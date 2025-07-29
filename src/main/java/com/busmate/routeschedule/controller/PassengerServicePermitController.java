@@ -16,7 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/permits")
 @RequiredArgsConstructor
-@Tag(name = "Permit Management", description = "APIs for managing passenger service permits")
+@Tag(name = "7. Permit Management", description = "APIs for managing passenger service permits")
 public class PassengerServicePermitController {
     private final PassengerServicePermitService permitService;
 
