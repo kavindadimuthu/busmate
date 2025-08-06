@@ -29,13 +29,4 @@ public interface OperatorRepository extends JpaRepository<Operator, UUID> {
         @Param("status") String status,
         Pageable pageable
     );
-    
-    @Query("SELECT o FROM Operator o WHERE " +
-           "(:operatorType IS NULL OR o.operatorType = :operatorType) " +
-           "AND (:status IS NULL OR o.status = :status)")
-    Page<Operator> findAllByFilters(
-        @Param("operatorType") OperatorTypeEnum operatorType,
-        @Param("status") StatusEnum status,
-        Pageable pageable
-    );
 }
