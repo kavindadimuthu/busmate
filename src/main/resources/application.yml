@@ -37,4 +37,4 @@ springdoc:
   swagger-ui:
     tags-sorter: alpha
     operations-sorter: operationId
-  show-actuator: true
+  show-actuator: false
