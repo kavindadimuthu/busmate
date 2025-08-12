@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -22,5 +23,11 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
            "LOWER(s.state) LIKE LOWER(CONCAT('%', :searchText, '%')))",
            nativeQuery = true)
     Page<Stop> findAllWithSearch(@Param("searchText") String searchText, Pageable pageable);
+    
+    @Query("SELECT DISTINCT s.location.state FROM Stop s WHERE s.location.state IS NOT NULL ORDER BY s.location.state")
+    List<String> findDistinctStates();
+    
+    @Query("SELECT DISTINCT s.isAccessible FROM Stop s WHERE s.isAccessible IS NOT NULL ORDER BY s.isAccessible DESC")
+    List<Boolean> findDistinctAccessibilityStatuses();
 }
 

@@ -15,4 +15,8 @@ public interface StopService {
     Page<StopResponse> getAllStopsWithSearch(String searchText, Pageable pageable);
     StopResponse updateStop(UUID id, StopRequest request, String userId);
     void deleteStop(UUID id);
+    
+    // Filter options methods
+    List<String> getDistinctStates();
+    List<Boolean> getDistinctAccessibilityStatuses();
 }
