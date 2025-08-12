@@ -32,3 +32,9 @@ logging:
     com.busmate.routeschedule: INFO
     org.springframework: WARN
     org.hibernate: WARN
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: operationId
+  show-actuator: false

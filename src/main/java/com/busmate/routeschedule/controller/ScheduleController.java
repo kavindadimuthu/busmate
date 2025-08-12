@@ -18,7 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/schedules")
 @RequiredArgsConstructor
-@Tag(name = "Schedule Management", description = "APIs for managing bus schedules")
+@Tag(name = "4. Schedule Management", description = "APIs for managing bus schedules")
 public class ScheduleController {
     private final ScheduleService scheduleService;
 

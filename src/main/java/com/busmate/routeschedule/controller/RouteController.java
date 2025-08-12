@@ -12,7 +12,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/routes")
 @RequiredArgsConstructor
-@Tag(name = "Route Management", description = "APIs for managing routes")
+@Tag(name = "2. Route Management", description = "APIs for managing routes")
 public class RouteController {
     private final RouteService routeService;
 

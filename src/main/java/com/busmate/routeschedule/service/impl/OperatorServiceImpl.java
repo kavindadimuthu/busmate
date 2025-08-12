@@ -11,6 +11,8 @@ import com.busmate.routeschedule.repository.OperatorRepository;
 import com.busmate.routeschedule.service.OperatorService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +51,21 @@ public class OperatorServiceImpl implements OperatorService {
     }
 
     @Override
+    public Page<OperatorResponse> getAllOperators(Pageable pageable) {
+        Page<Operator> operators = operatorRepository.findAll(pageable);
+        return operators.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<OperatorResponse> getAllOperatorsWithFilters(String searchText, OperatorTypeEnum operatorType, StatusEnum status, Pageable pageable) {
+        String operatorTypeStr = operatorType != null ? operatorType.name() : null;
+        String statusStr = status != null ? status.name() : null;
+        
+        Page<Operator> operators = operatorRepository.findAllWithFilters(searchText, operatorTypeStr, statusStr, pageable);
+        return operators.map(this::mapToResponse);
+    }
+
+    @Override
     public OperatorResponse updateOperator(UUID id, OperatorRequest request, String userId) {
         Operator operator = operatorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Operator not found with id: " + id));
@@ -78,9 +95,9 @@ public class OperatorServiceImpl implements OperatorService {
 
     @Override
     public void deleteOperator(UUID id) {
-        Operator operator = operatorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Operator not found with id: " + id));
-
+        if (!operatorRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Operator not found with id: " + id);
+        }
         operatorRepository.deleteById(id);
     }
 

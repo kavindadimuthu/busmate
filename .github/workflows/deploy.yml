@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "fix/stops-issue"
+      - "feature/trip-management"
 
 jobs:
   deploy:

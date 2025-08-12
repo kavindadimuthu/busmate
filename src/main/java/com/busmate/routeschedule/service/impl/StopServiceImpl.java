@@ -9,6 +9,8 @@ import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.exception.ConflictException;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +47,18 @@ public class StopServiceImpl implements StopService {
         return stopRepository.findAll().stream()
                 .map(stop -> mapperUtils.map(stop, StopResponse.class))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<StopResponse> getAllStops(Pageable pageable) {
+        Page<Stop> stops = stopRepository.findAll(pageable);
+        return stops.map(stop -> mapperUtils.map(stop, StopResponse.class));
+    }
+
+    @Override
+    public Page<StopResponse> getAllStopsWithSearch(String searchText, Pageable pageable) {
+        Page<Stop> stops = stopRepository.findAllWithSearch(searchText, pageable);
+        return stops.map(stop -> mapperUtils.map(stop, StopResponse.class));
     }
 
     @Override
