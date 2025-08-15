@@ -16,7 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/buses")
 @RequiredArgsConstructor
-@Tag(name = "5. Bus Management", description = "APIs for managing bus details")
+@Tag(name = "05. Bus Management", description = "APIs for managing bus details")
 public class BusController {
     private final BusService busService;
 

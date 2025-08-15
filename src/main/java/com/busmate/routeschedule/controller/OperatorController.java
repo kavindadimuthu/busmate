@@ -26,7 +26,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/operators")
 @RequiredArgsConstructor
-@Tag(name = "6. Operator Management", description = "APIs for managing operators")
+@Tag(name = "04. Operator Management", description = "APIs for managing operators")
 public class OperatorController {
     private final OperatorService operatorService;
 

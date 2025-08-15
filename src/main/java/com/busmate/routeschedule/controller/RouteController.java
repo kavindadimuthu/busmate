@@ -18,7 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/routes")
 @RequiredArgsConstructor
-@Tag(name = "2. Route Management", description = "APIs for managing routes and route groups")
+@Tag(name = "02. Route Management", description = "APIs for managing routes and route groups")
 public class RouteController {
     private final RouteService routeService;
     private final RouteGroupService routeGroupService;
