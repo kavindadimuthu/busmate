@@ -19,8 +19,8 @@ public class ScheduleStop {
     private Schedule schedule;
 
     @ManyToOne
-    @JoinColumn(name = "stop_id", nullable = false)
-    private Stop stop;
+    @JoinColumn(name = "route_stop_id", nullable = false)
+    private RouteStop routeStop;
 
     @Column(name = "stop_order", nullable = false)
     private Integer stopOrder;

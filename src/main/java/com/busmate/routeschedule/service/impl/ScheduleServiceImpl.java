@@ -3,17 +3,17 @@ package com.busmate.routeschedule.service.impl;
 import com.busmate.routeschedule.dto.request.ScheduleRequest;
 import com.busmate.routeschedule.dto.response.ScheduleResponse;
 import com.busmate.routeschedule.entity.Route;
+import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.Schedule;
 import com.busmate.routeschedule.entity.ScheduleStop;
-import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.enums.ScheduleTypeEnum;
 import com.busmate.routeschedule.enums.StatusEnum;
 import com.busmate.routeschedule.exception.ConflictException;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.RouteRepository;
+import com.busmate.routeschedule.repository.RouteStopRepository;
 import com.busmate.routeschedule.repository.ScheduleRepository;
 import com.busmate.routeschedule.repository.ScheduleStopRepository;
-import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.ScheduleService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final RouteRepository routeRepository;
-    private final StopRepository stopRepository;
+    private final RouteStopRepository routeStopRepository;
     private final ScheduleStopRepository scheduleStopRepository;
     private final MapperUtils mapperUtils;
 
@@ -117,12 +117,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (request.getScheduleStops() != null) {
             schedule.getScheduleStops().clear();
             List<ScheduleStop> scheduleStops = request.getScheduleStops().stream().map(ss -> {
-                Stop stop = stopRepository.findById(ss.getStopId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + ss.getStopId()));
+                // Changed: Now finding RouteStop instead of Stop directly
+                RouteStop routeStop = routeStopRepository.findByRouteIdAndStopIdAndStopOrder(
+                        request.getRouteId(), ss.getStopId(), ss.getStopOrder())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "RouteStop not found for route: " + request.getRouteId() + 
+                                ", stop: " + ss.getStopId() + ", order: " + ss.getStopOrder()));
+                
                 ScheduleStop scheduleStop = new ScheduleStop();
                 scheduleStop.setId(null); // Ensure new entity
                 scheduleStop.setSchedule(schedule);
-                scheduleStop.setStop(stop);
+                scheduleStop.setRouteStop(routeStop); // Changed: setRouteStop instead of setStop
                 scheduleStop.setStopOrder(ss.getStopOrder());
                 scheduleStop.setArrivalTime(ss.getArrivalTime());
                 scheduleStop.setDepartureTime(ss.getDepartureTime());
@@ -196,12 +201,17 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         if (request.getScheduleStops() != null) {
             List<ScheduleStop> scheduleStops = request.getScheduleStops().stream().map(ss -> {
-                Stop stop = stopRepository.findById(ss.getStopId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + ss.getStopId()));
+                // Changed: Now finding RouteStop instead of Stop directly
+                RouteStop routeStop = routeStopRepository.findByRouteIdAndStopIdAndStopOrder(
+                        request.getRouteId(), ss.getStopId(), ss.getStopOrder())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "RouteStop not found for route: " + request.getRouteId() + 
+                                ", stop: " + ss.getStopId() + ", order: " + ss.getStopOrder()));
+                
                 ScheduleStop scheduleStop = new ScheduleStop();
                 scheduleStop.setId(null); // Explicitly set to null for new entity
                 scheduleStop.setSchedule(schedule);
-                scheduleStop.setStop(stop);
+                scheduleStop.setRouteStop(routeStop); // Changed: setRouteStop instead of setStop
                 scheduleStop.setStopOrder(ss.getStopOrder());
                 scheduleStop.setArrivalTime(ss.getArrivalTime());
                 scheduleStop.setDepartureTime(ss.getDepartureTime());
@@ -223,9 +233,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (schedule.getScheduleStops() != null) {
             List<ScheduleResponse.ScheduleStopResponse> stopResponses = schedule.getScheduleStops().stream().map(ss -> {
                 ScheduleResponse.ScheduleStopResponse ssResponse = new ScheduleResponse.ScheduleStopResponse();
-                ssResponse.setStopId(ss.getStop().getId());
-                ssResponse.setStopName(ss.getStop().getName());
-                ssResponse.setLocation(mapperUtils.map(ss.getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));
+                // Changed: Now accessing stop through routeStop relationship
+                ssResponse.setStopId(ss.getRouteStop().getStop().getId());
+                ssResponse.setStopName(ss.getRouteStop().getStop().getName());
+                ssResponse.setLocation(mapperUtils.map(ss.getRouteStop().getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));
                 ssResponse.setStopOrder(ss.getStopOrder());
                 ssResponse.setArrivalTime(ss.getArrivalTime());
                 ssResponse.setDepartureTime(ss.getDepartureTime());
