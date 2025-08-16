@@ -3,15 +3,17 @@ package com.busmate.routeschedule.service.impl;
 import com.busmate.routeschedule.dto.response.RouteResponse;
 import com.busmate.routeschedule.entity.Route;
 import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.RouteRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.RouteService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,10 +37,108 @@ public class RouteServiceImpl implements RouteService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Page<RouteResponse> getAllRoutes(Pageable pageable) {
+        Page<Route> routes = routeRepository.findAll(pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteResponse> getAllRoutesWithSearch(String searchText, Pageable pageable) {
+        Page<Route> routes = routeRepository.findAllWithSearch(searchText, pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteResponse> getAllRoutesWithFilters(
+            UUID routeGroupId,
+            DirectionEnum direction,
+            Double minDistance,
+            Double maxDistance,
+            Integer minDuration,
+            Integer maxDuration,
+            Pageable pageable) {
+        Page<Route> routes = routeRepository.findAllWithFilters(
+                routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteResponse> getAllRoutesWithSearchAndFilters(
+            String searchText,
+            UUID routeGroupId,
+            DirectionEnum direction,
+            Double minDistance,
+            Double maxDistance,
+            Integer minDuration,
+            Integer maxDuration,
+            Pageable pageable) {
+        Page<Route> routes = routeRepository.findAllWithSearchAndFilters(
+                searchText, routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public List<DirectionEnum> getDistinctDirections() {
+        return routeRepository.findDistinctDirections();
+    }
+
+    @Override
+    public List<Map<String, Object>> getDistinctRouteGroups() {
+        List<Object[]> results = routeRepository.findDistinctRouteGroups();
+        return results.stream().map(result -> {
+            Map<String, Object> routeGroup = new HashMap<>();
+            routeGroup.put("id", result[0]);
+            routeGroup.put("name", result[1]);
+            return routeGroup;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> getDistanceRange() {
+        List<Object[]> results = routeRepository.findDistanceRange();
+        Map<String, Object> range = new HashMap<>();
+        if (!results.isEmpty() && results.get(0) != null) {
+            Object[] result = results.get(0);
+            range.put("min", result[0]);
+            range.put("max", result[1]);
+        } else {
+            range.put("min", 0.0);
+            range.put("max", 0.0);
+        }
+        return range;
+    }
+
+    @Override
+    public Map<String, Object> getDurationRange() {
+        List<Object[]> results = routeRepository.findDurationRange();
+        Map<String, Object> range = new HashMap<>();
+        if (!results.isEmpty() && results.get(0) != null) {
+            Object[] result = results.get(0);
+            range.put("min", result[0]);
+            range.put("max", result[1]);
+        } else {
+            range.put("min", 0);
+            range.put("max", 0);
+        }
+        return range;
+    }
+
+    @Override
+    public List<RouteResponse> getRoutesByRouteGroupId(UUID routeGroupId) {
+        List<Route> routes = routeRepository.findByRouteGroup_Id(routeGroupId);
+        return routes.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private RouteResponse mapToResponse(Route route) {
         RouteResponse response = mapperUtils.map(route, RouteResponse.class);
-        response.setRouteGroupId(route.getRouteGroup().getId());
-        response.setRouteGroupName(route.getRouteGroup().getName());
+        
+        if (route.getRouteGroup() != null) {
+            response.setRouteGroupId(route.getRouteGroup().getId());
+            response.setRouteGroupName(route.getRouteGroup().getName());
+        }
 
         Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
         if (startStop != null) {

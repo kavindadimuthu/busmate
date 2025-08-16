@@ -21,7 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
-@Tag(name = "10. Trip Management", description = "APIs for managing trip instances")
+@Tag(name = "09. Trip Management", description = "APIs for managing trip instances")
 public class TripController {
     private final TripService tripService;
 

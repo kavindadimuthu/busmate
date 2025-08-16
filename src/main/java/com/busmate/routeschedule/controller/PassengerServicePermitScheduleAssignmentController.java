@@ -16,7 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/permit-schedule-assignments")
 @RequiredArgsConstructor
-@Tag(name = "9. Permit-Schedule Assignment", description = "APIs for managing passenger service permit - schedule assignments")
+@Tag(name = "08. Permit-Schedule Assignment", description = "APIs for managing passenger service permit - schedule assignments")
 public class PassengerServicePermitScheduleAssignmentController {
     private final PassengerServicePermitScheduleAssignmentService assignmentService;
 
