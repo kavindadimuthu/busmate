@@ -33,7 +33,7 @@ public class StopController {
     @Operation(
         summary = "Create a new bus stop", 
         description = "Creates a new bus stop with the provided details. Requires authentication.",
-        operationId = "createStop"  // Add prefix for ordering
+        operationId = "createStop"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Stop created successfully"),
@@ -120,7 +120,7 @@ public class StopController {
     @Operation(
         summary = "Get stop by ID", 
         description = "Retrieve a specific bus stop by its unique identifier.",
-        operationId = "getStopById"  // Add prefix for ordering
+        operationId = "getStopById"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Stop found and retrieved successfully"),
@@ -134,12 +134,41 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 5. UPDATE - Modification operation
+    // 5. FILTER OPTIONS - Get distinct values for filtering
+    @GetMapping("/filter-options/states")
+    @Operation(
+        summary = "Get distinct states", 
+        description = "Retrieve all distinct states available in the stops database for filter dropdown options.",
+        operationId = "getDistinctStates"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Distinct states retrieved successfully")
+    })
+    public ResponseEntity<List<String>> getDistinctStates() {
+        List<String> states = stopService.getDistinctStates();
+        return ResponseEntity.ok(states);
+    }
+
+    @GetMapping("/filter-options/accessibility-statuses")
+    @Operation(
+        summary = "Get distinct accessibility statuses", 
+        description = "Retrieve all distinct accessibility statuses (true/false) available in the stops database for filter dropdown options.",
+        operationId = "getDistinctAccessibilityStatuses"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Distinct accessibility statuses retrieved successfully")
+    })
+    public ResponseEntity<List<Boolean>> getDistinctAccessibilityStatuses() {
+        List<Boolean> accessibilityStatuses = stopService.getDistinctAccessibilityStatuses();
+        return ResponseEntity.ok(accessibilityStatuses);
+    }
+
+    // 6. UPDATE - Modification operation
     @PutMapping("/{id}")
     @Operation(
         summary = "Update an existing stop", 
         description = "Update an existing bus stop with new details. Requires authentication.",
-        operationId = "updateStop"  // Add prefix for ordering
+        operationId = "updateStop"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Stop updated successfully"),
@@ -158,7 +187,7 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 6. DELETE - Destructive operation (last)
+    // 7. DELETE - Destructive operation (last)
     @DeleteMapping("/{id}")
     @Operation(
         summary = "Delete a stop", 

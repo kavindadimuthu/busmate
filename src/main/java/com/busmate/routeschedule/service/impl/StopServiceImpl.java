@@ -84,4 +84,14 @@ public class StopServiceImpl implements StopService {
         }
         stopRepository.deleteById(id);
     }
+
+    @Override
+    public List<String> getDistinctStates() {
+        return stopRepository.findDistinctStates();
+    }
+
+    @Override
+    public List<Boolean> getDistinctAccessibilityStatuses() {
+        return stopRepository.findDistinctAccessibilityStatuses();
+    }
 }
