@@ -1,7 +1,7 @@
 package com.busmate.routeschedule.entity;
 
 import com.busmate.routeschedule.enums.ScheduleTypeEnum;
-import com.busmate.routeschedule.enums.StatusEnum;
+import com.busmate.routeschedule.enums.ScheduleStatusEnum; // New import
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -24,6 +24,10 @@ public class Schedule extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    // Add description field
+    @Column
+    private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "schedule_type", nullable = false)
     private ScheduleTypeEnum scheduleType;
@@ -36,7 +40,7 @@ public class Schedule extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private StatusEnum status;
+    private ScheduleStatusEnum status; // Changed to ScheduleStatusEnum
 
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleStop> scheduleStops;

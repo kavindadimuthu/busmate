@@ -14,6 +14,7 @@ import java.util.UUID;
 public class ScheduleResponse {
     private UUID id;
     private String name;
+    private String description;
     private UUID routeId;
     private String routeName;
     private UUID routeGroupId;
@@ -23,6 +24,8 @@ public class ScheduleResponse {
     private LocalDate effectiveEndDate;
     private String status;
     private List<ScheduleStopResponse> scheduleStops;
+    private List<ScheduleCalendarResponse> scheduleCalendars;
+    private List<ScheduleExceptionResponse> scheduleExceptions;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdBy;
@@ -30,6 +33,7 @@ public class ScheduleResponse {
 
     @Data
     public static class ScheduleStopResponse {
+        private UUID id;
         private UUID stopId;
         private String stopName;
         private LocationDto location;
@@ -42,5 +46,24 @@ public class ScheduleResponse {
         @JsonFormat(pattern = "HH:mm:ss")
         @Schema(type = "string", pattern = "HH:mm:ss", example = "10:35:00")
         private LocalTime departureTime;
+    }
+
+    @Data
+    public static class ScheduleCalendarResponse {
+        private UUID id;
+        private Boolean monday;
+        private Boolean tuesday;
+        private Boolean wednesday;
+        private Boolean thursday;
+        private Boolean friday;
+        private Boolean saturday;
+        private Boolean sunday;
+    }
+
+    @Data
+    public static class ScheduleExceptionResponse {
+        private UUID id;
+        private LocalDate exceptionDate;
+        private String exceptionType;
     }
 }
