@@ -28,13 +28,23 @@ public class ScheduleRequest {
 
     private LocalDate effectiveEndDate;
 
-    private String status = "active";
+    private String status = "ACTIVE";
+
+    private String description;
 
     @Valid
     private List<ScheduleStopRequest> scheduleStops;
 
+    @Valid
+    private ScheduleCalendarRequest calendar;
+
+    @Valid
+    private List<ScheduleExceptionRequest> exceptions;
+
     @Data
     public static class ScheduleStopRequest {
+        private UUID id; // For updates
+        
         @NotNull(message = "Stop ID is mandatory")
         private UUID stopId;
 
