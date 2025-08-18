@@ -312,11 +312,37 @@ public class TripServiceImpl implements TripService {
 
     private TripResponse mapToResponse(Trip trip) {
         TripResponse response = mapperUtils.map(trip, TripResponse.class);
-        response.setAssignmentId(trip.getAssignment().getId());
-        response.setPermitNumber(trip.getAssignment().getPassengerServicePermit().getPermitNumber());
-        response.setScheduleName(trip.getAssignment().getSchedule().getName());
-        response.setRouteName(trip.getAssignment().getSchedule().getRoute().getName());
         
+        // Assignment details
+        response.setAssignmentId(trip.getAssignment().getId());
+        
+        // Schedule details
+        Schedule schedule = trip.getAssignment().getSchedule();
+        response.setScheduleId(schedule.getId());
+        response.setScheduleName(schedule.getName());
+        
+        // Route details
+        Route route = schedule.getRoute();
+        response.setRouteId(route.getId());
+        response.setRouteName(route.getName());
+        
+        // Route Group details
+        if (route.getRouteGroup() != null) {
+            response.setRouteGroupId(route.getRouteGroup().getId());
+            response.setRouteGroupName(route.getRouteGroup().getName());
+        }
+        
+        // Permit details
+        PassengerServicePermit permit = trip.getAssignment().getPassengerServicePermit();
+        response.setPermitId(permit.getId());
+        response.setPermitNumber(permit.getPermitNumber());
+        
+        // Operator details
+        Operator operator = permit.getOperator();
+        response.setOperatorId(operator.getId());
+        response.setOperatorName(operator.getName());
+        
+        // Bus details
         if (trip.getBus() != null) {
             response.setBusId(trip.getBus().getId());
             response.setBusPlateNumber(trip.getBus().getPlateNumber());

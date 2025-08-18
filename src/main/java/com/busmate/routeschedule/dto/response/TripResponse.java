@@ -12,9 +12,21 @@ import java.util.UUID;
 public class TripResponse {
     private UUID id;
     private UUID assignmentId;
+    
+    // Additional IDs for easy querying
+    private UUID scheduleId;
+    private UUID routeId;
+    private UUID permitId;
+    private UUID operatorId;
+    private UUID routeGroupId;
+    
+    // Descriptive fields
     private String permitNumber;
     private String scheduleName;
     private String routeName;
+    private String operatorName;
+    private String routeGroupName;
+    
     private LocalDate tripDate;
     
     @JsonFormat(pattern = "HH:mm:ss")
