@@ -2,6 +2,8 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
@@ -19,4 +21,8 @@ public interface StopService {
     // Filter options methods
     List<String> getDistinctStates();
     List<Boolean> getDistinctAccessibilityStatuses();
+    
+    // New methods for route and schedule stop details
+    List<RouteStopDetailResponse> getStopsByRoute(UUID routeId);
+    List<ScheduleStopDetailResponse> getStopsWithScheduleBySchedule(UUID scheduleId);
 }
