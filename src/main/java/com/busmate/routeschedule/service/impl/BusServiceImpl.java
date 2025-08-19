@@ -7,12 +7,14 @@ import com.busmate.routeschedule.entity.Operator;
 import com.busmate.routeschedule.enums.StatusEnum;
 import com.busmate.routeschedule.exception.ConflictException;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
-//import com.busmate.routeschedule.repository.BusPassengerServicePermitAssignmentRepository;
+import com.busmate.routeschedule.repository.BusPassengerServicePermitAssignmentRepository;
 import com.busmate.routeschedule.repository.BusRepository;
 import com.busmate.routeschedule.repository.OperatorRepository;
 import com.busmate.routeschedule.service.BusService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 public class BusServiceImpl implements BusService {
     private final BusRepository busRepository;
     private final OperatorRepository operatorRepository;
-//    private final BusPassengerServicePermitAssignmentRepository busPermitAssignmentRepository;
+    private final BusPassengerServicePermitAssignmentRepository busPermitAssignmentRepository;
     private final MapperUtils mapperUtils;
 
     @Override
@@ -54,6 +56,22 @@ public class BusServiceImpl implements BusService {
         return busRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<BusResponse> getAllBuses(Pageable pageable) {
+        Page<Bus> buses = busRepository.findAll(pageable);
+        return buses.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<BusResponse> getAllBusesWithFilters(String searchText, UUID operatorId, StatusEnum status, 
+                                                   Integer minCapacity, Integer maxCapacity, Pageable pageable) {
+        String statusStr = status != null ? status.name() : null;
+        
+        Page<Bus> buses = busRepository.findAllWithFilters(searchText, operatorId, statusStr, 
+                                                          minCapacity, maxCapacity, pageable);
+        return buses.map(this::mapToResponse);
     }
 
     @Override
@@ -97,9 +115,9 @@ public class BusServiceImpl implements BusService {
         Bus bus = busRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bus not found with id: " + id));
 
-//        if (busPermitAssignmentRepository.existsByBusId(id)) {
-//            throw new ConflictException("Cannot delete bus with id " + id + " as it is referenced by permit assignments");
-//        }
+        if (busPermitAssignmentRepository.existsByBusId(id)) {
+            throw new ConflictException("Cannot delete bus with id " + id + " as it is referenced by permit assignments");
+        }
 
         busRepository.deleteById(id);
     }
