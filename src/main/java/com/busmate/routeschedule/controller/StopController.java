@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -205,5 +207,42 @@ public class StopController {
             @PathVariable UUID id) {
         stopService.deleteStop(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // NEW ENDPOINTS for route and schedule stop details
+    @GetMapping("/route/{routeId}")
+    @Operation(
+        summary = "Get stops along a route", 
+        description = "Retrieve all stops in correct order for a specific route with details including distances.",
+        operationId = "getStopsByRoute"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Route stops retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Route not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid route ID format")
+    })
+    public ResponseEntity<List<RouteStopDetailResponse>> getStopsByRoute(
+            @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID routeId) {
+        List<RouteStopDetailResponse> responses = stopService.getStopsByRoute(routeId);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/schedule/{scheduleId}")
+    @Operation(
+        summary = "Get stops with schedule timings", 
+        description = "Retrieve all stops in correct order for a specific schedule with arrival/departure times and details.",
+        operationId = "getStopsWithScheduleBySchedule"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Schedule stops retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Schedule not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid schedule ID format")
+    })
+    public ResponseEntity<List<ScheduleStopDetailResponse>> getStopsWithScheduleBySchedule(
+            @Parameter(description = "Schedule ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID scheduleId) {
+        List<ScheduleStopDetailResponse> responses = stopService.getStopsWithScheduleBySchedule(scheduleId);
+        return ResponseEntity.ok(responses);
     }
 }

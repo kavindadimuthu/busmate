@@ -1,8 +1,15 @@
 package com.busmate.routeschedule.service.impl;
 
+import com.busmate.routeschedule.dto.common.LocationDto;
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.entity.RouteStop;
+import com.busmate.routeschedule.entity.ScheduleStop;
 import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.repository.RouteStopRepository;
+import com.busmate.routeschedule.repository.ScheduleStopRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.StopService;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
@@ -12,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,6 +29,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StopServiceImpl implements StopService {
     private final StopRepository stopRepository;
+    private final RouteStopRepository routeStopRepository;
+    private final ScheduleStopRepository scheduleStopRepository;
     private final MapperUtils mapperUtils;
 
     @Override
@@ -93,5 +104,58 @@ public class StopServiceImpl implements StopService {
     @Override
     public List<Boolean> getDistinctAccessibilityStatuses() {
         return stopRepository.findDistinctAccessibilityStatuses();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RouteStopDetailResponse> getStopsByRoute(UUID routeId) {
+        List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(routeId);
+
+        return routeStops.stream()
+                .map(this::mapToRouteStopDetailResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleStopDetailResponse> getStopsWithScheduleBySchedule(UUID scheduleId) {
+        List<ScheduleStop> scheduleStops = scheduleStopRepository.findByScheduleIdOrderByStopOrder(scheduleId);
+
+        return scheduleStops.stream()
+                .map(this::mapToScheduleStopDetailResponse)
+                .collect(Collectors.toList());
+    }
+
+    private RouteStopDetailResponse mapToRouteStopDetailResponse(RouteStop routeStop) {
+        RouteStopDetailResponse response = new RouteStopDetailResponse();
+        response.setRouteStopId(routeStop.getId());
+        response.setStopId(routeStop.getStop().getId());
+        response.setStopName(routeStop.getStop().getName());
+        response.setStopDescription(routeStop.getStop().getDescription());
+        response.setLocation(mapperUtils.map(routeStop.getStop().getLocation(), LocationDto.class));
+        response.setIsAccessible(routeStop.getStop().getIsAccessible());
+        response.setStopOrder(routeStop.getStopOrder());
+        response.setDistanceFromStartKm(routeStop.getDistanceFromStartKm());
+        return response;
+    }
+
+    private ScheduleStopDetailResponse mapToScheduleStopDetailResponse(ScheduleStop scheduleStop) {
+        ScheduleStopDetailResponse response = new ScheduleStopDetailResponse();
+        RouteStop routeStop = scheduleStop.getRouteStop();
+        Stop stop = routeStop.getStop();
+
+        response.setScheduleStopId(scheduleStop.getId());
+        response.setRouteStopId(routeStop.getId());
+        response.setStopId(stop.getId());
+        response.setStopName(stop.getName());
+        response.setStopDescription(stop.getDescription());
+        response.setLocation(mapperUtils.map(stop.getLocation(), LocationDto.class));
+        response.setIsAccessible(stop.getIsAccessible());
+        response.setStopOrder(scheduleStop.getStopOrder());
+        response.setDistanceFromStartKm(routeStop.getDistanceFromStartKm());
+        response.setArrivalTime(scheduleStop.getArrivalTime());
+        response.setDepartureTime(scheduleStop.getDepartureTime());
+
+        return response;
     }
 }
