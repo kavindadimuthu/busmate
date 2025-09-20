@@ -13,6 +13,7 @@ import com.busmate.routeschedule.exception.ConflictException;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.*;
 import com.busmate.routeschedule.service.ScheduleService;
+import com.busmate.routeschedule.service.TripService;
 import com.busmate.routeschedule.util.MapperUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleStopRepository scheduleStopRepository;
     private final ScheduleCalendarRepository scheduleCalendarRepository;
     private final ScheduleExceptionRepository scheduleExceptionRepository;
+    private final TripService tripService;
     private final MapperUtils mapperUtils;
     private final ObjectMapper objectMapper;
 
@@ -53,6 +55,24 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         Schedule schedule = mapToSchedule(request, userId, route);
         Schedule savedSchedule = scheduleRepository.save(schedule);
+        
+        // Generate trips if requested
+        if (request.isGenerateTrips()) {
+            log.info("Generating trips for schedule: {}", savedSchedule.getId());
+            try {
+                tripService.generateTripsForSchedule(
+                    savedSchedule.getId(),
+                    savedSchedule.getEffectiveStartDate(),
+                    savedSchedule.getEffectiveEndDate(),
+                    userId
+                );
+                log.info("Successfully generated trips for schedule: {}", savedSchedule.getId());
+            } catch (Exception e) {
+                log.error("Failed to generate trips for schedule: {}, error: {}", savedSchedule.getId(), e.getMessage());
+                // Don't fail the schedule creation if trip generation fails
+            }
+        }
+        
         log.info("Schedule created successfully with id: {}", savedSchedule.getId());
         return mapToResponse(savedSchedule);
     }
@@ -86,6 +106,24 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
+        
+        // Generate trips if requested
+        if (request.isGenerateTrips()) {
+            log.info("Generating trips for full schedule: {}", savedSchedule.getId());
+            try {
+                tripService.generateTripsForSchedule(
+                    savedSchedule.getId(),
+                    savedSchedule.getEffectiveStartDate(),
+                    savedSchedule.getEffectiveEndDate(),
+                    userId
+                );
+                log.info("Successfully generated trips for full schedule: {}", savedSchedule.getId());
+            } catch (Exception e) {
+                log.error("Failed to generate trips for full schedule: {}, error: {}", savedSchedule.getId(), e.getMessage());
+                // Don't fail the schedule creation if trip generation fails
+            }
+        }
+        
         log.info("Full schedule created successfully with id: {}", savedSchedule.getId());
         return mapToResponse(savedSchedule);
     }

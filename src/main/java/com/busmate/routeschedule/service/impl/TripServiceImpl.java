@@ -1,25 +1,30 @@
 package com.busmate.routeschedule.service.impl;
 
+import com.busmate.routeschedule.dto.request.BulkPspAssignmentRequest;
 import com.busmate.routeschedule.dto.request.TripRequest;
+import com.busmate.routeschedule.dto.response.BulkPspAssignmentResponse;
 import com.busmate.routeschedule.dto.response.TripResponse;
 import com.busmate.routeschedule.entity.*;
 import com.busmate.routeschedule.enums.TripStatusEnum;
+import com.busmate.routeschedule.enums.StatusEnum;
+import com.busmate.routeschedule.exception.BadRequestException;
 import com.busmate.routeschedule.exception.ConflictException;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.*;
 import com.busmate.routeschedule.service.TripService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -34,15 +39,19 @@ public class TripServiceImpl implements TripService {
     public TripResponse createTrip(TripRequest request, String userId) {
         validateTripRequest(request);
         
-        PassengerServicePermit passengerServicePermit = validateAndGetPassengerServicePermit(request.getPassengerServicePermitId());
+        // PSP is optional - can be null
+        PassengerServicePermit passengerServicePermit = request.getPassengerServicePermitId() != null 
+                ? validateAndGetPassengerServicePermit(request.getPassengerServicePermitId()) 
+                : null;
+        
+        // Schedule is mandatory
         Schedule schedule = validateAndGetSchedule(request.getScheduleId());
         Bus bus = request.getBusId() != null ? validateAndGetBus(request.getBusId()) : null;
         
-        // Check for duplicate trip
-        if (tripRepository.existsByTripDateAndPassengerServicePermitIdAndScheduleId(
-                request.getTripDate(), request.getPassengerServicePermitId(), request.getScheduleId())) {
-            throw new ConflictException("Trip already exists for PSP " + request.getPassengerServicePermitId() + 
-                    " and schedule " + request.getScheduleId() + " on date " + request.getTripDate());
+        // Check for duplicate trip (only check with schedule and date since PSP is optional)
+        if (tripRepository.existsByTripDateAndScheduleId(request.getTripDate(), request.getScheduleId())) {
+            throw new ConflictException("Trip already exists for schedule " + request.getScheduleId() + 
+                    " on date " + request.getTripDate());
         }
 
         Trip trip = mapToTrip(request, userId, passengerServicePermit, schedule, bus);
@@ -137,18 +146,20 @@ public class TripServiceImpl implements TripService {
 
         validateTripRequest(request);
         
-        PassengerServicePermit passengerServicePermit = validateAndGetPassengerServicePermit(request.getPassengerServicePermitId());
+        // PSP is optional - can be null
+        PassengerServicePermit passengerServicePermit = request.getPassengerServicePermitId() != null 
+                ? validateAndGetPassengerServicePermit(request.getPassengerServicePermitId()) 
+                : null;
+        
         Schedule schedule = validateAndGetSchedule(request.getScheduleId());
         Bus bus = request.getBusId() != null ? validateAndGetBus(request.getBusId()) : null;
 
-        // Check for duplicate if PSP, schedule, or date changed
-        if (!trip.getPassengerServicePermit().getId().equals(request.getPassengerServicePermitId()) || 
-            !trip.getSchedule().getId().equals(request.getScheduleId()) ||
+        // Check for duplicate if schedule or date changed
+        if (!trip.getSchedule().getId().equals(request.getScheduleId()) ||
             !trip.getTripDate().equals(request.getTripDate())) {
-            if (tripRepository.existsByTripDateAndPassengerServicePermitIdAndScheduleId(
-                    request.getTripDate(), request.getPassengerServicePermitId(), request.getScheduleId())) {
-                throw new ConflictException("Trip already exists for PSP " + request.getPassengerServicePermitId() + 
-                        " and schedule " + request.getScheduleId() + " on date " + request.getTripDate());
+            if (tripRepository.existsByTripDateAndScheduleId(request.getTripDate(), request.getScheduleId())) {
+                throw new ConflictException("Trip already exists for schedule " + request.getScheduleId() + 
+                        " on date " + request.getTripDate());
             }
         }
 
@@ -224,45 +235,172 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public List<TripResponse> generateTripsForSchedule(UUID passengerServicePermitId, UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId) {
-        PassengerServicePermit passengerServicePermit = validateAndGetPassengerServicePermit(passengerServicePermitId);
-        Schedule schedule = validateAndGetSchedule(scheduleId);
-        
-        List<Trip> generatedTrips = new ArrayList<>();
+    public List<TripResponse> generateTripsForSchedule(UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId) {
+        log.info("Generating trips for schedule with ID: {} by user: {}", scheduleId, userId);
+
+        // Validate schedule exists
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with ID: " + scheduleId));
+
+        // Validate date range
+        if (fromDate.isAfter(toDate)) {
+            throw new BadRequestException("From date cannot be after to date");
+        }
+
+        // Validate dates are within schedule validity period
+        if (fromDate.isBefore(schedule.getEffectiveStartDate()) || toDate.isAfter(schedule.getEffectiveEndDate())) {
+            throw new BadRequestException("Date range must be within schedule validity period");
+        }
+
+        List<Trip> trips = new ArrayList<>();
         LocalDate currentDate = fromDate;
-        
+
         while (!currentDate.isAfter(toDate)) {
-            if (!tripRepository.existsByTripDateAndPassengerServicePermitIdAndScheduleId(currentDate, passengerServicePermitId, scheduleId)) {
+            // Check if trip already exists for this date and schedule
+            boolean tripExists = tripRepository.existsByScheduleIdAndTripDate(scheduleId, currentDate);
+            
+            if (!tripExists) {
                 Trip trip = new Trip();
-                trip.setPassengerServicePermit(passengerServicePermit);
                 trip.setSchedule(schedule);
+                trip.setPassengerServicePermit(null); // PSP is optional during trip generation
                 trip.setTripDate(currentDate);
-                
-                // Set default scheduled times based on schedule
-                if (schedule != null && !schedule.getScheduleStops().isEmpty()) {
-                    // Get first and last schedule stops for departure and arrival times
-                    var scheduleStops = schedule.getScheduleStops();
-                    scheduleStops.sort((s1, s2) -> Integer.compare(s1.getStopOrder(), s2.getStopOrder()));
-                    
-                    if (!scheduleStops.isEmpty()) {
-                        trip.setScheduledDepartureTime(scheduleStops.get(0).getDepartureTime());
-                        trip.setScheduledArrivalTime(scheduleStops.get(scheduleStops.size() - 1).getArrivalTime());
-                    }
-                }
-                
                 trip.setStatus(TripStatusEnum.pending);
                 trip.setCreatedBy(userId);
                 trip.setUpdatedBy(userId);
-                
-                generatedTrips.add(trip);
+
+                trips.add(trip);
             }
+
             currentDate = currentDate.plusDays(1);
         }
-        
-        List<Trip> savedTrips = tripRepository.saveAll(generatedTrips);
+
+        if (trips.isEmpty()) {
+            log.info("No trips to generate - all trips already exist for the date range");
+            return Collections.emptyList();
+        }
+
+        List<Trip> savedTrips = tripRepository.saveAll(trips);
+        log.info("Successfully generated {} trips for schedule {}", savedTrips.size(), scheduleId);
+
         return savedTrips.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public TripResponse assignPassengerServicePermitToTrip(UUID tripId, UUID passengerServicePermitId, String userId) {
+        log.info("Assigning PSP {} to trip {} by user: {}", passengerServicePermitId, tripId, userId);
+
+        // Get the trip
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+
+        // Validate PSP exists
+        PassengerServicePermit psp = passengerServicePermitRepository.findById(passengerServicePermitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger Service Permit not found with ID: " + passengerServicePermitId));
+
+        // Check if trip already has a PSP assigned
+        if (trip.getPassengerServicePermit() != null) {
+            throw new BadRequestException("Trip already has a passenger service permit assigned");
+        }
+
+        // Validate PSP is active
+        if (psp.getStatus() != StatusEnum.active) {
+            throw new BadRequestException("Passenger Service Permit must be active to assign to trip");
+        }
+
+        // Check for duplicate assignment - same PSP, same route, same date
+        boolean duplicateExists = tripRepository.existsByPassengerServicePermitIdAndScheduleRouteIdAndTripDate(
+                passengerServicePermitId, trip.getSchedule().getRoute().getId(), trip.getTripDate());
+
+        if (duplicateExists) {
+            throw new ConflictException(
+                    "A trip with the same passenger service permit and route already exists for date: " + trip.getTripDate());
+        }
+
+        // Assign PSP to trip
+        trip.setPassengerServicePermit(psp);
+        trip.setUpdatedBy(userId);
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("Successfully assigned PSP {} to trip {}", passengerServicePermitId, tripId);
+
+        return mapToResponse(savedTrip);
+    }
+
+    @Override
+    public List<TripResponse> bulkAssignPassengerServicePermitToTrips(List<UUID> tripIds, UUID passengerServicePermitId, String userId) {
+        log.info("Bulk assigning PSP {} to {} trips by user: {}", passengerServicePermitId, tripIds.size(), userId);
+
+        // Validate PSP exists and is active
+        PassengerServicePermit psp = passengerServicePermitRepository.findById(passengerServicePermitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger Service Permit not found with ID: " + passengerServicePermitId));
+
+        if (psp.getStatus() != StatusEnum.active) {
+            throw new BadRequestException("Passenger Service Permit must be active to assign to trips");
+        }
+
+        // Get all trips
+        List<Trip> trips = tripRepository.findAllById(tripIds);
+        if (trips.size() != tripIds.size()) {
+            throw new ResourceNotFoundException("One or more trips not found");
+        }
+
+        // Validate none of the trips already have PSP assigned
+        List<Trip> tripsWithPSP = trips.stream()
+                .filter(trip -> trip.getPassengerServicePermit() != null)
+                .collect(Collectors.toList());
+
+        if (!tripsWithPSP.isEmpty()) {
+            throw new BadRequestException("Some trips already have passenger service permits assigned");
+        }
+
+        // Check for potential duplicates
+        for (Trip trip : trips) {
+            boolean duplicateExists = tripRepository.existsByPassengerServicePermitIdAndScheduleRouteIdAndTripDate(
+                    passengerServicePermitId, trip.getSchedule().getRoute().getId(), trip.getTripDate());
+
+            if (duplicateExists) {
+                throw new ConflictException(
+                        "A trip with the same passenger service permit and route already exists for date: " + trip.getTripDate());
+            }
+        }
+
+        // Assign PSP to all trips
+        trips.forEach(trip -> {
+            trip.setPassengerServicePermit(psp);
+            trip.setUpdatedBy(userId);
+        });
+
+        List<Trip> savedTrips = tripRepository.saveAll(trips);
+        log.info("Successfully assigned PSP {} to {} trips", passengerServicePermitId, savedTrips.size());
+
+        return savedTrips.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public TripResponse removePassengerServicePermitFromTrip(UUID tripId, String userId) {
+        log.info("Removing PSP from trip {} by user: {}", tripId, userId);
+
+        // Get the trip
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+
+        // Check if trip has a PSP assigned
+        if (trip.getPassengerServicePermit() == null) {
+            throw new BadRequestException("Trip does not have a passenger service permit assigned");
+        }
+
+        // Remove PSP from trip
+        trip.setPassengerServicePermit(null);
+        trip.setUpdatedBy(userId);
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("Successfully removed PSP from trip {}", tripId);
+
+        return mapToResponse(savedTrip);
     }
 
     private void validateTripRequest(TripRequest request) {
@@ -373,6 +511,66 @@ public class TripServiceImpl implements TripService {
             response.setBusModel(trip.getBus().getModel());
         }
         
+        return response;
+    }
+
+    @Override
+    public BulkPspAssignmentResponse bulkAssignPspsToTrips(BulkPspAssignmentRequest request, String userId) {
+        log.info("Processing bulk PSP assignment for {} assignments by user: {}", 
+                request.getAssignments().size(), userId);
+        
+        List<BulkPspAssignmentResponse.AssignmentResult> successfulResults = new ArrayList<>();
+        List<BulkPspAssignmentResponse.AssignmentResult> failedResults = new ArrayList<>();
+        
+        // Process each assignment
+        for (BulkPspAssignmentRequest.PspTripAssignment assignment : request.getAssignments()) {
+            try {
+                // Attempt to assign PSP to trip
+                TripResponse tripResponse = assignPassengerServicePermitToTrip(
+                        assignment.getTripId(), 
+                        assignment.getPassengerServicePermitId(), 
+                        userId
+                );
+                
+                // Add to successful results
+                successfulResults.add(BulkPspAssignmentResponse.AssignmentResult.builder()
+                        .tripId(assignment.getTripId())
+                        .passengerServicePermitId(assignment.getPassengerServicePermitId())
+                        .success(true)
+                        .tripResponse(tripResponse)
+                        .build());
+                        
+            } catch (Exception e) {
+                log.warn("Failed to assign PSP {} to trip {}: {}", 
+                        assignment.getPassengerServicePermitId(), 
+                        assignment.getTripId(), 
+                        e.getMessage());
+                
+                // Add to failed results
+                failedResults.add(BulkPspAssignmentResponse.AssignmentResult.builder()
+                        .tripId(assignment.getTripId())
+                        .passengerServicePermitId(assignment.getPassengerServicePermitId())
+                        .success(false)
+                        .errorMessage(e.getMessage())
+                        .build());
+            }
+        }
+        
+        // Build final response
+        BulkPspAssignmentResponse response = BulkPspAssignmentResponse.builder()
+                .totalRequested(request.getAssignments().size())
+                .successfulAssignments(successfulResults.size())
+                .failedAssignments(failedResults.size())
+                .processedAt(java.time.LocalDateTime.now())
+                .successfulResults(successfulResults)
+                .failedResults(failedResults)
+                .build();
+                
+        log.info("Bulk PSP assignment completed: {} successful, {} failed out of {} total", 
+                response.getSuccessfulAssignments(), 
+                response.getFailedAssignments(), 
+                response.getTotalRequested());
+                
         return response;
     }
 }

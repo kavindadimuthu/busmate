@@ -4,9 +4,11 @@ import com.busmate.routeschedule.dto.request.ScheduleRequest;
 import com.busmate.routeschedule.dto.request.ScheduleCalendarRequest;
 import com.busmate.routeschedule.dto.request.ScheduleExceptionRequest;
 import com.busmate.routeschedule.dto.response.ScheduleResponse;
+import com.busmate.routeschedule.dto.response.TripResponse;
 import com.busmate.routeschedule.enums.ScheduleTypeEnum;
 import com.busmate.routeschedule.enums.ScheduleStatusEnum; // Changed import
 import com.busmate.routeschedule.service.ScheduleService;
+import com.busmate.routeschedule.service.TripService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,6 +41,7 @@ import java.util.UUID;
 @Tag(name = "03. Schedule Management", description = "APIs for managing bus schedules")
 public class ScheduleController {
     private final ScheduleService scheduleService;
+    private final TripService tripService;
 
     // ========== CORE SCHEDULE OPERATIONS ==========
 
@@ -575,5 +580,43 @@ public class ScheduleController {
     public ResponseEntity<Map<String, Object>> getScheduleStatistics() {
         Map<String, Object> statistics = scheduleService.getScheduleStatistics();
         return ResponseEntity.ok(statistics);
+    }
+
+    // ========== TRIP GENERATION ==========
+
+    @PostMapping("/{id}/generate-trips")
+    @Operation(
+        summary = "Generate trips for schedule",
+        description = "Generate trips for the specified schedule within a date range. " +
+                     "If no date range is provided, trips will be generated for the entire schedule validity period.",
+        operationId = "generateTripsForSchedule"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Trips generated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid date range or schedule configuration"),
+        @ApiResponse(responseCode = "404", description = "Schedule not found"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<List<TripResponse>> generateTripsForSchedule(
+            @PathVariable UUID id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            Authentication authentication) {
+        try {
+            String userId = authentication.getName();
+            
+            // If no dates provided, use schedule's validity period
+            if (fromDate == null || toDate == null) {
+                ScheduleResponse schedule = scheduleService.getScheduleById(id);
+                fromDate = fromDate != null ? fromDate : schedule.getEffectiveStartDate();
+                toDate = toDate != null ? toDate : schedule.getEffectiveEndDate();
+            }
+            
+            List<TripResponse> responses = tripService.generateTripsForSchedule(id, fromDate, toDate, userId);
+            return new ResponseEntity<>(responses, HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("Error generating trips for schedule {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 }

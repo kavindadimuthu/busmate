@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Data
 public class TripRequest {
-    @NotNull(message = "Passenger Service Permit ID is mandatory")
+    @Schema(description = "Passenger Service Permit ID - Optional, can be assigned later")
     private UUID passengerServicePermitId;
 
     @NotNull(message = "Schedule ID is mandatory")

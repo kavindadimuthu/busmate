@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.controller;
 
+import com.busmate.routeschedule.dto.request.BulkPspAssignmentRequest;
 import com.busmate.routeschedule.dto.request.TripRequest;
+import com.busmate.routeschedule.dto.response.BulkPspAssignmentResponse;
 import com.busmate.routeschedule.dto.response.TripResponse;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 import com.busmate.routeschedule.service.TripService;
@@ -147,16 +149,60 @@ public class TripController {
     }
 
     @PostMapping("/generate")
-    @Operation(summary = "Generate trips for schedule and PSP within date range")
+    @Operation(summary = "Generate trips for schedule within date range")
     public ResponseEntity<List<TripResponse>> generateTripsForSchedule(
-            @RequestParam UUID passengerServicePermitId,
             @RequestParam UUID scheduleId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Authentication authentication) {
         String userId = authentication.getName();
-        List<TripResponse> responses = tripService.generateTripsForSchedule(passengerServicePermitId, scheduleId, fromDate, toDate, userId);
+        List<TripResponse> responses = tripService.generateTripsForSchedule(scheduleId, fromDate, toDate, userId);
         return new ResponseEntity<>(responses, HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/{id}/assign-psp")
+    @Operation(summary = "Assign Passenger Service Permit to trip")
+    public ResponseEntity<TripResponse> assignPassengerServicePermitToTrip(
+            @PathVariable UUID id,
+            @RequestParam UUID passengerServicePermitId,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        TripResponse response = tripService.assignPassengerServicePermitToTrip(id, passengerServicePermitId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/bulk-assign-psp")
+    @Operation(summary = "Bulk assign Passenger Service Permit to multiple trips")
+    public ResponseEntity<List<TripResponse>> bulkAssignPassengerServicePermitToTrips(
+            @RequestParam List<UUID> tripIds,
+            @RequestParam UUID passengerServicePermitId,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        List<TripResponse> responses = tripService.bulkAssignPassengerServicePermitToTrips(tripIds, passengerServicePermitId, userId);
+        return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{id}/remove-psp")
+    @Operation(summary = "Remove Passenger Service Permit from trip")
+    public ResponseEntity<TripResponse> removePassengerServicePermitFromTrip(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        TripResponse response = tripService.removePassengerServicePermitFromTrip(id, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/bulk-assign-psps")
+    @Operation(summary = "Bulk assign PSPs to trips", 
+               description = "Assign multiple Passenger Service Permits to multiple trips in a single operation. " +
+                           "This is useful for workspace scenarios where operators need to assign PSPs to trips in bulk. " +
+                           "The operation returns details of successful and failed assignments.")
+    public ResponseEntity<BulkPspAssignmentResponse> bulkAssignPspsToTrips(
+            @Valid @RequestBody BulkPspAssignmentRequest request,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        BulkPspAssignmentResponse response = tripService.bulkAssignPspsToTrips(request, userId);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

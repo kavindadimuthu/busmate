@@ -17,7 +17,7 @@ public class Trip extends BaseEntity {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "passenger_service_permit_id", nullable = false)
+    @JoinColumn(name = "passenger_service_permit_id", nullable = true)
     private PassengerServicePermit passengerServicePermit;
 
     @ManyToOne

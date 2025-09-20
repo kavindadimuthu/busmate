@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.service;
 
+import com.busmate.routeschedule.dto.request.BulkPspAssignmentRequest;
 import com.busmate.routeschedule.dto.request.TripRequest;
+import com.busmate.routeschedule.dto.response.BulkPspAssignmentResponse;
 import com.busmate.routeschedule.dto.response.TripResponse;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 
@@ -26,5 +28,13 @@ public interface TripService {
     TripResponse completeTrip(UUID id, String userId);
     TripResponse cancelTrip(UUID id, String cancellationReason, String userId);
     void deleteTrip(UUID id);
-    List<TripResponse> generateTripsForSchedule(UUID passengerServicePermitId, UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId);
+    List<TripResponse> generateTripsForSchedule(UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId);
+    
+    // PSP Assignment methods
+    TripResponse assignPassengerServicePermitToTrip(UUID tripId, UUID passengerServicePermitId, String userId);
+    List<TripResponse> bulkAssignPassengerServicePermitToTrips(List<UUID> tripIds, UUID passengerServicePermitId, String userId);
+    TripResponse removePassengerServicePermitFromTrip(UUID tripId, String userId);
+    
+    // Bulk PSP Assignment (many-to-many)
+    BulkPspAssignmentResponse bulkAssignPspsToTrips(BulkPspAssignmentRequest request, String userId);
 }

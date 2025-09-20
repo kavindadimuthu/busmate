@@ -39,6 +39,12 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND conductor_id = :conductorId", nativeQuery = true)
     List<Trip> findByTripDateAndConductorId(@Param("date") LocalDate date, @Param("conductorId") UUID conductorId);
     
+    boolean existsByTripDateAndScheduleId(LocalDate tripDate, UUID scheduleId);
+    
+    boolean existsByScheduleIdAndTripDate(UUID scheduleId, LocalDate tripDate);
+    
+    boolean existsByPassengerServicePermitIdAndScheduleRouteIdAndTripDate(UUID passengerServicePermitId, UUID routeId, LocalDate tripDate);
+    
     boolean existsByTripDateAndPassengerServicePermitIdAndScheduleId(LocalDate tripDate, UUID passengerServicePermitId, UUID scheduleId);
     
     @Query(value = "SELECT COUNT(*) FROM trip WHERE trip_date BETWEEN :startDate AND :endDate AND status = CAST(:status AS VARCHAR)", nativeQuery = true)

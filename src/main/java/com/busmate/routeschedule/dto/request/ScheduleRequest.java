@@ -32,6 +32,9 @@ public class ScheduleRequest {
 
     private String description;
 
+    @Schema(description = "Whether to automatically generate trips for the schedule's validity period", defaultValue = "false")
+    private boolean generateTrips = false;
+
     @Valid
     private List<ScheduleStopRequest> scheduleStops;
 
