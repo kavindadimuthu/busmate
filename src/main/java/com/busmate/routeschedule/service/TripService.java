@@ -12,7 +12,8 @@ public interface TripService {
     TripResponse createTrip(TripRequest request, String userId);
     TripResponse getTripById(UUID id);
     List<TripResponse> getAllTrips();
-    List<TripResponse> getTripsByAssignment(UUID assignmentId);
+    List<TripResponse> getTripsByPassengerServicePermit(UUID passengerServicePermitId);
+    List<TripResponse> getTripsBySchedule(UUID scheduleId);
     List<TripResponse> getTripsByDate(LocalDate tripDate);
     List<TripResponse> getTripsByDateRange(LocalDate startDate, LocalDate endDate);
     List<TripResponse> getTripsByStatus(TripStatusEnum status);
@@ -25,5 +26,5 @@ public interface TripService {
     TripResponse completeTrip(UUID id, String userId);
     TripResponse cancelTrip(UUID id, String cancellationReason, String userId);
     void deleteTrip(UUID id);
-    List<TripResponse> generateTripsForAssignment(UUID assignmentId, LocalDate fromDate, LocalDate toDate, String userId);
+    List<TripResponse> generateTripsForSchedule(UUID passengerServicePermitId, UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId);
 }

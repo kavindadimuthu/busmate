@@ -21,7 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
-@Tag(name = "09. Trip Management", description = "APIs for managing trip instances")
+@Tag(name = "08. Trip Management", description = "APIs for managing trip instances")
 public class TripController {
     private final TripService tripService;
 
@@ -47,10 +47,17 @@ public class TripController {
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/assignment/{assignmentId}")
-    @Operation(summary = "Get trips by assignment")
-    public ResponseEntity<List<TripResponse>> getTripsByAssignment(@PathVariable UUID assignmentId) {
-        List<TripResponse> responses = tripService.getTripsByAssignment(assignmentId);
+    @GetMapping("/permit/{passengerServicePermitId}")
+    @Operation(summary = "Get trips by Passenger Service Permit")
+    public ResponseEntity<List<TripResponse>> getTripsByPassengerServicePermit(@PathVariable UUID passengerServicePermitId) {
+        List<TripResponse> responses = tripService.getTripsByPassengerServicePermit(passengerServicePermitId);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/schedule/{scheduleId}")
+    @Operation(summary = "Get trips by Schedule")
+    public ResponseEntity<List<TripResponse>> getTripsBySchedule(@PathVariable UUID scheduleId) {
+        List<TripResponse> responses = tripService.getTripsBySchedule(scheduleId);
         return ResponseEntity.ok(responses);
     }
 
@@ -140,14 +147,15 @@ public class TripController {
     }
 
     @PostMapping("/generate")
-    @Operation(summary = "Generate trips for assignment within date range")
-    public ResponseEntity<List<TripResponse>> generateTripsForAssignment(
-            @RequestParam UUID assignmentId,
+    @Operation(summary = "Generate trips for schedule and PSP within date range")
+    public ResponseEntity<List<TripResponse>> generateTripsForSchedule(
+            @RequestParam UUID passengerServicePermitId,
+            @RequestParam UUID scheduleId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Authentication authentication) {
         String userId = authentication.getName();
-        List<TripResponse> responses = tripService.generateTripsForAssignment(assignmentId, fromDate, toDate, userId);
+        List<TripResponse> responses = tripService.generateTripsForSchedule(passengerServicePermitId, scheduleId, fromDate, toDate, userId);
         return new ResponseEntity<>(responses, HttpStatus.CREATED);
     }
 

@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class TripServiceImpl implements TripService {
     private final TripRepository tripRepository;
-    private final PassengerServicePermitScheduleAssignmentRepository assignmentRepository;
+    private final PassengerServicePermitRepository passengerServicePermitRepository;
+    private final ScheduleRepository scheduleRepository;
     private final BusRepository busRepository;
     private final MapperUtils mapperUtils;
 
@@ -33,16 +34,18 @@ public class TripServiceImpl implements TripService {
     public TripResponse createTrip(TripRequest request, String userId) {
         validateTripRequest(request);
         
-        PassengerServicePermitScheduleAssignment assignment = validateAndGetAssignment(request.getAssignmentId());
+        PassengerServicePermit passengerServicePermit = validateAndGetPassengerServicePermit(request.getPassengerServicePermitId());
+        Schedule schedule = validateAndGetSchedule(request.getScheduleId());
         Bus bus = request.getBusId() != null ? validateAndGetBus(request.getBusId()) : null;
         
         // Check for duplicate trip
-        if (tripRepository.existsByTripDateAndAssignmentId(request.getTripDate(), request.getAssignmentId())) {
-            throw new ConflictException("Trip already exists for assignment " + request.getAssignmentId() + 
-                    " on date " + request.getTripDate());
+        if (tripRepository.existsByTripDateAndPassengerServicePermitIdAndScheduleId(
+                request.getTripDate(), request.getPassengerServicePermitId(), request.getScheduleId())) {
+            throw new ConflictException("Trip already exists for PSP " + request.getPassengerServicePermitId() + 
+                    " and schedule " + request.getScheduleId() + " on date " + request.getTripDate());
         }
 
-        Trip trip = mapToTrip(request, userId, assignment, bus);
+        Trip trip = mapToTrip(request, userId, passengerServicePermit, schedule, bus);
         Trip savedTrip = tripRepository.save(trip);
         return mapToResponse(savedTrip);
     }
@@ -65,8 +68,16 @@ public class TripServiceImpl implements TripService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TripResponse> getTripsByAssignment(UUID assignmentId) {
-        return tripRepository.findByAssignmentId(assignmentId).stream()
+    public List<TripResponse> getTripsByPassengerServicePermit(UUID passengerServicePermitId) {
+        return tripRepository.findByPassengerServicePermitId(passengerServicePermitId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TripResponse> getTripsBySchedule(UUID scheduleId) {
+        return tripRepository.findByScheduleId(scheduleId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -126,19 +137,22 @@ public class TripServiceImpl implements TripService {
 
         validateTripRequest(request);
         
-        PassengerServicePermitScheduleAssignment assignment = validateAndGetAssignment(request.getAssignmentId());
+        PassengerServicePermit passengerServicePermit = validateAndGetPassengerServicePermit(request.getPassengerServicePermitId());
+        Schedule schedule = validateAndGetSchedule(request.getScheduleId());
         Bus bus = request.getBusId() != null ? validateAndGetBus(request.getBusId()) : null;
 
-        // Check for duplicate if assignment or date changed
-        if (!trip.getAssignment().getId().equals(request.getAssignmentId()) || 
+        // Check for duplicate if PSP, schedule, or date changed
+        if (!trip.getPassengerServicePermit().getId().equals(request.getPassengerServicePermitId()) || 
+            !trip.getSchedule().getId().equals(request.getScheduleId()) ||
             !trip.getTripDate().equals(request.getTripDate())) {
-            if (tripRepository.existsByTripDateAndAssignmentId(request.getTripDate(), request.getAssignmentId())) {
-                throw new ConflictException("Trip already exists for assignment " + request.getAssignmentId() + 
-                        " on date " + request.getTripDate());
+            if (tripRepository.existsByTripDateAndPassengerServicePermitIdAndScheduleId(
+                    request.getTripDate(), request.getPassengerServicePermitId(), request.getScheduleId())) {
+                throw new ConflictException("Trip already exists for PSP " + request.getPassengerServicePermitId() + 
+                        " and schedule " + request.getScheduleId() + " on date " + request.getTripDate());
             }
         }
 
-        updateTripFromRequest(trip, request, assignment, bus, userId);
+        updateTripFromRequest(trip, request, passengerServicePermit, schedule, bus, userId);
         Trip updatedTrip = tripRepository.save(trip);
         return mapToResponse(updatedTrip);
     }
@@ -210,22 +224,24 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public List<TripResponse> generateTripsForAssignment(UUID assignmentId, LocalDate fromDate, LocalDate toDate, String userId) {
-        PassengerServicePermitScheduleAssignment assignment = validateAndGetAssignment(assignmentId);
+    public List<TripResponse> generateTripsForSchedule(UUID passengerServicePermitId, UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId) {
+        PassengerServicePermit passengerServicePermit = validateAndGetPassengerServicePermit(passengerServicePermitId);
+        Schedule schedule = validateAndGetSchedule(scheduleId);
         
         List<Trip> generatedTrips = new ArrayList<>();
         LocalDate currentDate = fromDate;
         
         while (!currentDate.isAfter(toDate)) {
-            if (!tripRepository.existsByTripDateAndAssignmentId(currentDate, assignmentId)) {
+            if (!tripRepository.existsByTripDateAndPassengerServicePermitIdAndScheduleId(currentDate, passengerServicePermitId, scheduleId)) {
                 Trip trip = new Trip();
-                trip.setAssignment(assignment);
+                trip.setPassengerServicePermit(passengerServicePermit);
+                trip.setSchedule(schedule);
                 trip.setTripDate(currentDate);
                 
                 // Set default scheduled times based on schedule
-                if (assignment.getSchedule() != null && !assignment.getSchedule().getScheduleStops().isEmpty()) {
+                if (schedule != null && !schedule.getScheduleStops().isEmpty()) {
                     // Get first and last schedule stops for departure and arrival times
-                    var scheduleStops = assignment.getSchedule().getScheduleStops();
+                    var scheduleStops = schedule.getScheduleStops();
                     scheduleStops.sort((s1, s2) -> Integer.compare(s1.getStopOrder(), s2.getStopOrder()));
                     
                     if (!scheduleStops.isEmpty()) {
@@ -267,9 +283,14 @@ public class TripServiceImpl implements TripService {
         }
     }
 
-    private PassengerServicePermitScheduleAssignment validateAndGetAssignment(UUID assignmentId) {
-        return assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found with id: " + assignmentId));
+    private PassengerServicePermit validateAndGetPassengerServicePermit(UUID passengerServicePermitId) {
+        return passengerServicePermitRepository.findById(passengerServicePermitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger Service Permit not found with id: " + passengerServicePermitId));
+    }
+
+    private Schedule validateAndGetSchedule(UUID scheduleId) {
+        return scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + scheduleId));
     }
 
     private Bus validateAndGetBus(UUID busId) {
@@ -277,9 +298,10 @@ public class TripServiceImpl implements TripService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bus not found with id: " + busId));
     }
 
-    private Trip mapToTrip(TripRequest request, String userId, PassengerServicePermitScheduleAssignment assignment, Bus bus) {
+    private Trip mapToTrip(TripRequest request, String userId, PassengerServicePermit passengerServicePermit, Schedule schedule, Bus bus) {
         Trip trip = new Trip();
-        trip.setAssignment(assignment);
+        trip.setPassengerServicePermit(passengerServicePermit);
+        trip.setSchedule(schedule);
         trip.setTripDate(request.getTripDate());
         trip.setScheduledDepartureTime(request.getScheduledDepartureTime());
         trip.setActualDepartureTime(request.getActualDepartureTime());
@@ -295,8 +317,9 @@ public class TripServiceImpl implements TripService {
         return trip;
     }
 
-    private void updateTripFromRequest(Trip trip, TripRequest request, PassengerServicePermitScheduleAssignment assignment, Bus bus, String userId) {
-        trip.setAssignment(assignment);
+    private void updateTripFromRequest(Trip trip, TripRequest request, PassengerServicePermit passengerServicePermit, Schedule schedule, Bus bus, String userId) {
+        trip.setPassengerServicePermit(passengerServicePermit);
+        trip.setSchedule(schedule);
         trip.setTripDate(request.getTripDate());
         trip.setScheduledDepartureTime(request.getScheduledDepartureTime());
         trip.setActualDepartureTime(request.getActualDepartureTime());
@@ -313,11 +336,12 @@ public class TripServiceImpl implements TripService {
     private TripResponse mapToResponse(Trip trip) {
         TripResponse response = mapperUtils.map(trip, TripResponse.class);
         
-        // Assignment details
-        response.setAssignmentId(trip.getAssignment().getId());
+        // Passenger Service Permit details
+        response.setPassengerServicePermitId(trip.getPassengerServicePermit().getId());
+        response.setPassengerServicePermitNumber(trip.getPassengerServicePermit().getPermitNumber());
         
         // Schedule details
-        Schedule schedule = trip.getAssignment().getSchedule();
+        Schedule schedule = trip.getSchedule();
         response.setScheduleId(schedule.getId());
         response.setScheduleName(schedule.getName());
         
@@ -332,8 +356,8 @@ public class TripServiceImpl implements TripService {
             response.setRouteGroupName(route.getRouteGroup().getName());
         }
         
-        // Permit details
-        PassengerServicePermit permit = trip.getAssignment().getPassengerServicePermit();
+        // Permit details (already set above)
+        PassengerServicePermit permit = trip.getPassengerServicePermit();
         response.setPermitId(permit.getId());
         response.setPermitNumber(permit.getPermitNumber());
         

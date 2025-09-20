@@ -11,7 +11,8 @@ import java.util.UUID;
 @Data
 public class TripResponse {
     private UUID id;
-    private UUID assignmentId;
+    private UUID passengerServicePermitId;
+    private String passengerServicePermitNumber;
     
     // Additional IDs for easy querying
     private UUID scheduleId;

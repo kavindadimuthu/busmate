@@ -135,7 +135,7 @@ INSERT INTO bus (id, operator_id, ntc_registration_number, plate_number, capacit
 
 -- Private Operator Buses
 INSERT INTO bus (id, operator_id, ntc_registration_number, plate_number, capacity, model, facilities, status, created_at, updated_at, created_by, updated_by) VALUES
-('99999999-9999-9999-9999-999999999994', '22222222-2222-2222-2222-222222222221', 'WP-PVT-001', 'WP CBB-1111', 45, 'Rosa Deluxe', '{"air_conditioning": true, "wheelchair_accessible": false, "wifi": true, "gps": true, "pushback_seats": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
+('99999999-9999-9999-9999-999999999994', '22222222-2222-2222-2222-222222222221', 'WP-PVT-001', 'WP CBB-1111', 45, 'Rosa Coaster', '{"air_conditioning": true, "wheelchair_accessible": false, "wifi": true, "gps": true, "pushback_seats": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('99999999-9999-9999-9999-999999999995', '22222222-2222-2222-2222-222222222222', 'CP-PVT-002', 'CP KB-2222', 41, 'Coaster Luxury', '{"air_conditioning": true, "wheelchair_accessible": false, "wifi": true, "gps": true, "pushback_seats": true, "entertainment": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('99999999-9999-9999-9999-999999999996', '22222222-2222-2222-2222-222222222224', 'WP-PVT-003', 'WP CBC-3333', 35, 'Mitsubishi Rosa Super Long', '{"air_conditioning": true, "wheelchair_accessible": true, "wifi": true, "gps": true, "pushback_seats": true, "entertainment": true, "charging_ports": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('99999999-9999-9999-9999-999999999997', '22222222-2222-2222-2222-222222222225', 'WP-PVT-004', 'WP CBD-4444', 52, 'TATA LP 1613', '{"air_conditioning": false, "wheelchair_accessible": true, "wifi": false, "gps": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
@@ -208,24 +208,14 @@ INSERT INTO schedule_stop (id, schedule_id, route_stop_id, stop_order, arrival_t
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef6', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888f', 3, '06:40:00', NULL);
 
 -- ============================================================================
--- 12. PERMIT TO SCHEDULE ASSIGNMENTS
--- ============================================================================
-
-INSERT INTO passenger_service_permit_schedule_assignment (id, permit_id, schedule_id, start_date, end_date, status, created_at, updated_at, created_by, updated_by) VALUES
-('ffffffff-ffff-ffff-ffff-fffffffffffa', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '2025-01-01', '2025-12-31', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('ffffffff-ffff-ffff-ffff-fffffffffffb', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaad', 'cccccccc-cccc-cccc-cccc-cccccccccccd', '2025-02-01', '2026-01-31', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('ffffffff-ffff-ffff-ffff-fffffffffffc', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaae', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '2025-01-01', '2025-12-31', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('ffffffff-ffff-ffff-ffff-fffffffffffd', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '2025-01-01', '2025-12-31', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
-
--- ============================================================================
--- 13. SAMPLE TRIPS
+-- 12. SAMPLE TRIPS
 -- ============================================================================
 
 -- Recent trips for testing
-INSERT INTO trip (id, assignment_id, trip_date, scheduled_departure_time, actual_departure_time, scheduled_arrival_time, actual_arrival_time, bus_id, driver_id, conductor_id, status, notes, created_at, updated_at, created_by, updated_by) VALUES
-('10101010-1010-1010-1010-101010101010', 'ffffffff-ffff-ffff-ffff-fffffffffffa', '2025-09-20', '05:30:00', '05:32:00', '08:00:00', '08:05:00', '99999999-9999-9999-9999-999999999993', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'completed', 'Normal service, slight delay due to traffic', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('10101010-1010-1010-1010-101010101011', 'ffffffff-ffff-ffff-ffff-fffffffffffd', '2025-09-20', '06:00:00', '06:00:00', '06:40:00', NULL, '99999999-9999-9999-9999-999999999991', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004', 'in_transit', 'Currently en route', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('10101010-1010-1010-1010-101010101012', 'ffffffff-ffff-ffff-ffff-fffffffffffc', '2025-09-21', '07:00:00', NULL, '09:30:00', NULL, '99999999-9999-9999-9999-999999999996', '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000006', 'pending', 'Scheduled for tomorrow', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
+INSERT INTO trip (id, passenger_service_permit_id, schedule_id, trip_date, scheduled_departure_time, actual_departure_time, scheduled_arrival_time, actual_arrival_time, bus_id, driver_id, conductor_id, status, notes, created_at, updated_at, created_by, updated_by) VALUES
+('10101010-1010-1010-1010-101010101010', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '2025-09-20', '05:30:00', '05:32:00', '08:00:00', '08:05:00', '99999999-9999-9999-9999-999999999993', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'completed', 'Normal service, slight delay due to traffic', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
+('10101010-1010-1010-1010-101010101011', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '2025-09-20', '06:00:00', '06:00:00', '06:40:00', NULL, '99999999-9999-9999-9999-999999999991', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004', 'in_transit', 'Currently en route', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
+('10101010-1010-1010-1010-101010101012', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaae', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '2025-09-21', '07:00:00', NULL, '09:30:00', NULL, '99999999-9999-9999-9999-999999999996', '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000006', 'pending', 'Scheduled for tomorrow', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
 
 -- Enable foreign key checks
 SET session_replication_role = DEFAULT;

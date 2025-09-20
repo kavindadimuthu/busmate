@@ -14,7 +14,9 @@ import java.util.UUID;
 @Repository
 public interface TripRepository extends JpaRepository<Trip, UUID> {
     
-    List<Trip> findByAssignmentId(UUID assignmentId);
+    List<Trip> findByPassengerServicePermitId(UUID passengerServicePermitId);
+    
+    List<Trip> findByScheduleId(UUID scheduleId);
     
     List<Trip> findByTripDate(LocalDate tripDate);
     
@@ -28,8 +30,8 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     
     List<Trip> findByConductorId(UUID conductorId);
     
-    @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND assignment_id = :assignmentId", nativeQuery = true)
-    List<Trip> findByTripDateAndAssignmentId(@Param("date") LocalDate date, @Param("assignmentId") UUID assignmentId);
+    @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND passenger_service_permit_id = :pspId AND schedule_id = :scheduleId", nativeQuery = true)
+    List<Trip> findByTripDateAndPassengerServicePermitIdAndScheduleId(@Param("date") LocalDate date, @Param("pspId") UUID pspId, @Param("scheduleId") UUID scheduleId);
     
     @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND bus_id = :busId", nativeQuery = true)
     List<Trip> findByTripDateAndBusId(@Param("date") LocalDate date, @Param("busId") UUID busId);
@@ -37,7 +39,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND conductor_id = :conductorId", nativeQuery = true)
     List<Trip> findByTripDateAndConductorId(@Param("date") LocalDate date, @Param("conductorId") UUID conductorId);
     
-    boolean existsByTripDateAndAssignmentId(LocalDate tripDate, UUID assignmentId);
+    boolean existsByTripDateAndPassengerServicePermitIdAndScheduleId(LocalDate tripDate, UUID passengerServicePermitId, UUID scheduleId);
     
     @Query(value = "SELECT COUNT(*) FROM trip WHERE trip_date BETWEEN :startDate AND :endDate AND status = CAST(:status AS VARCHAR)", nativeQuery = true)
     long countByDateRangeAndStatus(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("status") String status);

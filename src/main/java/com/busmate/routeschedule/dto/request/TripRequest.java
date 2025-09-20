@@ -10,8 +10,11 @@ import java.util.UUID;
 
 @Data
 public class TripRequest {
-    @NotNull(message = "Assignment ID is mandatory")
-    private UUID assignmentId;
+    @NotNull(message = "Passenger Service Permit ID is mandatory")
+    private UUID passengerServicePermitId;
+
+    @NotNull(message = "Schedule ID is mandatory")
+    private UUID scheduleId;
 
     @NotNull(message = "Trip date is mandatory")
     private LocalDate tripDate;
