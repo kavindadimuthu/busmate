@@ -149,11 +149,14 @@ public class TripController {
     }
 
     @PostMapping("/generate")
-    @Operation(summary = "Generate trips for schedule within date range")
+    @Operation(summary = "Generate trips for schedule within date range or entire validity period", 
+               description = "Generate trips for a schedule. If fromDate and toDate are not provided, " +
+                           "trips will be generated for the entire validity period of the schedule. " +
+                           "If dates are provided, trips will be generated only for the specified period.")
     public ResponseEntity<List<TripResponse>> generateTripsForSchedule(
             @RequestParam UUID scheduleId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Authentication authentication) {
         String userId = authentication.getName();
         List<TripResponse> responses = tripService.generateTripsForSchedule(scheduleId, fromDate, toDate, userId);

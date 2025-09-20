@@ -242,20 +242,28 @@ public class TripServiceImpl implements TripService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with ID: " + scheduleId));
 
+        // If dates are not provided, use the schedule's entire validity period
+        LocalDate effectiveFromDate = fromDate != null ? fromDate : schedule.getEffectiveStartDate();
+        LocalDate effectiveToDate = toDate != null ? toDate : schedule.getEffectiveEndDate();
+        
+        log.info("Using date range: {} to {} (original: {} to {})", 
+                effectiveFromDate, effectiveToDate, fromDate, toDate);
+
         // Validate date range
-        if (fromDate.isAfter(toDate)) {
+        if (effectiveFromDate.isAfter(effectiveToDate)) {
             throw new BadRequestException("From date cannot be after to date");
         }
 
         // Validate dates are within schedule validity period
-        if (fromDate.isBefore(schedule.getEffectiveStartDate()) || toDate.isAfter(schedule.getEffectiveEndDate())) {
-            throw new BadRequestException("Date range must be within schedule validity period");
+        if (effectiveFromDate.isBefore(schedule.getEffectiveStartDate()) || effectiveToDate.isAfter(schedule.getEffectiveEndDate())) {
+            throw new BadRequestException("Date range must be within schedule validity period (" + 
+                    schedule.getEffectiveStartDate() + " to " + schedule.getEffectiveEndDate() + ")");
         }
 
         List<Trip> trips = new ArrayList<>();
-        LocalDate currentDate = fromDate;
+        LocalDate currentDate = effectiveFromDate;
 
-        while (!currentDate.isAfter(toDate)) {
+        while (!currentDate.isAfter(effectiveToDate)) {
             // Check if trip already exists for this date and schedule
             boolean tripExists = tripRepository.existsByScheduleIdAndTripDate(scheduleId, currentDate);
             
