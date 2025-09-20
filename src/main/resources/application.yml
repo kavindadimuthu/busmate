@@ -3,14 +3,14 @@ spring:
     # Change from direct connection to transaction pooler
 
     # DB 1 - for production (dasunperera002@gmail.com)
-    # url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
-    # username: postgres.bixiyzllxffxqwutthmk
-    # password: root
+    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+    username: postgres.bixiyzllxffxqwutthmk
+    password: root
 
     # DB 2 - for testing (kavindadimuthupc@gmail.com)
-    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
-    username: postgres.viplrebpmygqlvruxucp
-    password: LbGZQCRaSBblXaS7
+    # url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+    # username: postgres.viplrebpmygqlvruxucp
+    # password: LbGZQCRaSBblXaS7
 
     driver-class-name: org.postgresql.Driver
     platform: postgresql
