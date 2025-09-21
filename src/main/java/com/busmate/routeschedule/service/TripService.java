@@ -16,6 +16,7 @@ public interface TripService {
     List<TripResponse> getAllTrips();
     List<TripResponse> getTripsByPassengerServicePermit(UUID passengerServicePermitId);
     List<TripResponse> getTripsBySchedule(UUID scheduleId);
+    List<TripResponse> getTripsByRoute(UUID routeId);
     List<TripResponse> getTripsByDate(LocalDate tripDate);
     List<TripResponse> getTripsByDateRange(LocalDate startDate, LocalDate endDate);
     List<TripResponse> getTripsByStatus(TripStatusEnum status);

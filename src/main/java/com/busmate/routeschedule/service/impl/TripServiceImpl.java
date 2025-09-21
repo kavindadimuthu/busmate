@@ -93,6 +93,15 @@ public class TripServiceImpl implements TripService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<TripResponse> getTripsByRoute(UUID routeId) {
+        log.info("Fetching trips for route with ID: {}", routeId);
+        return tripRepository.findByScheduleRouteId(routeId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<TripResponse> getTripsByDate(LocalDate tripDate) {
         return tripRepository.findByTripDate(tripDate).stream()
                 .map(this::mapToResponse)
@@ -260,6 +269,30 @@ public class TripServiceImpl implements TripService {
                     schedule.getEffectiveStartDate() + " to " + schedule.getEffectiveEndDate() + ")");
         }
 
+        // Get schedule stops to determine departure and arrival times
+        List<ScheduleStop> scheduleStops = schedule.getScheduleStops();
+        if (scheduleStops == null || scheduleStops.isEmpty()) {
+            throw new BadRequestException("Schedule has no stops defined. Cannot generate trips.");
+        }
+
+        // Sort schedule stops by stop order to get first and last stops
+        scheduleStops.sort((s1, s2) -> s1.getStopOrder().compareTo(s2.getStopOrder()));
+        
+        ScheduleStop firstStop = scheduleStops.get(0);
+        ScheduleStop lastStop = scheduleStops.get(scheduleStops.size() - 1);
+        
+        LocalTime scheduledDepartureTime = firstStop.getDepartureTime();
+        LocalTime scheduledArrivalTime = lastStop.getArrivalTime();
+        
+        if (scheduledDepartureTime == null) {
+            throw new BadRequestException("First stop must have a departure time defined");
+        }
+        if (scheduledArrivalTime == null) {
+            throw new BadRequestException("Last stop must have an arrival time defined");
+        }
+
+        log.info("Trip schedule times - Departure: {}, Arrival: {}", scheduledDepartureTime, scheduledArrivalTime);
+
         List<Trip> trips = new ArrayList<>();
         LocalDate currentDate = effectiveFromDate;
 
@@ -272,6 +305,8 @@ public class TripServiceImpl implements TripService {
                 trip.setSchedule(schedule);
                 trip.setPassengerServicePermit(null); // PSP is optional during trip generation
                 trip.setTripDate(currentDate);
+                trip.setScheduledDepartureTime(scheduledDepartureTime);
+                trip.setScheduledArrivalTime(scheduledArrivalTime);
                 trip.setStatus(TripStatusEnum.pending);
                 trip.setCreatedBy(userId);
                 trip.setUpdatedBy(userId);
@@ -482,9 +517,21 @@ public class TripServiceImpl implements TripService {
     private TripResponse mapToResponse(Trip trip) {
         TripResponse response = mapperUtils.map(trip, TripResponse.class);
         
-        // Passenger Service Permit details
-        response.setPassengerServicePermitId(trip.getPassengerServicePermit().getId());
-        response.setPassengerServicePermitNumber(trip.getPassengerServicePermit().getPermitNumber());
+        // Passenger Service Permit details (nullable)
+        PassengerServicePermit permit = trip.getPassengerServicePermit();
+        if (permit != null) {
+            response.setPassengerServicePermitId(permit.getId());
+            response.setPassengerServicePermitNumber(permit.getPermitNumber());
+            response.setPermitId(permit.getId());
+            response.setPermitNumber(permit.getPermitNumber());
+            
+            // Operator details
+            Operator operator = permit.getOperator();
+            if (operator != null) {
+                response.setOperatorId(operator.getId());
+                response.setOperatorName(operator.getName());
+            }
+        }
         
         // Schedule details
         Schedule schedule = trip.getSchedule();
@@ -501,16 +548,6 @@ public class TripServiceImpl implements TripService {
             response.setRouteGroupId(route.getRouteGroup().getId());
             response.setRouteGroupName(route.getRouteGroup().getName());
         }
-        
-        // Permit details (already set above)
-        PassengerServicePermit permit = trip.getPassengerServicePermit();
-        response.setPermitId(permit.getId());
-        response.setPermitNumber(permit.getPermitNumber());
-        
-        // Operator details
-        Operator operator = permit.getOperator();
-        response.setOperatorId(operator.getId());
-        response.setOperatorName(operator.getName());
         
         // Bus details
         if (trip.getBus() != null) {

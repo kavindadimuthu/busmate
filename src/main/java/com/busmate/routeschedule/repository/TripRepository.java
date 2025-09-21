@@ -18,6 +18,9 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     
     List<Trip> findByScheduleId(UUID scheduleId);
     
+    @Query("SELECT t FROM Trip t WHERE t.schedule.route.id = :routeId")
+    List<Trip> findByScheduleRouteId(@Param("routeId") UUID routeId);
+    
     List<Trip> findByTripDate(LocalDate tripDate);
     
     List<Trip> findByTripDateBetween(LocalDate startDate, LocalDate endDate);

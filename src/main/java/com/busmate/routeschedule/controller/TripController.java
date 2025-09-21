@@ -63,6 +63,15 @@ public class TripController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/route/{routeId}")
+    @Operation(summary = "Get trips by Route", 
+               description = "Retrieve all trips associated with a specific route ID. " +
+                           "This includes trips from all schedules that belong to the specified route.")
+    public ResponseEntity<List<TripResponse>> getTripsByRoute(@PathVariable UUID routeId) {
+        List<TripResponse> responses = tripService.getTripsByRoute(routeId);
+        return ResponseEntity.ok(responses);
+    }
+
     @GetMapping("/date/{tripDate}")
     @Operation(summary = "Get trips by date")
     public ResponseEntity<List<TripResponse>> getTripsByDate(
