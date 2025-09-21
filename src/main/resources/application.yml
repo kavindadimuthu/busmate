@@ -21,7 +21,8 @@ spring:
     # platform: postgresql
   jpa:
     hibernate:
-      ddl-auto: create
+      # ddl-auto: create
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -30,7 +31,8 @@ spring:
     defer-datasource-initialization: true  # Add this line
   sql:
     init:
-      mode: always  # Temporarily disable to avoid duplicate data issues
+      # mode: always  # Temporarily disable to avoid duplicate data issues
+      mode: never 
   profiles:
     active: dev  # Enable production profile for Swagger UI testing
 
