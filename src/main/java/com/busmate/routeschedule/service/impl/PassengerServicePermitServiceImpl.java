@@ -2,6 +2,7 @@ package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.request.PassengerServicePermitRequest;
 import com.busmate.routeschedule.dto.response.PassengerServicePermitResponse;
+import com.busmate.routeschedule.dto.response.PaginatedResponse;
 import com.busmate.routeschedule.entity.PassengerServicePermit;
 import com.busmate.routeschedule.entity.Operator;
 import com.busmate.routeschedule.entity.RouteGroup;
@@ -16,7 +17,12 @@ import com.busmate.routeschedule.repository.RouteGroupRepository;
 import com.busmate.routeschedule.service.PassengerServicePermitService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -54,6 +60,29 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
     @Override
     public List<PassengerServicePermitResponse> getAllPermits() {
         return permitRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PaginatedResponse<PassengerServicePermitResponse> getPermits(Pageable pageable, String status, String permitType, String operatorName, String routeGroupName) {
+        Specification<PassengerServicePermit> specification = createSpecification(status, permitType, operatorName, routeGroupName);
+        Page<PassengerServicePermit> permitPage = permitRepository.findAll(specification, pageable);
+        
+        List<PassengerServicePermitResponse> content = permitPage.getContent().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        
+        return PaginatedResponse.of(content, pageable.getPageNumber(), pageable.getPageSize(), permitPage.getTotalElements());
+    }
+
+    @Override
+    public List<PassengerServicePermitResponse> getPermitsByRouteGroupId(UUID routeGroupId) {
+        // Validate that route group exists
+        routeGroupRepository.findById(routeGroupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Route group not found with id: " + routeGroupId));
+        
+        return permitRepository.findByRouteGroupId(routeGroupId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -169,5 +198,45 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
         response.setRouteGroupId(permit.getRouteGroup().getId());
         response.setRouteGroupName(permit.getRouteGroup().getName());
         return response;
+    }
+
+    private Specification<PassengerServicePermit> createSpecification(String status, String permitType, String operatorName, String routeGroupName) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            if (status != null && !status.trim().isEmpty()) {
+                try {
+                    StatusEnum statusEnum = StatusEnum.valueOf(status.toUpperCase());
+                    predicates.add(criteriaBuilder.equal(root.get("status"), statusEnum));
+                } catch (IllegalArgumentException e) {
+                    // Invalid status, ignore or throw exception
+                }
+            }
+            
+            if (permitType != null && !permitType.trim().isEmpty()) {
+                try {
+                    PassengerServicePermitTypeEnum permitTypeEnum = PassengerServicePermitTypeEnum.valueOf(permitType.toUpperCase());
+                    predicates.add(criteriaBuilder.equal(root.get("permitType"), permitTypeEnum));
+                } catch (IllegalArgumentException e) {
+                    // Invalid permit type, ignore or throw exception
+                }
+            }
+            
+            if (operatorName != null && !operatorName.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("operator").get("name")), 
+                    "%" + operatorName.toLowerCase() + "%"
+                ));
+            }
+            
+            if (routeGroupName != null && !routeGroupName.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("routeGroup").get("name")), 
+                    "%" + routeGroupName.toLowerCase() + "%"
+                ));
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }
