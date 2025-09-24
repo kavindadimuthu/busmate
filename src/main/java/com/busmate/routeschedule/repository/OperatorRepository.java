@@ -11,11 +11,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface OperatorRepository extends JpaRepository<Operator, UUID> {
     boolean existsByName(String name);
+    Optional<Operator> findByNameIgnoreCase(String name);
     
     @Query(value = "SELECT * FROM operator o WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +

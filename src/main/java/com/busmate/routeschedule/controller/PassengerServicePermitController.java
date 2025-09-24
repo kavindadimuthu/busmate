@@ -2,20 +2,28 @@ package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.PassengerServicePermitRequest;
 import com.busmate.routeschedule.dto.response.PassengerServicePermitResponse;
+import com.busmate.routeschedule.dto.response.PassengerServicePermitFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.PassengerServicePermitStatisticsResponse;
+import com.busmate.routeschedule.dto.response.PassengerServicePermitImportResponse;
 import com.busmate.routeschedule.dto.response.PaginatedResponse;
 import com.busmate.routeschedule.service.PassengerServicePermitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,5 +94,81 @@ public class PassengerServicePermitController {
     public ResponseEntity<Void> deletePermit(@PathVariable UUID id) {
         permitService.deletePermit(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ========== ENHANCED PERMIT MANAGEMENT APIs ==========
+
+    // Filter Options API - For frontend dropdowns and search filters
+    @GetMapping("/filter-options")
+    @Operation(
+        summary = "Get available filter options", 
+        description = "Retrieve all available filter options for permit management frontend including operators, route groups, statuses, permit types, and sort options.",
+        operationId = "getPermitFilterOptions"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Filter options retrieved successfully")
+    })
+    public ResponseEntity<PassengerServicePermitFilterOptionsResponse> getPermitFilterOptions() {
+        PassengerServicePermitFilterOptionsResponse response = permitService.getFilterOptions();
+        return ResponseEntity.ok(response);
+    }
+
+    // Statistics API - For KPI cards and dashboard
+    @GetMapping("/statistics")
+    @Operation(
+        summary = "Get permit statistics", 
+        description = "Retrieve comprehensive permit statistics including total counts, status breakdowns, expiry alerts, and distribution by operators and route groups.",
+        operationId = "getPermitStatistics"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
+    })
+    public ResponseEntity<PassengerServicePermitStatisticsResponse> getPermitStatistics() {
+        PassengerServicePermitStatisticsResponse response = permitService.getStatistics();
+        return ResponseEntity.ok(response);
+    }
+
+    // Import Template API - Download CSV template for bulk import
+    @GetMapping("/import-template")
+    @Operation(
+        summary = "Download CSV import template", 
+        description = "Download a CSV template file with sample data for bulk permit import. The template includes all required columns and example values.",
+        operationId = "getPermitImportTemplate"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
+    })
+    public ResponseEntity<byte[]> getPermitImportTemplate() {
+        byte[] template = permitService.getImportTemplate();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "permit-import-template.csv");
+        headers.setContentLength(template.length);
+        
+        return new ResponseEntity<>(template, headers, HttpStatus.OK);
+    }
+
+    // Bulk Import API - Import permits from CSV file
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Import permits from CSV file", 
+        description = "Bulk import passenger service permits from a CSV file. The file must follow the template format with columns: " +
+                     "operatorName, routeGroupName, permitNumber, issueDate, expiryDate, maximumBusAssigned, permitType, status. " +
+                     "Returns detailed results including successful imports, failures, and error details.",
+        operationId = "importPermitsFromCsv"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Import completed (may include partial failures)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or empty file"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<PassengerServicePermitImportResponse> importPermitsFromCsv(
+            @Parameter(description = "CSV file containing permit data") 
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        PassengerServicePermitImportResponse response = permitService.importPermitsFromCsv(file, userId);
+        return ResponseEntity.ok(response);
     }
 }

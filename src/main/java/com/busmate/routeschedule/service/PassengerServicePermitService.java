@@ -2,8 +2,12 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.PassengerServicePermitRequest;
 import com.busmate.routeschedule.dto.response.PassengerServicePermitResponse;
+import com.busmate.routeschedule.dto.response.PassengerServicePermitFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.PassengerServicePermitStatisticsResponse;
+import com.busmate.routeschedule.dto.response.PassengerServicePermitImportResponse;
 import com.busmate.routeschedule.dto.response.PaginatedResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,4 +19,10 @@ public interface PassengerServicePermitService {
     List<PassengerServicePermitResponse> getPermitsByRouteGroupId(UUID routeGroupId);
     PassengerServicePermitResponse updatePermit(UUID id, PassengerServicePermitRequest request, String userId);
     void deletePermit(UUID id);
+    
+    // New methods for enhanced functionality
+    PassengerServicePermitFilterOptionsResponse getFilterOptions();
+    PassengerServicePermitStatisticsResponse getStatistics();
+    PassengerServicePermitImportResponse importPermitsFromCsv(MultipartFile file, String userId);
+    byte[] getImportTemplate();
 }

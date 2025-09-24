@@ -8,11 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface RouteGroupRepository extends JpaRepository<RouteGroup, UUID> {
     boolean existsByName(String name);
+    Optional<RouteGroup> findByNameIgnoreCase(String name);
     
     @Query(value = "SELECT * FROM route_group rg WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +
