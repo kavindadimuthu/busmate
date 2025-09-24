@@ -3,8 +3,12 @@ package com.busmate.routeschedule.service;
 import com.busmate.routeschedule.dto.request.BulkPspAssignmentRequest;
 import com.busmate.routeschedule.dto.request.TripRequest;
 import com.busmate.routeschedule.dto.response.BulkPspAssignmentResponse;
+import com.busmate.routeschedule.dto.response.TripFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.TripResponse;
+import com.busmate.routeschedule.dto.response.TripStatisticsResponse;
 import com.busmate.routeschedule.enums.TripStatusEnum;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,6 +18,25 @@ public interface TripService {
     TripResponse createTrip(TripRequest request, String userId);
     TripResponse getTripById(UUID id);
     List<TripResponse> getAllTrips();
+    
+    // Enhanced getAllTrips with filtering, pagination, and search
+    Page<TripResponse> getAllTripsWithFilters(
+            Pageable pageable, 
+            String search, 
+            TripStatusEnum status,
+            UUID routeId,
+            UUID operatorId,
+            UUID scheduleId,
+            UUID passengerServicePermitId,
+            UUID busId,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Boolean hasPsp,
+            Boolean hasBus,
+            Boolean hasDriver,
+            Boolean hasConductor
+    );
+    
     List<TripResponse> getTripsByPassengerServicePermit(UUID passengerServicePermitId);
     List<TripResponse> getTripsBySchedule(UUID scheduleId);
     List<TripResponse> getTripsByRoute(UUID routeId);
@@ -38,4 +61,8 @@ public interface TripService {
     
     // Bulk PSP Assignment (many-to-many)
     BulkPspAssignmentResponse bulkAssignPspsToTrips(BulkPspAssignmentRequest request, String userId);
+    
+    // Statistics and Filter Options
+    TripStatisticsResponse getStatistics();
+    TripFilterOptionsResponse getFilterOptions();
 }

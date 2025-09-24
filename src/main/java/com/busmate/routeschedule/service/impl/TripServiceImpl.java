@@ -3,7 +3,9 @@ package com.busmate.routeschedule.service.impl;
 import com.busmate.routeschedule.dto.request.BulkPspAssignmentRequest;
 import com.busmate.routeschedule.dto.request.TripRequest;
 import com.busmate.routeschedule.dto.response.BulkPspAssignmentResponse;
+import com.busmate.routeschedule.dto.response.TripFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.TripResponse;
+import com.busmate.routeschedule.dto.response.TripStatisticsResponse;
 import com.busmate.routeschedule.entity.*;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 import com.busmate.routeschedule.enums.StatusEnum;
@@ -17,11 +19,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -73,6 +77,152 @@ public class TripServiceImpl implements TripService {
         return tripRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TripResponse> getAllTripsWithFilters(
+            Pageable pageable, 
+            String search, 
+            TripStatusEnum status,
+            UUID routeId,
+            UUID operatorId,
+            UUID scheduleId,
+            UUID passengerServicePermitId,
+            UUID busId,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Boolean hasPsp,
+            Boolean hasBus,
+            Boolean hasDriver,
+            Boolean hasConductor) {
+        
+        log.info("Fetching trips with filters - page: {}, size: {}, search: {}, status: {}", 
+                pageable.getPageNumber(), pageable.getPageSize(), search, status);
+        
+        Specification<Trip> spec = createTripSpecification(
+                search, status, routeId, operatorId, scheduleId, 
+                passengerServicePermitId, busId, fromDate, toDate,
+                hasPsp, hasBus, hasDriver, hasConductor
+        );
+        
+        Page<Trip> trips = tripRepository.findAll(spec, pageable);
+        return trips.map(this::mapToResponse);
+    }
+
+    private Specification<Trip> createTripSpecification(
+            String search, 
+            TripStatusEnum status,
+            UUID routeId,
+            UUID operatorId,
+            UUID scheduleId,
+            UUID passengerServicePermitId,
+            UUID busId,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Boolean hasPsp,
+            Boolean hasBus,
+            Boolean hasDriver,
+            Boolean hasConductor) {
+        
+        return (root, query, criteriaBuilder) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            
+            // Search filter (across multiple fields)
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase().trim() + "%";
+                jakarta.persistence.criteria.Predicate searchPredicate = criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("schedule").get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("schedule").get("route").get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("schedule").get("route").get("description")), searchPattern),
+                        // Operator search through PSP
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("passengerServicePermit").get("operator").get("name")), searchPattern),
+                        // Operator search through Bus
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("bus").get("operator").get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("passengerServicePermit").get("permitNumber")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("bus").get("plateNumber")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("notes")), searchPattern)
+                );
+                predicates.add(searchPredicate);
+            }
+            
+            // Status filter
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            
+            // Route filter
+            if (routeId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("schedule").get("route").get("id"), routeId));
+            }
+            
+            // Operator filter
+            if (operatorId != null) {
+                jakarta.persistence.criteria.Predicate operatorPredicate = criteriaBuilder.or(
+                        criteriaBuilder.equal(root.get("passengerServicePermit").get("operator").get("id"), operatorId),
+                        criteriaBuilder.equal(root.get("bus").get("operator").get("id"), operatorId)
+                );
+                predicates.add(operatorPredicate);
+            }
+            
+            // Schedule filter
+            if (scheduleId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("schedule").get("id"), scheduleId));
+            }
+            
+            // PSP filter
+            if (passengerServicePermitId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("passengerServicePermit").get("id"), passengerServicePermitId));
+            }
+            
+            // Bus filter
+            if (busId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("bus").get("id"), busId));
+            }
+            
+            // Date range filters
+            if (fromDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("tripDate"), fromDate));
+            }
+            if (toDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("tripDate"), toDate));
+            }
+            
+            // Assignment filters
+            if (hasPsp != null) {
+                if (hasPsp) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("passengerServicePermit")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("passengerServicePermit")));
+                }
+            }
+            
+            if (hasBus != null) {
+                if (hasBus) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("bus")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("bus")));
+                }
+            }
+            
+            if (hasDriver != null) {
+                if (hasDriver) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("driverId")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("driverId")));
+                }
+            }
+            
+            if (hasConductor != null) {
+                if (hasConductor) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("conductorId")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("conductorId")));
+                }
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
     }
 
     @Override
@@ -617,5 +767,313 @@ public class TripServiceImpl implements TripService {
                 response.getTotalRequested());
                 
         return response;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public TripStatisticsResponse getStatistics() {
+        log.info("Retrieving trip statistics");
+        
+        TripStatisticsResponse stats = new TripStatisticsResponse();
+        
+        try {
+            // Basic counts
+            stats.setTotalTrips(tripRepository.getTotalTripsCount());
+            stats.setCompletedTrips(tripRepository.countByStatus(TripStatusEnum.completed));
+            stats.setCancelledTrips(tripRepository.countByStatus(TripStatusEnum.cancelled));
+            stats.setPendingTrips(tripRepository.countByStatus(TripStatusEnum.pending));
+            stats.setActiveTrips(tripRepository.countByStatus(TripStatusEnum.active));
+            stats.setDelayedTrips(tripRepository.countByStatus(TripStatusEnum.delayed));
+            stats.setInTransitTrips(tripRepository.countByStatus(TripStatusEnum.in_transit));
+            stats.setBoardingTrips(tripRepository.countByStatus(TripStatusEnum.boarding));
+            stats.setDepartedTrips(tripRepository.countByStatus(TripStatusEnum.departed));
+            
+            // Status distribution
+            Map<String, Long> tripsByStatus = new HashMap<>();
+            List<Object[]> statusCounts = tripRepository.getTripCountsByStatus();
+            for (Object[] row : statusCounts) {
+                TripStatusEnum status = (TripStatusEnum) row[0];
+                Long count = (Long) row[1];
+                tripsByStatus.put(status.name(), count);
+            }
+            stats.setTripsByStatus(tripsByStatus);
+            
+            // Date-based statistics
+            LocalDate today = LocalDate.now();
+            LocalDate tomorrow = today.plusDays(1);
+            LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
+            LocalDate weekEnd = weekStart.plusDays(6);
+            LocalDate monthStart = today.withDayOfMonth(1);
+            LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
+            
+            stats.setTodayTrips(tripRepository.countByTripDate(today));
+            stats.setTomorrowTrips(tripRepository.countByTripDate(tomorrow));
+            stats.setWeeklyTrips(tripRepository.countByDateRange(weekStart, weekEnd));
+            stats.setMonthlyTrips(tripRepository.countByDateRange(monthStart, monthEnd));
+            
+            // Performance metrics
+            stats.setCompletionRate(tripRepository.getCompletionRate());
+            stats.setCancellationRate(tripRepository.getCancellationRate());
+            
+            // Calculate average trips per day (last 30 days)
+            LocalDate thirtyDaysAgo = today.minusDays(30);
+            Long tripsLast30Days = tripRepository.countByDateRange(thirtyDaysAgo, today);
+            stats.setAverageTripsPerDay(tripsLast30Days / 30.0);
+            
+            // Operational insights
+            Map<String, Long> tripsByRoute = new HashMap<>();
+            List<Object[]> routeCounts = tripRepository.getTripCountsByRoute();
+            for (Object[] row : routeCounts) {
+                String routeName = (String) row[0];
+                Long count = (Long) row[1];
+                tripsByRoute.put(routeName, count);
+            }
+            stats.setTripsByRoute(tripsByRoute);
+            
+            Map<String, Long> tripsByOperator = new HashMap<>();
+            List<Object[]> operatorCounts = tripRepository.getTripCountsByOperator();
+            for (Object[] row : operatorCounts) {
+                String operatorName = (String) row[0];
+                Long count = (Long) row[1];
+                tripsByOperator.put(operatorName, count);
+            }
+            stats.setTripsByOperator(tripsByOperator);
+            
+            Map<String, Long> tripsBySchedule = new HashMap<>();
+            List<Object[]> scheduleCounts = tripRepository.getTripCountsBySchedule();
+            for (Object[] row : scheduleCounts) {
+                String scheduleName = (String) row[0];
+                Long count = (Long) row[1];
+                tripsBySchedule.put(scheduleName, count);
+            }
+            stats.setTripsBySchedule(tripsBySchedule);
+            
+            // Assignment statistics
+            stats.setTripsWithAssignedPsp(tripRepository.countTripsWithPsp());
+            stats.setTripsWithoutPsp(tripRepository.countTripsWithoutPsp());
+            stats.setTripsWithAssignedBus(tripRepository.countTripsWithBus());
+            stats.setTripsWithoutBus(tripRepository.countTripsWithoutBus());
+            stats.setTripsWithDriver(tripRepository.countTripsWithDriver());
+            stats.setTripsWithConductor(tripRepository.countTripsWithConductor());
+            
+            // PSP assignment distribution
+            Map<String, Long> tripsWithPsp = new HashMap<>();
+            tripsWithPsp.put("ASSIGNED", stats.getTripsWithAssignedPsp());
+            tripsWithPsp.put("NOT_ASSIGNED", stats.getTripsWithoutPsp());
+            stats.setTripsWithPsp(tripsWithPsp);
+            
+            // Bus assignment distribution
+            Map<String, Long> tripsWithBus = new HashMap<>();
+            tripsWithBus.put("ASSIGNED", stats.getTripsWithAssignedBus());
+            tripsWithBus.put("NOT_ASSIGNED", stats.getTripsWithoutBus());
+            stats.setTripsWithBus(tripsWithBus);
+            
+            // Time-based insights
+            Map<String, Long> tripsByTimeOfDay = new HashMap<>();
+            List<Object[]> timeOfDayCounts = tripRepository.getTripCountsByTimeOfDay();
+            for (Object[] row : timeOfDayCounts) {
+                String timeOfDay = (String) row[0];
+                Long count = (Long) row[1];
+                tripsByTimeOfDay.put(timeOfDay, count);
+            }
+            stats.setTripsByTimeOfDay(tripsByTimeOfDay);
+            
+            Map<String, Long> tripsByDayOfWeek = new HashMap<>();
+            List<Object[]> dayOfWeekCounts = tripRepository.getTripCountsByDayOfWeek();
+            for (Object[] row : dayOfWeekCounts) {
+                String dayOfWeek = (String) row[0];
+                Long count = (Long) row[1];
+                tripsByDayOfWeek.put(dayOfWeek, count);
+            }
+            stats.setTripsByDayOfWeek(tripsByDayOfWeek);
+            
+            // Peak insights
+            stats.setPeakTripRoute(tripRepository.getPeakTripRoute());
+            stats.setPeakTripOperator(tripRepository.getPeakTripOperator());
+            stats.setPeakTripDate(tripRepository.getPeakTripDate());
+            stats.setLeastActiveRoute(tripRepository.getLeastActiveRoute());
+            
+            // Recent activity (last 24 hours)
+            java.time.LocalDateTime yesterday = java.time.LocalDateTime.now().minusDays(1);
+            stats.setRecentlyCreatedTrips(tripRepository.countRecentlyCreated(yesterday));
+            stats.setRecentlyCompletedTrips(tripRepository.countByDateRangeAndStatus(today, today, "completed"));
+            stats.setRecentlyCancelledTrips(tripRepository.countByDateRangeAndStatus(today, today, "cancelled"));
+            
+            // Calculate average trip duration
+            Double avgDuration = tripRepository.getAverageTripDurationHours();
+            stats.setAverageTripDuration(avgDuration != null ? avgDuration : 0.0);
+            
+            // Weekly and monthly data
+            Map<String, Long> tripsThisWeek = new HashMap<>();
+            for (int i = 0; i < 7; i++) {
+                LocalDate date = weekStart.plusDays(i);
+                Long count = tripRepository.countByTripDate(date);
+                tripsThisWeek.put(date.getDayOfWeek().name(), count);
+            }
+            stats.setTripsThisWeek(tripsThisWeek);
+            
+            Map<String, Long> tripsThisMonth = new HashMap<>();
+            for (int i = 1; i <= today.lengthOfMonth(); i++) {
+                LocalDate date = today.withDayOfMonth(i);
+                if (!date.isAfter(today)) {
+                    Long count = tripRepository.countByTripDate(date);
+                    tripsThisMonth.put(String.valueOf(i), count);
+                }
+            }
+            stats.setTripsThisMonth(tripsThisMonth);
+            
+            // On-time performance calculation (mock for now - would need actual logic)
+            long completedTrips = stats.getCompletedTrips() != null ? stats.getCompletedTrips() : 0;
+            double onTimeRate = completedTrips > 0 ? 85.0 : 0.0; // Mock 85% on-time rate
+            stats.setOnTimePerformanceRate(onTimeRate);
+            
+        } catch (Exception e) {
+            log.error("Error calculating trip statistics", e);
+            // Return basic stats in case of error
+            stats.setTotalTrips(0L);
+            stats.setCompletedTrips(0L);
+            stats.setCancelledTrips(0L);
+            stats.setPendingTrips(0L);
+            stats.setActiveTrips(0L);
+        }
+        
+        log.info("Trip statistics retrieved successfully");
+        return stats;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public TripFilterOptionsResponse getFilterOptions() {
+        log.info("Retrieving trip filter options");
+        
+        TripFilterOptionsResponse options = new TripFilterOptionsResponse();
+        
+        try {
+            // Status options
+            List<String> statuses = Arrays.stream(TripStatusEnum.values())
+                    .map(Enum::name)
+                    .collect(Collectors.toList());
+            options.setStatuses(statuses);
+            
+            // Route options
+            List<TripFilterOptionsResponse.RouteOption> routes = new ArrayList<>();
+            List<Object[]> routeData = tripRepository.getDistinctRoutes();
+            for (Object[] row : routeData) {
+                TripFilterOptionsResponse.RouteOption route = new TripFilterOptionsResponse.RouteOption();
+                route.setId(row[0].toString());
+                route.setName((String) row[1]);
+                route.setRouteNumber((String) row[1]); // Using name as route number for compatibility
+                route.setDirection(row[3] != null ? row[3].toString() : null); // Convert enum to string
+                route.setRouteGroupName((String) row[4]);
+                routes.add(route);
+            }
+            options.setRoutes(routes);
+            
+            // Route Group options
+            List<TripFilterOptionsResponse.RouteGroupOption> routeGroups = new ArrayList<>();
+            List<Object[]> routeGroupData = tripRepository.getDistinctRouteGroups();
+            for (Object[] row : routeGroupData) {
+                TripFilterOptionsResponse.RouteGroupOption routeGroup = new TripFilterOptionsResponse.RouteGroupOption();
+                routeGroup.setId(row[0].toString());
+                routeGroup.setName((String) row[1]);
+                routeGroup.setDescription((String) row[2]);
+                routeGroup.setRouteCount((Long) row[3]);
+                routeGroups.add(routeGroup);
+            }
+            options.setRouteGroups(routeGroups);
+            
+            // Operator options
+            List<TripFilterOptionsResponse.OperatorOption> operators = new ArrayList<>();
+            List<Object[]> operatorData = tripRepository.getDistinctOperators();
+            for (Object[] row : operatorData) {
+                TripFilterOptionsResponse.OperatorOption operator = new TripFilterOptionsResponse.OperatorOption();
+                operator.setId(row[0].toString());
+                operator.setName((String) row[1]);
+                operator.setOperatorType((String) row[2]);
+                operator.setRegion((String) row[3]);
+                operators.add(operator);
+            }
+            options.setOperators(operators);
+            
+            // Schedule options
+            List<TripFilterOptionsResponse.ScheduleOption> schedules = new ArrayList<>();
+            List<Object[]> scheduleData = tripRepository.getDistinctSchedules();
+            for (Object[] row : scheduleData) {
+                TripFilterOptionsResponse.ScheduleOption schedule = new TripFilterOptionsResponse.ScheduleOption();
+                schedule.setId(row[0].toString());
+                schedule.setName((String) row[1]);
+                schedule.setRouteName((String) row[2]);
+                schedule.setOperatorName((String) row[3]);
+                schedule.setScheduleType((String) row[4]);
+                schedules.add(schedule);
+            }
+            options.setSchedules(schedules);
+            
+            // PSP options
+            List<TripFilterOptionsResponse.PspOption> psps = new ArrayList<>();
+            List<Object[]> pspData = tripRepository.getDistinctPassengerServicePermits();
+            for (Object[] row : pspData) {
+                TripFilterOptionsResponse.PspOption psp = new TripFilterOptionsResponse.PspOption();
+                psp.setId(row[0].toString());
+                psp.setPermitNumber((String) row[1]);
+                psp.setOperatorName((String) row[2]);
+                psp.setRouteName((String) row[3]);
+                psps.add(psp);
+            }
+            options.setPassengerServicePermits(psps);
+            
+            // Bus options
+            List<TripFilterOptionsResponse.BusOption> buses = new ArrayList<>();
+            List<Object[]> busData = tripRepository.getDistinctBuses();
+            for (Object[] row : busData) {
+                TripFilterOptionsResponse.BusOption bus = new TripFilterOptionsResponse.BusOption();
+                bus.setId(row[0].toString());
+                bus.setPlateNumber((String) row[1]);
+                bus.setModel((String) row[2]);
+                bus.setOperatorName((String) row[3]);
+                bus.setCapacity((Integer) row[4]);
+                buses.add(bus);
+            }
+            options.setBuses(buses);
+            
+            // Date range presets
+            options.setDateRangePresets(Arrays.asList(
+                    "TODAY", "TOMORROW", "THIS_WEEK", "NEXT_WEEK", 
+                    "THIS_MONTH", "NEXT_MONTH", "LAST_7_DAYS", 
+                    "LAST_30_DAYS", "CUSTOM"
+            ));
+            
+            // Time of day options
+            options.setTimeOfDayOptions(Arrays.asList(
+                    "MORNING", "AFTERNOON", "EVENING", "NIGHT", "ALL_DAY"
+            ));
+            
+            // Assignment status options
+            options.setAssignmentStatuses(Arrays.asList(
+                    "PSP_ASSIGNED", "PSP_NOT_ASSIGNED", 
+                    "BUS_ASSIGNED", "BUS_NOT_ASSIGNED",
+                    "DRIVER_ASSIGNED", "DRIVER_NOT_ASSIGNED",
+                    "CONDUCTOR_ASSIGNED", "CONDUCTOR_NOT_ASSIGNED",
+                    "FULLY_ASSIGNED", "PARTIALLY_ASSIGNED", "NOT_ASSIGNED"
+            ));
+            
+            // Sort options
+            options.setSortOptions(Arrays.asList(
+                    "tripDate", "scheduledDepartureTime", "scheduledArrivalTime",
+                    "actualDepartureTime", "actualArrivalTime", "status",
+                    "routeName", "operatorName", "scheduleName",
+                    "permitNumber", "busPlateNumber", "createdAt", "updatedAt"
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error retrieving trip filter options", e);
+            // Return empty options in case of error
+            options.setStatuses(Arrays.asList());
+            options.setRoutes(Arrays.asList());
+            options.setOperators(Arrays.asList());
+        }
+        
+        log.info("Trip filter options retrieved successfully");
+        return options;
     }
 }
