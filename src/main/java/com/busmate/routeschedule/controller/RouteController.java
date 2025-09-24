@@ -3,6 +3,8 @@ package com.busmate.routeschedule.controller;
 import com.busmate.routeschedule.dto.request.RouteGroupRequest;
 import com.busmate.routeschedule.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.dto.response.RouteResponse;
+import com.busmate.routeschedule.dto.response.RouteStatisticsResponse;
+import com.busmate.routeschedule.dto.response.RouteImportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.service.RouteGroupService;
 import com.busmate.routeschedule.service.RouteService;
@@ -18,9 +20,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -377,5 +381,73 @@ public class RouteController {
             @PathVariable UUID id) {
         routeGroupService.deleteRouteGroup(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ========== STATISTICS APIs ==========
+
+    // ROUTE STATISTICS - For KPI dashboard cards  
+    @GetMapping("/statistics")
+    @Operation(
+        summary = "Get route statistics", 
+        description = "Retrieve comprehensive route statistics for dashboard KPI cards including counts, distributions, distance/duration metrics, and route information.",
+        operationId = "getRouteStatistics"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
+    })
+    public ResponseEntity<RouteStatisticsResponse> getRouteStatistics() {
+        RouteStatisticsResponse response = routeService.getStatistics();
+        return ResponseEntity.ok(response);
+    }
+
+    // ========== IMPORT APIs ==========
+
+    // ROUTE IMPORT - For bulk route import from file
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Import routes from CSV file", 
+        description = "Bulk import routes from a CSV file. Expected CSV format: name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction (header row required). " +
+                     "Direction should be OUTBOUND or INBOUND. Route group and stops must already exist in the system. Requires authentication.",
+        operationId = "importRoutes"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<RouteImportResponse> importRoutes(
+            @Parameter(description = "CSV file containing route data")
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        String userId = authentication.getName();
+        RouteImportResponse response = routeService.importRoutes(file, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // DOWNLOAD CSV TEMPLATE - For import template
+    @GetMapping("/import-template")
+    @Operation(
+        summary = "Download CSV import template", 
+        description = "Download a CSV template file with sample data and correct format for route import.",
+        operationId = "downloadRouteImportTemplate"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
+    })
+    public ResponseEntity<String> downloadRouteImportTemplate() {
+        String csvTemplate = "name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction\n" +
+                           "Colombo - Kandy Express,Express route from Colombo to Kandy,Main Routes,Colombo Central Bus Station,Kandy Bus Terminal,115.5,180,OUTBOUND\n" +
+                           "Kandy - Colombo Express,Express route from Kandy to Colombo,Main Routes,Kandy Bus Terminal,Colombo Central Bus Station,115.5,180,INBOUND\n" +
+                           "Galle - Matara Local,Local route from Galle to Matara,Southern Routes,Galle Bus Station,Matara Bus Terminal,45.2,90,OUTBOUND\n";
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=\"route_import_template.csv\"")
+                .body(csvTemplate);
     }
 }

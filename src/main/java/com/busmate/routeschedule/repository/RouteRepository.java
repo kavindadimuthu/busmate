@@ -78,4 +78,41 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     List<Object[]> findDurationRange();
     
     List<Route> findByRouteGroup_Id(UUID routeGroupId);
+    
+    // Statistics methods
+    @Query("SELECT COUNT(r) FROM Route r WHERE r.direction = :direction")
+    Long countByDirection(@Param("direction") DirectionEnum direction);
+    
+    @Query("SELECT COUNT(r) FROM Route r WHERE r.routeStops IS NOT EMPTY")
+    Long countRoutesWithStops();
+    
+    @Query("SELECT COUNT(r) FROM Route r WHERE r.routeStops IS EMPTY")
+    Long countRoutesWithoutStops();
+    
+    @Query("SELECT rg.name, COUNT(r) FROM Route r JOIN r.routeGroup rg GROUP BY rg.name ORDER BY rg.name")
+    List<Object[]> countRoutesByRouteGroup();
+    
+    @Query("SELECT r.direction, COUNT(r) FROM Route r GROUP BY r.direction ORDER BY r.direction")
+    List<Object[]> countRoutesByDirection();
+    
+    @Query("SELECT AVG(r.distanceKm), SUM(r.distanceKm) FROM Route r WHERE r.distanceKm IS NOT NULL")
+    List<Object[]> getDistanceStatistics();
+    
+    @Query("SELECT AVG(r.estimatedDurationMinutes), SUM(r.estimatedDurationMinutes) FROM Route r WHERE r.estimatedDurationMinutes IS NOT NULL")
+    List<Object[]> getDurationStatistics();
+    
+    @Query("SELECT COUNT(DISTINCT r.routeGroup) FROM Route r")
+    Long countDistinctRouteGroups();
+    
+    @Query("SELECT r.name FROM Route r WHERE r.distanceKm = (SELECT MAX(r2.distanceKm) FROM Route r2)")
+    List<String> findLongestRouteNames();
+    
+    @Query("SELECT r.name FROM Route r WHERE r.distanceKm = (SELECT MIN(r2.distanceKm) FROM Route r2 WHERE r2.distanceKm IS NOT NULL)")
+    List<String> findShortestRouteNames();
+    
+    @Query("SELECT r.name FROM Route r WHERE r.estimatedDurationMinutes = (SELECT MAX(r2.estimatedDurationMinutes) FROM Route r2)")
+    List<String> findLongestDurationRouteNames();
+    
+    @Query("SELECT r.name FROM Route r WHERE r.estimatedDurationMinutes = (SELECT MIN(r2.estimatedDurationMinutes) FROM Route r2 WHERE r2.estimatedDurationMinutes IS NOT NULL)")
+    List<String> findShortestDurationRouteNames();
 }

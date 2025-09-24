@@ -29,5 +29,33 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
     
     @Query("SELECT DISTINCT s.isAccessible FROM Stop s WHERE s.isAccessible IS NOT NULL ORDER BY s.isAccessible DESC")
     List<Boolean> findDistinctAccessibilityStatuses();
+    
+    // Statistics methods
+    @Query("SELECT COUNT(s) FROM Stop s WHERE s.isAccessible = true")
+    Long countAccessibleStops();
+    
+    @Query("SELECT COUNT(s) FROM Stop s WHERE s.isAccessible = false")
+    Long countNonAccessibleStops();
+    
+    @Query("SELECT COUNT(s) FROM Stop s WHERE s.description IS NOT NULL AND s.description != ''")
+    Long countStopsWithDescription();
+    
+    @Query("SELECT COUNT(s) FROM Stop s WHERE s.description IS NULL OR s.description = ''")
+    Long countStopsWithoutDescription();
+    
+    @Query("SELECT s.location.state, COUNT(s) FROM Stop s WHERE s.location.state IS NOT NULL GROUP BY s.location.state ORDER BY s.location.state")
+    List<Object[]> countStopsByState();
+    
+    @Query("SELECT s.location.city, COUNT(s) FROM Stop s WHERE s.location.city IS NOT NULL GROUP BY s.location.city ORDER BY s.location.city")
+    List<Object[]> countStopsByCity();
+    
+    @Query("SELECT s.isAccessible, COUNT(s) FROM Stop s WHERE s.isAccessible IS NOT NULL GROUP BY s.isAccessible ORDER BY s.isAccessible DESC")
+    List<Object[]> countStopsByAccessibility();
+    
+    @Query("SELECT COUNT(DISTINCT s.location.state) FROM Stop s WHERE s.location.state IS NOT NULL")
+    Long countDistinctStates();
+    
+    @Query("SELECT COUNT(DISTINCT s.location.city) FROM Stop s WHERE s.location.city IS NOT NULL")
+    Long countDistinctCities();
 }
 

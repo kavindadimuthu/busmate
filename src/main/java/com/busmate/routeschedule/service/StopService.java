@@ -2,10 +2,13 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
+import com.busmate.routeschedule.dto.response.StopImportResponse;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,4 +28,10 @@ public interface StopService {
     // New methods for route and schedule stop details
     List<RouteStopDetailResponse> getStopsByRoute(UUID routeId);
     List<ScheduleStopDetailResponse> getStopsWithScheduleBySchedule(UUID scheduleId);
+    
+    // Statistics methods
+    StopStatisticsResponse getStatistics();
+    
+    // Import methods
+    StopImportResponse importStops(MultipartFile file, String userId);
 }

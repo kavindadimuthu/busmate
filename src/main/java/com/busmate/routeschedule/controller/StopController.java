@@ -4,6 +4,8 @@ import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
+import com.busmate.routeschedule.dto.response.StopImportResponse;
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,9 +19,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
@@ -244,5 +248,73 @@ public class StopController {
             @PathVariable UUID scheduleId) {
         List<ScheduleStopDetailResponse> responses = stopService.getStopsWithScheduleBySchedule(scheduleId);
         return ResponseEntity.ok(responses);
+    }
+
+    // ========== STATISTICS APIs ==========
+
+    // STOP STATISTICS - For KPI dashboard cards
+    @GetMapping("/statistics")
+    @Operation(
+        summary = "Get stop statistics", 
+        description = "Retrieve comprehensive stop statistics for dashboard KPI cards including counts, distributions, accessibility metrics, and geographical information.",
+        operationId = "getStopStatistics"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
+    })
+    public ResponseEntity<StopStatisticsResponse> getStopStatistics() {
+        StopStatisticsResponse response = stopService.getStatistics();
+        return ResponseEntity.ok(response);
+    }
+
+    // ========== IMPORT APIs ==========
+
+    // STOP IMPORT - For bulk stop import from file
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Import stops from CSV file", 
+        description = "Bulk import stops from a CSV file. Expected CSV format: name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible (header row required). " +
+                     "Latitude and longitude are required. isAccessible should be true or false. Requires authentication.",
+        operationId = "importStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<StopImportResponse> importStops(
+            @Parameter(description = "CSV file containing stop data")
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        String userId = authentication.getName();
+        StopImportResponse response = stopService.importStops(file, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // DOWNLOAD CSV TEMPLATE - For import template
+    @GetMapping("/import-template")
+    @Operation(
+        summary = "Download CSV import template", 
+        description = "Download a CSV template file with sample data and correct format for stop import.",
+        operationId = "downloadStopImportTemplate"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
+    })
+    public ResponseEntity<String> downloadStopImportTemplate() {
+        String csvTemplate = "name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
+                           "Colombo Central Bus Station,Main bus terminal in Colombo,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n" +
+                           "Kandy Bus Terminal,Main bus terminal in Kandy,7.2906,80.6337,Temple Street,Kandy,Central Province,20000,Sri Lanka,true\n" +
+                           "Galle Bus Station,Main bus station in Galle,6.0535,80.2210,Main Street,Galle,Southern Province,80000,Sri Lanka,false\n";
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=\"stop_import_template.csv\"")
+                .body(csvTemplate);
     }
 }
