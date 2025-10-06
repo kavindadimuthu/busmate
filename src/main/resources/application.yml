@@ -49,7 +49,7 @@ supabase:
 
 logging:
   level:
-    com.busmate.routeschedule: INFO
+    com.busmate.routeschedule: DEBUG
     org.springframework: WARN
     org.hibernate: WARN
 

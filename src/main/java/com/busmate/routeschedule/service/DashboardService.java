@@ -109,57 +109,154 @@ public class DashboardService {
             DashboardKPIResponse kpi = new DashboardKPIResponse();
             
             // Get statistics from services
+            log.debug("Fetching statistics from all services...");
             TripStatisticsResponse tripStats = tripService.getStatistics();
+            log.debug("Trip statistics fetched successfully");
+            
             BusStatisticsResponse busStats = busService.getStatistics();
+            log.debug("Bus statistics fetched successfully");
+            
             RouteStatisticsResponse routeStats = routeService.getStatistics();
+            log.debug("Route statistics fetched successfully");
+            
             OperatorStatisticsResponse operatorStats = operatorService.getStatistics();
+            log.debug("Operator statistics fetched successfully");
+            
             PassengerServicePermitStatisticsResponse permitStats = permitService.getStatistics();
+            log.debug("Permit statistics fetched successfully");
+            
             StopStatisticsResponse stopStats = stopService.getStatistics();
+            log.debug("Stop statistics fetched successfully");
             
             // Performance KPIs
-            kpi.setOnTimePerformance(calculateOnTimePerformance(tripStats));
-            kpi.setScheduleAdherence(calculateScheduleAdherence(tripStats));
-            kpi.setBusUtilizationRate(calculateBusUtilizationRate(busStats));
-            kpi.setRouteEfficiency(calculateRouteEfficiency(routeStats, tripStats));
-            kpi.setOperatorPerformance(calculateOperatorPerformance(operatorStats, tripStats));
+            log.debug("Calculating performance KPIs...");
+            try {
+                kpi.setOnTimePerformance(calculateOnTimePerformance(tripStats));
+                log.debug("On-time performance calculated: {}", kpi.getOnTimePerformance());
+            } catch (Exception e) {
+                log.error("Error calculating on-time performance: {}", e.getMessage(), e);
+                kpi.setOnTimePerformance(0.0);
+            }
+            
+            try {
+                kpi.setScheduleAdherence(calculateScheduleAdherence(tripStats));
+                log.debug("Schedule adherence calculated: {}", kpi.getScheduleAdherence());
+            } catch (Exception e) {
+                log.error("Error calculating schedule adherence: {}", e.getMessage(), e);
+                kpi.setScheduleAdherence(0.0);
+            }
+            
+            try {
+                kpi.setBusUtilizationRate(calculateBusUtilizationRate(busStats));
+                log.debug("Bus utilization rate calculated: {}", kpi.getBusUtilizationRate());
+            } catch (Exception e) {
+                log.error("Error calculating bus utilization rate: {}", e.getMessage(), e);
+                kpi.setBusUtilizationRate(0.0);
+            }
+            
+            try {
+                kpi.setRouteEfficiency(calculateRouteEfficiency(routeStats, tripStats));
+                log.debug("Route efficiency calculated: {}", kpi.getRouteEfficiency());
+            } catch (Exception e) {
+                log.error("Error calculating route efficiency: {}", e.getMessage(), e);
+                kpi.setRouteEfficiency(0.0);
+            }
+            
+            try {
+                kpi.setOperatorPerformance(calculateOperatorPerformance(operatorStats, tripStats));
+                log.debug("Operator performance calculated: {}", kpi.getOperatorPerformance());
+            } catch (Exception e) {
+                log.error("Error calculating operator performance: {}", e.getMessage(), e);
+                kpi.setOperatorPerformance(0.0);
+            }
             
             // Operational KPIs
-            kpi.setServiceReliability(calculateServiceReliability(tripStats));
-            kpi.setFleetAvailability(calculateFleetAvailability(busStats));
-            kpi.setRouteCoverage(calculateRouteCoverage(routeStats));
-            kpi.setPermitUtilization(calculatePermitUtilization(permitStats));
-            kpi.setStopConnectivity(calculateStopConnectivity(stopStats, routeStats));
+            log.debug("Calculating operational KPIs...");
+            try {
+                kpi.setServiceReliability(calculateServiceReliability(tripStats));
+                kpi.setFleetAvailability(calculateFleetAvailability(busStats));
+                kpi.setRouteCoverage(calculateRouteCoverage(routeStats));
+                kpi.setPermitUtilization(calculatePermitUtilization(permitStats));
+                kpi.setStopConnectivity(calculateStopConnectivity(stopStats, routeStats));
+            } catch (Exception e) {
+                log.error("Error calculating operational KPIs: {}", e.getMessage(), e);
+                kpi.setServiceReliability(0.0);
+                kpi.setFleetAvailability(0.0);
+                kpi.setRouteCoverage(0.0);
+                kpi.setPermitUtilization(0.0);
+                kpi.setStopConnectivity(0.0);
+            }
             
             // Growth & Capacity KPIs
-            kpi.setTotalSeatingCapacity(busStats.getTotalCapacity());
-            kpi.setCapacityUtilizationDaily(calculateCapacityUtilization(busStats, tripStats));
-            kpi.setCapacityUtilizationWeekly(calculateWeeklyCapacityUtilization(busStats, tripStats));
-            kpi.setRouteExpansionRate(calculateRouteExpansionRate(routeStats));
-            kpi.setFleetGrowthRate(calculateFleetGrowthRate(busStats));
+            log.debug("Calculating growth & capacity KPIs...");
+            try {
+                kpi.setTotalSeatingCapacity(busStats != null && busStats.getTotalCapacity() != null ? busStats.getTotalCapacity() : 0);
+                kpi.setCapacityUtilizationDaily(calculateCapacityUtilization(busStats, tripStats));
+                kpi.setCapacityUtilizationWeekly(calculateWeeklyCapacityUtilization(busStats, tripStats));
+                kpi.setRouteExpansionRate(calculateRouteExpansionRate(routeStats));
+                kpi.setFleetGrowthRate(calculateFleetGrowthRate(busStats));
+            } catch (Exception e) {
+                log.error("Error calculating growth & capacity KPIs: {}", e.getMessage(), e);
+                kpi.setTotalSeatingCapacity(0);
+                kpi.setCapacityUtilizationDaily(0.0);
+                kpi.setCapacityUtilizationWeekly(0.0);
+                kpi.setRouteExpansionRate(0.0);
+                kpi.setFleetGrowthRate(0.0);
+            }
             
             // Quality KPIs
-            kpi.setAccessibilityCompliance(calculateAccessibilityCompliance(stopStats));
-            kpi.setModernFleetRatio(calculateModernFleetRatio(busStats));
-            kpi.setServiceFrequency(calculateServiceFrequency(routeStats, tripStats));
-            kpi.setGeographicalCoverage(calculateGeographicalCoverage(stopStats));
+            log.debug("Calculating quality KPIs...");
+            try {
+                kpi.setAccessibilityCompliance(calculateAccessibilityCompliance(stopStats));
+                kpi.setModernFleetRatio(calculateModernFleetRatio(busStats));
+                kpi.setServiceFrequency(calculateServiceFrequency(routeStats, tripStats));
+                kpi.setGeographicalCoverage(calculateGeographicalCoverage(stopStats));
+            } catch (Exception e) {
+                log.error("Error calculating quality KPIs: {}", e.getMessage(), e);
+                kpi.setAccessibilityCompliance(0.0);
+                kpi.setModernFleetRatio(0.0);
+                kpi.setServiceFrequency(0.0);
+                kpi.setGeographicalCoverage(0.0);
+            }
             
             // Financial Efficiency (estimated)
-            kpi.setCostPerTrip(estimateCostPerTrip(busStats, tripStats));
-            kpi.setRevenuePerSeat(estimateRevenuePerSeat(busStats, tripStats));
-            kpi.setOperationalCostRatio(estimateOperationalCostRatio(busStats, tripStats));
+            log.debug("Calculating financial efficiency KPIs...");
+            try {
+                kpi.setCostPerTrip(estimateCostPerTrip(busStats, tripStats));
+                kpi.setRevenuePerSeat(estimateRevenuePerSeat(busStats, tripStats));
+                kpi.setOperationalCostRatio(estimateOperationalCostRatio(busStats, tripStats));
+            } catch (Exception e) {
+                log.error("Error calculating financial efficiency KPIs: {}", e.getMessage(), e);
+                kpi.setCostPerTrip(0.0);
+                kpi.setRevenuePerSeat(0.0);
+                kpi.setOperationalCostRatio(0.0);
+            }
             
             // Performance Trends (mock data for now - would need historical data)
-            kpi.setPerformanceTrends(generatePerformanceTrends());
-            kpi.setKpiStatus(generateKPIStatus());
+            log.debug("Generating performance trends...");
+            try {
+                kpi.setPerformanceTrends(generatePerformanceTrends());
+                kpi.setKpiStatus(generateKPIStatus());
+            } catch (Exception e) {
+                log.error("Error generating performance trends: {}", e.getMessage(), e);
+                kpi.setPerformanceTrends(new HashMap<>());
+                kpi.setKpiStatus(new HashMap<>());
+            }
             
             // Target vs Actual KPIs
-            kpi.setKpiMetrics(generateKPIMetrics(kpi));
+            log.debug("Generating KPI metrics...");
+            try {
+                kpi.setKpiMetrics(generateKPIMetrics(kpi));
+            } catch (Exception e) {
+                log.error("Error generating KPI metrics: {}", e.getMessage(), e);
+                kpi.setKpiMetrics(new HashMap<>());
+            }
             
             log.info("Dashboard KPIs generated successfully");
             return kpi;
             
         } catch (Exception e) {
-            log.error("Error generating dashboard KPIs", e);
+            log.error("Error generating dashboard KPIs: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate dashboard KPIs", e);
         }
     }
@@ -281,20 +378,28 @@ public class DashboardService {
     }
 
     private Double calculateOperationalEfficiency(TripStatisticsResponse tripStats) {
-        if (tripStats.getTotalTrips() == 0) return 0.0;
-        return (tripStats.getCompletedTrips().doubleValue() / tripStats.getTotalTrips().doubleValue()) * 100;
+        if (tripStats == null || tripStats.getTotalTrips() == null || tripStats.getTotalTrips() == 0) return 0.0;
+        Long completedTrips = tripStats.getCompletedTrips() != null ? tripStats.getCompletedTrips() : 0L;
+        return (completedTrips.doubleValue() / tripStats.getTotalTrips().doubleValue()) * 100;
     }
 
     private Double calculateOnTimePerformance(TripStatisticsResponse tripStats) {
-        if (tripStats.getTotalTrips() == 0) return 0.0;
-        long onTimeTrips = tripStats.getCompletedTrips() - tripStats.getDelayedTrips();
+        if (tripStats == null || tripStats.getTotalTrips() == null || tripStats.getTotalTrips() == 0) return 0.0;
+        
+        Long completedTrips = tripStats.getCompletedTrips() != null ? tripStats.getCompletedTrips() : 0L;
+        Long delayedTrips = tripStats.getDelayedTrips() != null ? tripStats.getDelayedTrips() : 0L;
+        long onTimeTrips = completedTrips - delayedTrips;
+        
         return (onTimeTrips / tripStats.getTotalTrips().doubleValue()) * 100;
     }
 
     private Double calculateCapacityUtilization(BusStatisticsResponse busStats, TripStatisticsResponse tripStats) {
-        if (busStats.getTotalCapacity() == 0) return 0.0;
+        if (busStats == null || busStats.getTotalCapacity() == null || busStats.getTotalCapacity() == 0) return 0.0;
+        if (tripStats == null || busStats.getActiveBuses() == null || busStats.getActiveBuses() == 0) return 0.0;
+        
+        Long activeTrips = tripStats.getActiveTrips() != null ? tripStats.getActiveTrips() : 0L;
         // Estimate utilization based on active trips and total capacity
-        double estimatedUtilization = (tripStats.getActiveTrips().doubleValue() / busStats.getActiveBuses().doubleValue()) * 100;
+        double estimatedUtilization = (activeTrips.doubleValue() / busStats.getActiveBuses().doubleValue()) * 100;
         return Math.min(estimatedUtilization, 100.0);
     }
 
@@ -305,7 +410,19 @@ public class DashboardService {
     }
 
     private Double calculateScheduleAdherence(TripStatisticsResponse tripStats) {
-        if (tripStats.getScheduledTrips() == 0) return 0.0;
+        if (tripStats == null || tripStats.getScheduledTrips() == null || tripStats.getScheduledTrips() == 0) {
+            // If no scheduled trips data, use total trips as approximation
+            if (tripStats != null && tripStats.getTotalTrips() != null && tripStats.getTotalTrips() > 0 
+                && tripStats.getCompletedTrips() != null) {
+                return (tripStats.getCompletedTrips().doubleValue() / tripStats.getTotalTrips().doubleValue()) * 100;
+            }
+            return 0.0;
+        }
+        
+        if (tripStats.getCompletedTrips() == null) {
+            return 0.0;
+        }
+        
         return (tripStats.getCompletedTrips().doubleValue() / tripStats.getScheduledTrips().doubleValue()) * 100;
     }
 
@@ -314,13 +431,18 @@ public class DashboardService {
     }
 
     private Double calculateRouteEfficiency(RouteStatisticsResponse routeStats, TripStatisticsResponse tripStats) {
-        if (routeStats.getTotalRoutes() == 0) return 0.0;
+        if (routeStats == null || routeStats.getTotalRoutes() == null || routeStats.getTotalRoutes() == 0) return 0.0;
+        if (tripStats == null || tripStats.getTotalTrips() == null) return 0.0;
+        
         return tripStats.getTotalTrips().doubleValue() / routeStats.getTotalRoutes().doubleValue();
     }
 
     private Double calculateOperatorPerformance(OperatorStatisticsResponse operatorStats, TripStatisticsResponse tripStats) {
+        if (operatorStats == null || operatorStats.getTotalOperators() == null || operatorStats.getTotalOperators() == 0) return 0.0;
+        
+        Long activeOperators = operatorStats.getActiveOperators() != null ? operatorStats.getActiveOperators() : 0L;
         // Calculate average performance across all operators
-        return (operatorStats.getActiveOperators().doubleValue() / operatorStats.getTotalOperators().doubleValue()) * 100;
+        return (activeOperators.doubleValue() / operatorStats.getTotalOperators().doubleValue()) * 100;
     }
 
     private Double calculateServiceReliability(TripStatisticsResponse tripStats) {
@@ -337,8 +459,10 @@ public class DashboardService {
     }
 
     private Double calculatePermitUtilization(PassengerServicePermitStatisticsResponse permitStats) {
-        if (permitStats.getTotalPermits() == 0) return 0.0;
-        return (permitStats.getActivePermits().doubleValue() / permitStats.getTotalPermits().doubleValue()) * 100;
+        if (permitStats == null || permitStats.getTotalPermits() == null || permitStats.getTotalPermits() == 0) return 0.0;
+        
+        Long activePermits = permitStats.getActivePermits() != null ? permitStats.getActivePermits() : 0L;
+        return (activePermits.doubleValue() / permitStats.getTotalPermits().doubleValue()) * 100;
     }
 
     private Double calculateStopConnectivity(StopStatisticsResponse stopStats, RouteStatisticsResponse routeStats) {
@@ -370,28 +494,41 @@ public class DashboardService {
     }
 
     private Double calculateServiceFrequency(RouteStatisticsResponse routeStats, TripStatisticsResponse tripStats) {
-        if (routeStats.getTotalRoutes() == 0) return 0.0;
+        if (routeStats == null || routeStats.getTotalRoutes() == null || routeStats.getTotalRoutes() == 0) return 0.0;
+        if (tripStats == null || tripStats.getTodayTrips() == null) return 0.0;
+        
         return tripStats.getTodayTrips().doubleValue() / routeStats.getTotalRoutes().doubleValue();
     }
 
     private Double calculateGeographicalCoverage(StopStatisticsResponse stopStats) {
+        if (stopStats == null) return 0.0;
+        
+        Long totalStates = stopStats.getTotalStates() != null ? stopStats.getTotalStates() : 0L;
+        Long totalCities = stopStats.getTotalCities() != null ? stopStats.getTotalCities() : 0L;
+        
         // Based on number of states and cities served
-        return stopStats.getTotalStates() * 10.0 + stopStats.getTotalCities() * 2.0;
+        return totalStates * 10.0 + totalCities * 2.0;
     }
 
     private Double estimateCostPerTrip(BusStatisticsResponse busStats, TripStatisticsResponse tripStats) {
         // Mock estimation based on fleet size and trips
-        if (tripStats.getTotalTrips() == 0) return 0.0;
+        if (tripStats == null || tripStats.getTotalTrips() == null || tripStats.getTotalTrips() == 0) return 0.0;
+        if (busStats == null || busStats.getTotalBuses() == null) return 0.0;
+        
         return (busStats.getTotalBuses() * 100.0) / tripStats.getTotalTrips(); // Simplified cost model
     }
 
     private Double estimateRevenuePerSeat(BusStatisticsResponse busStats, TripStatisticsResponse tripStats) {
-        if (busStats.getTotalCapacity() == 0) return 0.0;
+        if (busStats == null || busStats.getTotalCapacity() == null || busStats.getTotalCapacity() == 0) return 0.0;
+        if (tripStats == null || tripStats.getTotalTrips() == null) return 0.0;
+        
         return (tripStats.getTotalTrips() * 50.0) / busStats.getTotalCapacity(); // Mock revenue calculation
     }
 
     private Double estimateOperationalCostRatio(BusStatisticsResponse busStats, TripStatisticsResponse tripStats) {
-        return calculateOperationalEfficiency(tripStats) / 100.0 * 0.8; // Simplified ratio
+        Double efficiency = calculateOperationalEfficiency(tripStats);
+        if (efficiency == null) return 0.0;
+        return efficiency / 100.0 * 0.8; // Simplified ratio
     }
 
     // Mock data generators for complex analytics (would be replaced with real calculations)
