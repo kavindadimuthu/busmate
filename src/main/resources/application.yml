@@ -53,6 +53,21 @@ logging:
     org.springframework: WARN
     org.hibernate: WARN
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+
 springdoc:
   swagger-ui:
     tags-sorter: alpha
