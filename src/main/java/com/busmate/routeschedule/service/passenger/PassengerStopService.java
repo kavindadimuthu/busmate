@@ -52,10 +52,10 @@ public interface PassengerStopService {
     
     /**
      * Get all routes passing through a specific stop
+     * Note: operatorType filtering removed - routes are not directly linked to operators
      */
     List<PassengerRouteResponse> getRoutesForStop(
             UUID stopId,
-            String operatorType,
             UUID operatorId,
             String direction,
             String destination,

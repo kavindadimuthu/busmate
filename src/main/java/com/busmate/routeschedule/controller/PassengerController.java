@@ -74,8 +74,8 @@ public class PassengerController {
             @Parameter(description = "Route direction", example = "OUTBOUND")
             @RequestParam(required = false) DirectionEnum direction,
             
-            @Parameter(description = "Operator type filter", example = "SLTB")
-            @RequestParam(required = false) OperatorTypeEnum operatorType,
+            // Note: operatorType filtering removed - routes are not directly linked to operators
+            // Use trip search APIs for operator-specific filtering
             
             @Parameter(description = "Maximum distance in kilometers", example = "100.5")
             @RequestParam(required = false) @DecimalMin("0.1") @DecimalMax("1000.0") Double maxDistance,
@@ -102,7 +102,7 @@ public class PassengerController {
         
         PassengerPaginatedResponse<PassengerRouteResponse> routes = passengerRouteService.searchRoutes(
                 fromCity, toCity, fromStopId, toStopId, null, null, null, null, null,
-                operatorType, null, direction, travelDate, departureTime, null, 
+                null, direction, travelDate, departureTime, null, 
                 null, null, maxDistance, pageable);
         
         return ResponseEntity.ok(routes);
@@ -115,8 +115,8 @@ public class PassengerController {
         @ApiResponse(responseCode = "200", description = "Routes retrieved successfully")
     })
     public ResponseEntity<PassengerPaginatedResponse<PassengerRouteResponse>> getAllRoutes(
-            @Parameter(description = "Filter by operator type", example = "SLTB")
-            @RequestParam(required = false) OperatorTypeEnum operatorType,
+            // Note: operatorType filtering removed - routes are not directly linked to operators
+            // Use trip search APIs for operator-specific filtering
             
             @Parameter(description = "Filter by direction", example = "OUTBOUND")
             @RequestParam(required = false) DirectionEnum direction,
@@ -130,13 +130,13 @@ public class PassengerController {
             @Parameter(description = "Page size", example = "20")
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size) {
         
-        log.info("Getting all routes with filters: operatorType={}, direction={}, searchText={}", 
-                operatorType, direction, searchText);
+        log.info("Getting all routes with filters: direction={}, searchText={}", 
+                direction, searchText);
         
         Pageable pageable = PageRequest.of(page, size);
         
         PassengerPaginatedResponse<PassengerRouteResponse> routes = passengerRouteService.getAllRoutes(
-                null, null, operatorType, null, direction, true, null, null, searchText, pageable);
+                null, null, null, direction, true, null, null, searchText, pageable);
         
         return ResponseEntity.ok(routes);
     }
@@ -282,8 +282,8 @@ public class PassengerController {
             @Parameter(description = "Stop ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID stopId,
             
-            @Parameter(description = "Filter by operator type", example = "SLTB")
-            @RequestParam(required = false) OperatorTypeEnum operatorType,
+            // Note: operatorType filtering removed - routes are not directly linked to operators
+            // Use trip search APIs for operator-specific filtering
             
             @Parameter(description = "Filter by direction", example = "OUTBOUND")
             @RequestParam(required = false) DirectionEnum direction,
@@ -291,11 +291,11 @@ public class PassengerController {
             @Parameter(description = "Date for schedule filtering")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
-        log.info("Getting routes for stopId={}, operatorType={}, direction={}, date={}", 
-                stopId, operatorType, direction, date);
+        log.info("Getting routes for stopId={}, direction={}, date={}", 
+                stopId, direction, date);
         
         List<PassengerRouteResponse> routes = passengerStopService.getRoutesForStop(
-                stopId, operatorType != null ? operatorType.toString() : null, null, 
+                stopId, null, 
                 direction != null ? direction.toString() : null, null, true, true, "name");
         
         return ResponseEntity.ok(routes);
@@ -331,6 +331,7 @@ public class PassengerController {
             @Parameter(description = "Departure time (latest)", example = "18:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime departureTimeTo,
             
+            // Note: operatorType filtering works for trips because trips are linked to operators via PSP
             @Parameter(description = "Operator type filter", example = "SLTB")
             @RequestParam(required = false) OperatorTypeEnum operatorType,
             
@@ -412,6 +413,7 @@ public class PassengerController {
             @Parameter(description = "Filter by route ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @RequestParam(required = false) UUID routeId,
             
+            // Note: operatorType filtering works for trips because trips are linked to operators via PSP
             @Parameter(description = "Filter by operator type", example = "SLTB")
             @RequestParam(required = false) OperatorTypeEnum operatorType,
             

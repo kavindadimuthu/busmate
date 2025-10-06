@@ -116,14 +116,15 @@ public class PassengerStopServiceImpl implements PassengerStopService {
 
     @Override
     public List<PassengerRouteResponse> getRoutesForStop(
-            UUID stopId, String operatorType, UUID operatorId,
+            UUID stopId, UUID operatorId,
             String direction, String destination, Boolean activeOnly,
             Boolean includeSchedule, String sort) {
 
-        log.debug("Getting routes for stop ID: {}", stopId);
+        log.debug("Getting routes for stop ID: {} (operatorType filtering removed)", stopId);
 
         // For now, return sample data
         // In a real implementation, you would query RouteStop repository
+        // Note: operatorType filtering removed - routes are not directly linked to operators
         List<PassengerRouteResponse> routes = new ArrayList<>();
         
         // Add sample route

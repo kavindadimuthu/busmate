@@ -8,7 +8,6 @@ import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.Schedule;
 import com.busmate.routeschedule.enums.DirectionEnum;
-import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.RouteRepository;
 import com.busmate.routeschedule.repository.RouteStopRepository;
@@ -44,7 +43,7 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
     public PassengerPaginatedResponse<PassengerRouteResponse> searchRoutes(
             String fromCity, String toCity, UUID fromStopId, UUID toStopId,
             Double fromLat, Double fromLng, Double toLat, Double toLng, Double radius,
-            OperatorTypeEnum operatorType, UUID operatorId, DirectionEnum direction,
+            UUID operatorId, DirectionEnum direction,
             LocalDate departureDate, LocalTime earliestTime, LocalTime latestTime,
             Boolean isAccessible, Integer maxDuration, Double maxDistance,
             Pageable pageable) {
@@ -57,7 +56,7 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
         List<Route> allRoutes = routeRepository.findAll();
         List<Route> filteredRoutes = allRoutes.stream()
                 .filter(route -> filterRoute(route, fromCity, toCity, fromStopId, toStopId, 
-                        direction, operatorType, operatorId, maxDistance))
+                        direction, operatorId, maxDistance))
                 .collect(Collectors.toList());
 
         // Apply pagination manually for this example
@@ -87,16 +86,16 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
 
     @Override
     public PassengerPaginatedResponse<PassengerRouteResponse> getAllRoutes(
-            String city, String region, OperatorTypeEnum operatorType,
+            String city, String region,
             UUID operatorId, DirectionEnum direction, Boolean isActive,
             Double maxDistance, Double minDistance, String search,
             Pageable pageable) {
 
-        log.debug("Getting all routes with filters: city={}, operatorType={}", city, operatorType);
+        log.debug("Getting all routes with filters: city={}, direction={}", city, direction);
 
         List<Route> allRoutes = routeRepository.findAll();
         List<Route> filteredRoutes = allRoutes.stream()
-                .filter(route -> filterRouteGeneral(route, city, region, operatorType, 
+                .filter(route -> filterRouteGeneral(route, city, region, 
                         operatorId, direction, isActive, maxDistance, minDistance, search))
                 .collect(Collectors.toList());
 
@@ -141,7 +140,7 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
 
     private boolean filterRoute(Route route, String fromCity, String toCity, 
             UUID fromStopId, UUID toStopId, DirectionEnum direction,
-            OperatorTypeEnum operatorType, UUID operatorId, Double maxDistance) {
+            UUID operatorId, Double maxDistance) {
 
         // Direction filter
         if (direction != null && !direction.equals(route.getDirection())) {
@@ -154,6 +153,9 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
             return false;
         }
 
+        // Note: operatorType filtering removed - routes are not directly linked to operators
+        // Operator filtering would require complex joins through trip->psp->operator
+
         // For stop and city filtering, we'd need to check route stops
         // This is a simplified implementation
         if (fromStopId != null || toStopId != null || fromCity != null || toCity != null) {
@@ -165,7 +167,7 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
     }
 
     private boolean filterRouteGeneral(Route route, String city, String region,
-            OperatorTypeEnum operatorType, UUID operatorId, DirectionEnum direction,
+            UUID operatorId, DirectionEnum direction,
             Boolean isActive, Double maxDistance, Double minDistance, String search) {
 
         // Direction filter
@@ -182,6 +184,9 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
             route.getDistanceKm() < minDistance) {
             return false;
         }
+
+        // Note: operatorType filtering removed - routes are not directly linked to operators
+        // Operator filtering would require complex joins through trip->psp->operator
 
         // Search filter
         if (search != null && !search.trim().isEmpty()) {

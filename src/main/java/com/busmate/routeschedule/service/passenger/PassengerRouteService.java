@@ -3,7 +3,6 @@ package com.busmate.routeschedule.service.passenger;
 import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
 import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
-import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -13,6 +12,7 @@ public interface PassengerRouteService {
     
     /**
      * Search routes between locations with comprehensive filtering
+     * Note: operatorType filtering removed - routes are not directly linked to operators
      */
     PassengerPaginatedResponse<PassengerRouteResponse> searchRoutes(
             // Location-based search
@@ -28,8 +28,7 @@ public interface PassengerRouteService {
             Double toLng,
             Double radius,
             
-            // Service filters
-            OperatorTypeEnum operatorType,
+            // Service filters - operatorType removed
             UUID operatorId,
             DirectionEnum direction,
             
@@ -49,11 +48,11 @@ public interface PassengerRouteService {
     
     /**
      * Get all available routes with filtering
+     * Note: operatorType filtering removed - routes are not directly linked to operators
      */
     PassengerPaginatedResponse<PassengerRouteResponse> getAllRoutes(
             String city,
             String region,
-            OperatorTypeEnum operatorType,
             UUID operatorId,
             DirectionEnum direction,
             Boolean isActive,
