@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/health")
 @RequiredArgsConstructor
-@Tag(name = "10. Health Check", description = "APIs for service health monitoring and status checks")
+@Tag(name = "11. Health Check", description = "APIs for service health monitoring and status checks")
 public class HealthController implements HealthIndicator {
 
     private final DataSource dataSource;

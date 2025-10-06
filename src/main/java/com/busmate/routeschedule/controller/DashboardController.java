@@ -23,7 +23,7 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "9. Admin Dashboard", description = "APIs for administrative dashboard overviews, statistics, KPIs and alerts")
+@Tag(name = "10. Admin Dashboard", description = "APIs for administrative dashboard overviews, statistics, KPIs and alerts")
 public class DashboardController {
     
     private final DashboardService dashboardService;
