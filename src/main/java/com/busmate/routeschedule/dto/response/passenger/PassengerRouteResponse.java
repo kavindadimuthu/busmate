@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import com.busmate.routeschedule.dto.common.LocationDto;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -21,6 +22,10 @@ public class PassengerRouteResponse {
     private PassengerOperatorSummary operator;
     private PassengerStopSummary fromStop;
     private PassengerStopSummary toStop;
+    
+    // Additional fields for route details
+    private List<PassengerStopSummary> stops;
+    private List<PassengerScheduleSummary> schedules;
     
     private PassengerServiceFrequency serviceFrequency;
     private PassengerFareInfo fareInfo;
@@ -49,6 +54,18 @@ public class PassengerRouteResponse {
         private String name;
         private String city;
         private LocationDto location;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PassengerScheduleSummary {
+        private UUID id;
+        private String name;
+        private String description;
+        private String type;
+        private String status;
     }
     
     @Data

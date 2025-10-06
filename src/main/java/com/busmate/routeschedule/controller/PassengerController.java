@@ -319,8 +319,11 @@ public class PassengerController {
             @Parameter(description = "Destination stop ID", example = "123e4567-e89b-12d3-a456-426614174001")
             @RequestParam(required = false) UUID toStopId,
             
-            @Parameter(description = "Travel date", required = true)
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate travelDate,
+            @Parameter(description = "Route ID filter", example = "123e4567-e89b-12d3-a456-426614174000")
+            @RequestParam(required = false) UUID routeId,
+            
+            @Parameter(description = "Travel date (optional for status-only searches)", example = "2025-10-07")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate travelDate,
             
             @Parameter(description = "Departure time (earliest)", example = "08:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime departureTimeFrom,
@@ -343,13 +346,13 @@ public class PassengerController {
             @Parameter(description = "Page size", example = "20")
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size) {
         
-        log.info("Searching trips: fromStopId={}, toStopId={}, travelDate={}, departureTimeFrom={}, departureTimeTo={}", 
-                fromStopId, toStopId, travelDate, departureTimeFrom, departureTimeTo);
+        log.info("Searching trips: fromStopId={}, toStopId={}, routeId={}, travelDate={}, status={}", 
+                fromStopId, toStopId, routeId, travelDate, status);
         
         Pageable pageable = PageRequest.of(page, size);
         
         PassengerPaginatedResponse<PassengerTripResponse> trips = passengerTripService.searchTrips(
-                fromStopId, toStopId, null, null, null, travelDate, departureTimeFrom, departureTimeTo,
+                fromStopId, toStopId, null, null, routeId, travelDate, departureTimeFrom, departureTimeTo,
                 operatorType, null, status, null, null, null, pageable);
         
         return ResponseEntity.ok(trips);

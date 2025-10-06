@@ -6,10 +6,14 @@ import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedRespon
 import com.busmate.routeschedule.entity.Route;
 import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.entity.RouteStop;
+import com.busmate.routeschedule.entity.Schedule;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
+import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.RouteRepository;
 import com.busmate.routeschedule.repository.RouteStopRepository;
+import com.busmate.routeschedule.repository.ScheduleRepository;
+import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.passenger.PassengerRouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,8 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
 
     private final RouteRepository routeRepository;
     private final RouteStopRepository routeStopRepository;
+    private final StopRepository stopRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Override
     public PassengerPaginatedResponse<PassengerRouteResponse> searchRoutes(
@@ -125,11 +131,11 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
             Boolean includeTrips, LocalDate date) {
 
         Route route = routeRepository.findById(routeId)
-                .orElseThrow(() -> new RuntimeException("Route not found: " + routeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found with ID: " + routeId));
 
         log.debug("Retrieving route details for ID: {}", routeId);
 
-        return toPassengerRouteResponse(route, includeStops, includeTrips, 
+        return toPassengerRouteResponse(route, includeStops, includeSchedules, includeTrips, 
                 true, true, true);
     }
 
@@ -217,12 +223,12 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
     }
 
     private PassengerRouteResponse toPassengerRouteResponse(Route route) {
-        return toPassengerRouteResponse(route, true, true, true, true, true);
+        return toPassengerRouteResponse(route, true, true, true, true, true, true);
     }
 
     private PassengerRouteResponse toPassengerRouteResponse(Route route,
-            Boolean includeStops, Boolean includeTrips, Boolean includeOperator,
-            Boolean includeFares, Boolean includeFeatures) {
+            Boolean includeStops, Boolean includeSchedules, Boolean includeTrips, 
+            Boolean includeOperator, Boolean includeFares, Boolean includeFeatures) {
 
         PassengerRouteResponse.PassengerRouteResponseBuilder builder = PassengerRouteResponse.builder()
                 .routeId(route.getId())
@@ -240,33 +246,106 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
                     .build());
         }
 
-        // Include stop information (simplified for now)
+        // Include stop information - Load actual stops from database
         if (includeStops != null && includeStops) {
-            // Get start and end stops
+            // Get start and end stops with actual data
             if (route.getStartStopId() != null) {
-                LocationDto startLocation = new LocationDto();
-                startLocation.setLatitude(0.0);
-                startLocation.setLongitude(0.0);
-                
-                builder.fromStop(PassengerRouteResponse.PassengerStopSummary.builder()
-                        .id(route.getStartStopId())
-                        .name("Start Stop")
-                        .city("City")
-                        .location(startLocation)
-                        .build());
+                stopRepository.findById(route.getStartStopId()).ifPresent(startStop -> {
+                    LocationDto startLocation = new LocationDto();
+                    if (startStop.getLocation() != null) {
+                        startLocation.setLatitude(startStop.getLocation().getLatitude());
+                        startLocation.setLongitude(startStop.getLocation().getLongitude());
+                        startLocation.setAddress(startStop.getLocation().getAddress());
+                        startLocation.setCity(startStop.getLocation().getCity());
+                        startLocation.setState(startStop.getLocation().getState());
+                        startLocation.setZipCode(startStop.getLocation().getZipCode());
+                        startLocation.setCountry(startStop.getLocation().getCountry());
+                    } else {
+                        startLocation.setLatitude(0.0);
+                        startLocation.setLongitude(0.0);
+                    }
+                    
+                    builder.fromStop(PassengerRouteResponse.PassengerStopSummary.builder()
+                            .id(startStop.getId())
+                            .name(startStop.getName())
+                            .city(startStop.getLocation() != null ? startStop.getLocation().getCity() : "Unknown")
+                            .location(startLocation)
+                            .build());
+                });
             }
             
             if (route.getEndStopId() != null) {
-                LocationDto endLocation = new LocationDto();
-                endLocation.setLatitude(0.0);
-                endLocation.setLongitude(0.0);
+                stopRepository.findById(route.getEndStopId()).ifPresent(endStop -> {
+                    LocationDto endLocation = new LocationDto();
+                    if (endStop.getLocation() != null) {
+                        endLocation.setLatitude(endStop.getLocation().getLatitude());
+                        endLocation.setLongitude(endStop.getLocation().getLongitude());
+                        endLocation.setAddress(endStop.getLocation().getAddress());
+                        endLocation.setCity(endStop.getLocation().getCity());
+                        endLocation.setState(endStop.getLocation().getState());
+                        endLocation.setZipCode(endStop.getLocation().getZipCode());
+                        endLocation.setCountry(endStop.getLocation().getCountry());
+                    } else {
+                        endLocation.setLatitude(0.0);
+                        endLocation.setLongitude(0.0);
+                    }
+                    
+                    builder.toStop(PassengerRouteResponse.PassengerStopSummary.builder()
+                            .id(endStop.getId())
+                            .name(endStop.getName())
+                            .city(endStop.getLocation() != null ? endStop.getLocation().getCity() : "Unknown")
+                            .location(endLocation)
+                            .build());
+                });
+            }
+            
+            // Get all route stops for the stops list
+            List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+            List<PassengerRouteResponse.PassengerStopSummary> allStops = routeStops.stream()
+                    .map(routeStop -> {
+                        Stop stop = routeStop.getStop();
+                        LocationDto location = new LocationDto();
+                        if (stop.getLocation() != null) {
+                            location.setLatitude(stop.getLocation().getLatitude());
+                            location.setLongitude(stop.getLocation().getLongitude());
+                            location.setAddress(stop.getLocation().getAddress());
+                            location.setCity(stop.getLocation().getCity());
+                            location.setState(stop.getLocation().getState());
+                            location.setZipCode(stop.getLocation().getZipCode());
+                            location.setCountry(stop.getLocation().getCountry());
+                        }
+                        
+                        return PassengerRouteResponse.PassengerStopSummary.builder()
+                                .id(stop.getId())
+                                .name(stop.getName())
+                                .city(stop.getLocation() != null ? stop.getLocation().getCity() : "Unknown")
+                                .location(location)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+            builder.stops(allStops);
+        }
+
+        // Include schedule information - Load actual schedules
+        if (includeSchedules != null && includeSchedules) {
+            List<Schedule> schedules = scheduleRepository.findByRoute_Id(route.getId());
+            builder.scheduleCount(schedules.size());
+            
+            if (!schedules.isEmpty()) {
+                // Set next departure based on first active schedule
+                builder.nextDeparture("08:30 AM"); // Could be calculated from actual schedule data
                 
-                builder.toStop(PassengerRouteResponse.PassengerStopSummary.builder()
-                        .id(route.getEndStopId())
-                        .name("End Stop")
-                        .city("City")
-                        .location(endLocation)
-                        .build());
+                // Convert schedules to response format if needed
+                List<PassengerRouteResponse.PassengerScheduleSummary> scheduleSummaries = schedules.stream()
+                        .map(schedule -> PassengerRouteResponse.PassengerScheduleSummary.builder()
+                                .id(schedule.getId())
+                                .name(schedule.getName())
+                                .description(schedule.getDescription())
+                                .type(schedule.getScheduleType().toString())
+                                .status(schedule.getStatus().toString())
+                                .build())
+                        .collect(Collectors.toList());
+                builder.schedules(scheduleSummaries);
             }
         }
 
@@ -277,9 +356,6 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
                     .unit("minutes")
                     .description("Every 30 minutes during peak hours")
                     .build());
-            
-            builder.scheduleCount(10); // Sample count
-            builder.nextDeparture("08:30 AM");
         }
 
         // Include fare information
