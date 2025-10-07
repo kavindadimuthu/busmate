@@ -1,20 +1,40 @@
 spring:
   datasource:
     # Change from direct connection to transaction pooler
+
+    # DB 1 - for production (dasunperera002@gmail.com)
     url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
     username: postgres.bixiyzllxffxqwutthmk
     password: root
+
+    # DB 2 - for testing (kavindadimuthupc@gmail.com)
+    # url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+    # username: postgres.viplrebpmygqlvruxucp
+    # password: LbGZQCRaSBblXaS7
+
+    # DB 3 - Local (for local testing)
+    # url: jdbc:postgresql://localhost:5432/sample?assumeMinServerVersion=9.4
+    # username: kavinda
+    # password: root
+
     driver-class-name: org.postgresql.Driver
+    # platform: postgresql
   jpa:
     hibernate:
+      # ddl-auto: create
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+    defer-datasource-initialization: true  # Add this line
+  sql:
+    init:
+      # mode: always  # Temporarily disable to avoid duplicate data issues
+      mode: never 
   profiles:
-    active: production  # Enable production profile for Swagger UI testing
+    active: dev  # Enable production profile for Swagger UI testing
 
 server:
   port: 8080
@@ -29,9 +49,24 @@ supabase:
 
 logging:
   level:
-    com.busmate.routeschedule: INFO
+    com.busmate.routeschedule: DEBUG
     org.springframework: WARN
     org.hibernate: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
 
 springdoc:
   swagger-ui:

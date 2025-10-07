@@ -1,23 +1,36 @@
 package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.response.RouteResponse;
+import com.busmate.routeschedule.dto.response.RouteStatisticsResponse;
+import com.busmate.routeschedule.dto.response.RouteImportResponse;
 import com.busmate.routeschedule.entity.Route;
 import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.entity.RouteGroup;
+import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.RouteRepository;
+import com.busmate.routeschedule.repository.RouteGroupRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.RouteService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RouteServiceImpl implements RouteService {
     private final RouteRepository routeRepository;
+    private final RouteGroupRepository routeGroupRepository;
     private final StopRepository stopRepository;
     private final MapperUtils mapperUtils;
 
@@ -35,10 +48,108 @@ public class RouteServiceImpl implements RouteService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Page<RouteResponse> getAllRoutes(Pageable pageable) {
+        Page<Route> routes = routeRepository.findAll(pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteResponse> getAllRoutesWithSearch(String searchText, Pageable pageable) {
+        Page<Route> routes = routeRepository.findAllWithSearch(searchText, pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteResponse> getAllRoutesWithFilters(
+            UUID routeGroupId,
+            DirectionEnum direction,
+            Double minDistance,
+            Double maxDistance,
+            Integer minDuration,
+            Integer maxDuration,
+            Pageable pageable) {
+        Page<Route> routes = routeRepository.findAllWithFilters(
+                routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteResponse> getAllRoutesWithSearchAndFilters(
+            String searchText,
+            UUID routeGroupId,
+            DirectionEnum direction,
+            Double minDistance,
+            Double maxDistance,
+            Integer minDuration,
+            Integer maxDuration,
+            Pageable pageable) {
+        Page<Route> routes = routeRepository.findAllWithSearchAndFilters(
+                searchText, routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+        return routes.map(this::mapToResponse);
+    }
+
+    @Override
+    public List<DirectionEnum> getDistinctDirections() {
+        return routeRepository.findDistinctDirections();
+    }
+
+    @Override
+    public List<Map<String, Object>> getDistinctRouteGroups() {
+        List<Object[]> results = routeRepository.findDistinctRouteGroups();
+        return results.stream().map(result -> {
+            Map<String, Object> routeGroup = new HashMap<>();
+            routeGroup.put("id", result[0]);
+            routeGroup.put("name", result[1]);
+            return routeGroup;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> getDistanceRange() {
+        List<Object[]> results = routeRepository.findDistanceRange();
+        Map<String, Object> range = new HashMap<>();
+        if (!results.isEmpty() && results.get(0) != null) {
+            Object[] result = results.get(0);
+            range.put("min", result[0]);
+            range.put("max", result[1]);
+        } else {
+            range.put("min", 0.0);
+            range.put("max", 0.0);
+        }
+        return range;
+    }
+
+    @Override
+    public Map<String, Object> getDurationRange() {
+        List<Object[]> results = routeRepository.findDurationRange();
+        Map<String, Object> range = new HashMap<>();
+        if (!results.isEmpty() && results.get(0) != null) {
+            Object[] result = results.get(0);
+            range.put("min", result[0]);
+            range.put("max", result[1]);
+        } else {
+            range.put("min", 0);
+            range.put("max", 0);
+        }
+        return range;
+    }
+
+    @Override
+    public List<RouteResponse> getRoutesByRouteGroupId(UUID routeGroupId) {
+        List<Route> routes = routeRepository.findByRouteGroup_Id(routeGroupId);
+        return routes.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private RouteResponse mapToResponse(Route route) {
         RouteResponse response = mapperUtils.map(route, RouteResponse.class);
-        response.setRouteGroupId(route.getRouteGroup().getId());
-        response.setRouteGroupName(route.getRouteGroup().getName());
+        
+        if (route.getRouteGroup() != null) {
+            response.setRouteGroupId(route.getRouteGroup().getId());
+            response.setRouteGroupName(route.getRouteGroup().getName());
+        }
 
         Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
         if (startStop != null) {
@@ -65,6 +176,212 @@ public class RouteServiceImpl implements RouteService {
             response.setRouteStops(routeStopResponses);
         }
 
+        return response;
+    }
+
+    @Override
+    public RouteStatisticsResponse getStatistics() {
+        RouteStatisticsResponse stats = new RouteStatisticsResponse();
+        
+        // Basic counts
+        stats.setTotalRoutes(routeRepository.count());
+        stats.setOutboundRoutes(routeRepository.countByDirection(DirectionEnum.OUTBOUND));
+        stats.setInboundRoutes(routeRepository.countByDirection(DirectionEnum.INBOUND));
+        stats.setRoutesWithStops(routeRepository.countRoutesWithStops());
+        stats.setRoutesWithoutStops(routeRepository.countRoutesWithoutStops());
+        stats.setTotalRouteGroups(routeRepository.countDistinctRouteGroups());
+        
+        // Routes by route group
+        Map<String, Long> routesByGroup = new LinkedHashMap<>();
+        routeRepository.countRoutesByRouteGroup().forEach(obj -> 
+            routesByGroup.put((String) obj[0], (Long) obj[1]));
+        stats.setRoutesByRouteGroup(routesByGroup);
+        
+        // Routes by direction
+        Map<String, Long> routesByDirection = new LinkedHashMap<>();
+        routeRepository.countRoutesByDirection().forEach(obj -> 
+            routesByDirection.put(obj[0] != null ? obj[0].toString() : "UNKNOWN", (Long) obj[1]));
+        stats.setRoutesByDirection(routesByDirection);
+        
+        // Distance statistics
+        List<Object[]> distanceStats = routeRepository.getDistanceStatistics();
+        if (!distanceStats.isEmpty() && distanceStats.get(0)[0] != null) {
+            stats.setAverageDistanceKm(((Number) distanceStats.get(0)[0]).doubleValue());
+            stats.setTotalDistanceKm(((Number) distanceStats.get(0)[1]).doubleValue());
+        }
+        
+        List<Object[]> distanceRange = routeRepository.findDistanceRange();
+        if (!distanceRange.isEmpty() && distanceRange.get(0)[0] != null) {
+            stats.setMinDistanceKm(((Number) distanceRange.get(0)[0]).doubleValue());
+            stats.setMaxDistanceKm(((Number) distanceRange.get(0)[1]).doubleValue());
+        }
+        
+        // Duration statistics
+        List<Object[]> durationStats = routeRepository.getDurationStatistics();
+        if (!durationStats.isEmpty() && durationStats.get(0)[0] != null) {
+            stats.setAverageDurationMinutes(((Number) durationStats.get(0)[0]).doubleValue());
+            stats.setTotalDurationMinutes(((Number) durationStats.get(0)[1]).doubleValue());
+        }
+        
+        List<Object[]> durationRange = routeRepository.findDurationRange();
+        if (!durationRange.isEmpty() && durationRange.get(0)[0] != null) {
+            stats.setMinDurationMinutes(((Number) durationRange.get(0)[0]).doubleValue());
+            stats.setMaxDurationMinutes(((Number) durationRange.get(0)[1]).doubleValue());
+        }
+        
+        // Route name statistics
+        List<String> longestRoutes = routeRepository.findLongestRouteNames();
+        stats.setLongestRoute(!longestRoutes.isEmpty() ? longestRoutes.get(0) : null);
+        
+        List<String> shortestRoutes = routeRepository.findShortestRouteNames();
+        stats.setShortestRoute(!shortestRoutes.isEmpty() ? shortestRoutes.get(0) : null);
+        
+        List<String> longestDurationRoutes = routeRepository.findLongestDurationRouteNames();
+        stats.setLongestDurationRoute(!longestDurationRoutes.isEmpty() ? longestDurationRoutes.get(0) : null);
+        
+        List<String> shortestDurationRoutes = routeRepository.findShortestDurationRouteNames();
+        stats.setShortestDurationRoute(!shortestDurationRoutes.isEmpty() ? shortestDurationRoutes.get(0) : null);
+        
+        // Average routes per group
+        if (stats.getTotalRouteGroups() > 0) {
+            stats.setAverageRoutesPerGroup(stats.getTotalRoutes().doubleValue() / stats.getTotalRouteGroups().doubleValue());
+        }
+        
+        return stats;
+    }
+
+    @Override
+    public RouteImportResponse importRoutes(MultipartFile file, String userId) {
+        RouteImportResponse response = new RouteImportResponse();
+        List<RouteImportResponse.ImportError> errors = new ArrayList<>();
+        
+        int totalRecords = 0;
+        int successfulImports = 0;
+        int failedImports = 0;
+        
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
+            int rowNumber = 0;
+            boolean isHeader = true;
+            
+            while ((line = reader.readLine()) != null) {
+                rowNumber++;
+                
+                if (isHeader) {
+                    isHeader = false;
+                    continue; // Skip header row
+                }
+                
+                totalRecords++;
+                String[] columns = line.split(",");
+                
+                try {
+                    // Expected CSV format: name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction
+                    if (columns.length < 8) {
+                        throw new IllegalArgumentException("Invalid CSV format. Expected 8 columns.");
+                    }
+                    
+                    String name = columns[0].trim();
+                    String description = columns[1].trim();
+                    String routeGroupName = columns[2].trim();
+                    String startStopName = columns[3].trim();
+                    String endStopName = columns[4].trim();
+                    String distanceKmStr = columns[5].trim();
+                    String durationStr = columns[6].trim();
+                    String directionStr = columns[7].trim();
+                    
+                    // Validate required fields
+                    if (name.isEmpty()) {
+                        throw new IllegalArgumentException("Route name is required");
+                    }
+                    
+                    // Find route group
+                    Optional<RouteGroup> routeGroupOpt = routeGroupRepository.findByNameIgnoreCase(routeGroupName);
+                    if (routeGroupOpt.isEmpty()) {
+                        throw new IllegalArgumentException("Route group not found: " + routeGroupName);
+                    }
+                    
+                    // Check if route already exists in this route group
+                    if (routeRepository.existsByNameAndRouteGroup_Id(name, routeGroupOpt.get().getId())) {
+                        throw new IllegalArgumentException("Route already exists in this route group: " + name);
+                    }
+                    
+                    // Find start stop
+                    List<Stop> startStops = stopRepository.findAll().stream()
+                            .filter(s -> s.getName().equalsIgnoreCase(startStopName))
+                            .collect(Collectors.toList());
+                    if (startStops.isEmpty()) {
+                        throw new IllegalArgumentException("Start stop not found: " + startStopName);
+                    }
+                    
+                    // Find end stop
+                    List<Stop> endStops = stopRepository.findAll().stream()
+                            .filter(s -> s.getName().equalsIgnoreCase(endStopName))
+                            .collect(Collectors.toList());
+                    if (endStops.isEmpty()) {
+                        throw new IllegalArgumentException("End stop not found: " + endStopName);
+                    }
+                    
+                    // Parse numeric values
+                    Double distanceKm = null;
+                    if (!distanceKmStr.isEmpty()) {
+                        distanceKm = Double.parseDouble(distanceKmStr);
+                    }
+                    
+                    Integer estimatedDuration = null;
+                    if (!durationStr.isEmpty()) {
+                        estimatedDuration = Integer.parseInt(durationStr);
+                    }
+                    
+                    // Parse direction
+                    DirectionEnum direction = DirectionEnum.valueOf(directionStr.toUpperCase());
+                    
+                    // Create and save route
+                    Route route = new Route();
+                    route.setName(name);
+                    route.setDescription(description.isEmpty() ? null : description);
+                    route.setRouteGroup(routeGroupOpt.get());
+                    route.setStartStopId(startStops.get(0).getId());
+                    route.setEndStopId(endStops.get(0).getId());
+                    route.setDistanceKm(distanceKm);
+                    route.setEstimatedDurationMinutes(estimatedDuration);
+                    route.setDirection(direction);
+                    route.setCreatedAt(LocalDateTime.now());
+                    route.setUpdatedAt(LocalDateTime.now());
+                    route.setCreatedBy(userId);
+                    route.setUpdatedBy(userId);
+                    
+                    routeRepository.save(route);
+                    successfulImports++;
+                    
+                } catch (Exception e) {
+                    failedImports++;
+                    RouteImportResponse.ImportError error = new RouteImportResponse.ImportError();
+                    error.setRowNumber(rowNumber);
+                    error.setErrorMessage(e.getMessage());
+                    error.setValue(line);
+                    errors.add(error);
+                    
+                    log.error("Failed to import route at row {}: {}", rowNumber, e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to process import file", e);
+            failedImports = totalRecords;
+            
+            RouteImportResponse.ImportError error = new RouteImportResponse.ImportError();
+            error.setErrorMessage("Failed to process import file: " + e.getMessage());
+            errors.add(error);
+        }
+        
+        response.setTotalRecords(totalRecords);
+        response.setSuccessfulImports(successfulImports);
+        response.setFailedImports(failedImports);
+        response.setErrors(errors);
+        response.setMessage(String.format("Import completed. %d successful, %d failed out of %d total records.", 
+                                        successfulImports, failedImports, totalRecords));
+        
         return response;
     }
 }

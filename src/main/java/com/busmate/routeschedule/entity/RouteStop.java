@@ -2,6 +2,7 @@ package com.busmate.routeschedule.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -26,4 +27,7 @@ public class RouteStop {
 
     @Column(name = "distance_from_start_km")
     private Double distanceFromStartKm;
+
+    @OneToMany(mappedBy = "routeStop", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScheduleStop> scheduleStops;
 }

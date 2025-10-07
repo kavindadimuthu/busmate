@@ -2,6 +2,9 @@ package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.OperatorRequest;
 import com.busmate.routeschedule.dto.response.OperatorResponse;
+import com.busmate.routeschedule.dto.response.OperatorFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.OperatorStatisticsResponse;
+import com.busmate.routeschedule.dto.response.OperatorImportResponse;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.enums.StatusEnum;
 import com.busmate.routeschedule.service.OperatorService;
@@ -17,16 +20,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/operators")
 @RequiredArgsConstructor
-@Tag(name = "6. Operator Management", description = "APIs for managing operators")
+@Tag(name = "04. Operator Management", description = "APIs for managing operators")
 public class OperatorController {
     private final OperatorService operatorService;
 
@@ -56,8 +62,8 @@ public class OperatorController {
     @Operation(
         summary = "Get all operators with pagination, sorting, and filtering", 
         description = "Retrieve all operators with optional pagination, sorting, search, and filtering by operator type and status. " +
-                     "Search is performed across operator name and region. " +
-                     "Default: page=0, size=10, sort=name",
+                     "Search is performed across operator name and region (case-insensitive). " +
+                     "Default: page=0, size=10, sort=name,asc. Maximum page size is 100.",
         operationId = "getAllOperators"
     )
     @ApiResponses(value = {
@@ -77,18 +83,24 @@ public class OperatorController {
             @Parameter(description = "Sort direction (asc or desc)", example = "asc")
             @RequestParam(defaultValue = "asc") String sortDir,
             
-            @Parameter(description = "Search text to filter operators by name or region", example = "Metro")
+            @Parameter(description = "Search text to filter operators by name or region (case-insensitive)", example = "Western")
             @RequestParam(required = false) String search,
             
-            @Parameter(description = "Filter by operator type (PRIVATE, CTB)", example = "PRIVATE")
+            @Parameter(description = "Filter by operator type (PRIVATE, CTB) - case insensitive", example = "PRIVATE")
             @RequestParam(required = false) String operatorType,
             
-            @Parameter(description = "Filter by status (pending, active, inactive, cancelled)", example = "active")
+            @Parameter(description = "Filter by status (pending, active, inactive, cancelled) - case insensitive", example = "active")
             @RequestParam(required = false) String status) {
         
-        // Validate page size
-        if (size > 100) {
-            size = 100; // Maximum page size limit
+        // Validate and normalize parameters
+        if (page < 0) page = 0;
+        if (size <= 0) size = 10;
+        if (size > 100) size = 100;
+        
+        // Validate sortBy field
+        List<String> allowedSortFields = List.of("name", "operatorType", "region", "status", "createdAt", "updatedAt");
+        if (!allowedSortFields.contains(sortBy)) {
+            return ResponseEntity.badRequest().build();
         }
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
@@ -97,13 +109,13 @@ public class OperatorController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         
-        // Parse enum values with validation
+        // Parse and validate enum values
         OperatorTypeEnum operatorTypeEnum = null;
         StatusEnum statusEnum = null;
         
         if (operatorType != null && !operatorType.trim().isEmpty()) {
             try {
-                operatorTypeEnum = OperatorTypeEnum.valueOf(operatorType.toUpperCase());
+                operatorTypeEnum = OperatorTypeEnum.valueOf(operatorType.toUpperCase().trim());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().build();
             }
@@ -111,15 +123,18 @@ public class OperatorController {
         
         if (status != null && !status.trim().isEmpty()) {
             try {
-                statusEnum = StatusEnum.valueOf(status.toLowerCase());
+                statusEnum = StatusEnum.valueOf(status.toLowerCase().trim());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().build();
             }
         }
         
+        // Normalize search text
+        String searchText = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        
+        // Execute query
         Page<OperatorResponse> responses;
-        if ((search != null && !search.trim().isEmpty()) || operatorTypeEnum != null || statusEnum != null) {
-            String searchText = search != null ? search.trim() : null;
+        if (searchText != null || operatorTypeEnum != null || statusEnum != null) {
             responses = operatorService.getAllOperatorsWithFilters(searchText, operatorTypeEnum, statusEnum, pageable);
         } else {
             responses = operatorService.getAllOperators(pageable);
@@ -205,5 +220,86 @@ public class OperatorController {
             @PathVariable UUID id) {
         operatorService.deleteOperator(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ========== ENHANCED MANAGEMENT APIs ==========
+
+    // 7. FILTER OPTIONS - For frontend dropdown/filter components
+    @GetMapping("/filter-options")
+    @Operation(
+        summary = "Get available filter options", 
+        description = "Retrieve all available filter options for operator management frontend including operator types, regions, statuses, and sort options.",
+        operationId = "getFilterOptions"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Filter options retrieved successfully")
+    })
+    public ResponseEntity<OperatorFilterOptionsResponse> getFilterOptions() {
+        OperatorFilterOptionsResponse response = operatorService.getFilterOptions();
+        return ResponseEntity.ok(response);
+    }
+
+    // 8. STATISTICS - For KPI dashboard cards
+    @GetMapping("/statistics")
+    @Operation(
+        summary = "Get operator statistics", 
+        description = "Retrieve comprehensive operator statistics for dashboard KPI cards including counts, distributions, and calculated metrics.",
+        operationId = "getOperatorStatistics"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
+    })
+    public ResponseEntity<OperatorStatisticsResponse> getOperatorStatistics() {
+        OperatorStatisticsResponse response = operatorService.getStatistics();
+        return ResponseEntity.ok(response);
+    }
+
+    // 9. IMPORT - For bulk operator import from file
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Import operators from CSV file", 
+        description = "Bulk import operators from a CSV file. Expected CSV format: name,operatorType,region,status (header row required). " +
+                     "OperatorType should be PRIVATE or CTB. Status should be active, inactive, pending, or cancelled. Requires authentication.",
+        operationId = "importOperators"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<OperatorImportResponse> importOperators(
+            @Parameter(description = "CSV file containing operator data")
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        String userId = authentication.getName();
+        OperatorImportResponse response = operatorService.importOperators(file, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // 10. DOWNLOAD CSV TEMPLATE - For import template
+    @GetMapping("/import-template")
+    @Operation(
+        summary = "Download CSV import template", 
+        description = "Download a CSV template file with sample data and correct format for operator import.",
+        operationId = "downloadImportTemplate"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
+    })
+    public ResponseEntity<String> downloadImportTemplate() {
+        String csvTemplate = "name,operatorType,region,status\n" +
+                           "Sample Transport Company,PRIVATE,Western Province,active\n" +
+                           "City Bus Service,CTB,Central Province,active\n" +
+                           "Express Lines Pvt Ltd,PRIVATE,Southern Province,inactive\n";
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=\"operator_import_template.csv\"")
+                .body(csvTemplate);
     }
 }

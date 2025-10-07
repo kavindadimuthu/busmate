@@ -3,8 +3,8 @@ name: Deploy to EC2
 on:
   push:
     branches:
+      - "dev"
       - "fix/stops-issue"
-      - "feature/trip-management"
 
 jobs:
   deploy:
@@ -52,4 +52,4 @@ jobs:
 
             docker build -t ${{ github.event.repository.name }} .
             docker rm -f ${{ github.event.repository.name }} || true
-            docker run -d --network=host --name ${{ github.event.repository.name }} ${{ github.event.repository.name }}
+            docker run -d --restart unless-stopped --network=host --name ${{ github.event.repository.name }} ${{ github.event.repository.name }}

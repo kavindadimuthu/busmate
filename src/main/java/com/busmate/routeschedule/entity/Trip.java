@@ -17,8 +17,12 @@ public class Trip extends BaseEntity {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "assignment_id", nullable = false)
-    private PassengerServicePermitScheduleAssignment assignment;
+    @JoinColumn(name = "passenger_service_permit_id", nullable = true)
+    private PassengerServicePermit passengerServicePermit;
+
+    @ManyToOne
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private Schedule schedule;
 
     @Column(name = "trip_date", nullable = false)
     private LocalDate tripDate;

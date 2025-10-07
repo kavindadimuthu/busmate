@@ -16,7 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/bus-permit-assignments")
 @RequiredArgsConstructor
-@Tag(name = "8. Bus-Permit Assignment", description = "APIs for managing bus - passenger service permit assignments")
+@Tag(name = "07. Bus-Permit Assignment", description = "APIs for managing bus - passenger service permit assignments")
 public class BusPassengerServicePermitAssignmentController {
     private final BusPassengerServicePermitAssignmentService assignmentService;
 

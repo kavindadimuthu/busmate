@@ -1,7 +1,11 @@
 package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
+import com.busmate.routeschedule.dto.response.StopImportResponse;
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,16 +19,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/stops")
 @RequiredArgsConstructor
-@Tag(name = "1. Bus Stop Management", description = "APIs for managing bus stops")
+@Tag(name = "01. Bus Stop Management", description = "APIs for managing bus stops")
 public class StopController {
     private final StopService stopService;
 
@@ -33,7 +39,7 @@ public class StopController {
     @Operation(
         summary = "Create a new bus stop", 
         description = "Creates a new bus stop with the provided details. Requires authentication.",
-        operationId = "createStop"  // Add prefix for ordering
+        operationId = "createStop"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Stop created successfully"),
@@ -120,7 +126,7 @@ public class StopController {
     @Operation(
         summary = "Get stop by ID", 
         description = "Retrieve a specific bus stop by its unique identifier.",
-        operationId = "getStopById"  // Add prefix for ordering
+        operationId = "getStopById"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Stop found and retrieved successfully"),
@@ -134,12 +140,41 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 5. UPDATE - Modification operation
+    // 5. FILTER OPTIONS - Get distinct values for filtering
+    @GetMapping("/filter-options/states")
+    @Operation(
+        summary = "Get distinct states", 
+        description = "Retrieve all distinct states available in the stops database for filter dropdown options.",
+        operationId = "getDistinctStates"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Distinct states retrieved successfully")
+    })
+    public ResponseEntity<List<String>> getDistinctStates() {
+        List<String> states = stopService.getDistinctStates();
+        return ResponseEntity.ok(states);
+    }
+
+    @GetMapping("/filter-options/accessibility-statuses")
+    @Operation(
+        summary = "Get distinct accessibility statuses", 
+        description = "Retrieve all distinct accessibility statuses (true/false) available in the stops database for filter dropdown options.",
+        operationId = "getDistinctAccessibilityStatuses"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Distinct accessibility statuses retrieved successfully")
+    })
+    public ResponseEntity<List<Boolean>> getDistinctAccessibilityStatuses() {
+        List<Boolean> accessibilityStatuses = stopService.getDistinctAccessibilityStatuses();
+        return ResponseEntity.ok(accessibilityStatuses);
+    }
+
+    // 6. UPDATE - Modification operation
     @PutMapping("/{id}")
     @Operation(
         summary = "Update an existing stop", 
         description = "Update an existing bus stop with new details. Requires authentication.",
-        operationId = "updateStop"  // Add prefix for ordering
+        operationId = "updateStop"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Stop updated successfully"),
@@ -158,7 +193,7 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 6. DELETE - Destructive operation (last)
+    // 7. DELETE - Destructive operation (last)
     @DeleteMapping("/{id}")
     @Operation(
         summary = "Delete a stop", 
@@ -176,5 +211,110 @@ public class StopController {
             @PathVariable UUID id) {
         stopService.deleteStop(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // NEW ENDPOINTS for route and schedule stop details
+    @GetMapping("/route/{routeId}")
+    @Operation(
+        summary = "Get stops along a route", 
+        description = "Retrieve all stops in correct order for a specific route with details including distances.",
+        operationId = "getStopsByRoute"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Route stops retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Route not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid route ID format")
+    })
+    public ResponseEntity<List<RouteStopDetailResponse>> getStopsByRoute(
+            @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID routeId) {
+        List<RouteStopDetailResponse> responses = stopService.getStopsByRoute(routeId);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/schedule/{scheduleId}")
+    @Operation(
+        summary = "Get stops with schedule timings", 
+        description = "Retrieve all stops in correct order for a specific schedule with arrival/departure times and details.",
+        operationId = "getStopsWithScheduleBySchedule"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Schedule stops retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Schedule not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid schedule ID format")
+    })
+    public ResponseEntity<List<ScheduleStopDetailResponse>> getStopsWithScheduleBySchedule(
+            @Parameter(description = "Schedule ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID scheduleId) {
+        List<ScheduleStopDetailResponse> responses = stopService.getStopsWithScheduleBySchedule(scheduleId);
+        return ResponseEntity.ok(responses);
+    }
+
+    // ========== STATISTICS APIs ==========
+
+    // STOP STATISTICS - For KPI dashboard cards
+    @GetMapping("/statistics")
+    @Operation(
+        summary = "Get stop statistics", 
+        description = "Retrieve comprehensive stop statistics for dashboard KPI cards including counts, distributions, accessibility metrics, and geographical information.",
+        operationId = "getStopStatistics"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
+    })
+    public ResponseEntity<StopStatisticsResponse> getStopStatistics() {
+        StopStatisticsResponse response = stopService.getStatistics();
+        return ResponseEntity.ok(response);
+    }
+
+    // ========== IMPORT APIs ==========
+
+    // STOP IMPORT - For bulk stop import from file
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Import stops from CSV file", 
+        description = "Bulk import stops from a CSV file. Expected CSV format: name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible (header row required). " +
+                     "Latitude and longitude are required. isAccessible should be true or false. Requires authentication.",
+        operationId = "importStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<StopImportResponse> importStops(
+            @Parameter(description = "CSV file containing stop data")
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        String userId = authentication.getName();
+        StopImportResponse response = stopService.importStops(file, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // DOWNLOAD CSV TEMPLATE - For import template
+    @GetMapping("/import-template")
+    @Operation(
+        summary = "Download CSV import template", 
+        description = "Download a CSV template file with sample data and correct format for stop import.",
+        operationId = "downloadStopImportTemplate"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
+    })
+    public ResponseEntity<String> downloadStopImportTemplate() {
+        String csvTemplate = "name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
+                           "Colombo Central Bus Station,Main bus terminal in Colombo,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n" +
+                           "Kandy Bus Terminal,Main bus terminal in Kandy,7.2906,80.6337,Temple Street,Kandy,Central Province,20000,Sri Lanka,true\n" +
+                           "Galle Bus Station,Main bus station in Galle,6.0535,80.2210,Main Street,Galle,Southern Province,80000,Sri Lanka,false\n";
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=\"stop_import_template.csv\"")
+                .body(csvTemplate);
     }
 }

@@ -17,6 +17,8 @@ import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.RouteGroupService;
 import com.busmate.routeschedule.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,6 +106,18 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         return routeGroupRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<RouteGroupResponse> getAllRouteGroups(Pageable pageable) {
+        Page<RouteGroup> routeGroups = routeGroupRepository.findAll(pageable);
+        return routeGroups.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RouteGroupResponse> getAllRouteGroupsWithSearch(String searchText, Pageable pageable) {
+        Page<RouteGroup> routeGroups = routeGroupRepository.findAllWithSearch(searchText, pageable);
+        return routeGroups.map(this::mapToResponse);
     }
 
     @Override
