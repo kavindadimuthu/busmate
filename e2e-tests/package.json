@@ -1,0 +1,21 @@
+{
+  "name": "busmate-route-service-e2e",
+  "version": "1.0.0",
+  "description": "End-to-end API testing for BusMate Route Management Service using Playwright",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:stops": "npx playwright test tests/stops.spec.js",
+    "test:stops:headed": "npx playwright test tests/stops.spec.js --headed",
+    "report": "npx playwright show-report",
+    "test:ui": "npx playwright test --ui",
+    "install": "npx playwright install"
+  },
+  "keywords": ["playwright", "api-testing", "e2e", "spring-boot", "busmate"],
+  "author": "BusMate Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

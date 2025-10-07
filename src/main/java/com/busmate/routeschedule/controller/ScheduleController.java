@@ -47,18 +47,49 @@ public class ScheduleController {
 
     @PostMapping
     @Operation(
-        summary = "Create a new schedule (basic)",
-        description = "Creates a new schedule with basic information only. " +
-                     "Use this for creating a schedule that will be configured later with stops, calendar, and exceptions.",
+        summary = "Create a basic schedule",
+        description = """
+            Creates a new schedule with basic information only (name, route, dates, type).
+            
+            **Use this endpoint when:**
+            - You want to create a schedule first and configure stops/calendar/exceptions later
+            - You're implementing a multi-step schedule creation workflow
+            - You only have basic schedule information available
+            
+            **What this API does:**
+            - Creates a schedule entity with basic information
+            - Does NOT create schedule stops, calendar, or exceptions
+            - Returns the created schedule with empty lists for stops/calendar/exceptions
+            - Optionally generates trips if 'generateTrips' is true (requires calendar to be set later)
+            
+            **Required fields:** name, routeId, scheduleType, effectiveStartDate
+            **Optional fields:** effectiveEndDate, status, description, generateTrips
+            **Ignored fields:** scheduleStops, calendar, exceptions (these will be ignored if provided)
+            
+            **Schedule Types:**
+            - REGULAR: Normal daily service
+            - SPECIAL: Special event or temporary service
+            
+            **Schedule Status:**
+            - PENDING: Schedule created but not active
+            - ACTIVE: Schedule is operational
+            - INACTIVE: Schedule temporarily disabled  
+            - CANCELLED: Schedule permanently cancelled
+            """,
         operationId = "createSchedule"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Schedule created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data - check required fields and data formats"),
+        @ApiResponse(responseCode = "404", description = "Route not found with the provided routeId"),
         @ApiResponse(responseCode = "409", description = "Schedule name already exists for this route"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized - valid authentication required")
     })
     public ResponseEntity<ScheduleResponse> createSchedule(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Complete with basic schedule information",
+                required = true
+            )
             @Valid @RequestBody ScheduleRequest request, 
             Authentication authentication) {
         try {
@@ -74,17 +105,48 @@ public class ScheduleController {
     @PostMapping("/full")
     @Operation(
         summary = "Create a complete schedule with all components",
-        description = "Creates a new schedule with stops, calendar, and exceptions in one transaction. " +
-                     "This is the recommended endpoint for creating fully configured schedules.",
+        description = """
+            Creates a new schedule with all components (stops, calendar, exceptions) in a single transaction.
+            
+            **Use this endpoint when:**
+            - You have all schedule information available at once
+            - You want to create a fully operational schedule immediately
+            - You prefer atomic operations (all-or-nothing approach)
+            
+            **What this API does:**
+            - Creates the schedule with basic information
+            - Creates all schedule stops with arrival/departure times
+            - Creates the calendar (which days of week the schedule operates)
+            - Creates any schedule exceptions (added/removed dates)
+            - Returns the complete schedule with all components populated
+            - Optionally generates trips if 'generateTrips' is true
+            
+            **Required fields:** name, routeId, scheduleType, effectiveStartDate
+            **Optional but recommended:** scheduleStops, calendar, exceptions
+            **Stops ordering:** Must be in correct sequence (stopOrder: 0, 1, 2, ...)
+            
+            **Calendar rules:**
+            - At least one day must be true for trip generation
+            - Days set to true indicate when the schedule operates
+            
+            **Exception types:**
+            - ADDED: Service runs on this date even if calendar says no
+            - REMOVED: Service doesn't run on this date even if calendar says yes
+            """,
         operationId = "createScheduleFull"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Complete schedule created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "201", description = "Complete schedule created successfully with all components"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data - check stops order, time formats, or calendar settings"),
+        @ApiResponse(responseCode = "404", description = "Route or stop not found with provided IDs"),
         @ApiResponse(responseCode = "409", description = "Schedule name already exists for this route"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized - valid authentication required")
     })
     public ResponseEntity<ScheduleResponse> createScheduleFull(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Complete schedule information with all components",
+                required = true
+            )
             @Valid @RequestBody ScheduleRequest request, 
             Authentication authentication) {
         try {
