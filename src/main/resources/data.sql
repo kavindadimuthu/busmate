@@ -30,7 +30,7 @@ SET session_replication_role = replica;
 -- Government and Semi-Government Operators (CTB)
 INSERT INTO operator (id, operator_type, name, region, status, created_at, updated_at, created_by, updated_by) VALUES
 ('11111111-1111-1111-1111-111111111111', 'CTB', 'Sri Lanka Transport Board - Western Province', 'Western Province', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('11111111-1111-1111-1111-111111111112', 'CTB', 'Sri Lanka Transport Board - Central Province', 'Central Province', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
+('8e886a71-445c-4e3a-8bc5-a17b5b2dad24', 'CTB', 'Sri Lanka Transport Board - Central Province', 'Central Province', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('11111111-1111-1111-1111-111111111113', 'CTB', 'Sri Lanka Transport Board - Southern Province', 'Southern Province', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('11111111-1111-1111-1111-111111111114', 'CTB', 'Sri Lanka Transport Board - Northern Province', 'Northern Province', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
 
@@ -203,7 +203,7 @@ INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_k
 INSERT INTO bus (id, operator_id, ntc_registration_number, plate_number, capacity, model, facilities, status, created_at, updated_at, created_by, updated_by) VALUES
 ('99999999-9999-9999-9999-999999999991', '11111111-1111-1111-1111-111111111111', 'WP-SLTB-001', 'WP CAA-1234', 52, 'TATA LP 1613', '{"air_conditioning": false, "wheelchair_accessible": true, "wifi": false, "gps": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('99999999-9999-9999-9999-999999999992', '11111111-1111-1111-1111-111111111111', 'WP-SLTB-002', 'WP CAB-5678', 49, 'Ashok Leyland Viking', '{"air_conditioning": false, "wheelchair_accessible": false, "wifi": false, "gps": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('99999999-9999-9999-9999-999999999993', '11111111-1111-1111-1111-111111111112', 'CP-SLTB-001', 'CP KA-9876', 52, 'TATA LP 1613', '{"air_conditioning": true, "wheelchair_accessible": true, "wifi": false, "gps": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
+('99999999-9999-9999-9999-999999999993', '8e886a71-445c-4e3a-8bc5-a17b5b2dad24', 'CP-SLTB-001', 'CP KA-9876', 52, 'TATA LP 1613', '{"air_conditioning": true, "wheelchair_accessible": true, "wifi": false, "gps": true}', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
 
 -- Private Operator Buses
 INSERT INTO bus (id, operator_id, ntc_registration_number, plate_number, capacity, model, facilities, status, created_at, updated_at, created_by, updated_by) VALUES
@@ -221,7 +221,7 @@ INSERT INTO bus (id, operator_id, ntc_registration_number, plate_number, capacit
 
 INSERT INTO passenger_service_permit (id, operator_id, route_group_id, permit_number, issue_date, expiry_date, maximum_bus_assigned, status, permit_type, created_at, updated_at, created_by, updated_by) VALUES
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', '66666666-6666-6666-6666-666666666665', 'SLTB-WP-2025-001', '2025-01-01', '2025-12-31', 10, 'active', 'NORMAL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab', '11111111-1111-1111-1111-111111111112', '66666666-6666-6666-6666-666666666661', 'SLTB-CP-2025-001', '2025-01-01', '2025-12-31', 5, 'active', 'NORMAL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab', '8e886a71-445c-4e3a-8bc5-a17b5b2dad24', '66666666-6666-6666-6666-666666666661', 'SLTB-CP-2025-001', '2025-01-01', '2025-12-31', 5, 'active', 'NORMAL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaac', '22222222-2222-2222-2222-222222222221', '66666666-6666-6666-6666-666666666665', 'PVT-SW-2025-001', '2025-01-15', '2025-12-31', 3, 'active', 'SEMI_LUXURY', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaad', '22222222-2222-2222-2222-222222222222', '66666666-6666-6666-6666-666666666661', 'PVT-RE-2025-001', '2025-02-01', '2026-01-31', 2, 'active', 'LUXURY', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaae', '22222222-2222-2222-2222-222222222224', '66666666-6666-6666-6666-666666666662', 'PVT-HE-2025-001', '2025-01-01', '2025-12-31', 3, 'active', 'EXTRA_LUXURY_HIGHWAY', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
