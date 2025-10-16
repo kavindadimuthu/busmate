@@ -1,6 +1,7 @@
 package com.busmatelk.backend.service.impl;
 
 import com.busmatelk.backend.dto.fleetOperatorDTO;
+import com.busmatelk.backend.model.Conductor;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.fleetOperatorModel;
 import com.busmatelk.backend.repository.UserRepo;
@@ -210,5 +211,24 @@ public class fleetOperatorServiceIMPL implements fleetOperatorProfileService {
         }
 
         fleetOperatorRepo.save(profile);
+    }
+
+    @Override
+    public void deleteFleetOperator(UUID userId) {
+
+        // Find the user
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Find the fleetoperator linked to the user
+        fleetOperatorModel fleetoperator = fleetOperatorRepo.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Conductor not found for user ID: " + userId));
+
+        // Delete the conductor
+        fleetOperatorRepo.delete(fleetoperator);
+
+        // Set account status to deactivate
+        user.setAccountStatus("deactivate");
+        userRepo.save(user);
     }
 }

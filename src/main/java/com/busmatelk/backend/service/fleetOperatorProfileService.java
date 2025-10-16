@@ -12,4 +12,6 @@ void addfleetOperatorProfile( fleetOperatorDTO fleetOperatorDTO);
     fleetOperatorDTO getFleetoperatorById(UUID userId);
 
     void updateFleetOperatorProfile(UUID userId, fleetOperatorDTO fleetOperatorDTO, MultipartFile file);
+
+    void deleteFleetOperator(UUID userId);
 }
