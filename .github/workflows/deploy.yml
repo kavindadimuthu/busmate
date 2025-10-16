@@ -30,7 +30,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
           source: "target/*.jar"
-          target: "/home/ec2-user/${{ github.event.repository.name }}/"
+          target: "/home/ubuntu/${{ github.event.repository.name }}/"
 
       - name: Deploy Docker container
         uses: appleboy/ssh-action@master
@@ -51,4 +51,4 @@ jobs:
 
             docker build -t ${{ github.event.repository.name }} .
             docker rm -f ${{ github.event.repository.name }} || true
-            docker run -d --name ${{ github.event.repository.name }} -p 8081:8081 ${{ github.event.repository.name }}
+            docker run -d --restart unless-stopped --name ${{ github.event.repository.name }} -p 8081:8081 ${{ github.event.repository.name }}
