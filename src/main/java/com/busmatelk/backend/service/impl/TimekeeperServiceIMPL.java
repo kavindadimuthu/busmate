@@ -17,6 +17,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,6 +35,9 @@ public class TimekeeperServiceIMPL implements TimekeeperService {
 
     @Value("${supabase.anon-key}")
     private String supabaseAnonKey;
+
+    @Value("${supabase.api.key}")
+    private String SUPABASE_API_KEY;
 
     @Override
     @Transactional
@@ -63,6 +68,29 @@ public class TimekeeperServiceIMPL implements TimekeeperService {
             String responseBody = response.body();
             String userIdString = extractUserIdFromJson(responseBody);
             UUID userId = UUID.fromString(userIdString);
+
+            // Step 2.1: Add user role to Supabase metadata
+            HttpRequest metadataRequest = HttpRequest.newBuilder()
+                .uri(URI.create("https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1/admin/users/" + userIdString))
+                .header("Content-Type", "application/json")
+                .header("apikey", SUPABASE_API_KEY)
+                .header("Authorization", "Bearer " + SUPABASE_API_KEY)
+                .PUT(HttpRequest.BodyPublishers.ofString("""
+            {
+              "user_metadata": {
+                "user_role": "Timekeeper"
+              }
+            }
+        """))
+                .build();
+
+            HttpResponse<String> metadataResponse = client.send(metadataRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println("Metadata response code: " + metadataResponse.statusCode());
+            System.out.println("Metadata response body: " + metadataResponse.body());
+
+            if (metadataResponse.statusCode() != 200) {
+                throw new RuntimeException("Failed to update user metadata: " + metadataResponse.body());
+            }
 
             // Step 3: Save to User table
             User user = new User();
@@ -121,5 +149,30 @@ public class TimekeeperServiceIMPL implements TimekeeperService {
         timekeeperDTO.setProvince(timekeeper.getProvince());
 
         return timekeeperDTO;
+    }
+
+    @Override
+    public List<TimekeeperDTO> getAllTimekeepers() {
+        // Get all timekeepers from the repository
+        List<Timekeeper> timekeepers = timekeeperRepo.findAll();
+
+        List<TimekeeperDTO> timekeeperDTOs = new ArrayList<>();
+
+        for (Timekeeper timekeeper : timekeepers) {
+            User user = timekeeper.getUser();
+
+            // Map to DTO
+            TimekeeperDTO timekeeperDTO = new TimekeeperDTO();
+            timekeeperDTO.setFullname(user.getFullName());
+            timekeeperDTO.setEmail(user.getEmail());
+            timekeeperDTO.setPhonenumber(user.getPhoneNumber());
+            timekeeperDTO.setAssign_stand(timekeeper.getAssignStand());
+            timekeeperDTO.setNic(timekeeper.getNic());
+            timekeeperDTO.setProvince(timekeeper.getProvince());
+
+            timekeeperDTOs.add(timekeeperDTO);
+        }
+
+        return timekeeperDTOs;
     }
 }

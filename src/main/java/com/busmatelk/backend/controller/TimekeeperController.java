@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.busmatelk.backend.service.TimekeeperService;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -22,9 +25,15 @@ public class TimekeeperController {
     public ResponseEntity<?> signup(@RequestBody TimekeeperDTO signupDTO) {
         try {
             timekeeperService.createtimekeeper(signupDTO);
-            return ResponseEntity.ok("Signup successful");
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Signup successful");
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
@@ -35,6 +44,16 @@ public class TimekeeperController {
             return ResponseEntity.ok(timekeeper);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<TimekeeperDTO>> getAllTimekeepers() {
+        try {
+            List<TimekeeperDTO> timekeepers = timekeeperService.getAllTimekeepers();
+            return ResponseEntity.ok(timekeepers);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
