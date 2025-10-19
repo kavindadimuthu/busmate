@@ -21,29 +21,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS with our custom configuration
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                
-                // Disable CSRF for stateless API
-                .csrf(csrf -> csrf.disable())
-                
-                // Stateless session management
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                
-                // Configure authorization rules
-                .authorizeHttpRequests(auth -> auth
-                        // Allow access to API endpoints, Swagger docs, and actuator
-                        .requestMatchers(
-                            "/api/**",
-                            "/v3/api-docs/**", 
-                            "/swagger-ui/**", 
-                            "/swagger-ui.html",
-                            "/actuator/**"
-                        ).permitAll()
-                        
-                        // All other requests require authentication
-                        .anyRequest().authenticated()
-                );
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/api/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/actuator/**"
+                ).permitAll()
+                .anyRequest().authenticated()
+            );
 
         return http.build();
     }
