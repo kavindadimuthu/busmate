@@ -37,7 +37,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "Dockerfile target/app.jar"
+          source: "Dockerfile target/*.jar"
           target: "~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}"
 
       # 5. Deploy via SSH
