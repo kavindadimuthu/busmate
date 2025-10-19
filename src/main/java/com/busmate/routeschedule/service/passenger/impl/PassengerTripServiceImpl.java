@@ -233,8 +233,9 @@ public class PassengerTripServiceImpl implements PassengerTripService {
             log.warn("Error loading detailed trip information for trip {}: {}", trip.getId(), e.getMessage());
         }
         
-        // Fallback to basic mapping if detailed query fails
-        return buildBasicTripResponse(trip, includeBus);
+        // Fallback to entity-based mapping if detailed query fails
+        // This ensures stop information is still populated from route data
+        return buildTripResponseFromEntity(trip, includeRoute, includeStops, includeBus, includeTracking);
     }
     
     private PassengerTripResponse buildBasicTripResponse(Trip trip, Boolean includeBus) {
@@ -600,50 +601,50 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                 // Calculate fare based on distance
                 builder.fare(calculateFare(route.getDistanceKm()));
 
-                if (includeRoute) {
-                    // Add departure and arrival stops with actual stop details
-                    if (route.getStartStopId() != null) {
-                        try {
-                            Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
-                            if (startStop != null) {
-                                var departureStop = PassengerRouteResponse.PassengerStopSummary.builder()
-                                        .id(startStop.getId())
-                                        .name(startStop.getName())
-                                        .city(startStop.getLocation() != null ? startStop.getLocation().getCity() : null)
-                                        .location(startStop.getLocation() != null ? 
-                                            buildLocationDto(
-                                                startStop.getLocation().getLatitude(), 
-                                                startStop.getLocation().getLongitude(), 
-                                                startStop.getLocation().getCity()
-                                            ) : null)
-                                        .build();
-                                builder.departureStop(departureStop);
-                            }
-                        } catch (Exception e) {
-                            log.debug("Could not load departure stop details for trip {}: {}", trip.getId(), e.getMessage());
+                // Always include departure and arrival stops for passenger responses
+                // Add departure stop information
+                if (route.getStartStopId() != null) {
+                    try {
+                        Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
+                        if (startStop != null) {
+                            var departureStop = PassengerRouteResponse.PassengerStopSummary.builder()
+                                    .id(startStop.getId())
+                                    .name(startStop.getName())
+                                    .city(startStop.getLocation() != null ? startStop.getLocation().getCity() : null)
+                                    .location(startStop.getLocation() != null ? 
+                                        buildLocationDto(
+                                            startStop.getLocation().getLatitude(), 
+                                            startStop.getLocation().getLongitude(), 
+                                            startStop.getLocation().getCity()
+                                        ) : null)
+                                    .build();
+                            builder.departureStop(departureStop);
                         }
+                    } catch (Exception e) {
+                        log.debug("Could not load departure stop details for trip {}: {}", trip.getId(), e.getMessage());
                     }
-                    
-                    if (route.getEndStopId() != null) {
-                        try {
-                            Stop endStop = stopRepository.findById(route.getEndStopId()).orElse(null);
-                            if (endStop != null) {
-                                var arrivalStop = PassengerRouteResponse.PassengerStopSummary.builder()
-                                        .id(endStop.getId())
-                                        .name(endStop.getName())
-                                        .city(endStop.getLocation() != null ? endStop.getLocation().getCity() : null)
-                                        .location(endStop.getLocation() != null ? 
-                                            buildLocationDto(
-                                                endStop.getLocation().getLatitude(), 
-                                                endStop.getLocation().getLongitude(), 
-                                                endStop.getLocation().getCity()
-                                            ) : null)
-                                        .build();
-                                builder.arrivalStop(arrivalStop);
-                            }
-                        } catch (Exception e) {
-                            log.debug("Could not load arrival stop details for trip {}: {}", trip.getId(), e.getMessage());
+                }
+                
+                // Add arrival stop information  
+                if (route.getEndStopId() != null) {
+                    try {
+                        Stop endStop = stopRepository.findById(route.getEndStopId()).orElse(null);
+                        if (endStop != null) {
+                            var arrivalStop = PassengerRouteResponse.PassengerStopSummary.builder()
+                                    .id(endStop.getId())
+                                    .name(endStop.getName())
+                                    .city(endStop.getLocation() != null ? endStop.getLocation().getCity() : null)
+                                    .location(endStop.getLocation() != null ? 
+                                        buildLocationDto(
+                                            endStop.getLocation().getLatitude(), 
+                                            endStop.getLocation().getLongitude(), 
+                                            endStop.getLocation().getCity()
+                                        ) : null)
+                                    .build();
+                            builder.arrivalStop(arrivalStop);
                         }
+                    } catch (Exception e) {
+                        log.debug("Could not load arrival stop details for trip {}: {}", trip.getId(), e.getMessage());
                     }
                 }
             }

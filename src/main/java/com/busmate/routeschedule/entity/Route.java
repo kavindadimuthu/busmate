@@ -3,10 +3,12 @@ package com.busmate.routeschedule.entity;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.util.List;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "route")
 public class Route extends BaseEntity {

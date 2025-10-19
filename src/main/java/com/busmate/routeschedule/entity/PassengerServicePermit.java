@@ -4,10 +4,12 @@ import com.busmate.routeschedule.enums.PassengerServicePermitTypeEnum;
 import com.busmate.routeschedule.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "passenger_service_permit")
 public class PassengerServicePermit extends BaseEntity {

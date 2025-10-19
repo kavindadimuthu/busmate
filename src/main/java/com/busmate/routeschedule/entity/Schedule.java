@@ -4,11 +4,13 @@ import com.busmate.routeschedule.enums.ScheduleTypeEnum;
 import com.busmate.routeschedule.enums.ScheduleStatusEnum; // New import
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "schedule")
 public class Schedule extends BaseEntity {
