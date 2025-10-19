@@ -52,7 +52,7 @@ public class PassengerController {
 
     @GetMapping("/routes/search")
     @Operation(summary = "Search routes between locations", 
-               description = "Find bus routes between origin and destination with comprehensive filtering options")
+               description = "Find bus routes between origin and destination with basic filtering")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Routes found successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid search parameters"),
@@ -74,20 +74,11 @@ public class PassengerController {
             @Parameter(description = "Route direction", example = "OUTBOUND")
             @RequestParam(required = false) DirectionEnum direction,
             
-            // Note: operatorType filtering removed - routes are not directly linked to operators
-            // Use trip search APIs for operator-specific filtering
-            
             @Parameter(description = "Maximum distance in kilometers", example = "100.5")
             @RequestParam(required = false) @DecimalMin("0.1") @DecimalMax("1000.0") Double maxDistance,
             
             @Parameter(description = "Search text for route names", example = "Colombo-Kandy")
             @RequestParam(required = false) String searchText,
-            
-            @Parameter(description = "Travel date for availability check")
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate travelDate,
-            
-            @Parameter(description = "Preferred departure time")
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime departureTime,
             
             @Parameter(description = "Page number (0-based)", example = "0")
             @RequestParam(defaultValue = "0") @Min(0) Integer page,
@@ -95,15 +86,13 @@ public class PassengerController {
             @Parameter(description = "Page size", example = "20")
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size) {
         
-        log.info("Searching routes with criteria: fromStopId={}, toStopId={}, fromCity={}, toCity={}", 
-                fromStopId, toStopId, fromCity, toCity);
+        log.info("Searching routes with criteria: fromStopId={}, toStopId={}, fromCity={}, toCity={}, direction={}", 
+                fromStopId, toStopId, fromCity, toCity, direction);
         
         Pageable pageable = PageRequest.of(page, size);
         
         PassengerPaginatedResponse<PassengerRouteResponse> routes = passengerRouteService.searchRoutes(
-                fromCity, toCity, fromStopId, toStopId, null, null, null, null, null,
-                null, direction, travelDate, departureTime, null, 
-                null, null, maxDistance, pageable);
+                fromCity, toCity, fromStopId, toStopId, direction, maxDistance, searchText, pageable);
         
         return ResponseEntity.ok(routes);
     }
