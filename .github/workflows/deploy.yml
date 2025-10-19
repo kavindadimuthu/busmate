@@ -3,38 +3,45 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - "main"
-      - "test-deployment"
+      - main
+      - test-deployment
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Set up Java 17
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build Spring Boot App
+      # 3. Build Spring Boot App
+      - name: Build Spring Boot JAR
         run: |
           ./mvnw clean package -DskipTests
-          ls -l target/*.jar  # Verify the JAR exists
+          ls -l target/*.jar
+          # Rename JAR to a consistent name for Dockerfile
+          mv target/*.jar target/app.jar
 
+      # 4. Copy Dockerfile and JAR to EC2
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "Dockerfile target/*.jar"  # Space-separated, NOT comma
+          source: "Dockerfile target/app.jar"
           target: "~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}"
 
-      - name: Deploy via SSH
+      # 5. Deploy via SSH
+      - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -42,9 +49,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}
-            ls -l  # Verify files are present
+            ls -l
+            # Stop and remove existing container if exists
             docker stop ${{ github.event.repository.name }} || true
             docker rm ${{ github.event.repository.name }} || true
             export DOCKER_BUILDKIT=1
-            docker build -t ${{ github.event.repository.name }}-image:latest .
-            docker run -d --network=host --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}-image:latest
+            # Build Docker image
+            docker build -t ${{ github.event.repository.name }}:latest .
+            # Run container with port mapping (choose one method)
+            docker run -d --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}:latest
