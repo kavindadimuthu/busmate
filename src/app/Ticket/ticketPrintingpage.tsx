@@ -4,12 +4,12 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TicketPrintingScreen() {
   const [progress, setProgress] = useState(0);

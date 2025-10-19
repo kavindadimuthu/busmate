@@ -7,7 +7,6 @@ import {
   FlatList,
   Modal,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,6 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOngoingTrip } from '../../hooks/employee/useOngoingTrip';
 import { journeyApi } from '../../services/api/journey';
 import { RouteStop } from '../../types/journey';

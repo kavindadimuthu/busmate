@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Dimensions,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { QRScanLog, useTicket } from '../../contexts/TicketContext';
 
 // Define types for scan history items

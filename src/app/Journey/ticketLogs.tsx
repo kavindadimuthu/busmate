@@ -2,8 +2,8 @@ import { useTicket } from '@/contexts/TicketContext';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
