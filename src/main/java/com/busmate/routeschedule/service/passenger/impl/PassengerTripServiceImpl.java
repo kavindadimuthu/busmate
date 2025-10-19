@@ -50,11 +50,27 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                 operatorType, operatorId, status);
 
         try {
-            // Use basic repository method for now - we'll implement advanced search later
             Page<Trip> tripPage;
             
-            // Start with basic queries to avoid parameter type issues
-            if (routeId != null) {
+            // Priority order for filtering:
+            // 1. Both fromStopId and toStopId (origin-destination search)
+            // 2. Only fromStopId (trips from origin)
+            // 3. Only toStopId (trips to destination) 
+            // 4. Route ID
+            // 5. Date
+            // 6. Status
+            // 7. All trips
+            
+            if (fromStopId != null && toStopId != null) {
+                log.info("Searching trips from stop {} to stop {}", fromStopId, toStopId);
+                tripPage = tripRepository.findTripsByFromStopAndToStop(fromStopId, toStopId, pageable);
+            } else if (fromStopId != null) {
+                log.info("Searching trips from stop {}", fromStopId);
+                tripPage = tripRepository.findTripsByFromStop(fromStopId, pageable);
+            } else if (toStopId != null) {
+                log.info("Searching trips to stop {}", toStopId);
+                tripPage = tripRepository.findTripsByToStop(toStopId, pageable);
+            } else if (routeId != null) {
                 tripPage = tripRepository.findByScheduleRouteId(routeId, pageable);
             } else if (date != null) {
                 tripPage = tripRepository.findByTripDate(date, pageable);

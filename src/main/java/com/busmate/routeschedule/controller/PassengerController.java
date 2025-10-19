@@ -330,9 +330,6 @@ public class PassengerController {
             @Parameter(description = "Trip status filter", example = "active")
             @RequestParam(required = false) TripStatusEnum status,
             
-            @Parameter(description = "Include only direct trips", example = "false")
-            @RequestParam(defaultValue = "false") Boolean directOnly,
-            
             @Parameter(description = "Page number (0-based)", example = "0")
             @RequestParam(defaultValue = "0") @Min(0) Integer page,
             

@@ -44,6 +44,35 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     @Query("SELECT t FROM Trip t WHERE t.schedule.route.id = :routeId")
     Page<Trip> findByScheduleRouteId(@Param("routeId") UUID routeId, Pageable pageable);
     
+    // Query to find trips by origin and destination stops
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs1.route.id FROM RouteStop rs1, RouteStop rs2 " +
+           "  WHERE rs1.route.id = rs2.route.id " +
+           "  AND rs1.stop.id = :fromStopId " +
+           "  AND rs2.stop.id = :toStopId " +
+           "  AND rs1.stopOrder < rs2.stopOrder" +
+           ")")
+    Page<Trip> findTripsByFromStopAndToStop(@Param("fromStopId") UUID fromStopId, 
+                                           @Param("toStopId") UUID toStopId, 
+                                           Pageable pageable);
+    
+    // Query to find trips by origin stop only
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs.route.id FROM RouteStop rs " +
+           "  WHERE rs.stop.id = :fromStopId" +
+           ")")
+    Page<Trip> findTripsByFromStop(@Param("fromStopId") UUID fromStopId, Pageable pageable);
+    
+    // Query to find trips by destination stop only
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs.route.id FROM RouteStop rs " +
+           "  WHERE rs.stop.id = :toStopId" +
+           ")")
+    Page<Trip> findTripsByToStop(@Param("toStopId") UUID toStopId, Pageable pageable);
+    
     @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND passenger_service_permit_id = :pspId AND schedule_id = :scheduleId", nativeQuery = true)
     List<Trip> findByTripDateAndPassengerServicePermitIdAndScheduleId(@Param("date") LocalDate date, @Param("pspId") UUID pspId, @Param("scheduleId") UUID scheduleId);
     
