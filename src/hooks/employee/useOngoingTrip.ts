@@ -106,7 +106,15 @@ export function useOngoingTrip() {
     }
   };
 
-  // console.log('Ongoing trip:', ongoingTrip);
+  // Debug: Log bus information when ongoing trip changes
+  if (ongoingTrip) {
+    console.log('🚌 Ongoing trip bus info:', {
+      tripId: ongoingTrip.id,
+      busId: ongoingTrip.busId, // Used for database operations
+      busPlateNumber: ongoingTrip.busPlateNumber, // Used for UI display
+      route: ongoingTrip.route
+    });
+  }
 
   return {
     ongoingTrip,

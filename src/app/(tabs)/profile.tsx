@@ -4,15 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import {
-  Alert,
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  SafeAreaView
+    Alert,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 
@@ -49,7 +49,7 @@ export default function ProfileScreen() {
     email: user?.email || "conductor@busmate.lk",
     contactNumber: user?.contactNumber || "+94 77 123 4567",
     role: user?.role || "conductor",
-    busId: ongoingTrip?.busId || ongoingTrip?.busPlateNumber || user?.busId || "NB-2845",
+    busId: ongoingTrip?.busPlateNumber || ongoingTrip?.busId || user?.busId || "NB-2845",
     route: ongoingTrip?.routeName || 
            (ongoingTrip?.fromLocation && ongoingTrip?.toLocation ? 
             `${ongoingTrip.fromLocation} - ${ongoingTrip.toLocation}` : null) ||

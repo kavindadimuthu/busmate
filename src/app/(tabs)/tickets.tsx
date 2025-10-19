@@ -7,14 +7,14 @@ import {
   FlatList,
   Modal,
   RefreshControl,
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  SafeAreaView
+  View
 } from 'react-native';
 import { useOngoingTrip } from '../../hooks/employee/useOngoingTrip';
 import { journeyApi } from '../../services/api/journey';
@@ -246,6 +246,14 @@ export default function TicketsScreen() {
     alert('Error: Missing trip or user information. Please try again.');
     return;
   }
+
+  // Log bus information for debugging
+  console.log('🎫 Issuing ticket with bus info:', {
+    busId: ongoingTrip.busId,
+    busPlateNumber: ongoingTrip.busPlateNumber,
+    tripId: ongoingTrip.id,
+    route: ongoingTrip.route
+  });
 
   // Create backend data for API - all IDs as strings to match backend DTO
   const backendData: IssueTicketRequest = {

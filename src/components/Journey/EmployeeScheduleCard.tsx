@@ -124,7 +124,7 @@ export default function EmployeeScheduleCard({ item }: Props) {
       {/* Bus Number */}
       <View style={styles.infoRow}>
         <MaterialCommunityIcons name="bus" size={18} color="#0066FF" />
-        <Text style={styles.infoText}>Bus {item.busId}</Text>
+        <Text style={styles.infoText}>Bus {item.busPlateNumber || item.busId}</Text>
       </View>
       
       {/* Time */}

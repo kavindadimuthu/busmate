@@ -308,7 +308,7 @@ export default function HomeScreen() {
       ) : nextTrip ? (
         <>
           <Text style={styles.routeText}>Route: {nextTrip.route}</Text>
-          <Text style={styles.busIdText}>Bus ID: {nextTrip.busId}</Text>
+          <Text style={styles.busIdText}>Bus: {nextTrip.busPlateNumber || nextTrip.busId}</Text>
           <Text style={styles.departureText}>
             Departure: {formatTime(nextTrip.startTime)}
           </Text>
