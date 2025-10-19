@@ -11,13 +11,13 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Platform,
+  SafeAreaView,
   Share,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  SafeAreaView
+  View
 } from 'react-native';
 
 export default function TicketConfirmationScreen() {
