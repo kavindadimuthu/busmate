@@ -1,64 +1,205 @@
-import React from 'react';
+import { useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
+import { useTicket } from '@/contexts/TicketContext';
+import mockTripData from '@/data/Journey/tripSummaryData.json';
+import { EmployeeSchedule } from '@/types/employee';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useMemo } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
-  StatusBar,
   ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+
+
+
 
 export default function TripOverviewScreen() {
-  // This would typically come from API or route params
-  const tripData = {
-    status: 'completed',
-    route: {
-      number: '138',
-      busId: 'LK-4782',
-      from: 'Colombo Fort',
-      to: 'Kandy',
-      departureTime: '06:30 AM',
-      arrivalTime: '10:15 AM',
-      duration: '3h 45m',
-    },
-    passengers: 47,
-    tickets: 52,
-    revenue: {
-      cash: 8450,
-      digital: 3280,
-      total: 11730,
-    },
-    qrValidations: {
-      successful: 23,
-      failed: 2,
-      successRate: 92,
-    },
-    completion: {
-      date: 'March 15, 2024',
-      duration: '3h 45m',
+  const { id } = useLocalSearchParams();
+  const { schedules } = useEmployeeScheduleContext();
+  const { 
+    getQRScanLogsForTrip, 
+    getCashTicketLogsForTrip 
+  } = useTicket();
+  
+  // Find the specific trip by ID
+  const tripSchedule = schedules?.find((schedule: EmployeeSchedule) => schedule.id === id);
+  
+  // Get mock data for this trip (using trip ID hash for consistency)
+  const getMockDataForTrip = (tripId: string) => {
+    // Use a simple hash function to consistently assign mock data to trips
+    const hash = tripId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const index = hash % mockTripData.length;
+    return mockTripData[index];
+  };
+  
+  // Calculate trip data from ticket logs
+  const tripSummaryData = useMemo(() => {
+    if (!tripSchedule?.id) {
+      return {
+        totalPassengers: 0,
+        totalRevenue: 0,
+        totalTickets: 0,
+        qrScans: { successful: 0, failed: 0, successRate: 0 },
+        cashRevenue: 0,
+        digitalRevenue: 0,
+        isUsingMockData: false
+      };
+    }
+
+    // Get logs for this trip
+    const qrLogs = getQRScanLogsForTrip(tripSchedule.id);
+    const cashTickets = getCashTicketLogsForTrip(tripSchedule.id);
+
+    // Calculate QR scan data
+    const successfulQRScans = qrLogs.filter(log => log.status === 'success');
+    const failedQRScans = qrLogs.filter(log => log.status === 'failed');
+    const qrPassengers = successfulQRScans.reduce((total, log) => total + log.passengerCount, 0);
+    const qrRevenue = successfulQRScans.reduce((total, log) => total + log.ticketFee, 0);
+
+    // Calculate cash ticket data
+    const cashPassengers = cashTickets.reduce((total, ticket) => total + ticket.passengerCount, 0);
+    const cashRevenue = cashTickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
+
+    // Calculate totals
+    const totalPassengers = qrPassengers + cashPassengers;
+    const totalTickets = successfulQRScans.length + cashTickets.length;
+    const totalRevenue = qrRevenue + cashRevenue;
+    const totalQRAttempts = qrLogs.length;
+    const successRate = totalQRAttempts > 0 ? Math.round((successfulQRScans.length / totalQRAttempts) * 100) : 0;
+
+    
+    if (totalPassengers === 0 && totalTickets === 0 && totalRevenue === 0) {
+      const mockData = getMockDataForTrip(tripSchedule.id);
+      return {
+        totalPassengers: mockData.passengers,
+        totalRevenue: mockData.cashRevenue + mockData.digitalRevenue,
+        totalTickets: mockData.tickets,
+        qrScans: {
+          successful: mockData.qrScans.successful,
+          failed: mockData.qrScans.failed,
+          successRate: mockData.qrScans.successRate
+        },
+        cashRevenue: mockData.cashRevenue,
+        digitalRevenue: mockData.digitalRevenue,
+        isUsingMockData: true
+      };
+    }
+
+    // Use real data if available
+    return {
+      totalPassengers: totalPassengers,
+      totalRevenue: totalRevenue,
+      totalTickets: totalTickets,
+      qrScans: {
+        successful: successfulQRScans.length,
+        failed: failedQRScans.length,
+        successRate: successRate
+      },
+      cashRevenue: cashRevenue,
+      digitalRevenue: qrRevenue,
+      isUsingMockData: false
+    };
+  }, [tripSchedule?.id, getQRScanLogsForTrip, getCashTicketLogsForTrip]);
+
+  // Helper functions
+  const formatTime = (timeStr: string): string => {
+    try {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours, 10);
+      const min = parseInt(minutes, 10);
+      
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      
+      return `${displayHour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')} ${ampm}`;
+    } catch (error) {
+      return timeStr;
     }
   };
+
+  const formatDate = (dateStr: string): string => {
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return dateStr;
+    }
+  };
+
+  const calculateDuration = (startTime: string, endTime: string): string => {
+    try {
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+      
+      let duration = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+      if (duration < 0) duration += 24 * 60; // Handle overnight trips
+      
+      const hours = Math.floor(duration / 60);
+      const minutes = duration % 60;
+      
+      return `${hours}h ${minutes}m`;
+    } catch (error) {
+      return 'N/A';
+    }
+  };
+
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'completed': return '#22C55E';
+      case 'ongoing': return '#0066FF';
+      case 'cancelled': return '#FF3B30';
+      default: return '#999';
+    }
+  };
+
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'completed': return 'Completed';
+      case 'ongoing': return 'Ongoing';
+      case 'cancelled': return 'Cancelled';
+      default: return status;
+    }
+  };
+
+  // If no trip found, show error
+  if (!tripSchedule) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color="#FF3B30" />
+          <Text style={styles.errorTitle}>Trip Not Found</Text>
+          <Text style={styles.errorMessage}>The requested trip could not be found.</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Trip Overview</Text>
-          <Text style={styles.headerSubtitle}>Completed Journey</Text>
-        </View>
-        <TouchableOpacity style={styles.moreButton}>
-          <MaterialIcons name="more-vert" size={24} color="#333" />
-        </TouchableOpacity>
-      </View> */}
+     
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Route Card */}
@@ -69,21 +210,27 @@ export default function TripOverviewScreen() {
                 <Ionicons name="bus" size={24} color="#0066FF" />
               </View>
               <View>
-                <Text style={styles.routeNumber}>Route {tripData.route.number}</Text>
-                <Text style={styles.busId}>Bus #{tripData.route.busId}</Text>
+                <Text style={styles.routeNumber}>{tripSchedule.route}</Text>
+                <Text style={styles.busId}>Bus  {tripSchedule.busId}</Text>
               </View>
             </View>
             
-            <View style={styles.statusBadge}>
-              <Ionicons name="checkmark" size={14} color="#22C55E" />
-              <Text style={styles.statusText}>Completed</Text>
+            <View style={[styles.statusBadge, { backgroundColor: tripSchedule.status === 'completed' ? '#ECFDF5' : '#FEF2F2' }]}>
+              <Ionicons 
+                name={tripSchedule.status === 'completed' ? "checkmark" : "close"} 
+                size={14} 
+                color={getStatusColor(tripSchedule.status)} 
+              />
+              <Text style={[styles.statusText, { color: getStatusColor(tripSchedule.status) }]}>
+                {getStatusText(tripSchedule.status)}
+              </Text>
             </View>
           </View>
 
           <View style={styles.routeProgressContainer}>
             <View style={styles.locationTimeContainer}>
-              <Text style={styles.locationText}>{tripData.route.from}</Text>
-              <Text style={styles.timeText}>{tripData.route.departureTime}</Text>
+              <Text style={styles.locationText}>{tripSchedule.fromLocation || 'Start'}</Text>
+              <Text style={styles.timeText}>{formatTime(tripSchedule.startTime)}</Text>
             </View>
 
             <View style={styles.progressLineContainer}>
@@ -91,12 +238,14 @@ export default function TripOverviewScreen() {
                 <View style={styles.progressDot1} />
                 <View style={styles.progressDot2} />
               </View>
-              <Text style={styles.durationText}>{tripData.route.duration}</Text>
+              <Text style={styles.durationText}>
+                {calculateDuration(tripSchedule.startTime, tripSchedule.endTime)}
+              </Text>
             </View>
 
             <View style={styles.locationTimeContainer}>
-              <Text style={styles.locationText}>{tripData.route.to}</Text>
-              <Text style={styles.timeText}>{tripData.route.arrivalTime}</Text>
+              <Text style={styles.locationText}>{tripSchedule.toLocation || 'End'}</Text>
+              <Text style={styles.timeText}>{formatTime(tripSchedule.endTime)}</Text>
             </View>
           </View>
         </View>
@@ -107,7 +256,7 @@ export default function TripOverviewScreen() {
             <View style={styles.statsIconCircle}>
               <Ionicons name="people" size={20} color="#0066FF" />
             </View>
-            <Text style={styles.statsNumber}>{tripData.passengers}</Text>
+            <Text style={styles.statsNumber}>{tripSummaryData.totalPassengers}</Text>
             <Text style={styles.statsLabel}>Passengers</Text>
           </View>
 
@@ -115,7 +264,7 @@ export default function TripOverviewScreen() {
             <View style={[styles.statsIconCircle, { backgroundColor: '#F0E6FF' }]}>
               <MaterialIcons name="confirmation-number" size={20} color="#7C3AED" />
             </View>
-            <Text style={styles.statsNumber}>{tripData.tickets}</Text>
+            <Text style={styles.statsNumber}>{tripSummaryData.totalTickets}</Text>
             <Text style={styles.statsLabel}>Tickets</Text>
           </View>
         </View>
@@ -137,69 +286,31 @@ export default function TripOverviewScreen() {
               <MaterialIcons name="money" size={18} color="#22C55E" />
               <Text style={styles.revenueTypeText}>Cash</Text>
             </View>
-            <Text style={styles.revenueAmount}>Rs {tripData.revenue.cash.toLocaleString()}</Text>
+            <Text style={styles.revenueAmount}>Rs {tripSummaryData.cashRevenue.toLocaleString()}</Text>
           </View>
 
           <View style={[styles.revenueRow, styles.revenueRowBorder]}>
             <View style={styles.revenueTypeContainer}>
-              <Ionicons name="grid" size={18} color="#0066FF" />
-              <Text style={styles.revenueTypeText}>Digital</Text>
+              <Ionicons name="qr-code" size={18} color="#0066FF" />
+              <Text style={styles.revenueTypeText}>Digital (QR)</Text>
             </View>
-            <Text style={styles.revenueAmount}>Rs {tripData.revenue.digital.toLocaleString()}</Text>
+            <Text style={styles.revenueAmount}>Rs {tripSummaryData.digitalRevenue.toLocaleString()}</Text>
           </View>
 
           <View style={styles.revenueTotalRow}>
             <Text style={styles.revenueTotalText}>Total Revenue</Text>
-            <Text style={styles.revenueTotalAmount}>Rs {tripData.revenue.total.toLocaleString()}</Text>
-          </View>
-        </View>
-
-        {/* QR Validations Card */}
-        <View style={styles.card}>
-          <View style={styles.qrHeaderRow}>
-            <View style={[styles.iconCircle, { backgroundColor: '#EEF3FF' }]}>
-              <MaterialIcons name="qr-code-scanner" size={20} color="#0066FF" />
-            </View>
-            <View>
-              <Text style={styles.qrTitle}>QR Validations</Text>
-              <Text style={styles.qrSubtitle}>Digital payment processing</Text>
-            </View>
-          </View>
-
-          <View style={styles.validationStatsRow}>
-            <View style={styles.successValidationCard}>
-              <Text style={styles.validationNumber}>{tripData.qrValidations.successful}</Text>
-              <Text style={styles.validationLabel}>Successful</Text>
-            </View>
-
-            <View style={styles.failedValidationCard}>
-              <Text style={styles.failedNumber}>{tripData.qrValidations.failed}</Text>
-              <Text style={styles.failedLabel}>Failed</Text>
-            </View>
-          </View>
-
-          <View style={styles.successRateContainer}>
-            <View style={styles.successRateHeader}>
-              <Text style={styles.successRateLabel}>Success Rate</Text>
-              <Text style={styles.successRateValue}>{tripData.qrValidations.successRate}%</Text>
-            </View>
-            <View style={styles.progressBarContainer}>
-              <View 
-                style={[
-                  styles.progressBarFill, 
-                  {width: `${tripData.qrValidations.successRate}%`}
-                ]} 
-              />
-            </View>
+            <Text style={styles.revenueTotalAmount}>Rs {tripSummaryData.totalRevenue.toLocaleString()}</Text>
           </View>
         </View>
 
         {/* Trip Completion Card */}
         <View style={styles.completionCard}>
-          <Text style={styles.completionHeader}>Trip completed on</Text>
-          <Text style={styles.completionDate}>{tripData.completion.date}</Text>
+          <Text style={styles.completionHeader}>
+            {tripSchedule.status === 'completed' ? 'Trip completed on' : 'Trip scheduled for'}
+          </Text>
+          <Text style={styles.completionDate}>{formatDate(tripSchedule.date)}</Text>
           <Text style={styles.completionDuration}>
-            Journey Duration: {tripData.completion.duration}
+            Journey Duration: {calculateDuration(tripSchedule.startTime, tripSchedule.endTime)}
           </Text>
         </View>
         
@@ -307,7 +418,7 @@ const styles = StyleSheet.create({
     width: 80,
   },
   locationText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '500',
     marginBottom: 4,
   },
@@ -436,86 +547,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#22C55E',
   },
-  qrHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  qrTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  qrSubtitle: {
-    fontSize: 13,
-    color: '#666',
-  },
-  validationStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  successValidationCard: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 8,
-    padding: 16,
-    flex: 1,
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  validationNumber: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#22C55E',
-    marginBottom: 4,
-  },
-  validationLabel: {
-    fontSize: 14,
-    color: '#22C55E',
-  },
-  failedValidationCard: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    padding: 16,
-    flex: 1,
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  failedNumber: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FF3B30',
-    marginBottom: 4,
-  },
-  failedLabel: {
-    fontSize: 14,
-    color: '#FF3B30',
-  },
-  successRateContainer: {
-    marginTop: 8,
-  },
-  successRateHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  successRateLabel: {
-    fontSize: 15,
-  },
-  successRateValue: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#F2F2F2',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#22C55E',
-    borderRadius: 4,
-  },
   completionCard: {
     backgroundColor: '#EEF3FF',
     borderRadius: 12,
@@ -537,5 +568,29 @@ const styles = StyleSheet.create({
   completionDuration: {
     fontSize: 14,
     color: '#0066FF',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FF3B30',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#0066FF',
+    fontWeight: '600',
   },
 });
