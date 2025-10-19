@@ -23,7 +23,7 @@ export default function TicketPrintingScreen() {
     // Start progress animation - 4 seconds total
     Animated.timing(progressAnimation, {
       toValue: 1,
-      duration: 10000, // Changed to 4000ms (4 seconds)
+      duration: 10000, 
       useNativeDriver: false,
     }).start();
     
@@ -55,7 +55,7 @@ export default function TicketPrintingScreen() {
           // Navigate to confirmation screen after completion
           setTimeout(() => {
             router.replace('/Ticket/ticketIssuePage');
-          }, 100);
+          }, 3000);
           return 1;
         }
         return newProgress;
