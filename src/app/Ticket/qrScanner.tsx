@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { QRScanLog, useTicket } from '../../contexts/TicketContext';
 
-
+// Define types for scan history items
 interface ScanHistoryItem {
   id: string;
   name?: string;
@@ -23,20 +23,20 @@ interface ScanHistoryItem {
   end?: string;
   seatNumber?: string;
   passengerCount?: number;
-  ticketFee?: number; 
+  ticketFee?: number; // can be float or integer
   status: 'success' | 'failed';
   timestamp: Date;
   ticketId?: string;
 }
 
-
+// Interface for passenger details
 interface PassengerDetails {
   name: string;
   start: string;
   end: string;
   seatNumber: string;
   passengerCount?: number;
-  ticketFee?: number; 
+  ticketFee?: number; // can be float or integer
   paymentStatus: string;
   ticketId: string;
 }
@@ -45,7 +45,7 @@ export default function QRScannerScreen() {
   // Get ticket context
   const { qrScanLogs, addQRScanLog } = useTicket();
   
-  
+  // Camera permission state using the new hooks
   const [permission, requestPermission] = useCameraPermissions();
   
   // Scanning states
@@ -59,7 +59,7 @@ export default function QRScannerScreen() {
   // Store the raw QR data for validation
   const [pendingQRData, setPendingQRData] = useState<string | null>(null);
   
-  
+  // Use recent scans from context instead of local state
   const recentScans = qrScanLogs.slice(0, 10).map(log => ({
     id: log.id,
     name: log.name,
@@ -93,7 +93,7 @@ export default function QRScannerScreen() {
       try {
         // Simulate ticket validation logic
         if (data.startsWith('TICKET:')) {
-         
+          // Successful scan - only show data for validation, don't add to logs yet
           const ticketData = JSON.parse(data.replace('TICKET:', ''));
           const passengerInfo = {
             name: ticketData.name || 'Unknown',
@@ -186,7 +186,7 @@ export default function QRScannerScreen() {
       // Parse the pending QR data again to create the log entry
       const ticketData = JSON.parse(pendingQRData.replace('TICKET:', ''));
       
-      
+      // Add to context scan logs only when validated
       const scanLog: QRScanLog = {
         id: Date.now().toString(),
         name: ticketData.name || 'Unknown',
@@ -204,7 +204,7 @@ export default function QRScannerScreen() {
       
       addQRScanLog(scanLog);
       
-      
+      // Show success message and reset scanner
       Alert.alert(
         "Ticket Validated",
         `${passengerDetails.name}'s ticket has been successfully validated and logged.`,
