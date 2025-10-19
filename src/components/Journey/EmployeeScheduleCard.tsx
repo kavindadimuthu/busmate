@@ -180,7 +180,7 @@ export default function EmployeeScheduleCard({ item }: Props) {
               // onPress={() => router.push(`/Journey/journeyReport?id=${item.id}`)}
               onPress={() => router.push(`/(tabs)/journey`)}
             >
-              <Text style={styles.secondaryButtonText}>Go to Journey</Text>
+              <Text style={styles.secondaryButtonText}>View Journey</Text>
             </TouchableOpacity>
           </>
         )}

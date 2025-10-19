@@ -248,17 +248,27 @@ export default function TicketsScreen() {
   }
 
   // Create backend data for API - all IDs as strings to match backend DTO
+  // const backendData: IssueTicketRequest = {
+  //   // conductorId: user.id.toString(),
+  //   conductorId: user.id.toString(),
+  //   busId: ongoingTrip.busId.toString(),
+  //   tripId: ongoingTrip.id.toString(),
+  //   startLocationId: fromStop?.stopId || 'unknown',
+  //   endLocationId: toStop?.stopId || 'unknown',
+  //   fareAmount: parseFloat(totalFare.toFixed(2)),
+  //   paymentMethod: paymentMethod,
+  //   transactionRef: `TXN-${Date.now()}-${ticketId}`
+  // };
   const backendData: IssueTicketRequest = {
-    // conductorId: user.id.toString(),
-    conductorId: user.id.toString(),
-    busId: ongoingTrip.busId.toString(),
-    tripId: ongoingTrip.id.toString(),
-    startLocationId: fromStop?.stopId || 'unknown',
-    endLocationId: toStop?.stopId || 'unknown',
-    fareAmount: parseFloat(totalFare.toFixed(2)),
-    paymentMethod: paymentMethod,
-    transactionRef: `TXN-${Date.now()}-${ticketId}`
-  };
+    conductorId: "325",        // Short numeric string
+  busId: "5554",            // Numeric only
+  tripId: "0101025",        // Short numeric
+  startLocationId: "33333666",  // 8 digits
+  endLocationId: "33333336",    // 8 digits
+  fareAmount: 62,
+  paymentMethod: "CASH", 
+  transactionRef: "900760"
+  };
 
     console.log('🎫 Backend data validation:', {
       conductorId: backendData.conductorId,
