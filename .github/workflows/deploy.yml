@@ -23,6 +23,7 @@ jobs:
       - name: Build Spring Boot App
         run: |
           ./mvnw clean package -DskipTests
+          ls -l target/*.jar  # Verify the JAR exists
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.6
@@ -30,7 +31,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "Dockerfile,target/*.jar"
+          source: "Dockerfile target/*.jar"  # Space-separated, NOT comma
           target: "~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}"
 
       - name: Deploy via SSH
@@ -41,7 +42,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}
+            ls -l  # Verify files are present
             docker stop ${{ github.event.repository.name }} || true
             docker rm ${{ github.event.repository.name }} || true
-            docker build -t ${{ github.event.repository.name }}-image .
-            docker run -d --network=host --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}-image
+            export DOCKER_BUILDKIT=1
+            docker build -t ${{ github.event.repository.name }}-image:latest .
+            docker run -d --network=host --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}-image:latest
