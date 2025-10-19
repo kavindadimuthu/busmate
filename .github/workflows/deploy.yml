@@ -40,7 +40,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "Dockerfile,target/app.jar"
           target: "~/app-${{ github.event.repository.name }}"
-          strip_prefix: "target/"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
@@ -50,7 +49,14 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/app-${{ github.event.repository.name }}
-            ls -l
+            ls -la
+            # Rename JAR if needed (in case it has a different name)
+            if [ -f target/app.jar ]; then
+              cp target/app.jar ./app.jar
+            else
+              echo "JAR file not found in target directory!"
+              exit 1
+            fi
             docker stop ${{ github.event.repository.name }} 2>/dev/null || true
             docker rm ${{ github.event.repository.name }} 2>/dev/null || true
             docker build -t ${{ github.event.repository.name }}:latest .
