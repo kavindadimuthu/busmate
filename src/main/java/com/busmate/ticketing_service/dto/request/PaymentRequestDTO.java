@@ -19,5 +19,6 @@ public class PaymentRequestDTO {
     private BigDecimal fareAmount;
     private String paymentMethod;
     private String transactionRef;
+    private String seatNumber;
 
 }

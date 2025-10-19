@@ -50,6 +50,7 @@ public class PaymentServiceIMPL implements PaymentService {
             ticket.setEndLocationId(requestDTO.getEndLocationId());
             ticket.setFareAmount(requestDTO.getFareAmount());
             ticket.setIssuedAt(LocalDateTime.now());
+            ticket.setSeatNumber(requestDTO.getSeatNumber());
 
             if ("CASH".equalsIgnoreCase(requestDTO.getPaymentMethod())) {
                 // Set transaction details for cash payment
