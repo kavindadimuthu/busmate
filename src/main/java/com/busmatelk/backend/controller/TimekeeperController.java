@@ -47,7 +47,7 @@ public class TimekeeperController {
             TimekeeperDTO timekeeper = timekeeperService.getTimekeeperById(userId);
             return ResponseEntity.ok(timekeeper);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 
