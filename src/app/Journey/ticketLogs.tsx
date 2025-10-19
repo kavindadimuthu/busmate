@@ -1,15 +1,13 @@
 import { useTicket } from '@/contexts/TicketContext';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    SafeAreaView
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 
 export default function TicketLogsScreen() {
@@ -79,7 +77,7 @@ export default function TicketLogsScreen() {
               <FontAwesome5 name="money-bill-wave" size={20} color="#BF5AF2" />
               <Text style={styles.summaryValue}>
                 Rs. {(tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.ticketFee, 0) +
-                     tripCashTickets.reduce((total, ticket) => total + ticket.fareAmount, 0)).toLocaleString()}
+                     tripCashTickets.reduce((total, ticket) => total + ticket.fareAmount, 0)).toFixed(2)}
               </Text>
               <Text style={styles.summaryLabel}>Total Revenue</Text>
             </View>
@@ -121,6 +119,10 @@ export default function TicketLogsScreen() {
                 
                 <View style={styles.logDetails}>
                   <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Passenger Name:</Text>
+                    <Text style={styles.detailValue}>{log.name}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Passengers:</Text>
                     <Text style={styles.detailValue}>{log.passengerCount}</Text>
                   </View>
@@ -134,7 +136,7 @@ export default function TicketLogsScreen() {
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Fare:</Text>
-                    <Text style={styles.detailValue}>Rs. {log.ticketFee.toLocaleString()}</Text>
+                    <Text style={styles.detailValue}>Rs. {log.ticketFee.toFixed(2)}</Text>
                   </View>
                 </View>
               </View>
@@ -188,7 +190,7 @@ export default function TicketLogsScreen() {
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Fare:</Text>
-                    <Text style={styles.detailValue}>Rs. {ticket.fareAmount.toLocaleString()}</Text>
+                    <Text style={styles.detailValue}>Rs. {ticket.fareAmount.toFixed(2)}</Text>
                   </View>
                 </View>
               </View>

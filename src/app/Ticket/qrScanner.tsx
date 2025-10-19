@@ -1,17 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   Dimensions,
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  SafeAreaView
+  View
 } from 'react-native';
 import { QRScanLog, useTicket } from '../../contexts/TicketContext';
 
@@ -58,6 +59,28 @@ export default function QRScannerScreen() {
   
   // Store the raw QR data for validation
   const [pendingQRData, setPendingQRData] = useState<string | null>(null);
+  
+  // Validation loading state
+  const [isValidating, setIsValidating] = useState(false);
+  
+  // Animation for loading spinner
+  const spinValue = useRef(new Animated.Value(0)).current;
+  
+  // Start spinner animation when validating
+  useEffect(() => {
+    if (isValidating) {
+      const spinAnimation = Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      );
+      spinAnimation.start();
+      
+      return () => spinAnimation.stop();
+    }
+  }, [isValidating]);
   
   // Use recent scans from context instead of local state
   const recentScans = qrScanLogs.slice(0, 10).map(log => ({
@@ -176,47 +199,52 @@ export default function QRScannerScreen() {
     setScanStatus('ready');
     setPassengerDetails(null);
     setPendingQRData(null);
+    setIsValidating(false);
   };
 
   // Handle ticket validation
   const handleValidateTicket = () => {
-    if (!passengerDetails || !pendingQRData) return;
+    if (!passengerDetails || !pendingQRData || isValidating) return;
     
-    try {
-      // Parse the pending QR data again to create the log entry
-      const ticketData = JSON.parse(pendingQRData.replace('TICKET:', ''));
-      
-      // Add to context scan logs only when validated
-      const scanLog: QRScanLog = {
-        id: Date.now().toString(),
-        name: ticketData.name || 'Unknown',
-        qrCode: pendingQRData,
-        ticketId: ticketData.id || 'Unknown',
-        startStation: ticketData.start || 'Unknown',
-        endStation: ticketData.end || 'Unknown',
-        seatNumber: ticketData.seat || 'Not assigned',
-        passengerCount: ticketData.passengerCount || 1,
-        ticketFee: ticketData.ticketFee || 0,
-        paymentStatus: ticketData.paid ? 'Paid' : 'Unpaid',
-        scanTime: new Date(),
-        status: 'success'
-      };
-      
-      addQRScanLog(scanLog);
-      
-      // Show success message and reset scanner
-      Alert.alert(
-        "Ticket Validated",
-        `${passengerDetails.name}'s ticket has been successfully validated and logged.`,
-        [{ text: "OK", onPress: resetScanner }]
-      );
-    } catch (error) {
-      Alert.alert(
-        "Validation Error",
-        "There was an error validating the ticket. Please try scanning again.",
-        [{ text: "OK", onPress: resetScanner }]
-      );
-    }
+    setIsValidating(true);
+    
+    // Add 2 seconds loading delay
+    setTimeout(() => {
+      try {
+        // Parse the pending QR data again to create the log entry
+        const ticketData = JSON.parse(pendingQRData.replace('TICKET:', ''));
+        
+        // Add to context scan logs only when validated
+        const scanLog: QRScanLog = {
+          id: Date.now().toString(),
+          name: ticketData.name || 'Unknown',
+          qrCode: pendingQRData,
+          ticketId: ticketData.id || 'Unknown',
+          startStation: ticketData.start || 'Unknown',
+          endStation: ticketData.end || 'Unknown',
+          seatNumber: ticketData.seat || 'Not assigned',
+          passengerCount: ticketData.passengerCount || 1,
+          ticketFee: ticketData.ticketFee || 0,
+          paymentStatus: ticketData.paid ? 'Paid' : 'Unpaid',
+          scanTime: new Date(),
+          status: 'success'
+        };
+        
+        addQRScanLog(scanLog);
+        
+        // Reset scanner without alert
+        resetScanner();
+      } catch (error) {
+        Alert.alert(
+          "Validation Error",
+          "There was an error validating the ticket. Please try scanning again.",
+          [{ text: "OK", onPress: () => {
+            setIsValidating(false);
+            resetScanner();
+          }}]
+        );
+      }
+    }, 2000); // 2 seconds loading delay
   };
   
   // View scan history
@@ -422,13 +450,34 @@ export default function QRScannerScreen() {
         <TouchableOpacity 
           style={[
             styles.validateButton,
-            (!passengerDetails || scanStatus === 'scanning') && styles.disabledButton
+            (!passengerDetails || scanStatus === 'scanning' || isValidating) && styles.disabledButton
           ]} 
           onPress={handleValidateTicket}
-          disabled={!passengerDetails || scanStatus === 'scanning'}
+          disabled={!passengerDetails || scanStatus === 'scanning' || isValidating}
         >
-          <Ionicons name="checkmark" size={20} color="white" />
-          <Text style={styles.validateButtonText}>Validate Ticket</Text>
+          {isValidating ? (
+            <>
+              <Animated.View 
+                style={[
+                  styles.loadingSpinner,
+                  {
+                    transform: [{
+                      rotate: spinValue.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg']
+                      })
+                    }]
+                  }
+                ]}
+              />
+              <Text style={styles.validateButtonText}>Validating...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="checkmark" size={20} color="white" />
+              <Text style={styles.validateButtonText}>Validate Ticket</Text>
+            </>
+          )}
         </TouchableOpacity>
         
         {/* Scan History Button */}
@@ -739,6 +788,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  loadingSpinner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: 'white',
+    marginRight: 8,
   },
   historyButton: {
     backgroundColor: '#F5F5F5',
