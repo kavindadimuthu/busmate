@@ -5,9 +5,12 @@ import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedRespon
 import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
 import com.busmate.routeschedule.dto.common.LocationDto;
 import com.busmate.routeschedule.entity.Trip;
+import com.busmate.routeschedule.entity.Operator;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.repository.TripRepository;
+import com.busmate.routeschedule.repository.StopRepository;
+import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.service.passenger.PassengerTripService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +37,7 @@ import java.util.ArrayList;
 public class PassengerTripServiceImpl implements PassengerTripService {
 
     private final TripRepository tripRepository;
+    private final StopRepository stopRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -52,36 +56,58 @@ public class PassengerTripServiceImpl implements PassengerTripService {
         try {
             Page<Trip> tripPage;
             
-            // Priority order for filtering:
-            // 1. Both fromStopId and toStopId (origin-destination search)
-            // 2. Only fromStopId (trips from origin)
-            // 3. Only toStopId (trips to destination) 
-            // 4. Route ID
-            // 5. Date
-            // 6. Status
-            // 7. All trips
+            // Use combined filtering approach instead of priority-based
+            // This allows multiple filters to work together
             
             if (fromStopId != null && toStopId != null) {
                 log.info("Searching trips from stop {} to stop {}", fromStopId, toStopId);
-                tripPage = tripRepository.findTripsByFromStopAndToStop(fromStopId, toStopId, pageable);
+                tripPage = tripRepository.findTripsByStopsWithFilters(fromStopId, toStopId, pageable);
             } else if (fromStopId != null) {
                 log.info("Searching trips from stop {}", fromStopId);
-                tripPage = tripRepository.findTripsByFromStop(fromStopId, pageable);
+                tripPage = tripRepository.findTripsByFromStopWithFilters(fromStopId, pageable);
             } else if (toStopId != null) {
                 log.info("Searching trips to stop {}", toStopId);
-                tripPage = tripRepository.findTripsByToStop(toStopId, pageable);
+                tripPage = tripRepository.findTripsByToStopWithFilters(toStopId, pageable);
             } else if (routeId != null) {
+                log.info("Searching trips by route {}", routeId);
                 tripPage = tripRepository.findByScheduleRouteId(routeId, pageable);
-            } else if (date != null) {
-                tripPage = tripRepository.findByTripDate(date, pageable);
-            } else if (status != null) {
-                tripPage = tripRepository.findByStatus(status, pageable);
             } else {
-                // Get all trips with pagination
-                tripPage = tripRepository.findAll(pageable);
+                // Use simple method based on available filters
+                if (date != null && status != null) {
+                    log.info("Searching trips with date={} and status={}", date, status);
+                    tripPage = tripRepository.findByTripDateAndStatus(date, status, pageable);
+                } else if (date != null) {
+                    log.info("Searching trips with date={}", date);
+                    tripPage = tripRepository.findByTripDate(date, pageable);
+                } else if (status != null) {
+                    log.info("Searching trips with status={}", status);
+                    tripPage = tripRepository.findByStatus(status, pageable);
+                } else {
+                    log.info("Searching all trips");
+                    tripPage = tripRepository.findAll(pageable);
+                }
             }
 
-            List<PassengerTripResponse> tripResponses = tripPage.getContent().stream()
+            // Apply all filtering in memory for consistency and to avoid transaction issues
+            List<Trip> filteredTrips = tripPage.getContent().stream()
+                    .filter(trip -> {
+                        // Date filter
+                        if (date != null && !date.equals(trip.getTripDate())) {
+                            return false;
+                        }
+                        // Status filter
+                        if (status != null && !status.equals(trip.getStatus())) {
+                            return false;
+                        }
+                        // Operator filter
+                        if (!matchesOperatorFilter(trip, operatorType, operatorId)) {
+                            return false;
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+
+            List<PassengerTripResponse> tripResponses = filteredTrips.stream()
                     .map(this::toPassengerTripResponse)
                     .collect(Collectors.toList());
 
@@ -195,7 +221,23 @@ public class PassengerTripServiceImpl implements PassengerTripService {
     private PassengerTripResponse toPassengerTripResponse(Trip trip,
             Boolean includeRoute, Boolean includeStops, Boolean includeBus, Boolean includeTracking) {
         
-        // For basic trip response, get minimal data from the trip entity
+        try {
+            // Get detailed trip information with all related data
+            Object[] tripDetails = tripRepository.getTripWithFullDetails(trip.getId());
+            
+            if (tripDetails != null && tripDetails.length > 0) {
+                // Use the detailed method to build the response
+                return buildDetailedTripResponse(tripDetails, includeRoute, includeStops, includeBus, includeTracking);
+            }
+        } catch (Exception e) {
+            log.warn("Error loading detailed trip information for trip {}: {}", trip.getId(), e.getMessage());
+        }
+        
+        // Fallback to basic mapping if detailed query fails
+        return buildBasicTripResponse(trip, includeBus);
+    }
+    
+    private PassengerTripResponse buildBasicTripResponse(Trip trip, Boolean includeBus) {
         PassengerTripResponse.PassengerTripResponseBuilder builder = PassengerTripResponse.builder()
                 .tripId(trip.getId())
                 .scheduledDeparture(trip.getTripDate().atTime(trip.getScheduledDepartureTime()))
@@ -228,6 +270,24 @@ public class PassengerTripServiceImpl implements PassengerTripService {
         if (trip.getSchedule() != null && trip.getSchedule().getRoute() != null) {
             builder.routeName(trip.getSchedule().getRoute().getName())
                    .distance(trip.getSchedule().getRoute().getDistanceKm());
+        }
+
+        // Try to populate operator information from trip relations
+        try {
+            if (trip.getPassengerServicePermit() != null && 
+                trip.getPassengerServicePermit().getOperator() != null) {
+                builder.operator(PassengerRouteResponse.PassengerOperatorSummary.builder()
+                        .name(trip.getPassengerServicePermit().getOperator().getName())
+                        .type(trip.getPassengerServicePermit().getOperator().getOperatorType().toString())
+                        .build());
+            } else if (trip.getBus() != null && trip.getBus().getOperator() != null) {
+                builder.operator(PassengerRouteResponse.PassengerOperatorSummary.builder()
+                        .name(trip.getBus().getOperator().getName())
+                        .type(trip.getBus().getOperator().getOperatorType().toString())
+                        .build());
+            }
+        } catch (Exception e) {
+            log.debug("Could not load operator info for trip {}: {}", trip.getId(), e.getMessage());
         }
 
         // Set default values for missing data
@@ -541,23 +601,49 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                 builder.fare(calculateFare(route.getDistanceKm()));
 
                 if (includeRoute) {
-                    // Add departure and arrival stops
+                    // Add departure and arrival stops with actual stop details
                     if (route.getStartStopId() != null) {
-                        // Find start stop details - we need to query the stop repository
-                        // For now, create basic stop summary
-                        var departureStop = PassengerRouteResponse.PassengerStopSummary.builder()
-                                .id(route.getStartStopId())
-                                .name("Departure Stop") // Will be enhanced when we query stop details
-                                .build();
-                        builder.departureStop(departureStop);
+                        try {
+                            Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
+                            if (startStop != null) {
+                                var departureStop = PassengerRouteResponse.PassengerStopSummary.builder()
+                                        .id(startStop.getId())
+                                        .name(startStop.getName())
+                                        .city(startStop.getLocation() != null ? startStop.getLocation().getCity() : null)
+                                        .location(startStop.getLocation() != null ? 
+                                            buildLocationDto(
+                                                startStop.getLocation().getLatitude(), 
+                                                startStop.getLocation().getLongitude(), 
+                                                startStop.getLocation().getCity()
+                                            ) : null)
+                                        .build();
+                                builder.departureStop(departureStop);
+                            }
+                        } catch (Exception e) {
+                            log.debug("Could not load departure stop details for trip {}: {}", trip.getId(), e.getMessage());
+                        }
                     }
                     
                     if (route.getEndStopId() != null) {
-                        var arrivalStop = PassengerRouteResponse.PassengerStopSummary.builder()
-                                .id(route.getEndStopId())
-                                .name("Arrival Stop") // Will be enhanced when we query stop details
-                                .build();
-                        builder.arrivalStop(arrivalStop);
+                        try {
+                            Stop endStop = stopRepository.findById(route.getEndStopId()).orElse(null);
+                            if (endStop != null) {
+                                var arrivalStop = PassengerRouteResponse.PassengerStopSummary.builder()
+                                        .id(endStop.getId())
+                                        .name(endStop.getName())
+                                        .city(endStop.getLocation() != null ? endStop.getLocation().getCity() : null)
+                                        .location(endStop.getLocation() != null ? 
+                                            buildLocationDto(
+                                                endStop.getLocation().getLatitude(), 
+                                                endStop.getLocation().getLongitude(), 
+                                                endStop.getLocation().getCity()
+                                            ) : null)
+                                        .build();
+                                builder.arrivalStop(arrivalStop);
+                            }
+                        } catch (Exception e) {
+                            log.debug("Could not load arrival stop details for trip {}: {}", trip.getId(), e.getMessage());
+                        }
                     }
                 }
             }
@@ -643,5 +729,40 @@ public class PassengerTripServiceImpl implements PassengerTripService {
         }
         // Simple fare calculation: base fare + distance rate
         return 25.0 + (distance * 3.5);
+    }
+
+    /**
+     * Check if a trip matches the operator filter criteria
+     */
+    private boolean matchesOperatorFilter(Trip trip, OperatorTypeEnum operatorType, UUID operatorId) {
+        // Check operator from PSP first, then from bus
+        Operator operator = null;
+        
+        if (trip.getPassengerServicePermit() != null && 
+            trip.getPassengerServicePermit().getOperator() != null) {
+            operator = trip.getPassengerServicePermit().getOperator();
+        } else if (trip.getBus() != null && trip.getBus().getOperator() != null) {
+            operator = trip.getBus().getOperator();
+        }
+        
+        // If no operator found and filters are specified, exclude this trip
+        if (operator == null && (operatorType != null || operatorId != null)) {
+            return false;
+        }
+        
+        // If operator found, check filters
+        if (operator != null) {
+            // Check operator type filter
+            if (operatorType != null && !operatorType.equals(operator.getOperatorType())) {
+                return false;
+            }
+            
+            // Check operator ID filter
+            if (operatorId != null && !operatorId.equals(operator.getId())) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
