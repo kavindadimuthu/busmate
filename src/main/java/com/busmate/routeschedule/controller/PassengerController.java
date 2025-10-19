@@ -332,10 +332,13 @@ public class PassengerController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime departureTimeTo,
             
             // Note: operatorType filtering works for trips because trips are linked to operators via PSP
-            @Parameter(description = "Operator type filter", example = "SLTB")
+            @Parameter(description = "Operator type filter", example = "PRIVATE")
             @RequestParam(required = false) OperatorTypeEnum operatorType,
             
-            @Parameter(description = "Trip status filter", example = "SCHEDULED")
+            @Parameter(description = "Specific operator ID filter", example = "123e4567-e89b-12d3-a456-426614174000")
+            @RequestParam(required = false) UUID operatorId,
+            
+            @Parameter(description = "Trip status filter", example = "active")
             @RequestParam(required = false) TripStatusEnum status,
             
             @Parameter(description = "Include only direct trips", example = "false")
@@ -347,14 +350,14 @@ public class PassengerController {
             @Parameter(description = "Page size", example = "20")
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size) {
         
-        log.info("Searching trips: fromStopId={}, toStopId={}, routeId={}, travelDate={}, status={}", 
-                fromStopId, toStopId, routeId, travelDate, status);
+        log.info("Searching trips: fromStopId={}, toStopId={}, routeId={}, travelDate={}, operatorType={}, operatorId={}, status={}", 
+                fromStopId, toStopId, routeId, travelDate, operatorType, operatorId, status);
         
         Pageable pageable = PageRequest.of(page, size);
         
         PassengerPaginatedResponse<PassengerTripResponse> trips = passengerTripService.searchTrips(
                 fromStopId, toStopId, null, null, routeId, travelDate, departureTimeFrom, departureTimeTo,
-                operatorType, null, status, null, null, null, pageable);
+                operatorType, operatorId, status, null, null, null, pageable);
         
         return ResponseEntity.ok(trips);
     }
@@ -414,8 +417,11 @@ public class PassengerController {
             @RequestParam(required = false) UUID routeId,
             
             // Note: operatorType filtering works for trips because trips are linked to operators via PSP
-            @Parameter(description = "Filter by operator type", example = "SLTB")
+            @Parameter(description = "Filter by operator type", example = "PRIVATE")
             @RequestParam(required = false) OperatorTypeEnum operatorType,
+            
+            @Parameter(description = "Filter by specific operator ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @RequestParam(required = false) UUID operatorId,
             
             @Parameter(description = "Latitude for location-based filtering", example = "6.9271")
             @RequestParam(required = false) @DecimalMin("-90.0") @DecimalMax("90.0") Double latitude,
@@ -432,13 +438,13 @@ public class PassengerController {
             @Parameter(description = "Page size", example = "20")
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size) {
         
-        log.info("Getting active trips: routeId={}, operatorType={}, location=({}, {}), radius={}", 
-                routeId, operatorType, latitude, longitude, radius);
+        log.info("Getting active trips: routeId={}, operatorType={}, operatorId={}, location=({}, {}), radius={}", 
+                routeId, operatorType, operatorId, latitude, longitude, radius);
         
         Pageable pageable = PageRequest.of(page, size);
         
         PassengerPaginatedResponse<PassengerTripResponse> activeTrips = passengerTripService.getActiveTrips(
-                routeId, null, null, latitude, longitude, radius, operatorType, null, null, null, pageable);
+                routeId, null, null, latitude, longitude, radius, operatorType, operatorId, null, null, pageable);
         
         return ResponseEntity.ok(activeTrips);
     }
