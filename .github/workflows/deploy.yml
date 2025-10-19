@@ -3,64 +3,128 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - "main"
-      - "test-deployment"
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Setup Java
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 3: Build Spring Boot JAR
-      - name: Build Spring Boot App
-        run: |
-          ./mvnw clean package -DskipTests
-          # Verify the JAR exists
-          ls -l target/*.jar
+      - name: Build JAR
+        run: mvn clean package -DskipTests
 
-      # Step 4: Copy Dockerfile and JAR to EC2
-      - name: Copy files to EC2
-        uses: appleboy/scp-action@v0.1.6
+      - name: Rename JAR
+        run: mv target/*.jar target/app.jar
+
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "Dockerfile target/*.jar"  # Use space, not comma
-          target: "~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}"
+          source: "target/app.jar"
+          target: "/home/ubuntu/${{ github.event.repository.name }}/"
 
-      # Step 5: Deploy on EC2
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy Docker container
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}
+            set -e
+            PROJECT_DIR="/home/ubuntu/${{ github.event.repository.name }}"
+            APP_NAME="${{ github.event.repository.name }}"
+
+            mkdir -p $PROJECT_DIR
+            cd $PROJECT_DIR
+
+            echo "=== Cleaning up old deployment ==="
             
-            # Stop & remove old container if exists
-            docker stop ${{ github.event.repository.name }} || true
-            docker rm ${{ github.event.repository.name }} || true
+            # Stop container gracefully with timeout
+            if docker ps -q --filter "name=$APP_NAME" | grep -q .; then
+              echo "Stopping existing container..."
+              docker stop $APP_NAME --time=10 || true
+              sleep 2
+            fi
 
-            # Enable BuildKit (modern Docker builder)
-            export DOCKER_BUILDKIT=1
+            # Remove old container
+            if docker ps -aq --filter "name=$APP_NAME" | grep -q .; then
+              echo "Removing old container..."
+              docker rm -f $APP_NAME || true
+            fi
 
-            # Build latest Docker image
-            docker build -t ${{ github.event.repository.name }}:latest .
+            # Remove old images to prevent conflicts
+            if docker images -q $APP_NAME | grep -q .; then
+              echo "Removing old images..."
+              docker rmi -f $APP_NAME || true
+            fi
 
-            # Remove any old dangling images to save space
-            docker image prune -af
+            # Clean up any containers using port 8083
+            docker ps -q --filter "publish=8083" | xargs -r docker stop --time=10 || true
+            docker ps -aq --filter "publish=8083" | xargs -r docker rm -f || true
 
-            # Run the new container in detached mode using host network
-            docker run -d --network=host --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}:latest
+            echo "=== Building new deployment ==="
+
+            # Create optimized Dockerfile
+            cat <<'EOF' > Dockerfile
+            FROM openjdk:17-jdk-slim
+            WORKDIR /app
+            COPY app.jar app.jar
+            EXPOSE 8083
+            ENTRYPOINT ["java", "-jar", "app.jar"]
+            EOF
+
+            echo "Building Docker image..."
+            docker build --no-cache -t $APP_NAME .
+
+            echo "Starting new container..."
+            docker run -d \
+              --name $APP_NAME \
+              -p 8083:8083 \
+              --restart=unless-stopped \
+              $APP_NAME
+
+            echo "=== Verifying deployment ==="
+            
+            # Wait for container to start and stabilize
+            echo "Waiting for container to stabilize..."
+            sleep 15
+            
+            # Check if container is running
+            if ! docker ps --filter "name=$APP_NAME" --filter "status=running" | grep -q $APP_NAME; then
+              echo "ERROR: Container failed to start"
+              docker logs $APP_NAME --tail=50
+              exit 1
+            fi
+
+            # Wait a bit more for application to fully initialize
+            echo "Waiting for application to fully initialize..."
+            sleep 15
+            
+            # Final container health check
+            if docker ps --filter "name=$APP_NAME" --filter "status=running" | grep -q $APP_NAME; then
+              echo "✅ Container is running successfully!"
+              echo "📋 Container status:"
+              docker ps --filter "name=$APP_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+              echo ""
+              echo "📊 Recent application logs:"
+              docker logs $APP_NAME --tail=10
+            else
+              echo "❌ Container failed to maintain running state"
+              docker logs $APP_NAME --tail=50
+              exit 1
+            fi
+
+            echo "=== Deployment completed successfully ==="
+            echo "🚀 Application is running at http://$(curl -s http://checkip.amazonaws.com):8083"
+            echo "📚 Swagger UI: http://$(curl -s http://checkip.amazonaws.com):8083/swagger-ui.html"
