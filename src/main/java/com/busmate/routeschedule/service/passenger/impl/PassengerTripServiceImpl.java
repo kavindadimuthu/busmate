@@ -6,11 +6,13 @@ import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
 import com.busmate.routeschedule.dto.common.LocationDto;
 import com.busmate.routeschedule.entity.Trip;
 import com.busmate.routeschedule.entity.Operator;
+import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.repository.TripRepository;
 import com.busmate.routeschedule.repository.StopRepository;
-import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.repository.RouteStopRepository;
 import com.busmate.routeschedule.service.passenger.PassengerTripService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +40,7 @@ public class PassengerTripServiceImpl implements PassengerTripService {
 
     private final TripRepository tripRepository;
     private final StopRepository stopRepository;
+    private final RouteStopRepository routeStopRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -524,6 +527,8 @@ public class PassengerTripServiceImpl implements PassengerTripService {
     
     private PassengerTripResponse.PassengerIntermediateStop buildIntermediateStop(Object[] stopData) {
         try {
+            log.debug("Building intermediate stop from data array: {}", java.util.Arrays.toString(stopData));
+            
             Integer stopOrder = getIntegerValue(stopData, 0, 0);
             UUID stopId = stopData[1] != null ? UUID.fromString(stopData[1].toString()) : null;
             String stopName = getStringValue(stopData, 2, "Unknown Stop");
@@ -532,6 +537,9 @@ public class PassengerTripServiceImpl implements PassengerTripService {
             Double longitude = getDoubleValue(stopData, 5, null);
             LocalTime arrivalTime = stopData[6] != null ? (LocalTime) stopData[6] : null;
             LocalTime departureTime = stopData[7] != null ? (LocalTime) stopData[7] : null;
+
+            log.debug("Parsed stop data - ID: {}, Name: {}, City: {}, Lat: {}, Lng: {}", 
+                     stopId, stopName, stopCity, latitude, longitude);
 
             LocationDto location = null;
             if (latitude != null && longitude != null) {
@@ -550,7 +558,10 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                     .departureTime(departureTime != null ? departureTime.format(formatter) : null)
                     .build();
         } catch (Exception e) {
-            log.error("Error building intermediate stop from data: {}", e.getMessage());
+            log.error("Error building intermediate stop from data: {}", e.getMessage(), e);
+            log.error("Data array length: {}, contents: {}", 
+                     stopData != null ? stopData.length : 0, 
+                     stopData != null ? java.util.Arrays.toString(stopData) : "null");
             return PassengerTripResponse.PassengerIntermediateStop.builder()
                     .name("Unknown Stop")
                     .build();
@@ -702,12 +713,41 @@ public class PassengerTripServiceImpl implements PassengerTripService {
             // Add intermediate stops if requested
             if (includeStops) {
                 try {
-                    List<Object[]> intermediateStopsData = tripRepository.getTripIntermediateStops(trip.getId());
-                    List<PassengerTripResponse.PassengerIntermediateStop> intermediateStops = 
-                            intermediateStopsData.stream()
-                                    .map(this::buildIntermediateStop)
-                                    .collect(Collectors.toList());
+                    List<PassengerTripResponse.PassengerIntermediateStop> intermediateStops = new ArrayList<>();
+                    
+                    if (trip.getSchedule() != null && trip.getSchedule().getRoute() != null) {
+                        var route = trip.getSchedule().getRoute();
+                        
+                        // Use RouteStopRepository to get ordered route stops
+                        List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+                        
+                        log.debug("Found {} route stops for route {}", routeStops.size(), route.getId());
+                        
+                        // Filter out first and last stops to get only intermediate stops
+                        if (routeStops.size() > 2) {
+                            for (int i = 1; i < routeStops.size() - 1; i++) {
+                                RouteStop routeStop = routeStops.get(i);
+                                Stop stop = routeStop.getStop();
+                                
+                                if (stop != null) {
+                                    log.debug("Building intermediate stop {} - {}", stop.getId(), stop.getName());
+                                    
+                                    var intermediateStop = PassengerTripResponse.PassengerIntermediateStop.builder()
+                                            .stopId(stop.getId())
+                                            .name(stop.getName())
+                                            .arrivalTime(null) // TODO: Get from schedule stops if available
+                                            .departureTime(null) // TODO: Get from schedule stops if available
+                                            .build();
+                                    
+                                    intermediateStops.add(intermediateStop);
+                                }
+                            }
+                        }
+                    }
+                    
+                    log.debug("Built {} intermediate stops for trip {}", intermediateStops.size(), trip.getId());
                     builder.intermediateStops(intermediateStops);
+                    
                 } catch (Exception e) {
                     log.warn("Error loading intermediate stops for trip {}: {}", trip.getId(), e.getMessage());
                     builder.intermediateStops(new ArrayList<>());

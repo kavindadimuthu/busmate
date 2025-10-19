@@ -410,7 +410,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     Object[] getTripWithFullDetails(@Param("tripId") UUID tripId);
     
     /**
-     * Get intermediate stops for a trip in order
+     * Get intermediate stops for a trip in order (excluding first and last stops)
      */
     @Query(value = """
         SELECT rs.stop_order,
@@ -428,6 +428,12 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
         INNER JOIN stop st ON rs.stop_id = st.id
         LEFT JOIN schedule_stop ss ON s.id = ss.schedule_id AND rs.id = ss.route_stop_id
         WHERE t.id = :tripId
+        AND rs.stop_order > 1  -- Exclude first stop
+        AND rs.stop_order < (
+            SELECT MAX(rs2.stop_order) 
+            FROM route_stop rs2 
+            WHERE rs2.route_id = r.id
+        )  -- Exclude last stop
         ORDER BY rs.stop_order
         """, nativeQuery = true)
     List<Object[]> getTripIntermediateStops(@Param("tripId") UUID tripId);
