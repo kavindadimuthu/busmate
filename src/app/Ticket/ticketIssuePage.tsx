@@ -89,28 +89,10 @@ export default function TicketConfirmationScreen() {
         } else {
           console.error(' Failed to store ticket:', result.error, '-', result.message);
           setStorageStatus('error');
-          
-          // Show user-friendly error message based on error type
-          setTimeout(() => {
-            Alert.alert(
-              'Ticket Issue Warning',
-              result.message || 'Failed to sync ticket with server. The ticket was generated locally.',
-              [{ text: 'OK' }]
-            );
-          }, 1000); // Delay to let UI render first
         }
       } catch (error: any) {
         console.error('Unexpected error storing ticket:', error);
         setStorageStatus('error');
-        
-        // Show generic error for unexpected issues
-        setTimeout(() => {
-          Alert.alert(
-            'Connection Error',
-            'Could not connect to server. The ticket was generated locally but may not be synced.',
-            [{ text: 'OK' }]
-          );
-        }, 1000);
       } finally {
         setIsStoring(false);
       }
