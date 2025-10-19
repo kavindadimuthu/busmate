@@ -7,7 +7,7 @@ import React from 'react';
 export default function TicketLayout() {
   const router = useRouter();
   
-  // Custom back button for returning to the previous screen
+  
   const BackButton = () => (
     <TouchableOpacity 
       onPress={() => router.back()}
@@ -21,7 +21,7 @@ export default function TicketLayout() {
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#0066FF', // Blue header to match your app's design
+          backgroundColor: '#0066FF', 
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
@@ -50,7 +50,7 @@ export default function TicketLayout() {
         name="qrScanner" 
         options={{
           title: "Scan Ticket",
-          headerShown: true, // Hide header for scanner
+          headerShown: true, 
           presentation: 'fullScreenModal',
         }}
       />
@@ -66,9 +66,9 @@ export default function TicketLayout() {
       <Stack.Screen 
         name="ticketPrintingpage" 
         options={{
-          headerShown: false, // Hide header for printing page
+          headerShown: false, 
           title: "Printing Ticket",
-          // presentation: 'card',
+          
         }}
       />
       

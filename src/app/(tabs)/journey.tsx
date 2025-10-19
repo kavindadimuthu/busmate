@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F7',
   },
   header: {
-    // REMOVED: marginTop: StatusBar.currentHeight, ← This was causing the gap
+   
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

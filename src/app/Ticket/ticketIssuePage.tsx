@@ -48,8 +48,8 @@ export default function TicketConfirmationScreen() {
         return;
       }
 
-      console.log('💾 Storing ticket to database...', JSON.stringify(ticketBackendData, null, 2));
-      console.log('🔍 Backend data validation:', {
+      console.log(' Storing ticket to database...', JSON.stringify(ticketBackendData, null, 2));
+      console.log(' Backend data validation:', {
         hasData: !!ticketBackendData,
         conductorId: ticketBackendData.conductorId,
         busId: ticketBackendData.busId,
