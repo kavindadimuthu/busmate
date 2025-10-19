@@ -26,18 +26,29 @@ export default function TicketConfirmationScreen() {
   const [isStoring, setIsStoring] = useState(false);
   const [storageStatus, setStorageStatus] = useState<'pending' | 'success' | 'error'>('pending');
 
-  // Use context data or fallback to sample data
-  const ticket: TicketDetails = ticketData || {
-    id: 'TK-2024-001573',
-    from: 'Colombo',
-    to: 'Kandy',
-    platform: 'Platform 2',
-    gate: 'Gate 5',
-    passengers: '2 Adults',
-    fare: 'Rs.12.50',
-    issuedOn: 'Dec 15, 2024 - 2:35 PM',
-    phoneNumber: '+94 77 123 4567'
-  };
+  // Check if ticket data is available
+  if (!ticketData) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor="#0066FF" />
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#FF3B30" />
+          <Text style={styles.errorTitle}>No Ticket Data</Text>
+          <Text style={styles.errorMessage}>
+            No ticket information available. Please go back and try again.
+          </Text>
+          <TouchableOpacity 
+            style={styles.errorButton} 
+            onPress={() => router.back()}
+          >
+            <Text style={styles.errorButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const ticket: TicketDetails = ticketData;
 
   // Store ticket to database when page loads
   useEffect(() => {
@@ -913,5 +924,36 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     color: '#555',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FF3B30',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  errorButton: {
+    backgroundColor: '#0066FF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  errorButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
