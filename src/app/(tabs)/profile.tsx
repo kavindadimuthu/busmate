@@ -11,9 +11,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();

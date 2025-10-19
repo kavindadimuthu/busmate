@@ -7,8 +7,8 @@ import {
   StatusBar,
   ScrollView,
   ActivityIndicator,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import BusLayout from '../../components/Journey/BusLayout';

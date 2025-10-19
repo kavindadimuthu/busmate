@@ -10,9 +10,9 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { QRScanLog, useTicket } from '../../contexts/TicketContext';
 
 // Define types for scan history items

@@ -14,8 +14,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Helper functions for status display
 function getStatusColor(status: string): string {

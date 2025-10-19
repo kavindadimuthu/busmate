@@ -13,9 +13,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOngoingTrip } from '../../hooks/employee/useOngoingTrip';
 import { journeyApi } from '../../services/api/journey';
 import { RouteStop } from '../../types/journey';

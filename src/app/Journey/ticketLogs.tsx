@@ -2,14 +2,14 @@ import { useTicket } from '@/contexts/TicketContext';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
+    SafeAreaView
 } from 'react-native';
 
 export default function TicketLogsScreen() {

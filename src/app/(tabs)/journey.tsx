@@ -17,9 +17,10 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 // Component for ongoing trip view
 function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {

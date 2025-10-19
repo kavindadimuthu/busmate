@@ -8,7 +8,6 @@ import * as Print from 'expo-print';
 import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Alert,
   Platform,
@@ -18,6 +17,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  SafeAreaView
 } from 'react-native';
 
 export default function TicketConfirmationScreen() {

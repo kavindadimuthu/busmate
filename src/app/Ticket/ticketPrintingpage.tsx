@@ -7,9 +7,9 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View
+  View,
+  SafeAreaView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TicketPrintingScreen() {
   const [progress, setProgress] = useState(0);
