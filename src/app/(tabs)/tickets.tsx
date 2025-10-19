@@ -227,7 +227,7 @@ export default function TicketsScreen() {
       to: toLocation,
       platform: 'Platform 1', // You can make this dynamic based on your logic
       gate: 'Gate A', // You can make this dynamic based on your logic
-      passengers: `${passengerCount} ${passengerCount === 1 ? 'Adult' : 'Adults'}`,
+      passengers: `${passengerCount} ${passengerCount === 1 ? 'Person' : 'Persons'}`,
       fare: `Rs. ${totalFare.toFixed(2)}`,
       issuedOn: `${currentDate} - ${currentTime}`,
       phoneNumber: phoneNumber || '+94 77 123 4567'

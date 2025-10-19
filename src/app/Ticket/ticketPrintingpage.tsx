@@ -23,7 +23,7 @@ export default function TicketPrintingScreen() {
     // Start progress animation - 4 seconds total
     Animated.timing(progressAnimation, {
       toValue: 1,
-      duration: 7000, // Changed to 4000ms (4 seconds)
+      duration: 10000, // Changed to 4000ms (4 seconds)
       useNativeDriver: false,
     }).start();
     
