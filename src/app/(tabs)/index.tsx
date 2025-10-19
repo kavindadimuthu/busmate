@@ -7,7 +7,7 @@ import { formatDate, formatTime, useNextTrip } from '@/hooks/employee/useNextTri
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
@@ -21,6 +21,11 @@ export default function HomeScreen() {
   
   // Pull-to-refresh state
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Shift state management
+  const [shiftStarted, setShiftStarted] = useState(false);
+  const [shiftStartTime, setShiftStartTime] = useState<string | null>(null);
+  const [startingShift, setStartingShift] = useState(false);
 
   // Handle pull-to-refresh
   const onRefresh = useCallback(async () => {
@@ -36,6 +41,59 @@ export default function HomeScreen() {
       setRefreshing(false);
     }
   }, [fetchProfile, refreshSchedules]);
+
+  // Handle shift start
+  const handleStartShift = async () => {
+    if (shiftStarted) return; // Prevent double clicks
+    
+    try {
+      setStartingShift(true);
+      
+      // Get current time
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Simulate API call delay (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update shift state
+      setShiftStarted(true);
+      setShiftStartTime(timeString);
+      
+      // Show success message
+      Alert.alert(
+        'Shift Started',
+        `Your shift has been started at ${timeString}`,
+        [{ text: 'OK' }]
+      );
+      
+    } catch (error) {
+      console.error('Failed to start shift:', error);
+      Alert.alert('Error', 'Failed to start shift. Please try again.');
+    } finally {
+      setStartingShift(false);
+    }
+  };
+
+  // Handle shift end
+  const handleEndShift = () => {
+    Alert.alert(
+      'End Shift',
+      'Are you sure you want to end your shift?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'End Shift',
+          style: 'destructive',
+          onPress: () => {
+            setShiftStarted(false);
+            setShiftStartTime(null);
+            Alert.alert('Shift Ended', 'Your shift has been ended successfully.');
+          },
+        },
+      ]
+    );
+  };
 
 
 
@@ -110,19 +168,19 @@ export default function HomeScreen() {
   const summarycard = [
     {
       icon: <Ionicons name="people" size={24} color="#0066FF" />,
-      value: '48',
+      value: '12',
       label: 'Passengers',
       backgroundColor: '#e6efff',
     },
     {
-      icon: <FontAwesome5 name="money-bill-wave" size={20} color="#00CC66" />,
-      value: '12,500',
+      icon: <FontAwesome5 name="money-bill-wave" size={16} color="#00CC66" />,
+      value: '1250',
       label: 'Collected',
       backgroundColor: '#e6fff2',
     },
     {
       icon: <MaterialCommunityIcons name="ticket-outline" size={24} color="#FFCC00" />,
-      value: '48',
+      value: '12',
       label: 'Tickets',
       backgroundColor: '#fff8e6',
     },
@@ -211,9 +269,9 @@ export default function HomeScreen() {
           <Text style={styles.nameText}>
             Conductor: {user?.fullName || user?.name || 'Loading...'}
           </Text>
-          <Text style={styles.infoText}>
-            Employee ID: {user?.employeeId || user?.id || 'Loading...'}
-          </Text>
+          {/* <Text style={styles.infoText}>
+            Employee ID: { user?.employeeId || user?.id || 'Loading...'}
+          </Text> */}
           <Text style={styles.infoText}>
             Date: {new Date().toLocaleDateString('en-LK', {
               month: 'long',
@@ -222,16 +280,46 @@ export default function HomeScreen() {
             })}
           </Text>
           
-          <TouchableOpacity 
-            style={styles.shiftButton}
-            onPress={() => {
-              // Handle shift start
-              // router.push('/active-shift');
-            }}
-          >
-            <Ionicons name="time-outline" size={20} color="white" style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Start Shift @ {markTime}</Text>
-          </TouchableOpacity>
+          {/* Shift Control Buttons */}
+          {shiftStarted ? (
+            // Show both buttons side by side when shift is started
+            <View style={styles.shiftButtonsContainer}>
+              <TouchableOpacity 
+                style={[styles.shiftButton, styles.shiftStartedButton, styles.halfWidthButton]}
+                disabled={true}
+              >
+                <Ionicons name="checkmark-circle" size={20} color="white" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Shift Started</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.endShiftButton, styles.halfWidthButton]}
+                onPress={handleEndShift}
+              >
+                <Ionicons name="stop-circle-outline" size={20} color="white" style={styles.buttonIcon} />
+                <Text style={styles.endShiftButtonText}>End Shift</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Show only start shift button when shift is not started
+            <TouchableOpacity 
+              style={[styles.shiftButton, startingShift && styles.disabledButton]}
+              onPress={handleStartShift}
+              disabled={startingShift}
+            >
+              {startingShift ? (
+                <>
+                  <ActivityIndicator size="small" color="white" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Starting Shift...</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="time-outline" size={20} color="white" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Start Shift @ {markTime}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
         
         {/* Quick Actions Section */}
@@ -464,6 +552,38 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.5,
+  },
+  shiftStartedButton: {
+    backgroundColor: '#4CAF50', // Green color for started shift
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  shiftButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  halfWidthButton: {
+    flex: 1,
+  },
+  endShiftButton: {
+    backgroundColor: '#FF3B30', // Red background
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+  },
+  endShiftButtonText: {
+    color: 'white', // White text for better contrast on red background
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   buttonIcon: {
     marginRight: 8,

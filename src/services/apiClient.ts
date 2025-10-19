@@ -93,7 +93,7 @@ class ApiClient {
               
               // For 403 errors, provide more specific message
               if (response.status === 403) {
-                errorMessage = 'Permission denied - Authentication or authorization failed';
+                errorMessage = 'cd ..';
                 errorDetails = errorText.substring(0, 200);
               } else {
                 errorMessage = `HTTP ${response.status}: Server returned non-JSON response`;
