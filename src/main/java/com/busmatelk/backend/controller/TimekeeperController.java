@@ -1,6 +1,5 @@
 package com.busmatelk.backend.controller;
 
-
 import com.busmatelk.backend.dto.TimekeeperDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,12 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/timekeeper")
-@CrossOrigin
+@CrossOrigin(origins = {
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://busmate-web-frontend.vercel.app"
+}, methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE,
+        RequestMethod.OPTIONS }, allowedHeaders = "*", allowCredentials = "true")
 public class TimekeeperController {
 
     @Autowired

@@ -13,14 +13,29 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(
-                            "http://localhost:3000", 
-                            "https://busmate-web-frontend.vercel.app"
-                        ) // list each frontend separately
-                        // .allowedOrigins("*") // Tempory CORS allowance for all URLs
-                        .allowedMethods("*") // GET, POST, PUT, etc.
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowedOriginPatterns(
+                                "http://localhost:3000",
+                                "http://localhost:3001",
+                                "https://busmate-web-frontend.vercel.app",
+                                "https://*.vercel.app",
+                                "https://*.netlify.app",
+                                "https://*.amazonaws.com",
+                                "https://*.elasticbeanstalk.com")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
+                        .allowedHeaders(
+                                "Origin",
+                                "Content-Type",
+                                "Accept",
+                                "Authorization",
+                                "Access-Control-Request-Method",
+                                "Access-Control-Request-Headers",
+                                "X-Requested-With",
+                                "Cache-Control")
+                        .exposedHeaders(
+                                "Access-Control-Allow-Origin",
+                                "Access-Control-Allow-Credentials")
+                        .allowCredentials(true)
+                        .maxAge(3600);
             }
         };
     }
