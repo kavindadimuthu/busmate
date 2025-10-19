@@ -142,7 +142,7 @@ export default function EmployeeScheduleCard({ item }: Props) {
       </View>
       
       {/* Passengers and Revenue (if available) */}
-      {(item.passengers !== undefined || item.revenue !== undefined) && (
+      {/* {(item.passengers !== undefined || item.revenue !== undefined) && (
         <>
           {item.passengers !== undefined && (
             <View style={styles.infoRow}>
@@ -162,7 +162,7 @@ export default function EmployeeScheduleCard({ item }: Props) {
             </View>
           )}
         </>
-      )}
+      )} */}
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>

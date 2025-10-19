@@ -71,11 +71,11 @@ export default function TicketPrintingScreen() {
         </View> */}
         
         {/* QR Code */}
-        <View style={styles.qrContainer}>
+        {/* <View style={styles.qrContainer}>
           <View style={styles.qrPlaceholder}>
             <Text style={styles.qrPlaceholderText}>QR Code</Text>
           </View>
-        </View>
+        </View> */}
         
         {/* Printing Message */}
         <Text style={styles.printingText}>

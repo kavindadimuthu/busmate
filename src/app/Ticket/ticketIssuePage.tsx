@@ -540,18 +540,18 @@ export default function TicketConfirmationScreen() {
             <View style={styles.divider} />
             
             {/* QR Code */}
-            <View style={styles.qrContainer}>
+            {/* <View style={styles.qrContainer}>
               <View style={styles.qrPlaceholder}>
                 <Text style={styles.qrPlaceholderText}>QR CODE</Text>
                 <Text style={styles.qrPlaceholderId}>{ticket.id}</Text>
               </View>
               <Text style={styles.qrText}>Scan QR Code for Validation</Text>
-            </View>
+            </View> */}
           </View>
         </View>
         
         {/* SMS Confirmation */}
-        <View style={styles.smsContainer}>
+        {/* <View style={styles.smsContainer}>
           <Ionicons name="phone-portrait-outline" size={20} color="#22C55E" />
           <View style={styles.smsTextContainer}>
             <Text style={styles.smsTitle}>SMS Sent Successfully</Text>
@@ -559,7 +559,7 @@ export default function TicketConfirmationScreen() {
               Ticket details sent to {ticket.phoneNumber}
             </Text>
           </View>
-        </View>
+        </View> */}
       </View>
       
       {/* Bottom Actions */}
@@ -583,12 +583,12 @@ export default function TicketConfirmationScreen() {
             <Text style={styles.actionButtonText}>Share</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton} onPress={handleViewHistory}>
+          {/* <TouchableOpacity style={styles.actionButton} onPress={handleViewHistory}>
             <View style={styles.historyIconContainer}>
               <Ionicons name="time-outline" size={20} color="#555" />
             </View>
             <Text style={styles.actionButtonText}>History</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </SafeAreaView>
