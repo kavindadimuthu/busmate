@@ -238,7 +238,7 @@ export default function TicketsScreen() {
     const toStop = routeStops.find(stop => stop.stopName === toLocation);
 
     if (!user?.id || !ongoingTrip?.id || !ongoingTrip?.busId) {
-    console.error('❌ Missing required data:', {
+    console.error('Missing required data:', {
       userId: user?.id,
       tripId: ongoingTrip?.id,
       busId: ongoingTrip?.busId
@@ -248,7 +248,7 @@ export default function TicketsScreen() {
   }
 
   // Log bus information for debugging
-  console.log('🎫 Issuing ticket with bus info:', {
+  console.log('Issuing ticket with bus info:', {
     busId: ongoingTrip.busId,
     busPlateNumber: ongoingTrip.busPlateNumber,
     tripId: ongoingTrip.id,
@@ -268,7 +268,7 @@ export default function TicketsScreen() {
     transactionRef: `TXN-${Date.now()}-${ticketId}`
   };
 
-    console.log('🎫 Backend data validation:', {
+    console.log(' Backend data validation:', {
       conductorId: backendData.conductorId,
       busId: backendData.busId,
       tripId: backendData.tripId,
@@ -279,7 +279,7 @@ export default function TicketsScreen() {
       transactionRef: backendData.transactionRef
     });
 
-    console.log('🔍 User and trip context:', {
+    console.log(' User and trip context:', {
       userId: user?.id,
       userType: typeof user?.id,
       ongoingTripId: ongoingTrip?.id,
@@ -308,8 +308,8 @@ export default function TicketsScreen() {
     // Add to cash ticket logs for journey report
     addCashTicketLog(cashTicketLog);
 
-    console.log('🎫 Ticket created with backend data:', backendData);
-    console.log('💰 Cash ticket log added:', cashTicketLog);
+    console.log(' Ticket created with backend data:', backendData);
+    console.log(' Cash ticket log added:', cashTicketLog);
   };
 
   return (
