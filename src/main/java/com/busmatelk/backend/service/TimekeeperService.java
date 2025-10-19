@@ -10,6 +10,6 @@ public interface TimekeeperService {
     void createtimekeeper(TimekeeperDTO signupDTO);
 
     TimekeeperDTO getTimekeeperById(UUID userId);
-    
+
     List<TimekeeperDTO> getAllTimekeepers();
 }

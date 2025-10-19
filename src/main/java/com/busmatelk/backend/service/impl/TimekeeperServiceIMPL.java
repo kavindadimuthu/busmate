@@ -46,11 +46,11 @@ public class TimekeeperServiceIMPL implements TimekeeperService {
             // Step 1: Register user with Supabase Auth
             HttpClient client = HttpClient.newHttpClient();
             String requestBody = String.format("""
-                {
-                    "email": "%s",
-                    "password": "%s"
-                }
-            """, signupDTO.getEmail(), signupDTO.getPassword());
+                        {
+                            "email": "%s",
+                            "password": "%s"
+                        }
+                    """, signupDTO.getEmail(), signupDTO.getPassword());
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1/signup"))
@@ -71,18 +71,18 @@ public class TimekeeperServiceIMPL implements TimekeeperService {
 
             // Step 2.1: Add user role to Supabase metadata
             HttpRequest metadataRequest = HttpRequest.newBuilder()
-                .uri(URI.create("https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1/admin/users/" + userIdString))
-                .header("Content-Type", "application/json")
-                .header("apikey", SUPABASE_API_KEY)
-                .header("Authorization", "Bearer " + SUPABASE_API_KEY)
-                .PUT(HttpRequest.BodyPublishers.ofString("""
-            {
-              "user_metadata": {
-                "user_role": "Timekeeper"
-              }
-            }
-        """))
-                .build();
+                    .uri(URI.create("https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1/admin/users/" + userIdString))
+                    .header("Content-Type", "application/json")
+                    .header("apikey", SUPABASE_API_KEY)
+                    .header("Authorization", "Bearer " + SUPABASE_API_KEY)
+                    .PUT(HttpRequest.BodyPublishers.ofString("""
+                                {
+                                  "user_metadata": {
+                                    "user_role": "Timekeeper"
+                                  }
+                                }
+                            """))
+                    .build();
 
             HttpResponse<String> metadataResponse = client.send(metadataRequest, HttpResponse.BodyHandlers.ofString());
             System.out.println("Metadata response code: " + metadataResponse.statusCode());
