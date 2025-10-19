@@ -163,7 +163,7 @@ public class TimekeeperServiceIMPL implements TimekeeperService {
 
             // Map to DTO
             TimekeeperDTO timekeeperDTO = new TimekeeperDTO();
-            timekeeperDTO.setId(timekeeper.getId());
+            timekeeperDTO.setId(timekeeper.getUser().getUserId());
             timekeeperDTO.setFullname(user.getFullName());
             timekeeperDTO.setEmail(user.getEmail());
             timekeeperDTO.setPhonenumber(user.getPhoneNumber());
