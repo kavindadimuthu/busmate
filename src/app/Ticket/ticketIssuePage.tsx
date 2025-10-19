@@ -54,7 +54,7 @@ export default function TicketConfirmationScreen() {
   useEffect(() => {
     const storeTicketToDatabase = async () => {
       if (!ticketBackendData) {
-        console.warn('⚠️ No backend data available for ticket storage');
+        console.warn(' No backend data available for ticket storage');
         setStorageStatus('error');
         return;
       }
@@ -87,7 +87,7 @@ export default function TicketConfirmationScreen() {
           console.log('✅ Ticket successfully stored:', result.message);
           setStorageStatus('success');
         } else {
-          console.error('❌ Failed to store ticket:', result.error, '-', result.message);
+          console.error(' Failed to store ticket:', result.error, '-', result.message);
           setStorageStatus('error');
           
           // Show user-friendly error message based on error type
@@ -100,7 +100,7 @@ export default function TicketConfirmationScreen() {
           }, 1000); // Delay to let UI render first
         }
       } catch (error: any) {
-        console.error('💥 Unexpected error storing ticket:', error);
+        console.error('Unexpected error storing ticket:', error);
         setStorageStatus('error');
         
         // Show generic error for unexpected issues

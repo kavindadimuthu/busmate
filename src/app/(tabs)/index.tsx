@@ -188,7 +188,7 @@ export default function HomeScreen() {
             onPress={() => { router.push('/(tabs)/profile'); }}
           >
             <Image 
-              source={require('@/assets/images/profilePic.jpg')} 
+              source={require('@/assets/images/newprofile.webp')} 
               style={styles.profileImage}
             />
           </TouchableOpacity>

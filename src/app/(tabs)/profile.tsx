@@ -88,7 +88,7 @@ export default function ProfileScreen() {
           {/* Profile Picture */}
           <View style={styles.profileImageContainer}>
             <Image 
-              source={require('@/assets/images/profilePic.jpg')} 
+              source={require('@/assets/images/newprofile.webp')} 
               style={styles.profileImage}
             />
             <TouchableOpacity style={styles.cameraButton}>
