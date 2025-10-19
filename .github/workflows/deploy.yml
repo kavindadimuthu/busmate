@@ -3,7 +3,8 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main
+      - "main"
+      - "test-deployment"
 
 jobs:
   deploy:
@@ -13,42 +14,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build JAR
-        run: mvn clean package -DskipTests
+      - name: Build Spring Boot App
+        run: |
+          ./mvnw clean package -DskipTests
 
-      - name: Copy JAR to EC2
-        uses: appleboy/scp-action@master
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
-          source: "target/*.jar"
-          target: "/home/ubuntu/${{ github.event.repository.name }}/"
+          source: "Dockerfile,target/*.jar"
+          target: "~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}"
 
-      - name: Deploy Docker container
-        uses: appleboy/ssh-action@master
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
           script: |
-            cd ${{ github.event.repository.name }}
-            cat <<EOF > Dockerfile
-            FROM openjdk:17-jdk
-            WORKDIR /app
-            COPY target/*.jar app.jar
-            ENTRYPOINT ["java", "-jar", "app.jar"]
-            EXPOSE 8080
-            EOF
-
-            docker build -t ${{ github.event.repository.name }} .
-            docker rm -f ${{ github.event.repository.name }} || true
-            docker run -d --restart unless-stopped --name ${{ github.event.repository.name }} -p 8081:8081 ${{ github.event.repository.name }}
+            cd ~/app-${{ github.repository_owner }}-${{ github.event.repository.name }}
+            docker stop ${{ github.event.repository.name }} || true
+            docker rm ${{ github.event.repository.name }} || true
+            docker build -t ${{ github.event.repository.name }}-image .
+            docker run -d --network=host --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}-image
