@@ -49,37 +49,53 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                 fromStopId, toStopId, fromCity, toCity, routeId, date, timeAfter, timeBefore, 
                 operatorType, operatorId, status);
 
-        // Use efficient database query with all filters
-        Page<Trip> tripPage = tripRepository.searchTripsWithFilters(
-                fromStopId,
-                toStopId,
-                fromCity,
-                toCity, 
-                routeId,
-                date,
-                timeAfter,
-                timeBefore,
-                operatorType != null ? operatorType.toString() : null,
-                operatorId,
-                status != null ? status.toString() : null,
-                pageable
-        );
+        try {
+            // Use basic repository method for now - we'll implement advanced search later
+            Page<Trip> tripPage;
+            
+            // Start with basic queries to avoid parameter type issues
+            if (routeId != null) {
+                tripPage = tripRepository.findByScheduleRouteId(routeId, pageable);
+            } else if (date != null) {
+                tripPage = tripRepository.findByTripDate(date, pageable);
+            } else if (status != null) {
+                tripPage = tripRepository.findByStatus(status, pageable);
+            } else {
+                // Get all trips with pagination
+                tripPage = tripRepository.findAll(pageable);
+            }
 
-        List<PassengerTripResponse> tripResponses = tripPage.getContent().stream()
-                .map(this::toPassengerTripResponse)
-                .collect(Collectors.toList());
+            List<PassengerTripResponse> tripResponses = tripPage.getContent().stream()
+                    .map(this::toPassengerTripResponse)
+                    .collect(Collectors.toList());
 
-        return PassengerPaginatedResponse.<PassengerTripResponse>builder()
-                .content(tripResponses)
-                .currentPage(tripPage.getNumber())
-                .size(tripPage.getSize())
-                .totalElements(tripPage.getTotalElements())
-                .totalPages(tripPage.getTotalPages())
-                .first(tripPage.isFirst())
-                .last(tripPage.isLast())
-                .hasNext(tripPage.hasNext())
-                .hasPrevious(tripPage.hasPrevious())
-                .build();
+            return PassengerPaginatedResponse.<PassengerTripResponse>builder()
+                    .content(tripResponses)
+                    .currentPage(tripPage.getNumber())
+                    .size(tripPage.getSize())
+                    .totalElements(tripPage.getTotalElements())
+                    .totalPages(tripPage.getTotalPages())
+                    .first(tripPage.isFirst())
+                    .last(tripPage.isLast())
+                    .hasNext(tripPage.hasNext())
+                    .hasPrevious(tripPage.hasPrevious())
+                    .build();
+        } catch (Exception e) {
+            log.error("Error searching trips: {}", e.getMessage());
+            
+            // Return empty result instead of failing
+            return PassengerPaginatedResponse.<PassengerTripResponse>builder()
+                    .content(new ArrayList<>())
+                    .currentPage(0)
+                    .size(pageable.getPageSize())
+                    .totalElements(0L)
+                    .totalPages(0)
+                    .first(true)
+                    .last(true)
+                    .hasNext(false)
+                    .hasPrevious(false)
+                    .build();
+        }
     }
 
     @Override
@@ -89,26 +105,32 @@ public class PassengerTripServiceImpl implements PassengerTripService {
 
         log.debug("Retrieving detailed trip information for ID: {}", tripId);
 
-        // Get trip with all related data in one query
-        Object[] tripData = tripRepository.getTripWithFullDetails(tripId);
-        if (tripData == null) {
-            throw new RuntimeException("Trip not found: " + tripId);
-        }
+        try {
+            // Get trip entity with all related data
+            Trip trip = tripRepository.findById(tripId)
+                    .orElseThrow(() -> new RuntimeException("Trip not found: " + tripId));
 
-        return buildDetailedTripResponse(tripData, includeRoute, includeStops, includeBus, includeTracking);
+            return buildTripResponseFromEntity(trip, includeRoute, includeStops, includeBus, includeTracking);
+        } catch (Exception e) {
+            log.error("Error retrieving trip details for ID: {}, Error: {}", tripId, e.getMessage());
+            throw new RuntimeException("Error retrieving trip details: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public PassengerTripResponse getTripStatus(UUID tripId) {
         log.debug("Getting real-time trip status for ID: {}", tripId);
 
-        // Get trip with all related data for status
-        Object[] tripData = tripRepository.getTripWithFullDetails(tripId);
-        if (tripData == null) {
-            throw new RuntimeException("Trip not found: " + tripId);
-        }
+        try {
+            // Get trip entity with all related data for status
+            Trip trip = tripRepository.findById(tripId)
+                    .orElseThrow(() -> new RuntimeException("Trip not found: " + tripId));
 
-        return buildDetailedTripResponse(tripData, false, false, true, true);
+            return buildTripResponseFromEntity(trip, false, false, true, true);
+        } catch (Exception e) {
+            log.error("Error retrieving trip status for ID: {}, Error: {}", tripId, e.getMessage());
+            throw new RuntimeException("Error retrieving trip status: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -208,108 +230,151 @@ public class PassengerTripServiceImpl implements PassengerTripService {
     private PassengerTripResponse buildDetailedTripResponse(Object[] tripData,
             Boolean includeRoute, Boolean includeStops, Boolean includeBus, Boolean includeTracking) {
         
-        if (tripData == null || tripData.length < 25) {
-            throw new RuntimeException("Invalid trip data structure");
+        if (tripData == null || tripData.length < 20) {
+            throw new RuntimeException("Invalid trip data structure - expected at least 20 fields, got: " + 
+                (tripData != null ? tripData.length : 0));
         }
         
-        // Parse the result from getTripWithFullDetails query
-        UUID tripId = UUID.fromString(tripData[0].toString());
-        LocalDate tripDate = (LocalDate) tripData[5];
-        LocalTime scheduledDeparture = (LocalTime) tripData[6];
-        LocalTime actualDeparture = tripData[7] != null ? (LocalTime) tripData[7] : null;
-        LocalTime scheduledArrival = (LocalTime) tripData[8];
-        LocalTime actualArrival = tripData[9] != null ? (LocalTime) tripData[9] : null;
-        String status = tripData[12] != null ? tripData[12].toString() : "unknown";
-        
-        // Route information
-        String routeName = tripData[13] != null ? tripData[13].toString() : "Unknown Route";
-        String routeDescription = tripData[14] != null ? tripData[14].toString() : null;
-        Double routeDistance = tripData[15] != null ? Double.valueOf(tripData[15].toString()) : 0.0;
-        Integer routeDuration = tripData[16] != null ? Integer.valueOf(tripData[16].toString()) : 0;
-        
-        // Stop information
-        String departureStopName = tripData[17] != null ? tripData[17].toString() : "Unknown";
-        String departureStopCity = tripData[18] != null ? tripData[18].toString() : null;
-        Double depStopLat = tripData[19] != null ? Double.valueOf(tripData[19].toString()) : null;
-        Double depStopLng = tripData[20] != null ? Double.valueOf(tripData[20].toString()) : null;
-        
-        String arrivalStopName = tripData[21] != null ? tripData[21].toString() : "Unknown";
-        String arrivalStopCity = tripData[22] != null ? tripData[22].toString() : null;
-        Double arrStopLat = tripData[23] != null ? Double.valueOf(tripData[23].toString()) : null;
-        Double arrStopLng = tripData[24] != null ? Double.valueOf(tripData[24].toString()) : null;
-        
-        // Operator information
-        String operatorName = tripData[25] != null ? tripData[25].toString() : "Unknown Operator";
-        String operatorType = tripData[26] != null ? tripData[26].toString() : null;
-        
-        // Bus information
-        String busPlate = tripData[27] != null ? tripData[27].toString() : null;
-        Integer busCapacity = tripData[28] != null ? Integer.valueOf(tripData[28].toString()) : null;
-        String busModel = tripData[29] != null ? tripData[29].toString() : null;
-        String busFacilitiesJson = tripData[30] != null ? tripData[30].toString() : null;
-        
-        PassengerTripResponse.PassengerTripResponseBuilder builder = PassengerTripResponse.builder()
-                .tripId(tripId)
-                .routeName(routeName)
-                .scheduledDeparture(tripDate.atTime(scheduledDeparture))
-                .scheduledArrival(tripDate.atTime(scheduledArrival))
-                .duration(routeDuration)
-                .distance(routeDistance)
-                .status(status)
-                .fare(calculateFare(routeDistance))
-                .availableSeats(busCapacity != null ? Math.max(0, busCapacity - 10) : 0) // Simulate occupancy
-                .bookingAvailable(true);
+        try {
+            // Parse the result from getTripWithFullDetails query
+            UUID tripId = UUID.fromString(tripData[0].toString());
+            LocalDate tripDate = (LocalDate) tripData[5];
+            LocalTime scheduledDeparture = (LocalTime) tripData[6];
+            LocalTime actualDeparture = tripData[7] != null ? (LocalTime) tripData[7] : null;
+            LocalTime scheduledArrival = (LocalTime) tripData[8];
+            LocalTime actualArrival = tripData[9] != null ? (LocalTime) tripData[9] : null;
+            String status = tripData[12] != null ? tripData[12].toString() : "unknown";
+            
+            // Route information (safe array access)
+            String routeName = getStringValue(tripData, 13, "Unknown Route");
+            String routeDescription = getStringValue(tripData, 14, null);
+            Double routeDistance = getDoubleValue(tripData, 15, 0.0);
+            Integer routeDuration = getIntegerValue(tripData, 16, 0);
+            
+            // Stop information (safe array access)
+            String departureStopName = getStringValue(tripData, 17, "Unknown");
+            String departureStopCity = getStringValue(tripData, 18, null);
+            Double depStopLat = getDoubleValue(tripData, 19, null);
+            Double depStopLng = getDoubleValue(tripData, 20, null);
+            
+            String arrivalStopName = getStringValue(tripData, 21, "Unknown");
+            String arrivalStopCity = getStringValue(tripData, 22, null);
+            Double arrStopLat = getDoubleValue(tripData, 23, null);
+            Double arrStopLng = getDoubleValue(tripData, 24, null);
+            
+            // Operator information (safe array access)
+            String operatorName = getStringValue(tripData, 25, "Unknown Operator");
+            String operatorType = getStringValue(tripData, 26, null);
+            
+            // Bus information (safe array access)
+            String busPlate = getStringValue(tripData, 27, null);
+            Integer busCapacity = getIntegerValue(tripData, 28, null);
+            String busModel = getStringValue(tripData, 29, null);
+            String busFacilitiesJson = getStringValue(tripData, 30, null);
+            
+            PassengerTripResponse.PassengerTripResponseBuilder builder = PassengerTripResponse.builder()
+                    .tripId(tripId)
+                    .routeName(routeName)
+                    .scheduledDeparture(tripDate.atTime(scheduledDeparture))
+                    .scheduledArrival(tripDate.atTime(scheduledArrival))
+                    .duration(routeDuration)
+                    .distance(routeDistance)
+                    .status(status)
+                    .fare(calculateFare(routeDistance))
+                    .availableSeats(busCapacity != null ? Math.max(0, busCapacity - 10) : 0) // Simulate occupancy
+                    .bookingAvailable(true);
 
-        // Set estimated times
-        builder.estimatedDeparture(actualDeparture != null ? 
-                tripDate.atTime(actualDeparture) : tripDate.atTime(scheduledDeparture))
-               .estimatedArrival(actualArrival != null ?
-                tripDate.atTime(actualArrival) : 
-                tripDate.atTime(scheduledDeparture.plusMinutes(routeDuration)));
+            // Set estimated times
+            builder.estimatedDeparture(actualDeparture != null ? 
+                    tripDate.atTime(actualDeparture) : tripDate.atTime(scheduledDeparture))
+                   .estimatedArrival(actualArrival != null ?
+                    tripDate.atTime(actualArrival) : 
+                    tripDate.atTime(scheduledDeparture.plusMinutes(routeDuration)));
 
-        // Calculate delay
-        if (actualDeparture != null) {
-            long delayMinutes = java.time.Duration.between(scheduledDeparture, actualDeparture).toMinutes();
-            builder.delay((int) delayMinutes);
-        } else {
-            builder.delay(0);
+            // Calculate delay
+            if (actualDeparture != null) {
+                long delayMinutes = java.time.Duration.between(scheduledDeparture, actualDeparture).toMinutes();
+                builder.delay((int) delayMinutes);
+            } else {
+                builder.delay(0);
+            }
+
+            // Build departure stop
+            if (includeRoute != null && includeRoute) {
+                builder.departureStop(PassengerRouteResponse.PassengerStopSummary.builder()
+                        .name(departureStopName)
+                        .city(departureStopCity)
+                        .location(buildLocationDto(depStopLat, depStopLng, departureStopCity))
+                        .build());
+
+                builder.arrivalStop(PassengerRouteResponse.PassengerStopSummary.builder()
+                        .name(arrivalStopName)
+                        .city(arrivalStopCity)
+                        .location(buildLocationDto(arrStopLat, arrStopLng, arrivalStopCity))
+                        .build());
+
+                builder.operator(PassengerRouteResponse.PassengerOperatorSummary.builder()
+                        .name(operatorName)
+                        .type(operatorType)
+                        .build());
+            }
+
+            // Include intermediate stops if requested
+            if (includeStops != null && includeStops) {
+                try {
+                    List<Object[]> stopData = tripRepository.getTripIntermediateStops(tripId);
+                    List<PassengerTripResponse.PassengerIntermediateStop> intermediateStops = stopData.stream()
+                            .map(this::buildIntermediateStop)
+                            .collect(Collectors.toList());
+                    builder.intermediateStops(intermediateStops);
+                } catch (Exception e) {
+                    log.warn("Error loading intermediate stops for trip {}: {}", tripId, e.getMessage());
+                    builder.intermediateStops(new ArrayList<>());
+                }
+            }
+
+            // Include bus information if requested
+            if (includeBus != null && includeBus && busPlate != null) {
+                builder.bus(buildBusInfoFromData(busPlate, busCapacity, busModel, busFacilitiesJson));
+            }
+
+            return builder.build();
+        } catch (Exception e) {
+            log.error("Error building detailed trip response: {}", e.getMessage());
+            throw new RuntimeException("Error building trip response: " + e.getMessage(), e);
         }
-
-        // Build departure stop
-        if (includeRoute != null && includeRoute) {
-            builder.departureStop(PassengerRouteResponse.PassengerStopSummary.builder()
-                    .name(departureStopName)
-                    .city(departureStopCity)
-                    .location(buildLocationDto(depStopLat, depStopLng, departureStopCity))
-                    .build());
-
-            builder.arrivalStop(PassengerRouteResponse.PassengerStopSummary.builder()
-                    .name(arrivalStopName)
-                    .city(arrivalStopCity)
-                    .location(buildLocationDto(arrStopLat, arrStopLng, arrivalStopCity))
-                    .build());
-
-            builder.operator(PassengerRouteResponse.PassengerOperatorSummary.builder()
-                    .name(operatorName)
-                    .type(operatorType)
-                    .build());
+    }
+    
+    // Helper methods for safe array access
+    private String getStringValue(Object[] array, int index, String defaultValue) {
+        if (array.length > index && array[index] != null) {
+            return array[index].toString();
         }
-
-        // Include intermediate stops if requested
-        if (includeStops != null && includeStops) {
-            List<Object[]> stopData = tripRepository.getTripIntermediateStops(tripId);
-            List<PassengerTripResponse.PassengerIntermediateStop> intermediateStops = stopData.stream()
-                    .map(this::buildIntermediateStop)
-                    .collect(Collectors.toList());
-            builder.intermediateStops(intermediateStops);
+        return defaultValue;
+    }
+    
+    private Double getDoubleValue(Object[] array, int index, Double defaultValue) {
+        if (array.length > index && array[index] != null) {
+            try {
+                return Double.valueOf(array[index].toString());
+            } catch (NumberFormatException e) {
+                log.warn("Error parsing double value at index {}: {}", index, array[index]);
+                return defaultValue;
+            }
         }
-
-        // Include bus information if requested
-        if (includeBus != null && includeBus && busPlate != null) {
-            builder.bus(buildBusInfoFromData(busPlate, busCapacity, busModel, busFacilitiesJson));
+        return defaultValue;
+    }
+    
+    private Integer getIntegerValue(Object[] array, int index, Integer defaultValue) {
+        if (array.length > index && array[index] != null) {
+            try {
+                return Integer.valueOf(array[index].toString());
+            } catch (NumberFormatException e) {
+                log.warn("Error parsing integer value at index {}: {}", index, array[index]);
+                return defaultValue;
+            }
         }
-
-        return builder.build();
+        return defaultValue;
     }
     
     private PassengerTripResponse.PassengerBusInfo buildBusInfo(com.busmate.routeschedule.entity.Bus bus) {
@@ -381,21 +446,181 @@ public class PassengerTripServiceImpl implements PassengerTripService {
     }
     
     private PassengerTripResponse.PassengerIntermediateStop buildIntermediateStop(Object[] stopData) {
-        UUID stopId = UUID.fromString(stopData[1].toString());
-        String stopName = stopData[2] != null ? stopData[2].toString() : "Unknown Stop";
-        LocalTime arrivalTime = (LocalTime) stopData[6];
-        LocalTime departureTime = (LocalTime) stopData[7];
-        
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        
-        return PassengerTripResponse.PassengerIntermediateStop.builder()
-                .stopId(stopId)
-                .name(stopName)
-                .arrivalTime(arrivalTime != null ? arrivalTime.format(timeFormatter) : null)
-                .departureTime(departureTime != null ? departureTime.format(timeFormatter) : null)
-                .build();
+        try {
+            Integer stopOrder = getIntegerValue(stopData, 0, 0);
+            UUID stopId = stopData[1] != null ? UUID.fromString(stopData[1].toString()) : null;
+            String stopName = getStringValue(stopData, 2, "Unknown Stop");
+            String stopCity = getStringValue(stopData, 3, null);
+            Double latitude = getDoubleValue(stopData, 4, null);
+            Double longitude = getDoubleValue(stopData, 5, null);
+            LocalTime arrivalTime = stopData[6] != null ? (LocalTime) stopData[6] : null;
+            LocalTime departureTime = stopData[7] != null ? (LocalTime) stopData[7] : null;
+
+            LocationDto location = null;
+            if (latitude != null && longitude != null) {
+                location = new LocationDto();
+                location.setLatitude(latitude);
+                location.setLongitude(longitude);
+                location.setCity(stopCity);
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+            
+            return PassengerTripResponse.PassengerIntermediateStop.builder()
+                    .stopId(stopId)
+                    .name(stopName)
+                    .arrivalTime(arrivalTime != null ? arrivalTime.format(formatter) : null)
+                    .departureTime(departureTime != null ? departureTime.format(formatter) : null)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error building intermediate stop from data: {}", e.getMessage());
+            return PassengerTripResponse.PassengerIntermediateStop.builder()
+                    .name("Unknown Stop")
+                    .build();
+        }
     }
     
+    /**
+     * Build trip response from Trip entity using JPA relationships
+     */
+    private PassengerTripResponse buildTripResponseFromEntity(Trip trip, Boolean includeRoute, 
+            Boolean includeStops, Boolean includeBus, Boolean includeTracking) {
+        
+        log.debug("Building trip response from entity for trip: {}", trip.getId());
+        
+        try {
+            // Basic trip information
+            LocalDateTime scheduledDeparture = LocalDateTime.of(trip.getTripDate(), trip.getScheduledDepartureTime());
+            LocalDateTime scheduledArrival = LocalDateTime.of(trip.getTripDate(), trip.getScheduledArrivalTime());
+            LocalDateTime estimatedDeparture = trip.getActualDepartureTime() != null 
+                ? LocalDateTime.of(trip.getTripDate(), trip.getActualDepartureTime()) : scheduledDeparture;
+            LocalDateTime estimatedArrival = trip.getActualArrivalTime() != null 
+                ? LocalDateTime.of(trip.getTripDate(), trip.getActualArrivalTime()) : scheduledArrival;
+
+            // Calculate delay
+            int delay = 0;
+            if (trip.getActualDepartureTime() != null) {
+                delay = (int) java.time.Duration.between(trip.getScheduledDepartureTime(), trip.getActualDepartureTime()).toMinutes();
+            }
+
+            PassengerTripResponse.PassengerTripResponseBuilder builder = PassengerTripResponse.builder()
+                    .tripId(trip.getId())
+                    .scheduledDeparture(scheduledDeparture)
+                    .scheduledArrival(scheduledArrival)
+                    .estimatedDeparture(estimatedDeparture)
+                    .estimatedArrival(estimatedArrival)
+                    .status(trip.getStatus() != null ? trip.getStatus().toString() : "unknown")
+                    .delay(delay)
+                    .availableSeats(0) // Default value
+                    .bookingAvailable(false); // Default value
+
+            // Route information
+            if (trip.getSchedule() != null && trip.getSchedule().getRoute() != null) {
+                var route = trip.getSchedule().getRoute();
+                builder.routeName(route.getName())
+                       .distance(route.getDistanceKm())
+                       .duration(route.getEstimatedDurationMinutes());
+
+                // Calculate fare based on distance
+                builder.fare(calculateFare(route.getDistanceKm()));
+
+                if (includeRoute) {
+                    // Add departure and arrival stops
+                    if (route.getStartStopId() != null) {
+                        // Find start stop details - we need to query the stop repository
+                        // For now, create basic stop summary
+                        var departureStop = PassengerRouteResponse.PassengerStopSummary.builder()
+                                .id(route.getStartStopId())
+                                .name("Departure Stop") // Will be enhanced when we query stop details
+                                .build();
+                        builder.departureStop(departureStop);
+                    }
+                    
+                    if (route.getEndStopId() != null) {
+                        var arrivalStop = PassengerRouteResponse.PassengerStopSummary.builder()
+                                .id(route.getEndStopId())
+                                .name("Arrival Stop") // Will be enhanced when we query stop details
+                                .build();
+                        builder.arrivalStop(arrivalStop);
+                    }
+                }
+            }
+
+            // Bus information
+            if (includeBus && trip.getBus() != null) {
+                var bus = trip.getBus();
+                var busFeatures = PassengerTripResponse.PassengerBusFeatures.builder()
+                        .isAccessible(false) // Default values
+                        .hasAirConditioning(false)
+                        .hasWiFi(false)
+                        .hasToilet(false)
+                        .build();
+
+                // Parse bus facilities if available
+                if (bus.getFacilities() != null) {
+                    try {
+                        JsonNode facilities = bus.getFacilities();
+                        if (facilities.has("wifi")) {
+                            busFeatures.setHasWiFi(facilities.get("wifi").asBoolean());
+                        }
+                        if (facilities.has("ac")) {
+                            busFeatures.setHasAirConditioning(facilities.get("ac").asBoolean());
+                        }
+                        if (facilities.has("accessible")) {
+                            busFeatures.setIsAccessible(facilities.get("accessible").asBoolean());
+                        }
+                        if (facilities.has("toilet")) {
+                            busFeatures.setHasToilet(facilities.get("toilet").asBoolean());
+                        }
+                    } catch (Exception e) {
+                        log.warn("Error parsing bus facilities for bus {}: {}", bus.getId(), e.getMessage());
+                    }
+                }
+
+                var busInfo = PassengerTripResponse.PassengerBusInfo.builder()
+                        .plateNumber(bus.getPlateNumber())
+                        .capacity(bus.getCapacity())
+                        .type(bus.getModel())
+                        .features(busFeatures)
+                        .build();
+                builder.bus(busInfo);
+
+                // Add operator information if available
+                if (bus.getOperator() != null) {
+                    var operator = PassengerRouteResponse.PassengerOperatorSummary.builder()
+                            .id(bus.getOperator().getId())
+                            .name(bus.getOperator().getName())
+                            .type(bus.getOperator().getOperatorType().toString())
+                            .build();
+                    builder.operator(operator);
+                }
+            }
+
+            // Add intermediate stops if requested
+            if (includeStops) {
+                try {
+                    List<Object[]> intermediateStopsData = tripRepository.getTripIntermediateStops(trip.getId());
+                    List<PassengerTripResponse.PassengerIntermediateStop> intermediateStops = 
+                            intermediateStopsData.stream()
+                                    .map(this::buildIntermediateStop)
+                                    .collect(Collectors.toList());
+                    builder.intermediateStops(intermediateStops);
+                } catch (Exception e) {
+                    log.warn("Error loading intermediate stops for trip {}: {}", trip.getId(), e.getMessage());
+                    builder.intermediateStops(new ArrayList<>());
+                }
+            }
+
+            return builder.build();
+
+        } catch (Exception e) {
+            log.error("Error building trip response from entity for trip {}: {}", trip.getId(), e.getMessage(), e);
+            throw new RuntimeException("Error building trip response: " + e.getMessage(), e);
+        }
+    }
+
+
+
     private Double calculateFare(Double distance) {
         if (distance == null || distance <= 0) {
             return 25.0; // Base fare

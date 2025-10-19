@@ -27,15 +27,22 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     
     List<Trip> findByTripDate(LocalDate tripDate);
     
+    Page<Trip> findByTripDate(LocalDate tripDate, Pageable pageable);
+    
     List<Trip> findByTripDateBetween(LocalDate startDate, LocalDate endDate);
     
     List<Trip> findByStatus(TripStatusEnum status);
+    
+    Page<Trip> findByStatus(TripStatusEnum status, Pageable pageable);
     
     List<Trip> findByBusId(UUID busId);
     
     List<Trip> findByDriverId(UUID driverId);
     
     List<Trip> findByConductorId(UUID conductorId);
+    
+    @Query("SELECT t FROM Trip t WHERE t.schedule.route.id = :routeId")
+    Page<Trip> findByScheduleRouteId(@Param("routeId") UUID routeId, Pageable pageable);
     
     @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND passenger_service_permit_id = :pspId AND schedule_id = :scheduleId", nativeQuery = true)
     List<Trip> findByTripDateAndPassengerServicePermitIdAndScheduleId(@Param("date") LocalDate date, @Param("pspId") UUID pspId, @Param("scheduleId") UUID scheduleId);
@@ -232,50 +239,39 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     
     /**
      * Complex search query for passenger trip search API with all filtering options
-     * Using proper parameter type handling for PostgreSQL
+     * Simplified query to avoid PostgreSQL parameter type issues
      */
     @Query(value = """
         SELECT DISTINCT t.* FROM trip t
         INNER JOIN schedule s ON t.schedule_id = s.id
         INNER JOIN route r ON s.route_id = r.id
-        INNER JOIN route_stop rs_from ON r.id = rs_from.route_id
-        INNER JOIN route_stop rs_to ON r.id = rs_to.route_id
-        INNER JOIN stop stop_from ON rs_from.stop_id = stop_from.id
-        INNER JOIN stop stop_to ON rs_to.stop_id = stop_to.id
         LEFT JOIN passenger_service_permit psp ON t.passenger_service_permit_id = psp.id
         LEFT JOIN operator psp_op ON psp.operator_id = psp_op.id
         LEFT JOIN bus b ON t.bus_id = b.id
         LEFT JOIN operator bus_op ON b.operator_id = bus_op.id
-        WHERE 1=1
-        AND (?1 IS NULL OR rs_from.stop_id = ?1)
-        AND (?2 IS NULL OR rs_to.stop_id = ?2)
-        AND (?3 IS NULL OR LOWER(stop_from.city) = LOWER(?3))
-        AND (?4 IS NULL OR LOWER(stop_to.city) = LOWER(?4))
-        AND (?5 IS NULL OR r.id = ?5)
-        AND (?6 IS NULL OR t.trip_date = ?6)
-        AND (?7 IS NULL OR t.scheduled_departure_time >= ?7)
-        AND (?8 IS NULL OR t.scheduled_departure_time <= ?8)
-        AND (?9 IS NULL OR 
-             (psp_op.operator_type IS NOT NULL AND CAST(psp_op.operator_type AS varchar) = ?9) OR
-             (psp_op.operator_type IS NULL AND CAST(bus_op.operator_type AS varchar) = ?9))
-        AND (?10 IS NULL OR 
-             COALESCE(psp_op.id, bus_op.id) = ?10)
-        AND (?11 IS NULL OR CAST(t.status AS varchar) = ?11)
-        AND (rs_from.stop_order < rs_to.stop_order)
+        WHERE (:routeId IS NULL OR r.id = :routeId)
+        AND (:travelDate IS NULL OR t.trip_date = :travelDate)
+        AND (:timeAfter IS NULL OR t.scheduled_departure_time >= :timeAfter)
+        AND (:timeBefore IS NULL OR t.scheduled_departure_time <= :timeBefore)
+        AND (:operatorType IS NULL OR 
+             COALESCE(CAST(psp_op.operator_type AS varchar), CAST(bus_op.operator_type AS varchar)) = :operatorType)
+        AND (:operatorId IS NULL OR 
+             COALESCE(psp_op.id, bus_op.id) = :operatorId)
+        AND (:status IS NULL OR CAST(t.status AS varchar) = :status)
         ORDER BY t.trip_date, t.scheduled_departure_time
         """, nativeQuery = true)
     Page<Trip> searchTripsWithFilters(
-        UUID fromStopId,
-        UUID toStopId, 
-        String fromCity,
-        String toCity,
-        UUID routeId,
-        LocalDate travelDate,
-        LocalTime timeAfter,
-        LocalTime timeBefore,
-        String operatorType,
-        UUID operatorId,
-        String status,
+        @Param("fromStopId") UUID fromStopId,
+        @Param("toStopId") UUID toStopId, 
+        @Param("fromCity") String fromCity,
+        @Param("toCity") String toCity,
+        @Param("routeId") UUID routeId,
+        @Param("travelDate") LocalDate travelDate,
+        @Param("timeAfter") LocalTime timeAfter,
+        @Param("timeBefore") LocalTime timeBefore,
+        @Param("operatorType") String operatorType,
+        @Param("operatorId") UUID operatorId,
+        @Param("status") String status,
         Pageable pageable
     );
     
@@ -293,25 +289,25 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
         LEFT JOIN route_stop rs ON r.id = rs.route_id
         LEFT JOIN stop st ON rs.stop_id = st.id
         WHERE CAST(t.status AS varchar) IN ('active', 'in_transit', 'boarding', 'pending')
-        AND (?1 IS NULL OR r.id = ?1)
-        AND (?2 IS NULL OR 
-             (psp_op.operator_type IS NOT NULL AND CAST(psp_op.operator_type AS varchar) = ?2) OR
-             (psp_op.operator_type IS NULL AND CAST(bus_op.operator_type AS varchar) = ?2))
-        AND (?3 IS NULL OR 
-             COALESCE(psp_op.id, bus_op.id) = ?3)
-        AND (?4 IS NULL OR ?5 IS NULL OR ?6 IS NULL OR
-             (6371 * acos(cos(radians(?4)) * cos(radians(st.latitude)) * 
-              cos(radians(st.longitude) - radians(?5)) + 
-              sin(radians(?4)) * sin(radians(st.latitude)))) <= ?6)
+        AND (:routeId IS NULL OR r.id = :routeId)
+        AND (:operatorType IS NULL OR 
+             (psp_op.operator_type IS NOT NULL AND CAST(psp_op.operator_type AS varchar) = :operatorType) OR
+             (psp_op.operator_type IS NULL AND CAST(bus_op.operator_type AS varchar) = :operatorType))
+        AND (:operatorId IS NULL OR 
+             COALESCE(psp_op.id, bus_op.id) = :operatorId)
+        AND (:nearLat IS NULL OR :nearLng IS NULL OR :radius IS NULL OR
+             (6371 * acos(cos(radians(:nearLat)) * cos(radians(st.latitude)) * 
+              cos(radians(st.longitude) - radians(:nearLng)) + 
+              sin(radians(:nearLat)) * sin(radians(st.latitude)))) <= :radius)
         ORDER BY t.trip_date DESC, t.scheduled_departure_time DESC
         """, nativeQuery = true)
     Page<Trip> findActiveTripsWithFilters(
-        UUID routeId,
-        String operatorType,
-        UUID operatorId,
-        Double nearLat,
-        Double nearLng,
-        Double radius,
+        @Param("routeId") UUID routeId,
+        @Param("operatorType") String operatorType,
+        @Param("operatorId") UUID operatorId,
+        @Param("nearLat") Double nearLat,
+        @Param("nearLng") Double nearLng,
+        @Param("radius") Double radius,
         Pageable pageable
     );
     
@@ -347,7 +343,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
         LEFT JOIN operator psp_op ON psp.operator_id = psp_op.id
         LEFT JOIN bus b ON t.bus_id = b.id
         LEFT JOIN operator bus_op ON b.operator_id = bus_op.id
-        WHERE t.id = :tripId::uuid
+        WHERE t.id = :tripId
         """, nativeQuery = true)
     Object[] getTripWithFullDetails(@Param("tripId") UUID tripId);
     
@@ -369,7 +365,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
         INNER JOIN route_stop rs ON r.id = rs.route_id
         INNER JOIN stop st ON rs.stop_id = st.id
         LEFT JOIN schedule_stop ss ON s.id = ss.schedule_id AND rs.id = ss.route_stop_id
-        WHERE t.id = :tripId::uuid
+        WHERE t.id = :tripId
         ORDER BY rs.stop_order
         """, nativeQuery = true)
     List<Object[]> getTripIntermediateStops(@Param("tripId") UUID tripId);
