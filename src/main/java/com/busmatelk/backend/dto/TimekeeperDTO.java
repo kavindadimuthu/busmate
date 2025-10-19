@@ -10,6 +10,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TimekeeperDTO {
+    private UUID id;
     private String fullname;
     private String phonenumber;
     private String email;
