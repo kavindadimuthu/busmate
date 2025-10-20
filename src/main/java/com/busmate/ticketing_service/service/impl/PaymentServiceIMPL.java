@@ -7,6 +7,8 @@ import com.busmate.ticketing_service.entity.Cash;
 import com.busmate.ticketing_service.entity.Online;
 import com.busmate.ticketing_service.entity.Tickets;
 import com.busmate.ticketing_service.entity.Transactions;
+import com.busmate.ticketing_service.exception.BadRequestException;
+import com.busmate.ticketing_service.exception.NotFoundException;
 import com.busmate.ticketing_service.repository.ConductorLogRepo;
 import com.busmate.ticketing_service.repository.OnlineRepo;
 import com.busmate.ticketing_service.repository.TicketRepo;
@@ -103,7 +105,7 @@ public class PaymentServiceIMPL implements PaymentService {
             return "Ticket issued successfully";
 
         } catch (Exception e) {
-            return "Failed to issue ticket: " + e.getMessage();
+            throw new BadRequestException("Failed to issue ticket: " + e.getMessage());
         }
     }
 
@@ -191,6 +193,10 @@ public class PaymentServiceIMPL implements PaymentService {
             // Fetch all tickets for the given trip ID
             List<Tickets> tickets = ticketRepo.findByTripId(tripId);
 
+            if (tickets.isEmpty()) {
+                throw new NotFoundException("No tickets found for tripId: " + tripId);
+            }
+
             // Convert tickets to DTOs
             return tickets.stream().map(ticket -> {
                 ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
@@ -207,7 +213,7 @@ public class PaymentServiceIMPL implements PaymentService {
 
                 // Get payment status from transaction
                 if (ticket.getTransactions() != null) {
-                    dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
+                    dto.setPaymentStatus(ticket.getIssueMethod().toString());
                 } else {
                     dto.setPaymentStatus("UNKNOWN");
                 }
@@ -218,9 +224,10 @@ public class PaymentServiceIMPL implements PaymentService {
                 return dto;
             }).toList();
 
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            // Return empty list in case of error
-            return List.of();
+            throw new BadRequestException("Failed to fetch tickets for tripId: " + tripId + ", " + e.getMessage());
         }
     }
 

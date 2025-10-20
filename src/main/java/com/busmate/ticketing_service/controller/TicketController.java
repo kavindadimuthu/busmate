@@ -5,6 +5,7 @@ import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +19,9 @@ public class TicketController {
     private PaymentService conductorLogService;
 
     @PostMapping("/conductor/issue")
-    public String createTicket(@RequestBody PaymentRequestDTO request) {
-        return conductorLogService.issueTicket(request);
+    public ResponseEntity<String> createTicket(@RequestBody PaymentRequestDTO request) {
+        String result = conductorLogService.issueTicket(request);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/conductor/{conductorId}/logs")
