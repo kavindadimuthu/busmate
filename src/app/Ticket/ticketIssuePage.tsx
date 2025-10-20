@@ -59,17 +59,17 @@ export default function TicketConfirmationScreen() {
         return;
       }
 
-      console.log(' Storing ticket to database...', JSON.stringify(ticketBackendData, null, 2));
-      console.log(' Backend data validation:', {
+      console.log('💾 Storing ticket to database...', JSON.stringify(ticketBackendData, null, 2));
+      console.log('🔍 Backend data validation:', {
         hasData: !!ticketBackendData,
-        conductorId: ticketBackendData.conductorId,
-        busId: ticketBackendData.busId,
-        tripId: ticketBackendData.tripId,
-        startLocationId: ticketBackendData.startLocationId,
-        endLocationId: ticketBackendData.endLocationId,
-        fareAmount: ticketBackendData.fareAmount,
-        paymentMethod: ticketBackendData.paymentMethod,
-        transactionRef: ticketBackendData.transactionRef
+        conductorId: `${ticketBackendData.conductorId} (${typeof ticketBackendData.conductorId})`,
+        busId: `${ticketBackendData.busId} (${typeof ticketBackendData.busId})`,
+        tripId: `${ticketBackendData.tripId} (${typeof ticketBackendData.tripId})`,
+        startLocationId: `${ticketBackendData.startLocationId} (${typeof ticketBackendData.startLocationId})`,
+        endLocationId: `${ticketBackendData.endLocationId} (${typeof ticketBackendData.endLocationId})`,
+        fareAmount: `${ticketBackendData.fareAmount} (${typeof ticketBackendData.fareAmount})`,
+        paymentMethod: `${ticketBackendData.paymentMethod} (${typeof ticketBackendData.paymentMethod})`,
+        transactionRef: `${ticketBackendData.transactionRef} (${typeof ticketBackendData.transactionRef})`
       });
       
       console.log('👤 Current user context:', {
@@ -77,21 +77,35 @@ export default function TicketConfirmationScreen() {
         userRole: user?.role,
         isLoggedIn: !!user
       });
+
+      // Ensure all data is in the correct format
+      const sanitizedData = {
+        conductorId: String(ticketBackendData.conductorId),
+        busId: String(ticketBackendData.busId),
+        tripId: String(ticketBackendData.tripId),
+        startLocationId: String(ticketBackendData.startLocationId),
+        endLocationId: String(ticketBackendData.endLocationId),
+        fareAmount: Number(ticketBackendData.fareAmount),
+        paymentMethod: String(ticketBackendData.paymentMethod),
+        transactionRef: String(ticketBackendData.transactionRef)
+      };
+
+      console.log('🧹 Sanitized data for API:', JSON.stringify(sanitizedData, null, 2));
       
       setIsStoring(true);
 
       try {
-        const result = await ticketApi.issueTicket(ticketBackendData);
+        const result = await ticketApi.issueTicket(sanitizedData);
         
         if (result.success) {
           console.log('✅ Ticket successfully stored:', result.message);
           setStorageStatus('success');
         } else {
-          console.error(' Failed to store ticket:', result.error, '-', result.message);
+          console.error('❌ Failed to store ticket:', result.error, '-', result.message);
           setStorageStatus('error');
         }
       } catch (error: any) {
-        console.error('Unexpected error storing ticket:', error);
+        console.error('❌ Unexpected error storing ticket:', error);
         setStorageStatus('error');
       } finally {
         setIsStoring(false);

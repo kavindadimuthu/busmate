@@ -7,18 +7,18 @@ import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-  SafeAreaView
+    ActivityIndicator,
+    Alert,
+    Modal,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useColorScheme,
+    View
 } from 'react-native';
 
 
@@ -191,13 +191,13 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
             <Text style={styles.summaryLabel}>Total Passengers</Text>
           </View>
           
-          {/* Validated Tickets - Dynamic from QR scans */}
+          {/* Online Tickets - Dynamic from QR scans */}
           <View style={[styles.summaryItem, styles.summaryItemThreeColumn, {backgroundColor: '#F0FFF6'}]}>
             <View style={[styles.summaryIconContainer, {backgroundColor: '#E6FFF2'}]}>
               <Ionicons name="receipt-outline" size={20} color="#00CC66" />
             </View>
             <Text style={styles.summaryValue}>{dynamicStats.validatedTickets}</Text>
-            <Text style={styles.summaryLabel}>Validated QR Tickets</Text>
+            <Text style={styles.summaryLabel}>Online Tickets</Text>
           </View>
           
           {/* Total Revenue - Dynamic from both sources */}
@@ -241,7 +241,7 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
             </Text>
           </View>
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>QR Validated:</Text>
+            <Text style={styles.breakdownLabel}>Online Tickets:</Text>
             <Text style={styles.breakdownValue}>
               {dynamicStats.validatedTickets} tickets ({tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.passengerCount, 0)} passengers)
             </Text>

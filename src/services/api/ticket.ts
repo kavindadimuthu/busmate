@@ -31,9 +31,72 @@ export const ticketApi = {
           message: `Missing required fields: ${missingFields.join(', ')}`
         };
       }
+
+      // Additional validation for data types
+      console.log('🔍 Validating data types...');
+      const validationIssues = [];
       
+      if (typeof ticketData.fareAmount !== 'number' || ticketData.fareAmount <= 0) {
+        validationIssues.push('fareAmount must be a positive number');
+      }
+      
+      if (typeof ticketData.conductorId !== 'string' || !ticketData.conductorId.trim()) {
+        validationIssues.push('conductorId must be a non-empty string');
+      }
+      
+      if (typeof ticketData.busId !== 'string' || !ticketData.busId.trim()) {
+        validationIssues.push('busId must be a non-empty string');
+      }
+      
+      if (typeof ticketData.tripId !== 'string' || !ticketData.tripId.trim()) {
+        validationIssues.push('tripId must be a non-empty string');
+      }
+
+      if (validationIssues.length > 0) {
+        console.error('❌ Data validation failed:', validationIssues);
+        return {
+          success: false,
+          error: 'Data validation failed',
+          message: `Invalid data: ${validationIssues.join(', ')}`
+        };
+      }
+      
+      // Validate data integrity before sending to backend
+      console.log('🔍 Performing pre-flight checks...');
+      
+      // Check for suspicious data patterns that might cause server errors
+      const dataChecks = {
+        tripIdFormat: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ticketData.tripId),
+        busIdFormat: /^[0-9a-f-]{36}$/i.test(ticketData.busId),
+        conductorIdFormat: /^[0-9a-f-]{36}$/i.test(ticketData.conductorId),
+        locationIdFormat: /^[0-9a-f-]{36}$/i.test(ticketData.startLocationId) && /^[0-9a-f-]{36}$/i.test(ticketData.endLocationId),
+        fareAmountValid: Number.isFinite(ticketData.fareAmount) && ticketData.fareAmount > 0,
+        paymentMethodValid: ['CASH', 'CARD', 'DIGITAL', 'QR'].includes(ticketData.paymentMethod?.toUpperCase()),
+      };
+      
+      console.log('🔍 Data format checks:', dataChecks);
+      
+      const failedChecks = Object.entries(dataChecks)
+        .filter(([key, passed]) => !passed)
+        .map(([key]) => key);
+        
+      if (failedChecks.length > 0) {
+        console.warn('⚠️ Data format warnings:', failedChecks);
+        // Don't fail here, just warn, as server might accept different formats
+      }
+
       // Log the exact request being sent
       console.log('📤 Sending ticket request to API...');
+      console.log('🔍 Final payload validation:', {
+        conductorId: typeof ticketData.conductorId,
+        busId: typeof ticketData.busId,
+        tripId: typeof ticketData.tripId,
+        startLocationId: typeof ticketData.startLocationId,
+        endLocationId: typeof ticketData.endLocationId,
+        fareAmount: typeof ticketData.fareAmount,
+        paymentMethod: typeof ticketData.paymentMethod,
+        transactionRef: typeof ticketData.transactionRef
+      });
       
       const response = await apiClient.authenticatedRequest<any>('/v1/tickets/conductor/issue', {
         method: 'POST',
@@ -48,6 +111,12 @@ export const ticketApi = {
       };
     } catch (error: any) {
       console.error('❌ Error issuing ticket:', error);
+      console.log('🔍 Detailed error information:', {
+        message: error.message,
+        status: error.status,
+        response: error.response,
+        stack: error.stack?.substring(0, 200) + '...'
+      });
       
       // Handle different types of errors
       if (error.message === 'UNAUTHORIZED') {
@@ -82,11 +151,11 @@ export const ticketApi = {
         };
       }
       
-      if (error.message.includes('HTTP 500')) {
+      if (error.message.includes('HTTP 500') || error.message.includes('Internal server error')) {
         return {
           success: false,
           error: 'Server error',
-          message: 'Server is experiencing issues. Please try again later.'
+          message: 'Server is experiencing issues processing your ticket. This could be due to invalid trip/bus/location data. Please try again or contact support if the issue persists.'
         };
       }
       

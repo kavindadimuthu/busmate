@@ -108,14 +108,53 @@ export default function TicketPrintingScreen() {
           {isPrintingComplete ? 'Ticket processing completed' : 'Please wait while we process your ticket'}
         </Text>
         
-        {/* Route Information */}
+        {/* Enhanced Route Information with Visual Journey */}
         {ticketData && (
           <View style={styles.routeInfo}>
-            <Text style={styles.routeText}>
-              {ticketData.from} → {ticketData.to}
-            </Text>
-            <Text style={styles.fareText}>{ticketData.fare}</Text>
-            <Text style={styles.passengerText}>{ticketData.passengers}</Text>
+            <View style={styles.journeyContainer}>
+              {/* From Stop */}
+              <View style={styles.stopContainer}>
+                <View style={styles.stopIcon}>
+                  <Text style={styles.stopIconText}>🚏</Text>
+                </View>
+                <View style={styles.stopDetails}>
+                  <Text style={styles.stopLabel}>FROM</Text>
+                  <Text style={styles.stopName}>{ticketData.from}</Text>
+                </View>
+              </View>
+              
+              {/* Journey Line with Arrow */}
+              <View style={styles.journeyLine}>
+                <View style={styles.dottedLine} />
+                <View style={styles.arrowContainer}>
+                  <Text style={styles.arrowText}>→</Text>
+                </View>
+                <View style={styles.dottedLine} />
+              </View>
+              
+              {/* To Stop */}
+              <View style={styles.stopContainer}>
+                <View style={[styles.stopIcon, styles.destinationIcon]}>
+                  <Text style={styles.stopIconText}>🎯</Text>
+                </View>
+                <View style={styles.stopDetails}>
+                  <Text style={styles.stopLabel}>TO</Text>
+                  <Text style={styles.stopName}>{ticketData.to}</Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Ticket Details */}
+            <View style={styles.ticketDetails}>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>💰 Fare:</Text>
+                <Text style={styles.fareText}>{ticketData.fare}</Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>👥 Passengers:</Text>
+                <Text style={styles.passengerText}>{ticketData.passengers}</Text>
+              </View>
+            </View>
           </View>
         )}
         
@@ -222,41 +261,31 @@ const styles = StyleSheet.create({
   routeInfo: {
     alignItems: 'center',
     marginBottom: 30,
-    paddingHorizontal: 25,
-    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 25,
     backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 15,
-    minWidth: 280,
+    borderRadius: 20,
+    minWidth: 320,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  routeText: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 8,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    shadowRadius: 6,
+    elevation: 8,
   },
   fareText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 5,
   },
   passengerText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '400',
+    fontSize: 16,
+    fontWeight: '700',
     textAlign: 'center',
-    opacity: 0.9,
   },
   percentageText: {
     color: '#FFFFFF',
@@ -352,5 +381,96 @@ const styles = StyleSheet.create({
   },
   completedText: {
     color: '#FFFFFF',
+  },
+  
+  // Enhanced journey visualization styles
+  journeyContainer: {
+    width: '100%',
+    paddingVertical: 15,
+  },
+  stopContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+    paddingHorizontal: 15,
+  },
+  stopIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  destinationIcon: {
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+  stopIconText: {
+    fontSize: 20,
+  },
+  stopDetails: {
+    flex: 1,
+  },
+  stopLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  stopName: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  journeyLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 5,
+    paddingHorizontal: 30,
+  },
+  dottedLine: {
+    height: 2,
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 1,
+  },
+  arrowContainer: {
+    marginHorizontal: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  arrowText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  ticketDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+  },
+  detailItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  detailLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 4,
   },
 });
