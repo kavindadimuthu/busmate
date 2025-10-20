@@ -2,6 +2,7 @@ package com.busmate.ticketing_service.controller;
 
 import com.busmate.ticketing_service.dto.request.PaymentRequestDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,16 @@ public class TicketController {
     @GetMapping("/bus/{busId}")
     public List<ConductorLogTicketDTO> getTicketsByBusId(@PathVariable String busId) {
         return conductorLogService.getTicketDetailsByBusId(busId);
+    }
+
+    @GetMapping("/trip/{tripId}")
+    public List<ConductorLogTicketDTO> getTicketsByTripId(@PathVariable String tripId) {
+        return conductorLogService.getTicketDetailsByTripId(tripId);
+    }
+
+    @GetMapping("/trip/{tripId}/summary")
+    public TripSummaryDTO getTripSummary(@PathVariable String tripId) {
+        return conductorLogService.getTripSummary(tripId);
     }
 
 }

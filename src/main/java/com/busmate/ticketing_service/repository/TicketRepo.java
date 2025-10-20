@@ -11,4 +11,6 @@ public interface TicketRepo extends JpaRepository<Tickets, Integer> {
     List<Tickets> findByConductorId(String conductorId);
 
     List<Tickets> findByBusId(String busId);
+
+    List<Tickets> findByTripId(String tripId);
 }
