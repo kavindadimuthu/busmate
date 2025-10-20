@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,16 @@ import {
   ScrollView,
   TextInput,
   FlatList,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { notificationApi } from '@/services/api/notification';
+import { Notification as ApiNotification } from '@/types/notification';
 
-type NotificationType = 'shift' | 'qr' | 'system' | 'bus' | 'feature' | 'maintenance';
+type NotificationType = 'shift' | 'qr' | 'system' | 'bus' | 'feature' | 'maintenance' | 'warning' | 'info';
 type FilterCategory = 'all' | 'shift' | 'route' | 'system' | 'general';
 
 interface Notification {
@@ -24,80 +28,129 @@ interface Notification {
   time: string;
   isRead: boolean;
   category: FilterCategory;
+  messageType?: 'info' | 'warning' | 'error' | 'success';
 }
 
 export default function NotificationsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Sample notifications data
-  const notifications: Notification[] = [
-    {
-      id: '1',
-      type: 'shift',
-      title: 'Shift Time Changed',
-      description: 'Your evening shift now starts at 3:00 PM due to route delay.',
-      time: '10 mins ago',
-      isRead: false,
-      category: 'shift',
-    },
-    {
-      id: '2',
-      type: 'qr',
-      title: 'QR Payment System Update',
-      description: 'New QR payment system deployed. Check tutorial.',
-      time: '25 mins ago',
-      isRead: false,
-      category: 'system',
-    },
-    {
-      id: '3',
-      type: 'system',
-      title: 'System Maintenance',
-      description: 'Maintenance tonight from 10:00 PM to 12:00 AM.',
-      time: '1 hour ago',
-      isRead: true,
-      category: 'system',
-    },
-    {
-      id: '4',
-      type: 'bus',
-      title: 'Bus Assignment Changed',
-      description: 'You have been assigned to bus #B12 for tomorrow.',
-      time: '3 hours ago',
-      isRead: true,
-      category: 'general',
-    },
-    {
-      id: '5',
-      type: 'feature',
-      title: 'New Feature Added',
-      description: 'Real-time seat view now available in your dashboard.',
-      time: '1 day ago',
-      isRead: true,
-      category: 'system',
-    },
-    {
-      id: '6',
-      type: 'maintenance',
-      title: 'Vehicle Maintenance Alert',
-      description: 'Bus KD-4578 scheduled for maintenance at 2:00 PM.',
-      time: '2 days ago',
-      isRead: true,
-      category: 'route',
-    },
-  ];
+  // Fetch notifications from API
+  const fetchNotifications = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) {
+        setIsLoading(true);
+      }
+
+      const response = await notificationApi.getNotificationsList();
+
+      // Filter to only notifications for conductors or for all
+      const allowed = (aud?: string) => {
+        const a = (aud || '').toLowerCase();
+        return a.includes('conductor') || a === 'all' || a.includes('all') || a.includes('everyone') || a.includes('public') || a.includes('global');
+      };
+
+      const filteredForConductor = response.notifications.filter((n) => allowed(n.targetAudience));
+
+      // Transform API notifications to local format
+      const transformedNotifications: Notification[] = filteredForConductor.map((apiNotif: ApiNotification) => {
+        // Calculate relative time
+        const createdDate = new Date(apiNotif.createdAt);
+        const now = new Date();
+        const diffMs = now.getTime() - createdDate.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        let timeAgo = '';
+        if (diffMins < 1) {
+          timeAgo = 'Just now';
+        } else if (diffMins < 60) {
+          timeAgo = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+        } else if (diffHours < 24) {
+          timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        } else {
+          timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        }
+
+        // Map message type to notification type and category
+        let type: NotificationType = 'system';
+        let category: FilterCategory = 'general';
+
+        switch (apiNotif.messageType) {
+          case 'warning':
+            type = 'warning';
+            category = 'system';
+            break;
+          case 'info':
+            type = 'info';
+            category = 'general';
+            break;
+          case 'error':
+            type = 'system';
+            category = 'system';
+            break;
+          case 'success':
+            type = 'feature';
+            category = 'general';
+            break;
+        }
+
+        // Try to determine category from target audience
+        if (apiNotif.targetAudience?.toLowerCase().includes('conductor')) {
+          category = 'shift';
+        } else if (apiNotif.targetAudience?.toLowerCase().includes('route') ||
+          apiNotif.targetAudience?.toLowerCase().includes('fleet')) {
+          category = 'route';
+        }
+
+        return {
+          id: apiNotif.notificationId,
+          type,
+          title: apiNotif.title,
+          description: apiNotif.body,
+          time: timeAgo,
+          isRead: false, // Default to unread
+          category,
+          messageType: apiNotif.messageType,
+        };
+      });
+
+      setNotifications(transformedNotifications);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+      Alert.alert('Error', 'Failed to load notifications. Please try again.');
+      // Keep existing notifications on error
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Load notifications on mount
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  // Handle pull to refresh
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchNotifications(true);
+  };
 
   // Filter notifications based on active filter and search query
   const filteredNotifications = notifications.filter((notification) => {
     // First filter by category
     const categoryMatch = activeFilter === 'all' || notification.category === activeFilter;
-    
+
     // Then filter by search query if any
-    const searchMatch = !searchQuery || 
+    const searchMatch = !searchQuery ||
       notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notification.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return categoryMatch && searchMatch;
   });
 
@@ -146,6 +199,18 @@ export default function NotificationsScreen() {
             <MaterialCommunityIcons name="tools" size={20} color="#F5A623" />
           </View>
         );
+      case 'warning':
+        return (
+          <View style={[styles.iconContainer, { backgroundColor: '#FFF8E6' }]}>
+            <Ionicons name="warning" size={20} color="#F5A623" />
+          </View>
+        );
+      case 'info':
+        return (
+          <View style={[styles.iconContainer, { backgroundColor: '#EEF3FF' }]}>
+            <Ionicons name="information-circle" size={20} color="#0066FF" />
+          </View>
+        );
       default:
         return (
           <View style={[styles.iconContainer, { backgroundColor: '#EEF3FF' }]}>
@@ -157,16 +222,21 @@ export default function NotificationsScreen() {
 
   // Render item for FlatList
   const renderItem = ({ item }: { item: Notification }) => (
-    <TouchableOpacity style={styles.notificationItem}>
+    <TouchableOpacity
+      style={styles.notificationItem}
+      onPress={() => router.push({ pathname: '/Notification/notificationDetail', params: { notificationId: item.id } })}
+    >
       {renderNotificationIcon(item.type)}
-      
+
       <View style={styles.notificationContent}>
         <View style={styles.notificationHeader}>
           <Text style={styles.notificationTitle}>{item.title}</Text>
           {!item.isRead && <View style={styles.unreadIndicator} />}
         </View>
-        
-        <Text style={styles.notificationDescription}>{item.description}</Text>
+
+        <Text style={styles.notificationDescription} numberOfLines={2} ellipsizeMode="tail">
+          {item.description}
+        </Text>
         <Text style={styles.notificationTime}>{item.time}</Text>
       </View>
     </TouchableOpacity>
@@ -184,7 +254,7 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#0066FF" />
-      
+
       {/* Header */}
       {/* <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -198,9 +268,9 @@ export default function NotificationsScreen() {
 
       {/* Subtitle */}
       {/* <View style={styles.subtitleContainer}> */}
-        {/* <Text style={styles.subtitle}>Important updates for conductors</Text> */}
+      {/* <Text style={styles.subtitle}>Important updates for conductors</Text> */}
       {/* </View> */}
-      
+
       {/* Search Box */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
@@ -214,9 +284,9 @@ export default function NotificationsScreen() {
       </View>
 
       {/* Filter Categories */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
         style={styles.filterScrollView}
         contentContainerStyle={styles.filterContainer}
       >
@@ -229,7 +299,7 @@ export default function NotificationsScreen() {
             ]}
             onPress={() => setActiveFilter(category.id)}
           >
-            <Text 
+            <Text
               style={[
                 styles.filterText,
                 activeFilter === category.id && styles.activeFilterText
@@ -240,17 +310,36 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      
+
       <View style={styles.divider} />
 
-      {/* Notifications List */}
-      <FlatList
-        data={filteredNotifications}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.notificationsList}
-        showsVerticalScrollIndicator={false}
-      />
+      {/* Loading State */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0066FF" />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      ) : (
+        /* Notifications List */
+        <FlatList
+          data={filteredNotifications}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.notificationsList}
+          showsVerticalScrollIndicator={false}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="notifications-off-outline" size={64} color="#CCC" />
+              <Text style={styles.emptyText}>No notifications yet</Text>
+              <Text style={styles.emptySubtext}>
+                {searchQuery ? 'Try adjusting your search' : 'Check back later for updates'}
+              </Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -395,5 +484,33 @@ const styles = StyleSheet.create({
   notificationTime: {
     fontSize: 12,
     color: '#999',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
   },
 });

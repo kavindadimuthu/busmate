@@ -22,6 +22,8 @@ class ApiClient {
         return API_CONFIG.SCHEDULE_MANAGEMENT;
       case 'ticket':
         return API_CONFIG.TICKET_MANAGEMENT;
+      case 'notification':
+        return API_CONFIG.NOTIFICATION_MANAGEMENT;
       default:
         return API_CONFIG.USER_MANAGEMENT;
     }
@@ -44,7 +46,7 @@ class ApiClient {
 
     // Create a unique key for this request to prevent duplicates
     const requestKey = `${serviceType}_${fullUrl}_${JSON.stringify(options)}`;
-    
+
     // If the same request is already in progress, return the existing promise
     if (this.activeRequests.has(requestKey)) {
       console.log('🔄 Reusing existing request for:', fullUrl, 'on service:', serviceType);
@@ -77,11 +79,11 @@ class ApiClient {
           // Try to get error message from response
           let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           let errorDetails = '';
-          
+
           try {
             const contentType = response.headers.get('content-type');
             console.log(`📋 Error response content-type: ${contentType}`);
-            
+
             if (contentType && contentType.includes('application/json')) {
               const errorData = await response.json();
               errorMessage = errorData.message || errorData.error || errorMessage;
@@ -90,7 +92,7 @@ class ApiClient {
               // If it's not JSON, get the text content
               const errorText = await response.text();
               console.log('📄 Non-JSON error response:', errorText.substring(0, 500));
-              
+
               // For 403 errors, provide more specific message
               if (response.status === 403) {
                 errorMessage = 'cd ..';
@@ -106,18 +108,18 @@ class ApiClient {
               errorMessage = 'Permission denied - Invalid credentials or insufficient permissions';
             }
           }
-          
+
           if (response.status === 401) {
             throw new Error('UNAUTHORIZED');
           }
-          
+
           const finalError = errorDetails ? `${errorMessage}. Details: ${errorDetails}` : errorMessage;
           throw new Error(finalError);
         }
 
         // Handle different content types
         const contentType = response.headers.get('content-type') || '';
-        
+
         if (contentType.includes('application/json')) {
           const data = await response.json();
           console.log('✅ Request completed successfully:', fullUrl, `(Service: ${serviceType})`);
@@ -125,7 +127,7 @@ class ApiClient {
         } else if (contentType.includes('text/plain')) {
           const text = await response.text();
           console.log('📄 Text response:', text);
-          
+
           // If it's a success message in plain text, return it
           if (text.toLowerCase().includes('success') || text.toLowerCase().includes('issued')) {
             console.log('✅ Request completed successfully (text response):', fullUrl, `(Service: ${serviceType})`);
@@ -137,11 +139,11 @@ class ApiClient {
           // For any other content type, try to get the response as text for debugging
           const textResponse = await response.text();
           console.log('⚠️ Unexpected content type:', contentType, 'Response:', textResponse.substring(0, 200));
-          
+
           // If the text contains success indicators, treat it as success
-          if (textResponse.toLowerCase().includes('success') || 
-              textResponse.toLowerCase().includes('issued') || 
-              textResponse.toLowerCase().includes('created')) {
+          if (textResponse.toLowerCase().includes('success') ||
+            textResponse.toLowerCase().includes('issued') ||
+            textResponse.toLowerCase().includes('created')) {
             console.log('✅ Request completed successfully (unknown content type but success message):', fullUrl, `(Service: ${serviceType})`);
             return { success: true, message: textResponse } as T;
           } else {
@@ -166,7 +168,7 @@ class ApiClient {
   async authenticatedRequest<T>(endpoint: string, options: RequestInit = {}, serviceType: ServiceType = 'user'): Promise<T> {
     const serviceConfig = this.getServiceConfig(serviceType);
     let baseURL = String(serviceConfig.baseURL || '');
-    
+
     // Ensure scheme exists (prepend http:// if missing)
     if (!/^https?:\/\//i.test(baseURL)) {
       baseURL = `http://${baseURL}`;
@@ -176,19 +178,19 @@ class ApiClient {
     const normalizedBase = baseURL.replace(/\/+$/g, '');       // remove trailing slashes
     const normalizedEndpoint = endpoint.replace(/^\/+/g, '');  // remove leading slashes
     const fullUrl = `${normalizedBase}/${normalizedEndpoint}`;
-    
+
     console.log('🔐 Making authenticated API request to:', fullUrl, `(Service: ${serviceType})`);
     console.log('📋 Request options:', JSON.stringify(options, null, 2));
-    
+
     const token = await this.getAuthToken();
-    
+
     if (!token) {
       console.log('❌ No authentication token found');
       throw new Error('No authentication token found');
     }
 
     console.log('🎫 Token exists, length:', token.length);
-    
+
     // Log first few characters of token for debugging (safely)
     console.log('🔑 Token preview:', token.substring(0, 20) + '...');
 
