@@ -1,6 +1,7 @@
 package com.busmate.ticketing_service.controller;
 
 import com.busmate.ticketing_service.dto.request.PaymentRequestDTO;
+import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.service.PaymentService;
@@ -42,6 +43,17 @@ public class TicketController {
     @GetMapping("/trip/{tripId}/summary")
     public TripSummaryDTO getTripSummary(@PathVariable String tripId) {
         return conductorLogService.getTripSummary(tripId);
+    }
+
+    @GetMapping("/passenger/{passengerId}")
+    public List<ConductorLogTicketDTO> getTicketsByPassengerId(@PathVariable String passengerId) {
+        return conductorLogService.getTicketDetailsByPassengerId(passengerId);
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<String> validateTicket(@RequestBody TicketValidationRequestDTO requestDTO) {
+        String result = conductorLogService.validateTicket(requestDTO);
+        return ResponseEntity.ok(result);
     }
 
 }

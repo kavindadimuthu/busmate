@@ -1,6 +1,7 @@
 package com.busmate.ticketing_service.service.impl;
 
 import com.busmate.ticketing_service.dto.request.PaymentRequestDTO;
+import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.entity.Cash;
@@ -271,6 +272,78 @@ public class PaymentServiceIMPL implements PaymentService {
         } catch (Exception e) {
             // Return empty summary in case of error
             return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0, java.math.BigDecimal.ZERO);
+        }
+    }
+
+    @Override
+    public List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId) {
+        try {
+            // Fetch all tickets for the given passenger ID
+            List<Tickets> tickets = ticketRepo.findByPassengerId(passengerId);
+
+            if (tickets.isEmpty()) {
+                throw new NotFoundException("No tickets found for passengerId: " + passengerId);
+            }
+
+            // Convert tickets to DTOs
+            return tickets.stream().map(ticket -> {
+                ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
+                dto.setTicketId(ticket.getTicketId());
+                dto.setPassengerId(ticket.getPassengerId());
+
+                // Direct assignment of String location IDs
+                dto.setStartLocationId(ticket.getStartLocationId());
+                dto.setEndLocationId(ticket.getEndLocationId());
+
+                dto.setSeatNumber(ticket.getSeatNumber());
+                dto.setFareAmount(ticket.getFareAmount().doubleValue());
+                dto.setIssuedAt(ticket.getIssuedAt());
+
+                // Get payment status from transaction
+                if (ticket.getTransactions() != null) {
+                    dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
+                } else {
+                    dto.setPaymentStatus("UNKNOWN");
+                }
+
+                // Set passenger count to 1 (assuming 1 passenger per ticket)
+                dto.setPassengerCount(1);
+
+                return dto;
+            }).toList();
+
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BadRequestException(
+                    "Failed to fetch tickets for passengerId: " + passengerId + ", " + e.getMessage());
+        }
+    }
+
+    @Override
+    public String validateTicket(TicketValidationRequestDTO requestDTO) {
+        try {
+            // Find the ticket by ID
+            Tickets ticket = ticketRepo.findById(requestDTO.getTicketId())
+                    .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + requestDTO.getTicketId()));
+
+            // Check if ticket is already validated
+            if (ticket.getStatus() == Tickets.Status.VALID) {
+                throw new BadRequestException("Ticket is already validated");
+            }
+
+            // Update ticket status to VALID
+            ticket.setStatus(Tickets.Status.VALID);
+
+            // Save the updated ticket
+            ticketRepo.save(ticket);
+
+            return "Ticket validated successfully by conductor: " + requestDTO.getConductorId();
+
+        } catch (NotFoundException | BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BadRequestException("Failed to validate ticket: " + e.getMessage());
         }
     }
 }

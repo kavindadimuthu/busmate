@@ -1,6 +1,7 @@
 package com.busmate.ticketing_service.service;
 
 import com.busmate.ticketing_service.dto.request.PaymentRequestDTO;
+import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 
@@ -15,5 +16,9 @@ public interface PaymentService {
 
     List<ConductorLogTicketDTO> getTicketDetailsByTripId(String tripId);
 
+    List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId);
+
     TripSummaryDTO getTripSummary(String tripId);
+
+    String validateTicket(TicketValidationRequestDTO requestDTO);
 }
