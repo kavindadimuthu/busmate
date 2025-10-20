@@ -395,6 +395,7 @@ export const ticketApi = {
     passengerName?: string;
     ticketId?: string;
     paymentStatus?: string;
+    fareAmount?: number;
   }[]> => {
     try {
       console.log('🪑 Fetching seat bookings for trip ID:', tripId);
@@ -426,7 +427,8 @@ export const ticketApi = {
                 status: ticket.paymentStatus === 'VALIDATED' ? 'validated' : 'booked',
                 passengerName: ticket.passengerId || 'Unknown Passenger',
                 ticketId: ticket.ticketId?.toString(),
-                paymentStatus: ticket.paymentStatus
+                paymentStatus: ticket.paymentStatus,
+                fareAmount: ticket.fareAmount
               };
             }
           });

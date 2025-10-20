@@ -1,8 +1,10 @@
+import { ticketApi } from '@/services/api/ticket';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -16,11 +18,41 @@ import PassengerList from '../../components/Journey/PassengerList';
 import { useEmployeeScheduleContext } from '../../contexts/EmployeeScheduleContext';
 import { EmployeeSchedule } from '../../types/employee';
 
+// Types for seat booking data
+interface SeatBookingData {
+  seatNumber: string;
+  status: 'available' | 'booked' | 'validated';
+  passengerName?: string;
+  ticketId?: string;
+  paymentStatus?: string;
+  fareAmount?: number;
+}
+
 export default function TripDetailsScreen() {
   const [activeTab, setActiveTab] = useState<'seats' | 'passengers'>('seats');
   const { schedules, loading, error } = useEmployeeScheduleContext();
    const { id: tripId } = useLocalSearchParams<{ id: string }>();
   const [tripData, setTripData] = useState<EmployeeSchedule | null>(null);
+  const [seatBookingData, setSeatBookingData] = useState<SeatBookingData[]>([]);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Fetch seat booking data
+  const fetchSeatBookingData = async () => {
+    if (!tripId) return;
+    
+    setBookingLoading(true);
+    try {
+      const bookingData = await ticketApi.getSeatBookings(tripId);
+      setSeatBookingData(bookingData);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error fetching seat booking data:', error);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   // Find the specific trip by ID
   useEffect(() => {
@@ -30,6 +62,42 @@ export default function TripDetailsScreen() {
       console.log('Trip details loaded:', trip);
     }
   }, [tripId, schedules]);
+
+  // Fetch seat booking data when component mounts
+  useEffect(() => {
+    fetchSeatBookingData();
+  }, [tripId]);
+
+  // Calculate total revenue from seat booking data
+  const calculateTotalRevenue = (): number => {
+    return seatBookingData.reduce((total, seat) => {
+      if (seat.status === 'booked' || seat.status === 'validated') {
+        // Use fareAmount from ticket data
+        const price = seat.fareAmount || 0;
+        return total + price;
+      }
+      return total;
+    }, 0);
+  };
+
+  // Calculate total passenger count from seat booking data
+  const calculatePassengerCount = (): number => {
+    return seatBookingData.filter(seat => 
+      seat.status === 'booked' || seat.status === 'validated'
+    ).length;
+  };
+
+  // Calculate validated tickets count
+  const calculateValidatedTickets = (): number => {
+    return seatBookingData.filter(seat => seat.status === 'validated').length;
+  };
+
+  // Handle pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchSeatBookingData();
+    setRefreshing(false);
+  };
 
   // Helper function to format time from HH:MM:SS to readable format
   const formatTime = (timeStr: string): string => {
@@ -177,7 +245,17 @@ export default function TripDetailsScreen() {
       {/* Content Container */}
       <View style={styles.contentContainer}>
         {activeTab === 'seats' ? (
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#0066FF']}
+                tintColor="#0066FF"
+              />
+            }
+          >
             {/* Trip Info Card */}
             <View style={styles.tripCard}>
               <View style={styles.routeContainer}>
@@ -227,6 +305,15 @@ export default function TripDetailsScreen() {
                 </View>
               )}
             </View>
+
+            {/* Last Updated Indicator */}
+            {lastUpdated && (
+              <View style={styles.lastUpdatedContainer}>
+                <Text style={styles.lastUpdatedText}>
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </Text>
+              </View>
+            )}
             
             {/* Stats Card */}
             <View style={styles.statsCard}>
@@ -235,9 +322,19 @@ export default function TripDetailsScreen() {
                   <Text style={styles.statLabel}>Passengers</Text>
                   <View style={styles.statValueWrapper}>
                     <Text style={[styles.statValue, styles.passengerValue]}>
-                      {tripData.passengers || 0}
+                      {bookingLoading ? '...' : calculatePassengerCount()}
                     </Text>
                     <Ionicons name="people" size={24} color="#0066FF" style={styles.statIcon} />
+                  </View>
+                </View>
+                
+                <View style={[styles.statItem, styles.borderLeft]}>
+                  <Text style={styles.statLabel}>Validated</Text>
+                  <View style={styles.statValueWrapper}>
+                    <Text style={[styles.statValue, styles.validatedValue]}>
+                      {bookingLoading ? '...' : calculateValidatedTickets()}
+                    </Text>
+                    <Ionicons name="checkmark-circle" size={24} color="#22C55E" style={styles.statIcon} />
                   </View>
                 </View>
                 
@@ -245,9 +342,9 @@ export default function TripDetailsScreen() {
                   <Text style={styles.statLabel}>Revenue</Text>
                   <View style={styles.statValueWrapper}>
                     <Text style={[styles.statValue, styles.amountValue]}>
-                      Rs. {(tripData.revenue || 0).toLocaleString()}
+                      Rs. {bookingLoading ? '...' : calculateTotalRevenue().toLocaleString()}
                     </Text>
-                    <Ionicons name="cash" size={24} color="#22C55E" style={styles.statIcon} />
+                    <Ionicons name="cash" size={24} color="#F59E0B" style={styles.statIcon} />
                   </View>
                 </View>
               </View>
@@ -531,8 +628,11 @@ const styles = StyleSheet.create({
   passengerValue: {
     color: '#0066FF',
   },
-  amountValue: {
+  validatedValue: {
     color: '#22C55E',
+  },
+  amountValue: {
+    color: '#F59E0B',
   },
   statIcon: {
     marginLeft: 8,
@@ -588,5 +688,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEEEE',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  lastUpdatedContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  lastUpdatedText: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
   },
 });
