@@ -291,4 +291,56 @@ export const ticketApi = {
       return []; // Return empty array for any other errors to avoid breaking the entire insights loading
     }
   },
+
+  // Get trip summary statistics - Ticket Management Service
+  getTripSummary: async (tripId: string): Promise<{
+    totalPassengers: number;
+    totalRevenue: number;
+    physicalTickets: number;
+    onlineTickets: number;
+    physicalTicketRevenue: number;
+    onlineTicketRevenue: number;
+  }> => {
+    try {
+      console.log('📊 Fetching trip summary for trip ID:', tripId);
+      
+      // Get all tickets for the trip
+      const tickets = await ticketApi.getTicketsByTripId(tripId);
+      
+      // Calculate statistics from the tickets
+      const physicalTickets = tickets.filter(ticket => ticket.paymentStatus === 'CONDUCTOR');
+      const onlineTickets = tickets.filter(ticket => ticket.paymentStatus === 'ONLINE');
+      
+      const totalPassengers = tickets.reduce((total, ticket) => total + ticket.passengerCount, 0);
+      const totalRevenue = tickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
+      
+      const physicalTicketRevenue = physicalTickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
+      const onlineTicketRevenue = onlineTickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
+      
+      const summary = {
+        totalPassengers,
+        totalRevenue,
+        physicalTickets: physicalTickets.length,
+        onlineTickets: onlineTickets.length,
+        physicalTicketRevenue,
+        onlineTicketRevenue
+      };
+      
+      console.log('✅ Trip summary calculated:', summary);
+      return summary;
+      
+    } catch (error: any) {
+      console.error('❌ Error fetching trip summary:', error);
+      
+      // Return default values if there's an error
+      return {
+        totalPassengers: 0,
+        totalRevenue: 0,
+        physicalTickets: 0,
+        onlineTickets: 0,
+        physicalTicketRevenue: 0,
+        onlineTicketRevenue: 0
+      };
+    }
+  },
 };

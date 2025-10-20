@@ -5,52 +5,94 @@ import { useSeatView } from '@/hooks/Journey/useSeatView';
 import { EmployeeSchedule } from '@/types/employee';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View
+  ActivityIndicator,
+  Alert,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View
 } from 'react-native';
+import { ticketApi } from '../../services/api/ticket';
 
 
 // Component for ongoing trip view
-function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
+function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; refreshTrigger?: number }) {
   const { endTrip, endingTrip } = useOngoingTrip();
   const { stats, tripData } = useSeatView();
   const { qrScanLogs, getQRScanLogsForTrip, cashTicketLogs, getCashTicketLogsForTrip } = useTicket();
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
+  
+  // Backend trip summary state
+  const [tripSummary, setTripSummary] = useState({
+    totalPassengers: 0,
+    totalRevenue: 0,
+    physicalTickets: 0,
+    onlineTickets: 0,
+    physicalTicketRevenue: 0,
+    onlineTicketRevenue: 0
+  });
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
-  // Get ticket data for this trip
+  // Get ticket data for this trip (keep for backward compatibility if needed)
   const tripQRLogs = getQRScanLogsForTrip();
   const tripCashTickets = getCashTicketLogsForTrip();
+
+  // Fetch trip summary from backend
+  useEffect(() => {
+    const fetchTripSummary = async () => {
+      if (!trip.id) {
+        console.log('⚠️ No trip ID available');
+        setLoadingSummary(false);
+        return;
+      }
+
+      try {
+        setLoadingSummary(true);
+        setSummaryError(null);
+        
+        console.log('📊 Fetching trip summary for trip:', trip.id);
+        const summary = await ticketApi.getTripSummary(trip.id);
+        
+        console.log('✅ Received trip summary:', summary);
+        setTripSummary(summary);
+        
+      } catch (error: any) {
+        console.error('❌ Error fetching trip summary:', error);
+        setSummaryError(error.message || 'Failed to load trip summary');
+        
+        // Keep default values if there's an error
+        setTripSummary({
+          totalPassengers: 0,
+          totalRevenue: 0,
+          physicalTickets: 0,
+          onlineTickets: 0,
+          physicalTicketRevenue: 0,
+          onlineTicketRevenue: 0
+        });
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    fetchTripSummary();
+  }, [trip.id, refreshTrigger]); // Refresh only when trip changes or manual refresh triggered
   
-  // Calculate dynamic trip statistics
+  // Calculate dynamic trip statistics using backend data
   const dynamicStats = {
-    // Total passengers from both QR scans and physical tickets
-    totalPassengers: 
-      tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.passengerCount, 0) +
-      tripCashTickets.reduce((total, ticket) => total + ticket.passengerCount, 0),
-    
-    // Validated tickets (QR scanned and validated)
-    validatedTickets: tripQRLogs.filter(log => log.status === 'success').length,
-    
-    // Pending tickets (start at 10, decrease by 1 for each validated QR ticket)
-    pendingTickets: Math.max(0, 10 - tripQRLogs.filter(log => log.status === 'success').length),
-    
-    // Total revenue from both sources
-    totalRevenue: 
-      tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.ticketFee, 0) +
-      tripCashTickets.reduce((total, ticket) => total + ticket.fareAmount, 0)
+    totalPassengers: tripSummary.totalPassengers,
+    validatedTickets: tripSummary.onlineTickets, // Online tickets are "validated" tickets
+    pendingTickets: Math.max(0, 10 - tripSummary.onlineTickets), // Keep this calculation for UI consistency
+    totalRevenue: tripSummary.totalRevenue
   };
 
   // Handle end trip
@@ -177,36 +219,52 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
         </View>
       </View>
       
-      {/* Trip Summary - using dynamic data from tickets and QR scans */}
+      {/* Trip Summary - using dynamic data from backend */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Trip Summary So far.....</Text>
+        <View style={styles.sectionHeaderWithRefresh}>
+          <Text style={styles.sectionTitle}>Trip Summary So far.....</Text>
+          {loadingSummary && (
+            <ActivityIndicator size="small" color="#0066FF" />
+          )}
+        </View>
+        
+        {summaryError && (
+          <View style={styles.errorBanner}>
+            <Ionicons name="warning-outline" size={16} color="#FF6B6B" />
+            <Text style={styles.errorText}>Failed to load real-time data</Text>
+          </View>
+        )}
         
         <View style={styles.summaryGrid}>
-          {/* Total Passenger Count - Dynamic from QR + Physical tickets */}
+          {/* Total Passenger Count - From Backend */}
           <View style={[styles.summaryItem, styles.summaryItemThreeColumn, {backgroundColor: '#F0F6FF'}]}>
             <View style={styles.summaryIconContainer}>
               <Ionicons name="people" size={20} color="#0066FF" />
             </View>
-            <Text style={styles.summaryValue}>{dynamicStats.totalPassengers}</Text>
+            <Text style={styles.summaryValue}>
+              {loadingSummary ? '...' : dynamicStats.totalPassengers}
+            </Text>
             <Text style={styles.summaryLabel}>Total Passengers</Text>
           </View>
           
-          {/* Online Tickets - Dynamic from QR scans */}
+          {/* Online Tickets - From Backend */}
           <View style={[styles.summaryItem, styles.summaryItemThreeColumn, {backgroundColor: '#F0FFF6'}]}>
             <View style={[styles.summaryIconContainer, {backgroundColor: '#E6FFF2'}]}>
               <Ionicons name="receipt-outline" size={20} color="#00CC66" />
             </View>
-            <Text style={styles.summaryValue}>{dynamicStats.validatedTickets}</Text>
+            <Text style={styles.summaryValue}>
+              {loadingSummary ? '...' : dynamicStats.validatedTickets}
+            </Text>
             <Text style={styles.summaryLabel}>Online Tickets</Text>
           </View>
           
-          {/* Total Revenue - Dynamic from both sources */}
+          {/* Total Revenue - From Backend */}
           <View style={[styles.summaryItem, styles.summaryItemThreeColumn, {backgroundColor: '#F9F0FF'}]}>
             <View style={[styles.summaryIconContainer, {backgroundColor: '#F6E6FF'}]}>
               <FontAwesome5 name="money-bill-wave" size={16} color="#BF5AF2" />
             </View>
             <Text style={styles.summaryValue}>
-              Rs. {dynamicStats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {loadingSummary ? '...' : `Rs. ${dynamicStats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </Text>
             <Text style={styles.summaryLabel}>Total Revenue</Text>
           </View>
@@ -233,22 +291,22 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
           </Text>
         </View>
         
-        {/* Ticket Breakdown */}
-        {/* <View style={styles.ticketBreakdownContainer}>
+        {/* Ticket Breakdown - Using Backend Data */}
+        <View style={styles.ticketBreakdownContainer}>
           <Text style={styles.ticketBreakdownTitle}>Ticket Breakdown</Text>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Physical Tickets:</Text>
             <Text style={styles.breakdownValue}>
-              {tripCashTickets.length} tickets ({tripCashTickets.reduce((total, ticket) => total + ticket.passengerCount, 0)} passengers)
+              {loadingSummary ? '...' : `${tripSummary.physicalTickets} tickets (Rs. ${tripSummary.physicalTicketRevenue.toFixed(2)})`}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Online Tickets:</Text>
             <Text style={styles.breakdownValue}>
-              {dynamicStats.validatedTickets} tickets ({tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.passengerCount, 0)} passengers)
+              {loadingSummary ? '...' : `${tripSummary.onlineTickets} tickets (Rs. ${tripSummary.onlineTicketRevenue.toFixed(2)})`}
             </Text>
           </View>
-        </View> */}
+        </View>
       </View>
       
       {/* Add bottom padding for scrolling */}
@@ -352,12 +410,14 @@ export default function JourneyScreen() {
   const colorScheme = useColorScheme();
   const { ongoingTrip, startableTrip, refreshTrips } = useOngoingTrip();
   const [refreshing, setRefreshing] = useState(false);
+  const [tripSummaryRefresh, setTripSummaryRefresh] = useState(0); // Force refresh trigger
   
   // Pull to refresh handler
   const onRefresh = async () => {
     setRefreshing(true);
     try {
       await refreshTrips(); // Refresh trip data
+      setTripSummaryRefresh(prev => prev + 1); // Trigger trip summary refresh
     } catch (error) {
       console.error('Error refreshing trips:', error);
     } finally {
@@ -401,7 +461,7 @@ export default function JourneyScreen() {
       >
         {ongoingTrip ? (
           // Show ongoing trip details
-          <OngoingTripView trip={ongoingTrip} />
+          <OngoingTripView trip={ongoingTrip} refreshTrigger={tripSummaryRefresh} />
         ) : (
           // Show no trip message with schedules button
           <NoOngoingTripView 
@@ -555,6 +615,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
+  },
+  sectionHeaderWithRefresh: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6B6B',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   expectedTime: {
     fontSize: 12,
