@@ -1,22 +1,27 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  TextInput
-} from 'react-native';
+import { ticketApi } from '@/services/api/ticket';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 // Define passenger interface
 interface Passenger {
   id: string;
   name: string;
-  seat: string;
-  mobile: string;
+  seatNumber: string;
+  mobile?: string;
   isValidated: boolean;
+  paymentStatus: string;
+  ticketId: string;
 }
 
 // Component props
@@ -26,69 +31,103 @@ interface PassengerListProps {
 
 export default function PassengerList({ tripId }: PassengerListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Sample passenger data (in a real app, you would fetch this based on tripId)
-  const passengers: Passenger[] = [
-    {
-      id: '1',
-      name: 'Kamal Perera',
-      mobile: '+94 77 123 4567',
-      seat: 'A1',
-      isValidated: true
-    },
-    {
-      id: '2',
-      name: 'Nimal Silva',
-      mobile: '+94 71 987 6543',
-      seat: 'B3',
-      isValidated: false
-    },
-    {
-      id: '3',
-      name: 'Saman Fernando',
-      mobile: '+94 76 555 1234',
-      seat: 'C2',
-      isValidated: true
-    },
-    {
-      id: '4',
-      name: 'Ruwan Jayasinghe',
-      mobile: '+94 78 999 8888',
-      seat: 'D5',
-      isValidated: false
-    },
-    {
-      id: '5',
-      name: 'Chamara Wickramasinghe',
-      mobile: '+94 75 444 3333',
-      seat: 'E2',
-      isValidated: true
-    },
-    {
-      id: '6',
-      name: 'Priyanka Rathnayake',
-      mobile: '+94 72 666 7777',
-      seat: 'F1',
-      isValidated: true
-    },
-     {
-      id: '7',
-      name: 'Malith Rathnayake',
-      mobile: '+94 72 666 1111',
-      seat: 'F2',
-      isValidated: true
+  const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch passenger data from API
+  const fetchPassengerData = async () => {
+    if (!tripId) {
+      setError('No trip ID provided');
+      setLoading(false);
+      return;
     }
-  ];
+
+    try {
+      setError(null);
+      console.log('👥 Fetching passenger data for trip:', tripId);
+      
+      const seatBookings = await ticketApi.getSeatBookings(tripId);
+      
+      // Convert seat data to passenger list
+      const passengerList: Passenger[] = seatBookings
+        .filter(seat => seat.status !== 'available')
+        .map(seat => ({
+          id: seat.ticketId || seat.seatNumber,
+          name: seat.passengerName || 'Unknown Passenger',
+          seatNumber: seat.seatNumber,
+          mobile: 'N/A', // Would come from ticket data if available
+          isValidated: seat.status === 'validated',
+          paymentStatus: seat.paymentStatus || 'UNKNOWN',
+          ticketId: seat.ticketId || ''
+        }));
+      
+      setPassengers(passengerList);
+      console.log('✅ Passenger data loaded:', passengerList.length, 'passengers');
+      
+    } catch (err: any) {
+      console.error('❌ Error fetching passenger data:', err);
+      setError(err.message || 'Failed to load passenger data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchPassengerData();
+  }, [tripId]);
+
+  // Pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchPassengerData();
+    setRefreshing(false);
+  };
 
   // Filter passengers based on search query
   const filteredPassengers = passengers.filter(passenger => {
     const query = searchQuery.toLowerCase();
     return (
       passenger.name.toLowerCase().includes(query) ||
-      passenger.seat.toLowerCase().includes(query) ||
-      passenger.mobile.includes(query)
+      passenger.seatNumber.toLowerCase().includes(query) ||
+      (passenger.mobile && passenger.mobile.includes(query))
     );
   });
+
+  // Handle passenger press
+  const handlePassengerPress = (passenger: Passenger) => {
+    Alert.alert(
+      'Passenger Details',
+      `Name: ${passenger.name}\nSeat: ${passenger.seatNumber}\nStatus: ${passenger.isValidated ? 'Validated' : 'Not Validated'}\nPayment: ${passenger.paymentStatus}\nMobile: ${passenger.mobile || 'N/A'}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0066FF" />
+        <Text style={styles.loadingText}>Loading passengers...</Text>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={60} color="#FF6B6B" />
+        <Text style={styles.errorTitle}>Unable to Load Passengers</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchPassengerData}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Trip summary data
   const tripSummary = {
@@ -134,21 +173,18 @@ export default function PassengerList({ tripId }: PassengerListProps) {
       <FlatList
         data={filteredPassengers}
         keyExtractor={item => item.id}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0066FF']}
+            tintColor="#0066FF"
+          />
+        }
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={styles.passengerCard}
-            onPress={() => {
-              try {
-                router.push({
-                  pathname: '/Journey/passengerCard', 
-                  params: { id: item.id, tripId }
-                });
-              } catch (error) {
-                console.error("Navigation error:", error);
-                // Fallback navigation if passengerCard doesn't exist
-                router.push('/Journey/seatView');
-              }
-            }}
+            onPress={() => handlePassengerPress(item)}
           >
             <View style={styles.passengerInfo}>
               <View style={styles.avatarContainer}>
@@ -157,13 +193,13 @@ export default function PassengerList({ tripId }: PassengerListProps) {
               
               <View style={styles.passengerDetails}>
                 <Text style={styles.passengerName}>{item.name}</Text>
-                <Text style={styles.passengerMobile}>Mobile: {item.mobile}</Text>
+                <Text style={styles.passengerMobile}>Mobile: {item.mobile || 'N/A'}</Text>
               </View>
             </View>
             
             <View style={styles.passengerActions}>
               <View style={styles.seatBadge}>
-                <Text style={styles.seatText}>{item.seat}</Text>
+                <Text style={styles.seatText}>{item.seatNumber}</Text>
               </View>
               
               {item.isValidated ? (
@@ -196,6 +232,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+    paddingHorizontal: 32,
+    paddingVertical: 60,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#0066FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   searchContainer: {
     flexDirection: 'row',

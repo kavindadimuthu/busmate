@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-  ScrollView,
-  ActivityIndicator,
-  SafeAreaView
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import BusLayout from '../../components/Journey/BusLayout';
 import PassengerList from '../../components/Journey/PassengerList';
 import { useEmployeeScheduleContext } from '../../contexts/EmployeeScheduleContext';
@@ -280,7 +280,7 @@ export default function TripDetailsScreen() {
             </View>
             
             {/* Bus Layout Component */}
-            <BusLayout />
+            <BusLayout tripId={tripData.id} />
             
             {/* Extra padding at the bottom */}
             <View style={{height: 30}} />

@@ -1,122 +1,220 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Dimensions
-} from 'react-native';
+import { ticketApi } from '@/services/api/ticket';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
-// Seat status: 0 = Available, 1 = Booked & Validated, 2 = Booked Not Validated, 3 = Blocked/Canceled
+// Types
 interface SeatData {
-  [key: string]: number;
+  seatNumber: string;
+  status: 'available' | 'booked' | 'validated';
+  passengerName?: string;
+  ticketId?: string;
+  paymentStatus?: string;
 }
 
-export default function BusLayout() {
-  // Seat data - in a real app, you would fetch this from an API
-  const seatData: SeatData = {
-    'A1': 0, 'A2': 2, 'A3': 0, 'A4': 1, 'A5': 0,
-    'B1': 1, 'B2': 1, 'B3': 2, 'B4': 0, 'B5': 1,
-    'C1': 3, 'C2': 1, 'C3': 1, 'C4': 2, 'C5': 0,
-    'D1': 1, 'D2': 0, 'D3': 1, 'D4': 1, 'D5': 2,
-    'E1': 2, 'E2': 1, 'E3': 0, 'E4': 0, 'E5': 1,
-    'F1': 1, 'F2': 1, 'F3': 2, 'F4': 1, 'F5': 0,
-    'G1': 0, 'G2': 1, 'G3': 1, 'G4': 2, 'G5': 1,
-    'H1': 1, 'H2': 0, 'H3': 0, 'H4': 1, 'H5': 1,
-    'I1': 2, 'I2': 1, 'I3': 1, 'I4': 0, 'I5': 1,
-    'J1': 1, 'J2': 1, 'J3': 2, 'J4': 1, 'J5': 0,
-    'K1': 1, 'K2': 0, 'K3': 2, 'K4': 1, 'K5': 0,
-  };
-  
-  // Define rows and columns for seat layout
-  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
-  const cols = [1, 2, 3, 4, 5];
-  
-  // Function to get style for a seat based on its status
-  const getSeatStyle = (status: number) => {
-    switch(status) {
-      case 1: // Booked & Validated
-        return styles.seatBookedValidated;
-      case 2: // Booked Not Validated
-        return styles.seatBookedNotValidated;
-      case 3: // Blocked/Canceled
-        return styles.seatBlocked;
-      default: // Available
-        return styles.seatAvailable;
+interface BusLayoutProps {
+  tripId: string;
+}
+
+export default function BusLayout({ tripId }: BusLayoutProps) {
+  const [seatData, setSeatData] = useState<SeatData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch seat data from API
+  const fetchSeatData = async () => {
+    if (!tripId) {
+      setError('No trip ID provided');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setError(null);
+      console.log('🪑 Fetching seat bookings for trip:', tripId);
+      
+      const seatBookings = await ticketApi.getSeatBookings(tripId);
+      setSeatData(seatBookings);
+      console.log('✅ Seat data loaded:', seatBookings.length, 'seats');
+      
+    } catch (err: any) {
+      console.error('❌ Error fetching seat data:', err);
+      setError(err.message || 'Failed to load seat data');
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Function to get text style for a seat based on its status
-  const getSeatTextStyle = (status: number) => {
-    switch(status) {
-      case 1: // Booked & Validated
-        return styles.seatTextBooked;
-      case 2: // Booked Not Validated
-        return styles.seatTextBooked;
-      case 3: // Blocked/Canceled
-        return styles.seatTextBlocked;
-      default: // Available
-        return styles.seatTextAvailable;
+
+  // Initial load
+  useEffect(() => {
+    fetchSeatData();
+  }, [tripId]);
+
+  // Pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchSeatData();
+    setRefreshing(false);
+  };
+
+  // Get seat style based on status
+  const getSeatStyle = (seat: SeatData) => {
+    switch (seat.status) {
+      case 'available':
+        return [styles.seat, styles.seatAvailable];
+      case 'booked':
+        return [styles.seat, styles.seatBooked];
+      case 'validated':
+        return [styles.seat, styles.seatValidated];
+      default:
+        return [styles.seat, styles.seatAvailable];
     }
   };
-  
-  // Function to handle seat press
-  const handleSeatPress = (seatId: string) => {
-    console.log(`Seat ${seatId} pressed`);
-    // Additional logic for seat selection
+
+  // Handle seat press
+  const handleSeatPress = (seat: SeatData) => {
+    if (seat.status === 'available') {
+      Alert.alert('Available Seat', `Seat ${seat.seatNumber} is available for booking.`);
+    } else {
+      Alert.alert(
+        `Seat ${seat.seatNumber}`,
+        `Passenger: ${seat.passengerName || 'Unknown'}\nStatus: ${seat.status === 'validated' ? 'Validated' : 'Booked (Not Validated)'}\nPayment: ${seat.paymentStatus || 'Unknown'}`,
+        [{ text: 'OK' }]
+      );
+    }
   };
-  
-  // Function to render a single seat
-  const renderSeat = (row: string, col: number) => {
-    const seatId = `${row}${col}`;
-    const seatStatus = seatData[seatId] || 0;
-    
+
+  // Render individual seat
+  const renderSeat = (seatNumber: string) => {
+    const seat = seatData.find(s => s.seatNumber === seatNumber) || {
+      seatNumber,
+      status: 'available' as const
+    };
+
     return (
       <TouchableOpacity
-        key={seatId}
-        style={[styles.seat, getSeatStyle(seatStatus)]}
-        onPress={() => handleSeatPress(seatId)}
+        key={seatNumber}
+        style={getSeatStyle(seat)}
+        onPress={() => handleSeatPress(seat)}
       >
-        <Text style={[styles.seatText, getSeatTextStyle(seatStatus)]}>{seatId}</Text>
+        <Text style={[
+          styles.seatText,
+          seat.status !== 'available' && styles.seatTextWhite
+        ]}>
+          {seatNumber}
+        </Text>
       </TouchableOpacity>
     );
   };
-  
-  // Function to render a row of seats
-  const renderRow = (row: string) => {
+
+  // Render seat row (2+2 layout, last row has 5 seats)
+  const renderSeatRow = (rowNumber: number) => {
+    const isLastRow = rowNumber === 12; // Row 12 is the last row (seats 45-49)
+    
+    if (isLastRow) {
+      // Last row: 5 seats (45, 46, 47, 48, 49)
+      const startSeat = 45;
+      return (
+        <View key={rowNumber} style={styles.seatRow}>
+          <View style={styles.seatPair}>
+            {renderSeat((startSeat).toString())}
+          </View>
+          <View style={styles.seatPair}>
+            {renderSeat((startSeat + 1).toString())}
+          </View>
+          <View style={styles.seatPair}>
+            {renderSeat((startSeat + 2).toString())}
+          </View>
+          <View style={styles.seatPair}>
+            {renderSeat((startSeat + 3).toString())}
+          </View>
+          <View style={styles.seatPair}>
+            {renderSeat((startSeat + 4).toString())}
+          </View>
+        </View>
+      );
+    } else {
+      // Regular rows: 2+2 layout
+      const startSeat = (rowNumber - 1) * 4 + 1;
+      return (
+        <View key={rowNumber} style={styles.seatRow}>
+          <View style={styles.seatPair}>
+            {renderSeat(startSeat.toString())}
+            {renderSeat((startSeat + 1).toString())}
+          </View>
+          <View style={styles.aisle} />
+          <View style={styles.seatPair}>
+            {renderSeat((startSeat + 2).toString())}
+            {renderSeat((startSeat + 3).toString())}
+          </View>
+        </View>
+      );
+    }
+  };
+
+  // Loading state
+  if (loading) {
     return (
-      <View key={row} style={styles.seatRow}>
-        {cols.map(col => {
-          // Create gap in the middle (aisle) after position 2
-          if (col === 3) {
-            return (
-              <React.Fragment key={`gap-${row}-${col}`}>
-                <View style={styles.aisle} />
-                {renderSeat(row, col)}
-              </React.Fragment>
-            );
-          }
-          return renderSeat(row, col);
-        })}
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0066FF" />
+        <Text style={styles.loadingText}>Loading seat data...</Text>
       </View>
     );
-  };
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={60} color="#FF6B6B" />
+        <Text style={styles.errorTitle}>Unable to Load Seat Data</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchSeatData}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
   
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#0066FF']}
+          tintColor="#0066FF"
+        />
+      }
+    >
       {/* Driver Seat */}
-      <View style={styles.driverSeatContainer}>
+      <View style={styles.driverContainer}>
         <View style={styles.driverSeat}>
           <Ionicons name="person" size={20} color="#fff" />
           <Text style={styles.driverText}>Driver</Text>
         </View>
       </View>
       
-      {/* Bus Layout */}
+      {/* Seat Layout - 11 rows of 2+2, 1 row of 5 */}
       <View style={styles.busLayout}>
-        {rows.map(row => renderRow(row))}
+        {/* Rows 1-11 (2+2 layout) */}
+        {Array.from({ length: 11 }, (_, i) => i + 1).map(rowNumber => renderSeatRow(rowNumber))}
+        
+        {/* Row 12 (5 seats) */}
+        {renderSeatRow(12)}
       </View>
       
       {/* Legend */}
@@ -125,20 +223,20 @@ export default function BusLayout() {
         
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.seatBookedValidated]} />
-            <Text style={styles.legendText}>Booked & Validated</Text>
+            <View style={[styles.legendBox, styles.seatAvailable]} />
+            <Text style={styles.legendText}>Available</Text>
           </View>
           
           <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.seatBookedNotValidated]} />
-            <Text style={styles.legendText}>Booked, Not Validated</Text>
+            <View style={[styles.legendBox, styles.seatBooked]} />
+            <Text style={styles.legendText}>Booked</Text>
           </View>
         </View>
         
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.seatAvailable]} />
-            <Text style={styles.legendText}>Available</Text>
+            <View style={[styles.legendBox, styles.seatValidated]} />
+            <Text style={styles.legendText}>Validated</Text>
           </View>
           
           <View style={styles.legendItem}>
@@ -165,25 +263,75 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 16,
   },
-  driverSeatContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 16,
-    marginRight: 85,
-    marginTop: 16,
-  },
-  driverSeat: {
-    width: 50,
-    height: 50,
-    borderRadius: 6,
-    backgroundColor: '#333',
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 32,
+    paddingVertical: 60,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#0066FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  driverContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  driverSeat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
   driverText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-    marginTop: 2,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   busLayout: {
     alignItems: 'center',
@@ -191,43 +339,49 @@ const styles = StyleSheet.create({
   },
   seatRow: {
     flexDirection: 'row',
-    marginBottom: 8,
-  },
-  seat: {
-    width: SEAT_WIDTH,
-    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
-    margin: 3,
+    marginBottom: 8,
   },
-  seatAvailable: {
-    backgroundColor: '#F5F5F5',
-  },
-  seatBookedValidated: {
-    backgroundColor: '#22C55E',
-  },
-  seatBookedNotValidated: {
-    backgroundColor: '#F5C518',
-  },
-  seatBlocked: {
-    backgroundColor: '#FF3B30',
-  },
-  seatText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  seatTextAvailable: {
-    color: '#333333',
-  },
-  seatTextBooked: {
-    color: '#FFFFFF',
-  },
-  seatTextBlocked: {
-    color: '#FFFFFF',
+  seatPair: {
+    flexDirection: 'row',
   },
   aisle: {
     width: 20,
+    height: 40,
+  },
+  seat: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 2,
+    borderWidth: 1,
+  },
+  seatAvailable: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#22C55E',
+  },
+  seatBooked: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+  },
+  seatValidated: {
+    backgroundColor: '#DBEAFE',
+    borderColor: '#0066FF',
+  },
+  seatBlocked: {
+    backgroundColor: '#FECACA',
+    borderColor: '#EF4444',
+  },
+  seatText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+  },
+  seatTextWhite: {
+    color: '#333',
   },
   legendContainer: {
     marginTop: 24,
