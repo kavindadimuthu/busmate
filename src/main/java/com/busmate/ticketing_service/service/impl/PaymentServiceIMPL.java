@@ -2,6 +2,7 @@ package com.busmate.ticketing_service.service.impl;
 
 import com.busmate.ticketing_service.dto.request.PaymentRequestDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.entity.Cash;
 import com.busmate.ticketing_service.entity.Online;
 import com.busmate.ticketing_service.entity.Tickets;
@@ -181,6 +182,88 @@ public class PaymentServiceIMPL implements PaymentService {
         } catch (Exception e) {
             // Return empty list in case of error
             return List.of();
+        }
+    }
+
+    @Override
+    public List<ConductorLogTicketDTO> getTicketDetailsByTripId(String tripId) {
+        try {
+            // Fetch all tickets for the given trip ID
+            List<Tickets> tickets = ticketRepo.findByTripId(tripId);
+
+            // Convert tickets to DTOs
+            return tickets.stream().map(ticket -> {
+                ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
+                dto.setTicketId(ticket.getTicketId());
+                dto.setPassengerId(ticket.getPassengerId());
+
+                // Direct assignment of String location IDs
+                dto.setStartLocationId(ticket.getStartLocationId());
+                dto.setEndLocationId(ticket.getEndLocationId());
+
+                dto.setSeatNumber(ticket.getSeatNumber());
+                dto.setFareAmount(ticket.getFareAmount().doubleValue());
+                dto.setIssuedAt(ticket.getIssuedAt());
+
+                // Get payment status from transaction
+                if (ticket.getTransactions() != null) {
+                    dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
+                } else {
+                    dto.setPaymentStatus("UNKNOWN");
+                }
+
+                // Set passenger count to 1 (assuming 1 passenger per ticket)
+                dto.setPassengerCount(1);
+
+                return dto;
+            }).toList();
+
+        } catch (Exception e) {
+            // Return empty list in case of error
+            return List.of();
+        }
+    }
+
+    @Override
+    public TripSummaryDTO getTripSummary(String tripId) {
+        try {
+            // Fetch all tickets for the given trip ID
+            List<Tickets> tickets = ticketRepo.findByTripId(tripId);
+
+            if (tickets.isEmpty()) {
+                // Return empty summary if no tickets found
+                return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0, java.math.BigDecimal.ZERO);
+            }
+
+            // Calculate summary statistics
+            int totalTickets = tickets.size();
+            java.math.BigDecimal totalFareAmount = tickets.stream()
+                    .map(Tickets::getFareAmount)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            // Count valid and invalid tickets
+            long validTickets = tickets.stream()
+                    .filter(ticket -> ticket.getStatus() == Tickets.Status.VALID)
+                    .count();
+            int invalidTickets = totalTickets - (int) validTickets;
+
+            // Calculate average fare per ticket
+            java.math.BigDecimal averageFarePerTicket = totalTickets > 0
+                    ? totalFareAmount.divide(java.math.BigDecimal.valueOf(totalTickets), 2,
+                            java.math.RoundingMode.HALF_UP)
+                    : java.math.BigDecimal.ZERO;
+
+            return new TripSummaryDTO(
+                    tripId,
+                    totalTickets,
+                    totalFareAmount,
+                    (int) validTickets,
+                    invalidTickets,
+                    averageFarePerTicket);
+
+        } catch (Exception e) {
+            // Return empty summary in case of error
+            return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0, java.math.BigDecimal.ZERO);
         }
     }
 }
