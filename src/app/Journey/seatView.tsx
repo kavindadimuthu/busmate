@@ -280,7 +280,7 @@ export default function SeatViewScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#0066FF" />
       
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => router.back()}
@@ -300,7 +300,7 @@ export default function SeatViewScreen() {
             style={refreshing ? { opacity: 0.5 } : {}} 
           />
         </TouchableOpacity>
-      </View>
+      </View> */}
       
       {/* Tab Toggle */}
       <View style={styles.tabContainer}>
