@@ -6,13 +6,13 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useMemo } from 'react';
 import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  SafeAreaView
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 
@@ -209,7 +209,7 @@ export default function TripOverviewScreen() {
               </View>
               <View>
                 <Text style={styles.routeNumber}>{tripSchedule.route}</Text>
-                <Text style={styles.busId}>Bus  {tripSchedule.busId}</Text>
+                <Text style={styles.busId}>Bus  {tripSchedule.busPlateNumber || tripSchedule.busId}</Text>
               </View>
             </View>
             

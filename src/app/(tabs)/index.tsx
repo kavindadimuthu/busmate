@@ -1,10 +1,9 @@
 import QuickActions from '@/components/Home/QuickActions';
-import SummaryCard from '@/components/Home/SummaryCard';
 import { useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEmployeeProfile } from '@/hooks/employee/useEmployeeProfile';
 import { formatDate, formatTime, useNextTrip } from '@/hooks/employee/useNextTrip';
-import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,10 +15,10 @@ export default function HomeScreen() {
   const { fetchProfile, isLoading: profileLoading, error: profileError } = useEmployeeProfile();
   const { refreshSchedules } = useEmployeeScheduleContext();
   
-  // Use the simplified hook to get next trip
+  
   const { nextTrip, nextTripTab, loading: schedulesLoading } = useNextTrip();
   
-  // Pull-to-refresh state
+  
   const [refreshing, setRefreshing] = useState(false);
   
   // Shift state management
@@ -27,7 +26,7 @@ export default function HomeScreen() {
   const [shiftStartTime, setShiftStartTime] = useState<string | null>(null);
   const [startingShift, setStartingShift] = useState(false);
 
-  // Handle pull-to-refresh
+  
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -49,18 +48,16 @@ export default function HomeScreen() {
     try {
       setStartingShift(true);
       
-      // Get current time
+      
       const now = new Date();
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
       // Simulate API call delay (replace with actual API call)
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update shift state
+         
       setShiftStarted(true);
       setShiftStartTime(timeString);
-      
-      // Show success message
+           
       Alert.alert(
         'Shift Started',
         `Your shift has been started at ${timeString}`,
@@ -75,7 +72,7 @@ export default function HomeScreen() {
     }
   };
 
-  // Handle shift end
+  
   const handleEndShift = () => {
     Alert.alert(
       'End Shift',
@@ -94,9 +91,6 @@ export default function HomeScreen() {
       ]
     );
   };
-
-
-
 
   useEffect(() => {
     // Fetch employee details if user exists but doesn't have employee data
@@ -165,26 +159,7 @@ export default function HomeScreen() {
     },
   ];
 
-  const summarycard = [
-    {
-      icon: <Ionicons name="people" size={24} color="#0066FF" />,
-      value: '12',
-      label: 'Passengers',
-      backgroundColor: '#e6efff',
-    },
-    {
-      icon: <FontAwesome5 name="money-bill-wave" size={16} color="#00CC66" />,
-      value: '1250',
-      label: 'Collected',
-      backgroundColor: '#e6fff2',
-    },
-    {
-      icon: <MaterialCommunityIcons name="ticket-outline" size={24} color="#FFCC00" />,
-      value: '12',
-      label: 'Tickets',
-      backgroundColor: '#fff8e6',
-    },
-  ];
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -213,7 +188,7 @@ export default function HomeScreen() {
             onPress={() => { router.push('/(tabs)/profile'); }}
           >
             <Image 
-              source={require('@/assets/images/profilePic.jpg')} 
+              source={require('@/assets/images/newprofile.webp')} 
               style={styles.profileImage}
             />
           </TouchableOpacity>
@@ -333,7 +308,7 @@ export default function HomeScreen() {
       ) : nextTrip ? (
         <>
           <Text style={styles.routeText}>Route: {nextTrip.route}</Text>
-          <Text style={styles.busIdText}>Bus ID: {nextTrip.busId}</Text>
+          <Text style={styles.busIdText}>Bus: {nextTrip.busPlateNumber || nextTrip.busId}</Text>
           <Text style={styles.departureText}>
             Departure: {formatTime(nextTrip.startTime)}
           </Text>
@@ -352,21 +327,6 @@ export default function HomeScreen() {
       )}
     </View>
         
-        <Text style={styles.sectionTitle}>Today's Summary</Text>
-        {/* Today's Summary */}
-        <View style={styles.summaryContainer}>
-          {summarycard.map((item, idx) => (
-            <SummaryCard
-              key={idx}
-              icon={item.icon}
-              value={item.value}
-              label={item.label}
-              backgroundColor={item.backgroundColor}
-            />
-          ))}
-        </View>       
-        
-        {/* Add padding at the bottom for better scrolling experience */}
         <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
@@ -533,12 +493,6 @@ const styles = StyleSheet.create({
   viewDetailsText: {
     color: '#0066FF',
     fontWeight: '500',
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginBottom: 24,
   },
   shiftButton: {
     backgroundColor: '#0066FF',

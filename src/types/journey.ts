@@ -10,6 +10,37 @@ export interface JourneySchedule {
   revenue?: number;
 }
 
+// Trip data from trips API
+export interface Trip {
+  id: string;
+  passengerServicePermitId: string;
+  passengerServicePermitNumber: string;
+  scheduleId: string;
+  routeId: string;
+  permitId: string;
+  operatorId: string;
+  routeGroupId: string;
+  permitNumber: string;
+  scheduleName: string;
+  routeName: string;
+  operatorName: string;
+  routeGroupName: string;
+  tripDate: string;
+  scheduledDepartureTime: string;
+  actualDepartureTime: string | null;
+  scheduledArrivalTime: string;
+  actualArrivalTime: string | null;
+  busId: string;
+  busPlateNumber: string;
+  busModel: string;
+  driverId: string;
+  conductorId: string;
+  status: 'scheduled' | 'in_transit' | 'completed' | 'cancelled';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TripDetails {
   id: string;
   scheduleId: string;

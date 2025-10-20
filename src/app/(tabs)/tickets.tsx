@@ -7,14 +7,14 @@ import {
   FlatList,
   Modal,
   RefreshControl,
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  SafeAreaView
+  View
 } from 'react-native';
 import { useOngoingTrip } from '../../hooks/employee/useOngoingTrip';
 import { journeyApi } from '../../services/api/journey';
@@ -227,7 +227,7 @@ export default function TicketsScreen() {
       to: toLocation,
       platform: 'Platform 1', // You can make this dynamic based on your logic
       gate: 'Gate A', // You can make this dynamic based on your logic
-      passengers: `${passengerCount} ${passengerCount === 1 ? 'Adult' : 'Adults'}`,
+      passengers: `${passengerCount} ${passengerCount === 1 ? 'Person' : 'Persons'}`,
       fare: `Rs. ${totalFare.toFixed(2)}`,
       issuedOn: `${currentDate} - ${currentTime}`,
       phoneNumber: phoneNumber || '+94 77 123 4567'
@@ -238,7 +238,7 @@ export default function TicketsScreen() {
     const toStop = routeStops.find(stop => stop.stopName === toLocation);
 
     if (!user?.id || !ongoingTrip?.id || !ongoingTrip?.busId) {
-    console.error('❌ Missing required data:', {
+    console.error('Missing required data:', {
       userId: user?.id,
       tripId: ongoingTrip?.id,
       busId: ongoingTrip?.busId
@@ -246,6 +246,14 @@ export default function TicketsScreen() {
     alert('Error: Missing trip or user information. Please try again.');
     return;
   }
+
+  // Log bus information for debugging
+  console.log('Issuing ticket with bus info:', {
+    busId: ongoingTrip.busId,
+    busPlateNumber: ongoingTrip.busPlateNumber,
+    tripId: ongoingTrip.id,
+    route: ongoingTrip.route
+  });
 
   // Create backend data for API - all IDs as strings to match backend DTO
   const backendData: IssueTicketRequest = {
@@ -260,7 +268,7 @@ export default function TicketsScreen() {
     transactionRef: `TXN-${Date.now()}-${ticketId}`
   };
 
-    console.log('🎫 Backend data validation:', {
+    console.log(' Backend data validation:', {
       conductorId: backendData.conductorId,
       busId: backendData.busId,
       tripId: backendData.tripId,
@@ -271,7 +279,7 @@ export default function TicketsScreen() {
       transactionRef: backendData.transactionRef
     });
 
-    console.log('🔍 User and trip context:', {
+    console.log(' User and trip context:', {
       userId: user?.id,
       userType: typeof user?.id,
       ongoingTripId: ongoingTrip?.id,
@@ -300,8 +308,8 @@ export default function TicketsScreen() {
     // Add to cash ticket logs for journey report
     addCashTicketLog(cashTicketLog);
 
-    console.log('🎫 Ticket created with backend data:', backendData);
-    console.log('💰 Cash ticket log added:', cashTicketLog);
+    console.log(' Ticket created with backend data:', backendData);
+    console.log(' Cash ticket log added:', cashTicketLog);
   };
 
   return (

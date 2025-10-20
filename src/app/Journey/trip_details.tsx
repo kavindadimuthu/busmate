@@ -27,7 +27,7 @@ export default function TripDetailsScreen() {
     if (tripId && schedules.length > 0) {
       const trip = schedules.find(schedule => schedule.id === tripId);
       setTripData(trip || null);
-      console.log('📋 Trip details loaded:', trip);
+      console.log('Trip details loaded:', trip);
     }
   }, [tripId, schedules]);
 

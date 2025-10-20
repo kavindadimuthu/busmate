@@ -1,10 +1,12 @@
 import { FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Modal,
   Platform,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -14,183 +16,125 @@ import {
   View
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { AuthContext } from '../../contexts/AuthContext';
+import { useInsights } from '../../hooks/ticket/useInsights';
 
 // Note: For charts in the "Daily Passenger Trend" section, you would need to install
 // a charting library like react-native-chart-kit
 
 type TimeFilter = 'today' | 'lastWeek' | 'lastMonth' | 'custom';
 
-type InsightsData = {
-  totalPassengers: {
-    value: number;
-    trend: string;
-    trending: string;
-  };
-  moneyCollected: {
-    value: number;
-    trend: string;
-    trending: string;
-  };
-  tripsCompleted: {
-    value: number;
-    trend: string;
-    trending: string;
-  };
-  qrValidations: {
-    value: number;
-    trend: string;
-    trending: string;
-  };
-  paymentBreakdown: {
-    cash: {
-      amount: number;
-      percentage: number;
-    };
-    qr: {
-      amount: number;
-      percentage: number;
-    };
-  };
-};
-
 export default function InsightsScreen() {
+  const authContext = useContext(AuthContext);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('today');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerMode, setDatePickerMode] = useState<'from' | 'to'>('from');
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
-  // Mock data
-  const insightsData: Record<TimeFilter, InsightsData> = {
-    today: { 
-      totalPassengers: {
-        value: 244,
-        trend: '+12% from yesterday',
-        trending: 'up'
-      },
-      moneyCollected: {
-        value: 2470,
-        trend: '+8% from yesterday',
-        trending: 'up'
-      },
-      tripsCompleted: {
-        value: 12,
-        trend: 'Same as yesterday',
-        trending: 'same'
-      },
-      qrValidations: {
-        value: 189,
-        trend: '+15% from yesterday',
-        trending: 'up'
-      },
-      paymentBreakdown: {
-        cash: {
-          amount: 1482,
-          percentage: 60
-        },
-        qr: {
-          amount: 988,
-          percentage: 40
-        }
-      }
-    },
-    lastWeek: {
-      totalPassengers: {
-        value: 1680,
-        trend: '+18% from previous week',
-        trending: 'up'
-      },
-      moneyCollected: {
-        value: 16800,
-        trend: '+22% from previous week',
-        trending: 'up'
-      },
-      tripsCompleted: {
-        value: 84,
-        trend: '+5% from previous week',
-        trending: 'up'
-      },
-      qrValidations: {
-        value: 1260,
-        trend: '+28% from previous week',
-        trending: 'up'
-      },
-      paymentBreakdown: {
-        cash: {
-          amount: 10080,
-          percentage: 60
-        },
-        qr: {
-          amount: 6720,
-          percentage: 40
-        }
-      }
-    },
-    lastMonth: {
-      totalPassengers: {
-        value: 7320,
-        trend: '+15% from previous month',
-        trending: 'up'
-      },
-      moneyCollected: {
-        value: 73200,
-        trend: '+12% from previous month',
-        trending: 'up'
-      },
-      tripsCompleted: {
-        value: 366,
-        trend: '+8% from previous month',
-        trending: 'up'
-      },
-      qrValidations: {
-        value: 5490,
-        trend: '+25% from previous month',
-        trending: 'up'
-      },
-      paymentBreakdown: {
-        cash: {
-          amount: 43920,
-          percentage: 60
-        },
-        qr: {
-          amount: 29280,
-          percentage: 40
-        }
-      }
-    },
-    custom: {
-      totalPassengers: {
-        value: 1520,
-        trend: 'For selected period',
-        trending: 'same'
-      },
-      moneyCollected: {
-        value: 15200,
-        trend: 'For selected period',
-        trending: 'same'
-      },
-      tripsCompleted: {
-        value: 76,
-        trend: 'For selected period',
-        trending: 'same'
-      },
-      qrValidations: {
-        value: 1140,
-        trend: 'For selected period',
-        trending: 'same'
-      },
-      paymentBreakdown: {
-        cash: {
-          amount: 9120,
-          percentage: 60
-        },
-        qr: {
-          amount: 6080,
-          percentage: 40
-        }
-      }
+  // Get conductor ID from auth context
+  const conductorId = authContext?.user?.id;
+
+  // Use the insights hook to fetch real data
+  const { insightsData, loading, error, refetch } = useInsights({
+    conductorId: conductorId || '',
+    customFromDate: fromDate,
+    customToDate: toDate,
+    autoFetch: hasInitialLoad, // Only auto-fetch if initial load has been triggered
+  });
+
+  // Track if we've attempted initial load
+  React.useEffect(() => {
+    if (conductorId && !hasInitialLoad) {
+      setHasInitialLoad(true);
     }
+  }, [conductorId, hasInitialLoad]);
+
+  // Handle manual load
+  const handleManualLoad = async () => {
+    setHasInitialLoad(true);
+    await refetch();
   };
+
+  // Show login required if no conductor ID
+  if (!conductorId) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.errorContainer}>
+          <MaterialIcons name="account-circle" size={48} color="#EF4444" />
+          <Text style={styles.errorTitle}>Login Required</Text>
+          <Text style={styles.errorMessage}>Please login to view your insights</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show "Click to Load" if no initial load attempted
+  if (!hasInitialLoad) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.loadDataContainer}>
+          <MaterialIcons name="analytics" size={64} color="#0066FF" />
+          <Text style={styles.loadDataTitle}>Load Your Insights</Text>
+          <Text style={styles.loadDataMessage}>
+            Tap the button below to load your conductor insights and performance data.
+          </Text>
+          <TouchableOpacity 
+            style={styles.loadDataButton} 
+            onPress={handleManualLoad}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.loadDataButtonText}>Load Insights</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show loading state during data fetch
+  if (loading && hasInitialLoad) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0066FF" />
+          <Text style={styles.loadingText}>Loading insights...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state with retry option
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.errorContainer}>
+          <MaterialIcons name="error-outline" size={48} color="#EF4444" />
+          <Text style={styles.errorTitle}>Unable to load insights</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={refetch}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.retryButtonText}>Retry</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Get current selected period data
   const currentData = insightsData[timeFilter];
@@ -206,6 +150,9 @@ export default function InsightsScreen() {
       } else {
         setToDate(selectedDate);
       }
+      
+      // If custom filter is selected, the hook will automatically recalculate the data
+      // due to the useEffect dependency on fromDate and toDate
     }
   };
 
@@ -224,22 +171,40 @@ export default function InsightsScreen() {
 
   // Prepare chart data for payment methods
   const getPaymentChartData = () => {
-    return [
-      {
+    const chartData = [];
+    const totalRevenue = currentData.moneyCollected.value;
+    
+    // Always show both payment methods if there's any data
+    if (totalRevenue > 0 || currentData.totalPassengers.value > 0) {
+      // Cash payments
+      chartData.push({
         name: 'Cash',
-        population: currentData.paymentBreakdown.cash.amount,
-        color: '#0066FF',
-        legendFontColor: '#333',
+        population: currentData.paymentBreakdown.cash.amount > 0 ? currentData.paymentBreakdown.cash.amount : 0.1,
+        color: currentData.paymentBreakdown.cash.amount > 0 ? '#0066FF' : '#E5E5E5',
+        legendFontColor: currentData.paymentBreakdown.cash.amount > 0 ? '#333' : '#999',
         legendFontSize: 14,
-      },
-      {
+      });
+      
+      // QR/Digital payments
+      chartData.push({
         name: 'QR/Digital',
-        population: currentData.paymentBreakdown.qr.amount,
-        color: '#22C55E',
-        legendFontColor: '#333',
+        population: currentData.paymentBreakdown.qr.amount > 0 ? currentData.paymentBreakdown.qr.amount : 0.1,
+        color: currentData.paymentBreakdown.qr.amount > 0 ? '#22C55E' : '#E5E5E5',
+        legendFontColor: currentData.paymentBreakdown.qr.amount > 0 ? '#333' : '#999',
         legendFontSize: 14,
-      }
-    ];
+      });
+    } else {
+      // No data at all
+      chartData.push({
+        name: 'No Data',
+        population: 1,
+        color: '#E5E5E5',
+        legendFontColor: '#999',
+        legendFontSize: 14,
+      });
+    }
+    
+    return chartData;
   };
 
   const screenWidth = Dimensions.get('window').width;
@@ -329,7 +294,16 @@ export default function InsightsScreen() {
         </View>
       )}
       
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={refetch}
+              colors={['#0066FF']}
+              tintColor="#0066FF"
+            />
+          }
+        >
         {/* Key Metrics */}
         <View style={styles.metricsGrid}>
           {/* Total Passengers */}
@@ -428,50 +402,86 @@ export default function InsightsScreen() {
         {/* Payment Methods */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Methods Distribution</Text>
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={getPaymentChartData()}
-              width={screenWidth - 64}
-              height={200}
-              chartConfig={chartConfig}
-              accessor={"population"}
-              backgroundColor={"transparent"}
-              paddingLeft={"0"}
-              absolute={false}
-            />
-            
-            {/* Total Revenue Display Below Chart */}
-            <View style={styles.totalRevenueContainer}>
-              <Text style={styles.totalRevenueLabel}>Total Revenue</Text>
-              <Text style={styles.totalRevenueValue}>RS {currentData.moneyCollected.value}</Text>
-              <Text style={styles.totalRevenuePeriod}>
-                {timeFilter === 'today' ? 'Today' : 
-                 timeFilter === 'lastWeek' ? 'Last Week' : 
-                 timeFilter === 'lastMonth' ? 'Last Month' : 
-                 'Custom Period'}
+          {currentData.moneyCollected.value > 0 ? (
+            <View style={styles.chartContainer}>
+              <PieChart
+                data={getPaymentChartData()}
+                width={screenWidth - 64}
+                height={200}
+                chartConfig={chartConfig}
+                accessor={"population"}
+                backgroundColor={"transparent"}
+                paddingLeft={"0"}
+                absolute={false}
+              />
+              
+              {/* Total Revenue Display Below Chart */}
+              <View style={styles.totalRevenueContainer}>
+                <Text style={styles.totalRevenueLabel}>Total Revenue</Text>
+                <Text style={styles.totalRevenueValue}>RS {currentData.moneyCollected.value}</Text>
+                <Text style={styles.totalRevenuePeriod}>
+                  {timeFilter === 'today' ? 'Today' : 
+                   timeFilter === 'lastWeek' ? 'Last Week' : 
+                   timeFilter === 'lastMonth' ? 'Last Month' : 
+                   'Custom Period'}
+                </Text>
+              </View>
+              
+              {/* Enhanced Legend */}
+              <View style={styles.chartLegend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, { 
+                    backgroundColor: currentData.paymentBreakdown.cash.amount > 0 ? '#0066FF' : '#E5E5E5' 
+                  }]} />
+                  <View style={styles.legendContent}>
+                    <Text style={styles.legendLabel}>Cash Payments (CONDUCTOR)</Text>
+                    <Text style={[
+                      styles.legendAmount, 
+                      currentData.paymentBreakdown.cash.amount === 0 && styles.legendAmountZero
+                    ]}>
+                      RS {currentData.paymentBreakdown.cash.amount}
+                    </Text>
+                    <Text style={[
+                      styles.legendPercent,
+                      currentData.paymentBreakdown.cash.amount === 0 && styles.legendPercentZero
+                    ]}>
+                      {currentData.paymentBreakdown.cash.percentage}% of total revenue
+                      {currentData.paymentBreakdown.cash.amount === 0 && ' (No cash collected)'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, { 
+                    backgroundColor: currentData.paymentBreakdown.qr.amount > 0 ? '#22C55E' : '#E5E5E5' 
+                  }]} />
+                  <View style={styles.legendContent}>
+                    <Text style={styles.legendLabel}>QR/Digital Payments (ONLINE)</Text>
+                    <Text style={[
+                      styles.legendAmount, 
+                      currentData.paymentBreakdown.qr.amount === 0 && styles.legendAmountZero
+                    ]}>
+                      RS {currentData.paymentBreakdown.qr.amount}
+                    </Text>
+                    <Text style={[
+                      styles.legendPercent,
+                      currentData.paymentBreakdown.qr.amount === 0 && styles.legendPercentZero
+                    ]}>
+                      {currentData.paymentBreakdown.qr.percentage}% of total revenue
+                      {currentData.paymentBreakdown.qr.amount === 0 && ' (Free/Zero-amount tickets)'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.noDataContainer}>
+              <MaterialIcons name="pie-chart-outline" size={48} color="#CCC" />
+              <Text style={styles.noDataTitle}>No Data Available</Text>
+              <Text style={styles.noDataMessage}>
+                No ticket data found for the selected period.
               </Text>
             </View>
-            
-            {/* Enhanced Legend */}
-            <View style={styles.chartLegend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: '#0066FF' }]} />
-                <View style={styles.legendContent}>
-                  <Text style={styles.legendLabel}>Cash Payments</Text>
-                  <Text style={styles.legendAmount}>RS {currentData.paymentBreakdown.cash.amount}</Text>
-                  <Text style={styles.legendPercent}>{currentData.paymentBreakdown.cash.percentage}% of total</Text>
-                </View>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: '#22C55E' }]} />
-                <View style={styles.legendContent}>
-                  <Text style={styles.legendLabel}>QR/Digital Payments</Text>
-                  <Text style={styles.legendAmount}>RS {currentData.paymentBreakdown.qr.amount}</Text>
-                  <Text style={styles.legendPercent}>{currentData.paymentBreakdown.qr.percentage}% of total</Text>
-                </View>
-              </View>
-            </View>
-          </View>
+          )}
         </View>
         
         {/* Add bottom padding for scrolling */}
@@ -836,9 +846,142 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
   },
+  legendAmountZero: {
+    fontSize: 18,
+    color: '#999',
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  legendPercentZero: {
+    fontSize: 13,
+    color: '#999',
+  },
   legendText: {
     fontSize: 14,
     color: '#333',
     fontWeight: '500',
+  },
+  
+  // Loading and error states
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#0066FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // No data state
+  noDataContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  noDataTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noDataMessage: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  
+  // Load data state
+  loadDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  loadDataTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0066FF',
+    marginTop: 24,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  loadDataMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  loadDataButton: {
+    backgroundColor: '#0066FF',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 160,
+    shadowColor: '#0066FF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  loadDataButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

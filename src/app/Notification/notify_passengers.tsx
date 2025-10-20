@@ -2,14 +2,14 @@ import { useOngoingTrip } from '@/hooks/employee/useOngoingTrip';
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  SafeAreaView
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 export default function NotifyPassengersScreen() {
@@ -22,7 +22,7 @@ export default function NotifyPassengersScreen() {
         from: ongoingTrip.fromLocation || ongoingTrip.route?.split(' - ')[0] || "Start Location",
         to: ongoingTrip.toLocation || ongoingTrip.route?.split(' - ')[1] || "End Location",
         time: ongoingTrip.startTime || "N/A",
-        busId: ongoingTrip.busId || ongoingTrip.busPlateNumber || "N/A",
+        busId: ongoingTrip.busPlateNumber || ongoingTrip.busId || "N/A",
         route: ongoingTrip.routeName || ongoingTrip.route || "N/A"
       };
     }

@@ -79,7 +79,7 @@ export function EmployeeScheduleProvider({ children }: EmployeeScheduleProviderP
           startTime: item.scheduledDepartureTime, // API returns HH:MM:SS format
           endTime: item.scheduledArrivalTime, // API returns HH:MM:SS format
           route: item.routeName,
-          busId: item.busPlateNumber, // Using plate number as busId
+          busId: item.busId, // Using actual busId from API
           status: 'pending', // Will be updated below
           passengers: 0, // Not provided in API, set default
           revenue: 0, // Not provided in API, set default
