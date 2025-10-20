@@ -1,3 +1,4 @@
+import { TicketLog } from '../../types/ticket';
 import { apiClient } from '../apiClient';
 
 export const ticketApi = {
@@ -127,5 +128,98 @@ export const ticketApi = {
   getTicketStats: async (conductorId: string, date?: string): Promise<any> => {
     const params = date ? `?conductorId=${conductorId}&date=${date}` : `?conductorId=${conductorId}`;
     return apiClient.authenticatedRequest<any>(`/stats${params}`, {}, 'ticket');
+  },
+
+  // Get conductor ticket logs for insights - Ticket Management Service
+  getConductorTicketLogs: async (conductorId: string): Promise<TicketLog[]> => {
+    try {
+      console.log('📊 Fetching conductor ticket logs for ID:', conductorId);
+      
+      const response = await apiClient.authenticatedRequest<TicketLog[]>(
+        `/v1/tickets/conductor/${conductorId}/logs`, 
+        {}, 
+        'ticket'
+      );
+      
+      console.log('✅ Successfully fetched ticket logs:', response);
+      return response;
+    } catch (error: any) {
+      console.error('❌ Error fetching conductor ticket logs:', error);
+      
+      // Handle different types of errors
+      if (error.message === 'UNAUTHORIZED') {
+        throw new Error('Your session has expired. Please login again to continue.');
+      }
+      
+      if (error.message.includes('Permission denied') || error.message.includes('HTTP 403')) {
+        throw new Error('You do not have permission to view insights. Please contact your administrator.');
+      }
+      
+      if (error.message.includes('HTTP 404')) {
+        throw new Error('Conductor not found or no ticket data available.');
+      }
+      
+      if (error.message.includes('HTTP 500')) {
+        throw new Error('Server is experiencing issues. Please try again later.');
+      }
+      
+      if (error.message.includes('timeout') || error.message.includes('network')) {
+        throw new Error('Network connection failed. Please check your internet connection and try again.');
+      }
+      
+      // Generic error handling
+      throw new Error('Failed to fetch insights data. Please try again later.');
+    }
+  },
+
+  // Get tickets by trip ID - Ticket Management Service  
+  getTicketsByTripId: async (tripId: string): Promise<TicketLog[]> => {
+    try {
+      console.log('🎫 Fetching tickets for trip ID:', tripId);
+      
+      const response = await apiClient.authenticatedRequest<TicketLog[]>(
+        `/v1/tickets/trip/${tripId}`, 
+        {}, 
+        'ticket'
+      );
+      
+      console.log('✅ Successfully fetched tickets for trip:', response);
+      return response;
+    } catch (error: any) {
+      // Handle the specific case where no tickets are found for a trip - this is NORMAL
+      if (error.message?.includes('No tickets found') || 
+          error.message?.includes('not found') ||
+          (error.message?.includes('HTTP 404') && !error.message?.includes('Trip not found'))) {
+        console.log(`ℹ️ No tickets found for trip ${tripId} - this is normal for trips without passengers`);
+        return []; // Return empty array instead of throwing error
+      }
+      
+      console.error('❌ Error fetching trip tickets:', error);
+      
+      // Handle different types of errors
+      if (error.message === 'UNAUTHORIZED') {
+        throw new Error('Your session has expired. Please login again to continue.');
+      }
+      
+      if (error.message.includes('Permission denied') || error.message.includes('HTTP 403')) {
+        throw new Error('You do not have permission to view ticket data. Please contact your administrator.');
+      }
+      
+      if (error.message.includes('Trip not found')) {
+        throw new Error('Trip not found. Please check the trip ID.');
+      }
+      
+      if (error.message.includes('HTTP 500')) {
+        throw new Error('Server is experiencing issues. Please try again later.');
+      }
+      
+      if (error.message.includes('timeout') || error.message.includes('network')) {
+        throw new Error('Network connection failed. Please check your internet connection and try again.');
+      }
+      
+      // Generic error handling for other errors
+      console.log(`⚠️ Unexpected error for trip ${tripId}, treating as no tickets:`, error.message);
+      return []; // Return empty array for any other errors to avoid breaking the entire insights loading
+    }
   },
 };

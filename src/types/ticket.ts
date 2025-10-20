@@ -38,3 +38,49 @@ export interface TicketDetails {
   paymentMethod?: string;
   transactionRef?: string;
 }
+
+// Ticket log types for insights
+export interface TicketLog {
+  ticketId: number;
+  passengerId: string | null;
+  startLocationId: string;
+  endLocationId: string;
+  seatNumber: string | null;
+  passengerCount: number;
+  fareAmount: number;
+  paymentStatus: string;
+  issuedAt: string;
+}
+
+export interface InsightsData {
+  totalPassengers: {
+    value: number;
+    trend: string;
+    trending: 'up' | 'down' | 'same';
+  };
+  moneyCollected: {
+    value: number;
+    trend: string;
+    trending: 'up' | 'down' | 'same';
+  };
+  tripsCompleted: {
+    value: number;
+    trend: string;
+    trending: 'up' | 'down' | 'same';
+  };
+  qrValidations: {
+    value: number;
+    trend: string;
+    trending: 'up' | 'down' | 'same';
+  };
+  paymentBreakdown: {
+    cash: {
+      amount: number;
+      percentage: number;
+    };
+    qr: {
+      amount: number;
+      percentage: number;
+    };
+  };
+}

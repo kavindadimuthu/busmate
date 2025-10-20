@@ -1,4 +1,4 @@
-import { RouteStop } from '../../types/journey';
+import { RouteStop, Trip } from '../../types/journey';
 import { apiClient } from '../apiClient';
 
 export const journeyApi = {
@@ -60,5 +60,47 @@ export const journeyApi = {
   // Get seat layout - Schedule Management Service
   getSeatLayout: async (busId: string): Promise<any> => {
     return apiClient.authenticatedRequest<any>(`/buses/${busId}/seats`, {}, 'schedule');
+  },
+
+  // Get trips by conductor - Trip Management Service
+  getConductorTrips: async (conductorId: string): Promise<Trip[]> => {
+    try {
+      console.log('🚌 Fetching trips for conductor ID:', conductorId);
+      
+      const response = await apiClient.authenticatedRequest<Trip[]>(
+        `/trips/conductor/${conductorId}`, 
+        {}, 
+        'schedule'
+      );
+      
+      console.log('✅ Successfully fetched trips:', response);
+      return response;
+    } catch (error: any) {
+      console.error('❌ Error fetching conductor trips:', error);
+      
+      // Handle different types of errors
+      if (error.message === 'UNAUTHORIZED') {
+        throw new Error('Your session has expired. Please login again to continue.');
+      }
+      
+      if (error.message.includes('Permission denied') || error.message.includes('HTTP 403')) {
+        throw new Error('You do not have permission to view trip data. Please contact your administrator.');
+      }
+      
+      if (error.message.includes('HTTP 404')) {
+        throw new Error('Conductor not found or no trip data available.');
+      }
+      
+      if (error.message.includes('HTTP 500')) {
+        throw new Error('Server is experiencing issues. Please try again later.');
+      }
+      
+      if (error.message.includes('timeout') || error.message.includes('network')) {
+        throw new Error('Network connection failed. Please check your internet connection and try again.');
+      }
+      
+      // Generic error handling
+      throw new Error('Failed to fetch trip data. Please try again later.');
+    }
   },
 };
