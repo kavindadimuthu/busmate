@@ -102,6 +102,21 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                         if (status != null && !status.equals(trip.getStatus())) {
                             return false;
                         }
+                        // Time filtering for departure time
+                        if (timeAfter != null || timeBefore != null) {
+                            LocalTime departureTime = trip.getScheduledDepartureTime();
+                            if (departureTime != null) {
+                                if (timeAfter != null && departureTime.isBefore(timeAfter)) {
+                                    return false;
+                                }
+                                if (timeBefore != null && departureTime.isAfter(timeBefore)) {
+                                    return false;
+                                }
+                            } else if (timeAfter != null || timeBefore != null) {
+                                // If time filters are specified but trip has no departure time, exclude it
+                                return false;
+                            }
+                        }
                         // Operator filter
                         if (!matchesOperatorFilter(trip, operatorType, operatorId)) {
                             return false;
@@ -114,16 +129,32 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                     .map(this::toPassengerTripResponse)
                     .collect(Collectors.toList());
 
+            // Calculate correct pagination information based on filtered results
+            int currentPage = tripPage.getNumber();
+            int pageSize = tripPage.getSize();
+            long totalFilteredElements = filteredTrips.size();
+            
+            // For proper pagination with filtering, we need to count all matching records across all pages
+            // Since we're filtering in memory, we need to get total count by checking all trips
+            long actualTotalElements = getTotalFilteredCount(fromStopId, toStopId, routeId, date, 
+                    timeAfter, timeBefore, operatorType, operatorId, status);
+            
+            int totalPages = (int) Math.ceil((double) actualTotalElements / pageSize);
+            boolean isFirst = currentPage == 0;
+            boolean isLast = currentPage >= totalPages - 1;
+            boolean hasNext = currentPage < totalPages - 1;
+            boolean hasPrevious = currentPage > 0;
+
             return PassengerPaginatedResponse.<PassengerTripResponse>builder()
                     .content(tripResponses)
-                    .currentPage(tripPage.getNumber())
-                    .size(tripPage.getSize())
-                    .totalElements(tripPage.getTotalElements())
-                    .totalPages(tripPage.getTotalPages())
-                    .first(tripPage.isFirst())
-                    .last(tripPage.isLast())
-                    .hasNext(tripPage.hasNext())
-                    .hasPrevious(tripPage.hasPrevious())
+                    .currentPage(currentPage)
+                    .size(pageSize)
+                    .totalElements(actualTotalElements)
+                    .totalPages(totalPages)
+                    .first(isFirst)
+                    .last(isLast)
+                    .hasNext(hasNext)
+                    .hasPrevious(hasPrevious)
                     .build();
         } catch (Exception e) {
             log.error("Error searching trips: {}", e.getMessage());
@@ -805,5 +836,73 @@ public class PassengerTripServiceImpl implements PassengerTripService {
         }
         
         return true;
+    }
+
+    /**
+     * Get total count of trips that match all the filtering criteria
+     * This is needed for correct pagination when filtering in memory
+     */
+    private long getTotalFilteredCount(UUID fromStopId, UUID toStopId, UUID routeId, LocalDate date,
+                                     LocalTime timeAfter, LocalTime timeBefore, 
+                                     OperatorTypeEnum operatorType, UUID operatorId, TripStatusEnum status) {
+        try {
+            List<Trip> allTrips;
+            
+            // Get all trips using the same logic as the main search but without pagination
+            if (fromStopId != null && toStopId != null) {
+                allTrips = tripRepository.findTripsByFromStopAndToStop(fromStopId, toStopId, Pageable.unpaged()).getContent();
+            } else if (fromStopId != null) {
+                allTrips = tripRepository.findTripsByFromStop(fromStopId, Pageable.unpaged()).getContent();
+            } else if (toStopId != null) {
+                allTrips = tripRepository.findTripsByToStop(toStopId, Pageable.unpaged()).getContent();
+            } else if (routeId != null) {
+                allTrips = tripRepository.findByScheduleRouteId(routeId, Pageable.unpaged()).getContent();
+            } else if (date != null && status != null) {
+                allTrips = tripRepository.findByTripDateAndStatus(date, status, Pageable.unpaged()).getContent();
+            } else if (date != null) {
+                allTrips = tripRepository.findByTripDate(date, Pageable.unpaged()).getContent();
+            } else if (status != null) {
+                allTrips = tripRepository.findByStatus(status, Pageable.unpaged()).getContent();
+            } else {
+                allTrips = tripRepository.findAll(Pageable.unpaged()).getContent();
+            }
+
+            // Apply the same filtering logic as in the main search
+            return allTrips.stream()
+                    .filter(trip -> {
+                        // Date filter
+                        if (date != null && !date.equals(trip.getTripDate())) {
+                            return false;
+                        }
+                        // Status filter
+                        if (status != null && !status.equals(trip.getStatus())) {
+                            return false;
+                        }
+                        // Time filtering for departure time
+                        if (timeAfter != null || timeBefore != null) {
+                            LocalTime departureTime = trip.getScheduledDepartureTime();
+                            if (departureTime != null) {
+                                if (timeAfter != null && departureTime.isBefore(timeAfter)) {
+                                    return false;
+                                }
+                                if (timeBefore != null && departureTime.isAfter(timeBefore)) {
+                                    return false;
+                                }
+                            } else if (timeAfter != null || timeBefore != null) {
+                                // If time filters are specified but trip has no departure time, exclude it
+                                return false;
+                            }
+                        }
+                        // Operator filter
+                        if (!matchesOperatorFilter(trip, operatorType, operatorId)) {
+                            return false;
+                        }
+                        return true;
+                    })
+                    .count();
+        } catch (Exception e) {
+            log.error("Error counting filtered trips: {}", e.getMessage());
+            return 0;
+        }
     }
 }
