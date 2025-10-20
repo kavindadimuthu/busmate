@@ -20,9 +20,9 @@ public class TicketController {
     private PaymentService conductorLogService;
 
     @PostMapping("/conductor/issue")
-    public ResponseEntity<String> createTicket(@RequestBody PaymentRequestDTO request) {
-        String result = conductorLogService.issueTicket(request);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ConductorLogTicketDTO> createTicket(@RequestBody PaymentRequestDTO request) {
+        ConductorLogTicketDTO ticketDetails = conductorLogService.issueTicket(request);
+        return ResponseEntity.ok(ticketDetails);
     }
 
     @GetMapping("/conductor/{conductorId}/logs")
