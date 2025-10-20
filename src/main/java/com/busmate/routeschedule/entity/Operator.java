@@ -13,7 +13,7 @@ import java.util.UUID;
 @Table(name = "operator")
 public class Operator extends BaseEntity {
     @Id
-    @GeneratedValue
+    // @GeneratedValue
     @Column(columnDefinition = "UUID")
     private UUID id;
 
