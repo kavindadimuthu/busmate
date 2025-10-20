@@ -67,7 +67,7 @@ public class AuthController {
                 return ResponseEntity.ok(responseBody);
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "User not found in local DB"));
+                        .body(Map.of("error", "User not founds in local DB"));
             }
 
         } catch (Exception e) {

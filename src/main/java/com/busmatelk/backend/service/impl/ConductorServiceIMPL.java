@@ -4,7 +4,6 @@ import com.busmatelk.backend.dto.ConductorDTO;
 import com.busmatelk.backend.model.Conductor;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.repository.ConductorRepo;
-import com.busmatelk.backend.repository.PassengerRepo;
 import com.busmatelk.backend.repository.UserRepo;
 import com.busmatelk.backend.service.ConductorService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,6 +19,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,10 +34,16 @@ public class ConductorServiceIMPL implements ConductorService {
 
     @Value("${supabase.anon-key}")
     private String supabaseAnonKey;
+
+    @Value("${supabase.api.key}")
+    private String SUPABASE_API_KEY;
+
     @Override
+    @Transactional
     public void createConductor(ConductorDTO conductorDTO) {
 
          try {
+
             // Step 1: Call Supabase Auth API to register user
             HttpClient client = HttpClient.newHttpClient();
 
@@ -59,12 +67,36 @@ public class ConductorServiceIMPL implements ConductorService {
                 throw new RuntimeException("Supabase signup failed: " + response.body());
             }
 
-            // Step 2: Extract userId from response JSON
-            String responseBody = response.body();
-            String userIdString = extractUserIdFromJson(responseBody);
-            UUID userId = UUID.fromString(userIdString);
+             // Step 2: Extract userId from response JSON
+             String responseBody = response.body();
+             String userIdString = extractUserIdFromJson(responseBody);
+             UUID userId = UUID.fromString(userIdString);
 
-            // Step 3: Save to your users table
+             // Step 2.1: Add user role to Supabase metadata
+             HttpRequest metadataRequest = HttpRequest.newBuilder()
+                     .uri(URI.create("https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1/admin/users/" + userIdString))
+                     .header("Content-Type", "application/json")
+                     .header("apikey", SUPABASE_API_KEY)
+                     .header("Authorization", "Bearer " + SUPABASE_API_KEY)
+                     .PUT(HttpRequest.BodyPublishers.ofString("""
+            {
+              "user_metadata": {
+                "user_role": "Conductor"
+              }
+            }
+        """))
+                     .build();
+
+             HttpResponse<String> metadataResponse = client.send(metadataRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println("Metadata response code: " + metadataResponse.statusCode());
+            System.out.println("Metadata response body: " + metadataResponse.body());
+
+             if (metadataResponse.statusCode() != 200) {
+                 throw new RuntimeException("Failed to update user metadata: " + metadataResponse.body());
+             }
+
+
+            // Step 4: Save to your users table
             User user = new User();
             user.setUserId(userId);
             user.setFullName(conductorDTO.getFullName());
@@ -76,38 +108,24 @@ public class ConductorServiceIMPL implements ConductorService {
             user.setCreatedAt(Instant.now());
             user.setPhoneNumber(conductorDTO.getPhoneNumber());
 
-            userRepo.save(user);
+            user = userRepo.save(user);
 
-            // Step 4: Save to conductor_profile
+            // Step 5: Save to conductor_profile
             Conductor conductor = new Conductor();
-            conductor.setUserId(userId);
+            conductor.setEmployee_id(conductorDTO.getEmployee_id());
             conductor.setAssign_operator_id(conductorDTO.getAssign_operator_id());
             conductor.setShift_status(conductorDTO.getShift_status());
             conductor.setNicNumber(conductorDTO.getNicNumber());
             conductor.setDateofbirth(conductorDTO.getDateOfBirth());
-//            conductor.setPr_img_path(conductorDTO.getP);
+//            conductor.setPr_img_path(conductor.getPr_img_path());
+            conductor.setUser(user);
 
 
             conductorRepo.save(conductor);
 
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to create conductor: " + e.getMessage(), e);
         }
-
-
-//        // ✅ Helper method to extract user.id from Supabase JSON
-//        private String extractUserIdFromJson(String json) throws IOException {
-//            ObjectMapper mapper = new ObjectMapper();
-//            JsonNode root = mapper.readTree(json);
-//
-//            if (root.has("user") && root.get("user").has("id")) {
-//                return root.get("user").get("id").asText();
-//            } else if (root.has("error")) {
-//                throw new RuntimeException("Supabase returned error: " + root.get("error").toString());
-//            } else {
-//                throw new RuntimeException("Unexpected Supabase response: " + json);
-//            }
-//        }
 
     }
 
@@ -130,7 +148,7 @@ public class ConductorServiceIMPL implements ConductorService {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Conductor conductor = conductorRepo.findByUserId(user.getUserId());
+//        Conductor conductor = conductorRepo.findById(user.getUserId());
 
         ConductorDTO conductorDTO = new ConductorDTO();
 
@@ -143,56 +161,122 @@ public class ConductorServiceIMPL implements ConductorService {
         conductorDTO.setIsVerified(user.getIsVerified());
         conductorDTO.setPhoneNumber(user.getPhoneNumber());
 
-        conductorDTO.setEmployee_id(conductor.getEmployee_id());
-        conductorDTO.setShift_status(conductor.getShift_status());
-        conductorDTO.setAssign_operator_id(conductor.getAssign_operator_id());
+//        conductorDTO.setEmployee_id(conductor.getEmployee_id());
+//        conductorDTO.setShift_status(conductor.getShift_status());
+//        conductorDTO.setAssign_operator_id(conductor.getAssign_operator_id());
 
-        System.out.println(conductorDTO);
+//        System.out.println(user);
         return conductorDTO;
     }
 
     @Override
+    @Transactional
     public ConductorDTO updateconductor(ConductorDTO conductorDTO, UUID userId) {
         // Fetch user
-        User user = userRepo.findById(userId).get();
-        if (user == null) {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
         // Fetch existing conductor linked to the user
-        Conductor conductor = conductorRepo.findByUserId(user.getUserId());
-        if (conductor == null) {
-            throw new RuntimeException("Conductor not found for user ID: " + userId);
-        }
+        Conductor conductor = conductorRepo.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Conductor not found for user ID: " + userId));
 
-        // Update fields (example fields — change as per your DTO)
-        conductor.setShift_status(conductorDTO.getShift_status());
+        // Update User fields
         user.setPhoneNumber(conductorDTO.getPhoneNumber());
         user.setFullName(conductorDTO.getFullName());
         user.setAccountStatus(conductorDTO.getAccountStatus());
-
-
         User updatedUser = userRepo.save(user);
+
+        // Update Conductor fields (only update if values are provided)
+        if (conductorDTO.getShift_status() != null) {
+            conductor.setShift_status(conductorDTO.getShift_status());
+        }
+        if (conductorDTO.getPr_img_path() != null) {
+            conductor.setPr_img_path(conductorDTO.getPr_img_path());
+        }
+        if (conductorDTO.getNicNumber() != null) {
+            conductor.setNicNumber(conductorDTO.getNicNumber());
+        }
+        if (conductorDTO.getEmployee_id() != null) {
+            conductor.setEmployee_id(conductorDTO.getEmployee_id());
+        }
+        if (conductorDTO.getAssign_operator_id() != null) {
+            conductor.setAssign_operator_id(conductorDTO.getAssign_operator_id());
+        }
+        if (conductorDTO.getDateOfBirth() != null) {
+            conductor.setDateofbirth(conductorDTO.getDateOfBirth());
+        }
+
         Conductor updatedConductor = conductorRepo.save(conductor);
 
+        // Create response DTO
         ConductorDTO dto = new ConductorDTO();
-
         // From User entity
-        dto.setUserId(user.getUserId());
-        dto.setFullName(user.getFullName()); // Assuming separate fields
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setRole(user.getRole());
-        dto.setAccountStatus(user.getAccountStatus());
-        dto.setIsVerified(user.getIsVerified());
-        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setUserId(updatedUser.getUserId());
+        dto.setFullName(updatedUser.getFullName());
+        dto.setUsername(updatedUser.getUsername());
+        dto.setEmail(updatedUser.getEmail());
+        dto.setRole(updatedUser.getRole());
+        dto.setAccountStatus(updatedUser.getAccountStatus());
+        dto.setIsVerified(updatedUser.getIsVerified());
+        dto.setPhoneNumber(updatedUser.getPhoneNumber());
 
         // From Conductor entity
-        dto.setEmployee_id(conductor.getEmployee_id());
-        dto.setAssign_operator_id(conductor.getAssign_operator_id());
-        dto.setShift_status(conductor.getShift_status());
+        dto.setEmployee_id(updatedConductor.getEmployee_id());
+        dto.setAssign_operator_id(updatedConductor.getAssign_operator_id());
+        dto.setShift_status(updatedConductor.getShift_status());
+        dto.setPr_img_path(updatedConductor.getPr_img_path());
+        dto.setNicNumber(updatedConductor.getNicNumber());
+        dto.setDateOfBirth(updatedConductor.getDateofbirth());
 
         return dto;
+    }
+
+    @Override
+    public List<ConductorDTO> getAllConductors() {
+        List<Conductor> conductors = conductorRepo.findAll();
+        List<ConductorDTO> conductorDTOs = new ArrayList<>();
+        for (Conductor conductor : conductors) {
+            User user = conductor.getUser();
+            ConductorDTO dto = new ConductorDTO();
+
+            // From User entity
+            dto.setUserId(user.getUserId());
+            dto.setFullName(user.getFullName());
+            dto.setUsername(user.getUsername());
+            dto.setEmail(user.getEmail());
+            dto.setRole(user.getRole());
+            dto.setAccountStatus(user.getAccountStatus());
+            dto.setIsVerified(user.getIsVerified());
+            dto.setPhoneNumber(user.getPhoneNumber());
+
+            // From Conductor entity
+            dto.setEmployee_id(conductor.getEmployee_id());
+            dto.setAssign_operator_id(conductor.getAssign_operator_id());
+            dto.setShift_status(conductor.getShift_status());
+            dto.setPr_img_path(conductor.getPr_img_path());
+
+            conductorDTOs.add(dto);
+        }
+        return conductorDTOs;
+    }
+
+    @Override
+    public void deleteConductor(UUID userId) {
+
+        // Find the user
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Find the conductor linked to the user
+        Conductor conductor = conductorRepo.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Conductor not found for user ID: " + userId));
+
+        // Delete the conductor
+        conductorRepo.delete(conductor);
+
+        // Set account status to deactivate
+        user.setAccountStatus("deactivate");
+        userRepo.save(user);
     }
 
 

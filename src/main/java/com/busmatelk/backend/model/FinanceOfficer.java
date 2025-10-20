@@ -9,17 +9,16 @@ import java.util.UUID;
 
 @Entity
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "passenger_profile")
-public class Passenger {
+@AllArgsConstructor
+public class FinanceOfficer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID Id;
-    private String notification_preferences;
+    private UUID id;
+    private String emp_id;
 
     @OneToOne
-    @JoinColumn(name = "user_id")  // This is both PK and FK
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", unique = true, nullable = false)
     private User user;
 }

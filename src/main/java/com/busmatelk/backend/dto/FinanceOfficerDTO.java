@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class ConductorDTO {
-
+@AllArgsConstructor
+public class FinanceOfficerDTO {
     // From `users` table
     private UUID userId;
     private String fullName;
@@ -21,17 +20,8 @@ public class ConductorDTO {
     private Boolean isVerified;
     private String phoneNumber;
 
-    //for conductor
-    private String employee_id;
-    private String assign_operator_id;
-    private String shift_status;
-    private String nicNumber;
-    private String dateOfBirth;
-    private String gender;
-    private String pr_img_path;
+    // From `finance_officers` table
+    private String emp_id;
 
-    //for auth
     private String password;
-
-
 }

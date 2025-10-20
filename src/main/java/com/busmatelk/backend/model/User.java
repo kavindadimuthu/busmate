@@ -16,13 +16,13 @@ public class User {
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
-    @Column(name = "full_name")
+    @Column(name = "full_name" , nullable = false)
     private String fullName;
 
     @Column(name = "username", unique = true)
     private String username;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number" )
     private String phoneNumber;
 
     @Column(name = "email", unique = true)
@@ -51,4 +51,14 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Passenger passenger;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Timekeeper timekeeper;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Mot mot;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private fleetOperatorModel operator;
+
 }

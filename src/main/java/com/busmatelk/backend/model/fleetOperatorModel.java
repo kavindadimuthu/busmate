@@ -18,8 +18,8 @@ import java.util.UUID;
 public class fleetOperatorModel {
 
     @Id
-    @Column(name = "user_id")
-    private UUID userId; // Same as users.user_id (FK manually handled)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(name = "operator_type")
     private String operatorType;
@@ -33,12 +33,13 @@ public class fleetOperatorModel {
     @Column(name = "registration_id")
     private String registrationId;
 
+    private String pr_img_path;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private List<String> contact_details;
 
-    public fleetOperatorModel(String operatorType, String organizationName, String region, String registrationId, List<String> contactDetails) {
-
-
-    }
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", unique = true, nullable = false)
+    private User user; // This is both PK and FK, linking to User entity
 }

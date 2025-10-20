@@ -5,6 +5,7 @@ import com.busmatelk.backend.service.ConductorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -16,7 +17,7 @@ public class ConductorController {
     private ConductorService conductorService;
 
     @PostMapping(path = "/register")
-    public String addPassenger(@RequestBody ConductorDTO conductorDTO) {
+    public String createConductor(@RequestBody ConductorDTO conductorDTO) {
         System.out.println(conductorDTO);
         conductorService.createConductor(conductorDTO);
         return "success";
@@ -33,5 +34,28 @@ public class ConductorController {
     @PutMapping(path = "/update")
     public ConductorDTO updateConductor(@RequestBody ConductorDTO conductorDTO, @RequestParam UUID userId) {
         return conductorService.updateconductor(conductorDTO,userId);
+    }
+
+    @GetMapping(path = "/all")
+    public List<ConductorDTO> getAllConductors() {
+        try {
+            return conductorService.getAllConductors();
+        } catch (Exception e) {
+            // Handle exceptions appropriately, e.g., log the error or return an error response
+            e.printStackTrace();
+            throw new RuntimeException("Failed to retrieve conductors: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping(path = "/delete/{userId}")
+    public String deleteConductor(@PathVariable UUID userId) {
+        try {
+            conductorService.deleteConductor(userId);
+            return "Conductor deleted successfully";
+        } catch (Exception e) {
+            // Handle exceptions appropriately, e.g., log the error or return an error response
+            e.printStackTrace();
+            return "Failed to delete conductor: " + e.getMessage();
+        }
     }
 }

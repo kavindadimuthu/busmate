@@ -15,17 +15,20 @@ import java.util.UUID;
 @Table(name = "conductor_profile")
 public class Conductor {
     @Id
-    @Column(name = "user_id")
-    private UUID userId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+    @Column( nullable = false, unique = true)
     private String employee_id;
+
+    @Column(nullable = false)
     private String assign_operator_id;
     private String shift_status;
+    @Column(nullable = false)
     private String NicNumber;
     private String Dateofbirth;
     private String pr_img_path;
 
     @OneToOne
-    @MapsId
     @JoinColumn(name = "user_id")  // This is both PK and FK
     private User user;
 
