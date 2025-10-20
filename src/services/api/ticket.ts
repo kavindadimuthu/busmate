@@ -387,4 +387,72 @@ export const ticketApi = {
       };
     }
   },
+
+  // Get seat bookings for a trip - Ticket Management Service
+  getSeatBookings: async (tripId: string): Promise<{
+    seatNumber: string;
+    status: 'available' | 'booked' | 'validated';
+    passengerName?: string;
+    ticketId?: string;
+    paymentStatus?: string;
+  }[]> => {
+    try {
+      console.log('🪑 Fetching seat bookings for trip ID:', tripId);
+      
+      // Get all tickets for the trip
+      const tickets = await ticketApi.getTicketsByTripId(tripId);
+      
+      // Create seat map for all 49 seats
+      const seatMap: { [key: string]: any } = {};
+      
+      // Initialize all 49 seats as available
+      for (let i = 1; i <= 49; i++) {
+        seatMap[i.toString()] = {
+          seatNumber: i.toString(),
+          status: 'available' as const
+        };
+      }
+      
+      // Update seat status based on bookings
+      tickets.forEach(ticket => {
+        if (ticket.seatNumber && ticket.seatNumber.trim() !== '') {
+          // Handle multiple seat numbers (comma-separated)
+          const seatNumbers = ticket.seatNumber.split(',').map(s => s.trim());
+          
+          seatNumbers.forEach(seatNum => {
+            if (seatMap[seatNum]) {
+              seatMap[seatNum] = {
+                seatNumber: seatNum,
+                status: ticket.paymentStatus === 'VALIDATED' ? 'validated' : 'booked',
+                passengerName: ticket.passengerId || 'Unknown Passenger',
+                ticketId: ticket.ticketId?.toString(),
+                paymentStatus: ticket.paymentStatus
+              };
+            }
+          });
+        }
+      });
+      
+      // Convert to array and sort by seat number
+      const seatBookings = Object.values(seatMap).sort((a, b) => 
+        parseInt(a.seatNumber) - parseInt(b.seatNumber)
+      );
+      
+      console.log('✅ Seat bookings fetched:', seatBookings.length, 'seats');
+      return seatBookings;
+      
+    } catch (error: any) {
+      console.error('❌ Error fetching seat bookings:', error);
+      
+      // Return default available seats if there's an error
+      const defaultSeats = [];
+      for (let i = 1; i <= 49; i++) {
+        defaultSeats.push({
+          seatNumber: i.toString(),
+          status: 'available' as const
+        });
+      }
+      return defaultSeats;
+    }
+  },
 };
