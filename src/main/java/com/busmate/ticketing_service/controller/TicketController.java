@@ -50,6 +50,11 @@ public class TicketController {
         return conductorLogService.getTicketDetailsByPassengerId(passengerId);
     }
 
+    @GetMapping("/{ticketId}")
+    public ConductorLogTicketDTO getTicketById(@PathVariable Long ticketId) {
+        return conductorLogService.getTicketDetailsById(ticketId);
+    }
+
     @PostMapping("/validate")
     public ResponseEntity<String> validateTicket(@RequestBody TicketValidationRequestDTO requestDTO) {
         String result = conductorLogService.validateTicket(requestDTO);

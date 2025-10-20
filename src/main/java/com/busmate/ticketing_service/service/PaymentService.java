@@ -18,6 +18,8 @@ public interface PaymentService {
 
     List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId);
 
+    ConductorLogTicketDTO getTicketDetailsById(Long ticketId);
+
     TripSummaryDTO getTripSummary(String tripId);
 
     String validateTicket(TicketValidationRequestDTO requestDTO);
