@@ -31,7 +31,7 @@ public class fleetOperatorController {
             fleetOperatorProfileService.addfleetOperatorProfile(fleetOperatorDTO);
             // Optionally, you can publish an event to Kafka here if needed
 
-            operatorProducer.publishOperatorCreated(fleetOperatorDTO.toJson());
+            // operatorProducer.publishOperatorCreated(fleetOperatorDTO.toJson());
             return ResponseEntity.status(HttpStatus.CREATED).body("Fleet operator registered successfully.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
