@@ -8,11 +8,13 @@ import com.busmate.routeschedule.entity.Trip;
 import com.busmate.routeschedule.entity.Operator;
 import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.entity.RouteStop;
+import com.busmate.routeschedule.entity.ScheduleStop;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.repository.TripRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.repository.RouteStopRepository;
+import com.busmate.routeschedule.repository.ScheduleStopRepository;
 import com.busmate.routeschedule.service.passenger.PassengerTripService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +43,7 @@ public class PassengerTripServiceImpl implements PassengerTripService {
     private final TripRepository tripRepository;
     private final StopRepository stopRepository;
     private final RouteStopRepository routeStopRepository;
+    private final ScheduleStopRepository scheduleStopRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -631,7 +634,17 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                     .status(trip.getStatus() != null ? trip.getStatus().toString() : "unknown")
                     .delay(delay)
                     .availableSeats(0) // Default value
-                    .bookingAvailable(false); // Default value
+                    .bookingAvailable(false) // Default value
+                    // Add relational identifiers
+                    .scheduleId(trip.getSchedule() != null ? trip.getSchedule().getId() : null)
+                    .routeId(trip.getSchedule() != null && trip.getSchedule().getRoute() != null ? 
+                        trip.getSchedule().getRoute().getId() : null)
+                    .routeGroupId(trip.getSchedule() != null && trip.getSchedule().getRoute() != null && 
+                        trip.getSchedule().getRoute().getRouteGroup() != null ? 
+                        trip.getSchedule().getRoute().getRouteGroup().getId() : null)
+                    .operatorId(trip.getBus() != null && trip.getBus().getOperator() != null ? 
+                        trip.getBus().getOperator().getId() : null)
+                    .busId(trip.getBus() != null ? trip.getBus().getId() : null);
 
             // Route information
             if (trip.getSchedule() != null && trip.getSchedule().getRoute() != null) {
@@ -747,31 +760,83 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                     List<PassengerTripResponse.PassengerIntermediateStop> intermediateStops = new ArrayList<>();
                     
                     if (trip.getSchedule() != null && trip.getSchedule().getRoute() != null) {
-                        var route = trip.getSchedule().getRoute();
+                        var schedule = trip.getSchedule();
+                        var route = schedule.getRoute();
                         
-                        // Use RouteStopRepository to get ordered route stops
-                        List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+                        // Get schedule stops with timing information
+                        List<ScheduleStop> scheduleStops = scheduleStopRepository.findByScheduleIdOrderByStopOrder(schedule.getId());
                         
-                        log.debug("Found {} route stops for route {}", routeStops.size(), route.getId());
+                        log.debug("Found {} schedule stops for schedule {}", scheduleStops.size(), schedule.getId());
                         
-                        // Filter out first and last stops to get only intermediate stops
-                        if (routeStops.size() > 2) {
-                            for (int i = 1; i < routeStops.size() - 1; i++) {
-                                RouteStop routeStop = routeStops.get(i);
-                                Stop stop = routeStop.getStop();
+                        // Build intermediate stops with comprehensive information
+                        for (ScheduleStop scheduleStop : scheduleStops) {
+                            RouteStop routeStop = scheduleStop.getRouteStop();
+                            Stop stop = routeStop.getStop();
+                            
+                            if (stop != null) {
+                                log.debug("Building intermediate stop {} - {}", stop.getId(), stop.getName());
                                 
-                                if (stop != null) {
-                                    log.debug("Building intermediate stop {} - {}", stop.getId(), stop.getName());
-                                    
-                                    var intermediateStop = PassengerTripResponse.PassengerIntermediateStop.builder()
-                                            .stopId(stop.getId())
-                                            .name(stop.getName())
-                                            .arrivalTime(null) // TODO: Get from schedule stops if available
-                                            .departureTime(null) // TODO: Get from schedule stops if available
-                                            .build();
-                                    
-                                    intermediateStops.add(intermediateStop);
+                                // Calculate estimated times based on trip date and schedule
+                                LocalDateTime stopEstimatedArrival = null;
+                                LocalDateTime stopEstimatedDeparture = null;
+                                
+                                if (scheduleStop.getArrivalTime() != null) {
+                                    stopEstimatedArrival = LocalDateTime.of(trip.getTripDate(), scheduleStop.getArrivalTime());
                                 }
+                                if (scheduleStop.getDepartureTime() != null) {
+                                    stopEstimatedDeparture = LocalDateTime.of(trip.getTripDate(), scheduleStop.getDepartureTime());
+                                }
+                                
+                                // Calculate delays if actual times are available (currently not tracked per stop)
+                                Integer arrivalDelay = null;
+                                Integer departureDelay = null;
+                                
+                                // Build location DTO
+                                LocationDto locationDto = null;
+                                if (stop.getLocation() != null) {
+                                    locationDto = buildLocationDto(
+                                        stop.getLocation().getLatitude(),
+                                        stop.getLocation().getLongitude(),
+                                        stop.getLocation().getCity()
+                                    );
+                                }
+                                
+                                // Parse facilities if available (this would need to be added to Stop entity)
+                                List<String> facilities = new ArrayList<>();
+                                // TODO: Add facilities parsing from Stop entity if available
+                                
+                                var intermediateStop = PassengerTripResponse.PassengerIntermediateStop.builder()
+                                        .stopId(stop.getId())
+                                        .name(stop.getName())
+                                        .description(stop.getDescription())
+                                        .city(stop.getLocation() != null ? stop.getLocation().getCity() : null)
+                                        .location(locationDto)
+                                        .isAccessible(stop.getIsAccessible())
+                                        .facilities(facilities)
+                                        .stopOrder(scheduleStop.getStopOrder())
+                                        .distanceFromStart(routeStop.getDistanceFromStartKm())
+                                        
+                                        // Detailed timing information
+                                        .scheduledArrivalTime(scheduleStop.getArrivalTime())
+                                        .scheduledDepartureTime(scheduleStop.getDepartureTime())
+                                        .actualArrivalTime(null) // TODO: Get from actual trip tracking
+                                        .actualDepartureTime(null) // TODO: Get from actual trip tracking
+                                        .estimatedArrivalTime(stopEstimatedArrival)
+                                        .estimatedDepartureTime(stopEstimatedDeparture)
+                                        
+                                        // Status and delays
+                                        .arrivalDelay(arrivalDelay)
+                                        .departureDelay(departureDelay)
+                                        .status("scheduled") // Default status
+                                        
+                                        // Legacy fields for backward compatibility
+                                        .arrivalTime(scheduleStop.getArrivalTime() != null ? 
+                                            scheduleStop.getArrivalTime().toString() : null)
+                                        .departureTime(scheduleStop.getDepartureTime() != null ? 
+                                            scheduleStop.getDepartureTime().toString() : null)
+                                        .build();
+                                
+                                intermediateStops.add(intermediateStop);
                             }
                         }
                     }
