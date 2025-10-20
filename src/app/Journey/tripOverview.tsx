@@ -1,108 +1,113 @@
 import { useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
-import { useTicket } from '@/contexts/TicketContext';
-import mockTripData from '@/data/Journey/tripSummaryData.json';
+import { ticketApi } from '@/services/api/ticket';
 import { EmployeeSchedule } from '@/types/employee';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
+
+// Types for seat booking data
+interface SeatBookingData {
+  seatNumber: string;
+  status: 'available' | 'booked' | 'validated';
+  passengerName?: string;
+  ticketId?: string;
+  paymentStatus?: string;
+  fareAmount?: number;
+}
 
 
 export default function TripOverviewScreen() {
   const { id } = useLocalSearchParams();
   const { schedules } = useEmployeeScheduleContext();
-  const { 
-    getQRScanLogsForTrip, 
-    getCashTicketLogsForTrip 
-  } = useTicket();
+  
+  // State for API data
+  const [seatBookingData, setSeatBookingData] = useState<SeatBookingData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Find the specific trip by ID
   const tripSchedule = schedules?.find((schedule: EmployeeSchedule) => schedule.id === id);
   
-  // Get mock data for this trip (using trip ID hash for consistency)
-  const getMockDataForTrip = (tripId: string) => {
-    // Use a simple hash function to consistently assign mock data to trips
-    const hash = tripId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const index = hash % mockTripData.length;
-    return mockTripData[index];
+  // Fetch seat booking data from API
+  const fetchTripData = async () => {
+    if (!tripSchedule?.id) return;
+    
+    try {
+      setError(null);
+      console.log('🎯 Fetching trip overview data for trip:', tripSchedule.id);
+      const bookingData = await ticketApi.getSeatBookings(tripSchedule.id);
+      setSeatBookingData(bookingData);
+      console.log('✅ Trip overview data loaded:', bookingData.length, 'seats');
+    } catch (err: any) {
+      console.error('❌ Error fetching trip overview data:', err);
+      setError(err.message || 'Failed to fetch trip data');
+      setSeatBookingData([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    if (tripSchedule?.id) {
+      fetchTripData();
+    } else {
+      setLoading(false);
+    }
+  }, [tripSchedule?.id]);
+
+  // Handle pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchTripData();
+    setRefreshing(false);
   };
   
-  // Calculate trip data from ticket logs
-  const tripSummaryData = useMemo(() => {
-    if (!tripSchedule?.id) {
-      return {
-        totalPassengers: 0,
-        totalRevenue: 0,
-        totalTickets: 0,
-        qrScans: { successful: 0, failed: 0, successRate: 0 },
-        cashRevenue: 0,
-        digitalRevenue: 0,
-        isUsingMockData: false
-      };
-    }
-
-    // Get logs for this trip
-    const qrLogs = getQRScanLogsForTrip(tripSchedule.id);
-    const cashTickets = getCashTicketLogsForTrip(tripSchedule.id);
-
-    // Calculate QR scan data
-    const successfulQRScans = qrLogs.filter(log => log.status === 'success');
-    const failedQRScans = qrLogs.filter(log => log.status === 'failed');
-    const qrPassengers = successfulQRScans.reduce((total, log) => total + log.passengerCount, 0);
-    const qrRevenue = successfulQRScans.reduce((total, log) => total + log.ticketFee, 0);
-
-    // Calculate cash ticket data
-    const cashPassengers = cashTickets.reduce((total, ticket) => total + ticket.passengerCount, 0);
-    const cashRevenue = cashTickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
-
-    // Calculate totals
-    const totalPassengers = qrPassengers + cashPassengers;
-    const totalTickets = successfulQRScans.length + cashTickets.length;
-    const totalRevenue = qrRevenue + cashRevenue;
-    const totalQRAttempts = qrLogs.length;
-    const successRate = totalQRAttempts > 0 ? Math.round((successfulQRScans.length / totalQRAttempts) * 100) : 0;
-
-    
-    if (totalPassengers === 0 && totalTickets === 0 && totalRevenue === 0) {
-      const mockData = getMockDataForTrip(tripSchedule.id);
-      return {
-        totalPassengers: mockData.passengers,
-        totalRevenue: mockData.cashRevenue + mockData.digitalRevenue,
-        totalTickets: mockData.tickets,
-        qrScans: {
-          successful: mockData.qrScans.successful,
-          failed: mockData.qrScans.failed,
-          successRate: mockData.qrScans.successRate
-        },
-        cashRevenue: mockData.cashRevenue,
-        digitalRevenue: mockData.digitalRevenue,
-        isUsingMockData: true
-      };
-    }
-
-    // Use real data if available
-    return {
-      totalPassengers: totalPassengers,
-      totalRevenue: totalRevenue,
-      totalTickets: totalTickets,
-      qrScans: {
-        successful: successfulQRScans.length,
-        failed: failedQRScans.length,
-        successRate: successRate
-      },
-      cashRevenue: cashRevenue,
-      digitalRevenue: qrRevenue,
-      isUsingMockData: false
-    };
-  }, [tripSchedule?.id, getQRScanLogsForTrip, getCashTicketLogsForTrip]);
+  // Calculate trip summary data from real API data
+  const tripSummaryData = {
+    totalPassengers: seatBookingData.filter(seat => 
+      seat.status === 'booked' || seat.status === 'validated'
+    ).length,
+    totalRevenue: seatBookingData.reduce((total, seat) => {
+      if (seat.status === 'booked' || seat.status === 'validated') {
+        return total + (seat.fareAmount || 0);
+      }
+      return total;
+    }, 0),
+    totalTickets: seatBookingData.filter(seat => 
+      seat.status === 'booked' || seat.status === 'validated'
+    ).length,
+    validatedTickets: seatBookingData.filter(seat => seat.status === 'validated').length,
+    bookedTickets: seatBookingData.filter(seat => seat.status === 'booked').length,
+    // Calculate digital vs cash revenue based on payment status
+    cashRevenue: seatBookingData.reduce((total, seat) => {
+      if ((seat.status === 'booked' || seat.status === 'validated') && 
+          seat.paymentStatus !== 'DIGITAL' && seat.paymentStatus !== 'VALIDATED') {
+        return total + (seat.fareAmount || 0);
+      }
+      return total;
+    }, 0),
+    digitalRevenue: seatBookingData.reduce((total, seat) => {
+      if ((seat.status === 'booked' || seat.status === 'validated') && 
+          (seat.paymentStatus === 'DIGITAL' || seat.paymentStatus === 'VALIDATED')) {
+        return total + (seat.fareAmount || 0);
+      }
+      return total;
+    }, 0),
+    isUsingRealData: true
+  };
 
   // Helper functions
   const formatTime = (timeStr: string): string => {
@@ -193,13 +198,42 @@ export default function TripOverviewScreen() {
     );
   }
 
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0066FF" />
+          <Text style={styles.loadingText}>Loading trip summary...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state (but still show the layout with empty data)
+  if (error) {
+    console.log('⚠️ Showing trip overview with error state:', error);
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       
      
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0066FF']} // Android
+            tintColor="#0066FF" // iOS
+          />
+        }
+      >
         {/* Route Card */}
         <View style={styles.card}>
           <View style={styles.routeHeaderRow}>
@@ -247,6 +281,30 @@ export default function TripOverviewScreen() {
             </View>
           </View>
         </View>
+
+        {/* Data Source Indicator */}
+        {error ? (
+          <View style={styles.errorBanner}>
+            <Ionicons name="warning-outline" size={16} color="#F59E0B" />
+            <Text style={styles.errorBannerText}>
+              Could not load trip data - {error}
+            </Text>
+          </View>
+        ) : seatBookingData.length === 0 ? (
+          <View style={styles.dataBanner}>
+            <Ionicons name="information-circle" size={16} color="#0066FF" />
+            <Text style={[styles.dataBannerText, { color: '#1E40AF' }]}>
+              No bookings found for this trip
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.dataBanner}>
+            <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+            <Text style={styles.dataBannerText}>
+              Real-time data  • {seatBookingData.filter(s => s.status !== 'available').length} bookings loaded
+            </Text>
+          </View>
+        )}
 
         {/* Passenger and Tickets Row */}
         <View style={styles.statsRow}>
@@ -298,6 +356,51 @@ export default function TripOverviewScreen() {
           <View style={styles.revenueTotalRow}>
             <Text style={styles.revenueTotalText}>Total Revenue</Text>
             <Text style={styles.revenueTotalAmount}>Rs {tripSummaryData.totalRevenue.toLocaleString()}</Text>
+          </View>
+        </View>
+
+        {/* Trip Statistics Card */}
+        <View style={styles.card}>
+          <View style={styles.revenueHeaderRow}>
+            <View style={[styles.iconCircle, { backgroundColor: '#F0F9FF' }]}>
+              <Ionicons name="analytics" size={20} color="#0066FF" />
+            </View>
+            <View>
+              <Text style={styles.revenueTitle}>Trip Statistics</Text>
+              <Text style={styles.revenueSubtitle}>Detailed breakdown of trip performance</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsDetailRow}>
+            <Text style={styles.statsDetailLabel}>Total Seats Available</Text>
+            <Text style={styles.statsDetailValue}>49</Text>
+          </View>
+
+          <View style={styles.statsDetailRow}>
+            <Text style={styles.statsDetailLabel}>Seats Occupied</Text>
+            <Text style={styles.statsDetailValue}>{tripSummaryData.totalPassengers}</Text>
+          </View>
+
+          <View style={styles.statsDetailRow}>
+            <Text style={styles.statsDetailLabel}>Occupancy Rate</Text>
+            <Text style={[styles.statsDetailValue, { color: tripSummaryData.totalPassengers > 30 ? '#22C55E' : '#F59E0B' }]}>
+              {Math.round((tripSummaryData.totalPassengers / 49) * 100)}%
+            </Text>
+          </View>
+
+          <View style={styles.statsDetailRow}>
+            <Text style={styles.statsDetailLabel}>Validated Tickets</Text>
+            <Text style={styles.statsDetailValue}>{tripSummaryData.validatedTickets}</Text>
+          </View>
+
+          <View style={styles.statsDetailRow}>
+            <Text style={styles.statsDetailLabel}>Average Revenue per Passenger</Text>
+            <Text style={styles.statsDetailValue}>
+              Rs {tripSummaryData.totalPassengers > 0 
+                ? Math.round(tripSummaryData.totalRevenue / tripSummaryData.totalPassengers).toLocaleString()
+                : '0'
+              }
+            </Text>
           </View>
         </View>
 
@@ -590,5 +693,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0066FF',
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  errorBannerText: {
+    fontSize: 12,
+    color: '#92400E',
+    marginLeft: 8,
+    flex: 1,
+  },
+  dataBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  dataBannerText: {
+    fontSize: 12,
+    color: '#065F46',
+    marginLeft: 8,
+    flex: 1,
+  },
+  statsDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  statsDetailLabel: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+  },
+  statsDetailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
 });
