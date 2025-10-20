@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -14,21 +14,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { AuthContext } from '../../contexts/AuthContext';
 import { QRScanLog, useTicket } from '../../contexts/TicketContext';
-
-// Define types for scan history items
-interface ScanHistoryItem {
-  id: string;
-  name?: string;
-  start?: string;
-  end?: string;
-  seatNumber?: string;
-  passengerCount?: number;
-  ticketFee?: number; // can be float or integer
-  status: 'success' | 'failed';
-  timestamp: Date;
-  ticketId?: string;
-}
+import { ticketApi } from '../../services/api/ticket';
 
 // Interface for passenger details
 interface PassengerDetails {
@@ -43,8 +31,12 @@ interface PassengerDetails {
 }
 
 export default function QRScannerScreen() {
-  // Get ticket context
+  // Get ticket context and auth context
   const { qrScanLogs, addQRScanLog } = useTicket();
+  const authContext = useContext(AuthContext);
+  
+  // Get conductor ID from auth context
+  const conductorId = authContext?.user?.id;
   
   // Camera permission state using the new hooks
   const [permission, requestPermission] = useCameraPermissions();
@@ -82,20 +74,6 @@ export default function QRScannerScreen() {
     }
   }, [isValidating]);
   
-  // Use recent scans from context instead of local state
-  const recentScans = qrScanLogs.slice(0, 10).map(log => ({
-    id: log.id,
-    name: log.name,
-    start: log.startStation,
-    end: log.endStation,
-    seatNumber: log.seatNumber,
-    passengerCount: log.passengerCount,
-    ticketFee: log.ticketFee,
-    status: log.status,
-    timestamp: log.scanTime,
-    ticketId: log.ticketId
-  }));
-
   // Request camera permissions if not already granted
   useEffect(() => {
     if (permission && !permission.granted) {
@@ -103,7 +81,7 @@ export default function QRScannerScreen() {
     }
   }, [permission]);
 
-  // Handle barcode scanning - updated to match CameraView's format
+  // Handle barcode scanning - updated to parse real passenger QR data
   const handleBarCodeScanned = ({data, type}: {data: string, type: string}) => {
     if (!scanning || scanned) return;
     
@@ -111,53 +89,44 @@ export default function QRScannerScreen() {
     setScanning(false);
     setScanStatus('scanning');
     
-    // Simulate API call to validate ticket
+    // Process the scanned QR data
     setTimeout(() => {
       try {
-        // Simulate ticket validation logic
+        let ticketData;
+        
+        // Try to parse the QR data - could be direct JSON or prefixed with TICKET:
         if (data.startsWith('TICKET:')) {
-          // Successful scan - only show data for validation, don't add to logs yet
-          const ticketData = JSON.parse(data.replace('TICKET:', ''));
-          const passengerInfo = {
-            name: ticketData.name || 'Unknown',
-            start: ticketData.start || 'Unknown',
-            end: ticketData.end || 'Unknown',
-            passengerCount: ticketData.passengerCount || 1,
-            ticketFee: ticketData.ticketFee || 0,
-            seatNumber: ticketData.seat || 'Not assigned',
-            paymentStatus: ticketData.paid ? 'Paid' : 'Unpaid',
-            ticketId: ticketData.id || 'Unknown'
-          };
-          
-          setPassengerDetails(passengerInfo);
-          setPendingQRData(data); // Store for validation
-          setScanStatus('success');
+          ticketData = JSON.parse(data.replace('TICKET:', ''));
         } else {
-          // Failed scan - add immediately to logs as failed
-          setScanStatus('failed');
-          setPassengerDetails(null);
-          setPendingQRData(null);
-          
-          // Add failed scan log to context immediately
-          const failedScanLog: QRScanLog = {
-            id: Date.now().toString(),
-            name: 'Invalid QR',
-            qrCode: data,
-            ticketId: '',
-            startStation: '',
-            endStation: '',
-            seatNumber: '',
-            passengerCount: 0,
-            ticketFee: 0,
-            paymentStatus: '',
-            scanTime: new Date(),
-            status: 'failed'
-          };
-          
-          addQRScanLog(failedScanLog);
+          // Try to parse as direct JSON
+          ticketData = JSON.parse(data);
         }
+        
+        // Validate that we have a ticket ID (required for validation)
+        if (!ticketData.ticketId && !ticketData.id) {
+          throw new Error('No ticket ID found in QR data');
+        }
+        
+        // Extract passenger information from QR data
+        const passengerInfo = {
+          name: ticketData.passengerName || ticketData.name || 'Unknown Passenger',
+          start: ticketData.startStation || ticketData.fromLocation || ticketData.start || 'Unknown',
+          end: ticketData.endStation || ticketData.toLocation || ticketData.end || 'Unknown',
+          passengerCount: ticketData.passengerCount || 1,
+          ticketFee: ticketData.ticketFee || ticketData.fareAmount || 0,
+          seatNumber: ticketData.seatNumber || ticketData.seat || 'Not assigned',
+          paymentStatus: ticketData.paymentStatus || (ticketData.paid ? 'PAID' : 'PENDING') || 'UNKNOWN',
+          ticketId: ticketData.ticketId || ticketData.id || 'Unknown'
+        };
+        
+        setPassengerDetails(passengerInfo);
+        setPendingQRData(data); // Store original QR data for validation
+        setScanStatus('success');
+        
       } catch (error) {
-        // Handle parsing error - add immediately to logs as failed
+        console.error('❌ Error parsing QR data:', error);
+        
+        // Handle parsing error - add failed scan to logs
         setScanStatus('failed');
         setPassengerDetails(null);
         setPendingQRData(null);
@@ -165,7 +134,7 @@ export default function QRScannerScreen() {
         // Add failed scan log to context immediately
         const errorScanLog: QRScanLog = {
           id: Date.now().toString(),
-          name: 'Parse Error',
+          name: 'Invalid QR Code',
           qrCode: data,
           ticketId: '',
           startStation: '',
@@ -179,9 +148,15 @@ export default function QRScannerScreen() {
         };
         
         addQRScanLog(errorScanLog);
+        
+        Alert.alert(
+          'Invalid QR Code',
+          'The scanned QR code does not contain valid ticket information. Please ask the passenger to show their ticket QR code.',
+          [{ text: 'OK' }]
+        );
       }
       
-      // Enable scanning again after a delay
+      // Enable scanning again after a delay if not successful
       setTimeout(() => {
         if (scanStatus !== 'success') {
           setScanned(false);
@@ -189,7 +164,7 @@ export default function QRScannerScreen() {
         }
       }, 2000);
       
-    }, 1500); // Simulate network delay
+    }, 1000); // Reduced delay for better UX
   };
 
   // Reset scanner
@@ -202,72 +177,123 @@ export default function QRScannerScreen() {
     setIsValidating(false);
   };
 
-  // Handle ticket validation
-  const handleValidateTicket = () => {
+  // Handle ticket validation - improved error handling
+  const handleValidateTicket = async () => {
     if (!passengerDetails || !pendingQRData || isValidating) return;
+    
+    if (!conductorId) {
+      Alert.alert('Error', 'Conductor ID not found. Please login again.');
+      return;
+    }
     
     setIsValidating(true);
     
-    // Add 2 seconds loading delay
-    setTimeout(() => {
-      try {
-        // Parse the pending QR data again to create the log entry
-        const ticketData = JSON.parse(pendingQRData.replace('TICKET:', ''));
-        
-        // Add to context scan logs only when validated
-        const scanLog: QRScanLog = {
-          id: Date.now().toString(),
-          name: ticketData.name || 'Unknown',
-          qrCode: pendingQRData,
-          ticketId: ticketData.id || 'Unknown',
-          startStation: ticketData.start || 'Unknown',
-          endStation: ticketData.end || 'Unknown',
-          seatNumber: ticketData.seat || 'Not assigned',
-          passengerCount: ticketData.passengerCount || 1,
-          ticketFee: ticketData.ticketFee || 0,
-          paymentStatus: ticketData.paid ? 'Paid' : 'Unpaid',
-          scanTime: new Date(),
-          status: 'success'
-        };
-        
-        addQRScanLog(scanLog);
-        
-        // Reset scanner without alert
-        resetScanner();
-      } catch (error) {
+    try {
+      let ticketData;
+      
+      // Parse the QR data to extract ticket information
+      if (pendingQRData.startsWith('TICKET:')) {
+        ticketData = JSON.parse(pendingQRData.replace('TICKET:', ''));
+      } else {
+        ticketData = JSON.parse(pendingQRData);
+      }
+      
+      // Extract ticket ID for API call
+      const ticketIdString = ticketData.ticketId || ticketData.id || '';
+      const ticketId = parseInt(ticketIdString) || 0;
+      
+      console.log('🔍 Ticket ID extraction:', {
+        original: ticketIdString,
+        parsed: ticketId,
+        type: typeof ticketId,
+        isValid: ticketId > 0
+      });
+      
+      if (!ticketId || ticketId === 0) {
         Alert.alert(
-          "Validation Error",
-          "There was an error validating the ticket. Please try scanning again.",
-          [{ text: "OK", onPress: () => {
-            setIsValidating(false);
-            resetScanner();
-          }}]
+          'Invalid Ticket',
+          `The scanned ticket does not have a valid ticket ID for validation.\nFound: "${ticketIdString}"\nParsed: ${ticketId}`,
+          [{ text: 'OK', onPress: () => resetScanner() }]
+        );
+        return;
+      }
+      
+      console.log('🎫 Validating ticket:', { ticketId, conductorId });
+      
+      // Call validation API with improved error handling
+      const result = await ticketApi.validateTicket(ticketId, conductorId);
+      
+      // Add to scan logs first
+      const scanLog: QRScanLog = {
+        id: Date.now().toString(),
+        name: passengerDetails.name,
+        qrCode: pendingQRData,
+        ticketId: passengerDetails.ticketId,
+        startStation: passengerDetails.start,
+        endStation: passengerDetails.end,
+        seatNumber: passengerDetails.seatNumber,
+        passengerCount: passengerDetails.passengerCount || 1,
+        ticketFee: passengerDetails.ticketFee || 0,
+        paymentStatus: passengerDetails.paymentStatus,
+        scanTime: new Date(),
+        status: 'success'
+      };
+      
+      addQRScanLog(scanLog);
+      
+      // Handle validation results
+      if (result.success) {
+        console.log('✅ Ticket validation successful:', result);
+        Alert.alert(
+          'Validation Successful! ✅',
+          `Passenger: ${passengerDetails.name}\nRoute: ${passengerDetails.start} → ${passengerDetails.end}\nTicket ID: ${passengerDetails.ticketId}\n\n${result.message || 'Ticket validated successfully'}`,
+          [{ text: 'OK', onPress: () => resetScanner() }]
+        );
+      } else if (result.isAlreadyValidated) {
+        console.log('ℹ️ Ticket already validated - expected behavior');
+        Alert.alert(
+          'Already Validated ⚠️',
+          `Passenger: ${passengerDetails.name}\nRoute: ${passengerDetails.start} → ${passengerDetails.end}\nTicket ID: ${passengerDetails.ticketId}\n\nThis ticket is already validated.`,
+          [{ text: 'OK', onPress: () => resetScanner() }]
+        );
+      } else {
+        Alert.alert(
+          'Validation Failed ❌',
+          `${result.message || 'Failed to validate ticket'}\n\nPlease try again or contact support.`,
+          [{ text: 'OK', onPress: () => resetScanner() }]
         );
       }
-    }, 2000); // 2 seconds loading delay
+      
+    } catch (error: any) {
+      console.log('🔍 Validation result:', error.message);
+      
+      // Check if it's an "already validated" case that slipped through
+      if (error.message?.toLowerCase().includes('already validated')) {
+        // This is expected behavior, not an error
+        console.log('ℹ️ Ticket already validated (caught in catch block)');
+        Alert.alert(
+          'Already Validated ⚠️',
+          `Passenger: ${passengerDetails.name}\nRoute: ${passengerDetails.start} → ${passengerDetails.end}\nTicket ID: ${passengerDetails.ticketId}\n\nThis ticket is already validated.`,
+          [{ text: 'OK', onPress: () => resetScanner() }]
+        );
+      } else {
+        // Actual error
+        console.error('❌ Validation failed:', error.message);
+        Alert.alert(
+          'Validation Failed ❌',
+          `Failed to validate ticket.\n\nError: ${error.message}\n\nPlease try again or contact support.`,
+          [{ text: 'OK', onPress: () => resetScanner() }]
+        );
+      }
+    } finally {
+      setIsValidating(false);
+    }
   };
   
   // View scan history
   const handleViewScanHistory = () => {
     // Navigate to scan history page
     router.push('/Ticket/scanHistory');
-  };
-
-  // Format time ago
-  const getTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins === 1) return '1 min ago';
-    if (diffMins < 60) return `${diffMins} mins ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours === 1) return '1 hour ago';
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    
-    return date.toLocaleDateString();
   };
 
   // Render scan status indicator
@@ -480,7 +506,7 @@ export default function QRScannerScreen() {
           )}
         </TouchableOpacity>
         
-        {/* Scan History Button */}
+        {/* Scan History Button - commented out */}
         <TouchableOpacity 
           // style={styles.historyButton} 
           onPress={handleViewScanHistory}
@@ -489,46 +515,6 @@ export default function QRScannerScreen() {
           {/* <Text style={styles.historyButtonText}>Scan History</Text> */}
         </TouchableOpacity>
         
-        {/* Recent Scans */}
-        <View style={styles.recentScansContainer}>
-          <Text style={styles.recentScansTitle}>Recent Scans</Text>
-          
-          {recentScans.slice(0, 2).map((scan) => (
-            <View key={scan.id} style={styles.scanItem}>
-              <View style={styles.scanItemLeft}>
-                <View style={scan.status === 'success' ? styles.successIcon : styles.failedIcon}>
-                  {scan.status === 'success' ? (
-                    <Ionicons name="checkmark" size={16} color="#22C55E" />
-                  ) : (
-                    <Ionicons name="close" size={16} color="#FF3B30" />
-                  )}
-                </View>
-                
-                <View>
-                  <Text style={styles.scanItemName}>
-                    {scan.name || 'Invalid QR'}
-                  </Text>
-                  {scan.seatNumber && (
-                    <Text style={styles.scanItemDetails}>
-                      Seat {scan.seatNumber} • {getTimeAgo(scan.timestamp)}
-                    </Text>
-                  )}
-                  {!scan.seatNumber && (
-                    <Text style={styles.scanItemDetails}>
-                      {getTimeAgo(scan.timestamp)}
-                    </Text>
-                  )}
-                </View>
-              </View>
-              
-              <View style={scan.status === 'success' ? styles.successBadge : styles.failedBadge}>
-                <Text style={scan.status === 'success' ? styles.successText : styles.failedText}>
-                  {scan.status === 'success' ? 'Success' : 'Failed'}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -813,82 +799,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  recentScansContainer: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-  },
-  recentScansTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  scanItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
-    elevation: 1,
-  },
-  scanItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  successIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#ECFDF5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  failedIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FEF2F2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  scanItemName: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  scanItemDetails: {
-    fontSize: 13,
-    color: '#777',
-  },
-  successBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  failedBadge: {
-    backgroundColor: '#FEF2F2',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  successText: {
-    fontSize: 12,
-    color: '#22C55E',
-    fontWeight: '500',
-  },
-  failedText: {
-    fontSize: 12,
-    color: '#FF3B30',
-    fontWeight: '500',
   },
   button: {
     backgroundColor: '#0066FF',

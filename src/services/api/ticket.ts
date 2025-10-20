@@ -3,11 +3,55 @@ import { apiClient } from '../apiClient';
 
 export const ticketApi = {
   // Validate a ticket - Ticket Management Service
-  validateTicket: async (ticketId: string): Promise<any> => {
-    return apiClient.authenticatedRequest<any>('/validate', {
-      method: 'POST',
-      body: JSON.stringify({ ticketId }),
-    }, 'ticket');
+  validateTicket: async (ticketId: number, conductorId: string): Promise<{ success: boolean; message: string; isAlreadyValidated?: boolean }> => {
+    try {
+      console.log(`🎫 Validating ticket ${ticketId} with conductor ${conductorId}`);
+      
+      // Validate inputs before sending
+      if (!ticketId || ticketId <= 0) {
+        throw new Error(`Invalid ticket ID: ${ticketId}`);
+      }
+      
+      if (!conductorId || conductorId.trim() === '') {
+        throw new Error(`Invalid conductor ID: ${conductorId}`);
+      }
+      
+      const requestPayload = { 
+        ticketId: ticketId,
+        conductorId: conductorId 
+      };
+      
+      console.log('📤 Sending validation request:', JSON.stringify(requestPayload, null, 2));
+      
+      const response = await apiClient.authenticatedRequest<any>('/v1/tickets/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      }, 'ticket');
+      
+      console.log('✅ Ticket validation successful');
+      return {
+        success: true,
+        message: response.message || 'Ticket validated successfully'
+      };
+      
+    } catch (error: any) {
+      // Handle "already validated" as a known case, not an error
+      if (error.message?.toLowerCase().includes('already validated')) {
+        console.log('ℹ️ Ticket already validated - this is expected behavior');
+        return {
+          success: false,
+          isAlreadyValidated: true,
+          message: 'Ticket is already validated'
+        };
+      }
+      
+      // For other errors, log and re-throw for the QR scanner to handle
+      console.error('❌ Ticket validation failed:', error.message);
+      throw error;
+    }
   },
 
   // Issue a new ticket - Ticket Management Service
