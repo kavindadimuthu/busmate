@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   summaryValue: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     marginBottom: 4,
   },

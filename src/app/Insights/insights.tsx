@@ -328,7 +328,7 @@ export default function InsightsScreen() {
             <Text style={styles.metricLabel}>Money Collected</Text>
             <View style={styles.metricValueRow}>
               <FontAwesome5 name="money-bill-wave" size={18} color="#0066FF" style={styles.metricIcon} />
-              <Text style={styles.metricValue}>RS {currentData.moneyCollected.value}</Text>
+              <Text style={styles.metricValue}>RS . {currentData.moneyCollected.value.toFixed(2)}</Text>
             </View>
             <Text style={[
               styles.trendText, 
@@ -418,7 +418,7 @@ export default function InsightsScreen() {
               {/* Total Revenue Display Below Chart */}
               <View style={styles.totalRevenueContainer}>
                 <Text style={styles.totalRevenueLabel}>Total Revenue</Text>
-                <Text style={styles.totalRevenueValue}>RS {currentData.moneyCollected.value}</Text>
+                <Text style={styles.totalRevenueValue}>RS. {currentData.moneyCollected.value.toFixed(2)}</Text>
                 <Text style={styles.totalRevenuePeriod}>
                   {timeFilter === 'today' ? 'Today' : 
                    timeFilter === 'lastWeek' ? 'Last Week' : 
@@ -434,12 +434,12 @@ export default function InsightsScreen() {
                     backgroundColor: currentData.paymentBreakdown.cash.amount > 0 ? '#0066FF' : '#E5E5E5' 
                   }]} />
                   <View style={styles.legendContent}>
-                    <Text style={styles.legendLabel}>Cash Payments (CONDUCTOR)</Text>
+                    <Text style={styles.legendLabel}>Cash Payments</Text>
                     <Text style={[
                       styles.legendAmount, 
                       currentData.paymentBreakdown.cash.amount === 0 && styles.legendAmountZero
                     ]}>
-                      RS {currentData.paymentBreakdown.cash.amount}
+                      RS. {currentData.paymentBreakdown.cash.amount.toFixed(2)}
                     </Text>
                     <Text style={[
                       styles.legendPercent,
@@ -455,12 +455,12 @@ export default function InsightsScreen() {
                     backgroundColor: currentData.paymentBreakdown.qr.amount > 0 ? '#22C55E' : '#E5E5E5' 
                   }]} />
                   <View style={styles.legendContent}>
-                    <Text style={styles.legendLabel}>QR/Digital Payments (ONLINE)</Text>
+                    <Text style={styles.legendLabel}>QR/Digital Payments </Text>
                     <Text style={[
                       styles.legendAmount, 
                       currentData.paymentBreakdown.qr.amount === 0 && styles.legendAmountZero
                     ]}>
-                      RS {currentData.paymentBreakdown.qr.amount}
+                      RS. {currentData.paymentBreakdown.qr.amount.toFixed(2)}
                     </Text>
                     <Text style={[
                       styles.legendPercent,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   metricValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
   },
   trendText: {

@@ -43,7 +43,7 @@ export default function TicketLogsScreen() {
       }
 
       if (!ongoingTrip) {
-        console.log('ℹ️ No ongoing trip found');
+        console.log('No ongoing trip found');
         setCurrentTripTickets([]);
         setLoading(false);
         return;
@@ -89,7 +89,7 @@ export default function TicketLogsScreen() {
         setStopNames(nameMap);
         
       } catch (err: any) {
-        console.error('❌ Error fetching current trip tickets:', err);
+        console.error(' Error fetching current trip tickets:', err);
         setError(err.message || 'Failed to fetch ticket data');
       } finally {
         setLoading(false);
