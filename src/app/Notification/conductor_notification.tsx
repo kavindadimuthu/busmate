@@ -53,7 +53,10 @@ export default function NotificationsScreen() {
         return a.includes('conductor') || a === 'all' || a.includes('all') || a.includes('everyone') || a.includes('public') || a.includes('global');
       };
 
-      const filteredForConductor = response.notifications.filter((n) => allowed(n.targetAudience));
+      const filteredForConductor = response.notifications.filter((n) => {
+        // Filter by audience and ensure notification has required fields
+        return allowed(n.targetAudience) && n.notificationId && (n.title || n.body);
+      });
 
       // Transform API notifications to local format
       const transformedNotifications: Notification[] = filteredForConductor.map((apiNotif: ApiNotification) => {
@@ -110,8 +113,8 @@ export default function NotificationsScreen() {
         return {
           id: apiNotif.notificationId,
           type,
-          title: apiNotif.title,
-          description: apiNotif.body,
+          title: apiNotif.title || 'No Title',
+          description: apiNotif.body || 'No Description',
           time: timeAgo,
           isRead: false, // Default to unread
           category,
@@ -120,8 +123,13 @@ export default function NotificationsScreen() {
       });
 
       setNotifications(transformedNotifications);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch notifications:', error);
+      console.log('Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        cause: error?.cause
+      });
       Alert.alert('Error', 'Failed to load notifications. Please try again.');
       // Keep existing notifications on error
     } finally {
@@ -148,8 +156,8 @@ export default function NotificationsScreen() {
 
     // Then filter by search query if any
     const searchMatch = !searchQuery ||
-      notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notification.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (notification.title && notification.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (notification.description && notification.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return categoryMatch && searchMatch;
   });
