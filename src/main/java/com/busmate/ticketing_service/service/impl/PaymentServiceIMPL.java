@@ -55,6 +55,7 @@ public class PaymentServiceIMPL implements PaymentService {
             ticket.setFareAmount(requestDTO.getFareAmount());
             ticket.setIssuedAt(LocalDateTime.now());
             ticket.setSeatNumber(requestDTO.getSeatNumber());
+            ticket.setPassengerId(requestDTO.getPassengerId());
 
             if ("CASH".equalsIgnoreCase(requestDTO.getPaymentMethod())) {
                 // Set transaction details for cash payment
@@ -92,6 +93,7 @@ public class PaymentServiceIMPL implements PaymentService {
                 onlinePayment.setTransactionRef(requestDTO.getTransactionRef());
                 onlinePayment.setCreatedAt(LocalDateTime.now());
                 onlinePayment.setTransactions(savedTransaction);
+                onlinePayment.setPassengerId(requestDTO.getPassengerId());
                 onlineRepo.save(onlinePayment);
 
                 // Set ticket details
