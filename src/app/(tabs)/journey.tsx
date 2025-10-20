@@ -205,7 +205,9 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
             <View style={[styles.summaryIconContainer, {backgroundColor: '#F6E6FF'}]}>
               <FontAwesome5 name="money-bill-wave" size={16} color="#BF5AF2" />
             </View>
-            <Text style={styles.summaryValue}>Rs. {dynamicStats.totalRevenue.toLocaleString()}</Text>
+            <Text style={styles.summaryValue}>
+              Rs. {dynamicStats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
             <Text style={styles.summaryLabel}>Total Revenue</Text>
           </View>
         </View>
@@ -232,7 +234,7 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
         </View>
         
         {/* Ticket Breakdown */}
-        <View style={styles.ticketBreakdownContainer}>
+        {/* <View style={styles.ticketBreakdownContainer}>
           <Text style={styles.ticketBreakdownTitle}>Ticket Breakdown</Text>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Physical Tickets:</Text>
@@ -246,7 +248,7 @@ function OngoingTripView({ trip }: { trip: EmployeeSchedule }) {
               {dynamicStats.validatedTickets} tickets ({tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.passengerCount, 0)} passengers)
             </Text>
           </View>
-        </View>
+        </View> */}
       </View>
       
       {/* Add bottom padding for scrolling */}
