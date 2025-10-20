@@ -39,7 +39,7 @@ public class PaymentServiceIMPL implements PaymentService {
 
     @Override
     @Transactional
-    public String issueTicket(PaymentRequestDTO requestDTO) {
+    public ConductorLogTicketDTO issueTicket(PaymentRequestDTO requestDTO) {
         try {
             // Create and save Transaction first
             Transactions transaction = new Transactions();
@@ -102,10 +102,30 @@ public class PaymentServiceIMPL implements PaymentService {
                 ticket.setTransactions(savedTransaction);
             }
 
-            // Save ticket
-            ticketRepo.save(ticket);
+            // Save ticket and get the saved instance with ID
+            Tickets savedTicket = ticketRepo.save(ticket);
 
-            return "Ticket issued successfully";
+            // Convert saved ticket to DTO for response
+            ConductorLogTicketDTO responseDTO = new ConductorLogTicketDTO();
+            responseDTO.setTicketId(savedTicket.getTicketId());
+            responseDTO.setPassengerId(savedTicket.getPassengerId());
+            responseDTO.setStartLocationId(savedTicket.getStartLocationId());
+            responseDTO.setEndLocationId(savedTicket.getEndLocationId());
+            responseDTO.setSeatNumber(savedTicket.getSeatNumber());
+            responseDTO.setFareAmount(savedTicket.getFareAmount().doubleValue());
+            responseDTO.setIssuedAt(savedTicket.getIssuedAt());
+
+            // Get payment status from transaction
+            if (savedTicket.getTransactions() != null) {
+                responseDTO.setPaymentStatus(savedTicket.getTransactions().getStatus().toString());
+            } else {
+                responseDTO.setPaymentStatus("UNKNOWN");
+            }
+
+            // Set passenger count to 1 (assuming 1 passenger per ticket)
+            responseDTO.setPassengerCount(1);
+
+            return responseDTO;
 
         } catch (Exception e) {
             throw new BadRequestException("Failed to issue ticket: " + e.getMessage());
