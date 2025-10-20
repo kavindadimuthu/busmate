@@ -346,4 +346,43 @@ public class PaymentServiceIMPL implements PaymentService {
             throw new BadRequestException("Failed to validate ticket: " + e.getMessage());
         }
     }
+
+    @Override
+    public ConductorLogTicketDTO getTicketDetailsById(Long ticketId) {
+        try {
+            // Find the ticket by ID
+            Tickets ticket = ticketRepo.findById(ticketId)
+                    .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + ticketId));
+
+            // Convert ticket to DTO
+            ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
+            dto.setTicketId(ticket.getTicketId());
+            dto.setPassengerId(ticket.getPassengerId());
+
+            // Direct assignment of String location IDs
+            dto.setStartLocationId(ticket.getStartLocationId());
+            dto.setEndLocationId(ticket.getEndLocationId());
+
+            dto.setSeatNumber(ticket.getSeatNumber());
+            dto.setFareAmount(ticket.getFareAmount().doubleValue());
+            dto.setIssuedAt(ticket.getIssuedAt());
+
+            // Get payment status from transaction
+            if (ticket.getTransactions() != null) {
+                dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
+            } else {
+                dto.setPaymentStatus("UNKNOWN");
+            }
+
+            // Set passenger count to 1 (assuming 1 passenger per ticket)
+            dto.setPassengerCount(1);
+
+            return dto;
+
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BadRequestException("Failed to fetch ticket with ID: " + ticketId + ", " + e.getMessage());
+        }
+    }
 }
