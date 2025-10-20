@@ -331,7 +331,7 @@ public class PassengerTripServiceImpl implements PassengerTripService {
         // Set default values for missing data
         builder.fare(0.0)
                .availableSeats(0)
-               .bookingAvailable(false);
+               .bookingAvailable(true);
 
         // Include bus information if available and requested
         if (includeBus != null && includeBus && trip.getBus() != null) {
@@ -634,7 +634,7 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                     .status(trip.getStatus() != null ? trip.getStatus().toString() : "unknown")
                     .delay(delay)
                     .availableSeats(0) // Default value
-                    .bookingAvailable(false) // Default value
+                    .bookingAvailable(true) // Default value
                     // Add relational identifiers
                     .scheduleId(trip.getSchedule() != null ? trip.getSchedule().getId() : null)
                     .routeId(trip.getSchedule() != null && trip.getSchedule().getRoute() != null ? 
