@@ -41,9 +41,9 @@ export default function HomeScreen() {
     }
   }, [fetchProfile, refreshSchedules]);
 
-  // Handle shift start
+  
   const handleStartShift = async () => {
-    if (shiftStarted) return; // Prevent double clicks
+    if (shiftStarted) return; 
     
     try {
       setStartingShift(true);
@@ -52,7 +52,7 @@ export default function HomeScreen() {
       const now = new Date();
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
-      // Simulate API call delay (replace with actual API call)
+    
       await new Promise(resolve => setTimeout(resolve, 1000));
          
       setShiftStarted(true);
@@ -97,11 +97,11 @@ export default function HomeScreen() {
     if (user?.id && !user.employeeId) {
       fetchProfile().catch(error => {
         console.error('Failed to fetch employee profile:', error);
-        // Optionally show user-friendly error
+        
         Alert.alert('Error', 'Failed to load profile data. Please try again.');
       });
     }
-  }, [user?.id, user?.employeeId]); // Remove fetchProfile from dependencies
+  }, [user?.id, user?.employeeId]); 
   
   const today = new Date().toLocaleDateString('en-LK', {
     weekday: 'long',
@@ -117,7 +117,7 @@ export default function HomeScreen() {
   
   const insets = useSafeAreaInsets();
   
-  // Helper functions
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Morning';
@@ -126,7 +126,7 @@ export default function HomeScreen() {
   };
   
   const getFirstName = () => {
-    // Use fullName first, then fallback to username, then name
+    
     if (user?.fullName) {
       return user.fullName.split(' ')[0];
     }
