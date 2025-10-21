@@ -391,7 +391,7 @@ public class PaymentServiceIMPL implements PaymentService {
 
             // Get payment status from transaction
             if (ticket.getTransactions() != null) {
-                dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
+                dto.setPaymentStatus(ticket.getStatus().toString());
             } else {
                 dto.setPaymentStatus("UNKNOWN");
             }
