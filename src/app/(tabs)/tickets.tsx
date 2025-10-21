@@ -39,8 +39,6 @@ export default function TicketsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [usingCachedData, setUsingCachedData] = useState(false);
-
-  // Base fare per km
   const farePerKm = 2.5;
 
   const [fromLocation, setFromLocation] = useState('');
