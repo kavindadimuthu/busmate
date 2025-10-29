@@ -60,49 +60,66 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                 operatorType, operatorId, status);
 
         try {
-            Page<Trip> tripPage;
-            
-            // Use combined filtering approach instead of priority-based
-            // This allows multiple filters to work together
+            // Step 1: Get all trips that match basic criteria (without pagination to handle in-memory filtering correctly)
+            List<Trip> allMatchingTrips = new ArrayList<>();
             
             if (fromStopId != null && toStopId != null) {
                 log.info("Searching trips from stop {} to stop {}", fromStopId, toStopId);
-                tripPage = tripRepository.findTripsByStopsWithFilters(fromStopId, toStopId, pageable);
+                Page<Trip> tripPage = tripRepository.findTripsByStopsWithFilters(fromStopId, toStopId, Pageable.unpaged());
+                allMatchingTrips = tripPage.getContent();
+                log.debug("Found {} trips for stops {} to {}", allMatchingTrips.size(), fromStopId, toStopId);
             } else if (fromStopId != null) {
                 log.info("Searching trips from stop {}", fromStopId);
-                tripPage = tripRepository.findTripsByFromStopWithFilters(fromStopId, pageable);
+                Page<Trip> tripPage = tripRepository.findTripsByFromStopWithFilters(fromStopId, Pageable.unpaged());
+                allMatchingTrips = tripPage.getContent();
+                log.debug("Found {} trips from stop {}", allMatchingTrips.size(), fromStopId);
             } else if (toStopId != null) {
                 log.info("Searching trips to stop {}", toStopId);
-                tripPage = tripRepository.findTripsByToStopWithFilters(toStopId, pageable);
+                Page<Trip> tripPage = tripRepository.findTripsByToStopWithFilters(toStopId, Pageable.unpaged());
+                allMatchingTrips = tripPage.getContent();
+                log.debug("Found {} trips to stop {}", allMatchingTrips.size(), toStopId);
             } else if (routeId != null) {
                 log.info("Searching trips by route {}", routeId);
-                tripPage = tripRepository.findByScheduleRouteId(routeId, pageable);
+                Page<Trip> tripPage = tripRepository.findByScheduleRouteId(routeId, Pageable.unpaged());
+                allMatchingTrips = tripPage.getContent();
+                log.debug("Found {} trips for route {}", allMatchingTrips.size(), routeId);
             } else {
                 // Use simple method based on available filters
                 if (date != null && status != null) {
                     log.info("Searching trips with date={} and status={}", date, status);
-                    tripPage = tripRepository.findByTripDateAndStatus(date, status, pageable);
+                    Page<Trip> tripPage = tripRepository.findByTripDateAndStatus(date, status, Pageable.unpaged());
+                    allMatchingTrips = tripPage.getContent();
+                    log.debug("Found {} trips for date {} and status {}", allMatchingTrips.size(), date, status);
                 } else if (date != null) {
                     log.info("Searching trips with date={}", date);
-                    tripPage = tripRepository.findByTripDate(date, pageable);
+                    Page<Trip> tripPage = tripRepository.findByTripDate(date, Pageable.unpaged());
+                    allMatchingTrips = tripPage.getContent();
+                    log.debug("Found {} trips for date {}", allMatchingTrips.size(), date);
                 } else if (status != null) {
                     log.info("Searching trips with status={}", status);
-                    tripPage = tripRepository.findByStatus(status, pageable);
+                    Page<Trip> tripPage = tripRepository.findByStatus(status, Pageable.unpaged());
+                    allMatchingTrips = tripPage.getContent();
+                    log.debug("Found {} trips for status {}", allMatchingTrips.size(), status);
                 } else {
-                    log.info("Searching all trips");
-                    tripPage = tripRepository.findAll(pageable);
+                    log.info("Searching all trips with pagination");
+                    // For general search, use pagination to avoid loading too much data
+                    Page<Trip> tripPage = tripRepository.findAll(pageable);
+                    allMatchingTrips = tripPage.getContent();
+                    log.debug("Found {} trips (paginated)", allMatchingTrips.size());
                 }
             }
 
-            // Apply all filtering in memory for consistency and to avoid transaction issues
-            List<Trip> filteredTrips = tripPage.getContent().stream()
+            // Step 2: Apply in-memory filtering for complex criteria
+            List<Trip> filteredTrips = allMatchingTrips.stream()
                     .filter(trip -> {
                         // Date filter
                         if (date != null && !date.equals(trip.getTripDate())) {
+                            log.debug("Filtering out trip {} - date mismatch: {} vs {}", trip.getId(), trip.getTripDate(), date);
                             return false;
                         }
                         // Status filter
                         if (status != null && !status.equals(trip.getStatus())) {
+                            log.debug("Filtering out trip {} - status mismatch: {} vs {}", trip.getId(), trip.getStatus(), status);
                             return false;
                         }
                         // Time filtering for departure time
@@ -110,49 +127,58 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                             LocalTime departureTime = trip.getScheduledDepartureTime();
                             if (departureTime != null) {
                                 if (timeAfter != null && departureTime.isBefore(timeAfter)) {
+                                    log.debug("Filtering out trip {} - departure time {} before {}", trip.getId(), departureTime, timeAfter);
                                     return false;
                                 }
                                 if (timeBefore != null && departureTime.isAfter(timeBefore)) {
+                                    log.debug("Filtering out trip {} - departure time {} after {}", trip.getId(), departureTime, timeBefore);
                                     return false;
                                 }
                             } else if (timeAfter != null || timeBefore != null) {
                                 // If time filters are specified but trip has no departure time, exclude it
+                                log.debug("Filtering out trip {} - no departure time available", trip.getId());
                                 return false;
                             }
                         }
                         // Operator filter
                         if (!matchesOperatorFilter(trip, operatorType, operatorId)) {
+                            log.debug("Filtering out trip {} - operator filter mismatch", trip.getId());
                             return false;
                         }
+                        log.debug("Trip {} passed all filters", trip.getId());
                         return true;
                     })
                     .collect(Collectors.toList());
+            
+            log.info("After filtering: {} trips remaining from {} initial trips", filteredTrips.size(), allMatchingTrips.size());
 
-            List<PassengerTripResponse> tripResponses = filteredTrips.stream()
+            // Step 3: Apply manual pagination to the filtered results
+            int totalElements = filteredTrips.size();
+            int pageNumber = pageable.getPageNumber();
+            int pageSize = pageable.getPageSize();
+            int startIndex = pageNumber * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalElements);
+            
+            List<Trip> paginatedTrips = startIndex < totalElements ? 
+                filteredTrips.subList(startIndex, endIndex) : new ArrayList<>();
+
+            // Step 4: Convert to response objects
+            List<PassengerTripResponse> tripResponses = paginatedTrips.stream()
                     .map(this::toPassengerTripResponse)
                     .collect(Collectors.toList());
 
-            // Calculate correct pagination information based on filtered results
-            int currentPage = tripPage.getNumber();
-            int pageSize = tripPage.getSize();
-            long totalFilteredElements = filteredTrips.size();
-            
-            // For proper pagination with filtering, we need to count all matching records across all pages
-            // Since we're filtering in memory, we need to get total count by checking all trips
-            long actualTotalElements = getTotalFilteredCount(fromStopId, toStopId, routeId, date, 
-                    timeAfter, timeBefore, operatorType, operatorId, status);
-            
-            int totalPages = (int) Math.ceil((double) actualTotalElements / pageSize);
-            boolean isFirst = currentPage == 0;
-            boolean isLast = currentPage >= totalPages - 1;
-            boolean hasNext = currentPage < totalPages - 1;
-            boolean hasPrevious = currentPage > 0;
+            // Step 5: Calculate pagination metadata
+            int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+            boolean isFirst = pageNumber == 0;
+            boolean isLast = pageNumber >= totalPages - 1 || totalPages == 0;
+            boolean hasNext = pageNumber < totalPages - 1;
+            boolean hasPrevious = pageNumber > 0;
 
             return PassengerPaginatedResponse.<PassengerTripResponse>builder()
                     .content(tripResponses)
-                    .currentPage(currentPage)
+                    .currentPage(pageNumber)
                     .size(pageSize)
-                    .totalElements(actualTotalElements)
+                    .totalElements((long) totalElements)
                     .totalPages(totalPages)
                     .first(isFirst)
                     .last(isLast)
@@ -160,7 +186,7 @@ public class PassengerTripServiceImpl implements PassengerTripService {
                     .hasPrevious(hasPrevious)
                     .build();
         } catch (Exception e) {
-            log.error("Error searching trips: {}", e.getMessage());
+            log.error("Error searching trips: {}", e.getMessage(), e);
             
             // Return empty result instead of failing
             return PassengerPaginatedResponse.<PassengerTripResponse>builder()
