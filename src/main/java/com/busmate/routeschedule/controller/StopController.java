@@ -6,6 +6,7 @@ import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.StopImportResponse;
+import com.busmate.routeschedule.dto.response.SimpleStopImportResponse;
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -315,6 +316,61 @@ public class StopController {
         return ResponseEntity.ok()
                 .header("Content-Type", "text/csv")
                 .header("Content-Disposition", "attachment; filename=\"stop_import_template.csv\"")
+                .body(csvTemplate);
+    }
+
+    // SIMPLE STOP IMPORT - For minimal CSV with just stop_id and stop_name
+    @PostMapping(value = "/import-simple", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Import stops from simple CSV file", 
+        description = "Bulk import stops from a simple CSV file with minimal data. Expected CSV format: stop_id,stop_name (header row required). " +
+                     "Only stop name is required. Default values will be used for missing location data. " +
+                     "Returns list of imported stops with their UUIDs for further use. Requires authentication.",
+        operationId = "importSimpleStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results and imported stop UUIDs)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<SimpleStopImportResponse> importSimpleStops(
+            @Parameter(description = "CSV file containing simple stop data (stop_id,stop_name format)")
+            @RequestParam("file") MultipartFile file,
+            
+            @Parameter(description = "Default country for all imported stops", example = "Sri Lanka")
+            @RequestParam(defaultValue = "Sri Lanka") String defaultCountry,
+            
+            Authentication authentication) {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        String userId = authentication.getName();
+        SimpleStopImportResponse response = stopService.importSimpleStops(file, userId, defaultCountry);
+        return ResponseEntity.ok(response);
+    }
+
+    // DOWNLOAD SIMPLE CSV TEMPLATE - For simple import template
+    @GetMapping("/import-simple-template")
+    @Operation(
+        summary = "Download simple CSV import template", 
+        description = "Download a simple CSV template file with sample data and correct format for simple stop import (stop_id,stop_name).",
+        operationId = "downloadSimpleStopImportTemplate"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Simple template downloaded successfully")
+    })
+    public ResponseEntity<String> downloadSimpleStopImportTemplate() {
+        String csvTemplate = "stop_id,stop_name\n" +
+                           "1,කොළඹ\n" +
+                           "2,මාලිගාවත්ත\n" +
+                           "3,කැළණිතිස්ස\n" +
+                           "4,කිරිබත්ගොඩ\n";
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=\"simple_stop_import_template.csv\"")
                 .body(csvTemplate);
     }
 }

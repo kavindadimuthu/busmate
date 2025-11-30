@@ -4,6 +4,7 @@ import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.StopImportResponse;
+import com.busmate.routeschedule.dto.response.SimpleStopImportResponse;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import org.springframework.data.domain.Page;
@@ -34,4 +35,7 @@ public interface StopService {
     
     // Import methods
     StopImportResponse importStops(MultipartFile file, String userId);
+    
+    // Simple import method for CSV with minimal data (stop_id,stop_name format)
+    SimpleStopImportResponse importSimpleStops(MultipartFile file, String userId, String defaultCountry);
 }

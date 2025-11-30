@@ -7,6 +7,7 @@ import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.StopImportResponse;
+import com.busmate.routeschedule.dto.response.SimpleStopImportResponse;
 import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.ScheduleStop;
 import com.busmate.routeschedule.entity.Stop;
@@ -366,6 +367,132 @@ public class StopServiceImpl implements StopService {
         response.setErrors(errors);
         response.setMessage(String.format("Import completed. %d successful, %d failed out of %d total records.", 
                                         successfulImports, failedImports, totalRecords));
+        
+        return response;
+    }
+    
+    @Override
+    public SimpleStopImportResponse importSimpleStops(MultipartFile file, String userId, String defaultCountry) {
+        log.info("Starting simple stop import for user: {}", userId);
+        
+        SimpleStopImportResponse response = new SimpleStopImportResponse();
+        List<SimpleStopImportResponse.ImportError> errors = new ArrayList<>();
+        List<SimpleStopImportResponse.ImportedStop> importedStops = new ArrayList<>();
+        
+        int totalRecords = 0;
+        int successfulImports = 0;
+        int failedImports = 0;
+        
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
+            int rowNumber = 0;
+            boolean isHeader = true;
+            
+            while ((line = reader.readLine()) != null) {
+                rowNumber++;
+                
+                if (isHeader) {
+                    isHeader = false;
+                    continue; // Skip header row
+                }
+                
+                totalRecords++;
+                String[] columns = line.split(",");
+                
+                try {
+                    // Expected CSV format: stop_id,stop_name
+                    if (columns.length < 2) {
+                        throw new IllegalArgumentException("Invalid CSV format. Expected 2 columns: stop_id,stop_name");
+                    }
+                    
+                    String stopId = columns[0].trim();
+                    String stopName = columns[1].trim();
+                    
+                    // Validate required fields
+                    if (stopName.isEmpty()) {
+                        throw new IllegalArgumentException("Stop name is required");
+                    }
+                    
+                    // Check if stop already exists by name (since we don't have city info yet)
+                    if (stopRepository.existsByNameAndLocation_City(stopName, null)) {
+                        throw new IllegalArgumentException("Stop already exists: " + stopName);
+                    }
+                    
+                    // Create and save stop with default values
+                    Stop stop = new Stop();
+                    stop.setName(stopName);
+                    stop.setDescription(null); // No description in simple format
+                    stop.setIsAccessible(true); // Default to accessible
+                    
+                    // Set default location with minimal info
+                    Stop.Location location = new Stop.Location();
+                    location.setLatitude(null); // Will be set later through geocoding
+                    location.setLongitude(null); // Will be set later through geocoding  
+                    location.setAddress(null); // Unknown for now
+                    location.setCity(null); // Will try to extract from stop name or set later
+                    location.setState(null); // Will be set later
+                    location.setZipCode(null); // Unknown
+                    location.setCountry(defaultCountry);
+                    stop.setLocation(location);
+                    
+                    stop.setCreatedAt(LocalDateTime.now());
+                    stop.setUpdatedAt(LocalDateTime.now());
+                    stop.setCreatedBy(userId);
+                    stop.setUpdatedBy(userId);
+                    
+                    Stop savedStop = stopRepository.save(stop);
+                    successfulImports++;
+                    
+                    // Add to imported stops list
+                    SimpleStopImportResponse.ImportedStop importedStop = new SimpleStopImportResponse.ImportedStop();
+                    importedStop.setId(savedStop.getId());
+                    importedStop.setName(savedStop.getName());
+                    importedStop.setOriginalStopId(stopId);
+                    importedStop.setRowNumber(rowNumber);
+                    importedStops.add(importedStop);
+                    
+                    log.debug("Successfully imported stop: {} with ID: {}", stopName, savedStop.getId());
+                    
+                } catch (Exception e) {
+                    failedImports++;
+                    SimpleStopImportResponse.ImportError error = new SimpleStopImportResponse.ImportError();
+                    error.setRowNumber(rowNumber);
+                    error.setErrorMessage(e.getMessage());
+                    error.setValue(line);
+                    
+                    if (e.getMessage().contains("already exists")) {
+                        error.setSuggestion("This stop name already exists in the database. Consider updating the existing stop or use a different name.");
+                    } else if (e.getMessage().contains("Stop name is required")) {
+                        error.setSuggestion("Ensure the stop_name column is not empty.");
+                    } else {
+                        error.setSuggestion("Check the CSV format. Expected: stop_id,stop_name");
+                    }
+                    
+                    errors.add(error);
+                    log.error("Failed to import stop at row {}: {}", rowNumber, e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to process simple import file", e);
+            failedImports = totalRecords;
+            
+            SimpleStopImportResponse.ImportError error = new SimpleStopImportResponse.ImportError();
+            error.setErrorMessage("Failed to process import file: " + e.getMessage());
+            error.setSuggestion("Ensure the file is a valid CSV with format: stop_id,stop_name");
+            errors.add(error);
+        }
+        
+        response.setTotalRecords(totalRecords);
+        response.setSuccessfulImports(successfulImports);
+        response.setFailedImports(failedImports);
+        response.setErrors(errors);
+        response.setImportedStops(importedStops);
+        response.setMessage(String.format("Simple import completed. %d successful, %d failed out of %d total records. %d stops imported with UUIDs.", 
+                                        successfulImports, failedImports, totalRecords, importedStops.size()));
+        
+        log.info("Simple stop import completed. Success: {}, Failed: {}, Total: {}", 
+                successfulImports, failedImports, totalRecords);
         
         return response;
     }
