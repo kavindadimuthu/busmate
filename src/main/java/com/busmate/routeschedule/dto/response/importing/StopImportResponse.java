@@ -1,10 +1,10 @@
-package com.busmate.routeschedule.dto.response;
+package com.busmate.routeschedule.dto.response.importing;
 
 import lombok.Data;
 import java.util.List;
 
 @Data
-public class RouteImportResponse {
+public class StopImportResponse {
     private Integer totalRecords;
     private Integer successfulImports;
     private Integer failedImports;

@@ -1,8 +1,8 @@
 package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.response.RouteResponse;
-import com.busmate.routeschedule.dto.response.RouteStatisticsResponse;
-import com.busmate.routeschedule.dto.response.RouteImportResponse;
+import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
 import com.busmate.routeschedule.entity.Route;
 import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.entity.RouteGroup;

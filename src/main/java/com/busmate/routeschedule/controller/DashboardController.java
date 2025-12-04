@@ -1,19 +1,17 @@
 package com.busmate.routeschedule.controller;
 
-import com.busmate.routeschedule.dto.response.DashboardAlertsResponse;
-import com.busmate.routeschedule.dto.response.DashboardAnalyticsResponse;
-import com.busmate.routeschedule.dto.response.DashboardKPIResponse;
-import com.busmate.routeschedule.dto.response.DashboardOverviewResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardAlertsResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardAnalyticsResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardKPIResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardOverviewResponse;
 import com.busmate.routeschedule.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;

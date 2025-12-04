@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.dto.response;
+package com.busmate.routeschedule.dto.response.statistic;
 
 import lombok.Data;
 import java.util.Map;

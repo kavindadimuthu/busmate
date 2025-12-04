@@ -2,9 +2,9 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
-import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
-import com.busmate.routeschedule.dto.response.StopImportResponse;
-import com.busmate.routeschedule.dto.response.SimpleStopImportResponse;
+import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
+import com.busmate.routeschedule.dto.response.importing.SimpleStopImportResponse;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import org.springframework.data.domain.Page;

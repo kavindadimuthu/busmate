@@ -1,17 +1,15 @@
-package com.busmate.routeschedule.dto.response;
+package com.busmate.routeschedule.dto.response.importing;
 
 import lombok.Data;
 import java.util.List;
-import java.util.UUID;
 
 @Data
-public class SimpleStopImportResponse {
+public class BusImportResponse {
     private Integer totalRecords;
     private Integer successfulImports;
     private Integer failedImports;
     private List<ImportError> errors;
     private String message;
-    private List<ImportedStop> importedStops; // New field for imported stops with UUIDs
     
     @Data
     public static class ImportError {
@@ -20,13 +18,5 @@ public class SimpleStopImportResponse {
         private String value;
         private String errorMessage;
         private String suggestion;
-    }
-    
-    @Data
-    public static class ImportedStop {
-        private UUID id;
-        private String name;
-        private String originalStopId; // From CSV
-        private Integer rowNumber;
     }
 }

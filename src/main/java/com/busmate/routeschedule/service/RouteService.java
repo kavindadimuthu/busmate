@@ -1,8 +1,8 @@
 package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.response.RouteResponse;
-import com.busmate.routeschedule.dto.response.RouteStatisticsResponse;
-import com.busmate.routeschedule.dto.response.RouteImportResponse;
+import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

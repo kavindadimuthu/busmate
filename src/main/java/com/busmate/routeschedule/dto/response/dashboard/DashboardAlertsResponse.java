@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.dto.response;
+package com.busmate.routeschedule.dto.response.dashboard;
 
 import lombok.Data;
 import java.time.LocalDateTime;
