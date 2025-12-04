@@ -296,7 +296,7 @@ public class StopController {
             return ResponseEntity.badRequest().build();
         }
         
-        String userId = authentication.getName();
+        String userId = authentication != null ? authentication.getName() : "system";
         StopImportResponse response = stopService.importStops(file, userId, defaultCountry);
         return ResponseEntity.ok(response);
     }
@@ -343,8 +343,62 @@ public class StopController {
         @ApiResponse(responseCode = "500", description = "Internal server error during export processing")
     })
     public ResponseEntity<byte[]> exportStops(
-            @Valid @RequestBody StopExportRequest request,
+            @Parameter(description = "Export all stops (ignores other filters if true)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean exportAll,
+            
+            @Parameter(description = "Specific stop IDs to export (comma-separated)")
+            @RequestParam(required = false) List<UUID> stopIds,
+            
+            @Parameter(description = "Filter by cities (comma-separated)")
+            @RequestParam(required = false) List<String> cities,
+            
+            @Parameter(description = "Filter by states (comma-separated)")
+            @RequestParam(required = false) List<String> states,
+            
+            @Parameter(description = "Filter by countries (comma-separated)")
+            @RequestParam(required = false) List<String> countries,
+            
+            @Parameter(description = "Filter by accessibility status")
+            @RequestParam(required = false) Boolean isAccessible,
+            
+            @Parameter(description = "Search text to filter stops by name, address, city, or state in all languages")
+            @RequestParam(required = false) String searchText,
+            
+            @Parameter(description = "Export format", example = "CSV")
+            @RequestParam(defaultValue = "CSV") StopExportRequest.ExportFormat format,
+            
+            @Parameter(description = "Include multi-language fields (name_sinhala, name_tamil, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeMultiLanguageFields,
+            
+            @Parameter(description = "Include detailed location information (address, coordinates, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeLocationDetails,
+            
+            @Parameter(description = "Include timestamp information (createdAt, updatedAt)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeTimestamps,
+            
+            @Parameter(description = "Include user information (createdBy, updatedBy)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeUserInfo,
+            
+            @Parameter(description = "Custom field selection (comma-separated, if specified only these fields will be exported)")
+            @RequestParam(required = false) List<String> customFields,
+            
             Authentication authentication) {
+        
+        // Build request object
+        StopExportRequest request = new StopExportRequest();
+        request.setExportAll(exportAll);
+        request.setStopIds(stopIds);
+        request.setCities(cities);
+        request.setStates(states);
+        request.setCountries(countries);
+        request.setIsAccessible(isAccessible);
+        request.setSearchText(searchText);
+        request.setFormat(format);
+        request.setIncludeMultiLanguageFields(includeMultiLanguageFields);
+        request.setIncludeLocationDetails(includeLocationDetails);
+        request.setIncludeTimestamps(includeTimestamps);
+        request.setIncludeUserInfo(includeUserInfo);
+        request.setCustomFields(customFields);
         
         String userId = authentication != null ? authentication.getName() : "system";
         StopExportResponse exportResponse = stopService.exportStops(request, userId);
