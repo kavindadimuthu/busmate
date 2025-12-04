@@ -47,8 +47,17 @@ public class StopServiceImpl implements StopService {
 
     @Override
     public StopResponse createStop(StopRequest request, String userId) {
-        if (stopRepository.existsByNameAndLocation_City(request.getName(), request.getLocation().getCity())) {
-            throw new ConflictException("Stop with name " + request.getName() + " already exists in city " + request.getLocation().getCity());
+        // Check for duplicates across all language variants
+        String cityToCheck = request.getLocation().getCity() != null ? request.getLocation().getCity() : 
+                           request.getLocation().getCitySinhala() != null ? request.getLocation().getCitySinhala() : 
+                           request.getLocation().getCityTamil();
+                           
+        if (stopRepository.existsByAnyNameVariantAndAnyCity(
+                request.getName(), 
+                request.getNameSinhala(), 
+                request.getNameTamil(), 
+                cityToCheck)) {
+            throw new ConflictException("Stop with similar name already exists in the same city");
         }
 
         Stop stop = mapperUtils.map(request, Stop.class);
@@ -89,9 +98,23 @@ public class StopServiceImpl implements StopService {
         Stop stop = stopRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + id));
 
-        if (!stop.getName().equals(request.getName()) &&
-                stopRepository.existsByNameAndLocation_City(request.getName(), request.getLocation().getCity())) {
-            throw new ConflictException("Stop with name " + request.getName() + " already exists in city " + request.getLocation().getCity());
+        // Check if any name has changed and if so, verify no duplicates across all language variants
+        boolean nameChanged = !stop.getName().equals(request.getName()) || 
+                            !java.util.Objects.equals(stop.getNameSinhala(), request.getNameSinhala()) || 
+                            !java.util.Objects.equals(stop.getNameTamil(), request.getNameTamil());
+                            
+        if (nameChanged) {
+            String cityToCheck = request.getLocation().getCity() != null ? request.getLocation().getCity() : 
+                               request.getLocation().getCitySinhala() != null ? request.getLocation().getCitySinhala() : 
+                               request.getLocation().getCityTamil();
+                               
+            if (stopRepository.existsByAnyNameVariantAndAnyCity(
+                    request.getName(), 
+                    request.getNameSinhala(), 
+                    request.getNameTamil(), 
+                    cityToCheck)) {
+                throw new ConflictException("Stop with similar name already exists in the same city");
+            }
         }
 
         mapperUtils.map(request, stop);
