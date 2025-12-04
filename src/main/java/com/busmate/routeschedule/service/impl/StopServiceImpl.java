@@ -7,7 +7,7 @@ import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
-import com.busmate.routeschedule.dto.response.importing.SimpleStopImportResponse;
+
 import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.ScheduleStop;
 import com.busmate.routeschedule.entity.Stop;
@@ -273,94 +273,49 @@ public class StopServiceImpl implements StopService {
     }
 
     @Override
-    public StopImportResponse importStops(MultipartFile file, String userId) {
+    public StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry) {
+        log.info("Starting dynamic stop import for user: {} with default country: {}", userId, defaultCountry);
+        
         StopImportResponse response = new StopImportResponse();
         List<StopImportResponse.ImportError> errors = new ArrayList<>();
+        List<StopImportResponse.ImportedStop> importedStops = new ArrayList<>();
         
         int totalRecords = 0;
         int successfulImports = 0;
         int failedImports = 0;
         
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String firstLine = reader.readLine();
+            if (firstLine == null) {
+                throw new IllegalArgumentException("Empty file");
+            }
+            
+            // Parse and analyze headers dynamically
+            String[] headers = firstLine.split(",");
+            Map<String, Integer> fieldMapping = createFieldMapping(headers);
+            
+            // Validate that at least one name field is present
+            if (!hasRequiredFields(fieldMapping)) {
+                throw new IllegalArgumentException("CSV must contain at least one name field (name, stop_name, name_sinhala, or name_tamil)");
+            }
+            
+            log.info("Detected CSV fields: {}", fieldMapping.keySet());
+            
             String line;
-            int rowNumber = 0;
-            boolean isHeader = true;
+            int rowNumber = 1; // We already read the header
             
             while ((line = reader.readLine()) != null) {
                 rowNumber++;
+                totalRecords++;
                 
-                if (isHeader) {
-                    isHeader = false;
-                    continue; // Skip header row
+                if (line.trim().isEmpty()) {
+                    continue; // Skip empty lines
                 }
                 
-                totalRecords++;
                 String[] columns = line.split(",");
                 
                 try {
-                    // Expected CSV format: name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible
-                    if (columns.length < 10) {
-                        throw new IllegalArgumentException("Invalid CSV format. Expected 10 columns.");
-                    }
-                    
-                    String name = columns[0].trim();
-                    String description = columns[1].trim();
-                    String latitudeStr = columns[2].trim();
-                    String longitudeStr = columns[3].trim();
-                    String address = columns[4].trim();
-                    String city = columns[5].trim();
-                    String state = columns[6].trim();
-                    String zipCode = columns[7].trim();
-                    String country = columns[8].trim();
-                    String isAccessibleStr = columns[9].trim();
-                    
-                    // Validate required fields
-                    if (name.isEmpty()) {
-                        throw new IllegalArgumentException("Stop name is required");
-                    }
-                    
-                    if (latitudeStr.isEmpty() || longitudeStr.isEmpty()) {
-                        throw new IllegalArgumentException("Latitude and longitude are required");
-                    }
-                    
-                    // Check if stop already exists
-                    if (stopRepository.existsByNameAndLocation_City(name, city)) {
-                        throw new IllegalArgumentException("Stop already exists in this city: " + name);
-                    }
-                    
-                    // Parse numeric values
-                    Double latitude = Double.parseDouble(latitudeStr);
-                    Double longitude = Double.parseDouble(longitudeStr);
-                    
-                    // Parse boolean value
-                    Boolean isAccessible = null;
-                    if (!isAccessibleStr.isEmpty()) {
-                        isAccessible = Boolean.parseBoolean(isAccessibleStr);
-                    }
-                    
-                    // Create and save stop
-                    Stop stop = new Stop();
-                    stop.setName(name);
-                    stop.setDescription(description.isEmpty() ? null : description);
-                    stop.setIsAccessible(isAccessible);
-                    
-                    // Set location
-                    Stop.Location location = new Stop.Location();
-                    location.setLatitude(latitude);
-                    location.setLongitude(longitude);
-                    location.setAddress(address.isEmpty() ? null : address);
-                    location.setCity(city.isEmpty() ? null : city);
-                    location.setState(state.isEmpty() ? null : state);
-                    location.setZipCode(zipCode.isEmpty() ? null : zipCode);
-                    location.setCountry(country.isEmpty() ? null : country);
-                    stop.setLocation(location);
-                    
-                    stop.setCreatedAt(LocalDateTime.now());
-                    stop.setUpdatedAt(LocalDateTime.now());
-                    stop.setCreatedBy(userId);
-                    stop.setUpdatedBy(userId);
-                    
-                    stopRepository.save(stop);
+                    processDynamicRow(columns, fieldMapping, rowNumber, userId, defaultCountry, importedStops);
                     successfulImports++;
                     
                 } catch (Exception e) {
@@ -369,140 +324,29 @@ public class StopServiceImpl implements StopService {
                     error.setRowNumber(rowNumber);
                     error.setErrorMessage(e.getMessage());
                     error.setValue(line);
-                    errors.add(error);
                     
+                    // Add helpful suggestions based on the error
+                    if (e.getMessage().contains("already exists")) {
+                        error.setSuggestion("This stop name already exists. Consider updating the existing stop or use a different name.");
+                    } else if (e.getMessage().contains("name is required")) {
+                        error.setSuggestion("Ensure at least one name column is not empty.");
+                    } else if (e.getMessage().contains("latitude") || e.getMessage().contains("longitude")) {
+                        error.setSuggestion("Check that latitude and longitude are valid decimal numbers.");
+                    } else {
+                        error.setSuggestion("Check the CSV format and data validity.");
+                    }
+                    
+                    errors.add(error);
                     log.error("Failed to import stop at row {}: {}", rowNumber, e.getMessage());
                 }
             }
             
         } catch (Exception e) {
             log.error("Failed to process import file", e);
-            failedImports = totalRecords;
             
             StopImportResponse.ImportError error = new StopImportResponse.ImportError();
             error.setErrorMessage("Failed to process import file: " + e.getMessage());
-            errors.add(error);
-        }
-        
-        response.setTotalRecords(totalRecords);
-        response.setSuccessfulImports(successfulImports);
-        response.setFailedImports(failedImports);
-        response.setErrors(errors);
-        response.setMessage(String.format("Import completed. %d successful, %d failed out of %d total records.", 
-                                        successfulImports, failedImports, totalRecords));
-        
-        return response;
-    }
-    
-    @Override
-    public SimpleStopImportResponse importSimpleStops(MultipartFile file, String userId, String defaultCountry) {
-        log.info("Starting simple stop import for user: {}", userId);
-        
-        SimpleStopImportResponse response = new SimpleStopImportResponse();
-        List<SimpleStopImportResponse.ImportError> errors = new ArrayList<>();
-        List<SimpleStopImportResponse.ImportedStop> importedStops = new ArrayList<>();
-        
-        int totalRecords = 0;
-        int successfulImports = 0;
-        int failedImports = 0;
-        
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            String line;
-            int rowNumber = 0;
-            boolean isHeader = true;
-            
-            while ((line = reader.readLine()) != null) {
-                rowNumber++;
-                
-                if (isHeader) {
-                    isHeader = false;
-                    continue; // Skip header row
-                }
-                
-                totalRecords++;
-                String[] columns = line.split(",");
-                
-                try {
-                    // Expected CSV format: stop_id,stop_name
-                    if (columns.length < 2) {
-                        throw new IllegalArgumentException("Invalid CSV format. Expected 2 columns: stop_id,stop_name");
-                    }
-                    
-                    String stopId = columns[0].trim();
-                    String stopName = columns[1].trim();
-                    
-                    // Validate required fields
-                    if (stopName.isEmpty()) {
-                        throw new IllegalArgumentException("Stop name is required");
-                    }
-                    
-                    // Check if stop already exists by name (since we don't have city info yet)
-                    if (stopRepository.existsByNameAndLocation_City(stopName, null)) {
-                        throw new IllegalArgumentException("Stop already exists: " + stopName);
-                    }
-                    
-                    // Create and save stop with default values
-                    Stop stop = new Stop();
-                    stop.setName(stopName);
-                    stop.setDescription(null); // No description in simple format
-                    stop.setIsAccessible(true); // Default to accessible
-                    
-                    // Set default location with minimal info
-                    Stop.Location location = new Stop.Location();
-                    location.setLatitude(null); // Will be set later through geocoding
-                    location.setLongitude(null); // Will be set later through geocoding  
-                    location.setAddress(null); // Unknown for now
-                    location.setCity(null); // Will try to extract from stop name or set later
-                    location.setState(null); // Will be set later
-                    location.setZipCode(null); // Unknown
-                    location.setCountry(defaultCountry);
-                    stop.setLocation(location);
-                    
-                    stop.setCreatedAt(LocalDateTime.now());
-                    stop.setUpdatedAt(LocalDateTime.now());
-                    stop.setCreatedBy(userId);
-                    stop.setUpdatedBy(userId);
-                    
-                    Stop savedStop = stopRepository.save(stop);
-                    successfulImports++;
-                    
-                    // Add to imported stops list
-                    SimpleStopImportResponse.ImportedStop importedStop = new SimpleStopImportResponse.ImportedStop();
-                    importedStop.setId(savedStop.getId());
-                    importedStop.setName(savedStop.getName());
-                    importedStop.setOriginalStopId(stopId);
-                    importedStop.setRowNumber(rowNumber);
-                    importedStops.add(importedStop);
-                    
-                    log.debug("Successfully imported stop: {} with ID: {}", stopName, savedStop.getId());
-                    
-                } catch (Exception e) {
-                    failedImports++;
-                    SimpleStopImportResponse.ImportError error = new SimpleStopImportResponse.ImportError();
-                    error.setRowNumber(rowNumber);
-                    error.setErrorMessage(e.getMessage());
-                    error.setValue(line);
-                    
-                    if (e.getMessage().contains("already exists")) {
-                        error.setSuggestion("This stop name already exists in the database. Consider updating the existing stop or use a different name.");
-                    } else if (e.getMessage().contains("Stop name is required")) {
-                        error.setSuggestion("Ensure the stop_name column is not empty.");
-                    } else {
-                        error.setSuggestion("Check the CSV format. Expected: stop_id,stop_name");
-                    }
-                    
-                    errors.add(error);
-                    log.error("Failed to import stop at row {}: {}", rowNumber, e.getMessage());
-                }
-            }
-            
-        } catch (Exception e) {
-            log.error("Failed to process simple import file", e);
-            failedImports = totalRecords;
-            
-            SimpleStopImportResponse.ImportError error = new SimpleStopImportResponse.ImportError();
-            error.setErrorMessage("Failed to process import file: " + e.getMessage());
-            error.setSuggestion("Ensure the file is a valid CSV with format: stop_id,stop_name");
+            error.setSuggestion("Ensure the file is a valid CSV with at least a name column. Supported fields: name, name_sinhala, name_tamil, description, latitude, longitude, address, city, state, zipCode, country, isAccessible");
             errors.add(error);
         }
         
@@ -511,12 +355,220 @@ public class StopServiceImpl implements StopService {
         response.setFailedImports(failedImports);
         response.setErrors(errors);
         response.setImportedStops(importedStops);
-        response.setMessage(String.format("Simple import completed. %d successful, %d failed out of %d total records. %d stops imported with UUIDs.", 
+        response.setMessage(String.format("Import completed. %d successful, %d failed out of %d total records. %d stops imported with UUIDs.", 
                                         successfulImports, failedImports, totalRecords, importedStops.size()));
         
-        log.info("Simple stop import completed. Success: {}, Failed: {}, Total: {}", 
+        log.info("Stop import completed. Success: {}, Failed: {}, Total: {}", 
                 successfulImports, failedImports, totalRecords);
         
         return response;
+    }
+    
+    /**
+     * Creates a dynamic field mapping based on CSV headers
+     * Maps header names to their column indices
+     */
+    private Map<String, Integer> createFieldMapping(String[] headers) {
+        Map<String, Integer> fieldMapping = new LinkedHashMap<>();
+        
+        for (int i = 0; i < headers.length; i++) {
+            String header = headers[i].trim().toLowerCase();
+            
+            // Map various possible header names to standardized field names
+            if (header.equals("name") || header.equals("stop_name") || header.equals("stopname")) {
+                fieldMapping.put("name", i);
+            } else if (header.equals("name_sinhala") || header.equals("namesinhala") || header.equals("sinhala_name")) {
+                fieldMapping.put("name_sinhala", i);
+            } else if (header.equals("name_tamil") || header.equals("nametamil") || header.equals("tamil_name")) {
+                fieldMapping.put("name_tamil", i);
+            } else if (header.equals("description") || header.equals("desc")) {
+                fieldMapping.put("description", i);
+            } else if (header.equals("latitude") || header.equals("lat")) {
+                fieldMapping.put("latitude", i);
+            } else if (header.equals("longitude") || header.equals("lng") || header.equals("lon")) {
+                fieldMapping.put("longitude", i);
+            } else if (header.equals("address") || header.equals("addr")) {
+                fieldMapping.put("address", i);
+            } else if (header.equals("address_sinhala") || header.equals("addresssinhala") || header.equals("sinhala_address")) {
+                fieldMapping.put("address_sinhala", i);
+            } else if (header.equals("address_tamil") || header.equals("addresstamil") || header.equals("tamil_address")) {
+                fieldMapping.put("address_tamil", i);
+            } else if (header.equals("city")) {
+                fieldMapping.put("city", i);
+            } else if (header.equals("city_sinhala") || header.equals("citysinhala") || header.equals("sinhala_city")) {
+                fieldMapping.put("city_sinhala", i);
+            } else if (header.equals("city_tamil") || header.equals("citytamil") || header.equals("tamil_city")) {
+                fieldMapping.put("city_tamil", i);
+            } else if (header.equals("state") || header.equals("province")) {
+                fieldMapping.put("state", i);
+            } else if (header.equals("state_sinhala") || header.equals("statesinhala") || header.equals("sinhala_state")) {
+                fieldMapping.put("state_sinhala", i);
+            } else if (header.equals("state_tamil") || header.equals("statetamil") || header.equals("tamil_state")) {
+                fieldMapping.put("state_tamil", i);
+            } else if (header.equals("zipcode") || header.equals("zip_code") || header.equals("postal_code") || header.equals("postalcode")) {
+                fieldMapping.put("zipCode", i);
+            } else if (header.equals("country")) {
+                fieldMapping.put("country", i);
+            } else if (header.equals("country_sinhala") || header.equals("countrysinhala") || header.equals("sinhala_country")) {
+                fieldMapping.put("country_sinhala", i);
+            } else if (header.equals("country_tamil") || header.equals("countrytamil") || header.equals("tamil_country")) {
+                fieldMapping.put("country_tamil", i);
+            } else if (header.equals("isaccessible") || header.equals("is_accessible") || header.equals("accessible")) {
+                fieldMapping.put("isAccessible", i);
+            } else if (header.equals("stop_id") || header.equals("stopid") || header.equals("id")) {
+                fieldMapping.put("original_stop_id", i);
+            }
+        }
+        
+        return fieldMapping;
+    }
+    
+    /**
+     * Validates that required fields are present
+     */
+    private boolean hasRequiredFields(Map<String, Integer> fieldMapping) {
+        // At least one name field must be present
+        return fieldMapping.containsKey("name") || 
+               fieldMapping.containsKey("name_sinhala") || 
+               fieldMapping.containsKey("name_tamil");
+    }
+    
+    /**
+     * Processes a row dynamically based on available fields
+     */
+    private void processDynamicRow(String[] columns, Map<String, Integer> fieldMapping, int rowNumber, 
+                                 String userId, String defaultCountry, 
+                                 List<StopImportResponse.ImportedStop> importedStops) {
+        
+        // Extract available data based on field mapping
+        String name = getFieldValue(columns, fieldMapping, "name");
+        String nameSinhala = getFieldValue(columns, fieldMapping, "name_sinhala");
+        String nameTamil = getFieldValue(columns, fieldMapping, "name_tamil");
+        String description = getFieldValue(columns, fieldMapping, "description");
+        String originalStopId = getFieldValue(columns, fieldMapping, "original_stop_id");
+        
+        // Determine primary name (prefer English, fallback to other languages)
+        String primaryName = null;
+        if (name != null && !name.isEmpty()) {
+            primaryName = name;
+        } else if (nameSinhala != null && !nameSinhala.isEmpty()) {
+            primaryName = nameSinhala;
+        } else if (nameTamil != null && !nameTamil.isEmpty()) {
+            primaryName = nameTamil;
+        }
+        
+        // Validate that we have at least one name
+        if (primaryName == null || primaryName.trim().isEmpty()) {
+            throw new IllegalArgumentException("At least one name field is required");
+        }
+        
+        // Extract location data
+        String latitudeStr = getFieldValue(columns, fieldMapping, "latitude");
+        String longitudeStr = getFieldValue(columns, fieldMapping, "longitude");
+        String address = getFieldValue(columns, fieldMapping, "address");
+        String addressSinhala = getFieldValue(columns, fieldMapping, "address_sinhala");
+        String addressTamil = getFieldValue(columns, fieldMapping, "address_tamil");
+        String city = getFieldValue(columns, fieldMapping, "city");
+        String citySinhala = getFieldValue(columns, fieldMapping, "city_sinhala");
+        String cityTamil = getFieldValue(columns, fieldMapping, "city_tamil");
+        String state = getFieldValue(columns, fieldMapping, "state");
+        String stateSinhala = getFieldValue(columns, fieldMapping, "state_sinhala");
+        String stateTamil = getFieldValue(columns, fieldMapping, "state_tamil");
+        String zipCode = getFieldValue(columns, fieldMapping, "zipCode");
+        String country = getFieldValue(columns, fieldMapping, "country");
+        String countrySinhala = getFieldValue(columns, fieldMapping, "country_sinhala");
+        String countryTamil = getFieldValue(columns, fieldMapping, "country_tamil");
+        String isAccessibleStr = getFieldValue(columns, fieldMapping, "isAccessible");
+        
+        // Check for duplicates using any available city field
+        String cityToCheck = city != null && !city.isEmpty() ? city : 
+                           citySinhala != null && !citySinhala.isEmpty() ? citySinhala :
+                           cityTamil != null && !cityTamil.isEmpty() ? cityTamil : null;
+                           
+        if (stopRepository.existsByAnyNameVariantAndAnyCity(name, nameSinhala, nameTamil, cityToCheck)) {
+            throw new IllegalArgumentException("Stop already exists: " + primaryName + 
+                (cityToCheck != null ? " in " + cityToCheck : ""));
+        }
+        
+        // Parse coordinates if available
+        Double latitude = null;
+        Double longitude = null;
+        if (latitudeStr != null && !latitudeStr.isEmpty() && longitudeStr != null && !longitudeStr.isEmpty()) {
+            try {
+                latitude = Double.parseDouble(latitudeStr);
+                longitude = Double.parseDouble(longitudeStr);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid latitude or longitude format: " + latitudeStr + ", " + longitudeStr);
+            }
+        }
+        
+        // Parse accessibility
+        Boolean isAccessible = null;
+        if (isAccessibleStr != null && !isAccessibleStr.isEmpty()) {
+            isAccessible = Boolean.parseBoolean(isAccessibleStr);
+        } else {
+            isAccessible = true; // Default to accessible
+        }
+        
+        // Use default country if not provided
+        if (country == null || country.isEmpty()) {
+            country = defaultCountry;
+        }
+        
+        // Create and save stop
+        Stop stop = new Stop();
+        stop.setName(name);
+        stop.setNameSinhala(nameSinhala);
+        stop.setNameTamil(nameTamil);
+        stop.setDescription(description);
+        stop.setIsAccessible(isAccessible);
+        
+        // Set location with available data
+        Stop.Location location = new Stop.Location();
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        location.setAddress(address);
+        location.setAddressSinhala(addressSinhala);
+        location.setAddressTamil(addressTamil);
+        location.setCity(city);
+        location.setCitySinhala(citySinhala);
+        location.setCityTamil(cityTamil);
+        location.setState(state);
+        location.setStateSinhala(stateSinhala);
+        location.setStateTamil(stateTamil);
+        location.setZipCode(zipCode);
+        location.setCountry(country);
+        location.setCountrySinhala(countrySinhala);
+        location.setCountryTamil(countryTamil);
+        stop.setLocation(location);
+        
+        stop.setCreatedAt(LocalDateTime.now());
+        stop.setUpdatedAt(LocalDateTime.now());
+        stop.setCreatedBy(userId);
+        stop.setUpdatedBy(userId);
+        
+        Stop savedStop = stopRepository.save(stop);
+        
+        // Add to imported stops list
+        StopImportResponse.ImportedStop importedStop = new StopImportResponse.ImportedStop();
+        importedStop.setId(savedStop.getId());
+        importedStop.setName(primaryName);
+        importedStop.setOriginalStopId(originalStopId);
+        importedStop.setRowNumber(rowNumber);
+        importedStops.add(importedStop);
+        
+        log.debug("Successfully imported dynamic stop: {} with ID: {}", primaryName, savedStop.getId());
+    }
+    
+    /**
+     * Safely extracts field value from columns array
+     */
+    private String getFieldValue(String[] columns, Map<String, Integer> fieldMapping, String fieldName) {
+        Integer index = fieldMapping.get(fieldName);
+        if (index == null || index >= columns.length) {
+            return null;
+        }
+        String value = columns[index].trim();
+        return value.isEmpty() ? null : value;
     }
 }

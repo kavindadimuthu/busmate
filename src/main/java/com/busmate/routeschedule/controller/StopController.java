@@ -6,7 +6,7 @@ import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
-import com.busmate.routeschedule.dto.response.importing.SimpleStopImportResponse;
+
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -274,70 +274,25 @@ public class StopController {
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Import stops from CSV file", 
-        description = "Bulk import stops from a CSV file. Expected CSV format: name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible (header row required). " +
-                     "Latitude and longitude are required. isAccessible should be true or false. Requires authentication.",
+        description = "Dynamically import stops from CSV files with flexible field combinations. " +
+                     "The system automatically detects available fields and processes any combination: " +
+                     "Required: At least one name field (name, name_sinhala, or name_tamil). " +
+                     "Optional: description, coordinates (lat/lng), address fields (all languages), " +
+                     "city/state/country (all languages), zipCode, isAccessible. " +
+                     "Mixed data supported - different rows can have different field combinations. " +
+                     "Requires authentication.",
         operationId = "importStops"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results including imported stop IDs)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<StopImportResponse> importStops(
-            @Parameter(description = "CSV file containing stop data")
-            @RequestParam("file") MultipartFile file,
-            Authentication authentication) {
-        
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        
-        String userId = authentication.getName();
-        StopImportResponse response = stopService.importStops(file, userId);
-        return ResponseEntity.ok(response);
-    }
-
-    // DOWNLOAD CSV TEMPLATE - For import template
-    @GetMapping("/import-template")
-    @Operation(
-        summary = "Download CSV import template", 
-        description = "Download a CSV template file with sample data and correct format for stop import.",
-        operationId = "downloadStopImportTemplate"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
-    })
-    public ResponseEntity<String> downloadStopImportTemplate() {
-        String csvTemplate = "name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
-                           "Colombo Central Bus Station,Main bus terminal in Colombo,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n" +
-                           "Kandy Bus Terminal,Main bus terminal in Kandy,7.2906,80.6337,Temple Street,Kandy,Central Province,20000,Sri Lanka,true\n" +
-                           "Galle Bus Station,Main bus station in Galle,6.0535,80.2210,Main Street,Galle,Southern Province,80000,Sri Lanka,false\n";
-        
-        return ResponseEntity.ok()
-                .header("Content-Type", "text/csv")
-                .header("Content-Disposition", "attachment; filename=\"stop_import_template.csv\"")
-                .body(csvTemplate);
-    }
-
-    // SIMPLE STOP IMPORT - For minimal CSV with just stop_id and stop_name
-    @PostMapping(value = "/import-simple", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(
-        summary = "Import stops from simple CSV file", 
-        description = "Bulk import stops from a simple CSV file with minimal data. Expected CSV format: stop_id,stop_name (header row required). " +
-                     "Only stop name is required. Default values will be used for missing location data. " +
-                     "Returns list of imported stops with their UUIDs for further use. Requires authentication.",
-        operationId = "importSimpleStops"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results and imported stop UUIDs)"),
-        @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    public ResponseEntity<SimpleStopImportResponse> importSimpleStops(
-            @Parameter(description = "CSV file containing simple stop data (stop_id,stop_name format)")
+            @Parameter(description = "CSV file containing stop data (supports multiple formats)")
             @RequestParam("file") MultipartFile file,
             
-            @Parameter(description = "Default country for all imported stops", example = "Sri Lanka")
+            @Parameter(description = "Default country for stops when not specified in CSV", example = "Sri Lanka")
             @RequestParam(defaultValue = "Sri Lanka") String defaultCountry,
             
             Authentication authentication) {
@@ -347,30 +302,77 @@ public class StopController {
         }
         
         String userId = authentication.getName();
-        SimpleStopImportResponse response = stopService.importSimpleStops(file, userId, defaultCountry);
+        StopImportResponse response = stopService.importStops(file, userId, defaultCountry);
         return ResponseEntity.ok(response);
     }
 
-    // DOWNLOAD SIMPLE CSV TEMPLATE - For simple import template
-    @GetMapping("/import-simple-template")
+    // DOWNLOAD CSV TEMPLATE - For import template
+    @GetMapping("/import-template")
     @Operation(
-        summary = "Download simple CSV import template", 
-        description = "Download a simple CSV template file with sample data and correct format for simple stop import (stop_id,stop_name).",
-        operationId = "downloadSimpleStopImportTemplate"
+        summary = "Download CSV import template", 
+        description = "Download flexible CSV template examples showing various field combinations supported. " +
+                     "The system dynamically processes any combination of available fields.",
+        operationId = "downloadStopImportTemplate"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Simple template downloaded successfully")
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
     })
-    public ResponseEntity<String> downloadSimpleStopImportTemplate() {
-        String csvTemplate = "stop_id,stop_name\n" +
-                           "1,කොළඹ\n" +
-                           "2,මාලිගාවත්ත\n" +
-                           "3,කැළණිතිස්ස\n" +
-                           "4,කිරිබත්ගොඩ\n";
+    public ResponseEntity<String> downloadStopImportTemplate(
+            @Parameter(description = "Template type: 'minimal' (name only), 'multilingual' (name variants), 'location' (with coordinates), 'full' (all fields)", example = "full")
+            @RequestParam(defaultValue = "full") String format) {
+        
+        String csvTemplate;
+        String filename;
+        
+        switch (format.toLowerCase()) {
+            case "minimal":
+                csvTemplate = "# Minimal Format - English names only\n" +
+                             "name\n" +
+                             "Colombo Central\n" +
+                             "Kandy Terminal\n" +
+                             "Galle Station\n";
+                filename = "minimal_stop_template.csv";
+                break;
+                
+            case "multilingual":
+                csvTemplate = "# Multilingual Format - Names in multiple languages\n" +
+                             "name,name_sinhala,name_tamil\n" +
+                             "Colombo Central,කොළඹ මධ්‍යම,கொழும்பு மத்திய\n" +
+                             "Kandy Terminal,මහනුවර පර්යන්තය,கண்டி முனையம்\n" +
+                             "Galle Station,ගාල්ල ස්ථානය,காலி நிலையம்\n";
+                filename = "multilingual_stop_template.csv";
+                break;
+                
+            case "location":
+                csvTemplate = "# Location Format - Names with coordinates\n" +
+                             "name,latitude,longitude,city,state,country\n" +
+                             "Colombo Central,6.9344,79.8428,Colombo,Western Province,Sri Lanka\n" +
+                             "Kandy Terminal,7.2906,80.6337,Kandy,Central Province,Sri Lanka\n" +
+                             "Galle Station,6.0535,80.2210,Galle,Southern Province,Sri Lanka\n";
+                filename = "location_stop_template.csv";
+                break;
+                
+            default: // full
+                csvTemplate = "# Full Format - All available fields\n" +
+                             "name,name_sinhala,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
+                             "Colombo Central,කොළඹ මධ්‍යම,Main intercity terminal,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n" +
+                             "Kandy Terminal,මහනුවර පර්යන්තය,Hill capital hub,7.2906,80.6337,Temple Street,Kandy,Central Province,20000,Sri Lanka,true\n" +
+                             "Galle Station,ගාල්ල ස්ථානය,Southern coastal terminal,6.0535,80.2210,Main Street,Galle,Southern Province,80000,Sri Lanka,false\n\n" +
+                             "# Supported Fields (all optional except name):\n" +
+                             "# Names: name, name_sinhala, name_tamil\n" +
+                             "# Location: latitude, longitude, address, address_sinhala, address_tamil\n" +
+                             "# Administrative: city, city_sinhala, city_tamil, state, state_sinhala, state_tamil\n" +
+                             "# Other: zipCode, country, country_sinhala, country_tamil, description, isAccessible\n" +
+                             "# Legacy: stop_id (preserved as original_stop_id)\n";
+                filename = "full_stop_template.csv";
+                break;
+        }
         
         return ResponseEntity.ok()
                 .header("Content-Type", "text/csv")
-                .header("Content-Disposition", "attachment; filename=\"simple_stop_import_template.csv\"")
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
                 .body(csvTemplate);
     }
+
+
 }
