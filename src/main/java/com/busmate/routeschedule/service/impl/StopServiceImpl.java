@@ -10,6 +10,9 @@ import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
 import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
+import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
+
+import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
 
 import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.ScheduleStop;
@@ -908,5 +911,522 @@ public class StopServiceImpl implements StopService {
         metadata.setOptionsUsed(exportOptions);
         
         return metadata;
+    }
+
+    @Override
+    public StopBulkUpdateResponse bulkUpdateStops(MultipartFile csvFile, StopBulkUpdateRequest request, String userId) {
+        log.info("Starting bulk update of stops from CSV file: {} by user: {}", csvFile.getOriginalFilename(), userId);
+        
+        long startTime = System.currentTimeMillis();
+        StopBulkUpdateResponse response = new StopBulkUpdateResponse();
+        
+        response.setUpdateResults(new ArrayList<>());
+        response.setSkippedRecords(new ArrayList<>());
+        response.setErrorRecords(new ArrayList<>());
+        
+        int totalRowsProcessed = 0;
+        int successfulUpdates = 0;
+        int successfulCreations = 0;
+        int skippedRows = 0;
+        int errorRows = 0;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvFile.getInputStream(), StandardCharsets.UTF_8))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                throw new RuntimeException("CSV file is empty");
+            }
+            
+            String[] headers = headerLine.split(",");
+            Map<String, Integer> fieldMapping = createFieldMapping(headers);
+            
+            // Check if we have ID field for ID-based matching
+            boolean hasIdField = fieldMapping.containsKey("original_stop_id") || fieldMapping.containsKey("id");
+            
+            String line;
+            int rowNumber = 1; // Starting from 1 (header is 0)
+            
+            while ((line = reader.readLine()) != null) {
+                rowNumber++;
+                totalRowsProcessed++;
+                
+                try {
+                    String[] columns = parseCsvLine(line);
+                    if (columns.length == 0) continue; // Skip empty rows
+                    
+                    BulkUpdateResult result = processBulkUpdateRow(columns, fieldMapping, rowNumber, userId, request, hasIdField);
+                    
+                    switch (result.getStatus()) {
+                        case SUCCESS_UPDATED:
+                            successfulUpdates++;
+                            addUpdateResult(response, result, "UPDATED");
+                            break;
+                        case SUCCESS_CREATED:
+                            successfulCreations++;
+                            addUpdateResult(response, result, "CREATED");
+                            break;
+                        case SKIPPED:
+                            skippedRows++;
+                            addSkippedRecord(response, result);
+                            break;
+                        case ERROR:
+                            errorRows++;
+                            addErrorRecord(response, result, columns);
+                            break;
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("Error processing row {}: {}", rowNumber, e.getMessage(), e);
+                    errorRows++;
+                    addErrorRecord(response, rowNumber, "PROCESSING_ERROR", e.getMessage(), line);
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("Error processing CSV file: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to process CSV file: " + e.getMessage());
+        }
+        
+        // Build summary
+        StopBulkUpdateResponse.UpdateSummary summary = new StopBulkUpdateResponse.UpdateSummary();
+        summary.setTotalRowsProcessed(totalRowsProcessed);
+        summary.setSuccessfulUpdates(successfulUpdates);
+        summary.setSuccessfulCreations(successfulCreations);
+        summary.setSkippedRows(skippedRows);
+        summary.setErrorRows(errorRows);
+        summary.setSuccessRate(totalRowsProcessed > 0 ? 
+            ((double)(successfulUpdates + successfulCreations) / totalRowsProcessed) * 100.0 : 0.0);
+        response.setSummary(summary);
+        
+        // Build metadata
+        StopBulkUpdateResponse.UpdateMetadata metadata = new StopBulkUpdateResponse.UpdateMetadata();
+        metadata.setProcessedAt(LocalDateTime.now());
+        metadata.setProcessedBy(userId);
+        metadata.setFileName(csvFile.getOriginalFilename());
+        metadata.setFileSize(csvFile.getSize());
+        metadata.setUpdateStrategy(request.getUpdateStrategy().name());
+        metadata.setMatchingStrategy(request.getMatchingStrategy().name());
+        metadata.setPartialUpdate(request.getPartialUpdate());
+        metadata.setCreateMissing(request.getCreateMissing());
+        metadata.setProcessingTimeMs(System.currentTimeMillis() - startTime);
+        response.setMetadata(metadata);
+        
+        log.info("Completed bulk update: {} total, {} updated, {} created, {} skipped, {} errors", 
+                totalRowsProcessed, successfulUpdates, successfulCreations, skippedRows, errorRows);
+        
+        return response;
+    }
+    
+    private BulkUpdateResult processBulkUpdateRow(String[] columns, Map<String, Integer> fieldMapping, 
+                                                int rowNumber, String userId, StopBulkUpdateRequest request, boolean hasIdField) {
+        
+        BulkUpdateResult result = new BulkUpdateResult();
+        result.setRowNumber(rowNumber);
+        
+        try {
+            // Extract identifier for matching
+            String stopId = getFieldValue(columns, fieldMapping, "original_stop_id");
+            if (stopId == null) {
+                stopId = getFieldValue(columns, fieldMapping, "id");
+            }
+            String stopName = getFieldValue(columns, fieldMapping, "name");
+            String cityName = getFieldValue(columns, fieldMapping, "city");
+            
+            result.setStopIdentifier(stopId != null ? stopId : (stopName + " (" + cityName + ")"));
+            
+            // Find existing stop based on strategy
+            Stop existingStop = findExistingStop(stopId, stopName, cityName, request.getMatchingStrategy(), hasIdField);
+            
+            if (existingStop == null) {
+                if (request.getCreateMissing()) {
+                    // Create new stop
+                    Stop newStop = createStopFromCsvRow(columns, fieldMapping, userId, request);
+                    result.setStatus(BulkUpdateStatus.SUCCESS_CREATED);
+                    result.setStop(newStop);
+                    result.setMatchedBy("NEW");
+                } else {
+                    result.setStatus(BulkUpdateStatus.SKIPPED);
+                    result.setReason("Stop not found and create missing is disabled");
+                }
+                return result;
+            }
+            
+            // Check update strategy
+            if (request.getUpdateStrategy() == StopBulkUpdateRequest.UpdateStrategy.SKIP_CONFLICTS) {
+                // Additional conflict checks can be added here
+                // For now, we'll proceed with update
+            }
+            
+            // Update existing stop
+            List<String> updatedFields = updateStopFromCsvRow(existingStop, columns, fieldMapping, userId, request);
+            
+            if (!updatedFields.isEmpty()) {
+                stopRepository.save(existingStop);
+                result.setStatus(BulkUpdateStatus.SUCCESS_UPDATED);
+                result.setStop(existingStop);
+                result.setUpdatedFields(updatedFields);
+                result.setMatchedBy(stopId != null ? "ID" : "NAME_AND_CITY");
+            } else {
+                result.setStatus(BulkUpdateStatus.SKIPPED);
+                result.setReason("No changes detected");
+            }
+            
+        } catch (Exception e) {
+            result.setStatus(BulkUpdateStatus.ERROR);
+            result.setErrorMessage(e.getMessage());
+        }
+        
+        return result;
+    }
+    
+    private Stop findExistingStop(String stopId, String stopName, String cityName, 
+                                StopBulkUpdateRequest.MatchingStrategy strategy, boolean hasIdField) {
+        
+        switch (strategy) {
+            case ID:
+                if (stopId != null && hasIdField) {
+                    try {
+                        UUID uuid = UUID.fromString(stopId);
+                        return stopRepository.findById(uuid).orElse(null);
+                    } catch (Exception e) {
+                        log.warn("Invalid UUID format for stop ID: {}", stopId);
+                    }
+                }
+                return null;
+                
+            case NAME_AND_CITY:
+                if (stopName != null && cityName != null) {
+                    return stopRepository.findAll().stream()
+                            .filter(stop -> matchesByNameAndCity(stop, stopName, cityName))
+                            .findFirst()
+                            .orElse(null);
+                }
+                return null;
+                
+            case AUTO:
+            default:
+                // Try ID first, then fallback to name+city
+                Stop stop = findExistingStop(stopId, stopName, cityName, StopBulkUpdateRequest.MatchingStrategy.ID, hasIdField);
+                if (stop == null) {
+                    stop = findExistingStop(stopId, stopName, cityName, StopBulkUpdateRequest.MatchingStrategy.NAME_AND_CITY, hasIdField);
+                }
+                return stop;
+        }
+    }
+    
+    private boolean matchesByNameAndCity(Stop stop, String csvName, String csvCity) {
+        // Check all language variants for both name and city
+        return (matchesName(stop, csvName) && matchesCity(stop, csvCity));
+    }
+    
+    private boolean matchesName(Stop stop, String csvName) {
+        if (csvName == null) return false;
+        String lowerCsvName = csvName.toLowerCase().trim();
+        
+        return (stop.getName() != null && stop.getName().toLowerCase().trim().equals(lowerCsvName)) ||
+               (stop.getNameSinhala() != null && stop.getNameSinhala().toLowerCase().trim().equals(lowerCsvName)) ||
+               (stop.getNameTamil() != null && stop.getNameTamil().toLowerCase().trim().equals(lowerCsvName));
+    }
+    
+    private boolean matchesCity(Stop stop, String csvCity) {
+        if (csvCity == null || stop.getLocation() == null) return false;
+        String lowerCsvCity = csvCity.toLowerCase().trim();
+        
+        return (stop.getLocation().getCity() != null && stop.getLocation().getCity().toLowerCase().trim().equals(lowerCsvCity)) ||
+               (stop.getLocation().getCitySinhala() != null && stop.getLocation().getCitySinhala().toLowerCase().trim().equals(lowerCsvCity)) ||
+               (stop.getLocation().getCityTamil() != null && stop.getLocation().getCityTamil().toLowerCase().trim().equals(lowerCsvCity));
+    }
+    
+    private Stop createStopFromCsvRow(String[] columns, Map<String, Integer> fieldMapping, 
+                                    String userId, StopBulkUpdateRequest request) {
+        
+        StopRequest stopRequest = buildStopRequestFromCsv(columns, fieldMapping, request);
+        return createStopEntity(stopRequest, userId);
+    }
+    
+    private List<String> updateStopFromCsvRow(Stop existingStop, String[] columns, Map<String, Integer> fieldMapping, 
+                                            String userId, StopBulkUpdateRequest request) {
+        
+        List<String> updatedFields = new ArrayList<>();
+        
+        // Update name fields
+        updateStringField(existingStop::setName, existingStop.getName(), 
+                         getFieldValue(columns, fieldMapping, "name"), "name", updatedFields, request.getPartialUpdate());
+        updateStringField(existingStop::setNameSinhala, existingStop.getNameSinhala(), 
+                         getFieldValue(columns, fieldMapping, "name_sinhala"), "nameSinhala", updatedFields, request.getPartialUpdate());
+        updateStringField(existingStop::setNameTamil, existingStop.getNameTamil(), 
+                         getFieldValue(columns, fieldMapping, "name_tamil"), "nameTamil", updatedFields, request.getPartialUpdate());
+        
+        // Update description
+        updateStringField(existingStop::setDescription, existingStop.getDescription(), 
+                         getFieldValue(columns, fieldMapping, "description"), "description", updatedFields, request.getPartialUpdate());
+        
+        // Update location fields
+        if (existingStop.getLocation() != null) {
+            updateLocationField(existingStop.getLocation(), columns, fieldMapping, updatedFields, request);
+        }
+        
+        // Update accessibility
+        String accessibleStr = getFieldValue(columns, fieldMapping, "isAccessible");
+        if (!request.getPartialUpdate() || (accessibleStr != null && !accessibleStr.trim().isEmpty())) {
+            Boolean newAccessible = parseBoolean(accessibleStr);
+            if (!java.util.Objects.equals(existingStop.getIsAccessible(), newAccessible)) {
+                existingStop.setIsAccessible(newAccessible);
+                updatedFields.add("isAccessible");
+            }
+        }
+        
+        // Update audit fields
+        if (!updatedFields.isEmpty()) {
+            existingStop.setUpdatedAt(LocalDateTime.now());
+            existingStop.setUpdatedBy(userId);
+        }
+        
+        return updatedFields;
+    }
+    
+    private void updateStringField(java.util.function.Consumer<String> setter, String currentValue, 
+                                 String newValue, String fieldName, List<String> updatedFields, boolean partialUpdate) {
+        
+        if (!partialUpdate || (newValue != null && !newValue.trim().isEmpty())) {
+            if (!java.util.Objects.equals(currentValue, newValue)) {
+                setter.accept(newValue);
+                updatedFields.add(fieldName);
+            }
+        }
+    }
+    
+    private void updateLocationField(Stop.Location location, String[] columns, 
+                                   Map<String, Integer> fieldMapping, List<String> updatedFields, StopBulkUpdateRequest request) {
+        
+        // Update address fields
+        updateStringField(location::setAddress, location.getAddress(), 
+                         getFieldValue(columns, fieldMapping, "address"), "address", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setAddressSinhala, location.getAddressSinhala(), 
+                         getFieldValue(columns, fieldMapping, "address_sinhala"), "addressSinhala", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setAddressTamil, location.getAddressTamil(), 
+                         getFieldValue(columns, fieldMapping, "address_tamil"), "addressTamil", updatedFields, request.getPartialUpdate());
+        
+        // Update city fields
+        updateStringField(location::setCity, location.getCity(), 
+                         getFieldValue(columns, fieldMapping, "city"), "city", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setCitySinhala, location.getCitySinhala(), 
+                         getFieldValue(columns, fieldMapping, "city_sinhala"), "citySinhala", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setCityTamil, location.getCityTamil(), 
+                         getFieldValue(columns, fieldMapping, "city_tamil"), "cityTamil", updatedFields, request.getPartialUpdate());
+        
+        // Update state fields
+        updateStringField(location::setState, location.getState(), 
+                         getFieldValue(columns, fieldMapping, "state"), "state", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setStateSinhala, location.getStateSinhala(), 
+                         getFieldValue(columns, fieldMapping, "state_sinhala"), "stateSinhala", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setStateTamil, location.getStateTamil(), 
+                         getFieldValue(columns, fieldMapping, "state_tamil"), "stateTamil", updatedFields, request.getPartialUpdate());
+        
+        // Update country fields
+        updateStringField(location::setCountry, location.getCountry(), 
+                         getFieldValue(columns, fieldMapping, "country"), "country", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setCountrySinhala, location.getCountrySinhala(), 
+                         getFieldValue(columns, fieldMapping, "country_sinhala"), "countrySinhala", updatedFields, request.getPartialUpdate());
+        updateStringField(location::setCountryTamil, location.getCountryTamil(), 
+                         getFieldValue(columns, fieldMapping, "country_tamil"), "countryTamil", updatedFields, request.getPartialUpdate());
+        
+        // Update zipCode
+        updateStringField(location::setZipCode, location.getZipCode(), 
+                         getFieldValue(columns, fieldMapping, "zipCode"), "zipCode", updatedFields, request.getPartialUpdate());
+        
+        // Update coordinates
+        String latStr = getFieldValue(columns, fieldMapping, "latitude");
+        String lngStr = getFieldValue(columns, fieldMapping, "longitude");
+        
+        if (!request.getPartialUpdate() || (latStr != null && !latStr.trim().isEmpty())) {
+            try {
+                Double newLat = latStr != null && !latStr.trim().isEmpty() ? Double.parseDouble(latStr) : null;
+                if (!java.util.Objects.equals(location.getLatitude(), newLat)) {
+                    location.setLatitude(newLat);
+                    updatedFields.add("latitude");
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid latitude format: {}", latStr);
+            }
+        }
+        
+        if (!request.getPartialUpdate() || (lngStr != null && !lngStr.trim().isEmpty())) {
+            try {
+                Double newLng = lngStr != null && !lngStr.trim().isEmpty() ? Double.parseDouble(lngStr) : null;
+                if (!java.util.Objects.equals(location.getLongitude(), newLng)) {
+                    location.setLongitude(newLng);
+                    updatedFields.add("longitude");
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid longitude format: {}", lngStr);
+            }
+        }
+    }
+    
+    private StopRequest buildStopRequestFromCsv(String[] columns, Map<String, Integer> fieldMapping, StopBulkUpdateRequest request) {
+        StopRequest stopRequest = new StopRequest();
+        
+        // Basic fields
+        stopRequest.setName(getFieldValue(columns, fieldMapping, "name"));
+        stopRequest.setNameSinhala(getFieldValue(columns, fieldMapping, "name_sinhala"));
+        stopRequest.setNameTamil(getFieldValue(columns, fieldMapping, "name_tamil"));
+        stopRequest.setDescription(getFieldValue(columns, fieldMapping, "description"));
+        
+        // Location
+        LocationDto locationDto = new LocationDto();
+        locationDto.setAddress(getFieldValue(columns, fieldMapping, "address"));
+        locationDto.setAddressSinhala(getFieldValue(columns, fieldMapping, "address_sinhala"));
+        locationDto.setAddressTamil(getFieldValue(columns, fieldMapping, "address_tamil"));
+        locationDto.setCity(getFieldValue(columns, fieldMapping, "city"));
+        locationDto.setCitySinhala(getFieldValue(columns, fieldMapping, "city_sinhala"));
+        locationDto.setCityTamil(getFieldValue(columns, fieldMapping, "city_tamil"));
+        locationDto.setState(getFieldValue(columns, fieldMapping, "state"));
+        locationDto.setStateSinhala(getFieldValue(columns, fieldMapping, "state_sinhala"));
+        locationDto.setStateTamil(getFieldValue(columns, fieldMapping, "state_tamil"));
+        locationDto.setCountry(getFieldValue(columns, fieldMapping, "country"));
+        locationDto.setCountrySinhala(getFieldValue(columns, fieldMapping, "country_sinhala"));
+        locationDto.setCountryTamil(getFieldValue(columns, fieldMapping, "country_tamil"));
+        locationDto.setZipCode(getFieldValue(columns, fieldMapping, "zipCode"));
+        
+        // Coordinates
+        String latStr = getFieldValue(columns, fieldMapping, "latitude");
+        String lngStr = getFieldValue(columns, fieldMapping, "longitude");
+        try {
+            if (latStr != null && !latStr.trim().isEmpty()) {
+                locationDto.setLatitude(Double.parseDouble(latStr));
+            }
+            if (lngStr != null && !lngStr.trim().isEmpty()) {
+                locationDto.setLongitude(Double.parseDouble(lngStr));
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Invalid coordinate format: lat={}, lng={}", latStr, lngStr);
+        }
+        
+        // Use default country if not specified
+        if (locationDto.getCountry() == null && request.getDefaultCountry() != null) {
+            locationDto.setCountry(request.getDefaultCountry());
+        }
+        
+        stopRequest.setLocation(locationDto);
+        
+        // Accessibility
+        String accessibleStr = getFieldValue(columns, fieldMapping, "isAccessible");
+        stopRequest.setIsAccessible(parseBoolean(accessibleStr));
+        
+        return stopRequest;
+    }
+    
+    private Stop createStopEntity(StopRequest request, String userId) {
+        // Reuse existing logic from createStop method
+        Stop stop = mapperUtils.map(request, Stop.class);
+        stop.setCreatedAt(LocalDateTime.now());
+        stop.setUpdatedAt(LocalDateTime.now());
+        stop.setCreatedBy(userId);
+        stop.setUpdatedBy(userId);
+        
+        return stopRepository.save(stop);
+    }
+    
+    private Boolean parseBoolean(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        
+        String lowerValue = value.toLowerCase().trim();
+        return "true".equals(lowerValue) || "yes".equals(lowerValue) || "1".equals(lowerValue) || "y".equals(lowerValue);
+    }
+    
+    private String[] parseCsvLine(String line) {
+        // Simple CSV parsing - can be enhanced for complex scenarios
+        return line.split(",", -1);
+    }
+    
+    private void addUpdateResult(StopBulkUpdateResponse response, BulkUpdateResult result, String operation) {
+        StopBulkUpdateResponse.UpdateResult updateResult = new StopBulkUpdateResponse.UpdateResult();
+        updateResult.setRowNumber(result.getRowNumber());
+        updateResult.setStopId(result.getStop().getId());
+        updateResult.setStopName(result.getStop().getName());
+        updateResult.setOperation(operation);
+        updateResult.setMatchedBy(result.getMatchedBy());
+        updateResult.setUpdatedFields(result.getUpdatedFields());
+        updateResult.setUpdatedStop(mapperUtils.map(result.getStop(), StopResponse.class));
+        
+        response.getUpdateResults().add(updateResult);
+    }
+    
+    private void addSkippedRecord(StopBulkUpdateResponse response, BulkUpdateResult result) {
+        StopBulkUpdateResponse.SkippedRecord skippedRecord = new StopBulkUpdateResponse.SkippedRecord();
+        skippedRecord.setRowNumber(result.getRowNumber());
+        skippedRecord.setReason(result.getReason());
+        skippedRecord.setStopIdentifier(result.getStopIdentifier());
+        skippedRecord.setDetails(result.getErrorMessage());
+        
+        response.getSkippedRecords().add(skippedRecord);
+    }
+    
+    private void addErrorRecord(StopBulkUpdateResponse response, BulkUpdateResult result, String[] columns) {
+        StopBulkUpdateResponse.ErrorRecord errorRecord = new StopBulkUpdateResponse.ErrorRecord();
+        errorRecord.setRowNumber(result.getRowNumber());
+        errorRecord.setErrorType("PROCESSING_ERROR");
+        errorRecord.setErrorMessage(result.getErrorMessage());
+        errorRecord.setStopIdentifier(result.getStopIdentifier());
+        errorRecord.setCsvData(java.util.Arrays.asList(columns));
+        
+        response.getErrorRecords().add(errorRecord);
+    }
+    
+    private void addErrorRecord(StopBulkUpdateResponse response, int rowNumber, String errorType, String errorMessage, String csvLine) {
+        StopBulkUpdateResponse.ErrorRecord errorRecord = new StopBulkUpdateResponse.ErrorRecord();
+        errorRecord.setRowNumber(rowNumber);
+        errorRecord.setErrorType(errorType);
+        errorRecord.setErrorMessage(errorMessage);
+        errorRecord.setStopIdentifier("Row " + rowNumber);
+        errorRecord.setCsvData(java.util.Arrays.asList(csvLine.split(",")));
+        
+        response.getErrorRecords().add(errorRecord);
+    }
+    
+    // Helper class for bulk update processing
+    private static class BulkUpdateResult {
+        private int rowNumber;
+        private BulkUpdateStatus status;
+        private Stop stop;
+        private String stopIdentifier;
+        private String reason;
+        private String errorMessage;
+        private String matchedBy;
+        private List<String> updatedFields;
+        
+        // Getters and setters
+        public int getRowNumber() { return rowNumber; }
+        public void setRowNumber(int rowNumber) { this.rowNumber = rowNumber; }
+        
+        public BulkUpdateStatus getStatus() { return status; }
+        public void setStatus(BulkUpdateStatus status) { this.status = status; }
+        
+        public Stop getStop() { return stop; }
+        public void setStop(Stop stop) { this.stop = stop; }
+        
+        public String getStopIdentifier() { return stopIdentifier; }
+        public void setStopIdentifier(String stopIdentifier) { this.stopIdentifier = stopIdentifier; }
+        
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
+        
+        public String getErrorMessage() { return errorMessage; }
+        public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+        
+        public String getMatchedBy() { return matchedBy; }
+        public void setMatchedBy(String matchedBy) { this.matchedBy = matchedBy; }
+        
+        public List<String> getUpdatedFields() { return updatedFields; }
+        public void setUpdatedFields(List<String> updatedFields) { this.updatedFields = updatedFields; }
+    }
+    
+    private enum BulkUpdateStatus {
+        SUCCESS_UPDATED,
+        SUCCESS_CREATED,
+        SKIPPED,
+        ERROR
     }
 }

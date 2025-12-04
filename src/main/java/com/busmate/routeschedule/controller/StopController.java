@@ -9,6 +9,9 @@ import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
 import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
+import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
+
+import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
 
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -146,7 +149,7 @@ public class StopController {
     }
 
     // 5. FILTER OPTIONS - Get all filter options in one call for better UX
-    @GetMapping("/filter-options")
+    @GetMapping("/filters/options")
     @Operation(
         summary = "Get all filter options for stops", 
         description = "Retrieve all available filter options including states, cities, countries, and accessibility statuses. " +
@@ -299,7 +302,7 @@ public class StopController {
     }
 
     // DOWNLOAD CSV TEMPLATE - For import template
-    @GetMapping("/import-template")
+    @GetMapping("/import/template")
     @Operation(
         summary = "Download CSV import template", 
         description = "Download flexible CSV template examples showing various field combinations supported. " +
@@ -355,6 +358,74 @@ public class StopController {
                                    exportResponse.getMetadata().getFormat(),
                                    exportResponse.getMetadata().getExportedBy()))
                 .body(exportResponse.getContent());
+    }
+
+    // 11. BULK UPDATE - Update or create multiple stops via CSV file
+    @PutMapping(value = "/import/upsert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Bulk update stops from CSV file", 
+        description = "Update multiple bus stops at once using a CSV file. " +
+                     "Supports flexible matching strategies (ID, name+city, or auto), " +
+                     "partial updates, conflict resolution, and creation of missing stops. " +
+                     "The CSV should contain the same fields as the export format. " +
+                     "Returns detailed results including success/failure counts and specific error information.",
+        operationId = "bulkUpdateStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Bulk update completed (check response for individual results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "413", description = "File too large"),
+        @ApiResponse(responseCode = "415", description = "Unsupported file type")
+    })
+    public ResponseEntity<StopBulkUpdateResponse> bulkUpdateStops(
+            @Parameter(description = "CSV file containing stops to update", required = true)
+            @RequestParam("file") MultipartFile csvFile,
+            
+            @Parameter(description = "Update strategy for handling conflicts", example = "UPDATE_ALL")
+            @RequestParam(defaultValue = "UPDATE_ALL") StopBulkUpdateRequest.UpdateStrategy updateStrategy,
+            
+            @Parameter(description = "Strategy for matching existing stops", example = "AUTO")
+            @RequestParam(defaultValue = "AUTO") StopBulkUpdateRequest.MatchingStrategy matchingStrategy,
+            
+            @Parameter(description = "Whether to create new stops if they don't exist", example = "false")
+            @RequestParam(defaultValue = "false") Boolean createMissing,
+            
+            @Parameter(description = "Whether to perform partial updates (only non-empty CSV fields)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean partialUpdate,
+            
+            @Parameter(description = "Default country to use if not specified in CSV", example = "Sri Lanka")
+            @RequestParam(required = false) String defaultCountry,
+            
+            @Parameter(description = "Whether to validate geographical coordinates", example = "true")
+            @RequestParam(defaultValue = "true") Boolean validateCoordinates,
+            
+            Authentication authentication) {
+        
+        // Validate file
+        if (csvFile.isEmpty()) {
+            throw new IllegalArgumentException("CSV file is required and cannot be empty");
+        }
+        
+        if (!"text/csv".equals(csvFile.getContentType()) && 
+            !csvFile.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+            throw new IllegalArgumentException("File must be a CSV file");
+        }
+        
+        // Build request object
+        StopBulkUpdateRequest request = new StopBulkUpdateRequest();
+        request.setUpdateStrategy(updateStrategy);
+        request.setMatchingStrategy(matchingStrategy);
+        request.setCreateMissing(createMissing);
+        request.setPartialUpdate(partialUpdate);
+        request.setDefaultCountry(defaultCountry);
+        request.setValidateCoordinates(validateCoordinates);
+        
+        String userId = authentication != null ? authentication.getName() : "system";
+        // Process bulk update
+        StopBulkUpdateResponse response = stopService.bulkUpdateStops(csvFile, request, userId);
+        
+        return ResponseEntity.ok(response);
     }
 
     // === Helper Methods ===

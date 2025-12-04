@@ -7,7 +7,9 @@ import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
 import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
+import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
 
+import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import org.springframework.data.domain.Page;
@@ -40,4 +42,7 @@ public interface StopService {
     
     // Export methods - Flexible export supporting multiple formats and filters
     StopExportResponse exportStops(StopExportRequest request, String userId);
+    
+    // Bulk update methods - Flexible bulk update supporting CSV files with various matching strategies
+    StopBulkUpdateResponse bulkUpdateStops(MultipartFile csvFile, StopBulkUpdateRequest request, String userId);
 }
