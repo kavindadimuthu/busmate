@@ -5,6 +5,7 @@ import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
 
@@ -132,13 +133,31 @@ public class StopServiceImpl implements StopService {
     }
 
     @Override
-    public List<String> getDistinctStates() {
-        return stopRepository.findDistinctStates();
-    }
-
-    @Override
-    public List<Boolean> getDistinctAccessibilityStatuses() {
-        return stopRepository.findDistinctAccessibilityStatuses();
+    public StopFilterOptionsResponse getFilterOptions() {
+        StopFilterOptionsResponse response = new StopFilterOptionsResponse();
+        
+        // Get all distinct values
+        List<String> states = stopRepository.findDistinctStates();
+        List<String> cities = stopRepository.findDistinctCities();
+        List<String> countries = stopRepository.findDistinctCountries();
+        List<Boolean> accessibilityStatuses = stopRepository.findDistinctAccessibilityStatuses();
+        
+        response.setStates(states);
+        response.setCities(cities);
+        response.setCountries(countries);
+        response.setAccessibilityStatuses(accessibilityStatuses);
+        
+        // Create metadata for additional insights
+        StopFilterOptionsResponse.FilterMetadata metadata = new StopFilterOptionsResponse.FilterMetadata();
+        metadata.setTotalStates(states.size());
+        metadata.setTotalCities(cities.size());
+        metadata.setTotalCountries(countries.size());
+        metadata.setHasAccessibleStops(accessibilityStatuses.contains(true));
+        metadata.setHasNonAccessibleStops(accessibilityStatuses.contains(false));
+        
+        response.setMetadata(metadata);
+        
+        return response;
     }
 
     @Override

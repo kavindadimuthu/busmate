@@ -2,6 +2,7 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
 
@@ -22,9 +23,8 @@ public interface StopService {
     StopResponse updateStop(UUID id, StopRequest request, String userId);
     void deleteStop(UUID id);
     
-    // Filter options methods
-    List<String> getDistinctStates();
-    List<Boolean> getDistinctAccessibilityStatuses();
+    // Filter options method - consolidated
+    StopFilterOptionsResponse getFilterOptions();
     
     // New methods for route and schedule stop details
     List<RouteStopDetailResponse> getStopsByRoute(UUID routeId);

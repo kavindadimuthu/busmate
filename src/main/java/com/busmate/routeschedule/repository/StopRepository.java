@@ -46,6 +46,12 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
     @Query("SELECT DISTINCT s.location.state FROM Stop s WHERE s.location.state IS NOT NULL ORDER BY s.location.state")
     List<String> findDistinctStates();
     
+    @Query("SELECT DISTINCT s.location.city FROM Stop s WHERE s.location.city IS NOT NULL ORDER BY s.location.city")
+    List<String> findDistinctCities();
+    
+    @Query("SELECT DISTINCT s.location.country FROM Stop s WHERE s.location.country IS NOT NULL ORDER BY s.location.country")
+    List<String> findDistinctCountries();
+    
     @Query("SELECT DISTINCT s.isAccessible FROM Stop s WHERE s.isAccessible IS NOT NULL ORDER BY s.isAccessible DESC")
     List<Boolean> findDistinctAccessibilityStatuses();
     

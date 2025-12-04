@@ -4,6 +4,7 @@ import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
 
@@ -141,33 +142,21 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 5. FILTER OPTIONS - Get distinct values for filtering
-    @GetMapping("/filter-options/states")
+    // 5. FILTER OPTIONS - Get all filter options in one call for better UX
+    @GetMapping("/filter-options")
     @Operation(
-        summary = "Get distinct states", 
-        description = "Retrieve all distinct states available in the stops database for filter dropdown options.",
-        operationId = "getDistinctStates"
+        summary = "Get all filter options for stops", 
+        description = "Retrieve all available filter options including states, cities, countries, and accessibility statuses. " +
+                     "This consolidated endpoint provides all filter data needed by the UI in a single call, " +
+                     "improving performance and user experience. Also includes metadata about the available options.",
+        operationId = "getFilterOptions"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct states retrieved successfully")
+        @ApiResponse(responseCode = "200", description = "Filter options retrieved successfully")
     })
-    public ResponseEntity<List<String>> getDistinctStates() {
-        List<String> states = stopService.getDistinctStates();
-        return ResponseEntity.ok(states);
-    }
-
-    @GetMapping("/filter-options/accessibility-statuses")
-    @Operation(
-        summary = "Get distinct accessibility statuses", 
-        description = "Retrieve all distinct accessibility statuses (true/false) available in the stops database for filter dropdown options.",
-        operationId = "getDistinctAccessibilityStatuses"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct accessibility statuses retrieved successfully")
-    })
-    public ResponseEntity<List<Boolean>> getDistinctAccessibilityStatuses() {
-        List<Boolean> accessibilityStatuses = stopService.getDistinctAccessibilityStatuses();
-        return ResponseEntity.ok(accessibilityStatuses);
+    public ResponseEntity<StopFilterOptionsResponse> getFilterOptions() {
+        StopFilterOptionsResponse filterOptions = stopService.getFilterOptions();
+        return ResponseEntity.ok(filterOptions);
     }
 
     // 6. UPDATE - Modification operation
