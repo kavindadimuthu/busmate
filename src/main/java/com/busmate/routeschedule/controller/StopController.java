@@ -313,52 +313,8 @@ public class StopController {
             @Parameter(description = "Template type: 'minimal' (name only), 'multilingual' (name variants), 'location' (with coordinates), 'full' (all fields)", example = "full")
             @RequestParam(defaultValue = "full") String format) {
         
-        String csvTemplate;
-        String filename;
-        
-        switch (format.toLowerCase()) {
-            case "minimal":
-                csvTemplate = "# Minimal Format - English names only\n" +
-                             "name\n" +
-                             "Colombo Central\n" +
-                             "Kandy Terminal\n" +
-                             "Galle Station\n";
-                filename = "minimal_stop_template.csv";
-                break;
-                
-            case "multilingual":
-                csvTemplate = "# Multilingual Format - Names in multiple languages\n" +
-                             "name,name_sinhala,name_tamil\n" +
-                             "Colombo Central,කොළඹ මධ්‍යම,கொழும்பு மத்திய\n" +
-                             "Kandy Terminal,මහනුවර පර්යන්තය,கண்டி முனையம்\n" +
-                             "Galle Station,ගාල්ල ස්ථානය,காலி நிலையம்\n";
-                filename = "multilingual_stop_template.csv";
-                break;
-                
-            case "location":
-                csvTemplate = "# Location Format - Names with coordinates\n" +
-                             "name,latitude,longitude,city,state,country\n" +
-                             "Colombo Central,6.9344,79.8428,Colombo,Western Province,Sri Lanka\n" +
-                             "Kandy Terminal,7.2906,80.6337,Kandy,Central Province,Sri Lanka\n" +
-                             "Galle Station,6.0535,80.2210,Galle,Southern Province,Sri Lanka\n";
-                filename = "location_stop_template.csv";
-                break;
-                
-            default: // full
-                csvTemplate = "# Full Format - All available fields\n" +
-                             "name,name_sinhala,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
-                             "Colombo Central,කොළඹ මධ්‍යම,Main intercity terminal,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n" +
-                             "Kandy Terminal,මහනුවර පර්යන්තය,Hill capital hub,7.2906,80.6337,Temple Street,Kandy,Central Province,20000,Sri Lanka,true\n" +
-                             "Galle Station,ගාල්ල ස්ථානය,Southern coastal terminal,6.0535,80.2210,Main Street,Galle,Southern Province,80000,Sri Lanka,false\n\n" +
-                             "# Supported Fields (all optional except name):\n" +
-                             "# Names: name, name_sinhala, name_tamil\n" +
-                             "# Location: latitude, longitude, address, address_sinhala, address_tamil\n" +
-                             "# Administrative: city, city_sinhala, city_tamil, state, state_sinhala, state_tamil\n" +
-                             "# Other: zipCode, country, country_sinhala, country_tamil, description, isAccessible\n" +
-                             "# Legacy: stop_id (preserved as original_stop_id)\n";
-                filename = "full_stop_template.csv";
-                break;
-        }
+        String csvTemplate = generateTemplate(format);
+        String filename = format.toLowerCase() + "_stop_template.csv";
         
         return ResponseEntity.ok()
                 .header("Content-Type", "text/csv")
@@ -401,5 +357,14 @@ public class StopController {
                 .body(exportResponse.getContent());
     }
 
-
+    // === Helper Methods ===
+    private String generateTemplate(String format) {
+        return switch (format.toLowerCase()) {
+            case "minimal" -> "name\nColombo Central\nKandy Terminal\nGalle Station\n";
+            case "multilingual" -> "name,name_sinhala,name_tamil\nColombo Central,කොළඹ මධ්‍යම,கொழும்பு மத்திய\n";
+            case "location" -> "name,latitude,longitude,city,state,country\nColombo Central,6.9344,79.8428,Colombo,Western Province,Sri Lanka\n";
+            default -> "name,name_sinhala,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
+                      "Colombo Central,කොළඹ මධ්‍යම,Main intercity terminal,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n";
+        };
+    }
 }
