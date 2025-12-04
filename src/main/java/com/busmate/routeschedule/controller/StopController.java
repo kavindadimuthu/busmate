@@ -1,12 +1,14 @@
 package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
 
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -361,6 +364,41 @@ public class StopController {
                 .header("Content-Type", "text/csv")
                 .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
                 .body(csvTemplate);
+    }
+
+    // EXPORT - Flexible stop data export
+    @PostMapping("/export")
+    @Operation(
+        summary = "Export stops with flexible filtering and format options", 
+        description = "Export stops to CSV or JSON format with highly flexible filtering options. " +
+                     "Supports exporting all stops, filtering by city/state/country, specific IDs, accessibility, " +
+                     "and custom field selection. Perfect for bulk operations like route imports where you need " +
+                     "stop IDs to replace in external datasets. The exported file includes comprehensive metadata " +
+                     "about applied filters and export options for audit purposes.",
+        operationId = "exportStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Export completed successfully - returns file content with metadata"),
+        @ApiResponse(responseCode = "400", description = "Invalid export request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during export processing")
+    })
+    public ResponseEntity<byte[]> exportStops(
+            @Valid @RequestBody StopExportRequest request,
+            Authentication authentication) {
+        
+        String userId = authentication != null ? authentication.getName() : "system";
+        StopExportResponse exportResponse = stopService.exportStops(request, userId);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", exportResponse.getContentType())
+                .header("Content-Disposition", "attachment; filename=\"" + exportResponse.getFileName() + "\"")
+                .header("X-Export-Metadata", 
+                       String.format("Records: %d, Format: %s, Exported-By: %s", 
+                                   exportResponse.getMetadata().getRecordsExported(),
+                                   exportResponse.getMetadata().getFormat(),
+                                   exportResponse.getMetadata().getExportedBy()))
+                .body(exportResponse.getContent());
     }
 
 

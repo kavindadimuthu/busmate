@@ -1,10 +1,12 @@
 package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
 
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
@@ -35,4 +37,7 @@ public interface StopService {
     
     // Import methods - Intelligent import supporting multiple CSV formats
     StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry);
+    
+    // Export methods - Flexible export supporting multiple formats and filters
+    StopExportResponse exportStops(StopExportRequest request, String userId);
 }

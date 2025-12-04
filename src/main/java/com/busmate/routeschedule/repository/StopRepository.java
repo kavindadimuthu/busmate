@@ -82,5 +82,33 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
     
     @Query("SELECT COUNT(DISTINCT s.location.city) FROM Stop s WHERE s.location.city IS NOT NULL")
     Long countDistinctCities();
+    
+    // Flexible export query methods
+    @Query("SELECT s FROM Stop s WHERE " +
+           "(:stopIds IS NULL OR s.id IN :stopIds) AND " +
+           "(:cities IS NULL OR s.location.city IN :cities OR s.location.citySinhala IN :cities OR s.location.cityTamil IN :cities) AND " +
+           "(:states IS NULL OR s.location.state IN :states OR s.location.stateSinhala IN :states OR s.location.stateTamil IN :states) AND " +
+           "(:countries IS NULL OR s.location.country IN :countries OR s.location.countrySinhala IN :countries OR s.location.countryTamil IN :countries) AND " +
+           "(:isAccessible IS NULL OR s.isAccessible = :isAccessible) AND " +
+           "(:searchText IS NULL OR :searchText = '' OR " +
+           "LOWER(s.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.address) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.addressSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.addressTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.city) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.citySinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.cityTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.state) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.stateSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.stateTamil) LIKE LOWER(CONCAT('%', :searchText, '%'))) " +
+           "ORDER BY s.name")
+    List<Stop> findStopsForExport(@Param("stopIds") List<UUID> stopIds,
+                                 @Param("cities") List<String> cities,
+                                 @Param("states") List<String> states,
+                                 @Param("countries") List<String> countries,
+                                 @Param("isAccessible") Boolean isAccessible,
+                                 @Param("searchText") String searchText);
 }
 

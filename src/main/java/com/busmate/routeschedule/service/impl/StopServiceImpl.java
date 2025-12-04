@@ -2,12 +2,14 @@ package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
 
 import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.ScheduleStop;
@@ -28,8 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -589,5 +596,317 @@ public class StopServiceImpl implements StopService {
         }
         String value = columns[index].trim();
         return value.isEmpty() ? null : value;
+    }
+
+    @Override
+    public StopExportResponse exportStops(StopExportRequest request, String userId) {
+        log.info("Starting stops export for user: {}, request: {}", userId, request);
+        
+        try {
+            // Get stops based on filters
+            List<Stop> stops = getFilteredStops(request);
+            
+            // Generate export content based on format
+            StopExportResponse response = new StopExportResponse();
+            
+            if (request.getFormat() == StopExportRequest.ExportFormat.CSV) {
+                generateCSVExport(stops, request, response, userId);
+            } else {
+                generateJSONExport(stops, request, response, userId);
+            }
+            
+            log.info("Successfully exported {} stops for user: {}", stops.size(), userId);
+            return response;
+            
+        } catch (Exception e) {
+            log.error("Error exporting stops for user: {}", userId, e);
+            throw new RuntimeException("Failed to export stops: " + e.getMessage(), e);
+        }
+    }
+    
+    private List<Stop> getFilteredStops(StopExportRequest request) {
+        if (Boolean.TRUE.equals(request.getExportAll())) {
+            return stopRepository.findAll();
+        }
+        
+        return stopRepository.findStopsForExport(
+            request.getStopIds(),
+            request.getCities(),
+            request.getStates(),
+            request.getCountries(),
+            request.getIsAccessible(),
+            request.getSearchText()
+        );
+    }
+    
+    private void generateCSVExport(List<Stop> stops, StopExportRequest request, 
+                                  StopExportResponse response, String userId) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
+            
+            // Write CSV headers
+            List<String> headers = buildCSVHeaders(request);
+            writer.println(String.join(",", headers));
+            
+            // Write data rows
+            for (Stop stop : stops) {
+                List<String> row = buildCSVRow(stop, request);
+                writer.println(String.join(",", row.stream()
+                    .map(this::escapeCsvField)
+                    .collect(Collectors.toList())));
+            }
+            
+            writer.flush();
+        }
+        
+        // Set response properties
+        response.setContent(baos.toByteArray());
+        response.setContentType("text/csv");
+        response.setFileName(generateFileName(request, "csv"));
+        
+        // Set metadata
+        response.setMetadata(buildExportMetadata(stops, request, userId));
+    }
+    
+    private void generateJSONExport(List<Stop> stops, StopExportRequest request, 
+                                   StopExportResponse response, String userId) throws Exception {
+        // Convert stops to response DTOs
+        List<StopResponse> stopResponses = stops.stream()
+            .map(stop -> mapperUtils.map(stop, StopResponse.class))
+            .collect(Collectors.toList());
+            
+        // Convert to JSON
+        String jsonContent = "[\n" + stopResponses.stream()
+            .map(stop -> "  " + convertStopToJson(stop, request))
+            .collect(Collectors.joining(",\n")) + "\n]";
+            
+        response.setContent(jsonContent.getBytes(StandardCharsets.UTF_8));
+        response.setContentType("application/json");
+        response.setFileName(generateFileName(request, "json"));
+        response.setMetadata(buildExportMetadata(stops, request, userId));
+    }
+    
+    private List<String> buildCSVHeaders(StopExportRequest request) {
+        List<String> headers = new ArrayList<>();
+        
+        // Always include essential fields
+        headers.add("id");
+        headers.add("name");
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            headers.add("name_sinhala");
+            headers.add("name_tamil");
+        }
+        
+        headers.add("description");
+        
+        if (Boolean.TRUE.equals(request.getIncludeLocationDetails())) {
+            headers.add("latitude");
+            headers.add("longitude");
+            headers.add("address");
+            headers.add("city");
+            headers.add("state");
+            headers.add("zip_code");
+            headers.add("country");
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                headers.add("address_sinhala");
+                headers.add("city_sinhala");
+                headers.add("state_sinhala");
+                headers.add("country_sinhala");
+                headers.add("address_tamil");
+                headers.add("city_tamil");
+                headers.add("state_tamil");
+                headers.add("country_tamil");
+            }
+        }
+        
+        headers.add("is_accessible");
+        
+        if (Boolean.TRUE.equals(request.getIncludeTimestamps())) {
+            headers.add("created_at");
+            headers.add("updated_at");
+        }
+        
+        if (Boolean.TRUE.equals(request.getIncludeUserInfo())) {
+            headers.add("created_by");
+            headers.add("updated_by");
+        }
+        
+        return headers;
+    }
+    
+    private List<String> buildCSVRow(Stop stop, StopExportRequest request) {
+        List<String> row = new ArrayList<>();
+        
+        // Essential fields
+        row.add(stop.getId().toString());
+        row.add(stop.getName());
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            row.add(stop.getNameSinhala());
+            row.add(stop.getNameTamil());
+        }
+        
+        row.add(stop.getDescription());
+        
+        if (Boolean.TRUE.equals(request.getIncludeLocationDetails()) && stop.getLocation() != null) {
+            Stop.Location loc = stop.getLocation();
+            row.add(loc.getLatitude() != null ? loc.getLatitude().toString() : "");
+            row.add(loc.getLongitude() != null ? loc.getLongitude().toString() : "");
+            row.add(loc.getAddress());
+            row.add(loc.getCity());
+            row.add(loc.getState());
+            row.add(loc.getZipCode());
+            row.add(loc.getCountry());
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                row.add(loc.getAddressSinhala());
+                row.add(loc.getCitySinhala());
+                row.add(loc.getStateSinhala());
+                row.add(loc.getCountrySinhala());
+                row.add(loc.getAddressTamil());
+                row.add(loc.getCityTamil());
+                row.add(loc.getStateTamil());
+                row.add(loc.getCountryTamil());
+            }
+        }
+        
+        row.add(stop.getIsAccessible() != null ? stop.getIsAccessible().toString() : "");
+        
+        if (Boolean.TRUE.equals(request.getIncludeTimestamps())) {
+            row.add(stop.getCreatedAt() != null ? stop.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : "");
+            row.add(stop.getUpdatedAt() != null ? stop.getUpdatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : "");
+        }
+        
+        if (Boolean.TRUE.equals(request.getIncludeUserInfo())) {
+            row.add(stop.getCreatedBy());
+            row.add(stop.getUpdatedBy());
+        }
+        
+        return row;
+    }
+    
+    private String escapeCsvField(String field) {
+        if (field == null) {
+            return "";
+        }
+        
+        // If field contains comma, newline, or quote, wrap it in quotes and escape internal quotes
+        if (field.contains(",") || field.contains("\n") || field.contains("\"")) {
+            return "\"" + field.replace("\"", "\"\"") + "\"";
+        }
+        
+        return field;
+    }
+    
+    private String convertStopToJson(StopResponse stop, StopExportRequest request) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        
+        json.append("    \"id\": \"").append(stop.getId()).append("\",\n");
+        json.append("    \"name\": ").append(jsonValue(stop.getName())).append(",\n");
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            json.append("    \"nameSinhala\": ").append(jsonValue(stop.getNameSinhala())).append(",\n");
+            json.append("    \"nameTamil\": ").append(jsonValue(stop.getNameTamil())).append(",\n");
+        }
+        
+        json.append("    \"description\": ").append(jsonValue(stop.getDescription())).append(",\n");
+        json.append("    \"isAccessible\": ").append(stop.getIsAccessible()).append(",\n");
+        
+        if (Boolean.TRUE.equals(request.getIncludeLocationDetails()) && stop.getLocation() != null) {
+            json.append("    \"location\": ").append(locationToJson(stop.getLocation(), request));
+        } else {
+            json.append("    \"location\": null");
+        }
+        
+        if (Boolean.TRUE.equals(request.getIncludeTimestamps())) {
+            json.append(",\n    \"createdAt\": ").append(jsonValue(stop.getCreatedAt())).append(",\n");
+            json.append("    \"updatedAt\": ").append(jsonValue(stop.getUpdatedAt()));
+        }
+        
+        if (Boolean.TRUE.equals(request.getIncludeUserInfo())) {
+            json.append(",\n    \"createdBy\": ").append(jsonValue(stop.getCreatedBy())).append(",\n");
+            json.append("    \"updatedBy\": ").append(jsonValue(stop.getUpdatedBy()));
+        }
+        
+        json.append("\n  }");
+        return json.toString();
+    }
+    
+    private String locationToJson(LocationDto location, StopExportRequest request) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        json.append("      \"latitude\": ").append(location.getLatitude()).append(",\n");
+        json.append("      \"longitude\": ").append(location.getLongitude()).append(",\n");
+        json.append("      \"address\": ").append(jsonValue(location.getAddress())).append(",\n");
+        json.append("      \"city\": ").append(jsonValue(location.getCity())).append(",\n");
+        json.append("      \"state\": ").append(jsonValue(location.getState())).append(",\n");
+        json.append("      \"zipCode\": ").append(jsonValue(location.getZipCode())).append(",\n");
+        json.append("      \"country\": ").append(jsonValue(location.getCountry()));
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            json.append(",\n      \"addressSinhala\": ").append(jsonValue(location.getAddressSinhala()));
+            json.append(",\n      \"citySinhala\": ").append(jsonValue(location.getCitySinhala()));
+            json.append(",\n      \"stateSinhala\": ").append(jsonValue(location.getStateSinhala()));
+            json.append(",\n      \"countrySinhala\": ").append(jsonValue(location.getCountrySinhala()));
+            json.append(",\n      \"addressTamil\": ").append(jsonValue(location.getAddressTamil()));
+            json.append(",\n      \"cityTamil\": ").append(jsonValue(location.getCityTamil()));
+            json.append(",\n      \"stateTamil\": ").append(jsonValue(location.getStateTamil()));
+            json.append(",\n      \"countryTamil\": ").append(jsonValue(location.getCountryTamil()));
+        }
+        
+        json.append("\n    }");
+        return json.toString();
+    }
+    
+    private String jsonValue(Object value) {
+        if (value == null) {
+            return "null";
+        }
+        if (value instanceof String) {
+            return "\"" + ((String) value).replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        }
+        return value.toString();
+    }
+    
+    private String generateFileName(StopExportRequest request, String extension) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String scope = Boolean.TRUE.equals(request.getExportAll()) ? "all_stops" : "filtered_stops";
+        return String.format("stops_export_%s_%s.%s", scope, timestamp, extension);
+    }
+    
+    private StopExportResponse.ExportMetadata buildExportMetadata(List<Stop> stops, 
+                                                                StopExportRequest request, 
+                                                                String userId) {
+        StopExportResponse.ExportMetadata metadata = new StopExportResponse.ExportMetadata();
+        metadata.setTotalRecordsFound(stops.size());
+        metadata.setRecordsExported(stops.size());
+        metadata.setExportedAt(LocalDateTime.now());
+        metadata.setExportedBy(userId);
+        metadata.setFormat(request.getFormat().toString());
+        
+        // Build filter summary
+        StopExportResponse.FilterSummary filterSummary = new StopExportResponse.FilterSummary();
+        filterSummary.setExportedAll(Boolean.TRUE.equals(request.getExportAll()));
+        filterSummary.setSpecificStopIds(request.getStopIds() != null ? request.getStopIds().size() : 0);
+        filterSummary.setCities(request.getCities());
+        filterSummary.setStates(request.getStates());
+        filterSummary.setCountries(request.getCountries());
+        filterSummary.setAccessibilityFilter(request.getIsAccessible());
+        filterSummary.setSearchText(request.getSearchText());
+        metadata.setFiltersApplied(filterSummary);
+        
+        // Build export options
+        StopExportResponse.ExportOptions exportOptions = new StopExportResponse.ExportOptions();
+        exportOptions.setIncludeMultiLanguageFields(request.getIncludeMultiLanguageFields());
+        exportOptions.setIncludeLocationDetails(request.getIncludeLocationDetails());
+        exportOptions.setIncludeTimestamps(request.getIncludeTimestamps());
+        exportOptions.setIncludeUserInfo(request.getIncludeUserInfo());
+        exportOptions.setCustomFields(request.getCustomFields());
+        metadata.setOptionsUsed(exportOptions);
+        
+        return metadata;
     }
 }
