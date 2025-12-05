@@ -161,23 +161,7 @@ public class RouteController {
         return ResponseEntity.ok(response);
     }
 
-    // 4. GET ROUTES BY ROUTE GROUP ID
-    @GetMapping("/groups/{routeGroupId}")
-    @Operation(
-        summary = "Get routes by route group ID",
-        description = "Retrieve all routes belonging to a specific route group.",
-        operationId = "getRoutesByRouteGroupId"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Routes retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid UUID format")
-    })
-    public ResponseEntity<List<RouteResponse>> getRoutesByRouteGroupId(
-            @Parameter(description = "Route Group ID", example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable UUID routeGroupId) {
-        List<RouteResponse> responses = routeService.getRoutesByRouteGroupId(routeGroupId);
-        return ResponseEntity.ok(responses);
-    }
+
 
     // 5. FILTER OPTIONS - Consolidated endpoint for all filter options
     @GetMapping("/filters/options")

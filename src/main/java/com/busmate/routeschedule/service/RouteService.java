@@ -41,7 +41,6 @@ public interface RouteService {
     
     // Filter options method - consolidated
     RouteFilterOptionsResponse getFilterOptions();
-    List<RouteResponse> getRoutesByRouteGroupId(UUID routeGroupId);
     
     // Statistics methods
     RouteStatisticsResponse getStatistics();

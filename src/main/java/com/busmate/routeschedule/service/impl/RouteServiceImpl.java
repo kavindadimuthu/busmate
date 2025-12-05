@@ -216,14 +216,6 @@ public class RouteServiceImpl implements RouteService {
         return response;
     }
 
-    @Override
-    public List<RouteResponse> getRoutesByRouteGroupId(UUID routeGroupId) {
-        List<Route> routes = routeRepository.findByRouteGroup_Id(routeGroupId);
-        return routes.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
     private RouteResponse mapToResponse(Route route) {
         RouteResponse response = mapperUtils.map(route, RouteResponse.class);
         

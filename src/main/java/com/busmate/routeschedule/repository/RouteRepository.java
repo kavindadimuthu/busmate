@@ -102,8 +102,6 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     @Query("SELECT MIN(r.estimatedDurationMinutes), MAX(r.estimatedDurationMinutes) FROM Route r WHERE r.estimatedDurationMinutes IS NOT NULL")
     List<Object[]> findDurationRange();
     
-    List<Route> findByRouteGroup_Id(UUID routeGroupId);
-    
     // Statistics methods
     @Query("SELECT COUNT(r) FROM Route r WHERE r.direction = :direction")
     Long countByDirection(@Param("direction") DirectionEnum direction);
