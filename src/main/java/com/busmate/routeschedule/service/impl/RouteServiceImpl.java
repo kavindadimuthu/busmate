@@ -743,25 +743,45 @@ public class RouteServiceImpl implements RouteService {
             route.setEstimatedDurationMinutes(Integer.parseInt(estimatedDurationStr));
         }
         
-        if (startStopIdStr != null && !startStopIdStr.isEmpty() && importRequest.getValidateStopsExist()) {
+        if (startStopIdStr != null && !startStopIdStr.isEmpty()) {
             try {
                 UUID startStopId = UUID.fromString(startStopIdStr);
-                if (stopRepository.existsById(startStopId)) {
+                if (importRequest.getValidateStopsExist()) {
+                    if (stopRepository.existsById(startStopId)) {
+                        route.setStartStopId(startStopId);
+                    } else {
+                        throw new IllegalArgumentException("Start stop with ID '" + startStopIdStr + "' does not exist");
+                    }
+                } else {
+                    // Set the stop ID without validation
                     route.setStartStopId(startStopId);
                 }
-            } catch (Exception ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw e; // Re-throw validation errors
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid start stop ID format: '" + startStopIdStr + "'", e);
+            }
         }
-        
-        if (endStopIdStr != null && !endStopIdStr.isEmpty() && importRequest.getValidateStopsExist()) {
+
+        if (endStopIdStr != null && !endStopIdStr.isEmpty()) {
             try {
                 UUID endStopId = UUID.fromString(endStopIdStr);
-                if (stopRepository.existsById(endStopId)) {
+                if (importRequest.getValidateStopsExist()) {
+                    if (stopRepository.existsById(endStopId)) {
+                        route.setEndStopId(endStopId);
+                    } else {
+                        throw new IllegalArgumentException("End stop with ID '" + endStopIdStr + "' does not exist");
+                    }
+                } else {
+                    // Set the stop ID without validation
                     route.setEndStopId(endStopId);
                 }
-            } catch (Exception ignored) {}
-        }
-        
-        route.setUpdatedAt(LocalDateTime.now());
+            } catch (IllegalArgumentException e) {
+                throw e; // Re-throw validation errors
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid end stop ID format: '" + endStopIdStr + "'", e);
+            }
+        }        route.setUpdatedAt(LocalDateTime.now());
         route.setUpdatedBy(userId);
         routeRepository.save(route);
     }
@@ -815,22 +835,42 @@ public class RouteServiceImpl implements RouteService {
         if (startStopIdStr != null && !startStopIdStr.isEmpty()) {
             try {
                 UUID startStopId = UUID.fromString(startStopIdStr);
-                if (!importRequest.getValidateStopsExist() || stopRepository.existsById(startStopId)) {
+                if (importRequest.getValidateStopsExist()) {
+                    if (stopRepository.existsById(startStopId)) {
+                        route.setStartStopId(startStopId);
+                    } else {
+                        throw new IllegalArgumentException("Start stop with ID '" + startStopIdStr + "' does not exist");
+                    }
+                } else {
+                    // Set the stop ID without validation
                     route.setStartStopId(startStopId);
                 }
-            } catch (Exception ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw e; // Re-throw validation errors
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid start stop ID format: '" + startStopIdStr + "'", e);
+            }
         }
-        
+
         if (endStopIdStr != null && !endStopIdStr.isEmpty()) {
             try {
                 UUID endStopId = UUID.fromString(endStopIdStr);
-                if (!importRequest.getValidateStopsExist() || stopRepository.existsById(endStopId)) {
+                if (importRequest.getValidateStopsExist()) {
+                    if (stopRepository.existsById(endStopId)) {
+                        route.setEndStopId(endStopId);
+                    } else {
+                        throw new IllegalArgumentException("End stop with ID '" + endStopIdStr + "' does not exist");
+                    }
+                } else {
+                    // Set the stop ID without validation
                     route.setEndStopId(endStopId);
                 }
-            } catch (Exception ignored) {}
-        }
-        
-        route.setCreatedAt(LocalDateTime.now());
+            } catch (IllegalArgumentException e) {
+                throw e; // Re-throw validation errors
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid end stop ID format: '" + endStopIdStr + "'", e);
+            }
+        }        route.setCreatedAt(LocalDateTime.now());
         route.setUpdatedAt(LocalDateTime.now());
         route.setCreatedBy(userId);
         route.setUpdatedBy(userId);
