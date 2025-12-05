@@ -451,22 +451,23 @@ public class RouteController {
                 .body(csvTemplate);
     }
 
-    // 9. EXPORT ROUTES
+    // 9. EXPORT ROUTES - CSV ONLY WITH TWO MODES
     @PostMapping("/export")
     @Operation(
-        summary = "Export routes with flexible filtering and format options",
-        description = "Export routes data to CSV or JSON format with comprehensive filtering options. " +
-                     "Supports exporting all routes, specific route selections, routes by various criteria, " +
-                     "and customizable field inclusion. Exported CSV contains system UUIDs for efficient " +
-                     "data integration with schedule imports and other bulk operations. Perfect for bulk operations " +
-                     "like schedule imports where you need route IDs to replace in external datasets.",
+        summary = "Export routes in CSV format with rich filtering and two distinct modes",
+        description = "Export routes data exclusively in CSV format with comprehensive filtering options and two distinct export modes:\n\n" +
+                     "**MODE 1 - ROUTE_ONLY**: One row per route containing only start and end stop information.\n" +
+                     "**MODE 2 - ROUTE_WITH_ALL_STOPS**: One row per stop (multiple rows per route) including all intermediate stops.\n\n" +
+                     "Supports extensive filtering by route attributes, stop criteria, text search, and customizable field inclusion. " +
+                     "Perfect for system integrations, BI dashboards, schedule imports, and route database migrations. " +
+                     "All exports include UUIDs for efficient data integration.",
         operationId = "exportRoutes"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Export completed successfully - returns file content with metadata"),
-        @ApiResponse(responseCode = "400", description = "Invalid export request parameters"),
+        @ApiResponse(responseCode = "200", description = "CSV export completed successfully with comprehensive metadata"),
+        @ApiResponse(responseCode = "400", description = "Invalid export request parameters or validation errors"),
         @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
-        @ApiResponse(responseCode = "500", description = "Internal server error during export processing")
+        @ApiResponse(responseCode = "500", description = "Internal server error during CSV generation")
     })
     public ResponseEntity<byte[]> exportRoutes(
             @Parameter(description = "Export all routes (ignores other filters if true)", example = "false")
@@ -505,8 +506,11 @@ public class RouteController {
             @Parameter(description = "Filter by maximum estimated duration in minutes", example = "120")
             @RequestParam(required = false) Integer maxDurationMinutes,
             
-            @Parameter(description = "Search text to filter routes by name, description, route group name, start/end stop names")
+            @Parameter(description = "Search text to filter routes by name, route number, or description in all languages")
             @RequestParam(required = false) String searchText,
+            
+            @Parameter(description = "Export mode - determines CSV structure", example = "ROUTE_ONLY")
+            @RequestParam(defaultValue = "ROUTE_ONLY") RouteExportRequest.ExportMode exportMode,
             
             @Parameter(description = "Export format", example = "CSV")
             @RequestParam(defaultValue = "CSV") RouteExportRequest.ExportFormat format,
@@ -514,19 +518,19 @@ public class RouteController {
             @Parameter(description = "Include multi-language fields (name_sinhala, name_tamil, etc.)", example = "true")
             @RequestParam(defaultValue = "true") Boolean includeMultiLanguageFields,
             
-            @Parameter(description = "Include route group information (route group name, etc.)", example = "true")
+            @Parameter(description = "Include route group information", example = "true")
             @RequestParam(defaultValue = "true") Boolean includeRouteGroupInfo,
             
-            @Parameter(description = "Include detailed stop information (stop names, coordinates)", example = "true")
+            @Parameter(description = "Include start and end stop details", example = "true")
             @RequestParam(defaultValue = "true") Boolean includeStopDetails,
             
-            @Parameter(description = "Include route stops information (intermediate stops)", example = "true")
-            @RequestParam(defaultValue = "true") Boolean includeRouteStops,
+            @Parameter(description = "Include route stops (intermediate stops)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeRouteStops,
             
-            @Parameter(description = "Include audit fields (createdAt, updatedAt, createdBy, updatedBy)", example = "false")
+            @Parameter(description = "Include audit fields (created_at, updated_at, created_by, updated_by)", example = "false")
             @RequestParam(defaultValue = "false") Boolean includeAuditFields,
             
-            @Parameter(description = "Custom field selection (comma-separated, if specified only these fields will be exported)")
+            @Parameter(description = "Custom fields to include in export (comma-separated, if specified only these fields will be exported)")
             @RequestParam(required = false) List<String> customFields,
             
             Authentication authentication) {
@@ -546,6 +550,7 @@ public class RouteController {
         exportRequest.setMinDurationMinutes(minDurationMinutes);
         exportRequest.setMaxDurationMinutes(maxDurationMinutes);
         exportRequest.setSearchText(searchText);
+        exportRequest.setExportMode(exportMode);
         exportRequest.setFormat(format);
         exportRequest.setIncludeMultiLanguageFields(includeMultiLanguageFields);
         exportRequest.setIncludeRouteGroupInfo(includeRouteGroupInfo);
@@ -561,11 +566,12 @@ public class RouteController {
         return ResponseEntity.ok()
                 .header("Content-Type", exportResponse.getContentType())
                 .header("Content-Disposition", "attachment; filename=\"" + exportResponse.getFileName() + "\"")
-                .header("X-Export-Metadata", 
-                       String.format("Records: %d, Format: %s, Exported-By: %s", 
-                                   exportResponse.getMetadata().getRecordsExported(),
-                                   exportResponse.getMetadata().getFormat(),
-                                   exportResponse.getMetadata().getExportedBy()))
+                .header("X-Export-Total-Records", exportResponse.getMetadata().getTotalRecordsFound().toString())
+                .header("X-Export-Records", exportResponse.getMetadata().getRecordsExported().toString())
+                .header("X-Export-Mode", exportResponse.getMetadata().getExportMode())
+                .header("X-Export-Format", exportResponse.getMetadata().getFormat())
+                .header("X-Export-Timestamp", exportResponse.getMetadata().getExportedAt().toString())
+                .header("X-Export-By", exportResponse.getMetadata().getExportedBy())
                 .body(exportResponse.getContent());
     }
 }

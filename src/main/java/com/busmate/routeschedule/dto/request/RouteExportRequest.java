@@ -48,6 +48,9 @@ public class RouteExportRequest {
     @Schema(description = "Search text to filter routes by name, route number, or description in all languages")
     private String searchText;
 
+    @Schema(description = "Export mode - determines CSV structure", allowableValues = {"ROUTE_ONLY", "ROUTE_WITH_ALL_STOPS"})
+    private ExportMode exportMode = ExportMode.ROUTE_ONLY;
+
     @Schema(description = "Export format", allowableValues = {"CSV", "JSON"})
     private ExportFormat format = ExportFormat.CSV;
 
@@ -68,6 +71,14 @@ public class RouteExportRequest {
 
     @Schema(description = "Custom fields to include in export")
     private List<String> customFields;
+
+    @Schema(description = "Available export modes")
+    public enum ExportMode {
+        @Schema(description = "One row per route with only start and end stops")
+        ROUTE_ONLY,
+        @Schema(description = "One row per stop (multiple rows per route including all intermediate stops)")
+        ROUTE_WITH_ALL_STOPS
+    }
 
     @Schema(description = "Available export formats")
     public enum ExportFormat {

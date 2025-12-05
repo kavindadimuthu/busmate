@@ -21,6 +21,7 @@ public class RouteExportResponse {
         private LocalDateTime exportedAt;
         private String exportedBy;
         private String format;
+        private String exportMode;
         
         // Filter information that was applied
         private FilterSummary filtersApplied;
@@ -34,6 +35,8 @@ public class RouteExportResponse {
         private Boolean exportedAll;
         private Integer specificRouteIds;
         private Integer routeGroupIds;
+        private Integer startStopIds;
+        private Integer endStopIds;
         private Integer travelsThroughStops;
         private List<String> directions;
         private List<String> roadTypes;
@@ -46,6 +49,7 @@ public class RouteExportResponse {
     
     @Data
     public static class ExportOptions {
+        private String exportMode;
         private Boolean includeMultiLanguageFields;
         private Boolean includeRouteGroupInfo;
         private Boolean includeStopDetails;
