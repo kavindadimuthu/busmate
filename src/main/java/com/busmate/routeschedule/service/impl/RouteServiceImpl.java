@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.response.RouteResponse;
+import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
 import com.busmate.routeschedule.entity.Route;
@@ -89,13 +90,11 @@ public class RouteServiceImpl implements RouteService {
         return routes.map(this::mapToResponse);
     }
 
-    @Override
-    public List<DirectionEnum> getDistinctDirections() {
+    private List<DirectionEnum> getDistinctDirections() {
         return routeRepository.findDistinctDirections();
     }
 
-    @Override
-    public List<Map<String, Object>> getDistinctRouteGroups() {
+    private List<Map<String, Object>> getDistinctRouteGroups() {
         List<Object[]> results = routeRepository.findDistinctRouteGroups();
         return results.stream().map(result -> {
             Map<String, Object> routeGroup = new HashMap<>();
@@ -105,8 +104,7 @@ public class RouteServiceImpl implements RouteService {
         }).collect(Collectors.toList());
     }
 
-    @Override
-    public Map<String, Object> getDistanceRange() {
+    private Map<String, Object> getDistanceRange() {
         List<Object[]> results = routeRepository.findDistanceRange();
         Map<String, Object> range = new HashMap<>();
         if (!results.isEmpty() && results.get(0) != null) {
@@ -120,8 +118,7 @@ public class RouteServiceImpl implements RouteService {
         return range;
     }
 
-    @Override
-    public Map<String, Object> getDurationRange() {
+    private Map<String, Object> getDurationRange() {
         List<Object[]> results = routeRepository.findDurationRange();
         Map<String, Object> range = new HashMap<>();
         if (!results.isEmpty() && results.get(0) != null) {
@@ -133,6 +130,76 @@ public class RouteServiceImpl implements RouteService {
             range.put("max", 0);
         }
         return range;
+    }
+
+    @Override
+    public RouteFilterOptionsResponse getFilterOptions() {
+        RouteFilterOptionsResponse response = new RouteFilterOptionsResponse();
+        
+        // Get directions
+        response.setDirections(getDistinctDirections());
+        
+        // Get route groups
+        List<Map<String, Object>> routeGroups = getDistinctRouteGroups();
+        response.setRouteGroups(routeGroups);
+        
+        // Get distance range
+        List<Object[]> distanceResults = routeRepository.findDistanceRange();
+        RouteFilterOptionsResponse.RangeFilter distanceRange = new RouteFilterOptionsResponse.RangeFilter();
+        if (!distanceResults.isEmpty() && distanceResults.get(0) != null) {
+            Object[] result = distanceResults.get(0);
+            distanceRange.setMin((Double) result[0]);
+            distanceRange.setMax((Double) result[1]);
+            
+            // Calculate average and count for additional metadata
+            List<Object[]> distanceStats = routeRepository.getDistanceStatistics();
+            if (!distanceStats.isEmpty() && distanceStats.get(0) != null) {
+                Object[] stats = distanceStats.get(0);
+                distanceRange.setAverage((Double) stats[0]);
+                distanceRange.setCount(routeRepository.count()); // Total routes count
+            }
+        } else {
+            distanceRange.setMin(0.0);
+            distanceRange.setMax(0.0);
+            distanceRange.setAverage(0.0);
+            distanceRange.setCount(0L);
+        }
+        response.setDistanceRange(distanceRange);
+        
+        // Get duration range
+        List<Object[]> durationResults = routeRepository.findDurationRange();
+        RouteFilterOptionsResponse.RangeFilter durationRange = new RouteFilterOptionsResponse.RangeFilter();
+        if (!durationResults.isEmpty() && durationResults.get(0) != null) {
+            Object[] result = durationResults.get(0);
+            durationRange.setMin(((Number) result[0]).doubleValue());
+            durationRange.setMax(((Number) result[1]).doubleValue());
+            
+            // Calculate average and count for additional metadata
+            List<Object[]> durationStats = routeRepository.getDurationStatistics();
+            if (!durationStats.isEmpty() && durationStats.get(0) != null) {
+                Object[] stats = durationStats.get(0);
+                durationRange.setAverage((Double) stats[0]);
+                durationRange.setCount(routeRepository.count()); // Total routes count
+            }
+        } else {
+            durationRange.setMin(0.0);
+            durationRange.setMax(0.0);
+            durationRange.setAverage(0.0);
+            durationRange.setCount(0L);
+        }
+        response.setDurationRange(durationRange);
+        
+        // Set metadata
+        RouteFilterOptionsResponse.FilterMetadata metadata = new RouteFilterOptionsResponse.FilterMetadata();
+        metadata.setTotalRoutes(Math.toIntExact(routeRepository.count()));
+        metadata.setTotalRouteGroups(routeGroups.size());
+        metadata.setTotalDirections(response.getDirections().size());
+        metadata.setHasDistanceData(distanceRange.getCount() > 0);
+        metadata.setHasDurationData(durationRange.getCount() > 0);
+        metadata.setDataSource("routes");
+        response.setMetadata(metadata);
+        
+        return response;
     }
 
     @Override

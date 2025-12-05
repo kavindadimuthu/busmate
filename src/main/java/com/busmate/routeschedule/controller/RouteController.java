@@ -3,6 +3,7 @@ package com.busmate.routeschedule.controller;
 import com.busmate.routeschedule.dto.request.RouteGroupRequest;
 import com.busmate.routeschedule.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.dto.response.RouteResponse;
+import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
@@ -174,61 +175,20 @@ public class RouteController {
         return ResponseEntity.ok(responses);
     }
 
-    // 5. FILTER OPTIONS - Get distinct values for filtering
-    @GetMapping("/filter-options/directions")
+    // 5. FILTER OPTIONS - Consolidated endpoint for all filter options
+    @GetMapping("/filters/options")
     @Operation(
-        summary = "Get distinct directions",
-        description = "Retrieve all distinct directions available in the routes database for filter dropdown options.",
-        operationId = "getDistinctDirections"
+        summary = "Get all route filter options",
+        description = "Retrieve all filter options in one consolidated response including directions, route groups, distance range, and duration range. " +
+                     "This endpoint provides everything needed for the UI filtering functionality in a single API call.",
+        operationId = "getRouteFilterOptions"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct directions retrieved successfully")
+        @ApiResponse(responseCode = "200", description = "All filter options retrieved successfully")
     })
-    public ResponseEntity<List<DirectionEnum>> getDistinctDirections() {
-        List<DirectionEnum> directions = routeService.getDistinctDirections();
-        return ResponseEntity.ok(directions);
-    }
-
-    @GetMapping("/filter-options/route-groups")
-    @Operation(
-        summary = "Get distinct route groups",
-        description = "Retrieve all distinct route groups available in the routes database for filter dropdown options.",
-        operationId = "getDistinctRouteGroups"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct route groups retrieved successfully")
-    })
-    public ResponseEntity<List<Map<String, Object>>> getDistinctRouteGroups() {
-        List<Map<String, Object>> routeGroups = routeService.getDistinctRouteGroups();
-        return ResponseEntity.ok(routeGroups);
-    }
-
-    @GetMapping("/filter-options/distance-range")
-    @Operation(
-        summary = "Get distance range",
-        description = "Retrieve the minimum and maximum distance values available in the routes database for range filter options.",
-        operationId = "getDistanceRange"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distance range retrieved successfully")
-    })
-    public ResponseEntity<Map<String, Object>> getDistanceRange() {
-        Map<String, Object> range = routeService.getDistanceRange();
-        return ResponseEntity.ok(range);
-    }
-
-    @GetMapping("/filter-options/duration-range")
-    @Operation(
-        summary = "Get duration range",
-        description = "Retrieve the minimum and maximum duration values available in the routes database for range filter options.",
-        operationId = "getDurationRange"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Duration range retrieved successfully")
-    })
-    public ResponseEntity<Map<String, Object>> getDurationRange() {
-        Map<String, Object> range = routeService.getDurationRange();
-        return ResponseEntity.ok(range);
+    public ResponseEntity<RouteFilterOptionsResponse> getRouteFilterOptions() {
+        RouteFilterOptionsResponse response = routeService.getFilterOptions();
+        return ResponseEntity.ok(response);
     }
 
     // ========== ROUTE GROUP APIs ==========

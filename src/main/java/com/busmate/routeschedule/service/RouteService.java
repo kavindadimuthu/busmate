@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.response.RouteResponse;
+import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
@@ -34,11 +35,8 @@ public interface RouteService {
             Integer maxDuration,
             Pageable pageable);
     
-    // Filter options methods
-    List<DirectionEnum> getDistinctDirections();
-    List<Map<String, Object>> getDistinctRouteGroups();
-    Map<String, Object> getDistanceRange();
-    Map<String, Object> getDurationRange();
+    // Filter options method - consolidated
+    RouteFilterOptionsResponse getFilterOptions();
     List<RouteResponse> getRoutesByRouteGroupId(UUID routeGroupId);
     
     // Statistics methods
