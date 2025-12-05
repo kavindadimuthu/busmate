@@ -52,8 +52,6 @@ public class RouteExportResponse {
         private String exportMode;
         private Boolean includeMultiLanguageFields;
         private Boolean includeRouteGroupInfo;
-        private Boolean includeStopDetails;
-        private Boolean includeRouteStops;
         private Boolean includeAuditFields;
         private List<String> customFields;
     }

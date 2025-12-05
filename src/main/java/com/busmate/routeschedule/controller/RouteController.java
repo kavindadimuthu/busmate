@@ -521,12 +521,6 @@ public class RouteController {
             @Parameter(description = "Include route group information", example = "true")
             @RequestParam(defaultValue = "true") Boolean includeRouteGroupInfo,
             
-            @Parameter(description = "Include start and end stop details", example = "true")
-            @RequestParam(defaultValue = "true") Boolean includeStopDetails,
-            
-            @Parameter(description = "Include route stops (intermediate stops)", example = "false")
-            @RequestParam(defaultValue = "false") Boolean includeRouteStops,
-            
             @Parameter(description = "Include audit fields (created_at, updated_at, created_by, updated_by)", example = "false")
             @RequestParam(defaultValue = "false") Boolean includeAuditFields,
             
@@ -554,8 +548,6 @@ public class RouteController {
         exportRequest.setFormat(format);
         exportRequest.setIncludeMultiLanguageFields(includeMultiLanguageFields);
         exportRequest.setIncludeRouteGroupInfo(includeRouteGroupInfo);
-        exportRequest.setIncludeStopDetails(includeStopDetails);
-        exportRequest.setIncludeRouteStops(includeRouteStops);
         exportRequest.setIncludeAuditFields(includeAuditFields);
         exportRequest.setCustomFields(customFields);
         

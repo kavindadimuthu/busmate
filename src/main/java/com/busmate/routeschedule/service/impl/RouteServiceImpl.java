@@ -1253,19 +1253,17 @@ public class RouteServiceImpl implements RouteService {
             routeData.put("startStopId", route.getStartStopId());
             routeData.put("endStopId", route.getEndStopId());
             
-            // Stop details if requested
-            if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
-                Stop startStop = route.getStartStopId() != null ? 
-                    stopRepository.findById(route.getStartStopId()).orElse(null) : null;
-                Stop endStop = route.getEndStopId() != null ? 
-                    stopRepository.findById(route.getEndStopId()).orElse(null) : null;
-                
-                if (startStop != null) {
-                    routeData.put("startStop", mapperUtils.map(startStop, com.busmate.routeschedule.dto.response.StopResponse.class));
-                }
-                if (endStop != null) {
-                    routeData.put("endStop", mapperUtils.map(endStop, com.busmate.routeschedule.dto.response.StopResponse.class));
-                }
+            // Stop details (always included for basic route info)
+            Stop startStop = route.getStartStopId() != null ? 
+                stopRepository.findById(route.getStartStopId()).orElse(null) : null;
+            Stop endStop = route.getEndStopId() != null ? 
+                stopRepository.findById(route.getEndStopId()).orElse(null) : null;
+            
+            if (startStop != null) {
+                routeData.put("startStop", mapperUtils.map(startStop, com.busmate.routeschedule.dto.response.StopResponse.class));
+            }
+            if (endStop != null) {
+                routeData.put("endStop", mapperUtils.map(endStop, com.busmate.routeschedule.dto.response.StopResponse.class));
             }
             
             // Route metrics
@@ -1273,8 +1271,8 @@ public class RouteServiceImpl implements RouteService {
             routeData.put("estimatedDurationMinutes", route.getEstimatedDurationMinutes());
             routeData.put("direction", route.getDirection());
             
-            // Route stops if requested
-            if (Boolean.TRUE.equals(request.getIncludeRouteStops())) {
+            // Route stops if export mode includes all stops
+            if (request.getExportMode() == RouteExportRequest.ExportMode.ROUTE_WITH_ALL_STOPS) {
                 List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
                 List<Map<String, Object>> routeStopsData = routeStops.stream()
                     .map(rs -> {
@@ -1350,30 +1348,27 @@ public class RouteServiceImpl implements RouteService {
             }
         }
         
-        // Start and end stop fields
+        // Start and end stop fields (always included)
         headers.add("start_stop_id");
         headers.add("end_stop_id");
+        headers.add("start_stop_name");
+        headers.add("end_stop_name");
         
-        if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
-            headers.add("start_stop_name");
-            headers.add("end_stop_name");
-            
-            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
-                headers.add("start_stop_name_sinhala");
-                headers.add("start_stop_name_tamil");
-                headers.add("end_stop_name_sinhala");
-                headers.add("end_stop_name_tamil");
-            }
-            
-            headers.add("start_stop_latitude");
-            headers.add("start_stop_longitude");
-            headers.add("start_stop_address");
-            headers.add("start_stop_city");
-            headers.add("end_stop_latitude");
-            headers.add("end_stop_longitude");
-            headers.add("end_stop_address");
-            headers.add("end_stop_city");
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            headers.add("start_stop_name_sinhala");
+            headers.add("start_stop_name_tamil");
+            headers.add("end_stop_name_sinhala");
+            headers.add("end_stop_name_tamil");
         }
+        
+        headers.add("start_stop_latitude");
+        headers.add("start_stop_longitude");
+        headers.add("start_stop_address");
+        headers.add("start_stop_city");
+        headers.add("end_stop_latitude");
+        headers.add("end_stop_longitude");
+        headers.add("end_stop_address");
+        headers.add("end_stop_city");
         
         // Route metrics
         headers.add("distance_km");
@@ -1440,12 +1435,11 @@ public class RouteServiceImpl implements RouteService {
         headers.add("distance_from_start_km");
         headers.add("stop_type"); // start, end, intermediate
         
-        if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
-            headers.add("latitude");
-            headers.add("longitude");
-            headers.add("address");
-            headers.add("city");
-        }
+        // Stop location details (always included)
+        headers.add("latitude");
+        headers.add("longitude");
+        headers.add("address");
+        headers.add("city");
         
         // Route metrics
         headers.add("distance_km");
@@ -1503,53 +1497,51 @@ public class RouteServiceImpl implements RouteService {
         rowData.add(escapeCsvValue(route.getStartStopId() != null ? route.getStartStopId().toString() : ""));
         rowData.add(escapeCsvValue(route.getEndStopId() != null ? route.getEndStopId().toString() : ""));
         
-        // Stop details if requested
-        if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
-            Stop startStop = route.getStartStopId() != null ? 
-                stopRepository.findById(route.getStartStopId()).orElse(null) : null;
-            Stop endStop = route.getEndStopId() != null ? 
-                stopRepository.findById(route.getEndStopId()).orElse(null) : null;
+        // Stop details (always included)
+        Stop startStop = route.getStartStopId() != null ? 
+            stopRepository.findById(route.getStartStopId()).orElse(null) : null;
+        Stop endStop = route.getEndStopId() != null ? 
+            stopRepository.findById(route.getEndStopId()).orElse(null) : null;
+        
+        // Start and end stop names
+        rowData.add(escapeCsvValue(startStop != null ? startStop.getName() : ""));
+        rowData.add(escapeCsvValue(endStop != null ? endStop.getName() : ""));
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            rowData.add(escapeCsvValue(startStop != null ? startStop.getNameSinhala() : ""));
+            rowData.add(escapeCsvValue(startStop != null ? startStop.getNameTamil() : ""));
+            rowData.add(escapeCsvValue(endStop != null ? endStop.getNameSinhala() : ""));
+            rowData.add(escapeCsvValue(endStop != null ? endStop.getNameTamil() : ""));
+        }
             
-            // Start stop details
-            rowData.add(escapeCsvValue(startStop != null ? startStop.getName() : ""));
-            rowData.add(escapeCsvValue(endStop != null ? endStop.getName() : ""));
-            
-            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
-                rowData.add(escapeCsvValue(startStop != null ? startStop.getNameSinhala() : ""));
-                rowData.add(escapeCsvValue(startStop != null ? startStop.getNameTamil() : ""));
-                rowData.add(escapeCsvValue(endStop != null ? endStop.getNameSinhala() : ""));
-                rowData.add(escapeCsvValue(endStop != null ? endStop.getNameTamil() : ""));
-            }
-            
-            // Start stop location
-            if (startStop != null && startStop.getLocation() != null) {
-                rowData.add(escapeCsvValue(startStop.getLocation().getLatitude() != null ? 
-                    startStop.getLocation().getLatitude().toString() : ""));
-                rowData.add(escapeCsvValue(startStop.getLocation().getLongitude() != null ? 
-                    startStop.getLocation().getLongitude().toString() : ""));
-                rowData.add(escapeCsvValue(startStop.getLocation().getAddress()));
-                rowData.add(escapeCsvValue(startStop.getLocation().getCity()));
-            } else {
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-            }
-            
-            // End stop location
-            if (endStop != null && endStop.getLocation() != null) {
-                rowData.add(escapeCsvValue(endStop.getLocation().getLatitude() != null ? 
-                    endStop.getLocation().getLatitude().toString() : ""));
-                rowData.add(escapeCsvValue(endStop.getLocation().getLongitude() != null ? 
-                    endStop.getLocation().getLongitude().toString() : ""));
-                rowData.add(escapeCsvValue(endStop.getLocation().getAddress()));
-                rowData.add(escapeCsvValue(endStop.getLocation().getCity()));
-            } else {
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-            }
+        // Start stop location
+        if (startStop != null && startStop.getLocation() != null) {
+            rowData.add(escapeCsvValue(startStop.getLocation().getLatitude() != null ? 
+                startStop.getLocation().getLatitude().toString() : ""));
+            rowData.add(escapeCsvValue(startStop.getLocation().getLongitude() != null ? 
+                startStop.getLocation().getLongitude().toString() : ""));
+            rowData.add(escapeCsvValue(startStop.getLocation().getAddress()));
+            rowData.add(escapeCsvValue(startStop.getLocation().getCity()));
+        } else {
+            rowData.add("");
+            rowData.add("");
+            rowData.add("");
+            rowData.add("");
+        }
+        
+        // End stop location
+        if (endStop != null && endStop.getLocation() != null) {
+            rowData.add(escapeCsvValue(endStop.getLocation().getLatitude() != null ? 
+                endStop.getLocation().getLatitude().toString() : ""));
+            rowData.add(escapeCsvValue(endStop.getLocation().getLongitude() != null ? 
+                endStop.getLocation().getLongitude().toString() : ""));
+            rowData.add(escapeCsvValue(endStop.getLocation().getAddress()));
+            rowData.add(escapeCsvValue(endStop.getLocation().getCity()));
+        } else {
+            rowData.add("");
+            rowData.add("");
+            rowData.add("");
+            rowData.add("");
         }
         
         // Route metrics
@@ -1625,14 +1617,15 @@ public class RouteServiceImpl implements RouteService {
             rowData.add(escapeCsvValue(stopType));
             
             // Stop location details
-            if (Boolean.TRUE.equals(request.getIncludeStopDetails()) && stop.getLocation() != null) {
+            // Stop location details
+            if (stop.getLocation() != null) {
                 rowData.add(escapeCsvValue(stop.getLocation().getLatitude() != null ? 
                     stop.getLocation().getLatitude().toString() : ""));
                 rowData.add(escapeCsvValue(stop.getLocation().getLongitude() != null ? 
                     stop.getLocation().getLongitude().toString() : ""));
                 rowData.add(escapeCsvValue(stop.getLocation().getAddress()));
                 rowData.add(escapeCsvValue(stop.getLocation().getCity()));
-            } else if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
+            } else {
                 rowData.add("");
                 rowData.add("");
                 rowData.add("");
@@ -1652,12 +1645,11 @@ public class RouteServiceImpl implements RouteService {
             rowData.add("");
             rowData.add(escapeCsvValue(stopType));
             
-            if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-            }
+            // Empty location fields
+            rowData.add("");
+            rowData.add("");
+            rowData.add("");
+            rowData.add("");
         }
         
         // Route metrics (same for all rows of this route)
@@ -1738,8 +1730,6 @@ public class RouteServiceImpl implements RouteService {
         exportOptions.setExportMode(request.getExportMode().name());
         exportOptions.setIncludeMultiLanguageFields(request.getIncludeMultiLanguageFields());
         exportOptions.setIncludeRouteGroupInfo(request.getIncludeRouteGroupInfo());
-        exportOptions.setIncludeStopDetails(request.getIncludeStopDetails());
-        exportOptions.setIncludeRouteStops(request.getIncludeRouteStops());
         exportOptions.setIncludeAuditFields(request.getIncludeAuditFields());
         exportOptions.setCustomFields(request.getCustomFields());
         

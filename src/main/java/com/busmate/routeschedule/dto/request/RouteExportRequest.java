@@ -60,12 +60,6 @@ public class RouteExportRequest {
     @Schema(description = "Include route group information")
     private Boolean includeRouteGroupInfo = true;
 
-    @Schema(description = "Include start and end stop details")
-    private Boolean includeStopDetails = true;
-
-    @Schema(description = "Include route stops (intermediate stops)")
-    private Boolean includeRouteStops = false;
-
     @Schema(description = "Include audit fields (created_at, updated_at, created_by, updated_by)")
     private Boolean includeAuditFields = false;
 
