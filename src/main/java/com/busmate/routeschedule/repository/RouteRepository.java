@@ -138,4 +138,43 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     
     @Query("SELECT r.name FROM Route r WHERE r.estimatedDurationMinutes = (SELECT MIN(r2.estimatedDurationMinutes) FROM Route r2 WHERE r2.estimatedDurationMinutes IS NOT NULL)")
     List<String> findShortestDurationRouteNames();
+    
+    @Query(value = "SELECT DISTINCT r.* FROM route r " +
+           "LEFT JOIN route_group rg ON r.route_group_id = rg.id " +
+           "LEFT JOIN route_stop rs ON r.id = rs.route_id " +
+           "LEFT JOIN stop start_stop ON r.start_stop_id = start_stop.id " +
+           "LEFT JOIN stop end_stop ON r.end_stop_id = end_stop.id " +
+           "WHERE (:routeIds IS NULL OR r.id IN (:routeIds)) AND " +
+           "(:routeGroupIds IS NULL OR r.route_group_id IN (:routeGroupIds)) AND " +
+           "(:travelsThroughStopIds IS NULL OR rs.stop_id IN (:travelsThroughStopIds)) AND " +
+           "(:startStopIds IS NULL OR r.start_stop_id IN (:startStopIds)) AND " +
+           "(:endStopIds IS NULL OR r.end_stop_id IN (:endStopIds)) AND " +
+           "(:directions IS NULL OR r.direction IN (:directions)) AND " +
+           "(:roadTypes IS NULL OR r.road_type IN (:roadTypes)) AND " +
+           "(:minDistance IS NULL OR r.distance_km >= :minDistance) AND " +
+           "(:maxDistance IS NULL OR r.distance_km <= :maxDistance) AND " +
+           "(:minDuration IS NULL OR r.estimated_duration_minutes >= :minDuration) AND " +
+           "(:maxDuration IS NULL OR r.estimated_duration_minutes <= :maxDuration) AND " +
+           "(:searchText IS NULL OR :searchText = '' OR " +
+           "LOWER(r.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.name_sinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.name_tamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.route_number) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.description) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.route_through) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(rg.name) LIKE LOWER(CONCAT('%', :searchText, '%')))",
+           nativeQuery = true)
+    List<Route> findAllWithFiltersForExport(
+            @Param("routeIds") List<UUID> routeIds,
+            @Param("routeGroupIds") List<UUID> routeGroupIds,
+            @Param("travelsThroughStopIds") List<UUID> travelsThroughStopIds,
+            @Param("startStopIds") List<UUID> startStopIds,
+            @Param("endStopIds") List<UUID> endStopIds,
+            @Param("directions") List<String> directions,
+            @Param("roadTypes") List<String> roadTypes,
+            @Param("minDistance") Double minDistance,
+            @Param("maxDistance") Double maxDistance,
+            @Param("minDuration") Integer minDuration,
+            @Param("maxDuration") Integer maxDuration,
+            @Param("searchText") String searchText);
 }

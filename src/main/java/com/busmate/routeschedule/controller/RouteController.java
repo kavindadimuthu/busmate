@@ -2,11 +2,13 @@ package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.RouteGroupRequest;
 import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
+import com.busmate.routeschedule.dto.request.RouteExportRequest;
 import com.busmate.routeschedule.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.dto.response.RouteResponse;
 import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.RouteExportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.service.RouteGroupService;
 import com.busmate.routeschedule.service.RouteService;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -446,5 +449,123 @@ public class RouteController {
                 .header("Content-Type", "text/csv; charset=UTF-8")
                 .header("Content-Disposition", "attachment; filename=\"route_unified_import_template.csv\"")
                 .body(csvTemplate);
+    }
+
+    // 9. EXPORT ROUTES
+    @PostMapping("/export")
+    @Operation(
+        summary = "Export routes with flexible filtering and format options",
+        description = "Export routes data to CSV or JSON format with comprehensive filtering options. " +
+                     "Supports exporting all routes, specific route selections, routes by various criteria, " +
+                     "and customizable field inclusion. Exported CSV contains system UUIDs for efficient " +
+                     "data integration with schedule imports and other bulk operations. Perfect for bulk operations " +
+                     "like schedule imports where you need route IDs to replace in external datasets.",
+        operationId = "exportRoutes"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Export completed successfully - returns file content with metadata"),
+        @ApiResponse(responseCode = "400", description = "Invalid export request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during export processing")
+    })
+    public ResponseEntity<byte[]> exportRoutes(
+            @Parameter(description = "Export all routes (ignores other filters if true)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean exportAll,
+            
+            @Parameter(description = "Specific route IDs to export (comma-separated)")
+            @RequestParam(required = false) List<UUID> routeIds,
+            
+            @Parameter(description = "Filter by route group IDs (comma-separated)")
+            @RequestParam(required = false) List<UUID> routeGroupIds,
+            
+            @Parameter(description = "Filter by stops that routes travel through (comma-separated)")
+            @RequestParam(required = false) List<UUID> travelsThroughStopIds,
+            
+            @Parameter(description = "Filter by start stop IDs (comma-separated)")
+            @RequestParam(required = false) List<UUID> startStopIds,
+            
+            @Parameter(description = "Filter by end stop IDs (comma-separated)")
+            @RequestParam(required = false) List<UUID> endStopIds,
+            
+            @Parameter(description = "Filter by direction (UP, DOWN) - comma-separated")
+            @RequestParam(required = false) List<String> directions,
+            
+            @Parameter(description = "Filter by road type (NORMALWAY, EXPRESSWAY) - comma-separated")
+            @RequestParam(required = false) List<String> roadTypes,
+            
+            @Parameter(description = "Filter by minimum distance in kilometers", example = "5.0")
+            @RequestParam(required = false) Double minDistanceKm,
+            
+            @Parameter(description = "Filter by maximum distance in kilometers", example = "50.0")
+            @RequestParam(required = false) Double maxDistanceKm,
+            
+            @Parameter(description = "Filter by minimum estimated duration in minutes", example = "30")
+            @RequestParam(required = false) Integer minDurationMinutes,
+            
+            @Parameter(description = "Filter by maximum estimated duration in minutes", example = "120")
+            @RequestParam(required = false) Integer maxDurationMinutes,
+            
+            @Parameter(description = "Search text to filter routes by name, description, route group name, start/end stop names")
+            @RequestParam(required = false) String searchText,
+            
+            @Parameter(description = "Export format", example = "CSV")
+            @RequestParam(defaultValue = "CSV") RouteExportRequest.ExportFormat format,
+            
+            @Parameter(description = "Include multi-language fields (name_sinhala, name_tamil, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeMultiLanguageFields,
+            
+            @Parameter(description = "Include route group information (route group name, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeRouteGroupInfo,
+            
+            @Parameter(description = "Include detailed stop information (stop names, coordinates)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeStopDetails,
+            
+            @Parameter(description = "Include route stops information (intermediate stops)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeRouteStops,
+            
+            @Parameter(description = "Include audit fields (createdAt, updatedAt, createdBy, updatedBy)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeAuditFields,
+            
+            @Parameter(description = "Custom field selection (comma-separated, if specified only these fields will be exported)")
+            @RequestParam(required = false) List<String> customFields,
+            
+            Authentication authentication) {
+        
+        // Build request object from parameters
+        RouteExportRequest exportRequest = new RouteExportRequest();
+        exportRequest.setExportAll(exportAll);
+        exportRequest.setRouteIds(routeIds);
+        exportRequest.setRouteGroupIds(routeGroupIds);
+        exportRequest.setTravelsThroughStopIds(travelsThroughStopIds);
+        exportRequest.setStartStopIds(startStopIds);
+        exportRequest.setEndStopIds(endStopIds);
+        exportRequest.setDirections(directions);
+        exportRequest.setRoadTypes(roadTypes);
+        exportRequest.setMinDistanceKm(minDistanceKm);
+        exportRequest.setMaxDistanceKm(maxDistanceKm);
+        exportRequest.setMinDurationMinutes(minDurationMinutes);
+        exportRequest.setMaxDurationMinutes(maxDurationMinutes);
+        exportRequest.setSearchText(searchText);
+        exportRequest.setFormat(format);
+        exportRequest.setIncludeMultiLanguageFields(includeMultiLanguageFields);
+        exportRequest.setIncludeRouteGroupInfo(includeRouteGroupInfo);
+        exportRequest.setIncludeStopDetails(includeStopDetails);
+        exportRequest.setIncludeRouteStops(includeRouteStops);
+        exportRequest.setIncludeAuditFields(includeAuditFields);
+        exportRequest.setCustomFields(customFields);
+        
+        String userId = authentication != null ? authentication.getName() : "anonymous";
+        
+        RouteExportResponse exportResponse = routeService.exportRoutes(exportRequest, userId);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", exportResponse.getContentType())
+                .header("Content-Disposition", "attachment; filename=\"" + exportResponse.getFileName() + "\"")
+                .header("X-Export-Metadata", 
+                       String.format("Records: %d, Format: %s, Exported-By: %s", 
+                                   exportResponse.getMetadata().getRecordsExported(),
+                                   exportResponse.getMetadata().getFormat(),
+                                   exportResponse.getMetadata().getExportedBy()))
+                .body(exportResponse.getContent());
     }
 }

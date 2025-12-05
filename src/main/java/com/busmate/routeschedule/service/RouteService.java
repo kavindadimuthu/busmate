@@ -5,6 +5,8 @@ import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
 import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
+import com.busmate.routeschedule.dto.request.RouteExportRequest;
+import com.busmate.routeschedule.dto.response.exporting.RouteExportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.enums.RoadTypeEnum;
 import org.springframework.data.domain.Page;
@@ -47,4 +49,7 @@ public interface RouteService {
     
     // Unified Import methods
     RouteUnifiedImportResponse importRoutesUnified(MultipartFile file, RouteUnifiedImportRequest importRequest, String userId);
+    
+    // Export methods
+    RouteExportResponse exportRoutes(RouteExportRequest request, String userId);
 }

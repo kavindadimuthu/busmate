@@ -1,10 +1,12 @@
 package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
+import com.busmate.routeschedule.dto.request.RouteExportRequest;
 import com.busmate.routeschedule.dto.response.RouteResponse;
 import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.RouteExportResponse;
 import com.busmate.routeschedule.entity.Route;
 import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.Stop;
@@ -26,7 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -984,5 +989,514 @@ public class RouteServiceImpl implements RouteService {
             warnings.add(warning);
             return false;
         }
+    }
+
+    @Override
+    public RouteExportResponse exportRoutes(RouteExportRequest request, String userId) {
+        log.info("Exporting routes with request: {}, user: {}", request, userId);
+        
+        try {
+            // Get filtered routes based on request
+            List<Route> routes = getFilteredRoutes(request);
+            
+            // Build export response
+            RouteExportResponse response = new RouteExportResponse();
+            
+            if (request.getFormat() == RouteExportRequest.ExportFormat.CSV) {
+                generateCsvExport(routes, request, response, userId);
+            } else {
+                generateJsonExport(routes, request, response, userId);
+            }
+            
+            // Set metadata
+            setExportMetadata(response, request, routes.size(), userId);
+            
+            log.info("Successfully exported {} routes for user: {}", routes.size(), userId);
+            return response;
+            
+        } catch (Exception e) {
+            log.error("Error exporting routes for user: {}", userId, e);
+            throw new RuntimeException("Failed to export routes: " + e.getMessage(), e);
+        }
+    }
+
+    private List<Route> getFilteredRoutes(RouteExportRequest request) {
+        if (Boolean.TRUE.equals(request.getExportAll())) {
+            return routeRepository.findAll();
+        }
+        
+        // If specific route IDs are provided, use them
+        if (request.getRouteIds() != null && !request.getRouteIds().isEmpty()) {
+            return routeRepository.findAllById(request.getRouteIds());
+        }
+        
+        // Start with all routes and apply filters
+        List<Route> allRoutes = routeRepository.findAll();
+        
+        return allRoutes.stream()
+            .filter(route -> matchesFilters(route, request))
+            .collect(Collectors.toList());
+    }
+
+    private boolean matchesFilters(Route route, RouteExportRequest request) {
+        // Route group filter
+        if (request.getRouteGroupIds() != null && !request.getRouteGroupIds().isEmpty()) {
+            if (route.getRouteGroup() == null || !request.getRouteGroupIds().contains(route.getRouteGroup().getId())) {
+                return false;
+            }
+        }
+        
+        // Start stop filter
+        if (request.getStartStopIds() != null && !request.getStartStopIds().isEmpty()) {
+            if (route.getStartStopId() == null || !request.getStartStopIds().contains(route.getStartStopId())) {
+                return false;
+            }
+        }
+        
+        // End stop filter
+        if (request.getEndStopIds() != null && !request.getEndStopIds().isEmpty()) {
+            if (route.getEndStopId() == null || !request.getEndStopIds().contains(route.getEndStopId())) {
+                return false;
+            }
+        }
+        
+        // Direction filter
+        if (request.getDirections() != null && !request.getDirections().isEmpty()) {
+            if (route.getDirection() == null || !request.getDirections().contains(route.getDirection().name())) {
+                return false;
+            }
+        }
+        
+        // Road type filter
+        if (request.getRoadTypes() != null && !request.getRoadTypes().isEmpty()) {
+            if (route.getRoadType() == null || !request.getRoadTypes().contains(route.getRoadType().name())) {
+                return false;
+            }
+        }
+        
+        // Distance filters
+        if (request.getMinDistanceKm() != null) {
+            if (route.getDistanceKm() == null || route.getDistanceKm() < request.getMinDistanceKm()) {
+                return false;
+            }
+        }
+        
+        if (request.getMaxDistanceKm() != null) {
+            if (route.getDistanceKm() == null || route.getDistanceKm() > request.getMaxDistanceKm()) {
+                return false;
+            }
+        }
+        
+        // Duration filters
+        if (request.getMinDurationMinutes() != null) {
+            if (route.getEstimatedDurationMinutes() == null || route.getEstimatedDurationMinutes() < request.getMinDurationMinutes()) {
+                return false;
+            }
+        }
+        
+        if (request.getMaxDurationMinutes() != null) {
+            if (route.getEstimatedDurationMinutes() == null || route.getEstimatedDurationMinutes() > request.getMaxDurationMinutes()) {
+                return false;
+            }
+        }
+        
+        // Search text filter
+        if (request.getSearchText() != null && !request.getSearchText().trim().isEmpty()) {
+            String searchText = request.getSearchText().toLowerCase();
+            boolean matchesSearch = 
+                (route.getName() != null && route.getName().toLowerCase().contains(searchText)) ||
+                (route.getNameSinhala() != null && route.getNameSinhala().toLowerCase().contains(searchText)) ||
+                (route.getNameTamil() != null && route.getNameTamil().toLowerCase().contains(searchText)) ||
+                (route.getRouteNumber() != null && route.getRouteNumber().toLowerCase().contains(searchText)) ||
+                (route.getDescription() != null && route.getDescription().toLowerCase().contains(searchText)) ||
+                (route.getRouteThrough() != null && route.getRouteThrough().toLowerCase().contains(searchText)) ||
+                (route.getRouteGroup() != null && route.getRouteGroup().getName() != null && 
+                 route.getRouteGroup().getName().toLowerCase().contains(searchText));
+            
+            if (!matchesSearch) {
+                return false;
+            }
+        }
+        
+        // Travels through stop filter
+        if (request.getTravelsThroughStopIds() != null && !request.getTravelsThroughStopIds().isEmpty()) {
+            List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+            boolean travelsThrough = routeStops.stream()
+                .anyMatch(rs -> request.getTravelsThroughStopIds().contains(rs.getStop().getId()));
+            
+            if (!travelsThrough) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    private void generateCsvExport(List<Route> routes, RouteExportRequest request, 
+                                  RouteExportResponse response, String userId) {
+        StringWriter csvWriter = new StringWriter();
+        
+        // Write CSV header
+        List<String> headers = buildCsvHeaders(request);
+        csvWriter.write(String.join(",", headers) + "\n");
+        
+        // Write route data
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        
+        for (Route route : routes) {
+            List<String> rowData = new ArrayList<>();
+            
+            // Basic route fields
+            rowData.add(escapeCsvValue(route.getId().toString()));
+            rowData.add(escapeCsvValue(route.getName()));
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                rowData.add(escapeCsvValue(route.getNameSinhala()));
+                rowData.add(escapeCsvValue(route.getNameTamil()));
+            }
+            
+            rowData.add(escapeCsvValue(route.getRouteNumber()));
+            rowData.add(escapeCsvValue(route.getDescription()));
+            rowData.add(escapeCsvValue(route.getRoadType() != null ? route.getRoadType().name() : ""));
+            rowData.add(escapeCsvValue(route.getRouteThrough()));
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                rowData.add(escapeCsvValue(route.getRouteThroughSinhala()));
+                rowData.add(escapeCsvValue(route.getRouteThroughTamil()));
+            }
+            
+            // Route group info
+            if (Boolean.TRUE.equals(request.getIncludeRouteGroupInfo())) {
+                rowData.add(escapeCsvValue(route.getRouteGroup() != null ? route.getRouteGroup().getId().toString() : ""));
+                rowData.add(escapeCsvValue(route.getRouteGroup() != null ? route.getRouteGroup().getName() : ""));
+                
+                if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                    rowData.add(escapeCsvValue(route.getRouteGroup() != null ? route.getRouteGroup().getNameSinhala() : ""));
+                    rowData.add(escapeCsvValue(route.getRouteGroup() != null ? route.getRouteGroup().getNameTamil() : ""));
+                }
+            }
+            
+            // Stop details
+            rowData.add(escapeCsvValue(route.getStartStopId() != null ? route.getStartStopId().toString() : ""));
+            rowData.add(escapeCsvValue(route.getEndStopId() != null ? route.getEndStopId().toString() : ""));
+            
+            if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
+                // Get stop details
+                Stop startStop = route.getStartStopId() != null ? 
+                    stopRepository.findById(route.getStartStopId()).orElse(null) : null;
+                Stop endStop = route.getEndStopId() != null ? 
+                    stopRepository.findById(route.getEndStopId()).orElse(null) : null;
+                
+                rowData.add(escapeCsvValue(startStop != null ? startStop.getName() : ""));
+                rowData.add(escapeCsvValue(endStop != null ? endStop.getName() : ""));
+                
+                if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                    rowData.add(escapeCsvValue(startStop != null ? startStop.getNameSinhala() : ""));
+                    rowData.add(escapeCsvValue(startStop != null ? startStop.getNameTamil() : ""));
+                    rowData.add(escapeCsvValue(endStop != null ? endStop.getNameSinhala() : ""));
+                    rowData.add(escapeCsvValue(endStop != null ? endStop.getNameTamil() : ""));
+                }
+                
+                // Stop locations
+                if (startStop != null && startStop.getLocation() != null) {
+                    rowData.add(escapeCsvValue(startStop.getLocation().getLatitude() != null ? 
+                        startStop.getLocation().getLatitude().toString() : ""));
+                    rowData.add(escapeCsvValue(startStop.getLocation().getLongitude() != null ? 
+                        startStop.getLocation().getLongitude().toString() : ""));
+                    rowData.add(escapeCsvValue(startStop.getLocation().getAddress()));
+                    rowData.add(escapeCsvValue(startStop.getLocation().getCity()));
+                } else {
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                }
+                
+                if (endStop != null && endStop.getLocation() != null) {
+                    rowData.add(escapeCsvValue(endStop.getLocation().getLatitude() != null ? 
+                        endStop.getLocation().getLatitude().toString() : ""));
+                    rowData.add(escapeCsvValue(endStop.getLocation().getLongitude() != null ? 
+                        endStop.getLocation().getLongitude().toString() : ""));
+                    rowData.add(escapeCsvValue(endStop.getLocation().getAddress()));
+                    rowData.add(escapeCsvValue(endStop.getLocation().getCity()));
+                } else {
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                }
+            }
+            
+            // Route metrics
+            rowData.add(escapeCsvValue(route.getDistanceKm() != null ? route.getDistanceKm().toString() : ""));
+            rowData.add(escapeCsvValue(route.getEstimatedDurationMinutes() != null ? 
+                route.getEstimatedDurationMinutes().toString() : ""));
+            rowData.add(escapeCsvValue(route.getDirection() != null ? route.getDirection().name() : ""));
+            
+            // Route stops
+            if (Boolean.TRUE.equals(request.getIncludeRouteStops())) {
+                List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+                StringBuilder routeStopsData = new StringBuilder();
+                
+                for (int i = 0; i < routeStops.size(); i++) {
+                    RouteStop routeStop = routeStops.get(i);
+                    routeStopsData.append(routeStop.getStop().getId())
+                        .append(":").append(routeStop.getStopOrder());
+                    if (routeStop.getDistanceFromStartKm() != null) {
+                        routeStopsData.append(":").append(routeStop.getDistanceFromStartKm());
+                    }
+                    if (i < routeStops.size() - 1) {
+                        routeStopsData.append("|");
+                    }
+                }
+                rowData.add(escapeCsvValue(routeStopsData.toString()));
+            }
+            
+            // Audit fields
+            if (Boolean.TRUE.equals(request.getIncludeAuditFields())) {
+                rowData.add(escapeCsvValue(route.getCreatedAt() != null ? 
+                    route.getCreatedAt().format(formatter) : ""));
+                rowData.add(escapeCsvValue(route.getUpdatedAt() != null ? 
+                    route.getUpdatedAt().format(formatter) : ""));
+                rowData.add(escapeCsvValue(route.getCreatedBy()));
+                rowData.add(escapeCsvValue(route.getUpdatedBy()));
+            }
+            
+            csvWriter.write(String.join(",", rowData) + "\n");
+        }
+        
+        // Set response data
+        response.setContent(csvWriter.toString().getBytes(StandardCharsets.UTF_8));
+        response.setContentType("text/csv");
+        response.setFileName("routes_export_" + System.currentTimeMillis() + ".csv");
+    }
+
+    private void generateJsonExport(List<Route> routes, RouteExportRequest request, 
+                                   RouteExportResponse response, String userId) {
+        // Convert routes to response DTOs with filtering based on request options
+        List<Map<String, Object>> exportData = new ArrayList<>();
+        
+        for (Route route : routes) {
+            Map<String, Object> routeData = new HashMap<>();
+            
+            // Basic fields
+            routeData.put("id", route.getId());
+            routeData.put("name", route.getName());
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                routeData.put("nameSinhala", route.getNameSinhala());
+                routeData.put("nameTamil", route.getNameTamil());
+            }
+            
+            routeData.put("routeNumber", route.getRouteNumber());
+            routeData.put("description", route.getDescription());
+            routeData.put("roadType", route.getRoadType());
+            routeData.put("routeThrough", route.getRouteThrough());
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                routeData.put("routeThroughSinhala", route.getRouteThroughSinhala());
+                routeData.put("routeThroughTamil", route.getRouteThroughTamil());
+            }
+            
+            // Route group info
+            if (Boolean.TRUE.equals(request.getIncludeRouteGroupInfo()) && route.getRouteGroup() != null) {
+                Map<String, Object> routeGroupData = new HashMap<>();
+                routeGroupData.put("id", route.getRouteGroup().getId());
+                routeGroupData.put("name", route.getRouteGroup().getName());
+                
+                if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                    routeGroupData.put("nameSinhala", route.getRouteGroup().getNameSinhala());
+                    routeGroupData.put("nameTamil", route.getRouteGroup().getNameTamil());
+                }
+                
+                routeData.put("routeGroup", routeGroupData);
+            }
+            
+            // Stop IDs
+            routeData.put("startStopId", route.getStartStopId());
+            routeData.put("endStopId", route.getEndStopId());
+            
+            // Stop details if requested
+            if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
+                Stop startStop = route.getStartStopId() != null ? 
+                    stopRepository.findById(route.getStartStopId()).orElse(null) : null;
+                Stop endStop = route.getEndStopId() != null ? 
+                    stopRepository.findById(route.getEndStopId()).orElse(null) : null;
+                
+                if (startStop != null) {
+                    routeData.put("startStop", mapperUtils.map(startStop, com.busmate.routeschedule.dto.response.StopResponse.class));
+                }
+                if (endStop != null) {
+                    routeData.put("endStop", mapperUtils.map(endStop, com.busmate.routeschedule.dto.response.StopResponse.class));
+                }
+            }
+            
+            // Route metrics
+            routeData.put("distanceKm", route.getDistanceKm());
+            routeData.put("estimatedDurationMinutes", route.getEstimatedDurationMinutes());
+            routeData.put("direction", route.getDirection());
+            
+            // Route stops if requested
+            if (Boolean.TRUE.equals(request.getIncludeRouteStops())) {
+                List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+                List<Map<String, Object>> routeStopsData = routeStops.stream()
+                    .map(rs -> {
+                        Map<String, Object> rsData = new HashMap<>();
+                        rsData.put("stopId", rs.getStop().getId());
+                        rsData.put("stopName", rs.getStop().getName());
+                        rsData.put("stopOrder", rs.getStopOrder());
+                        rsData.put("distanceFromStartKm", rs.getDistanceFromStartKm());
+                        return rsData;
+                    })
+                    .collect(Collectors.toList());
+                routeData.put("routeStops", routeStopsData);
+            }
+            
+            // Audit fields if requested
+            if (Boolean.TRUE.equals(request.getIncludeAuditFields())) {
+                routeData.put("createdAt", route.getCreatedAt());
+                routeData.put("updatedAt", route.getUpdatedAt());
+                routeData.put("createdBy", route.getCreatedBy());
+                routeData.put("updatedBy", route.getUpdatedBy());
+            }
+            
+            exportData.add(routeData);
+        }
+        
+        // Convert to JSON
+        try {
+            String jsonContent = "{\n  \"routes\": " + 
+                exportData.toString().replace("=", ": ") + "\n}";
+            response.setContent(jsonContent.getBytes(StandardCharsets.UTF_8));
+            response.setContentType("application/json");
+            response.setFileName("routes_export_" + System.currentTimeMillis() + ".json");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate JSON export", e);
+        }
+    }
+
+    private List<String> buildCsvHeaders(RouteExportRequest request) {
+        List<String> headers = new ArrayList<>();
+        
+        // Basic headers
+        headers.add("route_id");
+        headers.add("name");
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            headers.add("name_sinhala");
+            headers.add("name_tamil");
+        }
+        
+        headers.add("route_number");
+        headers.add("description");
+        headers.add("road_type");
+        headers.add("route_through");
+        
+        if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+            headers.add("route_through_sinhala");
+            headers.add("route_through_tamil");
+        }
+        
+        if (Boolean.TRUE.equals(request.getIncludeRouteGroupInfo())) {
+            headers.add("route_group_id");
+            headers.add("route_group_name");
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                headers.add("route_group_name_sinhala");
+                headers.add("route_group_name_tamil");
+            }
+        }
+        
+        headers.add("start_stop_id");
+        headers.add("end_stop_id");
+        
+        if (Boolean.TRUE.equals(request.getIncludeStopDetails())) {
+            headers.add("start_stop_name");
+            headers.add("end_stop_name");
+            
+            if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
+                headers.add("start_stop_name_sinhala");
+                headers.add("start_stop_name_tamil");
+                headers.add("end_stop_name_sinhala");
+                headers.add("end_stop_name_tamil");
+            }
+            
+            headers.add("start_stop_latitude");
+            headers.add("start_stop_longitude");
+            headers.add("start_stop_address");
+            headers.add("start_stop_city");
+            headers.add("end_stop_latitude");
+            headers.add("end_stop_longitude");
+            headers.add("end_stop_address");
+            headers.add("end_stop_city");
+        }
+        
+        headers.add("distance_km");
+        headers.add("estimated_duration_minutes");
+        headers.add("direction");
+        
+        if (Boolean.TRUE.equals(request.getIncludeRouteStops())) {
+            headers.add("route_stops");
+        }
+        
+        if (Boolean.TRUE.equals(request.getIncludeAuditFields())) {
+            headers.add("created_at");
+            headers.add("updated_at");
+            headers.add("created_by");
+            headers.add("updated_by");
+        }
+        
+        return headers;
+    }
+
+    private String escapeCsvValue(String value) {
+        if (value == null) {
+            return "";
+        }
+        
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        
+        return value;
+    }
+
+    private void setExportMetadata(RouteExportResponse response, RouteExportRequest request, 
+                                  int recordCount, String userId) {
+        RouteExportResponse.ExportMetadata metadata = new RouteExportResponse.ExportMetadata();
+        metadata.setTotalRecordsFound(recordCount);
+        metadata.setRecordsExported(recordCount);
+        metadata.setExportedAt(LocalDateTime.now());
+        metadata.setExportedBy(userId);
+        metadata.setFormat(request.getFormat().name());
+        
+        // Set filter summary
+        RouteExportResponse.FilterSummary filterSummary = new RouteExportResponse.FilterSummary();
+        filterSummary.setExportedAll(Boolean.TRUE.equals(request.getExportAll()));
+        filterSummary.setSpecificRouteIds(request.getRouteIds() != null ? request.getRouteIds().size() : 0);
+        filterSummary.setRouteGroupIds(request.getRouteGroupIds() != null ? request.getRouteGroupIds().size() : 0);
+        filterSummary.setTravelsThroughStops(request.getTravelsThroughStopIds() != null ? 
+            request.getTravelsThroughStopIds().size() : 0);
+        filterSummary.setDirections(request.getDirections());
+        filterSummary.setRoadTypes(request.getRoadTypes());
+        filterSummary.setMinDistanceKm(request.getMinDistanceKm());
+        filterSummary.setMaxDistanceKm(request.getMaxDistanceKm());
+        filterSummary.setMinDurationMinutes(request.getMinDurationMinutes());
+        filterSummary.setMaxDurationMinutes(request.getMaxDurationMinutes());
+        filterSummary.setSearchText(request.getSearchText());
+        
+        metadata.setFiltersApplied(filterSummary);
+        
+        // Set export options
+        RouteExportResponse.ExportOptions exportOptions = new RouteExportResponse.ExportOptions();
+        exportOptions.setIncludeMultiLanguageFields(request.getIncludeMultiLanguageFields());
+        exportOptions.setIncludeRouteGroupInfo(request.getIncludeRouteGroupInfo());
+        exportOptions.setIncludeStopDetails(request.getIncludeStopDetails());
+        exportOptions.setIncludeRouteStops(request.getIncludeRouteStops());
+        exportOptions.setIncludeAuditFields(request.getIncludeAuditFields());
+        exportOptions.setCustomFields(request.getCustomFields());
+        
+        metadata.setOptionsUsed(exportOptions);
+        response.setMetadata(metadata);
     }
 }
