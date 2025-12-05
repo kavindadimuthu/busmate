@@ -1,11 +1,12 @@
 package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.RouteGroupRequest;
+import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
 import com.busmate.routeschedule.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.dto.response.RouteResponse;
 import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
-import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
+import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.service.RouteGroupService;
 import com.busmate.routeschedule.service.RouteService;
@@ -363,54 +364,103 @@ public class RouteController {
         return ResponseEntity.ok(response);
     }
 
-    // ========== IMPORT APIs ==========
+    // ========== UNIFIED IMPORT APIs ==========
 
-    // ROUTE IMPORT - For bulk route import from file
+    // UNIFIED ROUTE IMPORT - Import route groups, routes, and route stops from single CSV
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-        summary = "Import routes from CSV file", 
-        description = "Bulk import routes from a CSV file. Expected CSV format: name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction (header row required). " +
-                     "Direction should be OUTBOUND or INBOUND. Route group and stops must already exist in the system. Requires authentication.",
-        operationId = "importRoutes"
+        summary = "Import complete route data from unified CSV file", 
+        description = "Import route groups, routes, and route stops from a single CSV file with flexible options. " +
+                     "CSV format includes all route-related entities in one row. Supports intelligent duplicate handling, " +
+                     "validation options, and partial imports. The CSV should include columns for route group, route, and route stop information.",
+        operationId = "importRoutesUnified"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<RouteImportResponse> importRoutes(
-            @Parameter(description = "CSV file containing route data")
+    public ResponseEntity<RouteUnifiedImportResponse> importRoutesUnified(
+            @Parameter(description = "CSV file containing complete route data")
             @RequestParam("file") MultipartFile file,
+            @Parameter(description = "Import options for handling duplicates and validation")
+            @RequestParam(value = "routeGroupDuplicateStrategy", defaultValue = "REUSE") String routeGroupDuplicateStrategy,
+            @RequestParam(value = "routeDuplicateStrategy", defaultValue = "SKIP") String routeDuplicateStrategy,
+            @RequestParam(value = "validateStopsExist", defaultValue = "true") Boolean validateStopsExist,
+            @RequestParam(value = "createMissingStops", defaultValue = "false") Boolean createMissingStops,
+            @RequestParam(value = "allowPartialRouteStops", defaultValue = "true") Boolean allowPartialRouteStops,
+            @RequestParam(value = "validateCoordinates", defaultValue = "false") Boolean validateCoordinates,
+            @RequestParam(value = "continueOnError", defaultValue = "true") Boolean continueOnError,
+            @RequestParam(value = "defaultRoadType", defaultValue = "NORMALWAY") String defaultRoadType,
             Authentication authentication) {
         
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         
+        // Build import request
+        RouteUnifiedImportRequest importRequest = new RouteUnifiedImportRequest();
+        try {
+            importRequest.setRouteGroupDuplicateStrategy(RouteUnifiedImportRequest.RouteGroupDuplicateStrategy.valueOf(routeGroupDuplicateStrategy));
+            importRequest.setRouteDuplicateStrategy(RouteUnifiedImportRequest.RouteDuplicateStrategy.valueOf(routeDuplicateStrategy));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        importRequest.setValidateStopsExist(validateStopsExist);
+        importRequest.setCreateMissingStops(createMissingStops);
+        importRequest.setAllowPartialRouteStops(allowPartialRouteStops);
+        importRequest.setValidateCoordinates(validateCoordinates);
+        importRequest.setContinueOnError(continueOnError);
+        importRequest.setDefaultRoadType(defaultRoadType);
+        
         String userId = authentication.getName();
-        RouteImportResponse response = routeService.importRoutes(file, userId);
+        RouteUnifiedImportResponse response = routeService.importRoutesUnified(file, importRequest, userId);
         return ResponseEntity.ok(response);
     }
 
-    // DOWNLOAD CSV TEMPLATE - For import template
+    // DOWNLOAD UNIFIED CSV TEMPLATE - For unified import template
     @GetMapping("/import/template")
     @Operation(
-        summary = "Download CSV import template", 
-        description = "Download a CSV template file with sample data and correct format for route import.",
-        operationId = "downloadRouteImportTemplate"
+        summary = "Download unified CSV import template", 
+        description = "Download a CSV template file with sample data for unified route import. " +
+                     "This template includes all route-related entities (route groups, routes, route stops) in a single format.",
+        operationId = "downloadUnifiedRouteImportTemplate"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
     })
-    public ResponseEntity<String> downloadRouteImportTemplate() {
-        String csvTemplate = "name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction\n" +
-                           "Colombo - Kandy Express,Express route from Colombo to Kandy,Main Routes,Colombo Central Bus Station,Kandy Bus Terminal,115.5,180,OUTBOUND\n" +
-                           "Kandy - Colombo Express,Express route from Kandy to Colombo,Main Routes,Kandy Bus Terminal,Colombo Central Bus Station,115.5,180,INBOUND\n" +
-                           "Galle - Matara Local,Local route from Galle to Matara,Southern Routes,Galle Bus Station,Matara Bus Terminal,45.2,90,OUTBOUND\n";
+    public ResponseEntity<String> downloadUnifiedRouteImportTemplate() {
+        String csvTemplate = "route_group_name,route_group_name_sinhala,route_group_name_tamil,route_group_description," +
+                           "route_name,route_name_sinhala,route_name_tamil,route_number,route_description," +
+                           "road_type,route_through,route_through_sinhala,route_through_tamil,direction," +
+                           "distance_km,estimated_duration_minutes,start_stop_id,end_stop_id," +
+                           "stop_order,stop_id,stop_name_english,stop_name_sinhala,distance_from_start_km\n" +
+                           
+                           "\"Colombo - Kandy\",\"කොළඹ - මහනුවර\",\"கொழும்பு - கண்டி\",\"Main intercity routes from Colombo to central regions\"," +
+                           "\"Colombo - Kandy Express\",\"කොළඹ - කෑන්ඩි එක්ස්ප්‍රස්\",\"கொழும்பு - கண்டி எக்ஸ்ப்ரெஸ்\",\"001\"," +
+                           "\"Express route from Colombo to Kandy\",\"EXPRESSWAY\",\"via A1 Highway\",\"A1 අධිවේගී මාර්ගය හරහා\"," +
+                           "\"A1 நெடுஞ்சாலை வழியாக\",\"OUTBOUND\",\"115.5\",\"180\"," +
+                           "\"550e8400-e29b-41d4-a716-446655440001\",\"550e8400-e29b-41d4-a716-446655440002\"," +
+                           "\"0\",\"550e8400-e29b-41d4-a716-446655440001\",\"Colombo Central\",\"කොළඹ මධ්‍යම\",\"0\"\n" +
+                           
+                           "\"Colombo - Kandy\",\"කොළඹ - මහනුවර\",\"கொழும்பு - கண்டி\",\"Main intercity routes from Colombo to central regions\"," +
+                           "\"Colombo - Kandy Express\",\"කොළඹ - කෑන්ඩි එක්ස්ප්‍රස්\",\"கொழும்பு - கண்டி எக்ஸ்ப்ரெஸ்\",\"001\"," +
+                           "\"Express route from Colombo to Kandy\",\"EXPRESSWAY\",\"via A1 Highway\",\"A1 අධිවේගී මාර්ගය හරහා\"," +
+                           "\"A1 நெடுஞ்சாலை வழியாக\",\"OUTBOUND\",\"115.5\",\"180\"," +
+                           "\"550e8400-e29b-41d4-a716-446655440001\",\"550e8400-e29b-41d4-a716-446655440002\"," +
+                           "\"1\",\"550e8400-e29b-41d4-a716-446655440003\",\"Kadawatha\",\"කඩවත\",\"25.5\"\n" +
+                           
+                           "\"Galle - Matara\",\"ගාල්ල - මාතර\",\"காலி - மாத்தறை\",\"Southern coastal routes\"," +
+                           "\"Galle - Matara Local\",\"ගාල්ල - මාතර දේශීය\",\"காலி - மாத்தறை உள்ளூர்\",\"002\"," +
+                           "\"Local service along southern coast\",\"NORMALWAY\",\"via Coastal Road\",\"වෙරළබඩ මාර්ගය හරහා\"," +
+                           "\"கடற்கரை சாலை வழியாக\",\"OUTBOUND\",\"45.2\",\"90\"," +
+                           "\"550e8400-e29b-41d4-a716-446655440004\",\"550e8400-e29b-41d4-a716-446655440005\"," +
+                           "\"0\",\"550e8400-e29b-41d4-a716-446655440004\",\"Galle Bus Station\",\"ගාල්ල බස් නැවතුම්පළ\",\"0\"\n";
         
         return ResponseEntity.ok()
-                .header("Content-Type", "text/csv")
-                .header("Content-Disposition", "attachment; filename=\"route_import_template.csv\"")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .header("Content-Disposition", "attachment; filename=\"route_unified_import_template.csv\"")
                 .body(csvTemplate);
     }
 }

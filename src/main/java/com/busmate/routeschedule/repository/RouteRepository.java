@@ -9,11 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, UUID> {
     boolean existsByNameAndRouteGroup_Id(String name, UUID routeGroupId);
+    Optional<Route> findByNameAndRouteGroup_Id(String name, UUID routeGroupId);
     
     @Query(value = "SELECT r.* FROM route r " +
            "LEFT JOIN route_group rg ON r.route_group_id = rg.id " +

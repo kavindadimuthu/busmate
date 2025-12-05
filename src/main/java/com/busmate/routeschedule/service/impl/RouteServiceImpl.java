@@ -1,16 +1,20 @@
 package com.busmate.routeschedule.service.impl;
 
+import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
 import com.busmate.routeschedule.dto.response.RouteResponse;
 import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
-import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
+import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
 import com.busmate.routeschedule.entity.Route;
+import com.busmate.routeschedule.entity.RouteStop;
 import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.entity.RouteGroup;
 import com.busmate.routeschedule.enums.DirectionEnum;
+import com.busmate.routeschedule.enums.RoadTypeEnum;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.RouteRepository;
 import com.busmate.routeschedule.repository.RouteGroupRepository;
+import com.busmate.routeschedule.repository.RouteStopRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.RouteService;
 import com.busmate.routeschedule.util.MapperUtils;
@@ -32,6 +36,7 @@ import java.util.stream.Collectors;
 public class RouteServiceImpl implements RouteService {
     private final RouteRepository routeRepository;
     private final RouteGroupRepository routeGroupRepository;
+    private final RouteStopRepository routeStopRepository;
     private final StopRepository stopRepository;
     private final MapperUtils mapperUtils;
 
@@ -327,13 +332,30 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    public RouteImportResponse importRoutes(MultipartFile file, String userId) {
-        RouteImportResponse response = new RouteImportResponse();
-        List<RouteImportResponse.ImportError> errors = new ArrayList<>();
+    public RouteUnifiedImportResponse importRoutesUnified(MultipartFile file, RouteUnifiedImportRequest importRequest, String userId) {
+        RouteUnifiedImportResponse response = new RouteUnifiedImportResponse();
+        List<RouteUnifiedImportResponse.ImportError> errors = new ArrayList<>();
+        List<RouteUnifiedImportResponse.ImportWarning> warnings = new ArrayList<>();
+        
+        // Summary tracking
+        RouteUnifiedImportResponse.ImportSummary summary = new RouteUnifiedImportResponse.ImportSummary();
+        summary.setCreatedRouteGroups(new ArrayList<>());
+        summary.setCreatedRoutes(new ArrayList<>());
+        summary.setProcessedAt(LocalDateTime.now());
+        summary.setProcessedBy(userId);
+        summary.setRouteGroupsCreated(0);
+        summary.setRouteGroupsReused(0);
+        summary.setRoutesCreated(0);
+        summary.setRouteStopsCreated(0);
         
         int totalRecords = 0;
         int successfulImports = 0;
         int failedImports = 0;
+        int skippedRecords = 0;
+        
+        // Track route groups and routes to avoid duplicates within the same import
+        Map<String, RouteGroup> routeGroupCache = new HashMap<>();
+        Map<String, Route> routeCache = new HashMap<>();
         
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
@@ -349,104 +371,124 @@ public class RouteServiceImpl implements RouteService {
                 }
                 
                 totalRecords++;
-                String[] columns = line.split(",");
                 
                 try {
-                    // Expected CSV format: name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction
-                    if (columns.length < 8) {
-                        throw new IllegalArgumentException("Invalid CSV format. Expected 8 columns.");
+                    String[] columns = parseCSVLine(line);
+                    
+                    // Expected CSV format based on your sample:
+                    // route_group_name,route_group_name_sinhala,route_group_name_tamil,route_group_description,
+                    // route_name,route_name_sinhala,route_name_tamil,route_number,route_description,
+                    // road_type,route_through,route_through_sinhala,route_through_tamil,direction,
+                    // distance_km,estimated_duration_minutes,start_stop_id,end_stop_id,
+                    // stop_order,stop_id,stop_name_english,stop_name_sinhala,distance_from_start_km
+                    
+                    if (columns.length < 23) {
+                        throw new IllegalArgumentException("Invalid CSV format. Expected 23 columns but found " + columns.length);
                     }
                     
-                    String name = columns[0].trim();
-                    String description = columns[1].trim();
-                    String routeGroupName = columns[2].trim();
-                    String startStopName = columns[3].trim();
-                    String endStopName = columns[4].trim();
-                    String distanceKmStr = columns[5].trim();
-                    String durationStr = columns[6].trim();
-                    String directionStr = columns[7].trim();
+                    // Parse route group data (columns 0-3)
+                    String routeGroupName = getValueOrNull(columns[0]);
+                    String routeGroupNameSinhala = getValueOrNull(columns[1]);
+                    String routeGroupNameTamil = getValueOrNull(columns[2]);
+                    String routeGroupDescription = getValueOrNull(columns[3]);
+                    
+                    // Parse route data (columns 4-17)
+                    String routeName = getValueOrNull(columns[4]);
+                    String routeNameSinhala = getValueOrNull(columns[5]);
+                    String routeNameTamil = getValueOrNull(columns[6]);
+                    String routeNumber = getValueOrNull(columns[7]);
+                    String routeDescription = getValueOrNull(columns[8]);
+                    String roadTypeStr = getValueOrNull(columns[9]);
+                    String routeThrough = getValueOrNull(columns[10]);
+                    String routeThroughSinhala = getValueOrNull(columns[11]);
+                    String routeThroughTamil = getValueOrNull(columns[12]);
+                    String directionStr = getValueOrNull(columns[13]);
+                    String distanceKmStr = getValueOrNull(columns[14]);
+                    String estimatedDurationStr = getValueOrNull(columns[15]);
+                    String startStopIdStr = getValueOrNull(columns[16]);
+                    String endStopIdStr = getValueOrNull(columns[17]);
+                    
+                    // Parse route stop data (columns 18-22)
+                    String stopOrderStr = getValueOrNull(columns[18]);
+                    String stopIdStr = getValueOrNull(columns[19]);
+                    String stopNameEnglish = getValueOrNull(columns[20]);
+                    String stopNameSinhala = getValueOrNull(columns[21]);
+                    String distanceFromStartStr = getValueOrNull(columns[22]);
                     
                     // Validate required fields
-                    if (name.isEmpty()) {
+                    if (routeGroupName == null || routeGroupName.trim().isEmpty()) {
+                        throw new IllegalArgumentException("Route group name is required");
+                    }
+                    if (routeName == null || routeName.trim().isEmpty()) {
                         throw new IllegalArgumentException("Route name is required");
                     }
-                    
-                    // Find route group
-                    Optional<RouteGroup> routeGroupOpt = routeGroupRepository.findByNameIgnoreCase(routeGroupName);
-                    if (routeGroupOpt.isEmpty()) {
-                        throw new IllegalArgumentException("Route group not found: " + routeGroupName);
+                    if (directionStr == null || directionStr.trim().isEmpty()) {
+                        throw new IllegalArgumentException("Direction is required");
                     }
                     
-                    // Check if route already exists in this route group
-                    if (routeRepository.existsByNameAndRouteGroup_Id(name, routeGroupOpt.get().getId())) {
-                        throw new IllegalArgumentException("Route already exists in this route group: " + name);
+                    // Process route group
+                    RouteGroup routeGroup = processRouteGroup(routeGroupName, routeGroupNameSinhala, 
+                                                            routeGroupNameTamil, routeGroupDescription, 
+                                                            importRequest, routeGroupCache, summary, 
+                                                            rowNumber, warnings, userId);
+                    
+                    if (routeGroup == null) {
+                        skippedRecords++;
+                        continue;
                     }
                     
-                    // Find start stop
-                    List<Stop> startStops = stopRepository.findAll().stream()
-                            .filter(s -> s.getName().equalsIgnoreCase(startStopName))
-                            .collect(Collectors.toList());
-                    if (startStops.isEmpty()) {
-                        throw new IllegalArgumentException("Start stop not found: " + startStopName);
+                    // Process route
+                    String routeKey = routeGroup.getId() + ":" + routeName;
+                    Route route = routeCache.get(routeKey);
+                    
+                    if (route == null) {
+                        route = processRoute(routeName, routeNameSinhala, routeNameTamil, routeNumber,
+                                           routeDescription, roadTypeStr, routeThrough, routeThroughSinhala,
+                                           routeThroughTamil, directionStr, distanceKmStr, estimatedDurationStr,
+                                           startStopIdStr, endStopIdStr, routeGroup, importRequest, 
+                                           summary, rowNumber, warnings, userId);
+                        
+                        if (route != null) {
+                            routeCache.put(routeKey, route);
+                        }
                     }
                     
-                    // Find end stop
-                    List<Stop> endStops = stopRepository.findAll().stream()
-                            .filter(s -> s.getName().equalsIgnoreCase(endStopName))
-                            .collect(Collectors.toList());
-                    if (endStops.isEmpty()) {
-                        throw new IllegalArgumentException("End stop not found: " + endStopName);
+                    if (route == null) {
+                        skippedRecords++;
+                        continue;
                     }
                     
-                    // Parse numeric values
-                    Double distanceKm = null;
-                    if (!distanceKmStr.isEmpty()) {
-                        distanceKm = Double.parseDouble(distanceKmStr);
+                    // Process route stop
+                    boolean routeStopProcessed = processRouteStop(route, stopOrderStr, stopIdStr,
+                                                                stopNameEnglish, stopNameSinhala,
+                                                                distanceFromStartStr, importRequest,
+                                                                summary, rowNumber, warnings);
+                    
+                    if (routeStopProcessed) {
+                        successfulImports++;
+                    } else {
+                        skippedRecords++;
                     }
-                    
-                    Integer estimatedDuration = null;
-                    if (!durationStr.isEmpty()) {
-                        estimatedDuration = Integer.parseInt(durationStr);
-                    }
-                    
-                    // Parse direction
-                    DirectionEnum direction = DirectionEnum.valueOf(directionStr.toUpperCase());
-                    
-                    // Create and save route
-                    Route route = new Route();
-                    route.setName(name);
-                    route.setDescription(description.isEmpty() ? null : description);
-                    route.setRouteGroup(routeGroupOpt.get());
-                    route.setStartStopId(startStops.get(0).getId());
-                    route.setEndStopId(endStops.get(0).getId());
-                    route.setDistanceKm(distanceKm);
-                    route.setEstimatedDurationMinutes(estimatedDuration);
-                    route.setDirection(direction);
-                    route.setCreatedAt(LocalDateTime.now());
-                    route.setUpdatedAt(LocalDateTime.now());
-                    route.setCreatedBy(userId);
-                    route.setUpdatedBy(userId);
-                    
-                    routeRepository.save(route);
-                    successfulImports++;
                     
                 } catch (Exception e) {
                     failedImports++;
-                    RouteImportResponse.ImportError error = new RouteImportResponse.ImportError();
+                    RouteUnifiedImportResponse.ImportError error = new RouteUnifiedImportResponse.ImportError();
                     error.setRowNumber(rowNumber);
                     error.setErrorMessage(e.getMessage());
-                    error.setValue(line);
+                    error.setRawCsvRow(line);
                     errors.add(error);
                     
-                    log.error("Failed to import route at row {}: {}", rowNumber, e.getMessage());
+                    log.error("Failed to import route data at row {}: {}", rowNumber, e.getMessage());
+                    
+                    if (!importRequest.getContinueOnError()) {
+                        break;
+                    }
                 }
             }
             
         } catch (Exception e) {
             log.error("Failed to process import file", e);
-            failedImports = totalRecords;
-            
-            RouteImportResponse.ImportError error = new RouteImportResponse.ImportError();
+            RouteUnifiedImportResponse.ImportError error = new RouteUnifiedImportResponse.ImportError();
             error.setErrorMessage("Failed to process import file: " + e.getMessage());
             errors.add(error);
         }
@@ -454,10 +496,461 @@ public class RouteServiceImpl implements RouteService {
         response.setTotalRecords(totalRecords);
         response.setSuccessfulImports(successfulImports);
         response.setFailedImports(failedImports);
+        response.setSkippedRecords(skippedRecords);
         response.setErrors(errors);
-        response.setMessage(String.format("Import completed. %d successful, %d failed out of %d total records.", 
-                                        successfulImports, failedImports, totalRecords));
+        response.setWarnings(warnings);
+        response.setSummary(summary);
+        response.setMessage(String.format("Import completed. %d successful, %d failed, %d skipped out of %d total records. " +
+                                         "Created %d route groups, %d routes, %d route stops.",
+                                         successfulImports, failedImports, skippedRecords, totalRecords,
+                                         summary.getRouteGroupsCreated(), summary.getRoutesCreated(),
+                                         summary.getRouteStopsCreated()));
         
         return response;
+    }
+    
+    // Helper methods for unified import
+    private String[] parseCSVLine(String line) {
+        List<String> result = new ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder field = new StringBuilder();
+        
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                result.add(field.toString());
+                field = new StringBuilder();
+            } else {
+                field.append(c);
+            }
+        }
+        result.add(field.toString());
+        
+        return result.toArray(new String[0]);
+    }
+    
+    private String getValueOrNull(String value) {
+        if (value == null || value.trim().isEmpty() || "null".equalsIgnoreCase(value.trim())) {
+            return null;
+        }
+        return value.trim();
+    }
+    
+    private RouteGroup processRouteGroup(String name, String nameSinhala, String nameTamil, 
+                                       String description, RouteUnifiedImportRequest importRequest,
+                                       Map<String, RouteGroup> routeGroupCache,
+                                       RouteUnifiedImportResponse.ImportSummary summary,
+                                       int rowNumber, List<RouteUnifiedImportResponse.ImportWarning> warnings,
+                                       String userId) {
+        
+        // Check cache first
+        RouteGroup cached = routeGroupCache.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        
+        // Check if route group exists in database
+        Optional<RouteGroup> existing = routeGroupRepository.findByNameIgnoreCase(name);
+        if (existing.isPresent()) {
+            RouteGroup routeGroup = existing.get();
+            
+            switch (importRequest.getRouteGroupDuplicateStrategy()) {
+                case SKIP:
+                    RouteUnifiedImportResponse.ImportWarning skipWarning = new RouteUnifiedImportResponse.ImportWarning();
+                    skipWarning.setRowNumber(rowNumber);
+                    skipWarning.setField("route_group_name");
+                    skipWarning.setWarningMessage("Route group already exists, skipping");
+                    skipWarning.setAction("SKIPPED");
+                    warnings.add(skipWarning);
+                    return null;
+                    
+                case REUSE:
+                    routeGroupCache.put(name, routeGroup);
+                    summary.setRouteGroupsReused(summary.getRouteGroupsReused() + 1);
+                    
+                    RouteUnifiedImportResponse.ImportWarning reuseWarning = new RouteUnifiedImportResponse.ImportWarning();
+                    reuseWarning.setRowNumber(rowNumber);
+                    reuseWarning.setField("route_group_name");
+                    reuseWarning.setWarningMessage("Reusing existing route group: " + name);
+                    reuseWarning.setAction("REUSED");
+                    warnings.add(reuseWarning);
+                    return routeGroup;
+                    
+                case CREATE_WITH_SUFFIX:
+                    String newName = findUniqueRouteGroupName(name);
+                    RouteGroup newRouteGroup = createRouteGroup(newName, nameSinhala, nameTamil, description, userId);
+                    routeGroupCache.put(name, newRouteGroup);
+                    
+                    RouteUnifiedImportResponse.ImportSummary.CreatedEntity created = new RouteUnifiedImportResponse.ImportSummary.CreatedEntity();
+                    created.setId(newRouteGroup.getId());
+                    created.setName(newRouteGroup.getName());
+                    created.setRowNumber(rowNumber);
+                    summary.getCreatedRouteGroups().add(created);
+                    summary.setRouteGroupsCreated(summary.getRouteGroupsCreated() + 1);
+                    
+                    RouteUnifiedImportResponse.ImportWarning suffixWarning = new RouteUnifiedImportResponse.ImportWarning();
+                    suffixWarning.setRowNumber(rowNumber);
+                    suffixWarning.setField("route_group_name");
+                    suffixWarning.setWarningMessage("Created route group with suffix: " + newName);
+                    suffixWarning.setAction("CREATED");
+                    warnings.add(suffixWarning);
+                    return newRouteGroup;
+            }
+        }
+        
+        // Create new route group
+        RouteGroup newRouteGroup = createRouteGroup(name, nameSinhala, nameTamil, description, userId);
+        routeGroupCache.put(name, newRouteGroup);
+        
+        RouteUnifiedImportResponse.ImportSummary.CreatedEntity created = new RouteUnifiedImportResponse.ImportSummary.CreatedEntity();
+        created.setId(newRouteGroup.getId());
+        created.setName(newRouteGroup.getName());
+        created.setRowNumber(rowNumber);
+        summary.getCreatedRouteGroups().add(created);
+        summary.setRouteGroupsCreated(summary.getRouteGroupsCreated() + 1);
+        
+        return newRouteGroup;
+    }
+    
+    private String findUniqueRouteGroupName(String baseName) {
+        int counter = 1;
+        String newName;
+        do {
+            newName = baseName + "_" + counter;
+            counter++;
+        } while (routeGroupRepository.existsByName(newName));
+        return newName;
+    }
+    
+    private RouteGroup createRouteGroup(String name, String nameSinhala, String nameTamil, 
+                                      String description, String userId) {
+        RouteGroup routeGroup = new RouteGroup();
+        routeGroup.setName(name);
+        routeGroup.setNameSinhala(nameSinhala);
+        routeGroup.setNameTamil(nameTamil);
+        routeGroup.setDescription(description);
+        routeGroup.setCreatedAt(LocalDateTime.now());
+        routeGroup.setUpdatedAt(LocalDateTime.now());
+        routeGroup.setCreatedBy(userId);
+        routeGroup.setUpdatedBy(userId);
+        
+        return routeGroupRepository.save(routeGroup);
+    }
+    
+    private Route processRoute(String name, String nameSinhala, String nameTamil, String routeNumber,
+                             String description, String roadTypeStr, String routeThrough,
+                             String routeThroughSinhala, String routeThroughTamil, String directionStr,
+                             String distanceKmStr, String estimatedDurationStr, String startStopIdStr,
+                             String endStopIdStr, RouteGroup routeGroup, RouteUnifiedImportRequest importRequest,
+                             RouteUnifiedImportResponse.ImportSummary summary, int rowNumber,
+                             List<RouteUnifiedImportResponse.ImportWarning> warnings, String userId) {
+        
+        // Check if route already exists in this route group
+        boolean routeExists = routeRepository.existsByNameAndRouteGroup_Id(name, routeGroup.getId());
+        
+        if (routeExists) {
+            switch (importRequest.getRouteDuplicateStrategy()) {
+                case SKIP:
+                    RouteUnifiedImportResponse.ImportWarning skipWarning = new RouteUnifiedImportResponse.ImportWarning();
+                    skipWarning.setRowNumber(rowNumber);
+                    skipWarning.setField("route_name");
+                    skipWarning.setWarningMessage("Route already exists in route group, skipping");
+                    skipWarning.setAction("SKIPPED");
+                    warnings.add(skipWarning);
+                    return null;
+                    
+                case UPDATE:
+                    // Find and update existing route
+                    Optional<Route> existingRoute = routeRepository.findByNameAndRouteGroup_Id(name, routeGroup.getId());
+                    if (existingRoute.isPresent()) {
+                        Route route = existingRoute.get();
+                        updateRouteFields(route, nameSinhala, nameTamil, routeNumber, description,
+                                        roadTypeStr, routeThrough, routeThroughSinhala, routeThroughTamil,
+                                        directionStr, distanceKmStr, estimatedDurationStr, startStopIdStr,
+                                        endStopIdStr, importRequest, userId);
+                        
+                        RouteUnifiedImportResponse.ImportWarning updateWarning = new RouteUnifiedImportResponse.ImportWarning();
+                        updateWarning.setRowNumber(rowNumber);
+                        updateWarning.setField("route_name");
+                        updateWarning.setWarningMessage("Updated existing route: " + name);
+                        updateWarning.setAction("UPDATED");
+                        warnings.add(updateWarning);
+                        return route;
+                    }
+                    break;
+                    
+                case CREATE_WITH_SUFFIX:
+                    String newName = findUniqueRouteName(name, routeGroup.getId());
+                    Route newRoute = createRoute(newName, nameSinhala, nameTamil, routeNumber, description,
+                                               roadTypeStr, routeThrough, routeThroughSinhala, routeThroughTamil,
+                                               directionStr, distanceKmStr, estimatedDurationStr, startStopIdStr,
+                                               endStopIdStr, routeGroup, importRequest, summary, rowNumber, userId);
+                    
+                    RouteUnifiedImportResponse.ImportWarning suffixWarning = new RouteUnifiedImportResponse.ImportWarning();
+                    suffixWarning.setRowNumber(rowNumber);
+                    suffixWarning.setField("route_name");
+                    suffixWarning.setWarningMessage("Created route with suffix: " + newName);
+                    suffixWarning.setAction("CREATED");
+                    warnings.add(suffixWarning);
+                    return newRoute;
+            }
+        }
+        
+        // Create new route
+        return createRoute(name, nameSinhala, nameTamil, routeNumber, description, roadTypeStr,
+                         routeThrough, routeThroughSinhala, routeThroughTamil, directionStr,
+                         distanceKmStr, estimatedDurationStr, startStopIdStr, endStopIdStr,
+                         routeGroup, importRequest, summary, rowNumber, userId);
+    }
+    
+    private String findUniqueRouteName(String baseName, UUID routeGroupId) {
+        int counter = 1;
+        String newName;
+        do {
+            newName = baseName + "_" + counter;
+            counter++;
+        } while (routeRepository.existsByNameAndRouteGroup_Id(newName, routeGroupId));
+        return newName;
+    }
+    
+    private void updateRouteFields(Route route, String nameSinhala, String nameTamil, String routeNumber,
+                                 String description, String roadTypeStr, String routeThrough,
+                                 String routeThroughSinhala, String routeThroughTamil, String directionStr,
+                                 String distanceKmStr, String estimatedDurationStr, String startStopIdStr,
+                                 String endStopIdStr, RouteUnifiedImportRequest importRequest, String userId) {
+        
+        if (nameSinhala != null) route.setNameSinhala(nameSinhala);
+        if (nameTamil != null) route.setNameTamil(nameTamil);
+        if (routeNumber != null) route.setRouteNumber(routeNumber);
+        if (description != null) route.setDescription(description);
+        
+        if (roadTypeStr != null && !roadTypeStr.isEmpty()) {
+            try {
+                route.setRoadType(RoadTypeEnum.valueOf(roadTypeStr.toUpperCase()));
+            } catch (Exception e) {
+                route.setRoadType(RoadTypeEnum.valueOf(importRequest.getDefaultRoadType()));
+            }
+        }
+        
+        if (routeThrough != null) route.setRouteThrough(routeThrough);
+        if (routeThroughSinhala != null) route.setRouteThroughSinhala(routeThroughSinhala);
+        if (routeThroughTamil != null) route.setRouteThroughTamil(routeThroughTamil);
+        
+        if (directionStr != null && !directionStr.isEmpty()) {
+            route.setDirection(DirectionEnum.valueOf(directionStr.toUpperCase()));
+        }
+        
+        if (distanceKmStr != null && !distanceKmStr.isEmpty()) {
+            route.setDistanceKm(Double.parseDouble(distanceKmStr));
+        }
+        
+        if (estimatedDurationStr != null && !estimatedDurationStr.isEmpty()) {
+            route.setEstimatedDurationMinutes(Integer.parseInt(estimatedDurationStr));
+        }
+        
+        if (startStopIdStr != null && !startStopIdStr.isEmpty() && importRequest.getValidateStopsExist()) {
+            try {
+                UUID startStopId = UUID.fromString(startStopIdStr);
+                if (stopRepository.existsById(startStopId)) {
+                    route.setStartStopId(startStopId);
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        if (endStopIdStr != null && !endStopIdStr.isEmpty() && importRequest.getValidateStopsExist()) {
+            try {
+                UUID endStopId = UUID.fromString(endStopIdStr);
+                if (stopRepository.existsById(endStopId)) {
+                    route.setEndStopId(endStopId);
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        route.setUpdatedAt(LocalDateTime.now());
+        route.setUpdatedBy(userId);
+        routeRepository.save(route);
+    }
+    
+    private Route createRoute(String name, String nameSinhala, String nameTamil, String routeNumber,
+                            String description, String roadTypeStr, String routeThrough,
+                            String routeThroughSinhala, String routeThroughTamil, String directionStr,
+                            String distanceKmStr, String estimatedDurationStr, String startStopIdStr,
+                            String endStopIdStr, RouteGroup routeGroup, RouteUnifiedImportRequest importRequest,
+                            RouteUnifiedImportResponse.ImportSummary summary, int rowNumber, String userId) {
+        
+        Route route = new Route();
+        route.setName(name);
+        route.setNameSinhala(nameSinhala);
+        route.setNameTamil(nameTamil);
+        route.setRouteNumber(routeNumber);
+        route.setDescription(description);
+        route.setRouteGroup(routeGroup);
+        
+        // Set road type
+        if (roadTypeStr != null && !roadTypeStr.isEmpty()) {
+            try {
+                route.setRoadType(RoadTypeEnum.valueOf(roadTypeStr.toUpperCase()));
+            } catch (Exception e) {
+                route.setRoadType(RoadTypeEnum.valueOf(importRequest.getDefaultRoadType()));
+            }
+        } else {
+            route.setRoadType(RoadTypeEnum.valueOf(importRequest.getDefaultRoadType()));
+        }
+        
+        route.setRouteThrough(routeThrough);
+        route.setRouteThroughSinhala(routeThroughSinhala);
+        route.setRouteThroughTamil(routeThroughTamil);
+        
+        // Set direction
+        if (directionStr != null && !directionStr.isEmpty()) {
+            route.setDirection(DirectionEnum.valueOf(directionStr.toUpperCase()));
+        }
+        
+        // Set distance
+        if (distanceKmStr != null && !distanceKmStr.isEmpty()) {
+            route.setDistanceKm(Double.parseDouble(distanceKmStr));
+        }
+        
+        // Set duration
+        if (estimatedDurationStr != null && !estimatedDurationStr.isEmpty()) {
+            route.setEstimatedDurationMinutes(Integer.parseInt(estimatedDurationStr));
+        }
+        
+        // Set start and end stops
+        if (startStopIdStr != null && !startStopIdStr.isEmpty()) {
+            try {
+                UUID startStopId = UUID.fromString(startStopIdStr);
+                if (!importRequest.getValidateStopsExist() || stopRepository.existsById(startStopId)) {
+                    route.setStartStopId(startStopId);
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        if (endStopIdStr != null && !endStopIdStr.isEmpty()) {
+            try {
+                UUID endStopId = UUID.fromString(endStopIdStr);
+                if (!importRequest.getValidateStopsExist() || stopRepository.existsById(endStopId)) {
+                    route.setEndStopId(endStopId);
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        route.setCreatedAt(LocalDateTime.now());
+        route.setUpdatedAt(LocalDateTime.now());
+        route.setCreatedBy(userId);
+        route.setUpdatedBy(userId);
+        
+        route = routeRepository.save(route);
+        
+        RouteUnifiedImportResponse.ImportSummary.CreatedEntity created = new RouteUnifiedImportResponse.ImportSummary.CreatedEntity();
+        created.setId(route.getId());
+        created.setName(route.getName());
+        created.setRowNumber(rowNumber);
+        summary.getCreatedRoutes().add(created);
+        summary.setRoutesCreated(summary.getRoutesCreated() + 1);
+        
+        return route;
+    }
+    
+    private boolean processRouteStop(Route route, String stopOrderStr, String stopIdStr,
+                                   String stopNameEnglish, String stopNameSinhala,
+                                   String distanceFromStartStr, RouteUnifiedImportRequest importRequest,
+                                   RouteUnifiedImportResponse.ImportSummary summary, int rowNumber,
+                                   List<RouteUnifiedImportResponse.ImportWarning> warnings) {
+        
+        if (stopOrderStr == null || stopOrderStr.isEmpty()) {
+            return false; // Skip if no stop order
+        }
+        
+        try {
+            Integer stopOrder = Integer.parseInt(stopOrderStr);
+            UUID stopId = null;
+            
+            // Try to find stop by ID first
+            if (stopIdStr != null && !stopIdStr.isEmpty()) {
+                try {
+                    stopId = UUID.fromString(stopIdStr);
+                    if (!stopRepository.existsById(stopId)) {
+                        stopId = null;
+                    }
+                } catch (Exception ignored) {}
+            }
+            
+            // If not found by ID, try to find by name
+            if (stopId == null && stopNameEnglish != null && !stopNameEnglish.isEmpty()) {
+                List<Stop> stops = stopRepository.findAll().stream()
+                        .filter(s -> s.getName().equalsIgnoreCase(stopNameEnglish))
+                        .collect(Collectors.toList());
+                if (!stops.isEmpty()) {
+                    stopId = stops.get(0).getId();
+                }
+            }
+            
+            if (stopId == null) {
+                if (importRequest.getValidateStopsExist()) {
+                    throw new IllegalArgumentException("Stop not found: " + (stopNameEnglish != null ? stopNameEnglish : stopIdStr));
+                } else {
+                    // Skip this route stop but don't fail the import
+                    RouteUnifiedImportResponse.ImportWarning warning = new RouteUnifiedImportResponse.ImportWarning();
+                    warning.setRowNumber(rowNumber);
+                    warning.setField("stop_id");
+                    warning.setWarningMessage("Stop not found, skipping route stop: " + (stopNameEnglish != null ? stopNameEnglish : stopIdStr));
+                    warning.setAction("SKIPPED");
+                    warnings.add(warning);
+                    return false;
+                }
+            }
+            
+            // Check if route stop already exists
+            Optional<RouteStop> existingRouteStop = routeStopRepository.findByRouteIdAndStopIdAndStopOrder(
+                    route.getId(), stopId, stopOrder);
+            
+            if (existingRouteStop.isPresent()) {
+                if (!importRequest.getAllowPartialRouteStops()) {
+                    return false; // Skip duplicate route stop
+                }
+            }
+            
+            // Create route stop
+            RouteStop routeStop = new RouteStop();
+            routeStop.setRoute(route);
+            
+            // Load stop entity
+            Optional<Stop> stopOpt = stopRepository.findById(stopId);
+            if (stopOpt.isPresent()) {
+                routeStop.setStop(stopOpt.get());
+            } else {
+                return false;
+            }
+            
+            routeStop.setStopOrder(stopOrder);
+            
+            if (distanceFromStartStr != null && !distanceFromStartStr.isEmpty()) {
+                try {
+                    routeStop.setDistanceFromStartKm(Double.parseDouble(distanceFromStartStr));
+                } catch (Exception ignored) {}
+            }
+            
+            routeStopRepository.save(routeStop);
+            summary.setRouteStopsCreated(summary.getRouteStopsCreated() + 1);
+            
+            return true;
+            
+        } catch (Exception e) {
+            if (!importRequest.getAllowPartialRouteStops()) {
+                throw e;
+            }
+            
+            RouteUnifiedImportResponse.ImportWarning warning = new RouteUnifiedImportResponse.ImportWarning();
+            warning.setRowNumber(rowNumber);
+            warning.setField("route_stop");
+            warning.setWarningMessage("Failed to create route stop: " + e.getMessage());
+            warning.setAction("SKIPPED");
+            warnings.add(warning);
+            return false;
+        }
     }
 }
