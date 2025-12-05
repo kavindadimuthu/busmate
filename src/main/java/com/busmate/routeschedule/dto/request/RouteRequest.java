@@ -10,9 +10,23 @@ import java.util.UUID;
 @Data
 public class RouteRequest {
     @NotBlank(message = "Name is mandatory")
-    private String name;
+    private String name; // English name (primary)
+
+    private String nameSinhala;
+
+    private String nameTamil;
+
+    private String routeNumber;
 
     private String description;
+
+    private String roadType; // NORMALWAY or EXPRESSWAY
+
+    private String routeThrough; // English (primary)
+
+    private String routeThroughSinhala;
+
+    private String routeThroughTamil;
 
     @NotNull(message = "Route group ID is mandatory")
     private UUID routeGroupId; // Changed from Long to UUID

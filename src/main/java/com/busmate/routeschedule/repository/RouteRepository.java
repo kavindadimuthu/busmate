@@ -21,8 +21,16 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
            "LEFT JOIN stop end_stop ON r.end_stop_id = end_stop.id " +
            "WHERE (:searchText IS NULL OR :searchText = '' OR " +
            "LOWER(r.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.name_sinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.name_tamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.route_number) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
            "LOWER(r.description) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.route_through) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.route_through_sinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.route_through_tamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
            "LOWER(rg.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(rg.name_sinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(rg.name_tamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
            "LOWER(start_stop.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
            "LOWER(end_stop.name) LIKE LOWER(CONCAT('%', :searchText, '%')))",
            nativeQuery = true)
@@ -31,6 +39,7 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     @Query("SELECT r FROM Route r WHERE " +
            "(:routeGroupId IS NULL OR r.routeGroup.id = :routeGroupId) AND " +
            "(:direction IS NULL OR r.direction = :direction) AND " +
+           "(:roadType IS NULL OR r.roadType = :roadType) AND " +
            "(:minDistance IS NULL OR r.distanceKm >= :minDistance) AND " +
            "(:maxDistance IS NULL OR r.distanceKm <= :maxDistance) AND " +
            "(:minDuration IS NULL OR r.estimatedDurationMinutes >= :minDuration) AND " +
@@ -38,6 +47,7 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     Page<Route> findAllWithFilters(
             @Param("routeGroupId") UUID routeGroupId,
             @Param("direction") DirectionEnum direction,
+            @Param("roadType") com.busmate.routeschedule.enums.RoadTypeEnum roadType,
             @Param("minDistance") Double minDistance,
             @Param("maxDistance") Double maxDistance,
             @Param("minDuration") Integer minDuration,
@@ -47,10 +57,19 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     @Query("SELECT r FROM Route r WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +
            "LOWER(r.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.routeNumber) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
            "LOWER(r.description) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
-           "LOWER(r.routeGroup.name) LIKE LOWER(CONCAT('%', :searchText, '%'))) AND " +
+           "LOWER(r.routeThrough) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.routeThroughSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.routeThroughTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.routeGroup.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.routeGroup.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(r.routeGroup.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%'))) AND " +
            "(:routeGroupId IS NULL OR r.routeGroup.id = :routeGroupId) AND " +
            "(:direction IS NULL OR r.direction = :direction) AND " +
+           "(:roadType IS NULL OR r.roadType = :roadType) AND " +
            "(:minDistance IS NULL OR r.distanceKm >= :minDistance) AND " +
            "(:maxDistance IS NULL OR r.distanceKm <= :maxDistance) AND " +
            "(:minDuration IS NULL OR r.estimatedDurationMinutes >= :minDuration) AND " +
@@ -59,6 +78,7 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
             @Param("searchText") String searchText,
             @Param("routeGroupId") UUID routeGroupId,
             @Param("direction") DirectionEnum direction,
+            @Param("roadType") com.busmate.routeschedule.enums.RoadTypeEnum roadType,
             @Param("minDistance") Double minDistance,
             @Param("maxDistance") Double maxDistance,
             @Param("minDuration") Integer minDuration,
@@ -67,6 +87,9 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     
     @Query("SELECT DISTINCT r.direction FROM Route r WHERE r.direction IS NOT NULL ORDER BY r.direction")
     List<DirectionEnum> findDistinctDirections();
+    
+    @Query("SELECT DISTINCT r.roadType FROM Route r WHERE r.roadType IS NOT NULL ORDER BY r.roadType")
+    List<com.busmate.routeschedule.enums.RoadTypeEnum> findDistinctRoadTypes();
     
     @Query("SELECT DISTINCT rg.id, rg.name FROM Route r JOIN r.routeGroup rg ORDER BY rg.name")
     List<Object[]> findDistinctRouteGroups();

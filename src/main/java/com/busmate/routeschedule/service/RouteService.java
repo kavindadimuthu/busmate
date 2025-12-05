@@ -5,6 +5,7 @@ import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.RouteImportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
+import com.busmate.routeschedule.enums.RoadTypeEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,7 @@ public interface RouteService {
     Page<RouteResponse> getAllRoutesWithFilters(
             UUID routeGroupId,
             DirectionEnum direction,
+            RoadTypeEnum roadType,
             Double minDistance,
             Double maxDistance,
             Integer minDuration,
@@ -29,6 +31,7 @@ public interface RouteService {
             String searchText,
             UUID routeGroupId,
             DirectionEnum direction,
+            RoadTypeEnum roadType,
             Double minDistance,
             Double maxDistance,
             Integer minDuration,

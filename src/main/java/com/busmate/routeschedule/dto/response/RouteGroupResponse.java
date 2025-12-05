@@ -8,7 +8,9 @@ import java.util.UUID;
 @Data
 public class RouteGroupResponse {
     private UUID id;
-    private String name;
+    private String name; // English name (primary)
+    private String nameSinhala;
+    private String nameTamil;
     private String description;
     private List<RouteResponse> routes;
     private LocalDateTime createdAt;

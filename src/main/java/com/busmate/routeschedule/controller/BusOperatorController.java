@@ -547,10 +547,10 @@ public class BusOperatorController {
         Page<RouteResponse> routes;
         if (normalizedSearchText != null) {
             routes = routeService.getAllRoutesWithSearchAndFilters(
-                normalizedSearchText, routeGroupId, null, null, null, null, null, pageable);
+                normalizedSearchText, routeGroupId, null, null, null, null, null, null, pageable);
         } else {
             routes = routeService.getAllRoutesWithFilters(
-                routeGroupId, null, null, null, null, null, pageable);
+                routeGroupId, null, null, null, null, null, null, pageable);
         }
         return ResponseEntity.ok(routes);
     }

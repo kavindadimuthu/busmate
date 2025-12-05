@@ -65,13 +65,14 @@ public class RouteServiceImpl implements RouteService {
     public Page<RouteResponse> getAllRoutesWithFilters(
             UUID routeGroupId,
             DirectionEnum direction,
+            com.busmate.routeschedule.enums.RoadTypeEnum roadType,
             Double minDistance,
             Double maxDistance,
             Integer minDuration,
             Integer maxDuration,
             Pageable pageable) {
         Page<Route> routes = routeRepository.findAllWithFilters(
-                routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+                routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
         return routes.map(this::mapToResponse);
     }
 
@@ -80,18 +81,23 @@ public class RouteServiceImpl implements RouteService {
             String searchText,
             UUID routeGroupId,
             DirectionEnum direction,
+            com.busmate.routeschedule.enums.RoadTypeEnum roadType,
             Double minDistance,
             Double maxDistance,
             Integer minDuration,
             Integer maxDuration,
             Pageable pageable) {
         Page<Route> routes = routeRepository.findAllWithSearchAndFilters(
-                searchText, routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+                searchText, routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
         return routes.map(this::mapToResponse);
     }
 
     private List<DirectionEnum> getDistinctDirections() {
         return routeRepository.findDistinctDirections();
+    }
+
+    private List<com.busmate.routeschedule.enums.RoadTypeEnum> getDistinctRoadTypes() {
+        return routeRepository.findDistinctRoadTypes();
     }
 
     private List<Map<String, Object>> getDistinctRouteGroups() {
@@ -138,6 +144,9 @@ public class RouteServiceImpl implements RouteService {
         
         // Get directions
         response.setDirections(getDistinctDirections());
+        
+        // Get road types
+        response.setRoadTypes(getDistinctRoadTypes());
         
         // Get route groups
         List<Map<String, Object>> routeGroups = getDistinctRouteGroups();

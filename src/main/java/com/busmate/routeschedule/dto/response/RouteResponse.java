@@ -9,10 +9,19 @@ import java.util.UUID;
 @Data
 public class RouteResponse {
     private UUID id;
-    private String name;
+    private String name; // English name (primary)
+    private String nameSinhala;
+    private String nameTamil;
+    private String routeNumber;
     private String description;
+    private String roadType;
+    private String routeThrough; // English (primary)
+    private String routeThroughSinhala;
+    private String routeThroughTamil;
     private UUID routeGroupId;
     private String routeGroupName;
+    private String routeGroupNameSinhala;
+    private String routeGroupNameTamil;
     private UUID startStopId;
     private String startStopName;
     private LocationDto startStopLocation;

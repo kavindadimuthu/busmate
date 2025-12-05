@@ -75,6 +75,9 @@ public class RouteController {
             @Parameter(description = "Filter by direction (INBOUND or OUTBOUND)")
             @RequestParam(required = false) DirectionEnum direction,
             
+            @Parameter(description = "Filter by road type (NORMALWAY or EXPRESSWAY)")
+            @RequestParam(required = false) com.busmate.routeschedule.enums.RoadTypeEnum roadType,
+            
             @Parameter(description = "Minimum distance in kilometers", example = "5.0")
             @RequestParam(required = false) Double minDistance,
             
@@ -101,7 +104,7 @@ public class RouteController {
         Page<RouteResponse> responses;
         
         // Determine which query method to use based on provided parameters
-        boolean hasFilters = routeGroupId != null || direction != null || 
+        boolean hasFilters = routeGroupId != null || direction != null || roadType != null ||
                            minDistance != null || maxDistance != null || 
                            minDuration != null || maxDuration != null;
         
@@ -109,12 +112,12 @@ public class RouteController {
         
         if (hasSearch && hasFilters) {
             responses = routeService.getAllRoutesWithSearchAndFilters(
-                search.trim(), routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+                search.trim(), routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
         } else if (hasSearch) {
             responses = routeService.getAllRoutesWithSearch(search.trim(), pageable);
         } else if (hasFilters) {
             responses = routeService.getAllRoutesWithFilters(
-                routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+                routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
         } else {
             responses = routeService.getAllRoutes(pageable);
         }
@@ -158,7 +161,7 @@ public class RouteController {
     }
 
     // 4. GET ROUTES BY ROUTE GROUP ID
-    @GetMapping("/by-group/{routeGroupId}")
+    @GetMapping("/groups/{routeGroupId}")
     @Operation(
         summary = "Get routes by route group ID",
         description = "Retrieve all routes belonging to a specific route group.",
@@ -390,7 +393,7 @@ public class RouteController {
     }
 
     // DOWNLOAD CSV TEMPLATE - For import template
-    @GetMapping("/import-template")
+    @GetMapping("/import/template")
     @Operation(
         summary = "Download CSV import template", 
         description = "Download a CSV template file with sample data and correct format for route import.",

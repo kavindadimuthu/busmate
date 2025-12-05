@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.dto.response;
 
 import com.busmate.routeschedule.enums.DirectionEnum;
+import com.busmate.routeschedule.enums.RoadTypeEnum;
 import lombok.Data;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 @Data
 public class RouteFilterOptionsResponse {
     private List<DirectionEnum> directions;
+    private List<RoadTypeEnum> roadTypes;
     private List<Map<String, Object>> routeGroups;
     private RangeFilter distanceRange;
     private RangeFilter durationRange;
