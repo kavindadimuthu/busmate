@@ -1320,15 +1320,15 @@ public class RouteServiceImpl implements RouteService {
         
         // Core route fields
         headers.add("route_id");
-        headers.add("name");
+        headers.add("route_name");
         
         if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
-            headers.add("name_sinhala");
-            headers.add("name_tamil");
+            headers.add("route_name_sinhala");
+            headers.add("route_name_tamil");
         }
         
         headers.add("route_number");
-        headers.add("description");
+        headers.add("route_description");
         headers.add("road_type");
         headers.add("route_through");
         
@@ -1349,7 +1349,9 @@ public class RouteServiceImpl implements RouteService {
         }
         
         // Start and end stop fields (always included)
+        headers.add("start_route_stop_id");
         headers.add("start_stop_id");
+        headers.add("end_route_stop_id");
         headers.add("end_stop_id");
         headers.add("start_stop_name");
         headers.add("end_stop_name");
@@ -1371,16 +1373,16 @@ public class RouteServiceImpl implements RouteService {
         headers.add("end_stop_city");
         
         // Route metrics
-        headers.add("distance_km");
-        headers.add("estimated_duration_minutes");
-        headers.add("direction");
+        headers.add("route_distance_km");
+        headers.add("route_estimated_duration_minutes");
+        headers.add("route_direction");
         
         // Audit fields
         if (Boolean.TRUE.equals(request.getIncludeAuditFields())) {
-            headers.add("created_at");
-            headers.add("updated_at");
-            headers.add("created_by");
-            headers.add("updated_by");
+            headers.add("route_created_at");
+            headers.add("route_updated_at");
+            headers.add("route_created_by");
+            headers.add("route_updated_by");
         }
         
         return headers;
@@ -1394,15 +1396,15 @@ public class RouteServiceImpl implements RouteService {
         
         // Core route fields
         headers.add("route_id");
-        headers.add("name");
+        headers.add("route_name");
         
         if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
-            headers.add("name_sinhala");
-            headers.add("name_tamil");
+            headers.add("route_name_sinhala");
+            headers.add("route_name_tamil");
         }
         
         headers.add("route_number");
-        headers.add("description");
+        headers.add("route_description");
         headers.add("road_type");
         headers.add("route_through");
         
@@ -1422,7 +1424,8 @@ public class RouteServiceImpl implements RouteService {
             }
         }
         
-        // Stop fields (for current stop in this row)
+        // Route stop and stop fields (for current stop in this row)
+        headers.add("route_stop_id");
         headers.add("stop_id");
         headers.add("stop_name");
         
@@ -1436,22 +1439,22 @@ public class RouteServiceImpl implements RouteService {
         headers.add("stop_type"); // start, end, intermediate
         
         // Stop location details (always included)
-        headers.add("latitude");
-        headers.add("longitude");
-        headers.add("address");
-        headers.add("city");
+        headers.add("stop_latitude");
+        headers.add("stop_longitude");
+        headers.add("stop_address");
+        headers.add("stop_city");
         
         // Route metrics
-        headers.add("distance_km");
-        headers.add("estimated_duration_minutes");
-        headers.add("direction");
+        headers.add("route_distance_km");
+        headers.add("route_estimated_duration_minutes");
+        headers.add("route_direction");
         
         // Audit fields
         if (Boolean.TRUE.equals(request.getIncludeAuditFields())) {
-            headers.add("created_at");
-            headers.add("updated_at");
-            headers.add("created_by");
-            headers.add("updated_by");
+            headers.add("route_created_at");
+            headers.add("route_updated_at");
+            headers.add("route_created_by");
+            headers.add("route_updated_by");
         }
         
         return headers;
@@ -1494,7 +1497,23 @@ public class RouteServiceImpl implements RouteService {
         }
         
         // Start and end stop IDs
+        // Fetch route stops to get route_stop_ids for start and end stops
+        List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
+        
+        // Find start and end route stops
+        RouteStop startRouteStop = routeStops.stream()
+            .filter(rs -> rs.getStop().getId().equals(route.getStartStopId()))
+            .findFirst()
+            .orElse(null);
+        RouteStop endRouteStop = routeStops.stream()
+            .filter(rs -> rs.getStop().getId().equals(route.getEndStopId()))
+            .findFirst()
+            .orElse(null);
+        
+        // Add route stop IDs and stop IDs
+        rowData.add(escapeCsvValue(startRouteStop != null ? startRouteStop.getId().toString() : ""));
         rowData.add(escapeCsvValue(route.getStartStopId() != null ? route.getStartStopId().toString() : ""));
+        rowData.add(escapeCsvValue(endRouteStop != null ? endRouteStop.getId().toString() : ""));
         rowData.add(escapeCsvValue(route.getEndStopId() != null ? route.getEndStopId().toString() : ""));
         
         // Stop details (always included)
@@ -1600,9 +1619,14 @@ public class RouteServiceImpl implements RouteService {
             }
         }
         
-        // Current stop fields (different for each row)
+        // Route stop and current stop fields (different for each row)
         if (routeStop != null && routeStop.getStop() != null) {
             Stop stop = routeStop.getStop();
+            
+            // Route stop ID (essential for schedule creation)
+            rowData.add(escapeCsvValue(routeStop.getId().toString()));
+            
+            // Stop information
             rowData.add(escapeCsvValue(stop.getId().toString()));
             rowData.add(escapeCsvValue(stop.getName()));
             
@@ -1616,7 +1640,6 @@ public class RouteServiceImpl implements RouteService {
                 routeStop.getDistanceFromStartKm().toString() : ""));
             rowData.add(escapeCsvValue(stopType));
             
-            // Stop location details
             // Stop location details
             if (stop.getLocation() != null) {
                 rowData.add(escapeCsvValue(stop.getLocation().getLatitude() != null ? 
@@ -1633,23 +1656,24 @@ public class RouteServiceImpl implements RouteService {
             }
         } else {
             // Handle case where routeStop is null (shouldn't happen in normal flow)
-            rowData.add("");
-            rowData.add("");
+            rowData.add(""); // route_stop_id
+            rowData.add(""); // stop_id
+            rowData.add(""); // stop_name
             
             if (Boolean.TRUE.equals(request.getIncludeMultiLanguageFields())) {
-                rowData.add("");
-                rowData.add("");
+                rowData.add(""); // stop_name_sinhala
+                rowData.add(""); // stop_name_tamil
             }
             
-            rowData.add("");
-            rowData.add("");
-            rowData.add(escapeCsvValue(stopType));
+            rowData.add(""); // stop_order
+            rowData.add(""); // distance_from_start_km
+            rowData.add(escapeCsvValue(stopType)); // stop_type
             
             // Empty location fields
-            rowData.add("");
-            rowData.add("");
-            rowData.add("");
-            rowData.add("");
+            rowData.add(""); // latitude
+            rowData.add(""); // longitude
+            rowData.add(""); // address
+            rowData.add(""); // city
         }
         
         // Route metrics (same for all rows of this route)
