@@ -437,4 +437,35 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
         ORDER BY rs.stop_order
         """, nativeQuery = true)
     List<Object[]> getTripIntermediateStops(@Param("tripId") UUID tripId);
+    
+    // ============================================================================
+    // FIND MY BUS QUERIES
+    // ============================================================================
+    
+    /**
+     * Find trips for given schedule IDs on a specific date
+     * Used for Find My Bus API to get real-time trip data
+     */
+    @Query("SELECT t FROM Trip t " +
+           "LEFT JOIN FETCH t.bus b " +
+           "LEFT JOIN FETCH b.operator " +
+           "LEFT JOIN FETCH t.passengerServicePermit psp " +
+           "LEFT JOIN FETCH psp.operator " +
+           "WHERE t.schedule.id IN :scheduleIds " +
+           "AND t.tripDate = :tripDate")
+    List<Trip> findByScheduleIdsAndTripDate(@Param("scheduleIds") List<UUID> scheduleIds, 
+                                            @Param("tripDate") LocalDate tripDate);
+    
+    /**
+     * Find trips for a schedule on a specific date with time filtering
+     */
+    /**
+     * Find trips by schedule ID and date - time filtering done in service layer
+     */
+    @Query("SELECT t FROM Trip t " +
+           "WHERE t.schedule.id = ?1 " +
+           "AND t.tripDate = ?2 " +
+           "ORDER BY t.scheduledDepartureTime ASC")
+    List<Trip> findBySchedule_IdAndTripDateAndScheduledDepartureTimeGreaterThanEqual(
+            UUID scheduleId, LocalDate tripDate, LocalTime departureTime);
 }

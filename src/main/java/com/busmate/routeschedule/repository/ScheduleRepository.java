@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,4 +58,28 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
 
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.scheduleType = 'SPECIAL'")
     Long countSpecialSchedules();
+    
+    /**
+     * Find active schedules for a route that are valid for a given date.
+     * Uses a two-step approach to avoid MultipleBagFetchException.
+     * First query fetches schedules with stops, then calendars and exceptions are lazy-loaded.
+     */
+    @Query("SELECT DISTINCT s FROM Schedule s " +
+           "WHERE s.route.id = :routeId " +
+           "AND s.status = 'ACTIVE' " +
+           "AND s.effectiveStartDate <= :date " +
+           "AND (s.effectiveEndDate IS NULL OR s.effectiveEndDate >= :date)")
+    List<Schedule> findActiveSchedulesForRouteAndDate(@Param("routeId") UUID routeId, @Param("date") LocalDate date);
+    
+    /**
+     * Find active schedules for multiple routes that are valid for a given date.
+     * Uses a two-step approach to avoid MultipleBagFetchException.
+     * First query fetches schedules with stops, then calendars and exceptions are lazy-loaded.
+     */
+    @Query("SELECT DISTINCT s FROM Schedule s " +
+           "WHERE s.route.id IN :routeIds " +
+           "AND s.status = 'ACTIVE' " +
+           "AND s.effectiveStartDate <= :date " +
+           "AND (s.effectiveEndDate IS NULL OR s.effectiveEndDate >= :date)")
+    List<Schedule> findActiveSchedulesForRoutesAndDate(@Param("routeIds") List<UUID> routeIds, @Param("date") LocalDate date);
 }
