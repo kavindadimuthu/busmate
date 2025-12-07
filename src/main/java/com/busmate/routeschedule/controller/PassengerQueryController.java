@@ -95,7 +95,7 @@ public class PassengerQueryController {
             @Parameter(description = "Date for which to find buses (defaults to today)", example = "2025-12-07")
             @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             
-            @Parameter(description = "Time from which to find buses (defaults to 00:00)", example = "08:00")
+            @Parameter(description = "Time from which to find buses (defaults to 00:00)", example = "08:00", schema = @Schema(type = "string", format = "time"))
             @RequestParam(value = "time", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
             
             @Parameter(description = "Filter by route number", example = "101")
