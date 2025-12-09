@@ -3,11 +3,13 @@ package com.busmate.routeschedule.entity;
 import com.busmate.routeschedule.enums.TripStatusEnum;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "trip")
 public class Trip extends BaseEntity {

@@ -1,16 +1,10 @@
 package com.busmate.routeschedule.service;
 
-import com.busmate.routeschedule.dto.response.*;
-import com.busmate.routeschedule.entity.Stop;
-import com.busmate.routeschedule.entity.Bus;
-import com.busmate.routeschedule.entity.Operator;
-import com.busmate.routeschedule.entity.Route;
-import com.busmate.routeschedule.entity.Schedule;
-import com.busmate.routeschedule.entity.Trip;
-import com.busmate.routeschedule.entity.PassengerServicePermit;
-import com.busmate.routeschedule.enums.StatusEnum;
-import com.busmate.routeschedule.enums.TripStatusEnum;
-import com.busmate.routeschedule.enums.OperatorTypeEnum;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardAlertsResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardAnalyticsResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardKPIResponse;
+import com.busmate.routeschedule.dto.response.dashboard.DashboardOverviewResponse;
+import com.busmate.routeschedule.dto.response.statistic.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

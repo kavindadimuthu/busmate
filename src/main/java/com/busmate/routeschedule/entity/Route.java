@@ -1,12 +1,15 @@
 package com.busmate.routeschedule.entity;
 
 import com.busmate.routeschedule.enums.DirectionEnum;
+import com.busmate.routeschedule.enums.RoadTypeEnum;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.util.List;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "route")
 public class Route extends BaseEntity {
@@ -16,10 +19,32 @@ public class Route extends BaseEntity {
     private UUID id;
 
     @Column(nullable = false)
-    private String name;
+    private String name; // English name (primary)
+
+    @Column(name = "name_sinhala")
+    private String nameSinhala;
+
+    @Column(name = "name_tamil")
+    private String nameTamil;
+
+    @Column(name = "route_number")
+    private String routeNumber;
 
     @Column
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "road_type")
+    private RoadTypeEnum roadType;
+
+    @Column(name = "route_through")
+    private String routeThrough; // English (primary)
+
+    @Column(name = "route_through_sinhala")
+    private String routeThroughSinhala;
+
+    @Column(name = "route_through_tamil")
+    private String routeThroughTamil;
 
     @ManyToOne
     @JoinColumn(name = "route_group_id")

@@ -46,6 +46,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
 
         RouteGroup routeGroup = new RouteGroup();
         routeGroup.setName(request.getName());
+        routeGroup.setNameSinhala(request.getNameSinhala());
+        routeGroup.setNameTamil(request.getNameTamil());
         routeGroup.setDescription(request.getDescription());
         routeGroup.setCreatedBy(userId);
         routeGroup.setUpdatedBy(userId);
@@ -59,7 +61,13 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 
                 Route route = new Route();
                 route.setName(r.getName());
+                route.setNameSinhala(r.getNameSinhala());
+                route.setNameTamil(r.getNameTamil());
+                route.setRouteNumber(r.getRouteNumber());
                 route.setDescription(r.getDescription());
+                route.setRouteThrough(r.getRouteThrough());
+                route.setRouteThroughSinhala(r.getRouteThroughSinhala());
+                route.setRouteThroughTamil(r.getRouteThroughTamil());
                 route.setRouteGroup(routeGroup);
                 route.setStartStopId(r.getStartStopId());
                 route.setEndStopId(r.getEndStopId());
@@ -70,6 +78,14 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                     route.setDirection(DirectionEnum.valueOf(r.getDirection()));
                 } catch (IllegalArgumentException e) {
                     throw new ConflictException("Invalid direction: " + r.getDirection());
+                }
+                
+                if (r.getRoadType() != null) {
+                    try {
+                        route.setRoadType(com.busmate.routeschedule.enums.RoadTypeEnum.valueOf(r.getRoadType()));
+                    } catch (IllegalArgumentException e) {
+                        throw new ConflictException("Invalid road type: " + r.getRoadType());
+                    }
                 }
                 
                 if (r.getRouteStops() != null && !r.getRouteStops().isEmpty()) {
@@ -132,6 +148,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         }
 
         routeGroup.setName(request.getName());
+        routeGroup.setNameSinhala(request.getNameSinhala());
+        routeGroup.setNameTamil(request.getNameTamil());
         routeGroup.setDescription(request.getDescription());
         routeGroup.setUpdatedBy(userId);
 
@@ -221,6 +239,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         RouteResponse response = mapperUtils.map(route, RouteResponse.class);
         response.setRouteGroupId(route.getRouteGroup().getId());
         response.setRouteGroupName(route.getRouteGroup().getName());
+        response.setRouteGroupNameSinhala(route.getRouteGroup().getNameSinhala());
+        response.setRouteGroupNameTamil(route.getRouteGroup().getNameTamil());
 
         Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
         if (startStop != null) {
@@ -257,7 +277,13 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 .orElseThrow(() -> new ResourceNotFoundException("End stop not found with id: " + routeRequest.getEndStopId()));
 
         existingRoute.setName(routeRequest.getName());
+        existingRoute.setNameSinhala(routeRequest.getNameSinhala());
+        existingRoute.setNameTamil(routeRequest.getNameTamil());
+        existingRoute.setRouteNumber(routeRequest.getRouteNumber());
         existingRoute.setDescription(routeRequest.getDescription());
+        existingRoute.setRouteThrough(routeRequest.getRouteThrough());
+        existingRoute.setRouteThroughSinhala(routeRequest.getRouteThroughSinhala());
+        existingRoute.setRouteThroughTamil(routeRequest.getRouteThroughTamil());
         existingRoute.setStartStopId(routeRequest.getStartStopId());
         existingRoute.setEndStopId(routeRequest.getEndStopId());
         existingRoute.setDistanceKm(routeRequest.getDistanceKm());
@@ -268,6 +294,14 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             existingRoute.setDirection(DirectionEnum.valueOf(routeRequest.getDirection()));
         } catch (IllegalArgumentException e) {
             throw new ConflictException("Invalid direction: " + routeRequest.getDirection());
+        }
+        
+        if (routeRequest.getRoadType() != null) {
+            try {
+                existingRoute.setRoadType(com.busmate.routeschedule.enums.RoadTypeEnum.valueOf(routeRequest.getRoadType()));
+            } catch (IllegalArgumentException e) {
+                throw new ConflictException("Invalid road type: " + routeRequest.getRoadType());
+            }
         }
 
         updateRouteStops(existingRoute, routeRequest.getRouteStops());
@@ -338,7 +372,13 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         
         Route route = new Route();
         route.setName(routeRequest.getName());
+        route.setNameSinhala(routeRequest.getNameSinhala());
+        route.setNameTamil(routeRequest.getNameTamil());
+        route.setRouteNumber(routeRequest.getRouteNumber());
         route.setDescription(routeRequest.getDescription());
+        route.setRouteThrough(routeRequest.getRouteThrough());
+        route.setRouteThroughSinhala(routeRequest.getRouteThroughSinhala());
+        route.setRouteThroughTamil(routeRequest.getRouteThroughTamil());
         route.setRouteGroup(routeGroup);
         route.setStartStopId(routeRequest.getStartStopId());
         route.setEndStopId(routeRequest.getEndStopId());
@@ -351,6 +391,14 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             route.setDirection(DirectionEnum.valueOf(routeRequest.getDirection()));
         } catch (IllegalArgumentException e) {
             throw new ConflictException("Invalid direction: " + routeRequest.getDirection());
+        }
+        
+        if (routeRequest.getRoadType() != null) {
+            try {
+                route.setRoadType(com.busmate.routeschedule.enums.RoadTypeEnum.valueOf(routeRequest.getRoadType()));
+            } catch (IllegalArgumentException e) {
+                throw new ConflictException("Invalid road type: " + routeRequest.getRoadType());
+            }
         }
         
         if (routeRequest.getRouteStops() != null && !routeRequest.getRouteStops().isEmpty()) {

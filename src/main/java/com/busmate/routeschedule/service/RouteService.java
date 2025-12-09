@@ -1,9 +1,14 @@
 package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.response.RouteResponse;
-import com.busmate.routeschedule.dto.response.RouteStatisticsResponse;
-import com.busmate.routeschedule.dto.response.RouteImportResponse;
+import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
+import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
+import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
+import com.busmate.routeschedule.dto.request.RouteExportRequest;
+import com.busmate.routeschedule.dto.response.exporting.RouteExportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
+import com.busmate.routeschedule.enums.RoadTypeEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +24,7 @@ public interface RouteService {
     Page<RouteResponse> getAllRoutesWithFilters(
             UUID routeGroupId,
             DirectionEnum direction,
+            RoadTypeEnum roadType,
             Double minDistance,
             Double maxDistance,
             Integer minDuration,
@@ -28,22 +34,22 @@ public interface RouteService {
             String searchText,
             UUID routeGroupId,
             DirectionEnum direction,
+            RoadTypeEnum roadType,
             Double minDistance,
             Double maxDistance,
             Integer minDuration,
             Integer maxDuration,
             Pageable pageable);
     
-    // Filter options methods
-    List<DirectionEnum> getDistinctDirections();
-    List<Map<String, Object>> getDistinctRouteGroups();
-    Map<String, Object> getDistanceRange();
-    Map<String, Object> getDurationRange();
-    List<RouteResponse> getRoutesByRouteGroupId(UUID routeGroupId);
+    // Filter options method - consolidated
+    RouteFilterOptionsResponse getFilterOptions();
     
     // Statistics methods
     RouteStatisticsResponse getStatistics();
     
-    // Import methods
-    RouteImportResponse importRoutes(MultipartFile file, String userId);
+    // Unified Import methods
+    RouteUnifiedImportResponse importRoutesUnified(MultipartFile file, RouteUnifiedImportRequest importRequest, String userId);
+    
+    // Export methods
+    RouteExportResponse exportRoutes(RouteExportRequest request, String userId);
 }

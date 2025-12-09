@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,24 +41,18 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
     @Override
     public PassengerPaginatedResponse<PassengerRouteResponse> searchRoutes(
             String fromCity, String toCity, UUID fromStopId, UUID toStopId,
-            Double fromLat, Double fromLng, Double toLat, Double toLng, Double radius,
-            UUID operatorId, DirectionEnum direction,
-            LocalDate departureDate, LocalTime earliestTime, LocalTime latestTime,
-            Boolean isAccessible, Integer maxDuration, Double maxDistance,
-            Pageable pageable) {
+            DirectionEnum direction, Double maxDistance, String searchText, Pageable pageable) {
 
-        log.debug("Searching routes with criteria: from={}, to={}, direction={}", 
-                 fromCity, toCity, direction);
+        log.debug("Searching routes with criteria: from={}, to={}, direction={}, searchText={}", 
+                 fromCity, toCity, direction, searchText);
 
-        // For now, get all routes and apply basic filtering
-        // In a real implementation, you would use custom queries or specifications
         List<Route> allRoutes = routeRepository.findAll();
         List<Route> filteredRoutes = allRoutes.stream()
                 .filter(route -> filterRoute(route, fromCity, toCity, fromStopId, toStopId, 
-                        direction, operatorId, maxDistance))
+                        direction, maxDistance, searchText))
                 .collect(Collectors.toList());
 
-        // Apply pagination manually for this example
+        // Apply pagination
         int start = Math.min((int) pageable.getOffset(), filteredRoutes.size());
         int end = Math.min((start + pageable.getPageSize()), filteredRoutes.size());
         List<Route> pageContent = filteredRoutes.subList(start, end);
@@ -134,13 +127,12 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
 
         log.debug("Retrieving route details for ID: {}", routeId);
 
-        return toPassengerRouteResponse(route, includeStops, includeSchedules, includeTrips, 
-                true, true, true);
+        return toPassengerRouteResponse(route, includeStops, includeSchedules, includeTrips);
     }
 
     private boolean filterRoute(Route route, String fromCity, String toCity, 
             UUID fromStopId, UUID toStopId, DirectionEnum direction,
-            UUID operatorId, Double maxDistance) {
+            Double maxDistance, String searchText) {
 
         // Direction filter
         if (direction != null && !direction.equals(route.getDirection())) {
@@ -153,11 +145,18 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
             return false;
         }
 
-        // Note: operatorType filtering removed - routes are not directly linked to operators
-        // Operator filtering would require complex joins through trip->psp->operator
+        // Search text filter
+        if (searchText != null && !searchText.trim().isEmpty()) {
+            String searchLower = searchText.toLowerCase();
+            boolean matchesName = route.getName().toLowerCase().contains(searchLower);
+            boolean matchesDescription = route.getDescription() != null && 
+                    route.getDescription().toLowerCase().contains(searchLower);
+            if (!matchesName && !matchesDescription) {
+                return false;
+            }
+        }
 
-        // For stop and city filtering, we'd need to check route stops
-        // This is a simplified implementation
+        // For stop and city filtering, check route stops
         if (fromStopId != null || toStopId != null || fromCity != null || toCity != null) {
             List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(route.getId());
             return checkStopCriteria(routeStops, fromCity, toCity, fromStopId, toStopId);
@@ -186,7 +185,7 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
         }
 
         // Note: operatorType filtering removed - routes are not directly linked to operators
-        // Operator filtering would require complex joins through trip->psp->operator
+        // Use trip search APIs for operator-specific filtering
 
         // Search filter
         if (search != null && !search.trim().isEmpty()) {
@@ -228,12 +227,11 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
     }
 
     private PassengerRouteResponse toPassengerRouteResponse(Route route) {
-        return toPassengerRouteResponse(route, true, true, true, true, true, true);
+        return toPassengerRouteResponse(route, true, true, true);
     }
 
     private PassengerRouteResponse toPassengerRouteResponse(Route route,
-            Boolean includeStops, Boolean includeSchedules, Boolean includeTrips, 
-            Boolean includeOperator, Boolean includeFares, Boolean includeFeatures) {
+            Boolean includeStops, Boolean includeSchedules, Boolean includeFeatures) {
 
         PassengerRouteResponse.PassengerRouteResponseBuilder builder = PassengerRouteResponse.builder()
                 .routeId(route.getId())
@@ -241,15 +239,6 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
                 .description(route.getDescription())
                 .distance(route.getDistanceKm())
                 .estimatedDuration(route.getEstimatedDurationMinutes());
-
-        // Include operator information (simplified)
-        if (includeOperator != null && includeOperator) {
-            builder.operator(PassengerRouteResponse.PassengerOperatorSummary.builder()
-                    .id(UUID.randomUUID()) // Placeholder
-                    .name("Sample Operator")
-                    .type("PUBLIC")
-                    .build());
-        }
 
         // Include stop information - Load actual stops from database
         if (includeStops != null && includeStops) {
@@ -337,10 +326,7 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
             builder.scheduleCount(schedules.size());
             
             if (!schedules.isEmpty()) {
-                // Set next departure based on first active schedule
-                builder.nextDeparture("08:30 AM"); // Could be calculated from actual schedule data
-                
-                // Convert schedules to response format if needed
+                // Convert schedules to response format
                 List<PassengerRouteResponse.PassengerScheduleSummary> scheduleSummaries = schedules.stream()
                         .map(schedule -> PassengerRouteResponse.PassengerScheduleSummary.builder()
                                 .id(schedule.getId())
@@ -352,24 +338,6 @@ public class PassengerRouteServiceImpl implements PassengerRouteService {
                         .collect(Collectors.toList());
                 builder.schedules(scheduleSummaries);
             }
-        }
-
-        // Include service frequency
-        if (includeTrips != null && includeTrips) {
-            builder.serviceFrequency(PassengerRouteResponse.PassengerServiceFrequency.builder()
-                    .interval(30)
-                    .unit("minutes")
-                    .description("Every 30 minutes during peak hours")
-                    .build());
-        }
-
-        // Include fare information
-        if (includeFares != null && includeFares) {
-            builder.fareInfo(PassengerRouteResponse.PassengerFareInfo.builder()
-                    .minimumFare(50.0)
-                    .maximumFare(150.0)
-                    .currency("LKR")
-                    .build());
         }
 
         // Include route features

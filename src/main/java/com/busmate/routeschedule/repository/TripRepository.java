@@ -2,6 +2,7 @@ package com.busmate.routeschedule.repository;
 
 import com.busmate.routeschedule.entity.Trip;
 import com.busmate.routeschedule.enums.TripStatusEnum;
+import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,15 +28,83 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     
     List<Trip> findByTripDate(LocalDate tripDate);
     
+    Page<Trip> findByTripDate(LocalDate tripDate, Pageable pageable);
+    
     List<Trip> findByTripDateBetween(LocalDate startDate, LocalDate endDate);
     
     List<Trip> findByStatus(TripStatusEnum status);
+    
+    Page<Trip> findByStatus(TripStatusEnum status, Pageable pageable);
     
     List<Trip> findByBusId(UUID busId);
     
     List<Trip> findByDriverId(UUID driverId);
     
     List<Trip> findByConductorId(UUID conductorId);
+    
+    @Query("SELECT t FROM Trip t WHERE t.schedule.route.id = :routeId")
+    Page<Trip> findByScheduleRouteId(@Param("routeId") UUID routeId, Pageable pageable);
+    
+    // Query to find trips by origin and destination stops
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs1.route.id FROM RouteStop rs1, RouteStop rs2 " +
+           "  WHERE rs1.route.id = rs2.route.id " +
+           "  AND rs1.stop.id = :fromStopId " +
+           "  AND rs2.stop.id = :toStopId " +
+           "  AND rs1.stopOrder < rs2.stopOrder" +
+           ")")
+    Page<Trip> findTripsByFromStopAndToStop(@Param("fromStopId") UUID fromStopId, 
+                                           @Param("toStopId") UUID toStopId, 
+                                           Pageable pageable);
+    
+    // Query to find trips by origin stop only
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs.route.id FROM RouteStop rs " +
+           "  WHERE rs.stop.id = :fromStopId" +
+           ")")
+    Page<Trip> findTripsByFromStop(@Param("fromStopId") UUID fromStopId, Pageable pageable);
+    
+    // Query to find trips by destination stop only
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs.route.id FROM RouteStop rs " +
+           "  WHERE rs.stop.id = :toStopId" +
+           ")")
+    Page<Trip> findTripsByToStop(@Param("toStopId") UUID toStopId, Pageable pageable);
+    
+    // Complex queries for combined filtering
+    // Simple methods instead of complex queries to avoid transaction issues
+    Page<Trip> findByTripDateAndStatus(LocalDate travelDate, TripStatusEnum status, Pageable pageable);
+    
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs1.route.id FROM RouteStop rs1, RouteStop rs2 " +
+           "  WHERE rs1.route.id = rs2.route.id " +
+           "  AND rs1.stop.id = :fromStopId " +
+           "  AND rs2.stop.id = :toStopId " +
+           "  AND rs1.stopOrder < rs2.stopOrder" +
+           ")")
+    Page<Trip> findTripsByStopsWithFilters(@Param("fromStopId") UUID fromStopId,
+                                          @Param("toStopId") UUID toStopId,
+                                          Pageable pageable);
+    
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs.route.id FROM RouteStop rs " +
+           "  WHERE rs.stop.id = :fromStopId" +
+           ")")
+    Page<Trip> findTripsByFromStopWithFilters(@Param("fromStopId") UUID fromStopId,
+                                             Pageable pageable);
+    
+    @Query("SELECT DISTINCT t FROM Trip t " +
+           "WHERE t.schedule.route.id IN (" +
+           "  SELECT rs.route.id FROM RouteStop rs " +
+           "  WHERE rs.stop.id = :toStopId" +
+           ")")
+    Page<Trip> findTripsByToStopWithFilters(@Param("toStopId") UUID toStopId,
+                                           Pageable pageable);
     
     @Query(value = "SELECT * FROM trip WHERE trip_date = :date AND passenger_service_permit_id = :pspId AND schedule_id = :scheduleId", nativeQuery = true)
     List<Trip> findByTripDateAndPassengerServicePermitIdAndScheduleId(@Param("date") LocalDate date, @Param("pspId") UUID pspId, @Param("scheduleId") UUID scheduleId);
@@ -224,4 +294,178 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     @Query("SELECT DISTINCT b.id, b.plateNumber, b.model, b.operator.name, b.capacity " +
            "FROM Trip t JOIN t.bus b WHERE b IS NOT NULL ORDER BY b.plateNumber")
     List<Object[]> getDistinctBuses();
+    
+    // ============================================================================
+    // PASSENGER API COMPLEX SEARCH QUERIES
+    // ============================================================================
+    
+    /**
+     * Complex search query for passenger trip search API with all filtering options
+     * Simplified query to avoid PostgreSQL parameter type issues
+     */
+    @Query(value = """
+        SELECT DISTINCT t.* FROM trip t
+        INNER JOIN schedule s ON t.schedule_id = s.id
+        INNER JOIN route r ON s.route_id = r.id
+        LEFT JOIN passenger_service_permit psp ON t.passenger_service_permit_id = psp.id
+        LEFT JOIN operator psp_op ON psp.operator_id = psp_op.id
+        LEFT JOIN bus b ON t.bus_id = b.id
+        LEFT JOIN operator bus_op ON b.operator_id = bus_op.id
+        WHERE (:routeId IS NULL OR r.id = :routeId)
+        AND (:travelDate IS NULL OR t.trip_date = :travelDate)
+        AND (:timeAfter IS NULL OR t.scheduled_departure_time >= :timeAfter)
+        AND (:timeBefore IS NULL OR t.scheduled_departure_time <= :timeBefore)
+        AND (:operatorType IS NULL OR 
+             COALESCE(CAST(psp_op.operator_type AS varchar), CAST(bus_op.operator_type AS varchar)) = :operatorType)
+        AND (:operatorId IS NULL OR 
+             COALESCE(psp_op.id, bus_op.id) = :operatorId)
+        AND (:status IS NULL OR CAST(t.status AS varchar) = :status)
+        ORDER BY t.trip_date, t.scheduled_departure_time
+        """, nativeQuery = true)
+    Page<Trip> searchTripsWithFilters(
+        @Param("fromStopId") UUID fromStopId,
+        @Param("toStopId") UUID toStopId, 
+        @Param("fromCity") String fromCity,
+        @Param("toCity") String toCity,
+        @Param("routeId") UUID routeId,
+        @Param("travelDate") LocalDate travelDate,
+        @Param("timeAfter") LocalTime timeAfter,
+        @Param("timeBefore") LocalTime timeBefore,
+        @Param("operatorType") String operatorType,
+        @Param("operatorId") UUID operatorId,
+        @Param("status") String status,
+        Pageable pageable
+    );
+    
+    /**
+     * Get active trips with comprehensive filtering for passenger API
+     */
+    @Query(value = """
+        SELECT DISTINCT t.* FROM trip t
+        INNER JOIN schedule s ON t.schedule_id = s.id
+        INNER JOIN route r ON s.route_id = r.id
+        LEFT JOIN passenger_service_permit psp ON t.passenger_service_permit_id = psp.id
+        LEFT JOIN operator psp_op ON psp.operator_id = psp_op.id
+        LEFT JOIN bus b ON t.bus_id = b.id
+        LEFT JOIN operator bus_op ON b.operator_id = bus_op.id
+        LEFT JOIN route_stop rs ON r.id = rs.route_id
+        LEFT JOIN stop st ON rs.stop_id = st.id
+        WHERE CAST(t.status AS varchar) IN ('active', 'in_transit', 'boarding', 'pending')
+        AND (:routeId IS NULL OR r.id = :routeId)
+        AND (:operatorType IS NULL OR 
+             (psp_op.operator_type IS NOT NULL AND CAST(psp_op.operator_type AS varchar) = :operatorType) OR
+             (psp_op.operator_type IS NULL AND CAST(bus_op.operator_type AS varchar) = :operatorType))
+        AND (:operatorId IS NULL OR 
+             COALESCE(psp_op.id, bus_op.id) = :operatorId)
+        AND (:nearLat IS NULL OR :nearLng IS NULL OR :radius IS NULL OR
+             (6371 * acos(cos(radians(:nearLat)) * cos(radians(st.latitude)) * 
+              cos(radians(st.longitude) - radians(:nearLng)) + 
+              sin(radians(:nearLat)) * sin(radians(st.latitude)))) <= :radius)
+        ORDER BY t.trip_date DESC, t.scheduled_departure_time DESC
+        """, nativeQuery = true)
+    Page<Trip> findActiveTripsWithFilters(
+        @Param("routeId") UUID routeId,
+        @Param("operatorType") String operatorType,
+        @Param("operatorId") UUID operatorId,
+        @Param("nearLat") Double nearLat,
+        @Param("nearLng") Double nearLng,
+        @Param("radius") Double radius,
+        Pageable pageable
+    );
+    
+    /**
+     * Get trip with full details including stops for passenger display
+     */
+    @Query(value = """
+        SELECT t.*, 
+               r.name as route_name, 
+               r.description as route_description,
+               r.distance_km as route_distance,
+               r.estimated_duration_minutes as route_duration,
+               start_stop.name as departure_stop_name,
+               start_stop.city as departure_stop_city,
+               start_stop.latitude as departure_stop_lat,
+               start_stop.longitude as departure_stop_lng,
+               end_stop.name as arrival_stop_name, 
+               end_stop.city as arrival_stop_city,
+               end_stop.latitude as arrival_stop_lat,
+               end_stop.longitude as arrival_stop_lng,
+               COALESCE(psp_op.name, bus_op.name) as operator_name,
+               COALESCE(psp_op.operator_type::text, bus_op.operator_type::text) as operator_type,
+               b.plate_number as bus_plate,
+               b.capacity as bus_capacity,
+               b.model as bus_model,
+               b.facilities as bus_facilities
+        FROM trip t
+        INNER JOIN schedule s ON t.schedule_id = s.id
+        INNER JOIN route r ON s.route_id = r.id
+        LEFT JOIN stop start_stop ON r.start_stop_id = start_stop.id
+        LEFT JOIN stop end_stop ON r.end_stop_id = end_stop.id
+        LEFT JOIN passenger_service_permit psp ON t.passenger_service_permit_id = psp.id
+        LEFT JOIN operator psp_op ON psp.operator_id = psp_op.id
+        LEFT JOIN bus b ON t.bus_id = b.id
+        LEFT JOIN operator bus_op ON b.operator_id = bus_op.id
+        WHERE t.id = :tripId
+        """, nativeQuery = true)
+    Object[] getTripWithFullDetails(@Param("tripId") UUID tripId);
+    
+    /**
+     * Get intermediate stops for a trip in order (excluding first and last stops)
+     */
+    @Query(value = """
+        SELECT rs.stop_order,
+               st.id as stop_id,
+               st.name as stop_name,
+               st.city as stop_city,
+               st.latitude,
+               st.longitude,
+               ss.arrival_time,
+               ss.departure_time
+        FROM trip t
+        INNER JOIN schedule s ON t.schedule_id = s.id
+        INNER JOIN route r ON s.route_id = r.id
+        INNER JOIN route_stop rs ON r.id = rs.route_id
+        INNER JOIN stop st ON rs.stop_id = st.id
+        LEFT JOIN schedule_stop ss ON s.id = ss.schedule_id AND rs.id = ss.route_stop_id
+        WHERE t.id = :tripId
+        AND rs.stop_order > 1  -- Exclude first stop
+        AND rs.stop_order < (
+            SELECT MAX(rs2.stop_order) 
+            FROM route_stop rs2 
+            WHERE rs2.route_id = r.id
+        )  -- Exclude last stop
+        ORDER BY rs.stop_order
+        """, nativeQuery = true)
+    List<Object[]> getTripIntermediateStops(@Param("tripId") UUID tripId);
+    
+    // ============================================================================
+    // FIND MY BUS QUERIES
+    // ============================================================================
+    
+    /**
+     * Find trips for given schedule IDs on a specific date
+     * Used for Find My Bus API to get real-time trip data
+     */
+    @Query("SELECT t FROM Trip t " +
+           "LEFT JOIN FETCH t.bus b " +
+           "LEFT JOIN FETCH b.operator " +
+           "LEFT JOIN FETCH t.passengerServicePermit psp " +
+           "LEFT JOIN FETCH psp.operator " +
+           "WHERE t.schedule.id IN :scheduleIds " +
+           "AND t.tripDate = :tripDate")
+    List<Trip> findByScheduleIdsAndTripDate(@Param("scheduleIds") List<UUID> scheduleIds, 
+                                            @Param("tripDate") LocalDate tripDate);
+    
+    /**
+     * Find trips for a schedule on a specific date with time filtering
+     */
+    /**
+     * Find trips by schedule ID and date - time filtering done in service layer
+     */
+    @Query("SELECT t FROM Trip t " +
+           "WHERE t.schedule.id = ?1 " +
+           "AND t.tripDate = ?2 " +
+           "ORDER BY t.scheduledDepartureTime ASC")
+    List<Trip> findBySchedule_IdAndTripDateAndScheduledDepartureTimeGreaterThanEqual(
+            UUID scheduleId, LocalDate tripDate, LocalTime departureTime);
 }

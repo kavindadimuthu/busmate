@@ -3,9 +3,11 @@ package com.busmate.routeschedule.service;
 import com.busmate.routeschedule.dto.request.ScheduleRequest;
 import com.busmate.routeschedule.dto.request.ScheduleCalendarRequest;
 import com.busmate.routeschedule.dto.request.ScheduleExceptionRequest;
+import com.busmate.routeschedule.dto.request.ScheduleCsvImportRequest;
 import com.busmate.routeschedule.dto.response.ScheduleResponse;
+import com.busmate.routeschedule.dto.response.importing.ScheduleCsvImportResponse;
 import com.busmate.routeschedule.enums.ScheduleTypeEnum;
-import com.busmate.routeschedule.enums.ScheduleStatusEnum; // Changed import
+import com.busmate.routeschedule.enums.ScheduleStatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,12 +53,12 @@ public interface ScheduleService {
     // Clone functionality
     ScheduleResponse cloneSchedule(UUID id, ScheduleRequest request, String userId);
     
-    // Bulk operations
-    List<ScheduleResponse> importSchedules(MultipartFile file, String userId);
-    List<Map<String, Object>> validateScheduleImport(MultipartFile file);
+    // CSV Import operations
+    ScheduleCsvImportResponse importSchedulesFromCsv(MultipartFile file, ScheduleCsvImportRequest options, String userId);
+    byte[] getScheduleImportTemplate();
     
     // Filter options
     List<ScheduleTypeEnum> getDistinctScheduleTypes();
-    List<ScheduleStatusEnum> getDistinctStatuses(); // Changed return type
+    List<ScheduleStatusEnum> getDistinctStatuses();
     Map<String, Object> getScheduleStatistics();
 }

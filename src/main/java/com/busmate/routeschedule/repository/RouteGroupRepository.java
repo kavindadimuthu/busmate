@@ -19,6 +19,8 @@ public interface RouteGroupRepository extends JpaRepository<RouteGroup, UUID> {
     @Query(value = "SELECT * FROM route_group rg WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +
            "LOWER(rg.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(rg.name_sinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(rg.name_tamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
            "LOWER(rg.description) LIKE LOWER(CONCAT('%', :searchText, '%')))",
            nativeQuery = true)
     Page<RouteGroup> findAllWithSearch(@Param("searchText") String searchText, Pageable pageable);

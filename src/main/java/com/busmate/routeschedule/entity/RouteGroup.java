@@ -2,10 +2,12 @@ package com.busmate.routeschedule.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.util.List;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "route_group")
 public class RouteGroup extends BaseEntity {
@@ -15,7 +17,13 @@ public class RouteGroup extends BaseEntity {
     private UUID id;
 
     @Column(nullable = false)
-    private String name;
+    private String name; // English name (primary)
+
+    @Column(name = "name_sinhala")
+    private String nameSinhala;
+
+    @Column(name = "name_tamil")
+    private String nameTamil;
 
     @Column
     private String description;

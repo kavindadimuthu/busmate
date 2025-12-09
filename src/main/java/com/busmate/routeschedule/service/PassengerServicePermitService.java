@@ -2,9 +2,9 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.PassengerServicePermitRequest;
 import com.busmate.routeschedule.dto.response.PassengerServicePermitResponse;
-import com.busmate.routeschedule.dto.response.PassengerServicePermitFilterOptionsResponse;
-import com.busmate.routeschedule.dto.response.PassengerServicePermitStatisticsResponse;
-import com.busmate.routeschedule.dto.response.PassengerServicePermitImportResponse;
+import com.busmate.routeschedule.dto.response.filter.PassengerServicePermitFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.PassengerServicePermitStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.PassengerServicePermitImportResponse;
 import com.busmate.routeschedule.dto.response.PaginatedResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
