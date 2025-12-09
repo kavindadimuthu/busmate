@@ -71,7 +71,7 @@ INSERT INTO stop (id, name, description, latitude, longitude, address, city, sta
 ('44444444-4444-4444-4444-444444444443', 'Matara Bus Stand', 'Southern coastal terminal', 5.9549, 80.5550, 'Anagarika Dharmapala Mawatha', 'Matara', 'Southern Province', '81000', 'Sri Lanka', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('44444444-4444-4444-4444-444444444444', 'Kurunegala Bus Stand', 'Northwestern province hub', 7.4867, 80.3647, 'Colombo Road', 'Kurunegala', 'North Western Province', '60000', 'Sri Lanka', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('44444444-4444-4444-4444-444444444445', 'Anuradhapura Bus Stand', 'Ancient city transport hub', 8.3114, 80.4037, 'Harischandra Mawatha', 'Anuradhapura', 'North Central Province', '50000', 'Sri Lanka', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
-('44444444-4444-4444-4444-444444444446', 'Ratnapura Bus Stand', 'Gem city terminal', 6.6828, 80.3992, 'Main Street', 'Ratnapura', 'Sabaragamuwa Province', '70000', 'Sri Lanka', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
+('44444444-4444-4444-4444-444444444446', 'Ratnapura Bus Stand old', 'Gem city terminal', 6.6828, 80.3992, 'Main Street', 'Ratnapura', 'Sabaragamuwa Province', '70000', 'Sri Lanka', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system'),
 ('44444444-4444-4444-4444-444444444447', 'Kegalle Bus Stand', 'Hill country junction', 7.2513, 80.3464, 'Kandy Road', 'Kegalle', 'Sabaragamuwa Province', '71000', 'Sri Lanka', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system', 'system');
 
 -- Additional Route Junctions

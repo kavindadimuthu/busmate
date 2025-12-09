@@ -40,3 +40,6 @@ docs
 # test results
 test-results/
 test-reports/
+
+# scripts (temporarily)
+scripts/

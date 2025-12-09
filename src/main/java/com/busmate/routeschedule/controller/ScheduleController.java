@@ -3,10 +3,12 @@ package com.busmate.routeschedule.controller;
 import com.busmate.routeschedule.dto.request.ScheduleRequest;
 import com.busmate.routeschedule.dto.request.ScheduleCalendarRequest;
 import com.busmate.routeschedule.dto.request.ScheduleExceptionRequest;
+import com.busmate.routeschedule.dto.request.ScheduleCsvImportRequest;
 import com.busmate.routeschedule.dto.response.ScheduleResponse;
 import com.busmate.routeschedule.dto.response.TripResponse;
+import com.busmate.routeschedule.dto.response.importing.ScheduleCsvImportResponse;
 import com.busmate.routeschedule.enums.ScheduleTypeEnum;
-import com.busmate.routeschedule.enums.ScheduleStatusEnum; // Changed import
+import com.busmate.routeschedule.enums.ScheduleStatusEnum;
 import com.busmate.routeschedule.service.ScheduleService;
 import com.busmate.routeschedule.service.TripService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -537,45 +540,160 @@ public class ScheduleController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    // ========== BULK OPERATIONS ==========
+    // ========== CSV IMPORT OPERATIONS ==========
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-        summary = "Import schedules from file",
-        description = "Import multiple schedules from a CSV or Excel file. " +
-                     "The file should contain schedule metadata, calendar settings, and stop timings.",
-        operationId = "importSchedules"
+        summary = "Import schedules from CSV file",
+        description = """
+            Import multiple schedules with their associated stops from a CSV file.
+            
+            **CSV Format:**
+            Each row represents one stop within a schedule. Rows with the same schedule_name + route_id + effective_start_date
+            are grouped together to create a single schedule with multiple stops.
+            
+            **Required Columns:**
+            - schedule_name: Name of the schedule
+            - route_id: UUID of the route this schedule belongs to
+            - effective_start_date: Date when schedule becomes effective (YYYY-MM-DD)
+            - route_stop_id: UUID of the route stop (from route_stop table)
+            - stop_order: Order of the stop in the schedule
+            
+            **Optional Columns:**
+            - schedule_type: REGULAR or SPECIAL (defaults to REGULAR)
+            - effective_end_date: End date (YYYY-MM-DD)
+            - status: PENDING, ACTIVE, INACTIVE, CANCELLED (defaults to ACTIVE)
+            - description: Schedule description
+            - arrival_time: Stop arrival time (HH:mm:ss)
+            - departure_time: Stop departure time (HH:mm:ss)
+            
+            **Duplicate Handling Strategies:**
+            - SKIP: Skip schedule if it already exists
+            - UPDATE: Update existing schedule with new data
+            - CREATE_WITH_SUFFIX: Create new schedule with suffix to avoid duplicate
+            """,
+        operationId = "importSchedulesFromCsv"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Schedules imported successfully"),
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for success/failure details)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or data"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<List<ScheduleResponse>> importSchedules(
-            @Parameter(description = "CSV or Excel file containing schedule data")
+    public ResponseEntity<ScheduleCsvImportResponse> importSchedulesFromCsv(
+            @Parameter(description = "CSV file containing schedule data", required = true)
             @RequestParam("file") MultipartFile file,
+            
+            @Parameter(description = "Strategy for handling duplicate schedules", 
+                      schema = @io.swagger.v3.oas.annotations.media.Schema(
+                          allowableValues = {"SKIP", "UPDATE", "CREATE_WITH_SUFFIX"},
+                          defaultValue = "SKIP"
+                      ))
+            @RequestParam(value = "scheduleDuplicateStrategy", defaultValue = "SKIP") 
+            ScheduleCsvImportRequest.ScheduleDuplicateStrategy scheduleDuplicateStrategy,
+            
+            @Parameter(description = "Strategy for handling duplicate schedule stops",
+                      schema = @io.swagger.v3.oas.annotations.media.Schema(
+                          allowableValues = {"SKIP", "UPDATE"},
+                          defaultValue = "UPDATE"
+                      ))
+            @RequestParam(value = "scheduleStopDuplicateStrategy", defaultValue = "UPDATE") 
+            ScheduleCsvImportRequest.ScheduleStopDuplicateStrategy scheduleStopDuplicateStrategy,
+            
+            @Parameter(description = "Validate that route_id exists in the system")
+            @RequestParam(value = "validateRouteExists", defaultValue = "true") Boolean validateRouteExists,
+            
+            @Parameter(description = "Validate that route_stop_id exists and belongs to the route")
+            @RequestParam(value = "validateRouteStopExists", defaultValue = "true") Boolean validateRouteStopExists,
+            
+            @Parameter(description = "Continue processing remaining rows when encountering errors")
+            @RequestParam(value = "continueOnError", defaultValue = "true") Boolean continueOnError,
+            
+            @Parameter(description = "Allow partial schedule creation when some stops fail")
+            @RequestParam(value = "allowPartialStops", defaultValue = "true") Boolean allowPartialStops,
+            
+            @Parameter(description = "Generate trips automatically for imported schedules")
+            @RequestParam(value = "generateTrips", defaultValue = "false") Boolean generateTrips,
+            
+            @Parameter(description = "Default status for schedules without status specified",
+                      schema = @io.swagger.v3.oas.annotations.media.Schema(
+                          allowableValues = {"PENDING", "ACTIVE", "INACTIVE", "CANCELLED"},
+                          defaultValue = "ACTIVE"
+                      ))
+            @RequestParam(value = "defaultStatus", defaultValue = "ACTIVE") String defaultStatus,
+            
+            @Parameter(description = "Default schedule type when not specified in CSV",
+                      schema = @io.swagger.v3.oas.annotations.media.Schema(
+                          allowableValues = {"REGULAR", "SPECIAL"},
+                          defaultValue = "REGULAR"
+                      ))
+            @RequestParam(value = "defaultScheduleType", defaultValue = "REGULAR") String defaultScheduleType,
+            
+            @Parameter(description = "Validate arrival time is before or equal to departure time")
+            @RequestParam(value = "validateTimeSequence", defaultValue = "true") Boolean validateTimeSequence,
+            
+            @Parameter(description = "Validate stop order sequence within each schedule")
+            @RequestParam(value = "validateStopOrder", defaultValue = "true") Boolean validateStopOrder,
+            
             Authentication authentication) {
+        
         String userId = authentication.getName();
-        List<ScheduleResponse> responses = scheduleService.importSchedules(file, userId);
-        return new ResponseEntity<>(responses, HttpStatus.CREATED);
+        
+        // Build options from request parameters
+        ScheduleCsvImportRequest options = new ScheduleCsvImportRequest();
+        options.setScheduleDuplicateStrategy(scheduleDuplicateStrategy);
+        options.setScheduleStopDuplicateStrategy(scheduleStopDuplicateStrategy);
+        options.setValidateRouteExists(validateRouteExists);
+        options.setValidateRouteStopExists(validateRouteStopExists);
+        options.setContinueOnError(continueOnError);
+        options.setAllowPartialStops(allowPartialStops);
+        options.setGenerateTrips(generateTrips);
+        options.setDefaultStatus(defaultStatus);
+        options.setDefaultScheduleType(defaultScheduleType);
+        options.setValidateTimeSequence(validateTimeSequence);
+        options.setValidateStopOrder(validateStopOrder);
+        
+        ScheduleCsvImportResponse response = scheduleService.importSchedulesFromCsv(file, options, userId);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @GetMapping(value = "/import/template", produces = "text/csv")
     @Operation(
-        summary = "Validate schedule import file",
-        description = "Validate a schedule import file without actually importing the data. " +
-                     "Returns validation errors and warnings.",
-        operationId = "validateScheduleImport"
+        summary = "Download CSV import template",
+        description = """
+            Download a sample CSV template for schedule import.
+            
+            The template includes:
+            - All required and optional column headers
+            - Example rows showing how to format data
+            - Multiple schedules with multiple stops each
+            
+            **Column Descriptions:**
+            - schedule_name: Unique name for the schedule within the route
+            - route_id: UUID of the route (must exist in system)
+            - schedule_type: REGULAR or SPECIAL
+            - effective_start_date: Start date (YYYY-MM-DD format)
+            - effective_end_date: End date (optional, YYYY-MM-DD format)
+            - status: PENDING, ACTIVE, INACTIVE, or CANCELLED
+            - description: Optional description text
+            - route_stop_id: UUID of the route stop
+            - stop_order: Integer order of the stop (1, 2, 3, ...)
+            - arrival_time: Time format HH:mm:ss (e.g., 08:30:00)
+            - departure_time: Time format HH:mm:ss (e.g., 08:35:00)
+            """,
+        operationId = "getScheduleImportTemplate"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "File validation completed"),
-        @ApiResponse(responseCode = "400", description = "Invalid file format")
+        @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
     })
-    public ResponseEntity<List<Map<String, Object>>> validateScheduleImport(
-            @Parameter(description = "CSV or Excel file to validate")
-            @RequestParam("file") MultipartFile file) {
-        List<Map<String, Object>> validationResults = scheduleService.validateScheduleImport(file);
-        return ResponseEntity.ok(validationResults);
+    public ResponseEntity<byte[]> getScheduleImportTemplate() {
+        byte[] template = scheduleService.getScheduleImportTemplate();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "schedule_import_template.csv");
+        headers.setContentLength(template.length);
+        
+        return new ResponseEntity<>(template, headers, HttpStatus.OK);
     }
 
     // ========== DELETE OPERATION ==========

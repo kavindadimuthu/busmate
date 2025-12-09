@@ -1,11 +1,18 @@
 package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
-import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
-import com.busmate.routeschedule.dto.response.StopImportResponse;
+import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
+import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
+
+import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
+
 import com.busmate.routeschedule.service.StopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -140,33 +148,21 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 5. FILTER OPTIONS - Get distinct values for filtering
-    @GetMapping("/filter-options/states")
+    // 5. FILTER OPTIONS - Get all filter options in one call for better UX
+    @GetMapping("/filters/options")
     @Operation(
-        summary = "Get distinct states", 
-        description = "Retrieve all distinct states available in the stops database for filter dropdown options.",
-        operationId = "getDistinctStates"
+        summary = "Get all filter options for stops", 
+        description = "Retrieve all available filter options including states, cities, countries, and accessibility statuses. " +
+                     "This consolidated endpoint provides all filter data needed by the UI in a single call, " +
+                     "improving performance and user experience. Also includes metadata about the available options.",
+        operationId = "getFilterOptions"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct states retrieved successfully")
+        @ApiResponse(responseCode = "200", description = "Filter options retrieved successfully")
     })
-    public ResponseEntity<List<String>> getDistinctStates() {
-        List<String> states = stopService.getDistinctStates();
-        return ResponseEntity.ok(states);
-    }
-
-    @GetMapping("/filter-options/accessibility-statuses")
-    @Operation(
-        summary = "Get distinct accessibility statuses", 
-        description = "Retrieve all distinct accessibility statuses (true/false) available in the stops database for filter dropdown options.",
-        operationId = "getDistinctAccessibilityStatuses"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct accessibility statuses retrieved successfully")
-    })
-    public ResponseEntity<List<Boolean>> getDistinctAccessibilityStatuses() {
-        List<Boolean> accessibilityStatuses = stopService.getDistinctAccessibilityStatuses();
-        return ResponseEntity.ok(accessibilityStatuses);
+    public ResponseEntity<StopFilterOptionsResponse> getFilterOptions() {
+        StopFilterOptionsResponse filterOptions = stopService.getFilterOptions();
+        return ResponseEntity.ok(filterOptions);
     }
 
     // 6. UPDATE - Modification operation
@@ -273,48 +269,227 @@ public class StopController {
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Import stops from CSV file", 
-        description = "Bulk import stops from a CSV file. Expected CSV format: name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible (header row required). " +
-                     "Latitude and longitude are required. isAccessible should be true or false. Requires authentication.",
+        description = "Dynamically import stops from CSV files with flexible field combinations. " +
+                     "The system automatically detects available fields and processes any combination: " +
+                     "Required: At least one name field (name, name_sinhala, or name_tamil). " +
+                     "Optional: description, coordinates (lat/lng), address fields (all languages), " +
+                     "city/state/country (all languages), zipCode, isAccessible. " +
+                     "Mixed data supported - different rows can have different field combinations. " +
+                     "Requires authentication.",
         operationId = "importStops"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
+        @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results including imported stop IDs)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<StopImportResponse> importStops(
-            @Parameter(description = "CSV file containing stop data")
+            @Parameter(description = "CSV file containing stop data (supports multiple formats)")
             @RequestParam("file") MultipartFile file,
+            
+            @Parameter(description = "Default country for stops when not specified in CSV", example = "Sri Lanka")
+            @RequestParam(defaultValue = "Sri Lanka") String defaultCountry,
+            
             Authentication authentication) {
         
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         
-        String userId = authentication.getName();
-        StopImportResponse response = stopService.importStops(file, userId);
+        String userId = authentication != null ? authentication.getName() : "system";
+        StopImportResponse response = stopService.importStops(file, userId, defaultCountry);
         return ResponseEntity.ok(response);
     }
 
     // DOWNLOAD CSV TEMPLATE - For import template
-    @GetMapping("/import-template")
+    @GetMapping("/import/template")
     @Operation(
         summary = "Download CSV import template", 
-        description = "Download a CSV template file with sample data and correct format for stop import.",
+        description = "Download flexible CSV template examples showing various field combinations supported. " +
+                     "The system dynamically processes any combination of available fields.",
         operationId = "downloadStopImportTemplate"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
     })
-    public ResponseEntity<String> downloadStopImportTemplate() {
-        String csvTemplate = "name,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
-                           "Colombo Central Bus Station,Main bus terminal in Colombo,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n" +
-                           "Kandy Bus Terminal,Main bus terminal in Kandy,7.2906,80.6337,Temple Street,Kandy,Central Province,20000,Sri Lanka,true\n" +
-                           "Galle Bus Station,Main bus station in Galle,6.0535,80.2210,Main Street,Galle,Southern Province,80000,Sri Lanka,false\n";
+    public ResponseEntity<String> downloadStopImportTemplate(
+            @Parameter(description = "Template type: 'minimal' (name only), 'multilingual' (name variants), 'location' (with coordinates), 'full' (all fields)", example = "full")
+            @RequestParam(defaultValue = "full") String format) {
+        
+        String csvTemplate = generateTemplate(format);
+        String filename = format.toLowerCase() + "_stop_template.csv";
         
         return ResponseEntity.ok()
                 .header("Content-Type", "text/csv")
-                .header("Content-Disposition", "attachment; filename=\"stop_import_template.csv\"")
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
                 .body(csvTemplate);
+    }
+
+    // EXPORT - Flexible stop data export
+    @PostMapping("/export")
+    @Operation(
+        summary = "Export stops with flexible filtering and format options", 
+        description = "Export stops to CSV or JSON format with highly flexible filtering options. " +
+                     "Supports exporting all stops, filtering by city/state/country, specific IDs, accessibility, " +
+                     "and custom field selection. Perfect for bulk operations like route imports where you need " +
+                     "stop IDs to replace in external datasets. The exported file includes comprehensive metadata " +
+                     "about applied filters and export options for audit purposes.",
+        operationId = "exportStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Export completed successfully - returns file content with metadata"),
+        @ApiResponse(responseCode = "400", description = "Invalid export request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during export processing")
+    })
+    public ResponseEntity<byte[]> exportStops(
+            @Parameter(description = "Export all stops (ignores other filters if true)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean exportAll,
+            
+            @Parameter(description = "Specific stop IDs to export (comma-separated)")
+            @RequestParam(required = false) List<UUID> stopIds,
+            
+            @Parameter(description = "Filter by cities (comma-separated)")
+            @RequestParam(required = false) List<String> cities,
+            
+            @Parameter(description = "Filter by states (comma-separated)")
+            @RequestParam(required = false) List<String> states,
+            
+            @Parameter(description = "Filter by countries (comma-separated)")
+            @RequestParam(required = false) List<String> countries,
+            
+            @Parameter(description = "Filter by accessibility status")
+            @RequestParam(required = false) Boolean isAccessible,
+            
+            @Parameter(description = "Search text to filter stops by name, address, city, or state in all languages")
+            @RequestParam(required = false) String searchText,
+            
+            @Parameter(description = "Export format", example = "CSV")
+            @RequestParam(defaultValue = "CSV") StopExportRequest.ExportFormat format,
+            
+            @Parameter(description = "Include multi-language fields (name_sinhala, name_tamil, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeMultiLanguageFields,
+            
+            @Parameter(description = "Include detailed location information (address, coordinates, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeLocationDetails,
+            
+            @Parameter(description = "Include timestamp information (createdAt, updatedAt)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeTimestamps,
+            
+            @Parameter(description = "Include user information (createdBy, updatedBy)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeUserInfo,
+            
+            @Parameter(description = "Custom field selection (comma-separated, if specified only these fields will be exported)")
+            @RequestParam(required = false) List<String> customFields,
+            
+            Authentication authentication) {
+        
+        // Build request object
+        StopExportRequest request = new StopExportRequest();
+        request.setExportAll(exportAll);
+        request.setStopIds(stopIds);
+        request.setCities(cities);
+        request.setStates(states);
+        request.setCountries(countries);
+        request.setIsAccessible(isAccessible);
+        request.setSearchText(searchText);
+        request.setFormat(format);
+        request.setIncludeMultiLanguageFields(includeMultiLanguageFields);
+        request.setIncludeLocationDetails(includeLocationDetails);
+        request.setIncludeTimestamps(includeTimestamps);
+        request.setIncludeUserInfo(includeUserInfo);
+        request.setCustomFields(customFields);
+        
+        String userId = authentication != null ? authentication.getName() : "system";
+        StopExportResponse exportResponse = stopService.exportStops(request, userId);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", exportResponse.getContentType())
+                .header("Content-Disposition", "attachment; filename=\"" + exportResponse.getFileName() + "\"")
+                .header("X-Export-Metadata", 
+                       String.format("Records: %d, Format: %s, Exported-By: %s", 
+                                   exportResponse.getMetadata().getRecordsExported(),
+                                   exportResponse.getMetadata().getFormat(),
+                                   exportResponse.getMetadata().getExportedBy()))
+                .body(exportResponse.getContent());
+    }
+
+    // 11. BULK UPDATE - Update or create multiple stops via CSV file
+    @PutMapping(value = "/import/upsert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Bulk update stops from CSV file", 
+        description = "Update multiple bus stops at once using a CSV file. " +
+                     "Supports flexible matching strategies (ID, name+city, or auto), " +
+                     "partial updates, conflict resolution, and creation of missing stops. " +
+                     "The CSV should contain the same fields as the export format. " +
+                     "Returns detailed results including success/failure counts and specific error information.",
+        operationId = "bulkUpdateStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Bulk update completed (check response for individual results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format or request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "413", description = "File too large"),
+        @ApiResponse(responseCode = "415", description = "Unsupported file type")
+    })
+    public ResponseEntity<StopBulkUpdateResponse> bulkUpdateStops(
+            @Parameter(description = "CSV file containing stops to update", required = true)
+            @RequestParam("file") MultipartFile csvFile,
+            
+            @Parameter(description = "Update strategy for handling conflicts", example = "UPDATE_ALL")
+            @RequestParam(defaultValue = "UPDATE_ALL") StopBulkUpdateRequest.UpdateStrategy updateStrategy,
+            
+            @Parameter(description = "Strategy for matching existing stops", example = "AUTO")
+            @RequestParam(defaultValue = "AUTO") StopBulkUpdateRequest.MatchingStrategy matchingStrategy,
+            
+            @Parameter(description = "Whether to create new stops if they don't exist", example = "false")
+            @RequestParam(defaultValue = "false") Boolean createMissing,
+            
+            @Parameter(description = "Whether to perform partial updates (only non-empty CSV fields)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean partialUpdate,
+            
+            @Parameter(description = "Default country to use if not specified in CSV", example = "Sri Lanka")
+            @RequestParam(required = false) String defaultCountry,
+            
+            @Parameter(description = "Whether to validate geographical coordinates", example = "true")
+            @RequestParam(defaultValue = "true") Boolean validateCoordinates,
+            
+            Authentication authentication) {
+        
+        // Validate file
+        if (csvFile.isEmpty()) {
+            throw new IllegalArgumentException("CSV file is required and cannot be empty");
+        }
+        
+        if (!"text/csv".equals(csvFile.getContentType()) && 
+            !csvFile.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+            throw new IllegalArgumentException("File must be a CSV file");
+        }
+        
+        // Build request object
+        StopBulkUpdateRequest request = new StopBulkUpdateRequest();
+        request.setUpdateStrategy(updateStrategy);
+        request.setMatchingStrategy(matchingStrategy);
+        request.setCreateMissing(createMissing);
+        request.setPartialUpdate(partialUpdate);
+        request.setDefaultCountry(defaultCountry);
+        request.setValidateCoordinates(validateCoordinates);
+        
+        String userId = authentication != null ? authentication.getName() : "system";
+        // Process bulk update
+        StopBulkUpdateResponse response = stopService.bulkUpdateStops(csvFile, request, userId);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    // === Helper Methods ===
+    private String generateTemplate(String format) {
+        return switch (format.toLowerCase()) {
+            case "minimal" -> "name\nColombo Central\nKandy Terminal\nGalle Station\n";
+            case "multilingual" -> "name,name_sinhala,name_tamil\nColombo Central,කොළඹ මධ්‍යම,கொழும்பு மத்திய\n";
+            case "location" -> "name,latitude,longitude,city,state,country\nColombo Central,6.9344,79.8428,Colombo,Western Province,Sri Lanka\n";
+            default -> "name,name_sinhala,description,latitude,longitude,address,city,state,zipCode,country,isAccessible\n" +
+                      "Colombo Central,කොළඹ මධ්‍යම,Main intercity terminal,6.9344,79.8428,Olcott Mawatha,Colombo,Western Province,00100,Sri Lanka,true\n";
+        };
     }
 }

@@ -2,13 +2,14 @@ package com.busmate.routeschedule.service.impl;
 
 import com.busmate.routeschedule.dto.request.ScheduleCalendarRequest;
 import com.busmate.routeschedule.dto.request.ScheduleExceptionRequest;
-import com.busmate.routeschedule.dto.request.ScheduleImportRequest;
 import com.busmate.routeschedule.dto.request.ScheduleRequest;
+import com.busmate.routeschedule.dto.request.ScheduleCsvImportRequest;
 import com.busmate.routeschedule.dto.response.ScheduleResponse;
+import com.busmate.routeschedule.dto.response.importing.ScheduleCsvImportResponse;
 import com.busmate.routeschedule.entity.*;
 import com.busmate.routeschedule.enums.ExceptionTypeEnum;
 import com.busmate.routeschedule.enums.ScheduleTypeEnum;
-import com.busmate.routeschedule.enums.ScheduleStatusEnum; // Changed import
+import com.busmate.routeschedule.enums.ScheduleStatusEnum;
 import com.busmate.routeschedule.exception.ConflictException;
 import com.busmate.routeschedule.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.repository.*;
@@ -26,8 +27,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -388,69 +393,167 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional
-    public List<ScheduleResponse> importSchedules(MultipartFile file, String userId) {
+    public ScheduleCsvImportResponse importSchedulesFromCsv(MultipartFile file, ScheduleCsvImportRequest options, String userId) {
+        log.info("Starting CSV schedule import for user: {}", userId);
+        
+        ScheduleCsvImportResponse response = new ScheduleCsvImportResponse();
+        response.setErrors(new ArrayList<>());
+        response.setWarnings(new ArrayList<>());
+        
+        ScheduleCsvImportResponse.ImportSummary summary = new ScheduleCsvImportResponse.ImportSummary();
+        summary.setCreatedSchedules(new ArrayList<>());
+        summary.setProcessedAt(LocalDateTime.now());
+        summary.setProcessedBy(userId);
+        summary.setSchedulesCreated(0);
+        summary.setSchedulesUpdated(0);
+        summary.setSchedulesSkipped(0);
+        summary.setStopsCreated(0);
+        summary.setStopsUpdated(0);
+        summary.setStopsSkipped(0);
+        
+        // Store options used
+        ScheduleCsvImportResponse.ImportSummary.ImportOptionsUsed optionsUsed = new ScheduleCsvImportResponse.ImportSummary.ImportOptionsUsed();
+        optionsUsed.setScheduleDuplicateStrategy(options.getScheduleDuplicateStrategy().name());
+        optionsUsed.setScheduleStopDuplicateStrategy(options.getScheduleStopDuplicateStrategy().name());
+        optionsUsed.setValidateRouteExists(options.getValidateRouteExists());
+        optionsUsed.setValidateRouteStopExists(options.getValidateRouteStopExists());
+        optionsUsed.setContinueOnError(options.getContinueOnError());
+        optionsUsed.setAllowPartialStops(options.getAllowPartialStops());
+        optionsUsed.setGenerateTrips(options.getGenerateTrips());
+        optionsUsed.setDefaultStatus(options.getDefaultStatus());
+        optionsUsed.setDefaultScheduleType(options.getDefaultScheduleType());
+        summary.setOptionsUsed(optionsUsed);
+        
         try {
-            List<ScheduleImportRequest> importRequests = parseScheduleImportFile(file);
-            List<ScheduleResponse> responses = new ArrayList<>();
+            // Parse CSV file
+            List<CsvScheduleRow> rows = parseCsvFile(file, options, response);
+            response.setTotalRows(rows.size());
             
-            for (ScheduleImportRequest importRequest : importRequests) {
+            if (rows.isEmpty()) {
+                response.setMessage("No valid rows found in CSV file");
+                response.setSummary(summary);
+                return response;
+            }
+            
+            // Group rows by schedule (composite key: name + route_id + effective_start_date)
+            Map<String, List<CsvScheduleRow>> groupedSchedules = groupRowsBySchedule(rows);
+            response.setTotalSchedulesIdentified(groupedSchedules.size());
+            
+            int successfulSchedules = 0;
+            int failedSchedules = 0;
+            int skippedSchedules = 0;
+            int totalStopsCreated = 0;
+            int totalStopsFailed = 0;
+            
+            // Process each schedule group
+            for (Map.Entry<String, List<CsvScheduleRow>> entry : groupedSchedules.entrySet()) {
+                List<CsvScheduleRow> scheduleRows = entry.getValue();
+                CsvScheduleRow firstRow = scheduleRows.get(0);
+                
                 try {
-                    ScheduleRequest scheduleRequest = convertImportToScheduleRequest(importRequest);
-                    ScheduleResponse response = createScheduleFull(scheduleRequest, userId);
-                    responses.add(response);
+                    ProcessScheduleResult result = processScheduleGroup(scheduleRows, options, userId, response);
+                    
+                    if (result.isSuccess()) {
+                        successfulSchedules++;
+                        totalStopsCreated += result.getStopsCreated();
+                        
+                        // Add to created schedules list
+                        ScheduleCsvImportResponse.ImportSummary.CreatedSchedule created = new ScheduleCsvImportResponse.ImportSummary.CreatedSchedule();
+                        created.setId(result.getScheduleId());
+                        created.setName(firstRow.getScheduleName());
+                        created.setRouteId(firstRow.getRouteId());
+                        created.setRouteName(result.getRouteName());
+                        created.setAction(result.getAction());
+                        created.setStopsCount(result.getStopsCreated());
+                        created.setStartRowNumber(firstRow.getRowNumber());
+                        created.setEndRowNumber(scheduleRows.get(scheduleRows.size() - 1).getRowNumber());
+                        summary.getCreatedSchedules().add(created);
+                        
+                        if ("CREATED".equals(result.getAction())) {
+                            summary.setSchedulesCreated(summary.getSchedulesCreated() + 1);
+                        } else if ("UPDATED".equals(result.getAction())) {
+                            summary.setSchedulesUpdated(summary.getSchedulesUpdated() + 1);
+                        }
+                        summary.setStopsCreated(summary.getStopsCreated() + result.getStopsCreated());
+                    } else if (result.isSkipped()) {
+                        skippedSchedules++;
+                        summary.setSchedulesSkipped(summary.getSchedulesSkipped() + 1);
+                    } else {
+                        failedSchedules++;
+                        totalStopsFailed += result.getStopsFailed();
+                    }
+                    
                 } catch (Exception e) {
-                    log.error("Error importing schedule: {}", importRequest.getName(), e);
-                    // Continue with next schedule
+                    log.error("Error processing schedule group: {}", entry.getKey(), e);
+                    failedSchedules++;
+                    
+                    ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+                    error.setRowNumber(firstRow.getRowNumber());
+                    error.setScheduleName(firstRow.getScheduleName());
+                    error.setErrorMessage("Failed to process schedule: " + e.getMessage());
+                    error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+                    response.getErrors().add(error);
+                    
+                    if (!options.getContinueOnError()) {
+                        break;
+                    }
                 }
             }
             
-            return responses;
+            response.setSuccessfulSchedules(successfulSchedules);
+            response.setFailedSchedules(failedSchedules);
+            response.setSkippedSchedules(skippedSchedules);
+            response.setTotalStopsCreated(totalStopsCreated);
+            response.setTotalStopsFailed(totalStopsFailed);
+            response.setSummary(summary);
+            
+            // Generate summary message
+            StringBuilder message = new StringBuilder();
+            message.append(String.format("Successfully imported %d schedules with %d stops.", successfulSchedules, totalStopsCreated));
+            if (failedSchedules > 0) {
+                message.append(String.format(" %d schedules failed.", failedSchedules));
+            }
+            if (skippedSchedules > 0) {
+                message.append(String.format(" %d schedules skipped.", skippedSchedules));
+            }
+            if (totalStopsFailed > 0) {
+                message.append(String.format(" %d stops failed.", totalStopsFailed));
+            }
+            response.setMessage(message.toString());
+            
         } catch (Exception e) {
-            log.error("Error importing schedules from file", e);
-            throw new RuntimeException("Failed to import schedules: " + e.getMessage());
+            log.error("Error importing schedules from CSV", e);
+            ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+            error.setErrorMessage("Failed to parse CSV file: " + e.getMessage());
+            error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+            response.getErrors().add(error);
+            response.setMessage("Import failed: " + e.getMessage());
+            response.setSummary(summary);
         }
+        
+        return response;
     }
-
+    
     @Override
-    public List<Map<String, Object>> validateScheduleImport(MultipartFile file) {
-        try {
-            List<ScheduleImportRequest> importRequests = parseScheduleImportFile(file);
-            List<Map<String, Object>> validationResults = new ArrayList<>();
-            
-            for (int i = 0; i < importRequests.size(); i++) {
-                Map<String, Object> result = new HashMap<>();
-                result.put("row", i + 1);
-                result.put("valid", true);
-                result.put("errors", new ArrayList<String>());
-                
-                ScheduleImportRequest importRequest = importRequests.get(i);
-                List<String> errors = (List<String>) result.get("errors");
-                
-                // Validate required fields
-                if (importRequest.getName() == null || importRequest.getName().trim().isEmpty()) {
-                    errors.add("Schedule name is required");
-                    result.put("valid", false);
-                }
-                
-                if (importRequest.getRouteId() == null) {
-                    errors.add("Route ID is required");
-                    result.put("valid", false);
-                }
-                
-                // Validate route exists
-                if (importRequest.getRouteId() != null && !routeRepository.existsById(importRequest.getRouteId())) {
-                    errors.add("Route not found with ID: " + importRequest.getRouteId());
-                    result.put("valid", false);
-                }
-                
-                validationResults.add(result);
-            }
-            
-            return validationResults;
-        } catch (Exception e) {
-            log.error("Error validating import file", e);
-            throw new RuntimeException("Failed to validate import file: " + e.getMessage());
-        }
+    public byte[] getScheduleImportTemplate() {
+        StringBuilder csv = new StringBuilder();
+        
+        // Header row
+        csv.append("schedule_name,route_id,schedule_type,effective_start_date,effective_end_date,status,description,route_stop_id,stop_order,arrival_time,departure_time\n");
+        
+        // Example rows - showing same schedule with multiple stops
+        csv.append("\"Morning Express\",77777777-7777-7777-7777-777777777771,REGULAR,2025-09-25,2025-12-31,ACTIVE,\"Express morning service\",33333333-3333-3333-3333-333333333331,1,08:30:00,08:35:00\n");
+        csv.append("\"Morning Express\",77777777-7777-7777-7777-777777777771,REGULAR,2025-09-25,2025-12-31,ACTIVE,\"Express morning service\",33333333-3333-3333-3333-333333333332,2,09:00:00,09:05:00\n");
+        csv.append("\"Morning Express\",77777777-7777-7777-7777-777777777771,REGULAR,2025-09-25,2025-12-31,ACTIVE,\"Express morning service\",33333333-3333-3333-3333-333333333333,3,09:30:00,09:35:00\n");
+        
+        // Second schedule example
+        csv.append("\"Evening Service\",77777777-7777-7777-7777-777777777772,REGULAR,2025-09-25,,ACTIVE,\"Evening return service\",44444444-4444-4444-4444-444444444441,1,17:00:00,17:05:00\n");
+        csv.append("\"Evening Service\",77777777-7777-7777-7777-777777777772,REGULAR,2025-09-25,,ACTIVE,\"Evening return service\",44444444-4444-4444-4444-444444444442,2,17:30:00,17:35:00\n");
+        
+        // Third schedule - special type
+        csv.append("\"Holiday Special\",77777777-7777-7777-7777-777777777771,SPECIAL,2025-12-25,2025-12-25,ACTIVE,\"Christmas special\",33333333-3333-3333-3333-333333333331,1,10:00:00,10:05:00\n");
+        
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -458,7 +561,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         return scheduleRepository.findDistinctScheduleTypes();
     }
 
-    @Override // Fixed method signature and return type
+    @Override
     public List<ScheduleStatusEnum> getDistinctStatuses() {
         return scheduleRepository.findDistinctStatuses();
     }
@@ -629,73 +732,648 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.getScheduleExceptions().addAll(newExceptions);
     }
 
-    private List<ScheduleImportRequest> parseScheduleImportFile(MultipartFile file) throws Exception {
-        List<ScheduleImportRequest> requests = new ArrayList<>();
+    // ========== CSV Import Helper Classes and Methods ==========
+    
+    /**
+     * Internal class to represent a parsed CSV row
+     */
+    @lombok.Data
+    private static class CsvScheduleRow {
+        private int rowNumber;
+        private String rawRow;
         
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+        // Schedule fields
+        private String scheduleName;
+        private UUID routeId;
+        private String scheduleType;
+        private LocalDate effectiveStartDate;
+        private LocalDate effectiveEndDate;
+        private String status;
+        private String description;
+        
+        // Schedule stop fields
+        private UUID routeStopId;
+        private Integer stopOrder;
+        private LocalTime arrivalTime;
+        private LocalTime departureTime;
+        
+        public String getCompositeKey() {
+            return scheduleName + "|" + routeId + "|" + effectiveStartDate;
+        }
+    }
+    
+    /**
+     * Internal class to represent the result of processing a schedule group
+     */
+    @lombok.Data
+    private static class ProcessScheduleResult {
+        private boolean success;
+        private boolean skipped;
+        private UUID scheduleId;
+        private String routeName;
+        private String action; // CREATED, UPDATED, SKIPPED
+        private int stopsCreated;
+        private int stopsFailed;
+    }
+    
+    /**
+     * Parse CSV file and return list of CsvScheduleRow objects
+     */
+    private List<CsvScheduleRow> parseCsvFile(MultipartFile file, ScheduleCsvImportRequest options, 
+                                              ScheduleCsvImportResponse response) throws Exception {
+        List<CsvScheduleRow> rows = new ArrayList<>();
+        
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
-            boolean isHeader = true;
+            int rowNumber = 0;
+            String[] headers = null;
             
             while ((line = reader.readLine()) != null) {
-                if (isHeader) {
-                    isHeader = false;
+                rowNumber++;
+                
+                // Skip empty lines
+                if (line.trim().isEmpty()) {
                     continue;
                 }
                 
-                String[] values = line.split(",");
-                if (values.length >= 8) {
-                    ScheduleImportRequest request = new ScheduleImportRequest();
-                    request.setName(values[0].trim());
-                    request.setRouteId(UUID.fromString(values[1].trim()));
-                    request.setScheduleType(values[2].trim());
-                    request.setEffectiveStartDate(java.time.LocalDate.parse(values[3].trim()));
-                    request.setEffectiveEndDate(values[4].trim().isEmpty() ? null : java.time.LocalDate.parse(values[4].trim()));
-                    request.setStatus(values[5].trim());
-                    request.setDescription(values[6].trim());
+                // First non-empty line is header
+                if (headers == null) {
+                    headers = parseCsvLine(line);
+                    continue;
+                }
+                
+                try {
+                    String[] values = parseCsvLine(line);
+                    CsvScheduleRow row = parseCsvRow(values, headers, rowNumber, line, options, response);
                     
-                    // Parse calendar days (assumes format: Mon,Tue,Wed,Thu,Fri,Sat,Sun as true/false)
-                    if (values.length >= 15) {
-                        request.setMonday(Boolean.parseBoolean(values[7].trim()));
-                        request.setTuesday(Boolean.parseBoolean(values[8].trim()));
-                        request.setWednesday(Boolean.parseBoolean(values[9].trim()));
-                        request.setThursday(Boolean.parseBoolean(values[10].trim()));
-                        request.setFriday(Boolean.parseBoolean(values[11].trim()));
-                        request.setSaturday(Boolean.parseBoolean(values[12].trim()));
-                        request.setSunday(Boolean.parseBoolean(values[13].trim()));
+                    if (row != null) {
+                        rows.add(row);
                     }
+                } catch (Exception e) {
+                    log.warn("Error parsing row {}: {}", rowNumber, e.getMessage());
                     
-                    requests.add(request);
+                    ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+                    error.setRowNumber(rowNumber);
+                    error.setErrorMessage("Failed to parse row: " + e.getMessage());
+                    error.setRawCsvRow(line);
+                    error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+                    response.getErrors().add(error);
+                    
+                    if (!options.getContinueOnError()) {
+                        throw e;
+                    }
                 }
             }
         }
         
-        return requests;
+        return rows;
     }
-
-    private ScheduleRequest convertImportToScheduleRequest(ScheduleImportRequest importRequest) {
-        ScheduleRequest request = new ScheduleRequest();
-        request.setName(importRequest.getName());
-        request.setRouteId(importRequest.getRouteId());
-        request.setScheduleType(importRequest.getScheduleType());
-        request.setEffectiveStartDate(importRequest.getEffectiveStartDate());
-        request.setEffectiveEndDate(importRequest.getEffectiveEndDate());
-        request.setStatus(importRequest.getStatus());
-        request.setDescription(importRequest.getDescription());
+    
+    /**
+     * Parse a single CSV line handling quoted values
+     */
+    private String[] parseCsvLine(String line) {
+        List<String> values = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
         
-        // Convert calendar
-        if (importRequest.getMonday() != null) {
-            ScheduleCalendarRequest calendar = new ScheduleCalendarRequest();
-            calendar.setMonday(importRequest.getMonday());
-            calendar.setTuesday(importRequest.getTuesday());
-            calendar.setWednesday(importRequest.getWednesday());
-            calendar.setThursday(importRequest.getThursday());
-            calendar.setFriday(importRequest.getFriday());
-            calendar.setSaturday(importRequest.getSaturday());
-            calendar.setSunday(importRequest.getSunday());
-            request.setCalendar(calendar);
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '"') {
+                // Check for escaped quote ("")
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    current.append('"');
+                    i++; // Skip the next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                values.add(current.toString().trim());
+                current = new StringBuilder();
+            } else {
+                current.append(c);
+            }
         }
         
-        return request;
+        values.add(current.toString().trim());
+        return values.toArray(new String[0]);
+    }
+    
+    /**
+     * Parse a CSV row into a CsvScheduleRow object
+     */
+    private CsvScheduleRow parseCsvRow(String[] values, String[] headers, int rowNumber, String rawRow,
+                                       ScheduleCsvImportRequest options, ScheduleCsvImportResponse response) {
+        CsvScheduleRow row = new CsvScheduleRow();
+        row.setRowNumber(rowNumber);
+        row.setRawRow(rawRow);
+        
+        Map<String, String> valueMap = new HashMap<>();
+        for (int i = 0; i < headers.length && i < values.length; i++) {
+            valueMap.put(headers[i].toLowerCase().trim(), values[i]);
+        }
+        
+        List<String> rowErrors = new ArrayList<>();
+        
+        // Parse schedule_name (required)
+        String scheduleName = getValueOrNull(valueMap, "schedule_name");
+        if (scheduleName == null || scheduleName.isEmpty()) {
+            rowErrors.add("schedule_name is required");
+        }
+        row.setScheduleName(scheduleName);
+        
+        // Parse route_id (required)
+        String routeIdStr = getValueOrNull(valueMap, "route_id");
+        if (routeIdStr == null || routeIdStr.isEmpty()) {
+            rowErrors.add("route_id is required");
+        } else {
+            try {
+                row.setRouteId(UUID.fromString(routeIdStr));
+            } catch (IllegalArgumentException e) {
+                rowErrors.add("Invalid UUID format for route_id: " + routeIdStr);
+            }
+        }
+        
+        // Parse schedule_type (optional, use default)
+        String scheduleType = getValueOrNull(valueMap, "schedule_type");
+        if (scheduleType == null || scheduleType.isEmpty()) {
+            scheduleType = options.getDefaultScheduleType();
+            addWarning(response, rowNumber, scheduleName, "schedule_type", 
+                      "Using default value: " + scheduleType, "USED_DEFAULT");
+        }
+        row.setScheduleType(scheduleType.toUpperCase());
+        
+        // Parse effective_start_date (required)
+        String startDateStr = getValueOrNull(valueMap, "effective_start_date");
+        if (startDateStr == null || startDateStr.isEmpty()) {
+            rowErrors.add("effective_start_date is required");
+        } else {
+            try {
+                row.setEffectiveStartDate(parseDate(startDateStr));
+            } catch (DateTimeParseException e) {
+                rowErrors.add("Invalid date format for effective_start_date: " + startDateStr);
+            }
+        }
+        
+        // Parse effective_end_date (optional)
+        String endDateStr = getValueOrNull(valueMap, "effective_end_date");
+        if (endDateStr != null && !endDateStr.isEmpty()) {
+            try {
+                row.setEffectiveEndDate(parseDate(endDateStr));
+            } catch (DateTimeParseException e) {
+                rowErrors.add("Invalid date format for effective_end_date: " + endDateStr);
+            }
+        }
+        
+        // Parse status (optional, use default)
+        String status = getValueOrNull(valueMap, "status");
+        if (status == null || status.isEmpty()) {
+            status = options.getDefaultStatus();
+            addWarning(response, rowNumber, scheduleName, "status", 
+                      "Using default value: " + status, "USED_DEFAULT");
+        }
+        row.setStatus(status.toUpperCase());
+        
+        // Parse description (optional)
+        row.setDescription(getValueOrNull(valueMap, "description"));
+        
+        // Parse route_stop_id (required for stop)
+        String routeStopIdStr = getValueOrNull(valueMap, "route_stop_id");
+        if (routeStopIdStr != null && !routeStopIdStr.isEmpty()) {
+            try {
+                row.setRouteStopId(UUID.fromString(routeStopIdStr));
+            } catch (IllegalArgumentException e) {
+                rowErrors.add("Invalid UUID format for route_stop_id: " + routeStopIdStr);
+            }
+        }
+        
+        // Parse stop_order (required for stop)
+        String stopOrderStr = getValueOrNull(valueMap, "stop_order");
+        if (stopOrderStr != null && !stopOrderStr.isEmpty()) {
+            try {
+                row.setStopOrder(Integer.parseInt(stopOrderStr));
+            } catch (NumberFormatException e) {
+                rowErrors.add("Invalid number format for stop_order: " + stopOrderStr);
+            }
+        }
+        
+        // Parse arrival_time (optional)
+        String arrivalTimeStr = getValueOrNull(valueMap, "arrival_time");
+        if (arrivalTimeStr != null && !arrivalTimeStr.isEmpty()) {
+            try {
+                row.setArrivalTime(parseTime(arrivalTimeStr));
+            } catch (DateTimeParseException e) {
+                rowErrors.add("Invalid time format for arrival_time: " + arrivalTimeStr);
+            }
+        }
+        
+        // Parse departure_time (optional)
+        String departureTimeStr = getValueOrNull(valueMap, "departure_time");
+        if (departureTimeStr != null && !departureTimeStr.isEmpty()) {
+            try {
+                row.setDepartureTime(parseTime(departureTimeStr));
+            } catch (DateTimeParseException e) {
+                rowErrors.add("Invalid time format for departure_time: " + departureTimeStr);
+            }
+        }
+        
+        // Validate time sequence if enabled
+        if (options.getValidateTimeSequence() && row.getArrivalTime() != null && row.getDepartureTime() != null) {
+            if (row.getArrivalTime().isAfter(row.getDepartureTime())) {
+                addWarning(response, rowNumber, scheduleName, "arrival_time/departure_time",
+                          "Arrival time is after departure time", "VALIDATION_WARNING");
+            }
+        }
+        
+        // Add errors if any
+        if (!rowErrors.isEmpty()) {
+            for (String errorMsg : rowErrors) {
+                ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+                error.setRowNumber(rowNumber);
+                error.setScheduleName(scheduleName);
+                error.setErrorMessage(errorMsg);
+                error.setRawCsvRow(rawRow);
+                error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+                response.getErrors().add(error);
+            }
+            return null; // Skip this row
+        }
+        
+        return row;
+    }
+    
+    /**
+     * Get value from map or return null
+     */
+    private String getValueOrNull(Map<String, String> map, String key) {
+        String value = map.get(key);
+        if (value != null && (value.isEmpty() || value.equalsIgnoreCase("null"))) {
+            return null;
+        }
+        return value;
+    }
+    
+    /**
+     * Parse date with multiple format support
+     */
+    private LocalDate parseDate(String dateStr) {
+        // Try different formats
+        String[] formats = {"yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy/MM/dd"};
+        
+        for (String format : formats) {
+            try {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(format));
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        
+        // Try ISO format as last resort
+        return LocalDate.parse(dateStr);
+    }
+    
+    /**
+     * Parse time with multiple format support
+     */
+    private LocalTime parseTime(String timeStr) {
+        // Try different formats
+        String[] formats = {"HH:mm:ss", "HH:mm", "H:mm:ss", "H:mm"};
+        
+        for (String format : formats) {
+            try {
+                return LocalTime.parse(timeStr, DateTimeFormatter.ofPattern(format));
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        
+        // Try ISO format as last resort
+        return LocalTime.parse(timeStr);
+    }
+    
+    /**
+     * Add a warning to the response
+     */
+    private void addWarning(ScheduleCsvImportResponse response, int rowNumber, String scheduleName,
+                           String field, String message, String action) {
+        ScheduleCsvImportResponse.ImportWarning warning = new ScheduleCsvImportResponse.ImportWarning();
+        warning.setRowNumber(rowNumber);
+        warning.setScheduleName(scheduleName);
+        warning.setField(field);
+        warning.setWarningMessage(message);
+        warning.setAction(action);
+        response.getWarnings().add(warning);
+    }
+    
+    /**
+     * Group rows by schedule composite key
+     */
+    private Map<String, List<CsvScheduleRow>> groupRowsBySchedule(List<CsvScheduleRow> rows) {
+        Map<String, List<CsvScheduleRow>> grouped = new LinkedHashMap<>();
+        
+        for (CsvScheduleRow row : rows) {
+            String key = row.getCompositeKey();
+            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
+        }
+        
+        return grouped;
+    }
+    
+    /**
+     * Process a group of rows belonging to the same schedule
+     */
+    private ProcessScheduleResult processScheduleGroup(List<CsvScheduleRow> rows, ScheduleCsvImportRequest options,
+                                                       String userId, ScheduleCsvImportResponse response) {
+        ProcessScheduleResult result = new ProcessScheduleResult();
+        CsvScheduleRow firstRow = rows.get(0);
+        
+        // Validate route exists
+        if (options.getValidateRouteExists()) {
+            Optional<Route> routeOpt = routeRepository.findById(firstRow.getRouteId());
+            if (routeOpt.isEmpty()) {
+                ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+                error.setRowNumber(firstRow.getRowNumber());
+                error.setScheduleName(firstRow.getScheduleName());
+                error.setField("route_id");
+                error.setValue(firstRow.getRouteId().toString());
+                error.setErrorMessage("Route not found with ID: " + firstRow.getRouteId());
+                error.setSuggestion("Ensure the route_id exists in the system before importing schedules");
+                error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+                response.getErrors().add(error);
+                
+                result.setSuccess(false);
+                return result;
+            }
+            result.setRouteName(routeOpt.get().getName());
+        }
+        
+        // Check for existing schedule
+        Schedule existingSchedule = scheduleRepository.findByNameAndRoute_Id(firstRow.getScheduleName(), firstRow.getRouteId());
+        
+        if (existingSchedule != null) {
+            // Handle duplicate based on strategy
+            switch (options.getScheduleDuplicateStrategy()) {
+                case SKIP:
+                    log.info("Skipping existing schedule: {}", firstRow.getScheduleName());
+                    addWarning(response, firstRow.getRowNumber(), firstRow.getScheduleName(), "schedule",
+                              "Schedule already exists, skipped", "SKIPPED");
+                    result.setSkipped(true);
+                    result.setAction("SKIPPED");
+                    return result;
+                    
+                case UPDATE:
+                    log.info("Updating existing schedule: {}", firstRow.getScheduleName());
+                    return updateExistingSchedule(existingSchedule, rows, options, userId, response, result);
+                    
+                case CREATE_WITH_SUFFIX:
+                    log.info("Creating schedule with suffix: {}", firstRow.getScheduleName());
+                    firstRow.setScheduleName(generateUniqueName(firstRow.getScheduleName(), firstRow.getRouteId()));
+                    addWarning(response, firstRow.getRowNumber(), firstRow.getScheduleName(), "schedule_name",
+                              "Schedule renamed to avoid duplicate", "RENAMED");
+                    break;
+            }
+        }
+        
+        // Create new schedule
+        return createNewSchedule(rows, options, userId, response, result);
+    }
+    
+    /**
+     * Generate unique name by adding suffix
+     */
+    private String generateUniqueName(String baseName, UUID routeId) {
+        String newName = baseName;
+        int suffix = 1;
+        
+        while (scheduleRepository.existsByNameAndRoute_Id(newName, routeId)) {
+            newName = baseName + " (" + suffix + ")";
+            suffix++;
+        }
+        
+        return newName;
+    }
+    
+    /**
+     * Create a new schedule from CSV rows
+     */
+    private ProcessScheduleResult createNewSchedule(List<CsvScheduleRow> rows, ScheduleCsvImportRequest options,
+                                                    String userId, ScheduleCsvImportResponse response,
+                                                    ProcessScheduleResult result) {
+        CsvScheduleRow firstRow = rows.get(0);
+        
+        Route route = routeRepository.findById(firstRow.getRouteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found: " + firstRow.getRouteId()));
+        
+        result.setRouteName(route.getName());
+        
+        // Create schedule entity
+        Schedule schedule = new Schedule();
+        schedule.setName(firstRow.getScheduleName());
+        schedule.setRoute(route);
+        schedule.setScheduleType(ScheduleTypeEnum.valueOf(firstRow.getScheduleType()));
+        schedule.setEffectiveStartDate(firstRow.getEffectiveStartDate());
+        schedule.setEffectiveEndDate(firstRow.getEffectiveEndDate());
+        schedule.setStatus(ScheduleStatusEnum.valueOf(firstRow.getStatus()));
+        schedule.setDescription(firstRow.getDescription());
+        schedule.setCreatedBy(userId);
+        schedule.setUpdatedBy(userId);
+        
+        // Create schedule stops
+        List<ScheduleStop> scheduleStops = new ArrayList<>();
+        int stopsCreated = 0;
+        int stopsFailed = 0;
+        
+        for (CsvScheduleRow row : rows) {
+            if (row.getRouteStopId() == null) {
+                continue; // Skip rows without route_stop_id
+            }
+            
+            try {
+                ScheduleStop stop = createScheduleStopFromRow(schedule, row, options, response);
+                if (stop != null) {
+                    scheduleStops.add(stop);
+                    stopsCreated++;
+                } else {
+                    stopsFailed++;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to create stop for row {}: {}", row.getRowNumber(), e.getMessage());
+                
+                ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+                error.setRowNumber(row.getRowNumber());
+                error.setScheduleName(row.getScheduleName());
+                error.setField("route_stop_id");
+                error.setValue(row.getRouteStopId().toString());
+                error.setErrorMessage("Failed to create stop: " + e.getMessage());
+                error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+                response.getErrors().add(error);
+                
+                stopsFailed++;
+                
+                if (!options.getAllowPartialStops()) {
+                    result.setSuccess(false);
+                    result.setStopsFailed(stopsFailed);
+                    return result;
+                }
+            }
+        }
+        
+        // Sort stops by order
+        scheduleStops.sort(Comparator.comparingInt(ScheduleStop::getStopOrder));
+        schedule.setScheduleStops(scheduleStops);
+        
+        // Save schedule
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+        
+        result.setSuccess(true);
+        result.setScheduleId(savedSchedule.getId());
+        result.setAction("CREATED");
+        result.setStopsCreated(stopsCreated);
+        result.setStopsFailed(stopsFailed);
+        
+        // Generate trips if requested
+        if (options.getGenerateTrips()) {
+            try {
+                tripService.generateTripsForSchedule(
+                    savedSchedule.getId(),
+                    savedSchedule.getEffectiveStartDate(),
+                    savedSchedule.getEffectiveEndDate(),
+                    userId
+                );
+            } catch (Exception e) {
+                log.warn("Failed to generate trips for schedule {}: {}", savedSchedule.getId(), e.getMessage());
+                addWarning(response, firstRow.getRowNumber(), firstRow.getScheduleName(), "generate_trips",
+                          "Failed to generate trips: " + e.getMessage(), "TRIP_GENERATION_FAILED");
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Update an existing schedule from CSV rows
+     */
+    private ProcessScheduleResult updateExistingSchedule(Schedule existingSchedule, List<CsvScheduleRow> rows,
+                                                         ScheduleCsvImportRequest options, String userId,
+                                                         ScheduleCsvImportResponse response,
+                                                         ProcessScheduleResult result) {
+        CsvScheduleRow firstRow = rows.get(0);
+        
+        result.setRouteName(existingSchedule.getRoute().getName());
+        
+        // Update schedule fields
+        existingSchedule.setScheduleType(ScheduleTypeEnum.valueOf(firstRow.getScheduleType()));
+        existingSchedule.setEffectiveStartDate(firstRow.getEffectiveStartDate());
+        existingSchedule.setEffectiveEndDate(firstRow.getEffectiveEndDate());
+        existingSchedule.setStatus(ScheduleStatusEnum.valueOf(firstRow.getStatus()));
+        existingSchedule.setDescription(firstRow.getDescription());
+        existingSchedule.setUpdatedBy(userId);
+        
+        // Clear existing stops and create new ones
+        if (existingSchedule.getScheduleStops() != null) {
+            existingSchedule.getScheduleStops().clear();
+        } else {
+            existingSchedule.setScheduleStops(new ArrayList<>());
+        }
+        
+        int stopsCreated = 0;
+        int stopsFailed = 0;
+        
+        for (CsvScheduleRow row : rows) {
+            if (row.getRouteStopId() == null) {
+                continue;
+            }
+            
+            try {
+                ScheduleStop stop = createScheduleStopFromRow(existingSchedule, row, options, response);
+                if (stop != null) {
+                    existingSchedule.getScheduleStops().add(stop);
+                    stopsCreated++;
+                } else {
+                    stopsFailed++;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to create stop for row {}: {}", row.getRowNumber(), e.getMessage());
+                
+                ScheduleCsvImportResponse.ImportError error = new ScheduleCsvImportResponse.ImportError();
+                error.setRowNumber(row.getRowNumber());
+                error.setScheduleName(row.getScheduleName());
+                error.setField("route_stop_id");
+                error.setValue(row.getRouteStopId().toString());
+                error.setErrorMessage("Failed to create stop: " + e.getMessage());
+                error.setSeverity(ScheduleCsvImportResponse.ImportError.ErrorSeverity.ERROR);
+                response.getErrors().add(error);
+                
+                stopsFailed++;
+                
+                if (!options.getAllowPartialStops()) {
+                    result.setSuccess(false);
+                    result.setStopsFailed(stopsFailed);
+                    return result;
+                }
+            }
+        }
+        
+        // Sort stops by order
+        existingSchedule.getScheduleStops().sort(Comparator.comparingInt(ScheduleStop::getStopOrder));
+        
+        // Save updated schedule
+        Schedule savedSchedule = scheduleRepository.save(existingSchedule);
+        
+        result.setSuccess(true);
+        result.setScheduleId(savedSchedule.getId());
+        result.setAction("UPDATED");
+        result.setStopsCreated(stopsCreated);
+        result.setStopsFailed(stopsFailed);
+        
+        return result;
+    }
+    
+    /**
+     * Create a ScheduleStop from a CSV row
+     */
+    private ScheduleStop createScheduleStopFromRow(Schedule schedule, CsvScheduleRow row,
+                                                   ScheduleCsvImportRequest options,
+                                                   ScheduleCsvImportResponse response) {
+        // Validate route_stop exists
+        if (options.getValidateRouteStopExists()) {
+            RouteStop routeStop = routeStopRepository.findById(row.getRouteStopId())
+                    .orElseThrow(() -> new ResourceNotFoundException("RouteStop not found: " + row.getRouteStopId()));
+            
+            // Verify route_stop belongs to the schedule's route
+            if (!routeStop.getRoute().getId().equals(schedule.getRoute().getId())) {
+                throw new IllegalArgumentException("RouteStop " + row.getRouteStopId() + 
+                                                  " does not belong to route " + schedule.getRoute().getId());
+            }
+            
+            ScheduleStop scheduleStop = new ScheduleStop();
+            scheduleStop.setSchedule(schedule);
+            scheduleStop.setRouteStop(routeStop);
+            scheduleStop.setStopOrder(row.getStopOrder() != null ? row.getStopOrder() : routeStop.getStopOrder());
+            scheduleStop.setArrivalTime(row.getArrivalTime());
+            scheduleStop.setDepartureTime(row.getDepartureTime());
+            
+            return scheduleStop;
+        } else {
+            // Without validation, try to find route_stop
+            Optional<RouteStop> routeStopOpt = routeStopRepository.findById(row.getRouteStopId());
+            
+            if (routeStopOpt.isEmpty()) {
+                addWarning(response, row.getRowNumber(), row.getScheduleName(), "route_stop_id",
+                          "RouteStop not found, skipping stop", "STOP_SKIPPED");
+                return null;
+            }
+            
+            RouteStop routeStop = routeStopOpt.get();
+            
+            ScheduleStop scheduleStop = new ScheduleStop();
+            scheduleStop.setSchedule(schedule);
+            scheduleStop.setRouteStop(routeStop);
+            scheduleStop.setStopOrder(row.getStopOrder() != null ? row.getStopOrder() : routeStop.getStopOrder());
+            scheduleStop.setArrivalTime(row.getArrivalTime());
+            scheduleStop.setDepartureTime(row.getDepartureTime());
+            
+            return scheduleStop;
+        }
     }
 
     private ScheduleResponse mapToResponse(Schedule schedule) {

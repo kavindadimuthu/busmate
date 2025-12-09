@@ -2,9 +2,9 @@ package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.OperatorRequest;
 import com.busmate.routeschedule.dto.response.OperatorResponse;
-import com.busmate.routeschedule.dto.response.OperatorFilterOptionsResponse;
-import com.busmate.routeschedule.dto.response.OperatorStatisticsResponse;
-import com.busmate.routeschedule.dto.response.OperatorImportResponse;
+import com.busmate.routeschedule.dto.response.filter.OperatorFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.OperatorStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.OperatorImportResponse;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.enums.StatusEnum;
 import org.springframework.data.domain.Page;

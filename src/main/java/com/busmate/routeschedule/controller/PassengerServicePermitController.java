@@ -2,9 +2,9 @@ package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.PassengerServicePermitRequest;
 import com.busmate.routeschedule.dto.response.PassengerServicePermitResponse;
-import com.busmate.routeschedule.dto.response.PassengerServicePermitFilterOptionsResponse;
-import com.busmate.routeschedule.dto.response.PassengerServicePermitStatisticsResponse;
-import com.busmate.routeschedule.dto.response.PassengerServicePermitImportResponse;
+import com.busmate.routeschedule.dto.response.filter.PassengerServicePermitFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.PassengerServicePermitStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.PassengerServicePermitImportResponse;
 import com.busmate.routeschedule.dto.response.PaginatedResponse;
 import com.busmate.routeschedule.service.PassengerServicePermitService;
 import io.swagger.v3.oas.annotations.Operation;

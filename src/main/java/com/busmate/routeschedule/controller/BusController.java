@@ -2,9 +2,9 @@ package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.BusRequest;
 import com.busmate.routeschedule.dto.response.BusResponse;
-import com.busmate.routeschedule.dto.response.BusFilterOptionsResponse;
-import com.busmate.routeschedule.dto.response.BusStatisticsResponse;
-import com.busmate.routeschedule.dto.response.BusImportResponse;
+import com.busmate.routeschedule.dto.response.filter.BusFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.BusStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.BusImportResponse;
 import com.busmate.routeschedule.enums.StatusEnum;
 import com.busmate.routeschedule.service.BusService;
 import io.swagger.v3.oas.annotations.Operation;

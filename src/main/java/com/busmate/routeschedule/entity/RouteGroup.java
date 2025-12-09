@@ -17,7 +17,13 @@ public class RouteGroup extends BaseEntity {
     private UUID id;
 
     @Column(nullable = false)
-    private String name;
+    private String name; // English name (primary)
+
+    @Column(name = "name_sinhala")
+    private String nameSinhala;
+
+    @Column(name = "name_tamil")
+    private String nameTamil;
 
     @Column
     private String description;

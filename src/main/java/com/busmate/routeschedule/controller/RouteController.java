@@ -1,10 +1,14 @@
 package com.busmate.routeschedule.controller;
 
 import com.busmate.routeschedule.dto.request.RouteGroupRequest;
+import com.busmate.routeschedule.dto.request.RouteUnifiedImportRequest;
+import com.busmate.routeschedule.dto.request.RouteExportRequest;
 import com.busmate.routeschedule.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.dto.response.RouteResponse;
-import com.busmate.routeschedule.dto.response.RouteStatisticsResponse;
-import com.busmate.routeschedule.dto.response.RouteImportResponse;
+import com.busmate.routeschedule.dto.response.RouteFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.RouteStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.RouteUnifiedImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.RouteExportResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.service.RouteGroupService;
 import com.busmate.routeschedule.service.RouteService;
@@ -19,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +79,9 @@ public class RouteController {
             @Parameter(description = "Filter by direction (INBOUND or OUTBOUND)")
             @RequestParam(required = false) DirectionEnum direction,
             
+            @Parameter(description = "Filter by road type (NORMALWAY or EXPRESSWAY)")
+            @RequestParam(required = false) com.busmate.routeschedule.enums.RoadTypeEnum roadType,
+            
             @Parameter(description = "Minimum distance in kilometers", example = "5.0")
             @RequestParam(required = false) Double minDistance,
             
@@ -100,7 +108,7 @@ public class RouteController {
         Page<RouteResponse> responses;
         
         // Determine which query method to use based on provided parameters
-        boolean hasFilters = routeGroupId != null || direction != null || 
+        boolean hasFilters = routeGroupId != null || direction != null || roadType != null ||
                            minDistance != null || maxDistance != null || 
                            minDuration != null || maxDuration != null;
         
@@ -108,12 +116,12 @@ public class RouteController {
         
         if (hasSearch && hasFilters) {
             responses = routeService.getAllRoutesWithSearchAndFilters(
-                search.trim(), routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+                search.trim(), routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
         } else if (hasSearch) {
             responses = routeService.getAllRoutesWithSearch(search.trim(), pageable);
         } else if (hasFilters) {
             responses = routeService.getAllRoutesWithFilters(
-                routeGroupId, direction, minDistance, maxDistance, minDuration, maxDuration, pageable);
+                routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
         } else {
             responses = routeService.getAllRoutes(pageable);
         }
@@ -156,79 +164,22 @@ public class RouteController {
         return ResponseEntity.ok(response);
     }
 
-    // 4. GET ROUTES BY ROUTE GROUP ID
-    @GetMapping("/by-group/{routeGroupId}")
-    @Operation(
-        summary = "Get routes by route group ID",
-        description = "Retrieve all routes belonging to a specific route group.",
-        operationId = "getRoutesByRouteGroupId"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Routes retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid UUID format")
-    })
-    public ResponseEntity<List<RouteResponse>> getRoutesByRouteGroupId(
-            @Parameter(description = "Route Group ID", example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable UUID routeGroupId) {
-        List<RouteResponse> responses = routeService.getRoutesByRouteGroupId(routeGroupId);
-        return ResponseEntity.ok(responses);
-    }
 
-    // 5. FILTER OPTIONS - Get distinct values for filtering
-    @GetMapping("/filter-options/directions")
-    @Operation(
-        summary = "Get distinct directions",
-        description = "Retrieve all distinct directions available in the routes database for filter dropdown options.",
-        operationId = "getDistinctDirections"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct directions retrieved successfully")
-    })
-    public ResponseEntity<List<DirectionEnum>> getDistinctDirections() {
-        List<DirectionEnum> directions = routeService.getDistinctDirections();
-        return ResponseEntity.ok(directions);
-    }
 
-    @GetMapping("/filter-options/route-groups")
+    // 5. FILTER OPTIONS - Consolidated endpoint for all filter options
+    @GetMapping("/filters/options")
     @Operation(
-        summary = "Get distinct route groups",
-        description = "Retrieve all distinct route groups available in the routes database for filter dropdown options.",
-        operationId = "getDistinctRouteGroups"
+        summary = "Get all route filter options",
+        description = "Retrieve all filter options in one consolidated response including directions, route groups, distance range, and duration range. " +
+                     "This endpoint provides everything needed for the UI filtering functionality in a single API call.",
+        operationId = "getRouteFilterOptions"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distinct route groups retrieved successfully")
+        @ApiResponse(responseCode = "200", description = "All filter options retrieved successfully")
     })
-    public ResponseEntity<List<Map<String, Object>>> getDistinctRouteGroups() {
-        List<Map<String, Object>> routeGroups = routeService.getDistinctRouteGroups();
-        return ResponseEntity.ok(routeGroups);
-    }
-
-    @GetMapping("/filter-options/distance-range")
-    @Operation(
-        summary = "Get distance range",
-        description = "Retrieve the minimum and maximum distance values available in the routes database for range filter options.",
-        operationId = "getDistanceRange"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Distance range retrieved successfully")
-    })
-    public ResponseEntity<Map<String, Object>> getDistanceRange() {
-        Map<String, Object> range = routeService.getDistanceRange();
-        return ResponseEntity.ok(range);
-    }
-
-    @GetMapping("/filter-options/duration-range")
-    @Operation(
-        summary = "Get duration range",
-        description = "Retrieve the minimum and maximum duration values available in the routes database for range filter options.",
-        operationId = "getDurationRange"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Duration range retrieved successfully")
-    })
-    public ResponseEntity<Map<String, Object>> getDurationRange() {
-        Map<String, Object> range = routeService.getDurationRange();
-        return ResponseEntity.ok(range);
+    public ResponseEntity<RouteFilterOptionsResponse> getRouteFilterOptions() {
+        RouteFilterOptionsResponse response = routeService.getFilterOptions();
+        return ResponseEntity.ok(response);
     }
 
     // ========== ROUTE GROUP APIs ==========
@@ -400,54 +351,219 @@ public class RouteController {
         return ResponseEntity.ok(response);
     }
 
-    // ========== IMPORT APIs ==========
+    // ========== UNIFIED IMPORT APIs ==========
 
-    // ROUTE IMPORT - For bulk route import from file
+    // UNIFIED ROUTE IMPORT - Import route groups, routes, and route stops from single CSV
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-        summary = "Import routes from CSV file", 
-        description = "Bulk import routes from a CSV file. Expected CSV format: name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction (header row required). " +
-                     "Direction should be OUTBOUND or INBOUND. Route group and stops must already exist in the system. Requires authentication.",
-        operationId = "importRoutes"
+        summary = "Import complete route data from unified CSV file", 
+        description = "Import route groups, routes, and route stops from a single CSV file with flexible options. " +
+                     "CSV format includes all route-related entities in one row. Supports intelligent duplicate handling, " +
+                     "validation options, and partial imports. The CSV should include columns for route group, route, and route stop information.",
+        operationId = "importRoutesUnified"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<RouteImportResponse> importRoutes(
-            @Parameter(description = "CSV file containing route data")
+    public ResponseEntity<RouteUnifiedImportResponse> importRoutesUnified(
+            @Parameter(description = "CSV file containing complete route data")
             @RequestParam("file") MultipartFile file,
+            @Parameter(description = "Import options for handling duplicates and validation")
+            @RequestParam(value = "routeGroupDuplicateStrategy", defaultValue = "REUSE") String routeGroupDuplicateStrategy,
+            @RequestParam(value = "routeDuplicateStrategy", defaultValue = "SKIP") String routeDuplicateStrategy,
+            @RequestParam(value = "validateStopsExist", defaultValue = "true") Boolean validateStopsExist,
+            @RequestParam(value = "createMissingStops", defaultValue = "false") Boolean createMissingStops,
+            @RequestParam(value = "allowPartialRouteStops", defaultValue = "true") Boolean allowPartialRouteStops,
+            @RequestParam(value = "validateCoordinates", defaultValue = "false") Boolean validateCoordinates,
+            @RequestParam(value = "continueOnError", defaultValue = "true") Boolean continueOnError,
+            @RequestParam(value = "defaultRoadType", defaultValue = "NORMALWAY") String defaultRoadType,
             Authentication authentication) {
         
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         
+        // Build import request
+        RouteUnifiedImportRequest importRequest = new RouteUnifiedImportRequest();
+        try {
+            importRequest.setRouteGroupDuplicateStrategy(RouteUnifiedImportRequest.RouteGroupDuplicateStrategy.valueOf(routeGroupDuplicateStrategy));
+            importRequest.setRouteDuplicateStrategy(RouteUnifiedImportRequest.RouteDuplicateStrategy.valueOf(routeDuplicateStrategy));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        importRequest.setValidateStopsExist(validateStopsExist);
+        importRequest.setCreateMissingStops(createMissingStops);
+        importRequest.setAllowPartialRouteStops(allowPartialRouteStops);
+        importRequest.setValidateCoordinates(validateCoordinates);
+        importRequest.setContinueOnError(continueOnError);
+        importRequest.setDefaultRoadType(defaultRoadType);
+        
         String userId = authentication.getName();
-        RouteImportResponse response = routeService.importRoutes(file, userId);
+        RouteUnifiedImportResponse response = routeService.importRoutesUnified(file, importRequest, userId);
         return ResponseEntity.ok(response);
     }
 
-    // DOWNLOAD CSV TEMPLATE - For import template
-    @GetMapping("/import-template")
+    // DOWNLOAD UNIFIED CSV TEMPLATE - For unified import template
+    @GetMapping("/import/template")
     @Operation(
-        summary = "Download CSV import template", 
-        description = "Download a CSV template file with sample data and correct format for route import.",
-        operationId = "downloadRouteImportTemplate"
+        summary = "Download unified CSV import template", 
+        description = "Download a CSV template file with sample data for unified route import. " +
+                     "This template includes all route-related entities (route groups, routes, route stops) in a single format.",
+        operationId = "downloadUnifiedRouteImportTemplate"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Template downloaded successfully")
     })
-    public ResponseEntity<String> downloadRouteImportTemplate() {
-        String csvTemplate = "name,description,routeGroupName,startStopName,endStopName,distanceKm,estimatedDurationMinutes,direction\n" +
-                           "Colombo - Kandy Express,Express route from Colombo to Kandy,Main Routes,Colombo Central Bus Station,Kandy Bus Terminal,115.5,180,OUTBOUND\n" +
-                           "Kandy - Colombo Express,Express route from Kandy to Colombo,Main Routes,Kandy Bus Terminal,Colombo Central Bus Station,115.5,180,INBOUND\n" +
-                           "Galle - Matara Local,Local route from Galle to Matara,Southern Routes,Galle Bus Station,Matara Bus Terminal,45.2,90,OUTBOUND\n";
+    public ResponseEntity<String> downloadUnifiedRouteImportTemplate() {
+        String csvTemplate = "route_group_name,route_group_name_sinhala,route_group_name_tamil,route_group_description," +
+                           "route_name,route_name_sinhala,route_name_tamil,route_number,route_description," +
+                           "road_type,route_through,route_through_sinhala,route_through_tamil,direction," +
+                           "distance_km,estimated_duration_minutes,start_stop_id,end_stop_id," +
+                           "stop_order,stop_id,stop_name_english,stop_name_sinhala,distance_from_start_km\n" +
+                           
+                           "\"Colombo - Kandy\",\"කොළඹ - මහනුවර\",\"கொழும்பு - கண்டி\",\"Main intercity routes from Colombo to central regions\"," +
+                           "\"Colombo - Kandy Express\",\"කොළඹ - කෑන්ඩි එක්ස්ප්‍රස්\",\"கொழும்பு - கண்டி எக்ஸ்ப்ரெஸ்\",\"001\"," +
+                           "\"Express route from Colombo to Kandy\",\"EXPRESSWAY\",\"via A1 Highway\",\"A1 අධිවේගී මාර්ගය හරහා\"," +
+                           "\"A1 நெடுஞ்சாலை வழியாக\",\"OUTBOUND\",\"115.5\",\"180\"," +
+                           "\"550e8400-e29b-41d4-a716-446655440001\",\"550e8400-e29b-41d4-a716-446655440002\"," +
+                           "\"0\",\"550e8400-e29b-41d4-a716-446655440001\",\"Colombo Central\",\"කොළඹ මධ්‍යම\",\"0\"\n" +
+                           
+                           "\"Colombo - Kandy\",\"කොළඹ - මහනුවර\",\"கொழும்பு - கண்டி\",\"Main intercity routes from Colombo to central regions\"," +
+                           "\"Colombo - Kandy Express\",\"කොළඹ - කෑන්ඩි එක්ස්ප්‍රස්\",\"கொழும்பு - கண்டி எக்ஸ்ப்ரெஸ்\",\"001\"," +
+                           "\"Express route from Colombo to Kandy\",\"EXPRESSWAY\",\"via A1 Highway\",\"A1 අධිවේගී මාර්ගය හරහා\"," +
+                           "\"A1 நெடுஞ்சாலை வழியாக\",\"OUTBOUND\",\"115.5\",\"180\"," +
+                           "\"550e8400-e29b-41d4-a716-446655440001\",\"550e8400-e29b-41d4-a716-446655440002\"," +
+                           "\"1\",\"550e8400-e29b-41d4-a716-446655440003\",\"Kadawatha\",\"කඩවත\",\"25.5\"\n" +
+                           
+                           "\"Galle - Matara\",\"ගාල්ල - මාතර\",\"காலி - மாத்தறை\",\"Southern coastal routes\"," +
+                           "\"Galle - Matara Local\",\"ගාල්ල - මාතර දේශීය\",\"காலி - மாத்தறை உள்ளூர்\",\"002\"," +
+                           "\"Local service along southern coast\",\"NORMALWAY\",\"via Coastal Road\",\"වෙරළබඩ මාර්ගය හරහා\"," +
+                           "\"கடற்கரை சாலை வழியாக\",\"OUTBOUND\",\"45.2\",\"90\"," +
+                           "\"550e8400-e29b-41d4-a716-446655440004\",\"550e8400-e29b-41d4-a716-446655440005\"," +
+                           "\"0\",\"550e8400-e29b-41d4-a716-446655440004\",\"Galle Bus Station\",\"ගාල්ල බස් නැවතුම්පළ\",\"0\"\n";
         
         return ResponseEntity.ok()
-                .header("Content-Type", "text/csv")
-                .header("Content-Disposition", "attachment; filename=\"route_import_template.csv\"")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .header("Content-Disposition", "attachment; filename=\"route_unified_import_template.csv\"")
                 .body(csvTemplate);
+    }
+
+    // 9. EXPORT ROUTES - CSV ONLY WITH TWO MODES
+    @PostMapping("/export")
+    @Operation(
+        summary = "Export routes in CSV format with rich filtering and two distinct modes",
+        description = "Export routes data exclusively in CSV format with comprehensive filtering options and two distinct export modes:\n\n" +
+                     "**MODE 1 - ROUTE_ONLY**: One row per route containing only start and end stop information.\n" +
+                     "**MODE 2 - ROUTE_WITH_ALL_STOPS**: One row per stop (multiple rows per route) including all intermediate stops.\n\n" +
+                     "Supports extensive filtering by route attributes, stop criteria, text search, and customizable field inclusion. " +
+                     "Perfect for system integrations, BI dashboards, schedule imports, and route database migrations. " +
+                     "All exports include UUIDs for efficient data integration.",
+        operationId = "exportRoutes"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "CSV export completed successfully with comprehensive metadata"),
+        @ApiResponse(responseCode = "400", description = "Invalid export request parameters or validation errors"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during CSV generation")
+    })
+    public ResponseEntity<byte[]> exportRoutes(
+            @Parameter(description = "Export all routes (ignores other filters if true)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean exportAll,
+            
+            @Parameter(description = "Specific route IDs to export (comma-separated)")
+            @RequestParam(required = false) List<UUID> routeIds,
+            
+            @Parameter(description = "Filter by route group IDs (comma-separated)")
+            @RequestParam(required = false) List<UUID> routeGroupIds,
+            
+            @Parameter(description = "Filter by stops that routes travel through (comma-separated)")
+            @RequestParam(required = false) List<UUID> travelsThroughStopIds,
+            
+            @Parameter(description = "Filter by start stop IDs (comma-separated)")
+            @RequestParam(required = false) List<UUID> startStopIds,
+            
+            @Parameter(description = "Filter by end stop IDs (comma-separated)")
+            @RequestParam(required = false) List<UUID> endStopIds,
+            
+            @Parameter(description = "Filter by direction (UP, DOWN) - comma-separated")
+            @RequestParam(required = false) List<String> directions,
+            
+            @Parameter(description = "Filter by road type (NORMALWAY, EXPRESSWAY) - comma-separated")
+            @RequestParam(required = false) List<String> roadTypes,
+            
+            @Parameter(description = "Filter by minimum distance in kilometers", example = "5.0")
+            @RequestParam(required = false) Double minDistanceKm,
+            
+            @Parameter(description = "Filter by maximum distance in kilometers", example = "50.0")
+            @RequestParam(required = false) Double maxDistanceKm,
+            
+            @Parameter(description = "Filter by minimum estimated duration in minutes", example = "30")
+            @RequestParam(required = false) Integer minDurationMinutes,
+            
+            @Parameter(description = "Filter by maximum estimated duration in minutes", example = "120")
+            @RequestParam(required = false) Integer maxDurationMinutes,
+            
+            @Parameter(description = "Search text to filter routes by name, route number, or description in all languages")
+            @RequestParam(required = false) String searchText,
+            
+            @Parameter(description = "Export mode - determines CSV structure", example = "ROUTE_ONLY")
+            @RequestParam(defaultValue = "ROUTE_ONLY") RouteExportRequest.ExportMode exportMode,
+            
+            @Parameter(description = "Export format", example = "CSV")
+            @RequestParam(defaultValue = "CSV") RouteExportRequest.ExportFormat format,
+            
+            @Parameter(description = "Include multi-language fields (name_sinhala, name_tamil, etc.)", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeMultiLanguageFields,
+            
+            @Parameter(description = "Include route group information", example = "true")
+            @RequestParam(defaultValue = "true") Boolean includeRouteGroupInfo,
+            
+            @Parameter(description = "Include audit fields (created_at, updated_at, created_by, updated_by)", example = "false")
+            @RequestParam(defaultValue = "false") Boolean includeAuditFields,
+            
+            @Parameter(description = "Custom fields to include in export (comma-separated, if specified only these fields will be exported)")
+            @RequestParam(required = false) List<String> customFields,
+            
+            Authentication authentication) {
+        
+        // Build request object from parameters
+        RouteExportRequest exportRequest = new RouteExportRequest();
+        exportRequest.setExportAll(exportAll);
+        exportRequest.setRouteIds(routeIds);
+        exportRequest.setRouteGroupIds(routeGroupIds);
+        exportRequest.setTravelsThroughStopIds(travelsThroughStopIds);
+        exportRequest.setStartStopIds(startStopIds);
+        exportRequest.setEndStopIds(endStopIds);
+        exportRequest.setDirections(directions);
+        exportRequest.setRoadTypes(roadTypes);
+        exportRequest.setMinDistanceKm(minDistanceKm);
+        exportRequest.setMaxDistanceKm(maxDistanceKm);
+        exportRequest.setMinDurationMinutes(minDurationMinutes);
+        exportRequest.setMaxDurationMinutes(maxDurationMinutes);
+        exportRequest.setSearchText(searchText);
+        exportRequest.setExportMode(exportMode);
+        exportRequest.setFormat(format);
+        exportRequest.setIncludeMultiLanguageFields(includeMultiLanguageFields);
+        exportRequest.setIncludeRouteGroupInfo(includeRouteGroupInfo);
+        exportRequest.setIncludeAuditFields(includeAuditFields);
+        exportRequest.setCustomFields(customFields);
+        
+        String userId = authentication != null ? authentication.getName() : "anonymous";
+        
+        RouteExportResponse exportResponse = routeService.exportRoutes(exportRequest, userId);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", exportResponse.getContentType())
+                .header("Content-Disposition", "attachment; filename=\"" + exportResponse.getFileName() + "\"")
+                .header("X-Export-Total-Records", exportResponse.getMetadata().getTotalRecordsFound().toString())
+                .header("X-Export-Records", exportResponse.getMetadata().getRecordsExported().toString())
+                .header("X-Export-Mode", exportResponse.getMetadata().getExportMode())
+                .header("X-Export-Format", exportResponse.getMetadata().getFormat())
+                .header("X-Export-Timestamp", exportResponse.getMetadata().getExportedAt().toString())
+                .header("X-Export-By", exportResponse.getMetadata().getExportedBy())
+                .body(exportResponse.getContent());
     }
 }

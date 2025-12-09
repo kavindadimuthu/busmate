@@ -1,9 +1,15 @@
 package com.busmate.routeschedule.service;
 
 import com.busmate.routeschedule.dto.request.StopRequest;
+import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.StopResponse;
-import com.busmate.routeschedule.dto.response.StopStatisticsResponse;
-import com.busmate.routeschedule.dto.response.StopImportResponse;
+import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
+import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
+import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
+import com.busmate.routeschedule.dto.response.exporting.StopExportResponse;
+import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
+
+import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import org.springframework.data.domain.Page;
@@ -21,9 +27,8 @@ public interface StopService {
     StopResponse updateStop(UUID id, StopRequest request, String userId);
     void deleteStop(UUID id);
     
-    // Filter options methods
-    List<String> getDistinctStates();
-    List<Boolean> getDistinctAccessibilityStatuses();
+    // Filter options method - consolidated
+    StopFilterOptionsResponse getFilterOptions();
     
     // New methods for route and schedule stop details
     List<RouteStopDetailResponse> getStopsByRoute(UUID routeId);
@@ -32,6 +37,12 @@ public interface StopService {
     // Statistics methods
     StopStatisticsResponse getStatistics();
     
-    // Import methods
-    StopImportResponse importStops(MultipartFile file, String userId);
+    // Import methods - Intelligent import supporting multiple CSV formats
+    StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry);
+    
+    // Export methods - Flexible export supporting multiple formats and filters
+    StopExportResponse exportStops(StopExportRequest request, String userId);
+    
+    // Bulk update methods - Flexible bulk update supporting CSV files with various matching strategies
+    StopBulkUpdateResponse bulkUpdateStops(MultipartFile csvFile, StopBulkUpdateRequest request, String userId);
 }
