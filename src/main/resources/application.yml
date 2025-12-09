@@ -53,9 +53,9 @@ spring:
   jpa:
     hibernate:
       # Change to update to avoid connection issues on startup
-      ddl-auto: update
-      # ddl-auto: create  # Only use during development reset
-    show-sql: false  # Reduce logging overhead
+      # ddl-auto: update
+      ddl-auto: create  # Only use during development reset
+    show-sql: false  # SQL logging disabled
     properties:
       hibernate:
         format_sql: false  # Reduce logging overhead
@@ -82,8 +82,8 @@ spring:
   sql:
     init:
       # Set to never to avoid connection issues during SQL execution
-      mode: never  # Disable to avoid duplicate data and connection issues
-      # mode: always  # Only enable when needed for fresh data load
+      # mode: never  # Disable to avoid duplicate data and connection issues
+      mode: always  # Only enable when needed for fresh data load
       continue-on-error: true  # Continue if some SQL statements fail 
   profiles:
     active: dev  # Enable production profile for Swagger UI testing
