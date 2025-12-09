@@ -32,6 +32,7 @@ jobs:
           passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
           source: "target/*.jar"
           target: "/home/ec2-user/${{ github.event.repository.name }}/"
+          # This copies the entire target directory with JAR inside
 
       - name: Deploy Docker container
         uses: appleboy/ssh-action@master
@@ -41,15 +42,44 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
           script: |
-            cd ${{ github.event.repository.name }}
+            REPO_NAME="${{ github.event.repository.name }}"
+            cd /home/ec2-user/$REPO_NAME
+            
+            echo "=== Current directory structure ==="
+            pwd
+            find . -type f -name "*.jar"
+            
+            # Create Dockerfile that copies from target/ directory
             cat <<EOF > Dockerfile
-            FROM openjdk:21-jdk
+            FROM eclipse-temurin:21-jdk
             WORKDIR /app
-            COPY target/*.jar app.jar
+            COPY ./target/*.jar app.jar
+            RUN echo "JAR file copied successfully" && ls -la /app
             ENTRYPOINT ["java", "-jar", "app.jar"]
             EXPOSE 8080
             EOF
-
-            docker build -t ${{ github.event.repository.name }} .
-            docker rm -f ${{ github.event.repository.name }} || true
-            docker run -d --restart unless-stopped --network=host --name ${{ github.event.repository.name }} ${{ github.event.repository.name }}
+            
+            echo "=== Dockerfile content ==="
+            cat Dockerfile
+            
+            # Build Docker image
+            echo "=== Building Docker image ==="
+            docker build --no-cache -t $REPO_NAME .
+            
+            # Stop and remove existing container
+            docker rm -f $REPO_NAME 2>/dev/null || true
+            
+            # Run new container
+            echo "=== Starting container ==="
+            docker run -d \
+              --restart unless-stopped \
+              --name $REPO_NAME \
+              -p 8080:8080 \
+              $REPO_NAME
+            
+            # Check status
+            sleep 10
+            echo "=== Container status ==="
+            docker ps -a --filter "name=$REPO_NAME"
+            echo "=== Container logs ==="
+            docker logs $REPO_NAME || echo "No logs yet"
