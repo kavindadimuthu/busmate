@@ -71,6 +71,7 @@ jobs:
             # Run new container
             docker run -d \
               --restart unless-stopped \
+              --network=host \
               --name $REPO_NAME \
               -p 8080:8080 \
               $REPO_NAME
