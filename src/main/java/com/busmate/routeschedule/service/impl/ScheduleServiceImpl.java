@@ -101,7 +101,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         // Add schedule calendar
         if (request.getCalendar() != null) {
             ScheduleCalendar calendar = createScheduleCalendar(schedule, request.getCalendar());
-            schedule.setScheduleCalendars(Arrays.asList(calendar));
+            // Use ArrayList instead of Arrays.asList to ensure mutable collection
+            schedule.setScheduleCalendars(new ArrayList<>(List.of(calendar)));
         }
 
         // Add schedule exceptions
@@ -372,7 +373,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         // Clone calendar if provided in request, otherwise use original
         if (request.getCalendar() != null) {
             ScheduleCalendar calendar = createScheduleCalendar(clonedSchedule, request.getCalendar());
-            clonedSchedule.setScheduleCalendars(Arrays.asList(calendar));
+            clonedSchedule.setScheduleCalendars(new ArrayList<>(List.of(calendar)));
         } else if (originalSchedule.getScheduleCalendars() != null && !originalSchedule.getScheduleCalendars().isEmpty()) {
             ScheduleCalendar originalCalendar = originalSchedule.getScheduleCalendars().get(0);
             ScheduleCalendar clonedCalendar = new ScheduleCalendar();
@@ -384,7 +385,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             clonedCalendar.setFriday(originalCalendar.getFriday());
             clonedCalendar.setSaturday(originalCalendar.getSaturday());
             clonedCalendar.setSunday(originalCalendar.getSunday());
-            clonedSchedule.setScheduleCalendars(Arrays.asList(clonedCalendar));
+            clonedSchedule.setScheduleCalendars(new ArrayList<>(List.of(clonedCalendar)));
         }
 
         Schedule savedClonedSchedule = scheduleRepository.save(clonedSchedule);
@@ -691,20 +692,25 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     private void updateScheduleStops(Schedule schedule, List<ScheduleRequest.ScheduleStopRequest> stopRequests) {
-        // Clear existing stops
-        if (schedule.getScheduleStops() != null) {
-            schedule.getScheduleStops().clear();
-        } else {
+        // Clear existing stops (orphanRemoval will handle deletion)
+        if (schedule.getScheduleStops() == null) {
             schedule.setScheduleStops(new ArrayList<>());
         }
+        schedule.getScheduleStops().clear();
         
-        // Add new stops
+        // Create and add new stops to existing collection
         List<ScheduleStop> newStops = createScheduleStops(schedule, stopRequests);
         schedule.getScheduleStops().addAll(newStops);
     }
 
     private void updateScheduleCalendar(Schedule schedule, ScheduleCalendarRequest calendarRequest) {
-        if (schedule.getScheduleCalendars() != null && !schedule.getScheduleCalendars().isEmpty()) {
+        // Initialize collection if null
+        if (schedule.getScheduleCalendars() == null) {
+            schedule.setScheduleCalendars(new ArrayList<>());
+        }
+        
+        if (!schedule.getScheduleCalendars().isEmpty()) {
+            // Update existing calendar
             ScheduleCalendar calendar = schedule.getScheduleCalendars().get(0);
             calendar.setMonday(calendarRequest.getMonday());
             calendar.setTuesday(calendarRequest.getTuesday());
@@ -714,20 +720,20 @@ public class ScheduleServiceImpl implements ScheduleService {
             calendar.setSaturday(calendarRequest.getSaturday());
             calendar.setSunday(calendarRequest.getSunday());
         } else {
+            // Add new calendar to existing collection
             ScheduleCalendar calendar = createScheduleCalendar(schedule, calendarRequest);
-            schedule.setScheduleCalendars(Arrays.asList(calendar));
+            schedule.getScheduleCalendars().add(calendar);
         }
     }
 
     private void updateScheduleExceptions(Schedule schedule, List<ScheduleExceptionRequest> exceptionRequests) {
-        // Clear existing exceptions
-        if (schedule.getScheduleExceptions() != null) {
-            schedule.getScheduleExceptions().clear();
-        } else {
+        // Clear existing exceptions (orphanRemoval will handle deletion)
+        if (schedule.getScheduleExceptions() == null) {
             schedule.setScheduleExceptions(new ArrayList<>());
         }
+        schedule.getScheduleExceptions().clear();
         
-        // Add new exceptions
+        // Create and add new exceptions to existing collection
         List<ScheduleException> newExceptions = createScheduleExceptions(schedule, exceptionRequests);
         schedule.getScheduleExceptions().addAll(newExceptions);
     }
