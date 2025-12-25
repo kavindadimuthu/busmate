@@ -80,7 +80,7 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                     throw new ConflictException("Invalid direction: " + r.getDirection());
                 }
                 
-                if (r.getRoadType() != null) {
+                if (r.getRoadType() != null && !r.getRoadType().trim().isEmpty()) {
                     try {
                         route.setRoadType(com.busmate.routeschedule.enums.RoadTypeEnum.valueOf(r.getRoadType()));
                     } catch (IllegalArgumentException e) {
@@ -142,8 +142,9 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         RouteGroup routeGroup = routeGroupRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Route group not found with id: " + id));
 
+        // Check if the name is being changed and if it already exists for a different route group
         if (!routeGroup.getName().equals(request.getName()) &&
-                routeGroupRepository.existsByName(request.getName())) {
+                routeGroupRepository.existsByNameAndIdNot(request.getName(), id)) {
             throw new ConflictException("Route group with name " + request.getName() + " already exists");
         }
 
@@ -196,8 +197,9 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                         throw new ConflictException("Route with id " + routeRequest.getId() + " does not belong to route group " + routeGroup.getId());
                     }
                     
+                    // Check if the route name is being changed and if it already exists for a different route in the same group
                     if (!existingRoute.getName().equals(routeRequest.getName()) &&
-                            routeRepository.existsByNameAndRouteGroup_Id(routeRequest.getName(), routeGroup.getId())) {
+                            routeRepository.existsByNameAndRouteGroup_IdAndIdNot(routeRequest.getName(), routeGroup.getId(), routeRequest.getId())) {
                         throw new ConflictException("Route with name '" + routeRequest.getName() + "' already exists in this route group");
                     }
                     
@@ -296,7 +298,7 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             throw new ConflictException("Invalid direction: " + routeRequest.getDirection());
         }
         
-        if (routeRequest.getRoadType() != null) {
+        if (routeRequest.getRoadType() != null && !routeRequest.getRoadType().trim().isEmpty()) {
             try {
                 existingRoute.setRoadType(com.busmate.routeschedule.enums.RoadTypeEnum.valueOf(routeRequest.getRoadType()));
             } catch (IllegalArgumentException e) {
@@ -393,7 +395,7 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             throw new ConflictException("Invalid direction: " + routeRequest.getDirection());
         }
         
-        if (routeRequest.getRoadType() != null) {
+        if (routeRequest.getRoadType() != null && !routeRequest.getRoadType().trim().isEmpty()) {
             try {
                 route.setRoadType(com.busmate.routeschedule.enums.RoadTypeEnum.valueOf(routeRequest.getRoadType()));
             } catch (IllegalArgumentException e) {
