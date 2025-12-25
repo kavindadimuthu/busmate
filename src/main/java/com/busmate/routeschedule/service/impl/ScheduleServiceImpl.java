@@ -647,15 +647,13 @@ public class ScheduleServiceImpl implements ScheduleService {
                     ScheduleStop scheduleStop = new ScheduleStop();
                     scheduleStop.setSchedule(schedule);
                     
-                    // Find RouteStop by stopId and route
-                    RouteStop routeStop = routeStopRepository.findByRouteIdAndStopIdAndStopOrder(
+                    // Find RouteStop by route and stop (stopOrder is schedule-specific, not route-specific)
+                    RouteStop routeStop = routeStopRepository.findByRouteIdAndStopId(
                             schedule.getRoute().getId(), 
-                            stopRequest.getStopId(), 
-                            stopRequest.getStopOrder())
+                            stopRequest.getStopId())
                             .orElseThrow(() -> new ResourceNotFoundException(
                                     "RouteStop not found for route: " + schedule.getRoute().getId() + 
-                                    ", stop: " + stopRequest.getStopId() + 
-                                    ", order: " + stopRequest.getStopOrder()));
+                                    ", stop: " + stopRequest.getStopId()));
                     
                     scheduleStop.setRouteStop(routeStop);
                     scheduleStop.setStopOrder(stopRequest.getStopOrder());
