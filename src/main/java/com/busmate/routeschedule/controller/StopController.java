@@ -5,6 +5,7 @@ import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
+import com.busmate.routeschedule.dto.response.StopExistsResponse;
 import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
 import com.busmate.routeschedule.dto.response.importing.StopImportResponse;
@@ -129,7 +130,40 @@ public class StopController {
         return ResponseEntity.ok(responses);
     }
 
-    // 4. READ BY ID - Specific read operation
+    // 4. CHECK STOP EXISTS - Check if a stop exists by ID or name
+    @GetMapping("/exists")
+    @Operation(
+        summary = "Check if a stop exists by ID or name", 
+        description = "Check if a bus stop exists in the system by providing either an ID or a name. " +
+                     "If the stop is found, its full data is returned. " +
+                     "Priority: ID takes precedence over name if both are provided. " +
+                     "Name search matches against English, Sinhala, and Tamil name variants (case-insensitive). " +
+                     "Note: In a future implementation, this will support checking by both name and city for more precise matching.",
+        operationId = "checkStopExists"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Check completed - exists field indicates if stop was found"),
+        @ApiResponse(responseCode = "400", description = "Neither ID nor name provided")
+    })
+    public ResponseEntity<StopExistsResponse> checkStopExists(
+            @Parameter(description = "Stop ID (UUID format)", example = "123e4567-e89b-12d3-a456-426614174000")
+            @RequestParam(required = false) String id,
+            
+            @Parameter(description = "Stop name (English, Sinhala, or Tamil)", example = "Colombo Fort")
+            @RequestParam(required = false) String name) {
+        
+        // Validate that at least one parameter is provided
+        if ((id == null || id.trim().isEmpty()) && (name == null || name.trim().isEmpty())) {
+            return ResponseEntity.badRequest().body(
+                    StopExistsResponse.notFound("none", "Either 'id' or 'name' parameter is required")
+            );
+        }
+        
+        StopExistsResponse response = stopService.checkStopExists(id, name);
+        return ResponseEntity.ok(response);
+    }
+
+    // 5. READ BY ID - Specific read operation
     @GetMapping("/{id}")
     @Operation(
         summary = "Get stop by ID", 
@@ -148,7 +182,7 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 5. FILTER OPTIONS - Get all filter options in one call for better UX
+    // 6. FILTER OPTIONS - Get all filter options in one call for better UX
     @GetMapping("/filters/options")
     @Operation(
         summary = "Get all filter options for stops", 
@@ -165,7 +199,7 @@ public class StopController {
         return ResponseEntity.ok(filterOptions);
     }
 
-    // 6. UPDATE - Modification operation
+    // 7. UPDATE - Modification operation
     @PutMapping("/{id}")
     @Operation(
         summary = "Update an existing stop", 
@@ -189,7 +223,7 @@ public class StopController {
         return ResponseEntity.ok(response);
     }
 
-    // 7. DELETE - Destructive operation (last)
+    // 8. DELETE - Destructive operation (last)
     @DeleteMapping("/{id}")
     @Operation(
         summary = "Delete a stop", 

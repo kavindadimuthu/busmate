@@ -9,10 +9,21 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface StopRepository extends JpaRepository<Stop, UUID> {
+    
+    /**
+     * Find a stop by any name variant (English, Sinhala, or Tamil).
+     * Returns the first matching stop.
+     */
+    @Query("SELECT s FROM Stop s WHERE " +
+           "LOWER(s.name) = LOWER(:name) OR " +
+           "LOWER(s.nameSinhala) = LOWER(:name) OR " +
+           "LOWER(s.nameTamil) = LOWER(:name)")
+    Optional<Stop> findByAnyNameVariant(@Param("name") String name);
     boolean existsByNameAndLocation_City(String name, String city);
     
     // Check for duplicates across all language variants
