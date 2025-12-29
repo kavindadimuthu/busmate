@@ -242,15 +242,18 @@ public class RouteServiceImpl implements RouteService {
         }
 
         if (route.getRouteStops() != null) {
-            List<RouteResponse.RouteStopResponse> routeStopResponses = route.getRouteStops().stream().map(rs -> {
-                RouteResponse.RouteStopResponse rsResponse = new RouteResponse.RouteStopResponse();
-                rsResponse.setStopId(rs.getStop().getId());
-                rsResponse.setStopName(rs.getStop().getName());
-                rsResponse.setLocation(mapperUtils.map(rs.getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));
-                rsResponse.setStopOrder(rs.getStopOrder());
-                rsResponse.setDistanceFromStartKm(rs.getDistanceFromStartKm());
-                return rsResponse;
-            }).collect(Collectors.toList());
+            List<RouteResponse.RouteStopResponse> routeStopResponses = route.getRouteStops().stream()
+                .sorted(Comparator.comparingInt(RouteStop::getStopOrder))
+                .map(rs -> {
+                    RouteResponse.RouteStopResponse rsResponse = new RouteResponse.RouteStopResponse();
+                    rsResponse.setId(rs.getId());  // Set route stop ID for updates
+                    rsResponse.setStopId(rs.getStop().getId());
+                    rsResponse.setStopName(rs.getStop().getName());
+                    rsResponse.setLocation(mapperUtils.map(rs.getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));
+                    rsResponse.setStopOrder(rs.getStopOrder());
+                    rsResponse.setDistanceFromStartKm(rs.getDistanceFromStartKm());
+                    return rsResponse;
+                }).collect(Collectors.toList());
             response.setRouteStops(routeStopResponses);
         }
 

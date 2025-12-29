@@ -5,6 +5,7 @@ import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
+import com.busmate.routeschedule.dto.response.StopExistsResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.dto.response.statistic.StopStatisticsResponse;
@@ -83,6 +84,41 @@ public class StopServiceImpl implements StopService {
         Stop stop = stopRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + id));
         return mapperUtils.map(stop, StopResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StopExistsResponse checkStopExists(String id, String name) {
+        // Priority: ID takes precedence over name
+        if (id != null && !id.trim().isEmpty()) {
+            try {
+                UUID uuid = UUID.fromString(id.trim());
+                return stopRepository.findById(uuid)
+                        .map(stop -> StopExistsResponse.found(
+                                mapperUtils.map(stop, StopResponse.class),
+                                "id",
+                                id
+                        ))
+                        .orElse(StopExistsResponse.notFound("id", id));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid UUID format provided: {}", id);
+                return StopExistsResponse.notFound("id", id);
+            }
+        }
+        
+        // Search by name if ID is not provided
+        if (name != null && !name.trim().isEmpty()) {
+            return stopRepository.findByAnyNameVariant(name.trim())
+                    .map(stop -> StopExistsResponse.found(
+                            mapperUtils.map(stop, StopResponse.class),
+                            "name",
+                            name
+                    ))
+                    .orElse(StopExistsResponse.notFound("name", name));
+        }
+        
+        // Neither ID nor name provided
+        return StopExistsResponse.notFound("none", "No search criteria provided");
     }
 
     @Override

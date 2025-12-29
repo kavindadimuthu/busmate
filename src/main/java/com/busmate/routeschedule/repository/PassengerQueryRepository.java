@@ -120,10 +120,12 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             AND s.effective_start_date <= :searchDate
             AND (s.effective_end_date IS NULL OR s.effective_end_date >= :searchDate)
         
+        -- Join schedule_stop using stop_order to handle cases where route_stop_id may not match
+        -- This is more reliable as stop_order is the logical sequence identifier
         LEFT JOIN schedule_stop ss1 ON ss1.schedule_id = s.id 
-            AND ss1.route_stop_id = rs1.id
+            AND ss1.stop_order = rs1.stop_order
         LEFT JOIN schedule_stop ss2 ON ss2.schedule_id = s.id 
-            AND ss2.route_stop_id = rs2.id
+            AND ss2.stop_order = rs2.stop_order
             
         LEFT JOIN schedule_calendar sc ON sc.schedule_id = s.id
         

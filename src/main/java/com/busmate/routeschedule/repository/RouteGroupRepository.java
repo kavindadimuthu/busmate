@@ -16,6 +16,10 @@ public interface RouteGroupRepository extends JpaRepository<RouteGroup, UUID> {
     boolean existsByName(String name);
     Optional<RouteGroup> findByNameIgnoreCase(String name);
     
+    @Query("SELECT CASE WHEN COUNT(rg) > 0 THEN true ELSE false END FROM RouteGroup rg " +
+           "WHERE rg.name = :name AND rg.id <> :excludeId")
+    boolean existsByNameAndIdNot(@Param("name") String name, @Param("excludeId") UUID excludeId);
+    
     @Query(value = "SELECT * FROM route_group rg WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +
            "LOWER(rg.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
