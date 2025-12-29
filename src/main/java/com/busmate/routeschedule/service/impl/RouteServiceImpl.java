@@ -246,6 +246,7 @@ public class RouteServiceImpl implements RouteService {
                 .sorted(Comparator.comparingInt(RouteStop::getStopOrder))
                 .map(rs -> {
                     RouteResponse.RouteStopResponse rsResponse = new RouteResponse.RouteStopResponse();
+                    rsResponse.setId(rs.getId());  // Set route stop ID for updates
                     rsResponse.setStopId(rs.getStop().getId());
                     rsResponse.setStopName(rs.getStop().getName());
                     rsResponse.setLocation(mapperUtils.map(rs.getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));

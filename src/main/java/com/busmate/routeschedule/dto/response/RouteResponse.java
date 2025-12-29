@@ -39,6 +39,7 @@ public class RouteResponse {
 
     @Data
     public static class RouteStopResponse {
+        private UUID id;  // Route stop entity ID (for updates)
         private UUID stopId;
         private String stopName;
         private LocationDto location;
