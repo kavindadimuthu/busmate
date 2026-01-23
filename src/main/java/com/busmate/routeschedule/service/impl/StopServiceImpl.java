@@ -228,14 +228,23 @@ public class StopServiceImpl implements StopService {
 
     private RouteStopDetailResponse mapToRouteStopDetailResponse(RouteStop routeStop) {
         RouteStopDetailResponse response = new RouteStopDetailResponse();
+        Stop stop = routeStop.getStop();
+        
         response.setRouteStopId(routeStop.getId());
-        response.setStopId(routeStop.getStop().getId());
-        response.setStopName(routeStop.getStop().getName());
-        response.setStopDescription(routeStop.getStop().getDescription());
-        response.setLocation(mapperUtils.map(routeStop.getStop().getLocation(), LocationDto.class));
-        response.setIsAccessible(routeStop.getStop().getIsAccessible());
+        response.setStopId(stop.getId());
+        response.setStopName(stop.getName());
+        response.setStopNameSinhala(stop.getNameSinhala());
+        response.setStopNameTamil(stop.getNameTamil());
+        response.setStopDescription(stop.getDescription());
+        response.setLocation(mapperUtils.map(stop.getLocation(), LocationDto.class));
+        response.setIsAccessible(stop.getIsAccessible());
         response.setStopOrder(routeStop.getStopOrder());
         response.setDistanceFromStartKm(routeStop.getDistanceFromStartKm());
+        response.setCreatedAt(stop.getCreatedAt());
+        response.setUpdatedAt(stop.getUpdatedAt());
+        response.setCreatedBy(stop.getCreatedBy());
+        response.setUpdatedBy(stop.getUpdatedBy());
+        
         return response;
     }
 
