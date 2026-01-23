@@ -4,6 +4,7 @@ import com.busmate.routeschedule.dto.common.LocationDto;
 import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.RouteGroupStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopExistsResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
@@ -16,9 +17,15 @@ import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
 import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
 
 import com.busmate.routeschedule.entity.RouteStop;
+import com.busmate.routeschedule.entity.Route;
+import com.busmate.routeschedule.entity.RouteGroup;
 import com.busmate.routeschedule.entity.ScheduleStop;
 import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.entity.Schedule;
 import com.busmate.routeschedule.repository.RouteStopRepository;
+import com.busmate.routeschedule.repository.RouteRepository;
+import com.busmate.routeschedule.repository.RouteGroupRepository;
+import com.busmate.routeschedule.repository.ScheduleRepository;
 import com.busmate.routeschedule.repository.ScheduleStopRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.service.StopService;
@@ -54,6 +61,9 @@ import java.util.stream.Collectors;
 public class StopServiceImpl implements StopService {
     private final StopRepository stopRepository;
     private final RouteStopRepository routeStopRepository;
+    private final RouteRepository routeRepository;
+    private final RouteGroupRepository routeGroupRepository;
+    private final ScheduleRepository scheduleRepository;
     private final ScheduleStopRepository scheduleStopRepository;
     private final MapperUtils mapperUtils;
 
@@ -209,6 +219,10 @@ public class StopServiceImpl implements StopService {
     @Override
     @Transactional(readOnly = true)
     public List<RouteStopDetailResponse> getStopsByRoute(UUID routeId) {
+        // Verify route exists
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found with id: " + routeId));
+        
         List<RouteStop> routeStops = routeStopRepository.findByRouteIdOrderByStopOrder(routeId);
 
         return routeStops.stream()
@@ -218,7 +232,25 @@ public class StopServiceImpl implements StopService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<RouteGroupStopDetailResponse> getStopsByRouteGroup(UUID routeGroupId) {
+        // Verify route group exists
+        RouteGroup routeGroup = routeGroupRepository.findById(routeGroupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Route group not found with id: " + routeGroupId));
+        
+        List<RouteStop> routeStops = routeStopRepository.findByRouteGroupIdOrderByRouteAndStopOrder(routeGroupId);
+
+        return routeStops.stream()
+                .map(this::mapToRouteGroupStopDetailResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ScheduleStopDetailResponse> getStopsWithScheduleBySchedule(UUID scheduleId) {
+        // Verify schedule exists
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + scheduleId));
+        
         List<ScheduleStop> scheduleStops = scheduleStopRepository.findByScheduleIdOrderByStopOrder(scheduleId);
 
         return scheduleStops.stream()
@@ -240,6 +272,40 @@ public class StopServiceImpl implements StopService {
         response.setIsAccessible(stop.getIsAccessible());
         response.setStopOrder(routeStop.getStopOrder());
         response.setDistanceFromStartKm(routeStop.getDistanceFromStartKm());
+        response.setCreatedAt(stop.getCreatedAt());
+        response.setUpdatedAt(stop.getUpdatedAt());
+        response.setCreatedBy(stop.getCreatedBy());
+        response.setUpdatedBy(stop.getUpdatedBy());
+        
+        return response;
+    }
+
+    private RouteGroupStopDetailResponse mapToRouteGroupStopDetailResponse(RouteStop routeStop) {
+        RouteGroupStopDetailResponse response = new RouteGroupStopDetailResponse();
+        Stop stop = routeStop.getStop();
+        Route route = routeStop.getRoute();
+        
+        // Route information
+        response.setRouteId(route.getId());
+        response.setRouteName(route.getName());
+        response.setRouteNameSinhala(route.getNameSinhala());
+        response.setRouteNameTamil(route.getNameTamil());
+        response.setRouteNumber(route.getRouteNumber());
+        response.setDirection(route.getDirection() != null ? route.getDirection().name() : null);
+        
+        // RouteStop information
+        response.setRouteStopId(routeStop.getId());
+        response.setStopOrder(routeStop.getStopOrder());
+        response.setDistanceFromStartKm(routeStop.getDistanceFromStartKm());
+        
+        // Stop information
+        response.setStopId(stop.getId());
+        response.setStopName(stop.getName());
+        response.setStopNameSinhala(stop.getNameSinhala());
+        response.setStopNameTamil(stop.getNameTamil());
+        response.setStopDescription(stop.getDescription());
+        response.setLocation(mapperUtils.map(stop.getLocation(), LocationDto.class));
+        response.setIsAccessible(stop.getIsAccessible());
         response.setCreatedAt(stop.getCreatedAt());
         response.setUpdatedAt(stop.getUpdatedAt());
         response.setCreatedBy(stop.getCreatedBy());

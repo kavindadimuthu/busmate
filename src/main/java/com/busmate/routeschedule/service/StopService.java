@@ -11,6 +11,7 @@ import com.busmate.routeschedule.dto.response.updating.StopBulkUpdateResponse;
 
 import com.busmate.routeschedule.dto.request.StopBulkUpdateRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.RouteGroupStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopExistsResponse;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public interface StopService {
     
     // New methods for route and schedule stop details
     List<RouteStopDetailResponse> getStopsByRoute(UUID routeId);
+    List<RouteGroupStopDetailResponse> getStopsByRouteGroup(UUID routeGroupId);
     List<ScheduleStopDetailResponse> getStopsWithScheduleBySchedule(UUID scheduleId);
     
     // Statistics methods
