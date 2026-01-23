@@ -13,6 +13,29 @@ interface BusCardProps {
   onViewDetails?: () => void;
 }
 
+// Utility function to calculate duration from arrival and departure times if api does not provide duration
+const calculateDuration = (departureTime?: string, arrivalTime?: string) => {
+  if (!departureTime || !arrivalTime) return undefined;
+
+  // Create valid date objects by prefixing time strings with a date
+  const baseDate = "1970-01-01T";
+  const departure = new Date(baseDate + departureTime);
+  const arrival = new Date(baseDate + arrivalTime);
+
+  if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) {
+    return undefined;
+  }
+
+  const durationInMinutes = (arrival.getTime() - departure.getTime()) / (1000 * 60);
+
+  // Convert minutes to hours and minutes format
+  const hours = Math.floor(durationInMinutes / 60);
+  const minutes = Math.round(durationInMinutes % 60);
+
+  // return finalized duration string in human readable format
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
+
 // Helper function to format time
 const formatTime = (timeString?: string) => {
   if (!timeString) return "";
@@ -259,7 +282,13 @@ export default function BusCard({
               <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-foreground">
                 <Clock className="h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground flex-shrink-0" />
                 <span className="hidden sm:inline">Duration:</span>
-                <span>{formatDuration(bus.estimatedDurationMinutes)}</span>
+                <span>
+                  {/* {formatDuration(bus.estimatedDurationMinutes)} */}
+                  {/* calculateDuration */}
+                  {bus.estimatedDurationMinutes
+                    ? formatDuration(bus.estimatedDurationMinutes)
+                    : calculateDuration(departureTime, arrivalTime)}
+                  </span>
               </div>
               <span className="hidden sm:block border-l-2 border-gray-300 h-5"></span>
               <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-foreground">
