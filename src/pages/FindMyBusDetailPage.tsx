@@ -319,7 +319,7 @@ const FindMyBusDetailPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="py-8 relative">
+      <div className="py-10 relative">
       {/* Header Section */}
       {/* Background image (low opacity) */}
         <img
