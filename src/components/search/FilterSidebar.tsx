@@ -21,6 +21,7 @@ interface FilterState {
   routeNumber: string;
   roadType: 'NORMALWAY' | 'EXPRESSWAY' | '';
   sortBy: string;
+  timePreference: 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
 }
 
 interface FilterSidebarProps {
@@ -40,7 +41,14 @@ const sortOptions = [
   { id: "departure", label: "Departure Time" },
   { id: "duration", label: "Duration" },
   { id: "distance", label: "Distance" },
-  { id: "dataMode", label: "Data Availability" }
+  { id: "timeSource", label: "Time Reliability" }
+];
+
+const timePreferenceOptions = [
+  { id: "DEFAULT", label: "All Times (Default)", description: "Verified > Unverified > Calculated" },
+  { id: "VERIFIED_ONLY", label: "Verified Only", description: "Most reliable, fewer results" },
+  { id: "PREFER_UNVERIFIED", label: "Prefer Unverified", description: "Verified > Unverified" },
+  { id: "PREFER_CALCULATED", label: "Prefer Calculated", description: "Verified > Unverified > Calculated" }
 ];
 
 const FilterSidebar = ({ filters, onFiltersChange, isOpen, onToggle }: FilterSidebarProps) => {
@@ -53,14 +61,16 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onToggle }: FilterSid
       departureTimeFrom: '',
       routeNumber: '',
       roadType: '',
-      sortBy: 'departure'
+      sortBy: 'departure',
+      timePreference: 'DEFAULT'
     });
   };
 
   const activeFiltersCount = 
     (filters.departureTimeFrom ? 1 : 0) + 
     (filters.routeNumber ? 1 : 0) + 
-    (filters.roadType ? 1 : 0);
+    (filters.roadType ? 1 : 0) +
+    (filters.timePreference !== 'DEFAULT' ? 1 : 0);
 
   return (
     <>
@@ -206,6 +216,37 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onToggle }: FilterSid
                       onChange={(e) => updateFilter('departureTimeFrom', e.target.value)}
                       className="w-full"
                     />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Time Preference */}
+              <AccordionItem value="time-preference">
+                <AccordionTrigger className="text-sm font-medium">
+                  Time Data Quality
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-3">
+                    {timePreferenceOptions.map((option) => (
+                      <div key={option.id} className="flex items-start space-x-2">
+                        <Checkbox
+                          id={`time-pref-${option.id}`}
+                          checked={filters.timePreference === option.id}
+                          onCheckedChange={() => updateFilter('timePreference', option.id)}
+                        />
+                        <div className="flex flex-col">
+                          <label
+                            htmlFor={`time-pref-${option.id}`}
+                            className="text-sm cursor-pointer font-medium"
+                          >
+                            {option.label}
+                          </label>
+                          <span className="text-xs text-muted-foreground">
+                            {option.description}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </AccordionContent>
               </AccordionItem>

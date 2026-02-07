@@ -2,7 +2,13 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BusFront, Clock, ArrowRight, Route } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { BusFront, Clock, ArrowRight, Route, CheckCircle, AlertCircle, Calculator } from "lucide-react";
 import type { BusResult } from "@/generated/api-client/route-management";
 
 interface BusCardProps {
@@ -69,14 +75,46 @@ const formatDuration = (minutes?: number) => {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 };
 
-// Helper function to get departure time
+// Helper function to get departure time (prioritize actual over scheduled)
 const getDepartureTime = (bus: BusResult) => {
-  return bus.actualDepartureTime || bus.scheduledDepartureAtOrigin || null;
+  return bus.actualDepartureTime || bus.departureAtOrigin || null;
 };
 
-// Helper function to get arrival time
+// Helper function to get arrival time (prioritize actual over scheduled)
 const getArrivalTime = (bus: BusResult) => {
-  return bus.actualArrivalTime || bus.scheduledArrivalAtDestination || null;
+  return bus.actualArrivalTime || bus.arrivalAtDestination || null;
+};
+
+// Helper function to get time source badge config
+const getTimeSourceConfig = (source?: string) => {
+  switch (source) {
+    case 'VERIFIED':
+      return { 
+        label: 'Verified', 
+        variant: 'default' as const, 
+        icon: CheckCircle, 
+        className: 'bg-green-100 text-green-700 border-green-200',
+        tooltip: 'Time verified by official sources'
+      };
+    case 'UNVERIFIED':
+      return { 
+        label: 'Unverified', 
+        variant: 'secondary' as const, 
+        icon: AlertCircle, 
+        className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        tooltip: 'Time submitted by users, not officially verified'
+      };
+    case 'CALCULATED':
+      return { 
+        label: 'Calculated', 
+        variant: 'outline' as const, 
+        icon: Calculator, 
+        className: 'bg-blue-50 text-blue-600 border-blue-200',
+        tooltip: 'Time calculated based on average travel times'
+      };
+    default:
+      return null;
+  }
 };
 
 export default function BusCard({
@@ -155,17 +193,50 @@ export default function BusCard({
           </div>
         </div>
 
-        {/* BADGES ROW - Operator and Bus Info */}
-        {(bus.operatorName || bus.busPlateNumber || bus.busModel || bus.busCapacity) && (
+        {/* BADGES ROW - Time Source, Operator and Bus Info */}
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-          {/* {bus.operatorType && (
+          {/* Time Source Badges */}
+          {/* <TooltipProvider>
+            {bus.departureAtOriginSource && getTimeSourceConfig(bus.departureAtOriginSource) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 flex items-center gap-1 ${getTimeSourceConfig(bus.departureAtOriginSource)?.className}`}
+                  >
+                    {React.createElement(getTimeSourceConfig(bus.departureAtOriginSource)!.icon, { className: "h-3 w-3" })}
+                    {getTimeSourceConfig(bus.departureAtOriginSource)?.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getTimeSourceConfig(bus.departureAtOriginSource)?.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider> */}
+          
+          {/* Trip Status Badge */}
+          {bus.hasTripData && bus.tripStatus && (
             <Badge
-              variant="secondary"
+              variant={bus.tripStatus === 'active' ? 'default' : 'secondary'}
+              className={`text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 ${
+                bus.tripStatus === 'active' ? 'bg-green-600' : ''
+              }`}
+            >
+              {bus.tripStatus === 'active' ? 'Live' : bus.tripStatus}
+            </Badge>
+          )}
+          
+          {/* Already Departed Badge */}
+          {bus.alreadyDeparted && (
+            <Badge
+              variant="destructive"
               className="text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1"
             >
-              {bus.operatorType}
+              Departed
             </Badge>
-          )} */}
+          )}
+          
           {bus.operatorName && (
             <Badge
               variant="secondary"
@@ -199,7 +270,6 @@ export default function BusCard({
             </Badge>
           )}
         </div>
-        )}
 
         <hr className="border-border" />
 
