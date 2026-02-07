@@ -63,7 +63,8 @@ spring:
         
         # Connection and transaction optimization
         jdbc:
-          time_zone: UTC
+          # Note: time_zone removed - LocalTime fields are timezone-agnostic
+          # Setting time_zone: UTC caused 5h30m offset with Asia/Colombo JVM timezone
           batch_size: 25
           batch_versioned_data: true
         
