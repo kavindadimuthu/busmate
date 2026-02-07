@@ -2,15 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { LocalTime } from './LocalTime';
 /**
- * Individual bus/route result
+ * Individual bus/route result with schedule and trip information
  */
 export type BusResult = {
-    /**
-     * Data mode - REALTIME, SCHEDULE, or STATIC
-     */
-    dataMode?: BusResult.dataMode;
     /**
      * Route ID
      */
@@ -40,7 +35,7 @@ export type BusResult = {
      */
     routeDescription?: string;
     /**
-     * Route through (via)
+     * Route through (via) in English
      */
     routeThrough?: string;
     /**
@@ -51,6 +46,22 @@ export type BusResult = {
      * Route through in Tamil
      */
     routeThroughTamil?: string;
+    /**
+     * Route group ID
+     */
+    routeGroupId?: string;
+    /**
+     * Route group name in English
+     */
+    routeGroupName?: string;
+    /**
+     * Route group name in Sinhala
+     */
+    routeGroupNameSinhala?: string;
+    /**
+     * Route group name in Tamil
+     */
+    routeGroupNameTamil?: string;
     /**
      * Distance from origin to destination in km
      */
@@ -68,7 +79,7 @@ export type BusResult = {
      */
     toStopOrder?: number;
     /**
-     * Schedule ID (if schedule data available)
+     * Schedule ID
      */
     scheduleId?: string;
     /**
@@ -76,39 +87,51 @@ export type BusResult = {
      */
     scheduleName?: string;
     /**
-     * Scheduled departure time at origin stop
+     * Schedule type (DAILY, WEEKDAY, WEEKEND, etc.)
      */
-    scheduledDepartureAtOrigin?: string;
+    scheduleType?: string;
     /**
-     * Scheduled arrival time at destination stop
+     * Departure time at origin stop
      */
-    scheduledArrivalAtDestination?: string;
+    departureAtOrigin?: string;
     /**
-     * Trip ID (if trip data available)
+     * Source of departure time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
+     */
+    departureAtOriginSource?: BusResult.departureAtOriginSource;
+    /**
+     * Arrival time at destination stop
+     */
+    arrivalAtDestination?: string;
+    /**
+     * Source of arrival time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
+     */
+    arrivalAtDestinationSource?: BusResult.arrivalAtDestinationSource;
+    /**
+     * Whether trip data is available for this schedule
+     */
+    hasTripData?: boolean;
+    /**
+     * Trip ID (if trip exists)
      */
     tripId?: string;
     /**
-     * Trip status
+     * Trip status (scheduled, active, completed, cancelled)
      */
     tripStatus?: string;
     /**
-     * Actual departure time (if available)
+     * Actual departure time from trip (if available)
      */
     actualDepartureTime?: string;
     /**
-     * Actual arrival time (if available)
+     * Actual arrival time from trip (if available)
      */
     actualArrivalTime?: string;
-    /**
-     * Estimated arrival at origin stop based on current trip progress
-     */
-    estimatedArrivalAtOrigin?: LocalTime;
     /**
      * Bus ID
      */
     busId?: string;
     /**
-     * Bus plate number
+     * Bus registration/plate number
      */
     busPlateNumber?: string;
     /**
@@ -116,7 +139,7 @@ export type BusResult = {
      */
     busModel?: string;
     /**
-     * Bus capacity
+     * Bus seating capacity
      */
     busCapacity?: number;
     /**
@@ -128,30 +151,44 @@ export type BusResult = {
      */
     operatorName?: string;
     /**
-     * Whether the bus has already departed from origin
+     * Operator type (CTB, PRIVATE, SLTB, etc.)
+     */
+    operatorType?: string;
+    /**
+     * Passenger Service Permit ID
+     */
+    pspId?: string;
+    /**
+     * Passenger Service Permit number
+     */
+    pspNumber?: string;
+    /**
+     * Whether the service has already departed from origin stop
      */
     alreadyDeparted?: boolean;
     /**
-     * User-friendly message about this result
+     * User-friendly status message about this result
      */
     statusMessage?: string;
-    /**
-     * Route group ID
-     */
-    routeGroupId?: string;
-    /**
-     * Route group name
-     */
-    routeGroupName?: string;
 };
 export namespace BusResult {
     /**
-     * Data mode - REALTIME, SCHEDULE, or STATIC
+     * Source of departure time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
      */
-    export enum dataMode {
-        REALTIME = 'REALTIME',
-        SCHEDULE = 'SCHEDULE',
-        STATIC = 'STATIC',
+    export enum departureAtOriginSource {
+        VERIFIED = 'VERIFIED',
+        UNVERIFIED = 'UNVERIFIED',
+        CALCULATED = 'CALCULATED',
+        UNAVAILABLE = 'UNAVAILABLE',
+    }
+    /**
+     * Source of arrival time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
+     */
+    export enum arrivalAtDestinationSource {
+        VERIFIED = 'VERIFIED',
+        UNVERIFIED = 'UNVERIFIED',
+        CALCULATED = 'CALCULATED',
+        UNAVAILABLE = 'UNAVAILABLE',
     }
 }
 

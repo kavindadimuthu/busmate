@@ -29,7 +29,7 @@ export type { DashboardOverviewResponse } from './models/DashboardOverviewRespon
 export type { ErrorRecord } from './models/ErrorRecord';
 export type { ExpiringPermit } from './models/ExpiringPermit';
 export type { FilterMetadata } from './models/FilterMetadata';
-export type { FindMyBusResponse } from './models/FindMyBusResponse';
+export { FindMyBusResponse } from './models/FindMyBusResponse';
 export type { ImportedStop } from './models/ImportedStop';
 export type { ImportError } from './models/ImportError';
 export type { ImportOptionsUsed } from './models/ImportOptionsUsed';
@@ -86,6 +86,7 @@ export type { RouteFilterOptionsResponse } from './models/RouteFilterOptionsResp
 export type { RouteGroupOption } from './models/RouteGroupOption';
 export type { RouteGroupRequest } from './models/RouteGroupRequest';
 export type { RouteGroupResponse } from './models/RouteGroupResponse';
+export type { RouteGroupStopDetailResponse } from './models/RouteGroupStopDetailResponse';
 export type { RouteOption } from './models/RouteOption';
 export type { RoutePerformance } from './models/RoutePerformance';
 export type { RouteRequest } from './models/RouteRequest';
@@ -109,6 +110,7 @@ export type { ScheduleStopResponse } from './models/ScheduleStopResponse';
 export type { SkippedRecord } from './models/SkippedRecord';
 export type { Sortnull } from './models/Sortnull';
 export type { StopBulkUpdateResponse } from './models/StopBulkUpdateResponse';
+export type { StopExistsResponse } from './models/StopExistsResponse';
 export type { StopFilterOptionsResponse } from './models/StopFilterOptionsResponse';
 export type { StopImportResponse } from './models/StopImportResponse';
 export type { StopInfo } from './models/StopInfo';

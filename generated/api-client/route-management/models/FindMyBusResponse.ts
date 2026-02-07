@@ -33,12 +33,27 @@ export type FindMyBusResponse = {
      */
     searchTime?: string;
     /**
+     * Time preference used for this search
+     */
+    timePreference?: FindMyBusResponse.timePreference;
+    /**
      * Total number of results found
      */
     totalResults?: number;
     /**
-     * List of bus/route results sorted by departure time or distance
+     * List of bus/route results sorted by departure time
      */
     results?: Array<BusResult>;
 };
+export namespace FindMyBusResponse {
+    /**
+     * Time preference used for this search
+     */
+    export enum timePreference {
+        VERIFIED_ONLY = 'VERIFIED_ONLY',
+        PREFER_UNVERIFIED = 'PREFER_UNVERIFIED',
+        PREFER_CALCULATED = 'PREFER_CALCULATED',
+        DEFAULT = 'DEFAULT',
+    }
+}
 

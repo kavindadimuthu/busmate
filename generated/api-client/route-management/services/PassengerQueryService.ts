@@ -9,24 +9,24 @@ import { request as __request } from '../core/request';
 export class PassengerQueryService {
     /**
      * Find buses between two stops
-     * Find available buses/routes between two stops. This API provides the best available data:
+     * Find available bus services between two stops with schedule timings.
      *
-     * **Data Modes:**
-     * - **REALTIME**: Trip data with real-time status (ON_TIME, DELAYED, etc.)
-     * - **SCHEDULE**: Schedule-based timing when no trips are available
-     * - **STATIC**: Basic route information when no schedules exist
+     * **Response includes:**
+     * - Route information (name, number, road type, via)
+     * - Schedule timings (departure at origin, arrival at destination)
+     * - Trip details if available (bus, operator, PSP)
+     * - Time source indicators for reliability assessment
      *
-     * **Algorithm:**
-     * 1. Validates stops and finds all direct routes
-     * 2. Fetches active schedules for the search date
-     * 3. Checks for trips (real-time data)
-     * 4. Returns best available data with appropriate fallbacks
+     * **Time Preferences:**
+     * - **VERIFIED_ONLY**: Only verified times (most reliable, fewer results)
+     * - **PREFER_UNVERIFIED**: Verified > Unverified
+     * - **PREFER_CALCULATED/DEFAULT**: Verified > Unverified > Calculated
      *
-     * **Sorting:**
-     * Results are sorted by:
-     * 1. Data mode priority (REALTIME > SCHEDULE > STATIC)
-     * 2. Departure time at origin
-     * 3. Travel distance
+     * **Time Sources:**
+     * Each time value includes its source (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
+     * to indicate reliability.
+     *
+     * **Sorting:** Results sorted by departure time, then by distance.
      *
      * @param fromStopId UUID of the origin stop
      * @param toStopId UUID of the destination stop
@@ -34,8 +34,7 @@ export class PassengerQueryService {
      * @param time Time from which to find buses (defaults to 00:00)
      * @param routeNumber Filter by route number
      * @param roadType Filter by road type
-     * @param includeScheduledData Include schedule-based results when no trips available (default: true)
-     * @param includeRouteData Include static route data as fallback when no schedules available (default: true)
+     * @param timePreference Time preference for schedule times
      * @returns FindMyBusResponse Search completed successfully
      * @throws ApiError
      */
@@ -46,8 +45,7 @@ export class PassengerQueryService {
         time?: any,
         routeNumber?: string,
         roadType?: 'NORMALWAY' | 'EXPRESSWAY',
-        includeScheduledData: boolean = true,
-        includeRouteData: boolean = true,
+        timePreference: 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT' = 'DEFAULT',
     ): CancelablePromise<FindMyBusResponse> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -59,11 +57,10 @@ export class PassengerQueryService {
                 'time': time,
                 'routeNumber': routeNumber,
                 'roadType': roadType,
-                'includeScheduledData': includeScheduledData,
-                'includeRouteData': includeRouteData,
+                'timePreference': timePreference,
             },
             errors: {
-                400: `Invalid request - missing or invalid parameters`,
+                400: `Invalid request parameters`,
             },
         });
     }
