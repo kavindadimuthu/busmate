@@ -659,6 +659,12 @@ public class ScheduleServiceImpl implements ScheduleService {
                     scheduleStop.setStopOrder(stopRequest.getStopOrder());
                     scheduleStop.setArrivalTime(stopRequest.getArrivalTime());
                     scheduleStop.setDepartureTime(stopRequest.getDepartureTime());
+                    scheduleStop.setArrivalTimeUnverified(stopRequest.getArrivalTimeUnverified());
+                    scheduleStop.setDepartureTimeUnverified(stopRequest.getDepartureTimeUnverified());
+                    scheduleStop.setArrivalTimeUnverifiedBy(stopRequest.getArrivalTimeUnverifiedBy());
+                    scheduleStop.setDepartureTimeUnverifiedBy(stopRequest.getDepartureTimeUnverifiedBy());
+                    scheduleStop.setArrivalTimeCalculated(stopRequest.getArrivalTimeCalculated());
+                    scheduleStop.setDepartureTimeCalculated(stopRequest.getDepartureTimeCalculated());
                     return scheduleStop;
                 })
                 .collect(Collectors.toList());
@@ -1430,6 +1436,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         response.setStopOrder(scheduleStop.getStopOrder());
         response.setArrivalTime(scheduleStop.getArrivalTime());
         response.setDepartureTime(scheduleStop.getDepartureTime());
+        response.setArrivalTimeUnverified(scheduleStop.getArrivalTimeUnverified());
+        response.setDepartureTimeUnverified(scheduleStop.getDepartureTimeUnverified());
+        response.setArrivalTimeUnverifiedBy(scheduleStop.getArrivalTimeUnverifiedBy());
+        response.setDepartureTimeUnverifiedBy(scheduleStop.getDepartureTimeUnverifiedBy());
+        response.setArrivalTimeCalculated(scheduleStop.getArrivalTimeCalculated());
+        response.setDepartureTimeCalculated(scheduleStop.getDepartureTimeCalculated());
         
         // Map location if available
         if (scheduleStop.getRouteStop().getStop().getLocation() != null) {

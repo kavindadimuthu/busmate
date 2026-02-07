@@ -45,5 +45,7 @@ public class RouteResponse {
         private LocationDto location;
         private Integer stopOrder;
         private Double distanceFromStartKm;
+        private Double distanceFromStartKmUnverified;
+        private Double distanceFromStartKmCalculated;
     }
 }

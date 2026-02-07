@@ -93,6 +93,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                         routeStop.setStop(stop);
                         routeStop.setStopOrder(rs.getStopOrder());
                         routeStop.setDistanceFromStartKm(rs.getDistanceFromStartKm());
+                        routeStop.setDistanceFromStartKmUnverified(rs.getDistanceFromStartKmUnverified());
+                        routeStop.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
                         return routeStop;
                     }).collect(Collectors.toList());
                     route.setRouteStops(routeStops);
@@ -263,6 +265,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                     rsResponse.setLocation(mapperUtils.map(rs.getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));
                     rsResponse.setStopOrder(rs.getStopOrder());
                     rsResponse.setDistanceFromStartKm(rs.getDistanceFromStartKm());
+                    rsResponse.setDistanceFromStartKmUnverified(rs.getDistanceFromStartKmUnverified());
+                    rsResponse.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
                     return rsResponse;
                 }).collect(Collectors.toList());
             response.setRouteStops(routeStopResponses);
@@ -344,6 +348,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                     existingRouteStop.setStop(stop);
                     existingRouteStop.setStopOrder(routeStopRequest.getStopOrder());
                     existingRouteStop.setDistanceFromStartKm(routeStopRequest.getDistanceFromStartKm());
+                    existingRouteStop.setDistanceFromStartKmUnverified(routeStopRequest.getDistanceFromStartKmUnverified());
+                    existingRouteStop.setDistanceFromStartKmCalculated(routeStopRequest.getDistanceFromStartKmCalculated());
                     updatedRouteStops.add(existingRouteStop);
                 } else {
                     throw new ResourceNotFoundException("Route stop with id " + routeStopRequest.getId() + " not found");
@@ -357,6 +363,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 newRouteStop.setStop(stop);
                 newRouteStop.setStopOrder(routeStopRequest.getStopOrder());
                 newRouteStop.setDistanceFromStartKm(routeStopRequest.getDistanceFromStartKm());
+                newRouteStop.setDistanceFromStartKmUnverified(routeStopRequest.getDistanceFromStartKmUnverified());
+                newRouteStop.setDistanceFromStartKmCalculated(routeStopRequest.getDistanceFromStartKmCalculated());
                 updatedRouteStops.add(newRouteStop);
             }
         }
@@ -411,6 +419,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 routeStop.setStop(stop);
                 routeStop.setStopOrder(rs.getStopOrder());
                 routeStop.setDistanceFromStartKm(rs.getDistanceFromStartKm());
+                routeStop.setDistanceFromStartKmUnverified(rs.getDistanceFromStartKmUnverified());
+                routeStop.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
                 return routeStop;
             }).collect(Collectors.toList());
             route.setRouteStops(routeStops);
