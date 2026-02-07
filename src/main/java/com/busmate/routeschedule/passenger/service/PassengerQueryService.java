@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.passenger.service;
 
+import com.busmate.routeschedule.passenger.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
 
 /**
@@ -33,4 +35,24 @@ public interface PassengerQueryService {
      * @return Response with matching bus services including time source indicators
      */
     FindMyBusResponse findMyBus(FindMyBusRequest request);
+    
+    /**
+     * Get comprehensive details for a specific schedule/trip between two stops.
+     * 
+     * This API provides detailed information when a passenger selects a specific
+     * schedule from the Find My Bus results. It includes:
+     * - Complete route information
+     * - Full schedule details with ALL stops (not just origin/destination)
+     * - All three time types (verified, unverified, calculated) for each stop
+     * - Schedule calendar information (which days it operates)
+     * - Schedule exceptions (cancelled/added days)
+     * - Trip details if tripId provided (bus, operator, PSP, real-time data)
+     * 
+     * This is the "drill-down" API after Find My Bus - providing everything
+     * needed for the passenger to understand the full journey.
+     * 
+     * @param request Request with scheduleId (required), tripId (optional), from/to stops
+     * @return Comprehensive schedule/trip details with all timing information
+     */
+    FindMyBusDetailsResponse findMyBusDetails(FindMyBusDetailsRequest request);
 }

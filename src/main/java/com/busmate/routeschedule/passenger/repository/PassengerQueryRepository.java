@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.passenger.repository;
 
 import com.busmate.routeschedule.passenger.dto.projection.FindMyBusProjection;
+import com.busmate.routeschedule.passenger.dto.projection.ScheduleStopDetailsProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -205,6 +206,88 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
      */
     interface ScheduleExceptionProjection {
         UUID getScheduleId();
+        String getExceptionType();
+    }
+    
+    // ==================== Find My Bus Details Queries ====================
+    
+    /**
+     * Get all schedule stops with comprehensive timing information for a schedule.
+     * Returns all stops in order with all three time types.
+     * 
+     * @param scheduleId The schedule ID
+     * @return List of schedule stop projections with complete timing data
+     */
+    @Query(value = """
+        SELECT
+            ss.id as scheduleStopId,
+            ss.stop_order as stopOrder,
+            
+            -- Stop Information
+            st.id as stopId,
+            st.name as stopName,
+            st.name_sinhala as stopNameSinhala,
+            st.name_tamil as stopNameTamil,
+            st.description as stopDescription,
+            st.latitude as stopLatitude,
+            st.longitude as stopLongitude,
+            st.address as stopAddress,
+            st.city as stopCity,
+            st.is_accessible as stopIsAccessible,
+            
+            -- Route Stop Information
+            rs.id as routeStopId,
+            rs.distance_from_start_km as distanceFromStartKm,
+            
+            -- Verified times
+            ss.arrival_time as arrivalTime,
+            ss.departure_time as departureTime,
+            
+            -- Unverified times
+            ss.arrival_time_unverified as arrivalTimeUnverified,
+            ss.departure_time_unverified as departureTimeUnverified,
+            
+            -- Calculated times
+            ss.arrival_time_calculated as arrivalTimeCalculated,
+            ss.departure_time_calculated as departureTimeCalculated
+            
+        FROM schedule_stop ss
+        INNER JOIN route_stop rs ON ss.route_stop_id = rs.id
+        INNER JOIN stop st ON rs.stop_id = st.id
+        WHERE ss.schedule_id = :scheduleId
+        ORDER BY ss.stop_order
+        """, nativeQuery = true)
+    List<ScheduleStopDetailsProjection> findScheduleStopsByScheduleId(
+        @Param("scheduleId") UUID scheduleId
+    );
+    
+    /**
+     * Get all schedule exceptions for a specific schedule.
+     * 
+     * @param scheduleId The schedule ID
+     * @return List of schedule exception details
+     */
+    @Query(value = """
+        SELECT 
+            se.id as id,
+            se.schedule_id as scheduleId,
+            se.exception_date as exceptionDate,
+            se.exception_type as exceptionType
+        FROM schedule_exception se
+        WHERE se.schedule_id = :scheduleId
+        ORDER BY se.exception_date
+        """, nativeQuery = true)
+    List<ScheduleExceptionDetailProjection> findAllScheduleExceptions(
+        @Param("scheduleId") UUID scheduleId
+    );
+    
+    /**
+     * Projection for detailed schedule exception information.
+     */
+    interface ScheduleExceptionDetailProjection {
+        UUID getId();
+        UUID getScheduleId();
+        LocalDate getExceptionDate();
         String getExceptionType();
     }
 }

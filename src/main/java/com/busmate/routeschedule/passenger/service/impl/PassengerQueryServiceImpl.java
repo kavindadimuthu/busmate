@@ -1,22 +1,29 @@
 package com.busmate.routeschedule.passenger.service.impl;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
+import com.busmate.routeschedule.entity.*;
 import com.busmate.routeschedule.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.enums.TimeSourceEnum;
 import com.busmate.routeschedule.passenger.dto.projection.FindMyBusProjection;
+import com.busmate.routeschedule.passenger.dto.projection.ScheduleStopDetailsProjection;
+import com.busmate.routeschedule.passenger.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.*;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
-import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse.*;
-import com.busmate.routeschedule.entity.*;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse.BusResult;
 import com.busmate.routeschedule.passenger.repository.PassengerQueryRepository;
 import com.busmate.routeschedule.passenger.service.PassengerQueryService;
+import com.busmate.routeschedule.repository.ScheduleRepository;
 import com.busmate.routeschedule.repository.StopRepository;
+import com.busmate.routeschedule.repository.TripRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
@@ -45,6 +52,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
 
     private final PassengerQueryRepository passengerQueryRepository;
     private final StopRepository stopRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final TripRepository tripRepository;
 
     @Override
     public FindMyBusResponse findMyBus(FindMyBusRequest request) {
@@ -417,7 +426,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     /**
      * Build StopInfo from Stop entity.
      */
-    private StopInfo buildStopInfo(Stop stop) {
+    private FindMyBusResponse.StopInfo buildStopInfo(Stop stop) {
         LocationDto location = null;
         if (stop.getLocation() != null) {
             location = new LocationDto();
@@ -438,12 +447,415 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
             location.setCountryTamil(stop.getLocation().getCountryTamil());
         }
 
-        return StopInfo.builder()
+        return FindMyBusResponse.StopInfo.builder()
                 .id(stop.getId())
                 .name(stop.getName())
                 .nameSinhala(stop.getNameSinhala())
                 .nameTamil(stop.getNameTamil())
                 .location(location)
+                .build();
+    }
+
+    // ==================== Find My Bus Details Implementation ====================
+
+    @Override
+    public FindMyBusDetailsResponse findMyBusDetails(FindMyBusDetailsRequest request) {
+        log.info("Find My Bus Details: scheduleId={}, tripId={}, fromStop={}, toStop={}, date={}, timePreference={}",
+                request.getScheduleId(), request.getTripId(), request.getFromStopId(), 
+                request.getToStopId(), request.getDate(), request.getTimePreference());
+
+        // Set defaults
+        LocalDate searchDate = request.getDate() != null ? request.getDate() : LocalDate.now();
+        TimePreferenceEnum timePreference = request.getTimePreference() != null ? 
+                request.getTimePreference() : TimePreferenceEnum.DEFAULT;
+
+        // Validate stops exist
+        Optional<Stop> fromStopOpt = stopRepository.findById(request.getFromStopId());
+        Optional<Stop> toStopOpt = stopRepository.findById(request.getToStopId());
+
+        if (fromStopOpt.isEmpty() || toStopOpt.isEmpty()) {
+            return buildDetailsErrorResponse("One or both stops not found.");
+        }
+
+        Stop fromStop = fromStopOpt.get();
+        Stop toStop = toStopOpt.get();
+
+        // Validate schedule exists
+        Optional<Schedule> scheduleOpt = scheduleRepository.findById(request.getScheduleId());
+        if (scheduleOpt.isEmpty()) {
+            return buildDetailsErrorResponse("Schedule not found.");
+        }
+
+        Schedule schedule = scheduleOpt.get();
+        Route route = schedule.getRoute();
+
+        // Get all schedule stops with full timing information
+        List<ScheduleStopDetailsProjection> scheduleStops = 
+                passengerQueryRepository.findScheduleStopsByScheduleId(request.getScheduleId());
+
+        if (scheduleStops.isEmpty()) {
+            return buildDetailsErrorResponse("No stops found for this schedule.");
+        }
+
+        // Find the origin and destination stop indices
+        int fromStopIndex = -1;
+        int toStopIndex = -1;
+        for (int i = 0; i < scheduleStops.size(); i++) {
+            ScheduleStopDetailsProjection stop = scheduleStops.get(i);
+            if (stop.getStopId().equals(request.getFromStopId())) {
+                fromStopIndex = i;
+            }
+            if (stop.getStopId().equals(request.getToStopId())) {
+                toStopIndex = i;
+            }
+        }
+
+        if (fromStopIndex == -1 || toStopIndex == -1 || fromStopIndex >= toStopIndex) {
+            return buildDetailsErrorResponse("Invalid stop sequence: origin must come before destination on this route.");
+        }
+
+        // Get schedule calendars
+        List<ScheduleCalendar> calendars = schedule.getScheduleCalendars();
+        List<ScheduleCalendarInfo> calendarInfos = calendars != null ?
+                calendars.stream()
+                        .map(this::buildCalendarInfo)
+                        .collect(Collectors.toList()) : Collections.emptyList();
+
+        // Get schedule exceptions
+        List<PassengerQueryRepository.ScheduleExceptionDetailProjection> exceptions = 
+                passengerQueryRepository.findAllScheduleExceptions(request.getScheduleId());
+        List<ScheduleExceptionInfo> exceptionInfos = exceptions.stream()
+                .map(this::buildExceptionInfo)
+                .collect(Collectors.toList());
+
+        // Build schedule stop details (all stops)
+        List<ScheduleStopDetails> allStopDetails = scheduleStops.stream()
+                .map(proj -> buildScheduleStopDetails(proj, timePreference))
+                .collect(Collectors.toList());
+
+        // Get trip details if tripId provided
+        TripDetails tripDetails = null;
+        if (request.getTripId() != null) {
+            Optional<Trip> tripOpt = tripRepository.findById(request.getTripId());
+            if (tripOpt.isPresent()) {
+                Trip trip = tripOpt.get();
+                tripDetails = buildTripDetails(trip);
+            }
+        }
+
+        // Build journey summary
+        ScheduleStopDetailsProjection fromStopProj = scheduleStops.get(fromStopIndex);
+        ScheduleStopDetailsProjection toStopProj = scheduleStops.get(toStopIndex);
+        JourneySummary journeySummary = buildJourneySummary(
+                fromStopProj, toStopProj, fromStopIndex, toStopIndex, 
+                scheduleStops.size(), timePreference, tripDetails);
+
+        // Build route details
+        RouteDetails routeDetails = buildRouteDetails(route);
+
+        // Build schedule details
+        ScheduleDetails scheduleDetails = buildScheduleDetails(schedule, allStopDetails, 
+                calendarInfos, exceptionInfos);
+
+        return FindMyBusDetailsResponse.builder()
+                .success(true)
+                .message("Schedule details retrieved successfully.")
+                .queryDate(searchDate)
+                .timePreference(timePreference)
+                .route(routeDetails)
+                .schedule(scheduleDetails)
+                .trip(tripDetails)
+                .journeySummary(journeySummary)
+                .build();
+    }
+
+    /**
+     * Build error response for details API.
+     */
+    private FindMyBusDetailsResponse buildDetailsErrorResponse(String message) {
+        return FindMyBusDetailsResponse.builder()
+                .success(false)
+                .message(message)
+                .build();
+    }
+
+    /**
+     * Build route details from Route entity.
+     */
+    private RouteDetails buildRouteDetails(Route route) {
+        RouteGroupInfo routeGroupInfo = null;
+        if (route.getRouteGroup() != null) {
+            RouteGroup rg = route.getRouteGroup();
+            routeGroupInfo = RouteGroupInfo.builder()
+                    .id(rg.getId())
+                    .name(rg.getName())
+                    .nameSinhala(rg.getNameSinhala())
+                    .nameTamil(rg.getNameTamil())
+                    .build();
+        }
+
+        return RouteDetails.builder()
+                .routeId(route.getId())
+                .name(route.getName())
+                .nameSinhala(route.getNameSinhala())
+                .nameTamil(route.getNameTamil())
+                .routeNumber(route.getRouteNumber())
+                .roadType(route.getRoadType() != null ? route.getRoadType().name() : null)
+                .description(route.getDescription())
+                .routeThrough(route.getRouteThrough())
+                .routeThroughSinhala(route.getRouteThroughSinhala())
+                .routeThroughTamil(route.getRouteThroughTamil())
+                .direction(route.getDirection() != null ? route.getDirection().name() : null)
+                .totalDistanceKm(route.getDistanceKm())
+                .estimatedDurationMinutes(route.getEstimatedDurationMinutes())
+                .routeGroup(routeGroupInfo)
+                .build();
+    }
+
+    /**
+     * Build schedule details from Schedule entity.
+     */
+    private ScheduleDetails buildScheduleDetails(Schedule schedule, List<ScheduleStopDetails> stops,
+                                                  List<ScheduleCalendarInfo> calendars,
+                                                  List<ScheduleExceptionInfo> exceptions) {
+        // Build single calendar from list (assuming single calendar per schedule)
+        ScheduleCalendarInfo calendar = calendars.isEmpty() ? null : calendars.get(0);
+        
+        return ScheduleDetails.builder()
+                .scheduleId(schedule.getId())
+                .name(schedule.getName())
+                .description(schedule.getDescription())
+                .scheduleType(schedule.getScheduleType() != null ? schedule.getScheduleType().name() : null)
+                .status(schedule.getStatus() != null ? schedule.getStatus().name() : null)
+                .effectiveStartDate(schedule.getEffectiveStartDate())
+                .effectiveEndDate(schedule.getEffectiveEndDate())
+                .stops(stops)
+                .calendar(calendar)
+                .exceptions(exceptions)
+                .build();
+    }
+
+    /**
+     * Build schedule stop details from projection.
+     */
+    private ScheduleStopDetails buildScheduleStopDetails(ScheduleStopDetailsProjection proj,
+                                                          TimePreferenceEnum preference) {
+        // Build location
+        LocationDto location = new LocationDto();
+        location.setLatitude(proj.getStopLatitude());
+        location.setLongitude(proj.getStopLongitude());
+        location.setAddress(proj.getStopAddress());
+        location.setCity(proj.getStopCity());
+        
+        // Build stop info
+        StopInfo stopInfo = StopInfo.builder()
+                .id(proj.getStopId())
+                .name(proj.getStopName())
+                .nameSinhala(proj.getStopNameSinhala())
+                .nameTamil(proj.getStopNameTamil())
+                .description(proj.getStopDescription())
+                .location(location)
+                .isAccessible(proj.getStopIsAccessible())
+                .build();
+
+        // Resolve times based on preference
+        TimeWithSource resolvedArrival = resolveTime(
+                proj.getArrivalTime(), 
+                proj.getArrivalTimeUnverified(), 
+                proj.getArrivalTimeCalculated(),
+                preference);
+        
+        TimeWithSource resolvedDeparture = resolveTime(
+                proj.getDepartureTime(), 
+                proj.getDepartureTimeUnverified(), 
+                proj.getDepartureTimeCalculated(),
+                preference);
+
+        return ScheduleStopDetails.builder()
+                .scheduleStopId(proj.getScheduleStopId())
+                .stopOrder(proj.getStopOrder())
+                .stop(stopInfo)
+                .distanceFromStartKm(proj.getDistanceFromStartKm())
+                // Verified times
+                .arrivalTime(proj.getArrivalTime())
+                .departureTime(proj.getDepartureTime())
+                // Unverified times
+                .arrivalTimeUnverified(proj.getArrivalTimeUnverified())
+                .departureTimeUnverified(proj.getDepartureTimeUnverified())
+                // Calculated times
+                .arrivalTimeCalculated(proj.getArrivalTimeCalculated())
+                .departureTimeCalculated(proj.getDepartureTimeCalculated())
+                // Resolved times based on preference
+                .resolvedArrivalTime(resolvedArrival.time)
+                .arrivalTimeSource(resolvedArrival.source)
+                .resolvedDepartureTime(resolvedDeparture.time)
+                .departureTimeSource(resolvedDeparture.source)
+                .build();
+    }
+
+    /**
+     * Build calendar info from ScheduleCalendar entity.
+     */
+    private ScheduleCalendarInfo buildCalendarInfo(ScheduleCalendar calendar) {
+        return ScheduleCalendarInfo.builder()
+                .monday(calendar.getMonday())
+                .tuesday(calendar.getTuesday())
+                .wednesday(calendar.getWednesday())
+                .thursday(calendar.getThursday())
+                .friday(calendar.getFriday())
+                .saturday(calendar.getSaturday())
+                .sunday(calendar.getSunday())
+                .build();
+    }
+
+    /**
+     * Build exception info from projection.
+     */
+    private ScheduleExceptionInfo buildExceptionInfo(
+            PassengerQueryRepository.ScheduleExceptionDetailProjection proj) {
+        return ScheduleExceptionInfo.builder()
+                .id(proj.getId())
+                .exceptionDate(proj.getExceptionDate())
+                .exceptionType(proj.getExceptionType())
+                .build();
+    }
+
+    /**
+     * Build trip details from Trip entity.
+     */
+    private TripDetails buildTripDetails(Trip trip) {
+        BusInfo busInfo = null;
+        OperatorInfo operatorInfo = null;
+        PspInfo pspInfo = null;
+
+        // Build bus info
+        if (trip.getBus() != null) {
+            Bus bus = trip.getBus();
+            busInfo = BusInfo.builder()
+                    .busId(bus.getId())
+                    .plateNumber(bus.getPlateNumber())
+                    .model(bus.getModel())
+                    .capacity(bus.getCapacity())
+                    .build();
+
+            // Build operator info from bus
+            if (bus.getOperator() != null) {
+                Operator op = bus.getOperator();
+                operatorInfo = OperatorInfo.builder()
+                        .operatorId(op.getId())
+                        .name(op.getName())
+                        .operatorType(op.getOperatorType() != null ? op.getOperatorType().name() : null)
+                        .region(op.getRegion())
+                        .build();
+            }
+        }
+
+        // Build PSP info
+        if (trip.getPassengerServicePermit() != null) {
+            PassengerServicePermit psp = trip.getPassengerServicePermit();
+            pspInfo = PspInfo.builder()
+                    .pspId(psp.getId())
+                    .permitNumber(psp.getPermitNumber())
+                    .validFrom(psp.getIssueDate())
+                    .validUntil(psp.getExpiryDate())
+                    .status(psp.getStatus() != null ? psp.getStatus().name() : null)
+                    .build();
+        }
+
+        // Calculate delay if actual times available
+        Integer delayMinutes = null;
+        if (trip.getScheduledDepartureTime() != null && trip.getActualDepartureTime() != null) {
+            delayMinutes = (int) Duration.between(trip.getScheduledDepartureTime(), trip.getActualDepartureTime()).toMinutes();
+        }
+
+        return TripDetails.builder()
+                .tripId(trip.getId())
+                .tripDate(trip.getTripDate())
+                .status(trip.getStatus() != null ? trip.getStatus().name() : null)
+                .scheduledDepartureTime(trip.getScheduledDepartureTime())
+                .scheduledArrivalTime(trip.getScheduledArrivalTime())
+                .actualDepartureTime(trip.getActualDepartureTime())
+                .actualArrivalTime(trip.getActualArrivalTime())
+                .delayMinutes(delayMinutes)
+                .bus(busInfo)
+                .operator(operatorInfo)
+                .psp(pspInfo)
+                .build();
+    }
+
+    /**
+     * Build journey summary for the selected origin-destination pair.
+     */
+    private JourneySummary buildJourneySummary(ScheduleStopDetailsProjection fromStop,
+                                                ScheduleStopDetailsProjection toStop,
+                                                int fromIndex, int toIndex,
+                                                int totalStops,
+                                                TimePreferenceEnum preference,
+                                                TripDetails tripDetails) {
+        // Calculate distance
+        Double distance = null;
+        if (fromStop.getDistanceFromStartKm() != null && toStop.getDistanceFromStartKm() != null) {
+            distance = toStop.getDistanceFromStartKm() - fromStop.getDistanceFromStartKm();
+        }
+
+        // Resolve departure from origin
+        TimeWithSource departure = resolveTime(
+                fromStop.getDepartureTime(),
+                fromStop.getDepartureTimeUnverified(),
+                fromStop.getDepartureTimeCalculated(),
+                preference);
+
+        // Resolve arrival at destination
+        TimeWithSource arrival = resolveTime(
+                toStop.getArrivalTime(),
+                toStop.getArrivalTimeUnverified(),
+                toStop.getArrivalTimeCalculated(),
+                preference);
+
+        // Calculate estimated duration
+        Integer durationMinutes = null;
+        if (departure.time != null && arrival.time != null) {
+            durationMinutes = (int) Duration.between(departure.time, arrival.time).toMinutes();
+        }
+
+        // Build origin stop info (using LocationDto)
+        LocationDto originLocation = new LocationDto();
+        originLocation.setLatitude(fromStop.getStopLatitude());
+        originLocation.setLongitude(fromStop.getStopLongitude());
+        
+        StopInfo originStopInfo = StopInfo.builder()
+                .id(fromStop.getStopId())
+                .name(fromStop.getStopName())
+                .nameSinhala(fromStop.getStopNameSinhala())
+                .nameTamil(fromStop.getStopNameTamil())
+                .location(originLocation)
+                .build();
+
+        // Build destination stop info (using LocationDto)
+        LocationDto destLocation = new LocationDto();
+        destLocation.setLatitude(toStop.getStopLatitude());
+        destLocation.setLongitude(toStop.getStopLongitude());
+        
+        StopInfo destinationStopInfo = StopInfo.builder()
+                .id(toStop.getStopId())
+                .name(toStop.getStopName())
+                .nameSinhala(toStop.getStopNameSinhala())
+                .nameTamil(toStop.getStopNameTamil())
+                .location(destLocation)
+                .build();
+
+        return JourneySummary.builder()
+                .originStop(originStopInfo)
+                .destinationStop(destinationStopInfo)
+                .originStopOrder(fromStop.getStopOrder())
+                .destinationStopOrder(toStop.getStopOrder())
+                .intermediateStopCount(toIndex - fromIndex - 1)
+                .distanceKm(distance)
+                .departureFromOrigin(departure.time)
+                .departureTimeSource(departure.source)
+                .arrivalAtDestination(arrival.time)
+                .arrivalTimeSource(arrival.source)
+                .estimatedDurationMinutes(durationMinutes)
                 .build();
     }
 }
