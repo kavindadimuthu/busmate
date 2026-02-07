@@ -109,11 +109,19 @@ BEGIN
     JOIN route r ON sch.route_id = r.id
     WHERE sch.id = NEW.schedule_id;
     
-    -- Get min and max stop_order for this schedule
-    SELECT MIN(stop_order), MAX(stop_order) INTO min_stop_order, max_stop_order
-    FROM schedule_stop WHERE schedule_id = NEW.schedule_id AND id != NEW.id;
+    -- Get min and max stop_order for this schedule (excluding current row properly)
+    -- FIX: Handle INSERT vs UPDATE differently since NEW.id is NULL during INSERT
+    IF TG_OP = 'INSERT' THEN
+        -- For INSERT, get min/max from existing rows only
+        SELECT MIN(stop_order), MAX(stop_order) INTO min_stop_order, max_stop_order
+        FROM schedule_stop WHERE schedule_id = NEW.schedule_id;
+    ELSE
+        -- For UPDATE, exclude the current row by ID
+        SELECT MIN(stop_order), MAX(stop_order) INTO min_stop_order, max_stop_order
+        FROM schedule_stop WHERE schedule_id = NEW.schedule_id AND id != NEW.id;
+    END IF;
     
-    -- Include current row
+    -- Include current row in min/max calculation
     IF min_stop_order IS NULL OR NEW.stop_order < min_stop_order THEN
         min_stop_order := NEW.stop_order;
     END IF;
@@ -278,6 +286,10 @@ RETURNS TRIGGER AS $$
 DECLARE
     min_stop_order INTEGER;
     max_stop_order INTEGER;
+    v_origin_departure TIME;
+    v_destination_arrival TIME;
+    v_total_distance DOUBLE PRECISION;
+    v_total_duration_seconds INTEGER;
 BEGIN
     -- Get min and max stop_order for this schedule
     SELECT MIN(stop_order), MAX(stop_order) INTO min_stop_order, max_stop_order
@@ -290,14 +302,52 @@ BEGIN
            (OLD.arrival_time_unverified IS DISTINCT FROM NEW.arrival_time_unverified) OR
            (OLD.departure_time_unverified IS DISTINCT FROM NEW.departure_time_unverified) THEN
             
-            -- Trigger recalculation for intermediate stops by updating them
-            -- This will fire the BEFORE UPDATE trigger which recalculates
-            UPDATE schedule_stop
-            SET arrival_time_calculated = NULL,
-                departure_time_calculated = NULL
-            WHERE schedule_id = NEW.schedule_id
-            AND stop_order != min_stop_order 
-            AND stop_order != max_stop_order;
+            -- Get the new origin departure time
+            SELECT COALESCE(ss.departure_time, ss.departure_time_unverified)
+            INTO v_origin_departure
+            FROM schedule_stop ss
+            WHERE ss.schedule_id = NEW.schedule_id AND ss.stop_order = min_stop_order
+            LIMIT 1;
+            
+            -- Get the new destination arrival time  
+            SELECT COALESCE(ss.arrival_time, ss.arrival_time_unverified)
+            INTO v_destination_arrival
+            FROM schedule_stop ss
+            WHERE ss.schedule_id = NEW.schedule_id AND ss.stop_order = max_stop_order
+            LIMIT 1;
+            
+            -- Get route total distance
+            SELECT r.distance_km INTO v_total_distance
+            FROM schedule sch
+            JOIN route r ON sch.route_id = r.id
+            WHERE sch.id = NEW.schedule_id;
+            
+            -- Only recalculate if we have all necessary data
+            IF v_origin_departure IS NOT NULL AND v_destination_arrival IS NOT NULL 
+               AND v_total_distance IS NOT NULL AND v_total_distance > 0 THEN
+                
+                -- Calculate total duration in seconds
+                v_total_duration_seconds := EXTRACT(EPOCH FROM (v_destination_arrival - v_origin_departure))::INTEGER;
+                IF v_total_duration_seconds < 0 THEN
+                    v_total_duration_seconds := v_total_duration_seconds + 86400;
+                END IF;
+                
+                -- FIX: Batch update all intermediate stops in a single UPDATE statement
+                -- This avoids O(n) cascading trigger calls
+                UPDATE schedule_stop ss
+                SET 
+                    arrival_time_calculated = v_origin_departure + 
+                        (((COALESCE(rs.distance_from_start_km, rs.distance_from_start_km_unverified, rs.distance_from_start_km_calculated, 0) 
+                           / v_total_distance) * v_total_duration_seconds)::INTEGER || ' seconds')::INTERVAL,
+                    departure_time_calculated = v_origin_departure + 
+                        (((COALESCE(rs.distance_from_start_km, rs.distance_from_start_km_unverified, rs.distance_from_start_km_calculated, 0) 
+                           / v_total_distance) * v_total_duration_seconds)::INTEGER || ' seconds')::INTERVAL
+                FROM route_stop rs
+                WHERE ss.route_stop_id = rs.id
+                  AND ss.schedule_id = NEW.schedule_id
+                  AND ss.stop_order > min_stop_order 
+                  AND ss.stop_order < max_stop_order;
+            END IF;
         END IF;
     END IF;
     
@@ -462,6 +512,24 @@ BEGIN
     RETURN updated_count;
 END;
 $$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- PERFORMANCE INDEXES
+-- =====================================================
+-- These indexes improve trigger performance for lookups
+
+-- Index for schedule_stop queries by schedule_id and stop_order
+CREATE INDEX IF NOT EXISTS idx_schedule_stop_schedule_order 
+ON schedule_stop(schedule_id, stop_order);
+
+-- Index for route_stop queries by route_id and stop_order
+CREATE INDEX IF NOT EXISTS idx_route_stop_route_order 
+ON route_stop(route_id, stop_order);
+
+-- Index for route_stop distance lookups
+CREATE INDEX IF NOT EXISTS idx_route_stop_id_distances 
+ON route_stop(id) 
+INCLUDE (distance_from_start_km, distance_from_start_km_unverified, distance_from_start_km_calculated);
 
 -- =====================================================
 -- Run initial calculation for existing data
