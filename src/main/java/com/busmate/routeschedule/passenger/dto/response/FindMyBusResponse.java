@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.dto.response.passenger;
+package com.busmate.routeschedule.passenger.dto.response;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
 import com.fasterxml.jackson.annotation.JsonFormat;

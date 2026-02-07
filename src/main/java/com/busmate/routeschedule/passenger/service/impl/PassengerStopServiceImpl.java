@@ -1,13 +1,13 @@
-package com.busmate.routeschedule.service.passenger.impl;
+package com.busmate.routeschedule.passenger.service.impl;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
-import com.busmate.routeschedule.dto.response.passenger.PassengerStopResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerNearbyStopsResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerStopResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerNearbyStopsResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerRouteResponse;
 import com.busmate.routeschedule.entity.Stop;
 import com.busmate.routeschedule.repository.StopRepository;
-import com.busmate.routeschedule.service.passenger.PassengerStopService;
+import com.busmate.routeschedule.passenger.service.PassengerStopService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,7 +38,6 @@ public class PassengerStopServiceImpl implements PassengerStopService {
 
         log.debug("Finding nearby stops at lat={}, lng={}, radius={}", latitude, longitude, radius);
 
-        // For this example, get all stops and filter manually
         List<Stop> allStops = stopRepository.findAll();
         
         List<Stop> nearbyStops = allStops.stream()
@@ -76,7 +75,6 @@ public class PassengerStopServiceImpl implements PassengerStopService {
                         hasRoutes, isAccessible))
                 .collect(Collectors.toList());
 
-        // Apply pagination
         int start = Math.min((int) pageable.getOffset(), filteredStops.size());
         int end = Math.min((start + pageable.getPageSize()), filteredStops.size());
         List<Stop> pageContent = filteredStops.subList(start, end);
@@ -116,18 +114,13 @@ public class PassengerStopServiceImpl implements PassengerStopService {
 
     @Override
     public List<PassengerRouteResponse> getRoutesForStop(
-            UUID stopId, UUID operatorId,
-            String direction, String destination, Boolean activeOnly,
-            Boolean includeSchedule, String sort) {
+            UUID stopId, UUID operatorId, String direction, String destination, 
+            Boolean activeOnly, Boolean includeSchedule, String sort) {
 
-        log.debug("Getting routes for stop ID: {} (operatorType filtering removed)", stopId);
+        log.debug("Getting routes for stop ID: {}", stopId);
 
-        // For now, return sample data
-        // In a real implementation, you would query RouteStop repository
-        // Note: operatorType filtering removed - routes are not directly linked to operators
         List<PassengerRouteResponse> routes = new ArrayList<>();
         
-        // Add sample route
         routes.add(PassengerRouteResponse.builder()
                 .routeId(UUID.randomUUID())
                 .routeName("Sample Route 1")
@@ -145,12 +138,10 @@ public class PassengerStopServiceImpl implements PassengerStopService {
     private boolean filterNearbyStop(Stop stop, Double latitude, Double longitude, 
             Double radius, Boolean hasRoutes, Boolean isAccessible, Boolean hasFacilities) {
         
-        // Accessibility filter
         if (isAccessible != null && !isAccessible.equals(stop.getIsAccessible())) {
             return false;
         }
 
-        // Distance filter (simplified)
         if (stop.getLocation() != null && 
             stop.getLocation().getLatitude() != null && 
             stop.getLocation().getLongitude() != null) {
@@ -166,7 +157,6 @@ public class PassengerStopServiceImpl implements PassengerStopService {
     private boolean filterStop(Stop stop, String query, Double nearLat, Double nearLng,
             String city, Boolean hasRoutes, Boolean isAccessible) {
         
-        // Text search
         if (query != null && !query.trim().isEmpty()) {
             String queryLower = query.toLowerCase();
             if (!stop.getName().toLowerCase().contains(queryLower) &&
@@ -176,14 +166,12 @@ public class PassengerStopServiceImpl implements PassengerStopService {
             }
         }
 
-        // City filter
         if (city != null && stop.getLocation() != null) {
             if (!city.equalsIgnoreCase(stop.getLocation().getCity())) {
                 return false;
             }
         }
 
-        // Accessibility filter
         if (isAccessible != null && !isAccessible.equals(stop.getIsAccessible())) {
             return false;
         }
@@ -204,7 +192,6 @@ public class PassengerStopServiceImpl implements PassengerStopService {
                 .description(stop.getDescription())
                 .isAccessible(stop.getIsAccessible() != null ? stop.getIsAccessible() : false);
 
-        // Set location information
         if (stop.getLocation() != null) {
             LocationDto location = new LocationDto();
             location.setLatitude(stop.getLocation().getLatitude());
@@ -218,7 +205,6 @@ public class PassengerStopServiceImpl implements PassengerStopService {
             builder.city(stop.getLocation().getCity());
         }
 
-        // Include upcoming trips (sample data)
         if (includeUpcoming != null && includeUpcoming) {
             List<PassengerStopResponse.PassengerUpcomingTrip> upcomingTrips = new ArrayList<>();
             upcomingTrips.add(PassengerStopResponse.PassengerUpcomingTrip.builder()
@@ -232,11 +218,9 @@ public class PassengerStopServiceImpl implements PassengerStopService {
             builder.upcomingTrips(upcomingTrips);
         }
 
-        // Set sample values
         builder.routeCount(3);
         builder.operatorCount(2);
         
-        // Add sample facilities
         List<String> facilities = new ArrayList<>();
         facilities.add("Seating");
         facilities.add("Shelter");
@@ -276,9 +260,8 @@ public class PassengerStopServiceImpl implements PassengerStopService {
     }
 
     private double calculateDistance(Double lat1, Double lng1, Double lat2, Double lng2) {
-        // Simplified distance calculation (Haversine formula would be more accurate)
         double deltaLat = Math.abs(lat1 - lat2);
         double deltaLng = Math.abs(lng1 - lng2);
-        return Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111; // Rough km conversion
+        return Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111;
     }
 }

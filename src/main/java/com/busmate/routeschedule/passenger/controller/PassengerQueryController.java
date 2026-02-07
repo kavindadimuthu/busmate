@@ -1,18 +1,15 @@
-package com.busmate.routeschedule.controller;
+package com.busmate.routeschedule.passenger.controller;
 
-import com.busmate.routeschedule.dto.request.FindMyBusRequest;
-import com.busmate.routeschedule.dto.response.passenger.FindMyBusResponse;
+import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
 import com.busmate.routeschedule.enums.RoadTypeEnum;
-import com.busmate.routeschedule.service.passenger.PassengerQueryService;
+import com.busmate.routeschedule.passenger.service.PassengerQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;

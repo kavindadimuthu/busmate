@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.dto.request;
+package com.busmate.routeschedule.passenger.dto.request;
 
 import com.busmate.routeschedule.enums.RoadTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;

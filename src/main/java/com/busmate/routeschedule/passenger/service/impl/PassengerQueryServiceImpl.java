@@ -1,15 +1,14 @@
-package com.busmate.routeschedule.service.passenger.impl;
+package com.busmate.routeschedule.passenger.service.impl;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
-import com.busmate.routeschedule.dto.projection.FindMyBusProjection;
-import com.busmate.routeschedule.dto.request.FindMyBusRequest;
-import com.busmate.routeschedule.dto.response.passenger.FindMyBusResponse;
-import com.busmate.routeschedule.dto.response.passenger.FindMyBusResponse.*;
+import com.busmate.routeschedule.passenger.dto.projection.FindMyBusProjection;
+import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse.*;
 import com.busmate.routeschedule.entity.*;
-import com.busmate.routeschedule.enums.ExceptionTypeEnum;
-import com.busmate.routeschedule.enums.TripStatusEnum;
-import com.busmate.routeschedule.repository.*;
-import com.busmate.routeschedule.service.passenger.PassengerQueryService;
+import com.busmate.routeschedule.passenger.repository.PassengerQueryRepository;
+import com.busmate.routeschedule.passenger.service.PassengerQueryService;
+import com.busmate.routeschedule.repository.StopRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

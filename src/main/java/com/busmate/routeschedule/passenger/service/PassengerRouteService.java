@@ -1,7 +1,7 @@
-package com.busmate.routeschedule.service.passenger;
+package com.busmate.routeschedule.passenger.service;
 
-import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerRouteResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;

@@ -1,7 +1,7 @@
-package com.busmate.routeschedule.service.passenger;
+package com.busmate.routeschedule.passenger.service;
 
-import com.busmate.routeschedule.dto.request.FindMyBusRequest;
-import com.busmate.routeschedule.dto.response.passenger.FindMyBusResponse;
+import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
 
 /**
  * Service interface for passenger query operations.
