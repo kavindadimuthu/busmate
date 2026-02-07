@@ -5,22 +5,32 @@ import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
 
 /**
  * Service interface for passenger query operations.
- * Provides APIs for passengers to find buses and routes.
+ * Provides the "Find My Bus" feature for passengers to search for bus services.
  */
 public interface PassengerQueryService {
     
     /**
      * Find buses/routes between two stops.
      * 
-     * Algorithm:
-     * 1. Validate input and identify possible routes
-     * 2. Fetch schedules for candidate routes
-     * 3. Look for trips (dynamic data)
-     * 4. Fallback to static route info if needed
-     * 5. Sort and return results
+     * Returns schedule-based results with timing information and optional trip details.
+     * Results include route data, schedule timings, and trip information (bus, operator, permit)
+     * when available.
      * 
-     * @param request The search request containing from/to stops and filters
-     * @return Response containing matching buses/routes with best available data
+     * Algorithm:
+     * 1. Validate input stops exist
+     * 2. Query routes with schedules between the two stops
+     * 3. Validate schedules against calendar and exceptions for the search date
+     * 4. Apply time preference to resolve schedule times (verified/unverified/calculated)
+     * 5. Include trip information if available for the schedule
+     * 6. Sort by departure time and return
+     * 
+     * Time Preference:
+     * - VERIFIED_ONLY: Only verified times (most reliable)
+     * - PREFER_UNVERIFIED: Verified > Unverified
+     * - PREFER_CALCULATED/DEFAULT: Verified > Unverified > Calculated
+     * 
+     * @param request Search request with from/to stops, date, time, and filters
+     * @return Response with matching bus services including time source indicators
      */
     FindMyBusResponse findMyBus(FindMyBusRequest request);
 }

@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.passenger.service.impl;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
+import com.busmate.routeschedule.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.enums.TimeSourceEnum;
 import com.busmate.routeschedule.passenger.dto.projection.FindMyBusProjection;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
@@ -21,17 +23,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Optimized implementation of PassengerQueryService for Find My Bus API.
+ * Implementation of PassengerQueryService for Find My Bus API.
  * 
- * This implementation uses a single optimized database query instead of multiple repository calls
- * to eliminate N+1 query problems and reduce database round trips.
+ * Provides schedule-based bus/route information between two stops.
+ * Results include route data, schedule timings (with time source indicators),
+ * and trip information (bus, operator, permit) when available.
  * 
  * Algorithm:
- * 1. Execute single optimized query to fetch all data (routes, schedules, trips, stops)
- * 2. Validate stops exist
- * 3. Process projections and apply business logic (calendar validation, time filtering)
- * 4. Build response objects from projection data
- * 5. Sort results and return unified response
+ * 1. Validate input stops exist
+ * 2. Execute optimized query to fetch routes with schedules and optional trips
+ * 3. Validate schedules against calendar and exceptions
+ * 4. Apply time preference to resolve schedule times
+ * 5. Build response with appropriate time source indicators
+ * 6. Sort by departure time and return
  */
 @Service
 @RequiredArgsConstructor
@@ -44,21 +48,22 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
 
     @Override
     public FindMyBusResponse findMyBus(FindMyBusRequest request) {
-        log.info("Find My Bus request: fromStop={}, toStop={}, date={}, time={}",
-                request.getFromStopId(), request.getToStopId(), request.getDate(), request.getTime());
+        log.info("Find My Bus: fromStop={}, toStop={}, date={}, time={}, timePreference={}",
+                request.getFromStopId(), request.getToStopId(), request.getDate(), 
+                request.getTime(), request.getTimePreference());
 
         // Set defaults
         LocalDate searchDate = request.getDate() != null ? request.getDate() : LocalDate.now();
         LocalTime searchTime = request.getTime() != null ? request.getTime() : LocalTime.of(0, 0);
-        boolean includeScheduledData = request.getIncludeScheduledData() != null ? request.getIncludeScheduledData() : true;
-        boolean includeRouteData = request.getIncludeRouteData() != null ? request.getIncludeRouteData() : true;
+        TimePreferenceEnum timePreference = request.getTimePreference() != null ? 
+                request.getTimePreference() : TimePreferenceEnum.DEFAULT;
 
         // Validate stops exist
         Optional<Stop> fromStopOpt = stopRepository.findById(request.getFromStopId());
         Optional<Stop> toStopOpt = stopRepository.findById(request.getToStopId());
 
         if (fromStopOpt.isEmpty() || toStopOpt.isEmpty()) {
-            return buildNoResultsResponse(request, searchDate, searchTime, 
+            return buildErrorResponse(searchDate, searchTime, timePreference,
                     fromStopOpt.orElse(null), toStopOpt.orElse(null),
                     "One or both stops not found.");
         }
@@ -66,7 +71,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         Stop fromStop = fromStopOpt.get();
         Stop toStop = toStopOpt.get();
 
-        // Execute single optimized query to fetch all data
+        // Execute optimized query
         String roadTypeStr = request.getRoadType() != null ? request.getRoadType().name() : null;
         List<FindMyBusProjection> projections = passengerQueryRepository.findBusesBetweenStops(
                 request.getFromStopId(), 
@@ -77,119 +82,216 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         );
 
         if (projections.isEmpty()) {
-            return buildNoResultsResponse(request, searchDate, searchTime, fromStop, toStop,
-                    "No direct bus route found between these two stops.");
+            return buildErrorResponse(searchDate, searchTime, timePreference, 
+                    fromStop, toStop, "No bus routes found between these stops.");
         }
 
-        log.info("Found {} projection results from optimized query", projections.size());
+        log.debug("Found {} projections from query", projections.size());
 
-        // Get schedule exceptions for validation
-        List<UUID> scheduleIds = projections.stream()
-                .map(FindMyBusProjection::getScheduleId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        
-        Map<UUID, String> scheduleExceptions = new HashMap<>();
-        if (!scheduleIds.isEmpty()) {
-            List<PassengerQueryRepository.ScheduleExceptionProjection> exceptions = 
-                    passengerQueryRepository.findScheduleExceptions(scheduleIds, searchDate);
-            
-            for (PassengerQueryRepository.ScheduleExceptionProjection exc : exceptions) {
-                scheduleExceptions.put(exc.getScheduleId(), exc.getExceptionType());
-            }
-        }
+        // Get schedule exceptions for the search date
+        Map<UUID, String> scheduleExceptions = getScheduleExceptions(projections, searchDate);
 
-        // Process projections and build results
-        List<BusResult> results = new ArrayList<>();
+        // Process projections and filter valid results
         DayOfWeek dayOfWeek = searchDate.getDayOfWeek();
+        List<BusResult> results = projections.stream()
+                .map(proj -> processProjection(proj, searchDate, searchTime, dayOfWeek, 
+                        scheduleExceptions, timePreference))
+                .filter(Objects::nonNull)
+                .sorted(this::compareResults)
+                .collect(Collectors.toList());
 
-        for (FindMyBusProjection proj : projections) {
-            BusResult result = processProjection(proj, searchDate, searchTime, dayOfWeek, 
-                    scheduleExceptions, includeScheduledData, includeRouteData);
-            if (result != null) {
-                results.add(result);
-            }
-        }
-
-        // Sort results
-        sortResults(results);
-
-        // Build response
-        return buildResponse(fromStop, toStop, searchDate, searchTime, results);
+        return buildSuccessResponse(fromStop, toStop, searchDate, searchTime, timePreference, results);
     }
 
     /**
-     * Process a single projection and create BusResult
+     * Process a projection and create BusResult if valid.
+     * Returns null if the schedule is not valid for the search date/time.
      */
-    private BusResult processProjection(FindMyBusProjection proj, LocalDate searchDate, LocalTime searchTime,
-                                        DayOfWeek dayOfWeek, Map<UUID, String> scheduleExceptions,
-                                        boolean includeScheduledData, boolean includeRouteData) {
+    private BusResult processProjection(FindMyBusProjection proj, LocalDate searchDate, 
+                                        LocalTime searchTime, DayOfWeek dayOfWeek,
+                                        Map<UUID, String> scheduleExceptions,
+                                        TimePreferenceEnum timePreference) {
         
-        // Determine data mode
-        DataMode dataMode;
-        if (proj.getTripId() != null) {
-            dataMode = DataMode.REALTIME;
-        } else if (proj.getScheduleId() != null) {
-            dataMode = DataMode.SCHEDULE;
-        } else {
-            dataMode = DataMode.STATIC;
+        // Must have a schedule for results
+        if (proj.getScheduleId() == null) {
+            return null;
         }
 
-        // For REALTIME mode - always include (trips are actual occurrences)
-        if (dataMode == DataMode.REALTIME) {
-            // Filter by search time
-            LocalTime departureTime = proj.getTripActualDepartureTime() != null ? 
-                    proj.getTripActualDepartureTime() : proj.getTripScheduledDepartureTime();
-            
-            if (departureTime != null && departureTime.isBefore(searchTime)) {
-                return null; // Skip trips that have already departed
-            }
-            
-            return buildRealtimeResult(proj);
+        // Check schedule exceptions
+        String exceptionType = scheduleExceptions.get(proj.getScheduleId());
+        if ("REMOVED".equals(exceptionType)) {
+            return null; // Schedule cancelled for this date
         }
 
-        // For SCHEDULE mode - validate calendar and exceptions
-        if (dataMode == DataMode.SCHEDULE) {
-            if (!includeScheduledData) {
-                return null;
-            }
-
-            // Check schedule exceptions
-            String exceptionType = scheduleExceptions.get(proj.getScheduleId());
-            if (exceptionType != null) {
-                if ("REMOVED".equals(exceptionType)) {
-                    return null; // Schedule removed for this date
-                } else if ("ADDED".equals(exceptionType)) {
-                    // Schedule specially added - include it
-                    return buildScheduleResultFromProjection(proj, searchTime);
-                }
-            }
-
-            // Validate calendar (day of week)
-            if (!isValidForDayOfWeek(proj, dayOfWeek)) {
-                return null;
-            }
-
-            // Filter by search time
-            LocalTime departureTime = proj.getFromDepartureTime();
-            if (departureTime != null && departureTime.isBefore(searchTime)) {
-                return null; // Skip schedules that have already passed
-            }
-
-            return buildScheduleResultFromProjection(proj, searchTime);
+        // Validate calendar (unless specially added)
+        if (!"ADDED".equals(exceptionType) && !isValidForDayOfWeek(proj, dayOfWeek)) {
+            return null;
         }
 
-        // For STATIC mode - only include if requested
-        if (dataMode == DataMode.STATIC && includeRouteData) {
-            return buildStaticResult(proj);
+        // Resolve departure time based on preference
+        TimeWithSource departureTime = resolveTime(
+                proj.getFromDepartureTime(),
+                proj.getFromDepartureTimeUnverified(),
+                proj.getFromDepartureTimeCalculated(),
+                timePreference
+        );
+
+        // Skip if no departure time available or already departed
+        if (departureTime.time == null || departureTime.time.isBefore(searchTime)) {
+            return null;
         }
 
-        return null;
+        // Resolve arrival time based on preference
+        TimeWithSource arrivalTime = resolveTime(
+                proj.getToArrivalTime(),
+                proj.getToArrivalTimeUnverified(),
+                proj.getToArrivalTimeCalculated(),
+                timePreference
+        );
+
+        // Build result
+        return buildBusResult(proj, departureTime, arrivalTime);
     }
 
     /**
-     * Check if schedule is valid for a specific day of week
+     * Build BusResult from projection data.
+     */
+    private BusResult buildBusResult(FindMyBusProjection proj, 
+                                      TimeWithSource departure, TimeWithSource arrival) {
+        
+        Double distanceKm = calculateDistance(proj.getFromDistanceFromStart(), proj.getToDistanceFromStart());
+        boolean hasTripData = proj.getTripId() != null;
+        
+        // Determine already departed status from trip data
+        boolean alreadyDeparted = false;
+        if (hasTripData) {
+            String status = proj.getTripStatus();
+            if ("completed".equalsIgnoreCase(status) || "cancelled".equalsIgnoreCase(status)) {
+                alreadyDeparted = true;
+            } else if (proj.getTripActualDepartureTime() != null && departure.time != null) {
+                alreadyDeparted = LocalTime.now().isAfter(departure.time);
+            }
+        }
+
+        // Build status message
+        String statusMessage = buildStatusMessage(departure.source, hasTripData, alreadyDeparted, 
+                proj.getTripStatus());
+
+        return BusResult.builder()
+                // Route information
+                .routeId(proj.getRouteId())
+                .routeName(proj.getRouteName())
+                .routeNameSinhala(proj.getRouteNameSinhala())
+                .routeNameTamil(proj.getRouteNameTamil())
+                .routeNumber(proj.getRouteNumber())
+                .roadType(proj.getRoadType())
+                .routeDescription(proj.getRouteDescription())
+                .routeThrough(proj.getRouteThrough())
+                .routeThroughSinhala(proj.getRouteThroughSinhala())
+                .routeThroughTamil(proj.getRouteThroughTamil())
+                // Route group
+                .routeGroupId(proj.getRouteGroupId())
+                .routeGroupName(proj.getRouteGroupName())
+                .routeGroupNameSinhala(proj.getRouteGroupNameSinhala())
+                .routeGroupNameTamil(proj.getRouteGroupNameTamil())
+                // Distance and stops
+                .distanceKm(distanceKm)
+                .fromStopOrder(proj.getFromStopOrder())
+                .toStopOrder(proj.getToStopOrder())
+                // Schedule information
+                .scheduleId(proj.getScheduleId())
+                .scheduleName(proj.getScheduleName())
+                .scheduleType(proj.getScheduleType())
+                .departureAtOrigin(departure.time)
+                .departureAtOriginSource(departure.source)
+                .arrivalAtDestination(arrival.time)
+                .arrivalAtDestinationSource(arrival.source)
+                // Trip information
+                .hasTripData(hasTripData)
+                .tripId(proj.getTripId())
+                .tripStatus(proj.getTripStatus())
+                .actualDepartureTime(proj.getTripActualDepartureTime())
+                .actualArrivalTime(proj.getTripActualArrivalTime())
+                // Bus information (from trip)
+                .busId(proj.getBusId())
+                .busPlateNumber(proj.getBusPlateNumber())
+                .busModel(proj.getBusModel())
+                .busCapacity(proj.getBusCapacity())
+                // Operator information
+                .operatorId(proj.getOperatorId())
+                .operatorName(proj.getOperatorName())
+                .operatorType(proj.getOperatorType())
+                // PSP information (from trip)
+                .pspId(proj.getPspId())
+                .pspNumber(proj.getPspNumber())
+                // Status
+                .alreadyDeparted(alreadyDeparted)
+                .statusMessage(statusMessage)
+                .build();
+    }
+
+    /**
+     * Build appropriate status message based on time source and trip availability.
+     */
+    private String buildStatusMessage(TimeSourceEnum timeSource, boolean hasTripData, 
+                                       boolean alreadyDeparted, String tripStatus) {
+        if (alreadyDeparted) {
+            if (tripStatus != null) {
+                return "Trip " + tripStatus.toLowerCase();
+            }
+            return "Already departed";
+        }
+
+        StringBuilder message = new StringBuilder();
+        
+        if (hasTripData) {
+            message.append("Trip scheduled");
+        } else {
+            message.append("Scheduled service");
+        }
+
+        // Add time reliability info
+        switch (timeSource) {
+            case VERIFIED -> message.append(" (verified times)");
+            case UNVERIFIED -> message.append(" (times may vary)");
+            case CALCULATED -> message.append(" (estimated times)");
+            case UNAVAILABLE -> message.append(" (times unavailable)");
+        }
+
+        return message.toString();
+    }
+
+    /**
+     * Resolve time value based on preference with fallback logic.
+     */
+    private TimeWithSource resolveTime(LocalTime verified, LocalTime unverified, 
+                                        LocalTime calculated, TimePreferenceEnum preference) {
+        return switch (preference) {
+            case VERIFIED_ONLY -> new TimeWithSource(verified, 
+                    verified != null ? TimeSourceEnum.VERIFIED : TimeSourceEnum.UNAVAILABLE);
+            
+            case PREFER_UNVERIFIED -> {
+                if (verified != null) yield new TimeWithSource(verified, TimeSourceEnum.VERIFIED);
+                if (unverified != null) yield new TimeWithSource(unverified, TimeSourceEnum.UNVERIFIED);
+                yield new TimeWithSource(null, TimeSourceEnum.UNAVAILABLE);
+            }
+            
+            case PREFER_CALCULATED, DEFAULT -> {
+                if (verified != null) yield new TimeWithSource(verified, TimeSourceEnum.VERIFIED);
+                if (unverified != null) yield new TimeWithSource(unverified, TimeSourceEnum.UNVERIFIED);
+                if (calculated != null) yield new TimeWithSource(calculated, TimeSourceEnum.CALCULATED);
+                yield new TimeWithSource(null, TimeSourceEnum.UNAVAILABLE);
+            }
+        };
+    }
+
+    /**
+     * Helper record for time with its source.
+     */
+    private record TimeWithSource(LocalTime time, TimeSourceEnum source) {}
+
+    /**
+     * Check if schedule runs on the specified day.
      */
     private boolean isValidForDayOfWeek(FindMyBusProjection proj, DayOfWeek dayOfWeek) {
         Boolean runsOnDay = switch (dayOfWeek) {
@@ -201,224 +303,104 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
             case SATURDAY -> proj.getSaturday();
             case SUNDAY -> proj.getSunday();
         };
-        
-        // If no calendar data, assume runs every day
-        if (runsOnDay == null) {
-            return true;
-        }
-        
-        return Boolean.TRUE.equals(runsOnDay);
+        // If no calendar, assume runs every day
+        return runsOnDay == null || Boolean.TRUE.equals(runsOnDay);
     }
 
     /**
-     * Build REALTIME mode result from projection
+     * Get schedule exceptions map for the search date.
      */
-    private BusResult buildRealtimeResult(FindMyBusProjection proj) {
-        // Calculate distance
-        Double distanceKm = calculateDistance(proj.getFromDistanceFromStart(), proj.getToDistanceFromStart());
-
-        // Determine if already departed and status
-        boolean alreadyDeparted = false;
-        String statusMessage = "Bus available";
-        String tripStatus = proj.getTripStatus();
+    private Map<UUID, String> getScheduleExceptions(List<FindMyBusProjection> projections, LocalDate date) {
+        List<UUID> scheduleIds = projections.stream()
+                .map(FindMyBusProjection::getScheduleId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
         
-        if ("completed".equals(tripStatus) || "cancelled".equals(tripStatus)) {
-            alreadyDeparted = true;
-            statusMessage = "Trip " + tripStatus.toLowerCase();
-        } else if (proj.getTripActualDepartureTime() != null && proj.getFromDepartureTime() != null) {
-            alreadyDeparted = proj.getTripActualDepartureTime().isAfter(proj.getFromDepartureTime());
-            if (alreadyDeparted) {
-                statusMessage = "Already departed from your stop";
-            }
+        if (scheduleIds.isEmpty()) {
+            return Collections.emptyMap();
         }
 
-        return BusResult.builder()
-                .dataMode(DataMode.REALTIME)
-                // Route info
-                .routeId(proj.getRouteId())
-                .routeName(proj.getRouteName())
-                .routeNameSinhala(proj.getRouteNameSinhala())
-                .routeNameTamil(proj.getRouteNameTamil())
-                .routeNumber(proj.getRouteNumber())
-                .roadType(proj.getRoadType())
-                .routeDescription(proj.getRouteDescription())
-                .routeThrough(proj.getRouteThrough())
-                .routeThroughSinhala(proj.getRouteThroughSinhala())
-                .routeThroughTamil(proj.getRouteThroughTamil())
-                // Distance and stop order
-                .distanceKm(distanceKm)
-                .fromStopOrder(proj.getFromStopOrder())
-                .toStopOrder(proj.getToStopOrder())
-                // Schedule info
-                .scheduleId(proj.getScheduleId())
-                .scheduleName(proj.getScheduleName())
-                .scheduledDepartureAtOrigin(proj.getFromDepartureTime())
-                .scheduledArrivalAtDestination(proj.getToArrivalTime())
-                // Trip info
-                .tripId(proj.getTripId())
-                .tripStatus(tripStatus)
-                .actualDepartureTime(proj.getTripActualDepartureTime())
-                .actualArrivalTime(proj.getTripActualArrivalTime())
-                // Bus info
-                .busId(proj.getBusId())
-                .busPlateNumber(proj.getBusPlateNumber())
-                .busModel(proj.getBusModel())
-                // Route Group
-                .routeGroupId(proj.getRouteGroupId())
-                .routeGroupName(proj.getRouteGroupName())
-                // Flags
-                .alreadyDeparted(alreadyDeparted)
-                .statusMessage(statusMessage)
-                .build();
+        return passengerQueryRepository.findScheduleExceptions(scheduleIds, date)
+                .stream()
+                .collect(Collectors.toMap(
+                        PassengerQueryRepository.ScheduleExceptionProjection::getScheduleId,
+                        PassengerQueryRepository.ScheduleExceptionProjection::getExceptionType
+                ));
     }
 
     /**
-     * Build SCHEDULE mode result from projection
-     */
-    private BusResult buildScheduleResultFromProjection(FindMyBusProjection proj, LocalTime searchTime) {
-        Double distanceKm = calculateDistance(proj.getFromDistanceFromStart(), proj.getToDistanceFromStart());
-
-        return BusResult.builder()
-                .dataMode(DataMode.SCHEDULE)
-                // Route info
-                .routeId(proj.getRouteId())
-                .routeName(proj.getRouteName())
-                .routeNameSinhala(proj.getRouteNameSinhala())
-                .routeNameTamil(proj.getRouteNameTamil())
-                .routeNumber(proj.getRouteNumber())
-                .roadType(proj.getRoadType())
-                .routeDescription(proj.getRouteDescription())
-                .routeThrough(proj.getRouteThrough())
-                .routeThroughSinhala(proj.getRouteThroughSinhala())
-                .routeThroughTamil(proj.getRouteThroughTamil())
-                // Distance and stop order
-                .distanceKm(distanceKm)
-                .fromStopOrder(proj.getFromStopOrder())
-                .toStopOrder(proj.getToStopOrder())
-                // Schedule info
-                .scheduleId(proj.getScheduleId())
-                .scheduleName(proj.getScheduleName())
-                .scheduledDepartureAtOrigin(proj.getFromDepartureTime())
-                .scheduledArrivalAtDestination(proj.getToArrivalTime())
-                // Flags
-                .alreadyDeparted(false)
-                .statusMessage("Scheduled service - no real-time data available")
-                .build();
-    }
-
-    /**
-     * Build STATIC mode result from projection
-     */
-    private BusResult buildStaticResult(FindMyBusProjection proj) {
-        Double distanceKm = calculateDistance(proj.getFromDistanceFromStart(), proj.getToDistanceFromStart());
-
-        return BusResult.builder()
-                .dataMode(DataMode.STATIC)
-                // Route info
-                .routeId(proj.getRouteId())
-                .routeName(proj.getRouteName())
-                .routeNameSinhala(proj.getRouteNameSinhala())
-                .routeNameTamil(proj.getRouteNameTamil())
-                .routeNumber(proj.getRouteNumber())
-                .roadType(proj.getRoadType())
-                .routeDescription(proj.getRouteDescription())
-                .routeThrough(proj.getRouteThrough())
-                .routeThroughSinhala(proj.getRouteThroughSinhala())
-                .routeThroughTamil(proj.getRouteThroughTamil())
-                // Distance and stop order
-                .distanceKm(distanceKm)
-                .fromStopOrder(proj.getFromStopOrder())
-                .toStopOrder(proj.getToStopOrder())
-                // Route Group
-                .routeGroupId(proj.getRouteGroupId())
-                .routeGroupName(proj.getRouteGroupName())
-                // Status
-                .alreadyDeparted(false)
-                .statusMessage("No scheduled trips available — buses on this route operate irregularly.")
-                .build();
-    }
-
-    /**
-     * Calculate distance between from and to stops
+     * Calculate distance between two stops.
      */
     private Double calculateDistance(Double fromDistance, Double toDistance) {
         if (fromDistance != null && toDistance != null) {
-            return toDistance - fromDistance;
+            return Math.abs(toDistance - fromDistance);
         }
         return null;
     }
 
     /**
-     * Sort results by data mode priority, then by departure time, then by distance
+     * Compare results for sorting: by departure time, then by distance.
      */
-    private void sortResults(List<BusResult> results) {
-        results.sort((a, b) -> {
-            // First by data mode priority (REALTIME > SCHEDULE > STATIC)
-            int modePriority = getModePriority(a.getDataMode()) - getModePriority(b.getDataMode());
-            if (modePriority != 0) {
-                return modePriority;
-            }
+    private int compareResults(BusResult a, BusResult b) {
+        // First by departure time
+        LocalTime timeA = a.getDepartureAtOrigin();
+        LocalTime timeB = b.getDepartureAtOrigin();
+        
+        if (timeA != null && timeB != null) {
+            int timeCompare = timeA.compareTo(timeB);
+            if (timeCompare != 0) return timeCompare;
+        } else if (timeA != null) {
+            return -1;
+        } else if (timeB != null) {
+            return 1;
+        }
 
-            // Then by departure time
-            LocalTime timeA = a.getScheduledDepartureAtOrigin();
-            LocalTime timeB = b.getScheduledDepartureAtOrigin();
-            
-            if (timeA != null && timeB != null) {
-                return timeA.compareTo(timeB);
-            } else if (timeA != null) {
-                return -1;
-            } else if (timeB != null) {
-                return 1;
-            }
+        // Then by distance
+        Double distA = a.getDistanceKm();
+        Double distB = b.getDistanceKm();
+        
+        if (distA != null && distB != null) {
+            return distA.compareTo(distB);
+        } else if (distA != null) {
+            return -1;
+        } else if (distB != null) {
+            return 1;
+        }
 
-            // Finally by distance
-            Double distA = a.getDistanceKm();
-            Double distB = b.getDistanceKm();
-            
-            if (distA != null && distB != null) {
-                return distA.compareTo(distB);
-            } else if (distA != null) {
-                return -1;
-            } else if (distB != null) {
-                return 1;
-            }
-
-            return 0;
-        });
-    }
-
-    private int getModePriority(DataMode mode) {
-        return switch (mode) {
-            case REALTIME -> 0;
-            case SCHEDULE -> 1;
-            case STATIC -> 2;
-        };
+        return 0;
     }
 
     /**
-     * Build the final response
+     * Build success response.
      */
-    private FindMyBusResponse buildResponse(Stop fromStop, Stop toStop, LocalDate searchDate, 
-                                            LocalTime searchTime, List<BusResult> results) {
+    private FindMyBusResponse buildSuccessResponse(Stop fromStop, Stop toStop, 
+                                                    LocalDate searchDate, LocalTime searchTime,
+                                                    TimePreferenceEnum timePreference,
+                                                    List<BusResult> results) {
+        String message = results.isEmpty() 
+                ? "No buses found for the selected criteria." 
+                : "Found " + results.size() + " result(s).";
+        
         return FindMyBusResponse.builder()
-                .success(true)
-                .message(results.isEmpty() ? "No buses found for the selected criteria." : 
-                        "Found " + results.size() + " result(s).")
+                .success(!results.isEmpty())
+                .message(message)
                 .fromStop(buildStopInfo(fromStop))
                 .toStop(buildStopInfo(toStop))
                 .searchDate(searchDate)
                 .searchTime(searchTime)
+                .timePreference(timePreference)
                 .totalResults(results.size())
                 .results(results)
                 .build();
     }
 
     /**
-     * Build response for no results scenario
+     * Build error response.
      */
-    private FindMyBusResponse buildNoResultsResponse(FindMyBusRequest request, LocalDate searchDate, 
-                                                      LocalTime searchTime, Stop fromStop, Stop toStop, 
-                                                      String message) {
+    private FindMyBusResponse buildErrorResponse(LocalDate searchDate, LocalTime searchTime,
+                                                  TimePreferenceEnum timePreference,
+                                                  Stop fromStop, Stop toStop, String message) {
         return FindMyBusResponse.builder()
                 .success(false)
                 .message(message)
@@ -426,17 +408,19 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .toStop(toStop != null ? buildStopInfo(toStop) : null)
                 .searchDate(searchDate)
                 .searchTime(searchTime)
+                .timePreference(timePreference)
                 .totalResults(0)
                 .results(Collections.emptyList())
                 .build();
     }
 
     /**
-     * Build StopInfo from Stop entity
+     * Build StopInfo from Stop entity.
      */
     private StopInfo buildStopInfo(Stop stop) {
-        LocationDto location = new LocationDto();
+        LocationDto location = null;
         if (stop.getLocation() != null) {
+            location = new LocationDto();
             location.setLatitude(stop.getLocation().getLatitude());
             location.setLongitude(stop.getLocation().getLongitude());
             location.setAddress(stop.getLocation().getAddress());

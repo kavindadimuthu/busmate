@@ -13,6 +13,11 @@ import java.util.UUID;
 /**
  * Repository for optimized passenger query operations.
  * Uses native queries with joins to minimize database round trips.
+ * 
+ * Supports enhanced time querying with three time types:
+ * - Verified times (most reliable)
+ * - Unverified times (user-submitted)
+ * - Calculated times (system-generated)
  */
 @Repository
 public interface PassengerQueryRepository extends JpaRepository<com.busmate.routeschedule.entity.Route, UUID> {
@@ -24,8 +29,10 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
      * 1. Joins route_stop twice to find routes where fromStop appears before toStop
      * 2. Left joins schedule, schedule_stop, and trip tables for dynamic data
      * 3. Left joins schedule_calendar for day-of-week filtering
-     * 4. Applies filters for date, time, route number, and road type
-     * 5. Returns all data needed to build response in one query
+     * 4. Includes all three time types (verified, unverified, calculated) for schedule stops
+     * 5. Includes operator information for trip results
+     * 6. Applies filters for date, time, route number, and road type
+     * 7. Returns all data needed to build response in one query
      * 
      * @param fromStopId Origin stop UUID
      * @param toStopId Destination stop UUID
@@ -72,15 +79,23 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             s.effective_start_date as scheduleStartDate,
             s.effective_end_date as scheduleEndDate,
             
-            -- From Schedule Stop Information
+            -- From Schedule Stop Information - all time types
             ss1.id as fromScheduleStopId,
             ss1.arrival_time as fromArrivalTime,
             ss1.departure_time as fromDepartureTime,
+            ss1.arrival_time_unverified as fromArrivalTimeUnverified,
+            ss1.departure_time_unverified as fromDepartureTimeUnverified,
+            ss1.arrival_time_calculated as fromArrivalTimeCalculated,
+            ss1.departure_time_calculated as fromDepartureTimeCalculated,
             
-            -- To Schedule Stop Information
+            -- To Schedule Stop Information - all time types
             ss2.id as toScheduleStopId,
             ss2.arrival_time as toArrivalTime,
             ss2.departure_time as toDepartureTime,
+            ss2.arrival_time_unverified as toArrivalTimeUnverified,
+            ss2.departure_time_unverified as toDepartureTimeUnverified,
+            ss2.arrival_time_calculated as toArrivalTimeCalculated,
+            ss2.departure_time_calculated as toDepartureTimeCalculated,
             
             -- Trip Information
             t.id as tripId,
@@ -95,6 +110,12 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             b.id as busId,
             b.plate_number as busPlateNumber,
             b.model as busModel,
+            b.capacity as busCapacity,
+            
+            -- Operator Information (from PSP -> Operator relationship)
+            op.id as operatorId,
+            op.name as operatorName,
+            op.operator_type as operatorType,
             
             -- PSP Information
             psp.id as pspId,
@@ -135,6 +156,7 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
         
         LEFT JOIN bus b ON t.bus_id = b.id
         LEFT JOIN passenger_service_permit psp ON t.passenger_service_permit_id = psp.id
+        LEFT JOIN operator op ON psp.operator_id = op.id
         
         WHERE rs1.stop_id = :fromStopId
             AND rs2.stop_id = :toStopId
@@ -146,7 +168,7 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             CASE WHEN t.id IS NOT NULL THEN 0 
                  WHEN s.id IS NOT NULL THEN 1 
                  ELSE 2 END,
-            COALESCE(t.actual_departure_time, t.scheduled_departure_time, ss1.departure_time),
+            COALESCE(t.actual_departure_time, t.scheduled_departure_time, ss1.departure_time, ss1.departure_time_unverified, ss1.departure_time_calculated),
             (rs2.distance_from_start_km - rs1.distance_from_start_km)
         """, nativeQuery = true)
     List<FindMyBusProjection> findBusesBetweenStops(

@@ -3,6 +3,7 @@ package com.busmate.routeschedule.passenger.controller;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
 import com.busmate.routeschedule.enums.RoadTypeEnum;
+import com.busmate.routeschedule.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.passenger.service.PassengerQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 /**
  * Controller for passenger query APIs.
- * Provides endpoints for passengers to search for buses and routes.
+ * Provides the "Find My Bus" feature for passengers to search for bus services.
  */
 @RestController
 @RequestMapping("/api/passenger")
@@ -36,64 +37,56 @@ public class PassengerQueryController {
     /**
      * Find My Bus API
      * 
-     * Searches for buses/routes between two stops with the following algorithm:
-     * 1. Identifies all direct routes connecting the two stops
-     * 2. Checks for active schedules on those routes for the given date
-     * 3. Looks for real-time trip data if available
-     * 4. Falls back to schedule or static route data as needed
-     * 
-     * Response modes:
-     * - REALTIME: Trip data available with real-time status
-     * - SCHEDULE: Schedule data available but no active trips
-     * - STATIC: Only route information available
+     * Searches for bus services between two stops, returning schedule-based results
+     * with timing information and optional trip details (bus, operator, permit).
      */
     @GetMapping("/find-my-bus")
     @Operation(
         summary = "Find buses between two stops",
         description = """
-            Find available buses/routes between two stops. This API provides the best available data:
+            Find available bus services between two stops with schedule timings.
             
-            **Data Modes:**
-            - **REALTIME**: Trip data with real-time status (ON_TIME, DELAYED, etc.)
-            - **SCHEDULE**: Schedule-based timing when no trips are available
-            - **STATIC**: Basic route information when no schedules exist
+            **Response includes:**
+            - Route information (name, number, road type, via)
+            - Schedule timings (departure at origin, arrival at destination)
+            - Trip details if available (bus, operator, PSP)
+            - Time source indicators for reliability assessment
             
-            **Algorithm:**
-            1. Validates stops and finds all direct routes
-            2. Fetches active schedules for the search date
-            3. Checks for trips (real-time data)
-            4. Returns best available data with appropriate fallbacks
+            **Time Preferences:**
+            - **VERIFIED_ONLY**: Only verified times (most reliable, fewer results)
+            - **PREFER_UNVERIFIED**: Verified > Unverified
+            - **PREFER_CALCULATED/DEFAULT**: Verified > Unverified > Calculated
             
-            **Sorting:**
-            Results are sorted by:
-            1. Data mode priority (REALTIME > SCHEDULE > STATIC)
-            2. Departure time at origin
-            3. Travel distance
+            **Time Sources:**
+            Each time value includes its source (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
+            to indicate reliability.
+            
+            **Sorting:** Results sorted by departure time, then by distance.
             """,
         operationId = "findMyBus"
     )
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Search completed successfully"
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid request - missing or invalid parameters"
-        )
+        @ApiResponse(responseCode = "200", description = "Search completed successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters")
     })
     public ResponseEntity<FindMyBusResponse> findMyBus(
-            @Parameter(description = "UUID of the origin stop", required = true, example = "33333333-3333-3333-3333-333333333331")
+            @Parameter(description = "UUID of the origin stop", required = true, 
+                       example = "33333333-3333-3333-3333-333333333331")
             @RequestParam("fromStopId") UUID fromStopId,
             
-            @Parameter(description = "UUID of the destination stop", required = true, example = "44444444-4444-4444-4444-444444444441")
+            @Parameter(description = "UUID of the destination stop", required = true, 
+                       example = "44444444-4444-4444-4444-444444444441")
             @RequestParam("toStopId") UUID toStopId,
             
-            @Parameter(description = "Date for which to find buses (defaults to today)", example = "2025-12-07")
-            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(description = "Date for which to find buses (defaults to today)", 
+                       example = "2026-02-08")
+            @RequestParam(value = "date", required = false) 
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             
-            @Parameter(description = "Time from which to find buses (defaults to 00:00)", example = "08:00", schema = @Schema(type = "string", format = "time"))
-            @RequestParam(value = "time", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
+            @Parameter(description = "Time from which to find buses (defaults to 00:00)", 
+                       example = "08:00", schema = @Schema(type = "string", format = "time"))
+            @RequestParam(value = "time", required = false) 
+            @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
             
             @Parameter(description = "Filter by route number", example = "101")
             @RequestParam(value = "routeNumber", required = false) String routeNumber,
@@ -101,16 +94,13 @@ public class PassengerQueryController {
             @Parameter(description = "Filter by road type", example = "NORMALWAY")
             @RequestParam(value = "roadType", required = false) RoadTypeEnum roadType,
             
-            @Parameter(description = "Include schedule-based results when no trips available (default: true)", example = "true")
-            @RequestParam(value = "includeScheduledData", required = false, defaultValue = "true") Boolean includeScheduledData,
-            
-            @Parameter(description = "Include static route data as fallback when no schedules available (default: true)", example = "true")
-            @RequestParam(value = "includeRouteData", required = false, defaultValue = "true") Boolean includeRouteData) {
+            @Parameter(description = "Time preference for schedule times", example = "DEFAULT")
+            @RequestParam(value = "timePreference", required = false, defaultValue = "DEFAULT") 
+            TimePreferenceEnum timePreference) {
         
-        log.info("Find My Bus request received: fromStop={}, toStop={}, date={}, time={}", 
-                fromStopId, toStopId, date, time);
+        log.info("Find My Bus: fromStop={}, toStop={}, date={}, time={}, timePreference={}", 
+                fromStopId, toStopId, date, time, timePreference);
         
-        // Build request object from query parameters
         FindMyBusRequest request = new FindMyBusRequest();
         request.setFromStopId(fromStopId);
         request.setToStopId(toStopId);
@@ -118,12 +108,11 @@ public class PassengerQueryController {
         request.setTime(time);
         request.setRouteNumber(routeNumber);
         request.setRoadType(roadType);
-        request.setIncludeScheduledData(includeScheduledData);
-        request.setIncludeRouteData(includeRouteData);
+        request.setTimePreference(timePreference);
         
         FindMyBusResponse response = passengerQueryService.findMyBus(request);
         
-        log.info("Find My Bus response: success={}, totalResults={}", 
+        log.info("Find My Bus response: success={}, results={}", 
                 response.isSuccess(), response.getTotalResults());
         
         return ResponseEntity.ok(response);

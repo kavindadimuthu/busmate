@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.passenger.dto.response;
 
 import com.busmate.routeschedule.dto.common.LocationDto;
+import com.busmate.routeschedule.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.enums.TimeSourceEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -13,6 +15,13 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Response for Find My Bus API.
+ * 
+ * Provides schedule-based bus/route information between two stops.
+ * Each result contains route information, schedule timings, and optionally
+ * trip details (bus, operator, permit) if a trip exists for the schedule.
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -39,36 +48,52 @@ public class FindMyBusResponse {
     @Schema(description = "Time from which results are filtered", type = "string", pattern = "HH:mm")
     private LocalTime searchTime;
     
+    @Schema(description = "Time preference used for this search")
+    private TimePreferenceEnum timePreference;
+    
     @Schema(description = "Total number of results found")
     private int totalResults;
     
-    @Schema(description = "List of bus/route results sorted by departure time or distance")
+    @Schema(description = "List of bus/route results sorted by departure time")
     private List<BusResult> results;
     
+    /**
+     * Stop information summary
+     */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     @Schema(description = "Stop information summary")
     public static class StopInfo {
+        @Schema(description = "Stop UUID")
         private UUID id;
+        
+        @Schema(description = "Stop name in English")
         private String name;
+        
+        @Schema(description = "Stop name in Sinhala")
         private String nameSinhala;
+        
+        @Schema(description = "Stop name in Tamil")
         private String nameTamil;
+        
+        @Schema(description = "Stop location details")
         private LocationDto location;
     }
     
+    /**
+     * Individual bus/route result with schedule and optional trip information.
+     */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "Individual bus/route result")
+    @Schema(description = "Individual bus/route result with schedule and trip information")
     public static class BusResult {
         
-        @Schema(description = "Data mode - REALTIME, SCHEDULE, or STATIC", example = "REALTIME")
-        private DataMode dataMode;
+        // ==================== Route Information ====================
         
-        // Route Information (always available)
         @Schema(description = "Route ID")
         private UUID routeId;
         
@@ -90,7 +115,7 @@ public class FindMyBusResponse {
         @Schema(description = "Route description")
         private String routeDescription;
         
-        @Schema(description = "Route through (via)")
+        @Schema(description = "Route through (via) in English")
         private String routeThrough;
         
         @Schema(description = "Route through in Sinhala")
@@ -99,7 +124,22 @@ public class FindMyBusResponse {
         @Schema(description = "Route through in Tamil")
         private String routeThroughTamil;
         
-        // Distance and Duration
+        // ==================== Route Group Information ====================
+        
+        @Schema(description = "Route group ID")
+        private UUID routeGroupId;
+        
+        @Schema(description = "Route group name in English")
+        private String routeGroupName;
+        
+        @Schema(description = "Route group name in Sinhala")
+        private String routeGroupNameSinhala;
+        
+        @Schema(description = "Route group name in Tamil")
+        private String routeGroupNameTamil;
+        
+        // ==================== Distance and Stop Information ====================
+        
         @Schema(description = "Distance from origin to destination in km")
         private Double distanceKm;
         
@@ -112,84 +152,89 @@ public class FindMyBusResponse {
         @Schema(description = "Stop order at destination")
         private Integer toStopOrder;
         
-        // Schedule Information (when available)
-        @Schema(description = "Schedule ID (if schedule data available)")
+        // ==================== Schedule Information ====================
+        
+        @Schema(description = "Schedule ID")
         private UUID scheduleId;
         
         @Schema(description = "Schedule name")
         private String scheduleName;
         
-        @JsonFormat(pattern = "HH:mm:ss")
-        @Schema(description = "Scheduled departure time at origin stop", type = "string", pattern = "HH:mm:ss")
-        private LocalTime scheduledDepartureAtOrigin;
+        @Schema(description = "Schedule type (DAILY, WEEKDAY, WEEKEND, etc.)")
+        private String scheduleType;
         
         @JsonFormat(pattern = "HH:mm:ss")
-        @Schema(description = "Scheduled arrival time at destination stop", type = "string", pattern = "HH:mm:ss")
-        private LocalTime scheduledArrivalAtDestination;
+        @Schema(description = "Departure time at origin stop", type = "string", pattern = "HH:mm:ss")
+        private LocalTime departureAtOrigin;
         
-        // Trip Information (when real-time data available)
-        @Schema(description = "Trip ID (if trip data available)")
+        @Schema(description = "Source of departure time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)")
+        private TimeSourceEnum departureAtOriginSource;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Arrival time at destination stop", type = "string", pattern = "HH:mm:ss")
+        private LocalTime arrivalAtDestination;
+        
+        @Schema(description = "Source of arrival time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)")
+        private TimeSourceEnum arrivalAtDestinationSource;
+        
+        // ==================== Trip Information (if available) ====================
+        
+        @Schema(description = "Whether trip data is available for this schedule")
+        private Boolean hasTripData;
+        
+        @Schema(description = "Trip ID (if trip exists)")
         private UUID tripId;
         
-        @Schema(description = "Trip status", example = "active")
+        @Schema(description = "Trip status (scheduled, active, completed, cancelled)")
         private String tripStatus;
         
         @JsonFormat(pattern = "HH:mm:ss")
-        @Schema(description = "Actual departure time (if available)", type = "string", pattern = "HH:mm:ss")
+        @Schema(description = "Actual departure time from trip (if available)", type = "string", pattern = "HH:mm:ss")
         private LocalTime actualDepartureTime;
         
         @JsonFormat(pattern = "HH:mm:ss")
-        @Schema(description = "Actual arrival time (if available)", type = "string", pattern = "HH:mm:ss")
+        @Schema(description = "Actual arrival time from trip (if available)", type = "string", pattern = "HH:mm:ss")
         private LocalTime actualArrivalTime;
         
-        @Schema(description = "Estimated arrival at origin stop based on current trip progress")
-        @JsonFormat(pattern = "HH:mm:ss")
-        private LocalTime estimatedArrivalAtOrigin;
+        // ==================== Bus Information (from trip if available) ====================
         
-        // Bus Information (when trip data available)
         @Schema(description = "Bus ID")
         private UUID busId;
         
-        @Schema(description = "Bus plate number")
+        @Schema(description = "Bus registration/plate number")
         private String busPlateNumber;
         
         @Schema(description = "Bus model")
         private String busModel;
         
-        @Schema(description = "Bus capacity")
+        @Schema(description = "Bus seating capacity")
         private Integer busCapacity;
         
-        // Operator Information
+        // ==================== Operator Information ====================
+        
         @Schema(description = "Operator ID")
         private UUID operatorId;
         
         @Schema(description = "Operator name")
         private String operatorName;
         
-        // Additional flags
-        @Schema(description = "Whether the bus has already departed from origin")
+        @Schema(description = "Operator type (CTB, PRIVATE, SLTB, etc.)")
+        private String operatorType;
+        
+        // ==================== PSP Information (from trip if available) ====================
+        
+        @Schema(description = "Passenger Service Permit ID")
+        private UUID pspId;
+        
+        @Schema(description = "Passenger Service Permit number")
+        private String pspNumber;
+        
+        // ==================== Status Information ====================
+        
+        @Schema(description = "Whether the service has already departed from origin stop")
         private Boolean alreadyDeparted;
         
-        @Schema(description = "User-friendly message about this result")
+        @Schema(description = "User-friendly status message about this result")
         private String statusMessage;
-        
-        // Route Group
-        @Schema(description = "Route group ID")
-        private UUID routeGroupId;
-        
-        @Schema(description = "Route group name")
-        private String routeGroupName;
-    }
-    
-    @Schema(description = "Data availability mode")
-    public enum DataMode {
-        @Schema(description = "Real-time trip data available - best quality")
-        REALTIME,
-        
-        @Schema(description = "Schedule data available but no active trips")
-        SCHEDULE,
-        
-        @Schema(description = "Only static route information available")
-        STATIC
     }
 }
