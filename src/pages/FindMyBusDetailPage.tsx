@@ -4,84 +4,70 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   ArrowLeft, 
   Bus, 
-  Clock, 
   MapPin, 
-  Navigation,
-  Phone,
-  User,
   Loader2,
   AlertCircle,
-  Wifi,
-  Wind,
-  Battery,
-  Users,
-  ChevronDown,
   AlertTriangle,
-  ChevronLeft
+  CheckCircle,
+  Calculator,
+  Info,
+  Calendar,
+  Route as RouteIcon
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
-import { TripManagementService, ScheduleManagementService } from "@/generated/api-client/route-management";
-import type { TripResponse, ScheduleResponse, ScheduleStopResponse, ScheduleCalendarResponse } from "@/generated/api-client/route-management";
+import { PassengerQueryService } from "@/generated/api-client/route-management";
+import type { 
+  FindMyBusDetailsResponse,
+  ScheduleStopDetails,
+  ScheduleCalendarInfo,
+  ScheduleExceptionInfo
+} from "@/generated/api-client/route-management";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type StopViewMode = 'timings' | 'arrival-departure' | 'all';
-
-interface DetailData {
-  // Common fields
-  routeName?: string;
-  routeNumber?: string;
-  roadType?: string;
-  origin?: string;
-  destination?: string;
-  departureTime?: string;
-  arrivalTime?: string;
-  duration?: number;
-  // Schedule data
-  operatingDays?: string[];
-  scheduleExceptions?: any[];
-  // Bus data
-  busPlateNumber?: string;
-  busModel?: string;
-  busCapacity?: number;
-  operatorName?: string;
-  driverName?: string;
-  conductorName?: string;
-  contactNumber?: string;
-  // Stops
-  stops: ScheduleStopResponse[];
-}
+type StopViewMode = 'all' | 'with-times' | 'origin-destination';
+type TimeDisplayMode = 'resolved' | 'verified' | 'unverified' | 'calculated';
 
 /**
- * FindMyBusDetailPage - Unified detail page showing bus result details
+ * FindMyBusDetailPage - Comprehensive detail page for bus schedule/trip
  * 
  * URL Pattern:
- * - /findmybus/detail?type=trip&id=X
- * - /findmybus/detail?type=schedule&id=X&date=YYYY-MM-DD
+ * /findmybus/detail?scheduleId=X&fromStopId=Y&toStopId=Z&tripId=T&date=YYYY-MM-DD&timePreference=DEFAULT
  */
 const FindMyBusDetailPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const type = searchParams.get('type') as 'trip' | 'schedule' | null;
-  const id = searchParams.get('id');
+  // Extract URL parameters
+  const scheduleId = searchParams.get('scheduleId');
+  const fromStopId = searchParams.get('fromStopId');
+  const toStopId = searchParams.get('toStopId');
+  const tripId = searchParams.get('tripId') || undefined;
   const dateParam = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const timePreferenceParam = (searchParams.get('timePreference') || 'DEFAULT') as 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<DetailData | null>(null);
-  const [stopViewMode, setStopViewMode] = useState<StopViewMode>('timings');
+  const [data, setData] = useState<FindMyBusDetailsResponse | null>(null);
+  const [stopViewMode, setStopViewMode] = useState<StopViewMode>('all');
+  const [timeDisplayMode, setTimeDisplayMode] = useState<TimeDisplayMode>('resolved');
   const [showExceptions, setShowExceptions] = useState(false);
 
-  // Fetch data based on type
+  // Fetch data using new API
   useEffect(() => {
     const fetchData = async () => {
-      if (!id || !type) {
-        setError("Invalid URL parameters");
+      if (!scheduleId || !fromStopId || !toStopId) {
+        setError("Missing required parameters. Please go back and select a bus.");
         setLoading(false);
         return;
       }
@@ -90,84 +76,54 @@ const FindMyBusDetailPage = () => {
         setLoading(true);
         setError(null);
 
-        let detailData: DetailData;
+        const response = await PassengerQueryService.findMyBusDetails(
+          scheduleId,
+          fromStopId,
+          toStopId,
+          tripId,
+          dateParam,
+          timePreferenceParam
+        );
 
-        if (type === 'trip') {
-          const tripResponse = await TripManagementService.getTripById(id);
-          let scheduleData: ScheduleResponse | undefined;
-          
-          if (tripResponse.scheduleId) {
-            try {
-              scheduleData = await ScheduleManagementService.getScheduleById(tripResponse.scheduleId);
-            } catch (err) {
-              console.error("Failed to fetch schedule data:", err);
-            }
-          }
-
-          const stops = scheduleData?.scheduleStops?.sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0)) || [];
-          const firstStop = stops[0];
-          const lastStop = stops[stops.length - 1];
-
-          detailData = {
-            routeName: tripResponse.routeName,
-            routeNumber: scheduleData?.routeName?.match(/\d+-\d+/)?.[0],
-            origin: firstStop?.stopName,
-            destination: lastStop?.stopName,
-            departureTime: tripResponse.scheduledDepartureTime || tripResponse.actualDepartureTime,
-            arrivalTime: tripResponse.scheduledArrivalTime || tripResponse.actualArrivalTime,
-            operatingDays: scheduleData?.scheduleCalendars ? getOperatingDays(scheduleData.scheduleCalendars) : [],
-            scheduleExceptions: scheduleData?.scheduleExceptions,
-            busPlateNumber: tripResponse.busPlateNumber,
-            busModel: tripResponse.busModel,
-            operatorName: tripResponse.operatorName,
-            stops,
-          };
-        } else {
-          const scheduleResponse = await ScheduleManagementService.getScheduleById(id);
-          const stops = scheduleResponse.scheduleStops?.sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0)) || [];
-          const firstStop = stops[0];
-          const lastStop = stops[stops.length - 1];
-          
-
-          detailData = {
-            routeName: scheduleResponse.routeName,
-            routeNumber: scheduleResponse.routeName?.match(/\d+-\d+/)?.[0],
-            origin: firstStop?.stopName,
-            destination: lastStop?.stopName,
-            departureTime: firstStop?.departureTime,
-            arrivalTime: lastStop?.arrivalTime,
-            operatingDays: scheduleResponse.scheduleCalendars ? getOperatingDays(scheduleResponse.scheduleCalendars) : [],
-            scheduleExceptions: scheduleResponse.scheduleExceptions,
-            stops,
-          };
+        if (!response.success) {
+          setError(response.message || "Failed to load details");
+          return;
         }
 
-        setData(detailData);
-      } catch (err: any) {
-        console.error(`Failed to fetch ${type} details:`, err);
-        setError(err.message || `Failed to load details. Please try again.`);
+        setData(response);
+      } catch (err: unknown) {
+        console.error("Failed to fetch details:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to load details. Please try again.";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id, type, dateParam]);
+  }, [scheduleId, fromStopId, toStopId, tripId, dateParam, timePreferenceParam]);
 
   // Helper functions
   const formatTime = (timeString?: string | null) => {
     if (!timeString) return null;
     try {
-      // If it's just time (HH:MM:SS), prepend a dummy date to create a valid Date object
       const fullDateString = timeString.includes('T') ? timeString : `2000-01-01T${timeString}`;
       const date = new Date(fullDateString);
       if (isNaN(date.getTime())) throw new Error('Invalid date');
       return date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false,
+        hour12: true,
       });
     } catch {
+      const parts = timeString.split(':');
+      if (parts.length >= 2) {
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+      }
       return timeString;
     }
   };
@@ -180,67 +136,102 @@ const FindMyBusDetailPage = () => {
     return `${mins}m`;
   };
 
-  const getOperatingDays = (calendar: ScheduleCalendarResponse[]): string[] => {
-    // Default all 7 weekdays
-    const defaultDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
-    if (!calendar || calendar.length === 0) return defaultDays;
-    
-    const cal = calendar[0];
-    const days: string[] = [];
-    if (cal.monday) days.push('Mon');
-    if (cal.tuesday) days.push('Tue');
-    if (cal.wednesday) days.push('Wed');
-    if (cal.thursday) days.push('Thu');
-    if (cal.friday) days.push('Fri');
-    if (cal.saturday) days.push('Sat');
-    if (cal.sunday) days.push('Sun');
-    
-    // If no days are configured, return default all 7 days
-    return days.length > 0 ? days : defaultDays;
-  };
-
-  const getDayOfWeekIndex = () => {
-    const date = new Date(dateParam);
-    return date.getDay();
-  };
-
-  const isOperatingToday = (): boolean => {
-    if (!data?.operatingDays || data.operatingDays.length === 0) return false;
-    const dayIndex = getDayOfWeekIndex();
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return data.operatingDays.includes(dayNames[dayIndex]);
-  };
-
-  const calculateDuration = () => {
-    if (!data?.departureTime || !data?.arrivalTime) return null;
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
     try {
-      // Convert time strings to Date objects, handling HH:MM:SS format
-      const departureStr = data.departureTime.includes('T') ? data.departureTime : `2000-01-01T${data.departureTime}`;
-      const arrivalStr = data.arrivalTime.includes('T') ? data.arrivalTime : `2000-01-01T${data.arrivalTime}`;
-      const departure = new Date(departureStr);
-      const arrival = new Date(arrivalStr);
-      if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) return null;
-      const diffMs = arrival.getTime() - departure.getTime();
-      return Math.floor(diffMs / 60000); // Convert to minutes
+      return new Date(dateString).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
     } catch {
-      return null;
+      return dateString;
     }
   };
 
+  // Get time source badge config
+  const getTimeSourceConfig = (source?: string) => {
+    switch (source) {
+      case 'VERIFIED':
+        return { 
+          label: 'Verified', 
+          icon: CheckCircle, 
+          className: 'bg-green-100 text-green-700 border-green-200',
+          tooltip: 'Time verified by official sources'
+        };
+      case 'UNVERIFIED':
+        return { 
+          label: 'Unverified', 
+          icon: AlertCircle, 
+          className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+          tooltip: 'Time submitted by users, not officially verified'
+        };
+      case 'CALCULATED':
+        return { 
+          label: 'Calculated', 
+          icon: Calculator, 
+          className: 'bg-blue-50 text-blue-600 border-blue-200',
+          tooltip: 'Time calculated based on average travel times'
+        };
+      default:
+        return null;
+    }
+  };
+
+  // Get operating days from calendar
+  const getOperatingDays = (calendar?: ScheduleCalendarInfo): string[] => {
+    if (!calendar) return [];
+    const days: string[] = [];
+    if (calendar.monday) days.push('Mon');
+    if (calendar.tuesday) days.push('Tue');
+    if (calendar.wednesday) days.push('Wed');
+    if (calendar.thursday) days.push('Thu');
+    if (calendar.friday) days.push('Fri');
+    if (calendar.saturday) days.push('Sat');
+    if (calendar.sunday) days.push('Sun');
+    return days;
+  };
+
   // Filter stops based on view mode
-  const getFilteredStops = () => {
-    if (!data?.stops) return [];
+  const getFilteredStops = (stops?: ScheduleStopDetails[]): ScheduleStopDetails[] => {
+    if (!stops) return [];
     
     switch (stopViewMode) {
-      case 'timings':
-        return data.stops.filter(s => s.arrivalTime || s.departureTime);
-      case 'arrival-departure':
-        return data.stops.filter(s => s.arrivalTime && s.departureTime);
+      case 'with-times':
+        return stops.filter(s => s.resolvedArrivalTime || s.resolvedDepartureTime);
+      case 'origin-destination':
+        return stops.filter(s => s.isOrigin || s.isDestination);
       case 'all':
-        return data.stops;
       default:
-        return data.stops;
+        return stops;
+    }
+  };
+
+  // Get display time based on mode
+  const getDisplayTime = (stop: ScheduleStopDetails, type: 'arrival' | 'departure'): { time: string | null; source: string | null } => {
+    switch (timeDisplayMode) {
+      case 'verified':
+        return { 
+          time: type === 'arrival' ? stop.arrivalTime || null : stop.departureTime || null,
+          source: 'VERIFIED'
+        };
+      case 'unverified':
+        return { 
+          time: type === 'arrival' ? stop.arrivalTimeUnverified || null : stop.departureTimeUnverified || null,
+          source: 'UNVERIFIED'
+        };
+      case 'calculated':
+        return { 
+          time: type === 'arrival' ? stop.arrivalTimeCalculated || null : stop.departureTimeCalculated || null,
+          source: 'CALCULATED'
+        };
+      case 'resolved':
+      default:
+        return { 
+          time: type === 'arrival' ? stop.resolvedArrivalTime || null : stop.resolvedDepartureTime || null,
+          source: type === 'arrival' ? stop.arrivalTimeSource || null : stop.departureTimeSource || null
+        };
     }
   };
 
@@ -305,14 +296,17 @@ const FindMyBusDetailPage = () => {
     );
   }
 
-  const duration = calculateDuration();
-  const filteredStops = getFilteredStops();
-  const stopsForMap = data.stops.map((stop, index) => ({
-    name: stop.stopName || '',
-    km: index * 10, // Approximate distance based on order
-    location: stop.location ? {
-      latitude: stop.location.latitude || 0,
-      longitude: stop.location.longitude || 0,
+  const { route, schedule, trip, journeySummary } = data;
+  const filteredStops = getFilteredStops(schedule?.stops);
+  const operatingDays = getOperatingDays(schedule?.calendar);
+  
+  // Prepare stops for map
+  const stopsForMap = (schedule?.stops || []).map((stop) => ({
+    name: stop.stop?.name || '',
+    km: stop.distanceFromStartKm || 0,
+    location: stop.stop?.location ? {
+      latitude: stop.stop.location.latitude || 0,
+      longitude: stop.stop.location.longitude || 0,
     } : undefined
   }));
 
@@ -320,14 +314,11 @@ const FindMyBusDetailPage = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="py-10 relative">
-      {/* Header Section */}
-      {/* Background image (low opacity) */}
         <img
           src="/Autobus-de-luxe.jpg"
           alt="Bus background"
           className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
         />
-        {/* Keep the existing gradient/color effect above the image */}
         <div className="absolute inset-0 bg-gradient-hero opacity-90" />
       </div>
       
@@ -341,38 +332,96 @@ const FindMyBusDetailPage = () => {
           >
             <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-foreground" />
           </Button>
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground leading-tight">
-            {data.origin || 'Origin'} to {data.destination || 'Destination'}
-          </h1>
+          <div>
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground leading-tight">
+              {journeySummary?.originStop?.name || 'Origin'} to {journeySummary?.destinationStop?.name || 'Destination'}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              {formatDate(data.queryDate)} • {route?.routeNumber ? `Route ${route.routeNumber}` : route?.name}
+            </p>
+          </div>
         </div>
 
-        {/* Bus Summary Card */}
+        {/* Journey Summary Card */}
         <Card className="mb-4 sm:mb-5 md:mb-6 bg-muted/30">
           <CardContent className="p-3 sm:p-4 md:p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-              {data.routeNumber && (
-              <div>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Route No</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-semibold">{data.routeNumber || 'N/A'}</p>
-              </div>
-                )}
-              <div className={data.routeNumber ? "col-span-2 sm:col-span-1 lg:col-span-1" : "col-span-2"}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              {route?.routeNumber && (
+                <div>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Route No</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-semibold">{route.routeNumber}</p>
+                </div>
+              )}
+              <div className="col-span-2 sm:col-span-1">
                 <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Route</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-semibold truncate">{data.routeName || 'N/A'}</p>
+                <p className="text-sm sm:text-base md:text-lg font-semibold truncate">{route?.name || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Departure</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-semibold">{formatTime(data.departureTime) || 'N/A'}</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-lg sm:text-xl md:text-2xl font-semibold">
+                    {formatTime(journeySummary?.departureFromOrigin) || 'N/A'}
+                  </p>
+                  {journeySummary?.departureTimeSource && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="outline" className={`text-[10px] px-1 py-0 ${getTimeSourceConfig(journeySummary.departureTimeSource)?.className}`}>
+                            {journeySummary.departureTimeSource?.charAt(0)}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{getTimeSourceConfig(journeySummary.departureTimeSource)?.tooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Arrival</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-semibold">{formatTime(data.arrivalTime) || 'N/A'}</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-lg sm:text-xl md:text-2xl font-semibold">
+                    {formatTime(journeySummary?.arrivalAtDestination) || 'N/A'}
+                  </p>
+                  {journeySummary?.arrivalTimeSource && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="outline" className={`text-[10px] px-1 py-0 ${getTimeSourceConfig(journeySummary.arrivalTimeSource)?.className}`}>
+                            {journeySummary.arrivalTimeSource?.charAt(0)}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{getTimeSourceConfig(journeySummary.arrivalTimeSource)?.tooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
               </div>
-              <div className="col-span-2 sm:col-span-1">
+              <div>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Duration</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-semibold">{formatDuration(duration || undefined) || 'N/A'}</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-semibold">
+                  {formatDuration(journeySummary?.estimatedDurationMinutes) || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Distance</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-semibold">
+                  {journeySummary?.distanceKm ? `${journeySummary.distanceKm.toFixed(1)} km` : 'N/A'}
+                </p>
               </div>
             </div>
+            
+            {journeySummary?.statusMessage && (
+              <div className="mt-3 pt-3 border-t">
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  {journeySummary.statusMessage}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -381,7 +430,7 @@ const FindMyBusDetailPage = () => {
           <CardContent className="p-0">
             {stopsForMap.length >= 2 ? (
               <div className="min-h-[250px] sm:min-h-[300px] md:min-h-[400px]">
-                <RouteMap stops={stopsForMap} routeName={data.routeName || 'Route'} />
+                <RouteMap stops={stopsForMap} routeName={route?.name || 'Route'} />
               </div>
             ) : (
               <div className="h-48 sm:h-56 md:h-64 flex items-center justify-center bg-muted/50 rounded-lg">
@@ -399,77 +448,129 @@ const FindMyBusDetailPage = () => {
           {/* Left Column: Stop List */}
           <Card>
             <CardContent className="p-3 sm:p-4 md:p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5 md:mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold">Stop List</h2>
-                <Select value={stopViewMode} onValueChange={(value) => setStopViewMode(value as StopViewMode)}>
-                  <SelectTrigger className="w-full sm:w-[180px] md:w-[200px] text-sm">
-                    <SelectValue placeholder="Select view mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="timings">Stops with timings</SelectItem>
-                    <SelectItem value="arrival-departure">Arrival/Departure times</SelectItem>
-                    <SelectItem value="all">All stops</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-col gap-3 mb-4 sm:mb-5 md:mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <h2 className="text-lg sm:text-xl font-semibold">
+                    Stop List ({schedule?.stops?.length || 0} stops)
+                  </h2>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  <Select value={stopViewMode} onValueChange={(value) => setStopViewMode(value as StopViewMode)}>
+                    <SelectTrigger className="w-[140px] sm:w-[160px] text-xs sm:text-sm h-8">
+                      <SelectValue placeholder="View" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Stops</SelectItem>
+                      <SelectItem value="with-times">With Times</SelectItem>
+                      <SelectItem value="origin-destination">Origin & Dest</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={timeDisplayMode} onValueChange={(value) => setTimeDisplayMode(value as TimeDisplayMode)}>
+                    <SelectTrigger className="w-[140px] sm:w-[160px] text-xs sm:text-sm h-8">
+                      <SelectValue placeholder="Time Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="resolved">Resolved Times</SelectItem>
+                      <SelectItem value="verified">Verified Only</SelectItem>
+                      <SelectItem value="unverified">Unverified Only</SelectItem>
+                      <SelectItem value="calculated">Calculated Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="max-h-[400px] sm:max-h-[450px] md:max-h-[500px] overflow-y-auto pr-1 sm:pr-2">
                 {filteredStops.length > 0 ? (
                   <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-                    {filteredStops.map((stop, index) => (
-                      <div key={stop.id || index} className="flex gap-2 sm:gap-3 md:gap-4">
-                        {/* Time Column */}
-                        <div className="flex-shrink-0 w-12 sm:w-14 md:w-16">
-                          <div className="text-sm sm:text-base md:text-lg font-semibold text-foreground">
-                            {formatTime(stop.departureTime || stop.arrivalTime) || '-'}
-                          </div>
-                        </div>
-
-                        {/* Timeline & Stop Info */}
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <div className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
-                            {/* Timeline Indicator */}
-                            <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
-                              <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
-                                index === 0 ? 'bg-green-500' : 
-                                index === filteredStops.length - 1 ? 'bg-red-500' : 
-                                'bg-blue-500'
-                              }`} />
-                              {index < filteredStops.length - 1 && (
-                                <div className="w-0.5 h-8 sm:h-9 bg-border mt-1" />
-                              )}
+                    {filteredStops.map((stop, index) => {
+                      const arrivalInfo = getDisplayTime(stop, 'arrival');
+                      const departureInfo = getDisplayTime(stop, 'departure');
+                      const displayTime = departureInfo.time || arrivalInfo.time;
+                      const displaySource = departureInfo.source || arrivalInfo.source;
+                      
+                      return (
+                        <div key={stop.scheduleStopId || index} className="flex gap-2 sm:gap-3 md:gap-4">
+                          <div className="flex-shrink-0 w-16 sm:w-20 md:w-24">
+                            <div className="text-sm sm:text-base md:text-lg font-semibold text-foreground">
+                              {formatTime(displayTime) || '-'}
                             </div>
+                            {displaySource && timeDisplayMode === 'resolved' && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="outline" className={`text-[9px] px-1 py-0 ${getTimeSourceConfig(displaySource)?.className}`}>
+                                      {getTimeSourceConfig(displaySource)?.label}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{getTimeSourceConfig(displaySource)?.tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
 
-                            {/* Stop Details */}
-                            <div className="flex-1 min-w-0 bg-gray-200/60 px-2 sm:px-2.5 md:px-3 py-1.5 sm:py-2 rounded-sm">
-                              <p className="text-xs sm:text-sm font-medium text-foreground truncate">
-                                {stop.stopName}
-                              </p>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                                Stop {stop.stopOrder}
-                              </p>
-                              
-                              {stopViewMode === 'arrival-departure' && (
-                                <div className="flex gap-3 sm:gap-4 mt-1.5 sm:mt-2 text-[10px] sm:text-xs">
-                                  <div>
-                                    <span className="text-muted-foreground">Arr: </span>
-                                    <span className="font-medium">
-                                      {stop.arrivalTime ? formatTime(stop.arrivalTime) : '-'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Dep: </span>
-                                    <span className="font-medium">
-                                      {stop.departureTime ? formatTime(stop.departureTime) : '-'}
-                                    </span>
-                                  </div>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <div className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
+                              <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
+                                <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
+                                  stop.isOrigin ? 'bg-green-500 ring-2 ring-green-200' : 
+                                  stop.isDestination ? 'bg-red-500 ring-2 ring-red-200' : 
+                                  'bg-blue-500'
+                                }`} />
+                                {index < filteredStops.length - 1 && (
+                                  <div className="w-0.5 h-8 sm:h-9 bg-border mt-1" />
+                                )}
+                              </div>
+
+                              <div className={`flex-1 min-w-0 px-2 sm:px-2.5 md:px-3 py-1.5 sm:py-2 rounded-sm ${
+                                stop.isOrigin ? 'bg-green-50 border border-green-200' :
+                                stop.isDestination ? 'bg-red-50 border border-red-200' :
+                                'bg-gray-200/60'
+                              }`}>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+                                    {stop.stop?.name}
+                                  </p>
+                                  {stop.isOrigin && (
+                                    <Badge className="bg-green-500 text-white text-[9px] px-1 py-0">Origin</Badge>
+                                  )}
+                                  {stop.isDestination && (
+                                    <Badge className="bg-red-500 text-white text-[9px] px-1 py-0">Dest</Badge>
+                                  )}
                                 </div>
-                              )}
+                                
+                                <div className="flex gap-3 sm:gap-4 mt-1 text-[10px] sm:text-xs text-muted-foreground">
+                                  <span>Stop #{stop.stopOrder}</span>
+                                  {stop.distanceFromStartKm !== undefined && (
+                                    <span>{stop.distanceFromStartKm.toFixed(1)} km</span>
+                                  )}
+                                </div>
+                                
+                                {(arrivalInfo.time || departureInfo.time) && (
+                                  <div className="flex gap-3 sm:gap-4 mt-1.5 text-[10px] sm:text-xs">
+                                    {arrivalInfo.time && (
+                                      <div>
+                                        <span className="text-muted-foreground">Arr: </span>
+                                        <span className="font-medium">{formatTime(arrivalInfo.time)}</span>
+                                      </div>
+                                    )}
+                                    {departureInfo.time && (
+                                      <div>
+                                        <span className="text-muted-foreground">Dep: </span>
+                                        <span className="font-medium">{formatTime(departureInfo.time)}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 sm:py-10 md:py-12 text-muted-foreground">
@@ -481,52 +582,147 @@ const FindMyBusDetailPage = () => {
             </CardContent>
           </Card>
 
-          {/* Right Column: Schedule & Bus Details */}
+          {/* Right Column: Schedule, Trip & Route Details */}
           <div className="space-y-4 sm:space-y-5 md:space-y-6">
             {/* Schedule Details */}
-            {data.operatingDays && data.operatingDays.length > 0 && (
-              <Card>
-                <CardContent className="p-3 sm:p-4 md:p-6">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Schedule Details</h2>
-                  <div className="space-y-3 sm:space-y-4">
-                    {/* Operating Days */}
+            <Card>
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Schedule Details
+                </h2>
+                <div className="space-y-3 sm:space-y-4">
+                  {schedule?.name && (
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Schedule:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{schedule.name}</span>
+                    </div>
+                  )}
+                  {schedule?.scheduleType && (
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Type:</span>
+                      <Badge variant="secondary" className="text-xs">{schedule.scheduleType}</Badge>
+                    </div>
+                  )}
+                  
+                  {operatingDays.length > 0 && (
                     <div>
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">Operating Days</p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {data.operatingDays.map((day) => (
+                        {operatingDays.map((day) => (
                           <Badge key={day} variant="secondary" className="px-2 py-0.5 sm:px-2.5 sm:py-1 text-xs">
                             {day}
                           </Badge>
                         ))}
                       </div>
+                      {schedule?.calendar?.operatingDaysSummary && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {schedule.calendar.operatingDaysSummary}
+                        </p>
+                      )}
                     </div>
+                  )}
 
-                    {/* Operating Today */}
-                    <div className="pt-1.5 sm:pt-2">
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">Operating Today</p>
-                      <div>
-                        {isOperatingToday() ? (
-                          <Badge className="bg-green-500 hover:bg-green-600 text-white px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
-                            Yes
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive" className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
-                            No
-                          </Badge>
-                        )}
+                  <div className="pt-1.5 sm:pt-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">Operating on {formatDate(data.queryDate)}</p>
+                    <div>
+                      {schedule?.isActiveOnDate !== false ? (
+                        <Badge className="bg-green-500 hover:bg-green-600 text-white px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
+                          Yes
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
+                          No
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {(schedule?.effectiveStartDate || schedule?.effectiveEndDate) && (
+                    <div className="pt-1.5 sm:pt-2 border-t">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Effective Period</p>
+                      <p className="text-xs sm:text-sm">
+                        {formatDate(schedule.effectiveStartDate)} - {formatDate(schedule.effectiveEndDate) || 'Ongoing'}
+                      </p>
+                    </div>
+                  )}
+
+                  {schedule?.exceptions && schedule.exceptions.length > 0 && (
+                    <div className="pt-1.5 sm:pt-2 border-t">
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto text-primary hover:underline text-xs sm:text-sm"
+                        onClick={() => setShowExceptions(true)}
+                      >
+                        View schedule exceptions ({schedule.exceptions.length})
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Trip & Bus Details */}
+            {trip && (
+              <Card>
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                    <Bus className="h-5 w-5" />
+                    Trip & Bus Details
+                  </h2>
+                  <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
+                    {trip.status && (
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Trip Status:</span>
+                        <Badge variant={trip.status === 'active' ? 'default' : 'secondary'} 
+                               className={trip.status === 'active' ? 'bg-green-600' : ''}>
+                          {trip.status}
+                        </Badge>
                       </div>
-                    </div>
-
-                    {/* Exceptions */}
-                    {data.scheduleExceptions && data.scheduleExceptions.length > 0 && (
-                      <div className="pt-1.5 sm:pt-2 border-t">
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto text-primary hover:underline text-xs sm:text-sm"
-                          onClick={() => setShowExceptions(true)}
-                        >
-                          View schedule exceptions ({data.scheduleExceptions.length})
-                        </Button>
+                    )}
+                    {trip.bus?.plateNumber && (
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Bus Plate:</span>
+                        <span className="font-medium text-xs sm:text-sm text-right">{trip.bus.plateNumber}</span>
+                      </div>
+                    )}
+                    {trip.bus?.model && (
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Bus Model:</span>
+                        <span className="font-medium text-xs sm:text-sm text-right">{trip.bus.model}</span>
+                      </div>
+                    )}
+                    {trip.bus?.capacity && (
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Capacity:</span>
+                        <span className="font-medium text-xs sm:text-sm text-right">{trip.bus.capacity} passengers</span>
+                      </div>
+                    )}
+                    {trip.operator?.name && (
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Operator:</span>
+                        <span className="font-medium text-xs sm:text-sm text-right">{trip.operator.name}</span>
+                      </div>
+                    )}
+                    {trip.operator?.operatorType && (
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Operator Type:</span>
+                        <Badge variant="outline" className="text-xs">{trip.operator.operatorType}</Badge>
+                      </div>
+                    )}
+                    {trip.psp?.permitNumber && (
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">PSP Number:</span>
+                        <span className="font-medium text-xs sm:text-sm text-right">{trip.psp.permitNumber}</span>
+                      </div>
+                    )}
+                    {trip.delayMinutes !== undefined && trip.delayMinutes !== 0 && (
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Delay:</span>
+                        <Badge variant={trip.delayMinutes > 0 ? 'destructive' : 'default'} 
+                               className={trip.delayMinutes < 0 ? 'bg-green-600' : ''}>
+                          {trip.delayMinutes > 0 ? `+${trip.delayMinutes}` : trip.delayMinutes} min
+                        </Badge>
                       </div>
                     )}
                   </div>
@@ -534,63 +730,55 @@ const FindMyBusDetailPage = () => {
               </Card>
             )}
 
-            {/* Bus Details */}
+            {/* Route Details */}
             <Card>
               <CardContent className="p-3 sm:p-4 md:p-6">
-                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Bus Details</h2>
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                  <RouteIcon className="h-5 w-5" />
+                  Route Details
+                </h2>
                 <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-                  {data.busPlateNumber && (
+                  {route?.name && (
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Bus Plate:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{data.busPlateNumber}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">Route Name:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{route.name}</span>
                     </div>
                   )}
-                  {data.operatorName && (
+                  {route?.routeNumber && (
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Operator:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{data.operatorName}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">Route Number:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{route.routeNumber}</span>
                     </div>
                   )}
-                  {data.busModel && (
+                  {route?.roadType && (
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Vehicle Type:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{data.busModel}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">Road Type:</span>
+                      <Badge variant="outline" className="text-xs">{route.roadType}</Badge>
                     </div>
                   )}
-                  {data.busCapacity && (
+                  {route?.routeThrough && (
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Capacity:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{data.busCapacity} passengers</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">Via:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{route.routeThrough}</span>
                     </div>
                   )}
-                  {data.driverName && (
+                  {route?.totalDistanceKm && (
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Driver:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{data.driverName}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">Total Distance:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{route.totalDistanceKm.toFixed(1)} km</span>
                     </div>
                   )}
-                  {data.conductorName && (
+                  {route?.direction && (
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Conductor:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{data.conductorName}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">Direction:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{route.direction}</span>
                     </div>
                   )}
-                  {data.contactNumber && (
-                    <div className="flex justify-between items-center gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Contact:</span>
-                      <a 
-                        href={`tel:${data.contactNumber}`} 
-                        className="font-medium text-primary hover:underline flex items-center gap-1 text-xs sm:text-sm"
-                      >
-                        <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                        {data.contactNumber}
-                      </a>
+                  {route?.routeGroup?.name && (
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Route Group:</span>
+                      <span className="font-medium text-xs sm:text-sm text-right">{route.routeGroup.name}</span>
                     </div>
-                  )}
-                  {!data.busPlateNumber && !data.operatorName && !data.busModel && (
-                    <p className="text-xs sm:text-sm text-muted-foreground text-center py-3 sm:py-4">
-                      Bus details not available
-                    </p>
                   )}
                 </div>
               </CardContent>
@@ -606,24 +794,35 @@ const FindMyBusDetailPage = () => {
             <DialogTitle className="text-base sm:text-lg">Schedule Exceptions</DialogTitle>
           </DialogHeader>
           <div className="max-h-[300px] sm:max-h-[350px] md:max-h-[400px] overflow-y-auto">
-            {data?.scheduleExceptions && data.scheduleExceptions.length > 0 ? (
+            {schedule?.exceptions && schedule.exceptions.length > 0 ? (
               <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-                {data.scheduleExceptions.map((exception: any, index: number) => (
-                  <div key={exception.id || index} className="p-2.5 sm:p-3 border rounded-lg bg-muted/50">
+                {schedule.exceptions.map((exception: ScheduleExceptionInfo, index: number) => (
+                  <div key={exception.id || index} className={`p-2.5 sm:p-3 border rounded-lg ${
+                    exception.affectsQueryDate ? 'bg-red-50 border-red-200' : 'bg-muted/50'
+                  }`}>
                     <div className="flex gap-2 mb-1.5 sm:mb-2">
-                      <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <AlertTriangle className={`h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 mt-0.5 ${
+                        exception.affectsQueryDate ? 'text-red-600' : 'text-yellow-600'
+                      }`} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground text-xs sm:text-sm">
-                          {exception.exceptionDate || exception.date || 'Exception'}
+                          {formatDate(exception.exceptionDate)}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                          {exception.description || exception.reason || 'No description available'}
+                          {exception.reason || 'No description available'}
                         </p>
-                        {exception.type && (
-                          <Badge variant="outline" className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs">
-                            {exception.type}
-                          </Badge>
-                        )}
+                        <div className="flex gap-2 mt-1.5 sm:mt-2">
+                          {exception.exceptionType && (
+                            <Badge variant="outline" className="text-[10px] sm:text-xs">
+                              {exception.exceptionType}
+                            </Badge>
+                          )}
+                          {exception.affectsQueryDate && (
+                            <Badge variant="destructive" className="text-[10px] sm:text-xs">
+                              Affects Selected Date
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

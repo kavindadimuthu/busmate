@@ -15,7 +15,10 @@ interface BusCardProps {
   bus: BusResult;
   fromStopName?: string;
   toStopName?: string;
+  fromStopId?: string;
+  toStopId?: string;
   searchDate?: string;
+  timePreference?: 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
   onViewDetails?: () => void;
 }
 
@@ -121,24 +124,41 @@ export default function BusCard({
   bus,
   fromStopName,
   toStopName,
+  fromStopId,
+  toStopId,
   searchDate,
+  timePreference,
   onViewDetails,
 }: BusCardProps) {
   const departureTime = getDepartureTime(bus);
   const arrivalTime = getArrivalTime(bus);
 
-  // Determine button action - prioritize trip, then schedule, then route
+  // Generate detail link with new API parameters
   const getDetailLink = () => {
-    if (bus.tripId) {
-      return `/findmybus/detail?type=trip&id=${bus.tripId}`;
-    } else if (bus.scheduleId) {
-      return `/findmybus/detail?type=schedule&id=${bus.scheduleId}&date=${
-        searchDate || new Date().toISOString().split("T")[0]
-      }`;
-    } else if (bus.routeId) {
-      return `/route/${bus.routeId}`;
+    if (!bus.scheduleId || !fromStopId || !toStopId) {
+      // Fall back to route page if required params are missing
+      if (bus.routeId) {
+        return `/route/${bus.routeId}`;
+      }
+      return null;
     }
-    return null;
+    
+    const params = new URLSearchParams();
+    params.set('scheduleId', bus.scheduleId);
+    params.set('fromStopId', fromStopId);
+    params.set('toStopId', toStopId);
+    
+    if (bus.tripId) {
+      params.set('tripId', bus.tripId);
+    }
+    
+    params.set('date', searchDate || new Date().toISOString().split("T")[0]);
+    
+    if (timePreference) {
+      params.set('timePreference', timePreference);
+    }
+    
+    return `/findmybus/detail?${params.toString()}`;
   };
 
   return (

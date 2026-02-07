@@ -280,7 +280,10 @@ const FindMyBusPage = () => {
                         bus={bus}
                         fromStopName={fromStopName}
                         toStopName={toStopName}
+                        fromStopId={searchParams.fromStopId}
+                        toStopId={searchParams.toStopId}
                         searchDate={searchParams.date}
+                        timePreference={filters.timePreference}
                       />
                     ))
                   ) : !loading && (searchParams.fromStopId && searchParams.toStopId) ? (
