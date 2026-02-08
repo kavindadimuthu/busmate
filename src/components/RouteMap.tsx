@@ -220,7 +220,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName, originStopId, des
           const markerDiv = document.createElement('div');
           markerDiv.className = 'flex flex-col items-center';
           markerDiv.innerHTML = `
-            <div class="w-5 h-5 rounded-full flex items-center justify-center shadow-lg ${
+            <div class="w-4 h-4 rounded-full flex items-center justify-center shadow-lg ${
               isOrigin ? 'bg-green-500 ring-2 ring-green-300' : 
               isDestination ? 'bg-red-500 ring-2 ring-red-300' : 
               isFirst ? 'bg-purple-500' :
