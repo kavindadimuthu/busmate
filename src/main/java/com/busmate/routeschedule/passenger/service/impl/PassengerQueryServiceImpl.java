@@ -185,6 +185,51 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         // Build status message
         String statusMessage = buildStatusMessage(departure.source, hasTripData, alreadyDeparted, 
                 proj.getTripStatus());
+        
+        // Get schedule start/end stop info
+        LocalTime startStopDepartureTime = null;
+        LocalTime startStopArrivalTime = null;
+        LocalTime endStopArrivalTime = null;
+        LocalTime endStopDepartureTime = null;
+        Double totalDistanceKm = null;
+        
+        if (proj.getScheduleId() != null) {
+            try {
+                PassengerQueryRepository.ScheduleStartEndStopProjection startEndInfo = 
+                        passengerQueryRepository.findScheduleStartEndStopInfo(proj.getScheduleId());
+                if (startEndInfo != null) {
+                    // Resolve times with fallback logic (verified -> unverified -> calculated)
+                    startStopDepartureTime = startEndInfo.getStartStopDepartureTime() != null ? 
+                            startEndInfo.getStartStopDepartureTime() :
+                            (startEndInfo.getStartStopDepartureTimeUnverified() != null ?
+                                    startEndInfo.getStartStopDepartureTimeUnverified() :
+                                    startEndInfo.getStartStopDepartureTimeCalculated());
+                    
+                    startStopArrivalTime = startEndInfo.getStartStopArrivalTime() != null ?
+                            startEndInfo.getStartStopArrivalTime() :
+                            (startEndInfo.getStartStopArrivalTimeUnverified() != null ?
+                                    startEndInfo.getStartStopArrivalTimeUnverified() :
+                                    startEndInfo.getStartStopArrivalTimeCalculated());
+                    
+                    endStopArrivalTime = startEndInfo.getEndStopArrivalTime() != null ?
+                            startEndInfo.getEndStopArrivalTime() :
+                            (startEndInfo.getEndStopArrivalTimeUnverified() != null ?
+                                    startEndInfo.getEndStopArrivalTimeUnverified() :
+                                    startEndInfo.getEndStopArrivalTimeCalculated());
+                    
+                    endStopDepartureTime = startEndInfo.getEndStopDepartureTime() != null ?
+                            startEndInfo.getEndStopDepartureTime() :
+                            (startEndInfo.getEndStopDepartureTimeUnverified() != null ?
+                                    startEndInfo.getEndStopDepartureTimeUnverified() :
+                                    startEndInfo.getEndStopDepartureTimeCalculated());
+                    
+                    totalDistanceKm = startEndInfo.getTotalDistanceKm();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch schedule start/end stop info for scheduleId={}: {}", 
+                        proj.getScheduleId(), e.getMessage());
+            }
+        }
 
         return BusResult.builder()
                 // Route information
@@ -215,6 +260,12 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .departureAtOriginSource(departure.source)
                 .arrivalAtDestination(arrival.time)
                 .arrivalAtDestinationSource(arrival.source)
+                // Schedule start/end stop info
+                .scheduleStartStopDepartureTime(startStopDepartureTime)
+                .scheduleStartStopArrivalTime(startStopArrivalTime)
+                .scheduleEndStopArrivalTime(endStopArrivalTime)
+                .scheduleEndStopDepartureTime(endStopDepartureTime)
+                .scheduleTotalDistanceKm(totalDistanceKm)
                 // Trip information
                 .hasTripData(hasTripData)
                 .tripId(proj.getTripId())
@@ -298,6 +349,16 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
      * Helper record for time with its source.
      */
     private record TimeWithSource(LocalTime time, TimeSourceEnum source) {}
+    
+    /**
+     * Resolve distance value based on preference with fallback logic.
+     * Fallback order: verified -> unverified -> calculated
+     */
+    private Double resolveDistance(Double verified, Double unverified, Double calculated) {
+        if (verified != null) return verified;
+        if (unverified != null) return unverified;
+        return calculated;
+    }
 
     /**
      * Check if schedule runs on the specified day.
@@ -528,9 +589,9 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .map(this::buildExceptionInfo)
                 .collect(Collectors.toList());
 
-        // Build schedule stop details (all stops)
-        List<ScheduleStopDetails> allStopDetails = scheduleStops.stream()
-                .map(proj -> buildScheduleStopDetails(proj, timePreference))
+        // Build route schedule stops (all stops with unified data)
+        List<RouteScheduleStop> routeScheduleStops = scheduleStops.stream()
+                .map(proj -> buildRouteScheduleStop(proj, timePreference, request.getFromStopId(), request.getToStopId()))
                 .collect(Collectors.toList());
 
         // Get trip details if tripId provided
@@ -553,8 +614,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         // Build route details
         RouteDetails routeDetails = buildRouteDetails(route);
 
-        // Build schedule details
-        ScheduleDetails scheduleDetails = buildScheduleDetails(schedule, allStopDetails, 
+        // Build schedule details (metadata only, no stops)
+        ScheduleDetails scheduleDetails = buildScheduleDetails(schedule, scheduleStops.size(), 
                 calendarInfos, exceptionInfos);
 
         return FindMyBusDetailsResponse.builder()
@@ -564,6 +625,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .timePreference(timePreference)
                 .route(routeDetails)
                 .schedule(scheduleDetails)
+                .routeScheduleStops(routeScheduleStops)
                 .trip(tripDetails)
                 .journeySummary(journeySummary)
                 .build();
@@ -613,9 +675,9 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     }
 
     /**
-     * Build schedule details from Schedule entity.
+     * Build schedule details from Schedule entity (metadata only, no stops).
      */
-    private ScheduleDetails buildScheduleDetails(Schedule schedule, List<ScheduleStopDetails> stops,
+    private ScheduleDetails buildScheduleDetails(Schedule schedule, int totalStops,
                                                   List<ScheduleCalendarInfo> calendars,
                                                   List<ScheduleExceptionInfo> exceptions) {
         // Build single calendar from list (assuming single calendar per schedule)
@@ -629,17 +691,19 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .status(schedule.getStatus() != null ? schedule.getStatus().name() : null)
                 .effectiveStartDate(schedule.getEffectiveStartDate())
                 .effectiveEndDate(schedule.getEffectiveEndDate())
-                .stops(stops)
+                .totalStops(totalStops)
                 .calendar(calendar)
                 .exceptions(exceptions)
                 .build();
     }
 
     /**
-     * Build schedule stop details from projection.
+     * Build route schedule stop details from projection.
      */
-    private ScheduleStopDetails buildScheduleStopDetails(ScheduleStopDetailsProjection proj,
-                                                          TimePreferenceEnum preference) {
+    private RouteScheduleStop buildRouteScheduleStop(ScheduleStopDetailsProjection proj,
+                                                     TimePreferenceEnum preference,
+                                                     UUID fromStopId,
+                                                     UUID toStopId) {
         // Build location
         LocationDto location = new LocationDto();
         location.setLatitude(proj.getStopLatitude());
@@ -671,11 +735,29 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 proj.getDepartureTimeCalculated(),
                 preference);
 
-        return ScheduleStopDetails.builder()
+        // Resolve distance with fallback: verified -> unverified -> calculated
+        Double resolvedDistance = resolveDistance(
+                proj.getDistanceFromStartKm(),
+                proj.getDistanceFromStartKmUnverified(),
+                proj.getDistanceFromStartKmCalculated());
+
+        // Determine if this stop is origin or destination
+        boolean isOrigin = proj.getStopId().equals(fromStopId);
+        boolean isDestination = proj.getStopId().equals(toStopId);
+
+        return RouteScheduleStop.builder()
+                .routeStopId(proj.getRouteStopId())
                 .scheduleStopId(proj.getScheduleStopId())
-                .stopOrder(proj.getStopOrder())
+                .stopOrder(proj.getStopOrder() - 1)  // Convert to 0-based index
                 .stop(stopInfo)
-                .distanceFromStartKm(proj.getDistanceFromStartKm())
+                // Origin/Destination flags
+                .isOrigin(isOrigin)
+                .isDestination(isDestination)
+                // Distance with fallback
+                .distanceFromStartKm(resolvedDistance)
+                .distanceFromStartKmVerified(proj.getDistanceFromStartKm())
+                .distanceFromStartKmUnverified(proj.getDistanceFromStartKmUnverified())
+                .distanceFromStartKmCalculated(proj.getDistanceFromStartKmCalculated())
                 // Verified times
                 .arrivalTime(proj.getArrivalTime())
                 .departureTime(proj.getDepartureTime())

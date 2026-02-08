@@ -28,6 +28,8 @@ public interface ScheduleStopDetailsProjection {
     // Route Stop Information
     UUID getRouteStopId();
     Double getDistanceFromStartKm();
+    Double getDistanceFromStartKmUnverified();
+    Double getDistanceFromStartKmCalculated();
     
     // Verified times
     LocalTime getArrivalTime();

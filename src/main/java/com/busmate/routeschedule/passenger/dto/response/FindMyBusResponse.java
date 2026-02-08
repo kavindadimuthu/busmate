@@ -177,6 +177,27 @@ public class FindMyBusResponse {
         @Schema(description = "Source of arrival time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)")
         private TimeSourceEnum arrivalAtDestinationSource;
         
+        // ==================== Schedule Start/End Stop Information ====================
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Departure time at schedule's first stop", type = "string", pattern = "HH:mm:ss")
+        private LocalTime scheduleStartStopDepartureTime;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Arrival time at schedule's first stop (usually null)", type = "string", pattern = "HH:mm:ss")
+        private LocalTime scheduleStartStopArrivalTime;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Arrival time at schedule's last stop", type = "string", pattern = "HH:mm:ss")
+        private LocalTime scheduleEndStopArrivalTime;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Departure time at schedule's last stop (usually null)", type = "string", pattern = "HH:mm:ss")
+        private LocalTime scheduleEndStopDepartureTime;
+        
+        @Schema(description = "Total distance of the entire schedule/route in km")
+        private Double scheduleTotalDistanceKm;
+        
         // ==================== Trip Information (if available) ====================
         
         @Schema(description = "Whether trip data is available for this schedule")

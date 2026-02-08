@@ -49,8 +49,13 @@ public class FindMyBusDetailsResponse {
     
     // ==================== Schedule Information ====================
     
-    @Schema(description = "Complete schedule information")
+    @Schema(description = "Schedule metadata (without stops)")
     private ScheduleDetails schedule;
+    
+    // ==================== Route Schedule Stops ====================
+    
+    @Schema(description = "All stops in this route and schedule with unified data (route + schedule + stop info)")
+    private List<RouteScheduleStop> routeScheduleStops;
     
     // ==================== Trip Information (optional) ====================
     
@@ -186,8 +191,8 @@ public class FindMyBusDetailsResponse {
         @Schema(description = "Whether the schedule is active on the query date")
         private Boolean isActiveOnDate;
         
-        @Schema(description = "All stops in this schedule with timing information")
-        private List<ScheduleStopDetails> stops;
+        @Schema(description = "Total number of stops in this schedule")
+        private Integer totalStops;
         
         @Schema(description = "Calendar information (days of operation)")
         private ScheduleCalendarInfo calendar;
@@ -197,25 +202,39 @@ public class FindMyBusDetailsResponse {
     }
     
     /**
-     * Schedule stop with all time information
+     * Unified route and schedule stop information
      */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "Schedule stop with comprehensive timing information")
-    public static class ScheduleStopDetails {
+    @Schema(description = "Unified stop information combining route stop, schedule stop, and stop metadata")
+    public static class RouteScheduleStop {
+        // Route Stop Information
+        @Schema(description = "Route stop ID")
+        private UUID routeStopId;
+        
         @Schema(description = "Schedule stop ID")
         private UUID scheduleStopId;
         
-        @Schema(description = "Stop order in the schedule")
+        @Schema(description = "Stop order in both route and schedule")
         private Integer stopOrder;
         
         @Schema(description = "Stop information")
         private StopInfo stop;
         
-        @Schema(description = "Distance from route start in km")
+        // Distance with fallback (verified -> unverified -> calculated)
+        @Schema(description = "Distance from route start in km (resolved with fallback)")
         private Double distanceFromStartKm;
+        
+        @Schema(description = "Verified distance from route start in km")
+        private Double distanceFromStartKmVerified;
+        
+        @Schema(description = "Unverified distance from route start in km (user-submitted)")
+        private Double distanceFromStartKmUnverified;
+        
+        @Schema(description = "Calculated distance from route start in km (system-generated)")
+        private Double distanceFromStartKmCalculated;
         
         @Schema(description = "Whether this is the user's origin stop")
         private Boolean isOrigin;

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -238,6 +239,8 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             -- Route Stop Information
             rs.id as routeStopId,
             rs.distance_from_start_km as distanceFromStartKm,
+            rs.distance_from_start_km_unverified as distanceFromStartKmUnverified,
+            rs.distance_from_start_km_calculated as distanceFromStartKmCalculated,
             
             -- Verified times
             ss.arrival_time as arrivalTime,
@@ -290,4 +293,89 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
         LocalDate getExceptionDate();
         String getExceptionType();
     }
+    
+    /**
+     * Get schedule's first and last stop timing information.
+     * Used to provide start/end stop context in Find My Bus results.
+     * 
+     * @param scheduleId The schedule ID
+     * @return Projection with first and last stop times
+     */
+    @Query(value = """
+        WITH first_stop AS (
+            SELECT 
+                ss.departure_time,
+                ss.departure_time_unverified,
+                ss.departure_time_calculated,
+                ss.arrival_time,
+                ss.arrival_time_unverified,
+                ss.arrival_time_calculated
+            FROM schedule_stop ss
+            WHERE ss.schedule_id = :scheduleId
+            ORDER BY ss.stop_order ASC
+            LIMIT 1
+        ),
+        last_stop AS (
+            SELECT 
+                ss.departure_time,
+                ss.departure_time_unverified,
+                ss.departure_time_calculated,
+                ss.arrival_time,
+                ss.arrival_time_unverified,
+                ss.arrival_time_calculated
+            FROM schedule_stop ss
+            WHERE ss.schedule_id = :scheduleId
+            ORDER BY ss.stop_order DESC
+            LIMIT 1
+        ),
+        total_distance AS (
+            SELECT MAX(rs.distance_from_start_km) as max_distance
+            FROM schedule_stop ss
+            INNER JOIN route_stop rs ON ss.route_stop_id = rs.id
+            WHERE ss.schedule_id = :scheduleId
+        )
+        SELECT 
+            f.departure_time as startStopDepartureTime,
+            f.departure_time_unverified as startStopDepartureTimeUnverified,
+            f.departure_time_calculated as startStopDepartureTimeCalculated,
+            f.arrival_time as startStopArrivalTime,
+            f.arrival_time_unverified as startStopArrivalTimeUnverified,
+            f.arrival_time_calculated as startStopArrivalTimeCalculated,
+            l.departure_time as endStopDepartureTime,
+            l.departure_time_unverified as endStopDepartureTimeUnverified,
+            l.departure_time_calculated as endStopDepartureTimeCalculated,
+            l.arrival_time as endStopArrivalTime,
+            l.arrival_time_unverified as endStopArrivalTimeUnverified,
+            l.arrival_time_calculated as endStopArrivalTimeCalculated,
+            td.max_distance as totalDistanceKm
+        FROM first_stop f, last_stop l, total_distance td
+        """, nativeQuery = true)
+    ScheduleStartEndStopProjection findScheduleStartEndStopInfo(
+        @Param("scheduleId") UUID scheduleId
+    );
+    
+    /**
+     * Projection for schedule's first and last stop information.
+     */
+    interface ScheduleStartEndStopProjection {
+        // First stop
+        LocalTime getStartStopDepartureTime();
+        LocalTime getStartStopDepartureTimeUnverified();
+        LocalTime getStartStopDepartureTimeCalculated();
+        LocalTime getStartStopArrivalTime();
+        LocalTime getStartStopArrivalTimeUnverified();
+        LocalTime getStartStopArrivalTimeCalculated();
+        
+        // Last stop
+        LocalTime getEndStopDepartureTime();
+        LocalTime getEndStopDepartureTimeUnverified();
+        LocalTime getEndStopDepartureTimeCalculated();
+        LocalTime getEndStopArrivalTime();
+        LocalTime getEndStopArrivalTimeUnverified();
+        LocalTime getEndStopArrivalTimeCalculated();
+        
+        // Total distance
+        Double getTotalDistanceKm();
+    }
 }
+
