@@ -29,7 +29,7 @@ import RouteMap from "@/components/RouteMap";
 import { PassengerQueryService } from "@/generated/api-client/route-management";
 import type { 
   FindMyBusDetailsResponse,
-  ScheduleStopDetails,
+  RouteScheduleStop,
   ScheduleCalendarInfo,
   ScheduleExceptionInfo
 } from "@/generated/api-client/route-management";
@@ -194,7 +194,7 @@ const FindMyBusDetailPage = () => {
   };
 
   // Filter stops based on view mode
-  const getFilteredStops = (stops?: ScheduleStopDetails[]): ScheduleStopDetails[] => {
+  const getFilteredStops = (stops?: RouteScheduleStop[]): RouteScheduleStop[] => {
     if (!stops) return [];
     
     switch (stopViewMode) {
@@ -209,7 +209,7 @@ const FindMyBusDetailPage = () => {
   };
 
   // Get display time based on mode
-  const getDisplayTime = (stop: ScheduleStopDetails, type: 'arrival' | 'departure'): { time: string | null; source: string | null } => {
+  const getDisplayTime = (stop: RouteScheduleStop, type: 'arrival' | 'departure'): { time: string | null; source: string | null } => {
     switch (timeDisplayMode) {
       case 'verified':
         return { 
@@ -233,6 +233,14 @@ const FindMyBusDetailPage = () => {
           source: type === 'arrival' ? stop.arrivalTimeSource || null : stop.departureTimeSource || null
         };
     }
+  };
+
+  // Get display distance based on available data (prefer verified > unverified > calculated)
+  const getDisplayDistance = (stop: RouteScheduleStop): number | undefined => {
+    return stop.distanceFromStartKm || 
+           stop.distanceFromStartKmVerified || 
+           stop.distanceFromStartKmUnverified || 
+           stop.distanceFromStartKmCalculated;
   };
 
   // Loading state
@@ -296,18 +304,20 @@ const FindMyBusDetailPage = () => {
     );
   }
 
-  const { route, schedule, trip, journeySummary } = data;
-  const filteredStops = getFilteredStops(schedule?.stops);
+  const { route, schedule, trip, journeySummary, routeScheduleStops } = data;
+  const filteredStops = getFilteredStops(routeScheduleStops);
   const operatingDays = getOperatingDays(schedule?.calendar);
   
-  // Prepare stops for map
-  const stopsForMap = (schedule?.stops || []).map((stop) => ({
+  // Prepare stops for map with origin/destination markers
+  const stopsForMap = (routeScheduleStops || []).map((stop) => ({
     name: stop.stop?.name || '',
     km: stop.distanceFromStartKm || 0,
     location: stop.stop?.location ? {
       latitude: stop.stop.location.latitude || 0,
       longitude: stop.stop.location.longitude || 0,
-    } : undefined
+    } : undefined,
+    isOrigin: stop.isOrigin || false,
+    isDestination: stop.isDestination || false
   }));
 
   return (
@@ -430,7 +440,12 @@ const FindMyBusDetailPage = () => {
           <CardContent className="p-0">
             {stopsForMap.length >= 2 ? (
               <div className="min-h-[250px] sm:min-h-[300px] md:min-h-[400px]">
-                <RouteMap stops={stopsForMap} routeName={route?.name || 'Route'} />
+                <RouteMap 
+                  stops={stopsForMap} 
+                  routeName={route?.name || 'Route'} 
+                  originStopId={fromStopId || undefined}
+                  destinationStopId={toStopId || undefined}
+                />
               </div>
             ) : (
               <div className="h-48 sm:h-56 md:h-64 flex items-center justify-center bg-muted/50 rounded-lg">
@@ -451,7 +466,7 @@ const FindMyBusDetailPage = () => {
               <div className="flex flex-col gap-3 mb-4 sm:mb-5 md:mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <h2 className="text-lg sm:text-xl font-semibold">
-                    Stop List ({schedule?.stops?.length || 0} stops)
+                    Stop List ({routeScheduleStops?.length || 0} stops)
                   </h2>
                 </div>
                 
@@ -489,6 +504,7 @@ const FindMyBusDetailPage = () => {
                       const departureInfo = getDisplayTime(stop, 'departure');
                       const displayTime = departureInfo.time || arrivalInfo.time;
                       const displaySource = departureInfo.source || arrivalInfo.source;
+                      const displayDistance = getDisplayDistance(stop);
                       
                       return (
                         <div key={stop.scheduleStopId || index} className="flex gap-2 sm:gap-3 md:gap-4">
@@ -544,8 +560,8 @@ const FindMyBusDetailPage = () => {
                                 
                                 <div className="flex gap-3 sm:gap-4 mt-1 text-[10px] sm:text-xs text-muted-foreground">
                                   <span>Stop #{stop.stopOrder}</span>
-                                  {stop.distanceFromStartKm !== undefined && (
-                                    <span>{stop.distanceFromStartKm.toFixed(1)} km</span>
+                                  {displayDistance !== undefined && (
+                                    <span>{displayDistance.toFixed(1)} km</span>
                                   )}
                                 </div>
                                 

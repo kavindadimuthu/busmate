@@ -133,6 +133,11 @@ export default function BusCard({
   const departureTime = getDepartureTime(bus);
   const arrivalTime = getArrivalTime(bus);
 
+  // Get start and end stop times (for the entire route)
+  const routeStartDepartureTime = bus.scheduleStartStopDepartureTime || departureTime;
+  const routeEndArrivalTime = bus.scheduleEndStopArrivalTime || arrivalTime;
+  const totalRouteDistance = bus.scheduleTotalDistanceKm || bus.distanceKm;
+
   // Generate detail link with new API parameters
   const getDetailLink = () => {
     if (!bus.scheduleId || !fromStopId || !toStopId) {
@@ -187,27 +192,29 @@ export default function BusCard({
             </div>
           </div>
 
-          {/* Right side - Time and Distance info */}
+          {/* Right side - Route Start/End Times and Total Distance */}
           <div className="flex flex-col items-start sm:items-end gap-1 text-sm sm:text-base">
-            {departureTime && arrivalTime && (
-              <div className="flex items-center gap-1 sm:gap-2 text-sm sm:text-lg font-semibold text-foreground whitespace-nowrap">
-                <span>{formatTime(departureTime)}</span>
-                <ArrowRight className="h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground flex-shrink-0" />
-                <span>{formatTime(arrivalTime)}</span>
+            {/* Route Start to End Times */}
+            {routeStartDepartureTime && routeEndArrivalTime && (
+              <div className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-semibold text-foreground whitespace-nowrap">
+                {/* <span className="text-xs sm:text-sm text-muted-foreground">Start</span> */}
+                <span>{formatTime(routeStartDepartureTime)}</span>
+                <ArrowRight className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground flex-shrink-0" />
+                <span>{formatTime(routeEndArrivalTime)}</span>
+                {/* <span className="text-xs sm:text-sm text-muted-foreground">End</span> */}
               </div>
             )}
-            <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm font-medium">
-              {bus.distanceKm && <span>{bus.distanceKm.toFixed(1)} km</span>}
-              {bus.distanceKm && bus.roadType && (
-                <span className="hidden sm:inline">|</span>
+            
+            {/* Total Route Distance and Road Type */}
+            <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm font-medium text-muted-foreground">
+              {totalRouteDistance && (
+                <span>{totalRouteDistance.toFixed(1)} km total</span>
+              )}
+              {totalRouteDistance && bus.roadType && (
+                <span>•</span>
               )}
               {bus.roadType && (
-                <span className="hidden sm:inline">{bus.roadType}</span>
-              )}
-              {bus.roadType && (
-                <span className="sm:hidden text-muted-foreground">
-                  ({bus.roadType})
-                </span>
+                <span>{bus.roadType}</span>
               )}
             </div>
           </div>
