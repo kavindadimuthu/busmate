@@ -748,7 +748,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         return RouteScheduleStop.builder()
                 .routeStopId(proj.getRouteStopId())
                 .scheduleStopId(proj.getScheduleStopId())
-                .stopOrder(proj.getStopOrder() - 1)  // Convert to 0-based index
+                .stopOrder(proj.getStopOrder())  // Convert to 0-based index
                 .stop(stopInfo)
                 // Origin/Destination flags
                 .isOrigin(isOrigin)
