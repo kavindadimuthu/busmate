@@ -98,8 +98,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName, originStopId, des
         const fullRouteRenderer = new google.maps.DirectionsRenderer({
           suppressMarkers: true,
           polylineOptions: {
-            strokeColor: "#93c5fd", // Light blue
-            strokeOpacity: 0.6,
+            strokeColor: "#2563eb", // Light blue
+            strokeOpacity: 0.7,
             strokeWeight: 3,
           },
           preserveViewport: true
