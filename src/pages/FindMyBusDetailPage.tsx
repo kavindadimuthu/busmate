@@ -531,11 +531,13 @@ const FindMyBusDetailPage = () => {
                           <div className="flex flex-col flex-1 min-w-0">
                             <div className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
                               <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
-                                <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
-                                  stop.isOrigin ? 'bg-green-500 ring-2 ring-green-200' : 
-                                  stop.isDestination ? 'bg-red-500 ring-2 ring-red-200' : 
-                                  'bg-blue-500'
-                                }`} />
+                                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold border-2 flex-shrink-0 ${
+                                  stop.isOrigin ? 'bg-green-500 border-green-600 shadow-lg shadow-green-300/50' : 
+                                  stop.isDestination ? 'bg-red-500 border-red-600 shadow-lg shadow-red-300/50' : 
+                                  'bg-blue-500 border-blue-600 shadow-lg shadow-blue-300/50'
+                                }`}>
+                                  {stop.stopOrder + 2}
+                                </div>
                                 {index < filteredStops.length - 1 && (
                                   <div className="w-0.5 h-8 sm:h-9 bg-border mt-1" />
                                 )}
@@ -546,23 +548,19 @@ const FindMyBusDetailPage = () => {
                                 stop.isDestination ? 'bg-red-50 border border-red-200' :
                                 'bg-gray-200/60'
                               }`}>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between gap-2">
                                   <p className="text-xs sm:text-sm font-medium text-foreground truncate">
                                     {stop.stop?.name}
                                   </p>
-                                  {stop.isOrigin && (
+                                  {/* {stop.isOrigin && (
                                     <Badge className="bg-green-500 text-white text-[9px] px-1 py-0">Origin</Badge>
                                   )}
                                   {stop.isDestination && (
                                     <Badge className="bg-red-500 text-white text-[9px] px-1 py-0">Dest</Badge>
-                                  )}
-                                </div>
-                                
-                                <div className="flex gap-3 sm:gap-4 mt-1 text-[10px] sm:text-xs text-muted-foreground">
-                                  <span>Stop #{stop.stopOrder}</span>
-                                  {displayDistance !== undefined && (
+                                  )} */}
+                                  <div>
                                     <span>{displayDistance.toFixed(1)} km</span>
-                                  )}
+                                  </div>
                                 </div>
                                 
                                 {(arrivalInfo.time || departureInfo.time) && (
