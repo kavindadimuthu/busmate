@@ -107,6 +107,26 @@ export type BusResult = {
      */
     arrivalAtDestinationSource?: BusResult.arrivalAtDestinationSource;
     /**
+     * Departure time at schedule's first stop
+     */
+    scheduleStartStopDepartureTime?: string;
+    /**
+     * Arrival time at schedule's first stop (usually null)
+     */
+    scheduleStartStopArrivalTime?: string;
+    /**
+     * Arrival time at schedule's last stop
+     */
+    scheduleEndStopArrivalTime?: string;
+    /**
+     * Departure time at schedule's last stop (usually null)
+     */
+    scheduleEndStopDepartureTime?: string;
+    /**
+     * Total distance of the entire schedule/route in km
+     */
+    scheduleTotalDistanceKm?: number;
+    /**
      * Whether trip data is available for this schedule
      */
     hasTripData?: boolean;

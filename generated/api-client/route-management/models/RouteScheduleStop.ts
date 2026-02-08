@@ -4,15 +4,19 @@
 /* eslint-disable */
 import type { StopInfo } from './StopInfo';
 /**
- * Schedule stop with comprehensive timing information
+ * Unified stop information combining route stop, schedule stop, and stop metadata
  */
-export type ScheduleStopDetails = {
+export type RouteScheduleStop = {
+    /**
+     * Route stop ID
+     */
+    routeStopId?: string;
     /**
      * Schedule stop ID
      */
     scheduleStopId?: string;
     /**
-     * Stop order in the schedule
+     * Stop order in both route and schedule
      */
     stopOrder?: number;
     /**
@@ -20,9 +24,21 @@ export type ScheduleStopDetails = {
      */
     stop?: StopInfo;
     /**
-     * Distance from route start in km
+     * Distance from route start in km (resolved with fallback)
      */
     distanceFromStartKm?: number;
+    /**
+     * Verified distance from route start in km
+     */
+    distanceFromStartKmVerified?: number;
+    /**
+     * Unverified distance from route start in km (user-submitted)
+     */
+    distanceFromStartKmUnverified?: number;
+    /**
+     * Calculated distance from route start in km (system-generated)
+     */
+    distanceFromStartKmCalculated?: number;
     /**
      * Whether this is the user's origin stop
      */
@@ -62,7 +78,7 @@ export type ScheduleStopDetails = {
     /**
      * Source of resolved arrival time
      */
-    arrivalTimeSource?: ScheduleStopDetails.arrivalTimeSource;
+    arrivalTimeSource?: RouteScheduleStop.arrivalTimeSource;
     /**
      * Resolved departure time based on preference
      */
@@ -70,9 +86,9 @@ export type ScheduleStopDetails = {
     /**
      * Source of resolved departure time
      */
-    departureTimeSource?: ScheduleStopDetails.departureTimeSource;
+    departureTimeSource?: RouteScheduleStop.departureTimeSource;
 };
-export namespace ScheduleStopDetails {
+export namespace RouteScheduleStop {
     /**
      * Source of resolved arrival time
      */
