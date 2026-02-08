@@ -173,7 +173,7 @@ const FindMyBusPage = () => {
       {/* Header Section */}
       {/* Background image (low opacity) */}
         <img
-          src="/Autobus-de-luxe.jpg"
+          src="/bus-bg.png"
           alt="Bus background"
           className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
         />
