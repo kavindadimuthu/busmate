@@ -536,7 +536,7 @@ const FindMyBusDetailPage = () => {
                                   stop.isDestination ? 'bg-red-500 border-red-600 shadow-lg shadow-red-300/50' : 
                                   'bg-blue-500 border-blue-600 shadow-lg shadow-blue-300/50'
                                 }`}>
-                                  {stop.stopOrder + 2}
+                                  {stop.stopOrder + 1}
                                 </div>
                                 {index < filteredStops.length - 1 && (
                                   <div className="w-0.5 h-8 sm:h-9 bg-border mt-1" />
