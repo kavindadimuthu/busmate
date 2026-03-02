@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+Design System — Passenger Data Finder Application
+All colors are HSL-based.
+Core theme: Blue #004CFF (hsl(225 100% 50%))
+Professional, reduced gradients, and clean neutral surfaces.
+*/
+
+@layer base {
+  :root {
+    --background: 220 20% 98%;
+    --foreground: 220 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 15%;
+
+    /* Core brand blue */
+    --primary: 225 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 225 95% 45%;
+
+    /* Neutral secondary (no more green) */
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 25% 20%;
+    --secondary-hover: 220 15% 88%;
+
+    /* Subtle muted surfaces */
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 40%;
+
+    /* Accent uses same blue spectrum */
+    --accent: 225 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Status colors */
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Neutral framework colors */
+    --border: 220 15% 88%;
+    --input: 220 15% 95%;
+    --ring: 225 100% 50%;
+
+    /* --- Custom design tokens --- */
+    /* Simplified gradients for modern UI */
+    --gradient-primary: linear-gradient(135deg, hsl(225 100% 50%), hsl(225 90% 45%));
+    --gradient-secondary: linear-gradient(135deg, hsl(225 80% 52%), hsl(225 85% 46%));
+    --gradient-hero: linear-gradient(135deg, hsl(225 100% 50%) 0%, hsla(225, 90%, 45%, 0.89) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -2px hsl(225 100% 50% / 0.1);
+    --shadow-card: 0 2px 12px -1px hsl(220 15% 30% / 0.08);
+
+    /* Animation / transition */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Radius */
+    --radius: 0.5rem;
+
+    /* Sidebar UI */
+    --sidebar-background: 220 20% 97%;
+    --sidebar-foreground: 220 15% 20%;
+    --sidebar-primary: 225 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 20% 94%;
+    --sidebar-accent-foreground: 220 15% 20%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 225 100% 50%;
+  }
+
+  /* --- Dark Mode --- */
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 15% 96%;
+
+    --card: 220 25% 10%;
+    --card-foreground: 220 15% 96%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 15% 96%;
+
+    --primary: 225 100% 65%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 225 100% 55%;
+
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 220 15% 90%;
+    --secondary-hover: 220 15% 25%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 15% 70%;
+
+    --accent: 225 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 18%;
+    --ring: 225 100% 60%;
+
+    /* Sidebar */
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 225 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 225 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
