@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.dto.projection;
+package com.busmate.routeschedule.passenger.dto.projection;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -7,6 +7,11 @@ import java.util.UUID;
 /**
  * Projection interface for Find My Bus query results.
  * Used to map native query results efficiently without loading entire entities.
+ * 
+ * Includes all three types of schedule stop times:
+ * - Verified times (arrivalTime, departureTime) - most reliable
+ * - Unverified times (arrivalTimeUnverified, departureTimeUnverified) - user-submitted
+ * - Calculated times (arrivalTimeCalculated, departureTimeCalculated) - system-generated
  */
 public interface FindMyBusProjection {
     
@@ -45,14 +50,29 @@ public interface FindMyBusProjection {
     LocalDate getScheduleStartDate();
     LocalDate getScheduleEndDate();
     
-    // Schedule Stop Information (nullable)
+    // Schedule Stop Information - FROM stop (nullable)
+    // Verified times
     UUID getFromScheduleStopId();
     LocalTime getFromArrivalTime();
     LocalTime getFromDepartureTime();
+    // Unverified times
+    LocalTime getFromArrivalTimeUnverified();
+    LocalTime getFromDepartureTimeUnverified();
+    // Calculated times
+    LocalTime getFromArrivalTimeCalculated();
+    LocalTime getFromDepartureTimeCalculated();
     
+    // Schedule Stop Information - TO stop (nullable)
+    // Verified times
     UUID getToScheduleStopId();
     LocalTime getToArrivalTime();
     LocalTime getToDepartureTime();
+    // Unverified times
+    LocalTime getToArrivalTimeUnverified();
+    LocalTime getToDepartureTimeUnverified();
+    // Calculated times
+    LocalTime getToArrivalTimeCalculated();
+    LocalTime getToDepartureTimeCalculated();
     
     // Trip Information (nullable)
     UUID getTripId();
@@ -67,6 +87,12 @@ public interface FindMyBusProjection {
     UUID getBusId();
     String getBusPlateNumber();
     String getBusModel();
+    Integer getBusCapacity();
+    
+    // Operator Information (nullable)
+    UUID getOperatorId();
+    String getOperatorName();
+    String getOperatorType();
     
     // PSP Information (nullable)
     UUID getPspId();

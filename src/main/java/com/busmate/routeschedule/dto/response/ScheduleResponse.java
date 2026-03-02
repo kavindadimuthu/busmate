@@ -88,12 +88,34 @@ public class ScheduleResponse {
         private Integer stopOrder;
         
         @JsonFormat(pattern = "HH:mm:ss")
-        @Schema(description = "Scheduled arrival time", type = "string", pattern = "HH:mm:ss", example = "10:30:00")
+        @Schema(description = "Scheduled arrival time (verified)", type = "string", pattern = "HH:mm:ss", example = "10:30:00")
         private LocalTime arrivalTime;
         
         @JsonFormat(pattern = "HH:mm:ss")
-        @Schema(description = "Scheduled departure time", type = "string", pattern = "HH:mm:ss", example = "10:35:00")
+        @Schema(description = "Scheduled departure time (verified)", type = "string", pattern = "HH:mm:ss", example = "10:35:00")
         private LocalTime departureTime;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Unverified arrival time from experienced users", type = "string", pattern = "HH:mm:ss", example = "10:32:00")
+        private LocalTime arrivalTimeUnverified;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Unverified departure time from experienced users", type = "string", pattern = "HH:mm:ss", example = "10:37:00")
+        private LocalTime departureTimeUnverified;
+        
+        @Schema(description = "Username who provided unverified arrival time", example = "experienced_user@busmate.lk")
+        private String arrivalTimeUnverifiedBy;
+        
+        @Schema(description = "Username who provided unverified departure time", example = "experienced_user@busmate.lk")
+        private String departureTimeUnverifiedBy;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Calculated arrival time based on route distance and travel time", type = "string", pattern = "HH:mm:ss", example = "10:31:30")
+        private LocalTime arrivalTimeCalculated;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(description = "Calculated departure time based on route distance and travel time", type = "string", pattern = "HH:mm:ss", example = "10:36:30")
+        private LocalTime departureTimeCalculated;
     }
 
     @Data

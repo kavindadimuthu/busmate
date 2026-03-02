@@ -1,16 +1,16 @@
-package com.busmate.routeschedule.controller;
+package com.busmate.routeschedule.passenger.controller;
 
-import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerStopResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerTripResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerNearbyStopsResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerRouteResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerStopResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerTripResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerNearbyStopsResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
 import com.busmate.routeschedule.enums.DirectionEnum;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.enums.TripStatusEnum;
-import com.busmate.routeschedule.service.passenger.PassengerRouteService;
-import com.busmate.routeschedule.service.passenger.PassengerStopService;
-import com.busmate.routeschedule.service.passenger.PassengerTripService;
+import com.busmate.routeschedule.passenger.service.PassengerRouteService;
+import com.busmate.routeschedule.passenger.service.PassengerStopService;
+import com.busmate.routeschedule.passenger.service.PassengerTripService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -104,9 +104,6 @@ public class PassengerController {
         @ApiResponse(responseCode = "200", description = "Routes retrieved successfully")
     })
     public ResponseEntity<PassengerPaginatedResponse<PassengerRouteResponse>> getAllRoutes(
-            // Note: operatorType filtering removed - routes are not directly linked to operators
-            // Use trip search APIs for operator-specific filtering
-            
             @Parameter(description = "Filter by direction", example = "OUTBOUND")
             @RequestParam(required = false) DirectionEnum direction,
             
@@ -158,8 +155,6 @@ public class PassengerController {
         
         return ResponseEntity.ok(routeDetails);
     }
-
-    // Note: Route stops are included in getRouteDetails when includeStops=true
 
     // ================================
     // STOP INFORMATION APIs
@@ -271,9 +266,6 @@ public class PassengerController {
             @Parameter(description = "Stop ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID stopId,
             
-            // Note: operatorType filtering removed - routes are not directly linked to operators
-            // Use trip search APIs for operator-specific filtering
-            
             @Parameter(description = "Filter by direction", example = "OUTBOUND")
             @RequestParam(required = false) DirectionEnum direction,
             
@@ -320,7 +312,6 @@ public class PassengerController {
             @Parameter(description = "Departure time (latest)", example = "18:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime departureTimeTo,
             
-            // Note: operatorType filtering works for trips because trips are linked to operators via PSP
             @Parameter(description = "Operator type filter", example = "PRIVATE")
             @RequestParam(required = false) OperatorTypeEnum operatorType,
             
@@ -402,7 +393,6 @@ public class PassengerController {
             @Parameter(description = "Filter by route ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @RequestParam(required = false) UUID routeId,
             
-            // Note: operatorType filtering works for trips because trips are linked to operators via PSP
             @Parameter(description = "Filter by operator type", example = "PRIVATE")
             @RequestParam(required = false) OperatorTypeEnum operatorType,
             
@@ -434,6 +424,4 @@ public class PassengerController {
         
         return ResponseEntity.ok(activeTrips);
     }
-
-    // Note: Trip schedules can be retrieved using searchTrips with date and time filters
 }

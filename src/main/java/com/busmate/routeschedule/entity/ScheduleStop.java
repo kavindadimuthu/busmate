@@ -30,4 +30,22 @@ public class ScheduleStop {
 
     @Column(name = "departure_time")
     private LocalTime departureTime;
+
+    @Column(name = "arrival_time_unverified")
+    private LocalTime arrivalTimeUnverified;
+
+    @Column(name = "departure_time_unverified")
+    private LocalTime departureTimeUnverified;
+
+    @Column(name = "arrival_time_unverified_by")
+    private String arrivalTimeUnverifiedBy;
+
+    @Column(name = "departure_time_unverified_by")
+    private String departureTimeUnverifiedBy;
+
+    @Column(name = "arrival_time_calculated")
+    private LocalTime arrivalTimeCalculated;
+
+    @Column(name = "departure_time_calculated")
+    private LocalTime departureTimeCalculated;
 }

@@ -1,9 +1,9 @@
-package com.busmate.routeschedule.service.passenger;
+package com.busmate.routeschedule.passenger.service;
 
-import com.busmate.routeschedule.dto.response.passenger.PassengerStopResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerNearbyStopsResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerRouteResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerStopResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerNearbyStopsResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerRouteResponse;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;

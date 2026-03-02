@@ -28,6 +28,12 @@ public class RouteStop {
     @Column(name = "distance_from_start_km")
     private Double distanceFromStartKm;
 
+    @Column(name = "distance_from_start_km_unverified")
+    private Double distanceFromStartKmUnverified;
+
+    @Column(name = "distance_from_start_km_calculated")
+    private Double distanceFromStartKmCalculated;
+
     @OneToMany(mappedBy = "routeStop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleStop> scheduleStops;
 }
