@@ -1,0 +1,25 @@
+{
+  "entry": [
+    "./src/app/**/*.{js,jsx,ts,tsx}",
+    "./src/middleware.ts"
+  ],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/*.tests.{js,jsx,ts,tsx}",
+    "**/*.test.{js,jsx,ts,tsx}",
+    "**/*.spec.{js,jsx,ts,tsx}",
+    "**/tests/**",
+    "**/__tests__/**",
+    "**/*.d.ts"
+  ],
+  "ignoreUnimported": [
+    "src/app/globals.css"
+  ],
+  "ignoreUnused": [
+    "next",
+    "react",
+    "react-dom"
+  ],
+  "ignoreUnresolved": [],
+  "respectGitignore": true
+}

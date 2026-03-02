@@ -1,0 +1,216 @@
+📊 Analyzing codebase...
+
+
+============================================================
+📈 CODEBASE OVERVIEW
+============================================================
+✓ Total Files: 538
+✓ Total Lines: 113,888
+✓ Code Lines: 99,711 (87.6%)
+✓ Comment Lines: 4,047 (3.6%)
+✓ Blank Lines: 10,130 (8.9%)
+
+============================================================
+📄 BREAKDOWN BY FILE TYPE
+============================================================
+File Type                | Files         | Lines           | Code Lines            
+-------------------------------------------------------
+.tsx            | 409      | 88,147     | 78,261      
+.ts             | 128      | 25,725     | 21,436      
+.css            | 1        | 16         | 14          
+
+============================================================
+📁 BREAKDOWN BY DIRECTORY
+============================================================
+Directory                                    | Files         | Code Lines            
+-----------------------------------------------------------------
+data/operator                       | 7        | 4,016       
+data/admin                          | 9        | 3,736       
+components/shared                   | 14       | 2,615       
+services                            | 6        | 2,493       
+components/mot/buses                | 8        | 2,383       
+data/mot                            | 5        | 2,366       
+components/admin/users              | 9        | 2,296       
+components/mot/routes/workspace/form-mode | 5        | 2,192       
+components/admin/settings           | 6        | 2,150       
+components/mot/location-tracking    | 8        | 2,134       
+components/mot/trip-assignment/components | 7        | 2,052       
+components/mot/bus-stops            | 9        | 2,019       
+components/admin/monitoring         | 6        | 1,807       
+components/mot/routes               | 8        | 1,786       
+components/mot/passenger-service-permits | 4        | 1,771       
+components/tools/csv-editor         | 6        | 1,645       
+components/mot/schedule-form        | 5        | 1,628       
+components/admin/logs               | 8        | 1,430       
+components/mot/trip-details/tabs    | 6        | 1,428       
+components/mot/schedules/workspace/form-mode | 6        | 1,413       
+data/timekeeper                     | 5        | 1,347       
+components/admin/notifications      | 7        | 1,325       
+components/mot/routes/route-form    | 4        | 1,308       
+components/operator/fleet           | 10       | 1,274       
+hooks                               | 9        | 1,195       
+components/operator/staff           | 13       | 1,186       
+components/mot/policies             | 7        | 1,152       
+components/mot/routes/route-group-view/tabs | 5        | 1,104       
+components/ui                       | 17       | 1,083       
+components/operator/trips/trip-details | 7        | 1,069       
+components/mot/dashboard            | 10       | 1,059       
+types                               | 5        | 1,015       
+components/mot/fares                | 7        | 1,010       
+components/mot/analytics            | 9        | 999         
+lib/services                        | 4        | 976         
+components/mot/staff                | 9        | 964         
+components/operator/profile         | 4        | 892         
+services/ai                         | 6        | 881         
+components/admin/dashboard          | 9        | 869         
+components/operator/dashboard       | 9        | 859         
+_temp_/data                         | 7        | 845         
+components/mot/trips                | 4        | 831         
+components/operator/salary-mgmt     | 8        | 829         
+app/mot/bus-stops/[busStopId]       | 1        | 793         
+components/mot/routes/workspace     | 1        | 772         
+components/operator/permits         | 5        | 724         
+components/operator/revenue         | 4        | 705         
+components/mot/schedule-details/tabs | 5        | 686         
+context/ScheduleWorkspace           | 4        | 675         
+components/mot/users/operator       | 2        | 669         
+components/operator/trips           | 4        | 669         
+components/timekeeper/attendance    | 5        | 648         
+app/mot/trips                       | 1        | 646         
+components/timekeeper/trips         | 4        | 632         
+components/mot/schedules            | 4        | 609         
+components/mot/permits              | 4        | 598         
+components/mot/analytics/charts     | 4        | 593         
+components/mot/operators            | 5        | 566         
+components/operator/revenue-analytics | 6        | 557         
+context/RouteWorkspace              | 3        | 553         
+app/mot/bus-stops/export            | 1        | 552         
+components/mot/trip-details         | 3        | 490         
+app/mot/bus-stops                   | 1        | 446         
+app/mot/passenger-service-permits   | 1        | 441         
+components/mot/schedules/workspace/ai-studio | 2        | 427         
+app/mot/buses                       | 1        | 406         
+components/mot                      | 3        | 404         
+app/mot/operators                   | 1        | 401         
+components/mot/schedule-details     | 3        | 401         
+components/mot/routes/workspace/ai-studio | 2        | 397         
+components/timekeeper/profile       | 2        | 393         
+app/operator/revenue-analytics      | 1        | 378         
+components/timekeeper/dashboard     | 5        | 374         
+app/mot/schedules                   | 1        | 370         
+app/operator/salary-management      | 1        | 360         
+app/mot/routes                      | 1        | 358         
+app/admin/logs/listing              | 1        | 349         
+_temp_/services                     | 2        | 343         
+validation-rules                    | 3        | 340         
+app/mot/trips/[tripId]              | 1        | 338         
+components/mot/profile              | 2        | 333         
+app/admin/notifications/listing     | 1        | 324         
+app/mot/notifications               | 1        | 315         
+app/mot/routes/(route-group)/[routeGroupId]/edit | 1        | 308         
+app/mot/notifications/[id]          | 1        | 307         
+app/operator/trips                  | 1        | 301         
+components/mot/routes/route-group-view | 5        | 295         
+app/mot/notifications/compose       | 1        | 294         
+components/mot/notifications        | 2        | 291         
+app/mot/staff-management            | 1        | 280         
+app/mot/schedules/[scheduleId]      | 1        | 276         
+components/mot/trip-assignment      | 2        | 276         
+app/admin/notifications             | 1        | 275         
+context/PageContext                 | 4        | 269         
+components/admin/profile            | 2        | 268         
+app/mot/passenger-service-permits/[permitId] | 1        | 266         
+app/mot/policies                    | 1        | 262         
+app/admin/logs                      | 1        | 261         
+app/mot/analytics                   | 1        | 253         
+app/mot/routes/(route-group)/[routeGroupId] | 1        | 253         
+app/operator/passenger-service-permits | 1        | 242         
+_temp_/utils                        | 3        | 237         
+components/mot/schedules/workspace/textual-mode | 2        | 229         
+app/operator/staff-management       | 1        | 224         
+app/mot/operators/[operatorId]      | 1        | 221         
+app/mot/fares                       | 1        | 217         
+app/mot/passenger-service-permits/[permitId]/edit | 1        | 216         
+app/admin/users                     | 1        | 215         
+app/mot/location-tracking           | 1        | 207         
+app/mot/buses/[busId]               | 1        | 201         
+app/operator/fleet-management       | 1        | 201         
+app/mot/passenger-service-permits/add-new | 1        | 173         
+app/timekeeper/attendance           | 1        | 173         
+app/timekeeper/trips                | 1        | 171         
+app/mot/buses/[busId]/edit          | 1        | 166         
+components/operator                 | 3        | 155         
+app/mot/routes/workspace            | 1        | 146         
+app/mot/schedules/workspace         | 1        | 146         
+app/mot/routes/import               | 1        | 142         
+app/operator/trips/[tripId]         | 1        | 138         
+app/operator/passenger-service-permits/[permitId] | 1        | 136         
+lib/push                            | 1        | 135         
+app/mot/routes/(route-group)/add-new | 1        | 134         
+app/mot/policies/[policyId]/edit    | 1        | 131         
+app/mot/fares/amendments/new        | 1        | 126         
+app/admin/users/[id]                | 1        | 122         
+app/mot/buses/add-new               | 1        | 121         
+app/operator/fleet-management/[busId] | 1        | 113         
+app/operator/staff-management/[staffId] | 1        | 112         
+app/mot/dashboard                   | 1        | 108         
+app/mot/bus-stops/import            | 1        | 106         
+app/mot/fares/amendments/[amendmentId] | 1        | 106         
+app/mot/policies/[policyId]         | 1        | 106         
+app/mot/policies/upload             | 1        | 106         
+app/mot/schedules/[scheduleId]/edit | 1        | 105         
+app                                 | 3        | 102         
+app/mot/staff-management/[staffId]  | 1        | 101         
+app/operator/dashboard              | 1        | 100         
+lib/utils                           | 4        | 99          
+components/mot/routes/workspace/textual-mode | 1        | 98          
+app/admin/dashboard                 | 1        | 92          
+app/timekeeper/dashboard            | 1        | 91          
+app/mot/bus-stops/[busStopId]/edit  | 1        | 86          
+app/admin/users/[id]/edit           | 1        | 75          
+components/timekeeper               | 2        | 58          
+app/admin/notifications/[id]        | 1        | 56          
+components/admin                    | 1        | 54          
+app/admin/monitoring                | 1        | 52          
+app/admin/logs/[id]                 | 1        | 51          
+app/mot/operators/[operatorId]/edit | 1        | 46          
+app/admin/users/create              | 1        | 44          
+app/mot/operators/add-new           | 1        | 43          
+app/mot/staff-management/[staffId]/edit | 1        | 43          
+app/mot/schedules/add-new           | 1        | 42          
+app/mot/staff-management/add-new    | 1        | 41          
+app/mot/bus-stops/add-new           | 1        | 40          
+app/admin                           | 1        | 33          
+app/mot                             | 1        | 33          
+app/admin/monitoring/alerts         | 1        | 32          
+app/admin/monitoring/resource-usage | 1        | 32          
+app/admin/monitoring/resources      | 1        | 32          
+app/operator                        | 1        | 32          
+app/timekeeper                      | 1        | 32          
+app/admin/monitoring/microservice-uptime | 1        | 31          
+app/admin/monitoring/performance    | 1        | 31          
+app/admin/monitoring/api            | 1        | 28          
+app/admin/monitoring/api-health     | 1        | 28          
+_temp_                              | 1        | 21          
+.                                   | 1        | 21          
+app/admin/notifications/compose     | 1        | 16          
+app/admin/settings/backup           | 1        | 16          
+app/api/auth/logout                 | 1        | 16          
+app/mot/trips/assignment            | 1        | 16          
+app/mot/bus-stops/add               | 1        | 14          
+app/admin/settings                  | 1        | 13          
+lib                                 | 2        | 7           
+app/admin/profile                   | 1        | 6           
+app/mot/profile                     | 1        | 6           
+app/operator/profile                | 1        | 6           
+app/timekeeper/profile              | 1        | 6           
+
+============================================================
+📊 SUMMARY STATISTICS
+============================================================
+✓ Average Lines per File: 185
+✓ Code Density: 87.6%
+✓ File Types: 3
+✓ Directories: 180
+
+✅ Analysis complete!

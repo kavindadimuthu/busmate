@@ -1,0 +1,9 @@
+# Ignore all dump files
+*.sql
+*.dump
+
+# But keep this .gitignore file
+!.gitignore
+
+# Keep README template if one exists
+!README.md
