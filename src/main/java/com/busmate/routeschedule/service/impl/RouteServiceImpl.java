@@ -252,6 +252,8 @@ public class RouteServiceImpl implements RouteService {
                     rsResponse.setLocation(mapperUtils.map(rs.getStop().getLocation(), com.busmate.routeschedule.dto.common.LocationDto.class));
                     rsResponse.setStopOrder(rs.getStopOrder());
                     rsResponse.setDistanceFromStartKm(rs.getDistanceFromStartKm());
+                    rsResponse.setDistanceFromStartKmUnverified(rs.getDistanceFromStartKmUnverified());
+                    rsResponse.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
                     return rsResponse;
                 }).collect(Collectors.toList());
             response.setRouteStops(routeStopResponses);

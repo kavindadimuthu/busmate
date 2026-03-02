@@ -143,56 +143,56 @@ INSERT INTO route (id, name, description, route_group_id, start_stop_id, end_sto
 
 -- Colombo to Kandy Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('88888888-8888-8888-8888-888888888881', '77777777-7777-7777-7777-777777777771', '33333333-3333-3333-3333-333333333331', 1, 0.0),
-('88888888-8888-8888-8888-888888888882', '77777777-7777-7777-7777-777777777771', '33333333-3333-3333-3333-333333333337', 2, 15.2),
-('88888888-8888-8888-8888-888888888883', '77777777-7777-7777-7777-777777777771', '33333333-3333-3333-3333-333333333336', 3, 28.5),
-('88888888-8888-8888-8888-888888888884', '77777777-7777-7777-7777-777777777771', '44444444-4444-4444-4444-444444444447', 4, 67.3),
-('88888888-8888-8888-8888-888888888885', '77777777-7777-7777-7777-777777777771', '55555555-5555-5555-5555-555555555551', 5, 95.2),
-('88888888-8888-8888-8888-888888888886', '77777777-7777-7777-7777-777777777771', '44444444-4444-4444-4444-444444444441', 6, 115.0);
+('88888888-8888-8888-8888-888888888881', '77777777-7777-7777-7777-777777777771', '33333333-3333-3333-3333-333333333331', 0, 0.0),
+('88888888-8888-8888-8888-888888888882', '77777777-7777-7777-7777-777777777771', '33333333-3333-3333-3333-333333333337', 1, 15.2),
+('88888888-8888-8888-8888-888888888883', '77777777-7777-7777-7777-777777777771', '33333333-3333-3333-3333-333333333336', 2, 28.5),
+('88888888-8888-8888-8888-888888888884', '77777777-7777-7777-7777-777777777771', '44444444-4444-4444-4444-444444444447', 3, 67.3),
+('88888888-8888-8888-8888-888888888885', '77777777-7777-7777-7777-777777777771', '55555555-5555-5555-5555-555555555551', 4, 95.2),
+('88888888-8888-8888-8888-888888888886', '77777777-7777-7777-7777-777777777771', '44444444-4444-4444-4444-444444444441', 5, 115.0);
 
 -- Pettah to Galle Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('88888888-8888-8888-8888-888888888887', '77777777-7777-7777-7777-777777777773', '33333333-3333-3333-3333-333333333332', 1, 0.0),
-('88888888-8888-8888-8888-888888888888', '77777777-7777-7777-7777-777777777773', '33333333-3333-3333-3333-333333333334', 2, 8.2),
-('88888888-8888-8888-8888-888888888889', '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555552', 3, 23.1),
-('88888888-8888-8888-8888-88888888888a', '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555553', 4, 35.7),
-('88888888-8888-8888-8888-88888888888b', '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555554', 5, 45.2),
-('88888888-8888-8888-8888-88888888888c', '77777777-7777-7777-7777-777777777773', '44444444-4444-4444-4444-444444444442', 6, 119.0);
+('88888888-8888-8888-8888-888888888887', '77777777-7777-7777-7777-777777777773', '33333333-3333-3333-3333-333333333332', 0, 0.0),
+('88888888-8888-8888-8888-888888888888', '77777777-7777-7777-7777-777777777773', '33333333-3333-3333-3333-333333333334', 1, 8.2),
+('88888888-8888-8888-8888-888888888889', '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555552', 2, 23.1),
+('88888888-8888-8888-8888-88888888888a', '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555553', 3, 35.7),
+('88888888-8888-8888-8888-88888888888b', '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555554', 4, 45.2),
+('88888888-8888-8888-8888-88888888888c', '77777777-7777-7777-7777-777777777773', '44444444-4444-4444-4444-444444444442', 5, 119.0);
 
 -- Fort to Maharagama Suburban Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('88888888-8888-8888-8888-88888888888d', '77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333331', 1, 0.0),
-('88888888-8888-8888-8888-88888888888e', '77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333334', 2, 8.2),
-('88888888-8888-8888-8888-88888888888f', '77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', 3, 18.5);
+('88888888-8888-8888-8888-88888888888d', '77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333331', 0, 0.0),
+('88888888-8888-8888-8888-88888888888e', '77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333334', 1, 8.2),
+('88888888-8888-8888-8888-88888888888f', '77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', 2, 18.5);
 
 -- Colombo to Kurunegala Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('99999999-9999-9999-9999-999999999991', '77777777-7777-7777-7777-777777777775', '33333333-3333-3333-3333-333333333332', 1, 0.0),
-('99999999-9999-9999-9999-999999999992', '77777777-7777-7777-7777-777777777775', '33333333-3333-3333-3333-333333333336', 2, 25.0),
-('99999999-9999-9999-9999-999999999993', '77777777-7777-7777-7777-777777777775', '44444444-4444-4444-4444-444444444447', 3, 75.0),
-('99999999-9999-9999-9999-999999999994', '77777777-7777-7777-7777-777777777775', '44444444-4444-4444-4444-444444444444', 4, 103.0);;
+('99999999-9999-9999-9999-999999999991', '77777777-7777-7777-7777-777777777775', '33333333-3333-3333-3333-333333333332', 0, 0.0),
+('99999999-9999-9999-9999-999999999992', '77777777-7777-7777-7777-777777777775', '33333333-3333-3333-3333-333333333336', 1, 25.0),
+('99999999-9999-9999-9999-999999999993', '77777777-7777-7777-7777-777777777775', '44444444-4444-4444-4444-444444444447', 2, 75.0),
+('99999999-9999-9999-9999-999999999994', '77777777-7777-7777-7777-777777777775', '44444444-4444-4444-4444-444444444444', 3, 103.0);;
 
 -- Colombo to Jaffna Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '77777777-7777-7777-7777-777777777779', '33333333-3333-3333-3333-333333333332', 1, 0.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '77777777-7777-7777-7777-777777777779', '33333333-3333-3333-3333-333333333336', 2, 25.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', '77777777-7777-7777-7777-777777777779', '44444444-4444-4444-4444-444444444444', 3, 103.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', '77777777-7777-7777-7777-777777777779', '44444444-4444-4444-4444-444444444445', 4, 200.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', '77777777-7777-7777-7777-777777777779', '55555555-5555-5555-5555-555555555556', 5, 396.0);
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '77777777-7777-7777-7777-777777777779', '33333333-3333-3333-3333-333333333332', 0, 0.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '77777777-7777-7777-7777-777777777779', '33333333-3333-3333-3333-333333333336', 1, 25.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', '77777777-7777-7777-7777-777777777779', '44444444-4444-4444-4444-444444444444', 2, 103.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', '77777777-7777-7777-7777-777777777779', '44444444-4444-4444-4444-444444444445', 3, 200.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', '77777777-7777-7777-7777-777777777779', '55555555-5555-5555-5555-555555555556', 4, 396.0);
 
 -- Colombo to Trincomalee Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', '77777777-7777-7777-7777-777777777781', '33333333-3333-3333-3333-333333333332', 1, 0.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', '77777777-7777-7777-7777-777777777781', '44444444-4444-4444-4444-444444444444', 2, 103.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8', '77777777-7777-7777-7777-777777777781', '55555555-5555-5555-5555-555555555558', 3, 220.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa9', '77777777-7777-7777-7777-777777777781', '55555555-5555-5555-5555-555555555557', 4, 273.0);
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', '77777777-7777-7777-7777-777777777781', '33333333-3333-3333-3333-333333333332', 0, 0.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', '77777777-7777-7777-7777-777777777781', '44444444-4444-4444-4444-444444444444', 1, 103.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8', '77777777-7777-7777-7777-777777777781', '55555555-5555-5555-5555-555555555558', 2, 220.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa9', '77777777-7777-7777-7777-777777777781', '55555555-5555-5555-5555-555555555557', 3, 273.0);
 
 -- Colombo to Badulla Route Stops
 INSERT INTO route_stop (id, route_id, stop_id, stop_order, distance_from_start_km) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10', '77777777-7777-7777-7777-777777777783', '33333333-3333-3333-3333-333333333332', 1, 0.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa11', '77777777-7777-7777-7777-777777777783', '44444444-4444-4444-4444-444444444441', 2, 115.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12', '77777777-7777-7777-7777-777777777783', '55555555-5555-5555-5555-555555555560', 3, 180.0),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13', '77777777-7777-7777-7777-777777777783', '55555555-5555-5555-5555-555555555559', 4, 235.0);
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10', '77777777-7777-7777-7777-777777777783', '33333333-3333-3333-3333-333333333332', 0, 0.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa11', '77777777-7777-7777-7777-777777777783', '44444444-4444-4444-4444-444444444441', 1, 115.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12', '77777777-7777-7777-7777-777777777783', '55555555-5555-5555-5555-555555555560', 2, 180.0),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13', '77777777-7777-7777-7777-777777777783', '55555555-5555-5555-5555-555555555559', 3, 235.0);
 
 -- ============================================================================
 -- 6. BUSES - Vehicle Fleet
@@ -284,42 +284,42 @@ INSERT INTO schedule_calendar (id, schedule_id, monday, tuesday, wednesday, thur
 
 -- Colombo to Kandy Schedule Stops
 INSERT INTO schedule_stop (id, schedule_id, route_stop_id, stop_order, arrival_time, departure_time) VALUES
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888881', 1, NULL, '05:30:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeef', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888882', 2, '05:55:00', '05:57:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef0', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888883', 3, '06:15:00', '06:17:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef1', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888884', 4, '07:10:00', '07:12:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef2', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888885', 5, '07:45:00', '07:47:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef3', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888886', 6, '08:00:00', NULL);
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888881', 0, NULL, '05:30:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeef', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888882', 1, '05:55:00', '05:57:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef0', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888883', 2, '06:15:00', '06:17:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef1', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888884', 3, '07:10:00', '07:12:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef2', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888885', 4, '07:45:00', '07:47:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef3', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '88888888-8888-8888-8888-888888888886', 5, '08:00:00', NULL);
 
 -- Pettah to Galle Schedule Stops
 INSERT INTO schedule_stop (id, schedule_id, route_stop_id, stop_order, arrival_time, departure_time) VALUES
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef7', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-888888888887', 1, NULL, '07:00:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef8', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-888888888888', 2, '07:25:00', '07:27:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef9', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-888888888889', 3, '08:15:00', '08:17:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefa', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-88888888888a', 4, '08:35:00', '08:37:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefb', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-88888888888b', 5, '08:55:00', '08:57:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefc', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-88888888888c', 6, '09:30:00', NULL);
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef7', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-888888888887', 0, NULL, '07:00:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef8', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-888888888888', 1, '07:25:00', '07:27:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef9', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-888888888889', 2, '08:15:00', '08:17:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefa', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-88888888888a', 3, '08:35:00', '08:37:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefb', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-88888888888b', 4, '08:55:00', '08:57:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefc', 'cccccccc-cccc-cccc-cccc-ccccccccccce', '88888888-8888-8888-8888-88888888888c', 5, '09:30:00', NULL);
 
 -- Suburban Schedule Stops
 INSERT INTO schedule_stop (id, schedule_id, route_stop_id, stop_order, arrival_time, departure_time) VALUES
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeefa0', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888d', 1, NULL, '06:00:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeefa1', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888e', 2, '06:20:00', '06:22:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeefa2', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888f', 3, '06:40:00', NULL);
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeefa0', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888d', 0, NULL, '06:00:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeefa1', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888e', 1, '06:20:00', '06:22:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeefa2', 'cccccccc-cccc-cccc-cccc-cccccccccccf', '88888888-8888-8888-8888-88888888888f', 2, '06:40:00', NULL);
 
 -- Long Distance Schedule Stops
 INSERT INTO schedule_stop (id, schedule_id, route_stop_id, stop_order, arrival_time, departure_time) VALUES
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefd', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 1, NULL, '06:00:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefe', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 2, '07:00:00', '07:15:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeff', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 3, '09:00:00', '09:30:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef4', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 4, '13:00:00', '13:30:00'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef5', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 5, '18:00:00', NULL);
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefd', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 0, NULL, '06:00:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeefe', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 1, '07:00:00', '07:15:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeff', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 2, '09:00:00', '09:30:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef4', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 3, '13:00:00', '13:30:00'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeef5', 'cccccccc-cccc-cccc-cccc-ccccccccccc1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 4, '18:00:00', NULL);
 
 -- Eastern Route Schedule Stops
 INSERT INTO schedule_stop (id, schedule_id, route_stop_id, stop_order, arrival_time, departure_time) VALUES
-('fff00000-0000-0000-0000-000000000001', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', 1, NULL, '08:00:00'),
-('fff00000-0000-0000-0000-000000000002', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', 2, '10:00:00', '10:30:00'),
-('fff00000-0000-0000-0000-000000000003', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8', 3, '13:30:00', '14:00:00'),
-('fff00000-0000-0000-0000-000000000004', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa9', 4, '16:00:00', NULL);
+('fff00000-0000-0000-0000-000000000001', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', 0, NULL, '08:00:00'),
+('fff00000-0000-0000-0000-000000000002', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', 1, '10:00:00', '10:30:00'),
+('fff00000-0000-0000-0000-000000000003', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8', 2, '13:30:00', '14:00:00'),
+('fff00000-0000-0000-0000-000000000004', 'cccccccc-cccc-cccc-cccc-ccccccccccc2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa9', 3, '16:00:00', NULL);
 
 -- ============================================================================
 -- 12. SCHEDULE EXCEPTIONS - Special Cases

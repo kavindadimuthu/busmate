@@ -3,6 +3,7 @@ package com.busmate.routeschedule.controller;
 import com.busmate.routeschedule.dto.request.StopRequest;
 import com.busmate.routeschedule.dto.request.StopExportRequest;
 import com.busmate.routeschedule.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.dto.response.RouteGroupStopDetailResponse;
 import com.busmate.routeschedule.dto.response.ScheduleStopDetailResponse;
 import com.busmate.routeschedule.dto.response.StopResponse;
 import com.busmate.routeschedule.dto.response.StopExistsResponse;
@@ -259,6 +260,25 @@ public class StopController {
             @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID routeId) {
         List<RouteStopDetailResponse> responses = stopService.getStopsByRoute(routeId);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/route-group/{routeGroupId}")
+    @Operation(
+        summary = "Get stops for all routes in a route group", 
+        description = "Retrieve all stops for all routes within a specific route group, ordered by route name and stop order. " +
+                     "Each stop includes both stop details and route information to distinguish stops across different routes.",
+        operationId = "getStopsByRouteGroup"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Route group stops retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Route group not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid route group ID format")
+    })
+    public ResponseEntity<List<RouteGroupStopDetailResponse>> getStopsByRouteGroup(
+            @Parameter(description = "Route Group ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID routeGroupId) {
+        List<RouteGroupStopDetailResponse> responses = stopService.getStopsByRouteGroup(routeGroupId);
         return ResponseEntity.ok(responses);
     }
 

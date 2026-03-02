@@ -123,7 +123,7 @@ public class ScheduleRequest {
 
         @JsonFormat(pattern = "HH:mm:ss")
         @Schema(
-            description = "Time when bus arrives at this stop (24-hour format HH:mm:ss)", 
+            description = "Time when bus arrives at this stop - verified (24-hour format HH:mm:ss)", 
             type = "string", 
             pattern = "HH:mm:ss", 
             example = "10:30:00"
@@ -132,11 +132,59 @@ public class ScheduleRequest {
 
         @JsonFormat(pattern = "HH:mm:ss")
         @Schema(
-            description = "Time when bus departs from this stop (24-hour format HH:mm:ss). Must be >= arrivalTime", 
+            description = "Time when bus departs from this stop - verified (24-hour format HH:mm:ss). Must be >= arrivalTime", 
             type = "string", 
             pattern = "HH:mm:ss", 
             example = "10:35:00"
         )
         private LocalTime departureTime;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(
+            description = "Unverified arrival time from experienced users (24-hour format HH:mm:ss)", 
+            type = "string", 
+            pattern = "HH:mm:ss", 
+            example = "10:32:00"
+        )
+        private LocalTime arrivalTimeUnverified;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(
+            description = "Unverified departure time from experienced users (24-hour format HH:mm:ss)", 
+            type = "string", 
+            pattern = "HH:mm:ss", 
+            example = "10:37:00"
+        )
+        private LocalTime departureTimeUnverified;
+        
+        @Schema(
+            description = "Username who provided unverified arrival time (auto-set from authentication if not provided)", 
+            example = "experienced_user@busmate.lk"
+        )
+        private String arrivalTimeUnverifiedBy;
+        
+        @Schema(
+            description = "Username who provided unverified departure time (auto-set from authentication if not provided)", 
+            example = "experienced_user@busmate.lk"
+        )
+        private String departureTimeUnverifiedBy;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(
+            description = "Optional calculated arrival time. If not provided, will be auto-calculated by database trigger", 
+            type = "string", 
+            pattern = "HH:mm:ss", 
+            example = "10:31:30"
+        )
+        private LocalTime arrivalTimeCalculated;
+        
+        @JsonFormat(pattern = "HH:mm:ss")
+        @Schema(
+            description = "Optional calculated departure time. If not provided, will be auto-calculated by database trigger", 
+            type = "string", 
+            pattern = "HH:mm:ss", 
+            example = "10:36:30"
+        )
+        private LocalTime departureTimeCalculated;
     }
 }

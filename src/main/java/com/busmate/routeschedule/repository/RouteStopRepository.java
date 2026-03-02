@@ -38,4 +38,14 @@ public interface RouteStopRepository extends JpaRepository<RouteStop, UUID> {
            "JOIN FETCH rs.stop s " +
            "WHERE rs.route.id = :routeId AND rs.stop.id = :stopId")
     Optional<RouteStop> findByRouteIdAndStopId(@Param("routeId") UUID routeId, @Param("stopId") UUID stopId);
+    
+    /**
+     * Find all RouteStop entries for a given route group ID with route and stop details
+     */
+    @Query("SELECT rs FROM RouteStop rs " +
+           "JOIN FETCH rs.route r " +
+           "JOIN FETCH rs.stop s " +
+           "WHERE r.routeGroup.id = :routeGroupId " +
+           "ORDER BY r.name ASC, rs.stopOrder ASC")
+    List<RouteStop> findByRouteGroupIdOrderByRouteAndStopOrder(@Param("routeGroupId") UUID routeGroupId);
 }
