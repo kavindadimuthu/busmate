@@ -1,10 +1,11 @@
 package com.busmate.routeschedule.controller;
 
-import com.busmate.routeschedule.dto.response.passenger.PassengerTripResponse;
-import com.busmate.routeschedule.dto.response.passenger.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.controller.PassengerController;
+import com.busmate.routeschedule.passenger.dto.response.PassengerTripResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
 import com.busmate.routeschedule.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.enums.TripStatusEnum;
-import com.busmate.routeschedule.service.passenger.PassengerTripService;
+import com.busmate.routeschedule.passenger.service.PassengerTripService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
