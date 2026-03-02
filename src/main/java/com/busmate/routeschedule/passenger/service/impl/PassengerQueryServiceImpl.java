@@ -1,7 +1,34 @@
 package com.busmate.routeschedule.passenger.service.impl;
 
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.busmate.routeschedule.dto.common.LocationDto;
-import com.busmate.routeschedule.entity.*;
+import com.busmate.routeschedule.entity.Bus;
+import com.busmate.routeschedule.entity.Operator;
+import com.busmate.routeschedule.entity.PassengerServicePermit;
+import com.busmate.routeschedule.entity.Route;
+import com.busmate.routeschedule.entity.RouteGroup;
+import com.busmate.routeschedule.entity.Schedule;
+import com.busmate.routeschedule.entity.ScheduleCalendar;
+import com.busmate.routeschedule.entity.Stop;
+import com.busmate.routeschedule.entity.Trip;
 import com.busmate.routeschedule.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.enums.TimeSourceEnum;
 import com.busmate.routeschedule.passenger.dto.projection.FindMyBusProjection;
@@ -9,25 +36,30 @@ import com.busmate.routeschedule.passenger.dto.projection.ScheduleStopDetailsPro
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse;
-import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.*;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.BusInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.JourneySummary;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.OperatorInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.PspInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.RouteDetails;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.RouteGroupInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.RouteScheduleStop;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.ScheduleCalendarInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.ScheduleDetails;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.ScheduleExceptionInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.StopInfo;
+import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse.TripDetails;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse.BusResult;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerStopResponse;
 import com.busmate.routeschedule.passenger.repository.PassengerQueryRepository;
 import com.busmate.routeschedule.passenger.service.PassengerQueryService;
 import com.busmate.routeschedule.repository.ScheduleRepository;
 import com.busmate.routeschedule.repository.StopRepository;
 import com.busmate.routeschedule.repository.TripRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of PassengerQueryService for Find My Bus API.
@@ -939,5 +971,91 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .arrivalTimeSource(arrival.source)
                 .estimatedDurationMinutes(durationMinutes)
                 .build();
+    }
+
+    // ================================
+    // STOP SEARCH
+    // ================================
+
+    @Override
+    public PassengerPaginatedResponse<PassengerStopResponse> searchStops(
+            String name, String city, String searchText, Boolean accessibleOnly,
+            Integer page, Integer size) {
+
+        log.info("Searching stops: name={}, city={}, searchText={}, accessibleOnly={}",
+                name, city, searchText, accessibleOnly);
+
+        Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
+        String query = searchText != null ? searchText : name;
+
+        List<Stop> allStops = stopRepository.findAll();
+
+        List<Stop> filteredStops = allStops.stream()
+                .filter(stop -> stopMatchesSearchCriteria(stop, query, city, accessibleOnly))
+                .collect(Collectors.toList());
+
+        int start = Math.min((int) pageable.getOffset(), filteredStops.size());
+        int end = Math.min(start + pageable.getPageSize(), filteredStops.size());
+        List<PassengerStopResponse> stopResponses = filteredStops.subList(start, end).stream()
+                .map(this::toPassengerStopResponse)
+                .collect(Collectors.toList());
+
+        Page<PassengerStopResponse> stopPage = new PageImpl<>(stopResponses, pageable, filteredStops.size());
+
+        return PassengerPaginatedResponse.<PassengerStopResponse>builder()
+                .content(stopResponses)
+                .currentPage(stopPage.getNumber())
+                .size(stopPage.getSize())
+                .totalElements(stopPage.getTotalElements())
+                .totalPages(stopPage.getTotalPages())
+                .first(stopPage.isFirst())
+                .last(stopPage.isLast())
+                .hasNext(stopPage.hasNext())
+                .hasPrevious(stopPage.hasPrevious())
+                .build();
+    }
+
+    private boolean stopMatchesSearchCriteria(Stop stop, String query, String city, Boolean accessibleOnly) {
+        if (query != null && !query.trim().isEmpty()) {
+            String queryLower = query.toLowerCase();
+            boolean matchesName = stop.getName().toLowerCase().contains(queryLower);
+            boolean matchesDesc = stop.getDescription() != null
+                    && stop.getDescription().toLowerCase().contains(queryLower);
+            if (!matchesName && !matchesDesc) {
+                return false;
+            }
+        }
+        if (city != null && stop.getLocation() != null) {
+            if (!city.equalsIgnoreCase(stop.getLocation().getCity())) {
+                return false;
+            }
+        }
+        if (accessibleOnly != null && !accessibleOnly.equals(stop.getIsAccessible())) {
+            return false;
+        }
+        return true;
+    }
+
+    private PassengerStopResponse toPassengerStopResponse(Stop stop) {
+        PassengerStopResponse.PassengerStopResponseBuilder builder = PassengerStopResponse.builder()
+                .stopId(stop.getId())
+                .name(stop.getName())
+                .description(stop.getDescription())
+                .isAccessible(stop.getIsAccessible() != null ? stop.getIsAccessible() : false);
+
+        if (stop.getLocation() != null) {
+            LocationDto location = new LocationDto();
+            location.setLatitude(stop.getLocation().getLatitude());
+            location.setLongitude(stop.getLocation().getLongitude());
+            location.setAddress(stop.getLocation().getAddress());
+            location.setCity(stop.getLocation().getCity());
+            location.setState(stop.getLocation().getState());
+            location.setZipCode(stop.getLocation().getZipCode());
+            location.setCountry(stop.getLocation().getCountry());
+            builder.location(location);
+            builder.city(stop.getLocation().getCity());
+        }
+
+        return builder.build();
     }
 }

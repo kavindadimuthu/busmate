@@ -4,6 +4,8 @@ import com.busmate.routeschedule.passenger.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerStopResponse;
 
 /**
  * Service interface for passenger query operations.
@@ -55,4 +57,20 @@ public interface PassengerQueryService {
      * @return Comprehensive schedule/trip details with all timing information
      */
     FindMyBusDetailsResponse findMyBusDetails(FindMyBusDetailsRequest request);
+
+    /**
+     * Search bus stops by name, city, or text.
+     * Used for autocomplete and stop selection in the passenger search form.
+     *
+     * @param name          Stop name or partial name
+     * @param city          City name filter
+     * @param searchText    General search text (takes priority over name)
+     * @param accessibleOnly Filter to accessible stops only
+     * @param page          Page number (0-based)
+     * @param size          Page size
+     * @return Paginated list of matching stops
+     */
+    PassengerPaginatedResponse<PassengerStopResponse> searchStops(
+            String name, String city, String searchText, Boolean accessibleOnly,
+            Integer page, Integer size);
 }

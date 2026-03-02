@@ -1,27 +1,37 @@
 package com.busmate.routeschedule.passenger.controller;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.UUID;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.busmate.routeschedule.enums.RoadTypeEnum;
+import com.busmate.routeschedule.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusResponse;
-import com.busmate.routeschedule.enums.RoadTypeEnum;
-import com.busmate.routeschedule.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.passenger.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passenger.dto.response.PassengerStopResponse;
 import com.busmate.routeschedule.passenger.service.PassengerQueryService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.UUID;
 
 /**
  * Controller for passenger query APIs.
@@ -31,6 +41,7 @@ import java.util.UUID;
 @RequestMapping("/api/passenger")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 @Tag(name = "10. Passenger Query", description = "APIs for passengers to query bus and route information")
 public class PassengerQueryController {
 
@@ -201,5 +212,47 @@ public class PassengerQueryController {
                 response.isSuccess(), response.getSchedule() != null ? response.getSchedule().getName() : "N/A");
         
         return ResponseEntity.ok(response);
+    }
+
+    // ================================
+    // STOP SEARCH
+    // ================================
+
+    @GetMapping("/query/stops/search")
+    @Operation(
+        summary = "Search bus stops",
+        description = "Search for bus stops by name, city, or general text. Used for autocomplete and stop selection when planning a journey.",
+        operationId = "searchStops"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Stops found successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters")
+    })
+    public ResponseEntity<PassengerPaginatedResponse<PassengerStopResponse>> searchStops(
+            @Parameter(description = "Stop name or partial name", example = "Central")
+            @RequestParam(required = false) String name,
+
+            @Parameter(description = "City name filter", example = "Colombo")
+            @RequestParam(required = false) String city,
+
+            @Parameter(description = "General search text (overrides name if provided)", example = "Main Station")
+            @RequestParam(required = false) String searchText,
+
+            @Parameter(description = "Return only wheelchair-accessible stops", example = "true")
+            @RequestParam(required = false) Boolean accessibleOnly,
+
+            @Parameter(description = "Page number (0-based)", example = "0")
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+
+            @Parameter(description = "Page size (max 100)", example = "20")
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size) {
+
+        log.info("Search stops: name={}, city={}, searchText={}, accessibleOnly={}, page={}, size={}",
+                name, city, searchText, accessibleOnly, page, size);
+
+        PassengerPaginatedResponse<PassengerStopResponse> stops =
+                passengerQueryService.searchStops(name, city, searchText, accessibleOnly, page, size);
+
+        return ResponseEntity.ok(stops);
     }
 }
