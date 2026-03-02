@@ -1,0 +1,106 @@
+{
+  "name": "management-portal",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "root": "apps/frontend/management-portal",
+  "sourceRoot": "apps/frontend/management-portal/src",
+  "tags": ["scope:frontend", "type:app", "framework:next", "lang:typescript"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next dev",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next build",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/.next"],
+      "inputs": ["production", "^production"],
+      "cache": true
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next start --port 5000",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next lint",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "analyze": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/analyze-codebase.js",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "generate:api-route:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx openapi-typescript-codegen --input http://localhost:8080/v3/api-docs --output ./generated/api-clients/route-management",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "generate:api-ticketing:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx openapi-typescript-codegen --input http://localhost:8083/v3/api-docs --output ./generated/api-clients/ticketing-management",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "generate:api-location:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx openapi-typescript-codegen --input http://localhost:4000/api-spec --output ./generated/api-clients/location-tracking",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "db:schema": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make db-schema",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "db:reference": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make db-reference",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "db:backup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make db-backup",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "db:all": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make db-all",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "busmate",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.26.1",
+  "scripts": {
+    "dev:management-portal": "nx dev management-portal",
+    "dev:passenger-web": "nx dev passenger-web",
+    "build": "nx run-many -t build",
+    "build:management-portal": "nx build management-portal",
+    "build:passenger-web": "nx build passenger-web",
+    "build:api-core": "nx build api-core",
+    "serve:api-core": "nx serve api-core",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "affected:build": "nx affected -t build",
+    "affected:test": "nx affected -t test",
+    "affected:lint": "nx affected -t lint",
+    "graph": "nx graph",
+    "nx": "nx"
+  },
+  "devDependencies": {
+    "nx": "^21.0.0"
+  },
+  "pnpm": {
+    "overrides": {}
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  }
+}

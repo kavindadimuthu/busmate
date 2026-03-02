@@ -1,5 +1,5 @@
 {
-  "name": "busmate",
+  "name": "@busmate/management-portal",
   "version": "0.1.0",
   "private": true,
   "scripts": {
