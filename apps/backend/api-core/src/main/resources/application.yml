@@ -1,0 +1,154 @@
+spring:
+  datasource:
+    # Change from direct connection to transaction pooler with optimized settings
+
+    # DB 1 - for production (dasunperera002@gmail.com)
+    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?connectTimeout=10&socketTimeout=30&loginTimeout=10&prepareThreshold=0&preparedStatementCacheQueries=0&reWriteBatchedInserts=true&tcpKeepAlive=true&autoCommit=false
+    username: postgres.bixiyzllxffxqwutthmk
+    password: root
+
+    # DB 2 - for testing (kavindadimuthupc@gmail.com)
+    # url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?connectTimeout=10&socketTimeout=30&loginTimeout=10&prepareThreshold=0&preparedStatementCacheQueries=0&reWriteBatchedInserts=true&tcpKeepAlive=true
+    # username: postgres.viplrebpmygqlvruxucp
+    # password: LbGZQCRaSBblXaS7
+
+    # DB 3 - Local (for local testing)
+    # url: jdbc:postgresql://localhost:5432/sample?assumeMinServerVersion=9.4
+    # username: kavinda
+    # password: root
+
+    # DB 4 - Alternative aws rds
+    # url: jdbc:postgresql://database-1.cjsy2ky4qv53.ap-southeast-1.rds.amazonaws.com:5432/busmateroute
+    # username: postgres
+    # password: wZ6NUc2csD9HE6TJps6r
+
+    driver-class-name: org.postgresql.Driver
+    
+    # HikariCP Connection Pool Configuration for Supabase
+    hikari:
+      # Connection pool sizing - conservative for pooler
+      minimum-idle: 2
+      maximum-pool-size: 8
+      
+      # Connection timeout settings
+      connection-timeout: 15000          # 15 seconds to get connection from pool
+      idle-timeout: 300000              # 5 minutes idle before eviction
+      max-lifetime: 900000              # 15 minutes max connection age
+      
+      # Validation and keep-alive
+      validation-timeout: 5000          # 5 seconds for connection validation
+      connection-test-query: SELECT 1   # Simple query to validate connections
+      leak-detection-threshold: 60000   # 1 minute leak detection
+      
+      # Pool behavior for intermittent connectivity
+      initialization-fail-timeout: 30000 # 30 seconds to retry failed initialization
+      
+      # Connection pool name for logging
+      pool-name: BusMateHikariPool
+      
+      # Important: Disable auto-commit for transaction management
+      auto-commit: false
+      
+    # platform: postgresql
+  jpa:
+    hibernate:
+      # Change to update to avoid connection issues on startup
+      ddl-auto: update
+      # ddl-auto: create  # Only use during development reset
+    show-sql: false  # SQL logging disabled
+    properties:
+      hibernate:
+        format_sql: false  # Reduce logging overhead
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+        # Connection and transaction optimization
+        jdbc:
+          # Note: time_zone removed - LocalTime fields are timezone-agnostic
+          # Setting time_zone: UTC caused 5h30m offset with Asia/Colombo JVM timezone
+          batch_size: 25
+          batch_versioned_data: true
+        
+        # Query optimization for pooled connections
+        connection:
+          provider_disables_autocommit: true
+          
+        # Statement caching
+        query:
+          plan_cache_max_size: 128
+          
+    defer-datasource-initialization: true
+    
+    # Database initialization mode
+    database-platform: postgresql
+  sql:
+    init:
+      # Set to never to avoid connection issues during SQL execution
+      mode: never  # Disable to avoid duplicate data and connection issues
+      # mode: always  # Only enable when needed for fresh data load
+      continue-on-error: true  # Continue if some SQL statements fail 
+  profiles:
+    active: dev  # Enable production profile for Swagger UI testing
+
+server:
+  port: 8080
+
+supabase:
+  api:
+    key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg
+  auth:
+    url: https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1
+  jwt:
+    secret: v7dyiu735nxybSzPS41oWmOtOLwZyaJOApdGaFqWpTNGYkmL7yWP6fnKPG2FWSxr5AB5kSdFiRiT78YcB7vT5w==
+
+logging:
+  level:
+    com.busmate.routeschedule: INFO  # Reduce debug logging
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: DEBUG  # Enable HikariCP logging for monitoring
+    org.springframework.jdbc: WARN
+    org.postgresql: WARN
+    
+  # Configure connection pool logging
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,hikaricp
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    hikaricp:
+      enabled: true  # Enable HikariCP metrics endpoint
+  health:
+    db:
+      enabled: true
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+# Connection retry and resilience configuration
+resilience4j:
+  retry:
+    instances:
+      database:
+        max-attempts: 3
+        wait-duration: 2s
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.net.SocketTimeoutException
+          - org.postgresql.util.PSQLException
+          - org.springframework.dao.DataAccessResourceFailureException
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: operationId
+  show-actuator: false

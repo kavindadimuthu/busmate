@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test_routes
+    username: kavinda
+    password: root
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always # Load data.sql for test data initialization
+
+  # Disable security for basic tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+server:
+  port: 0 # Use random port for testing
+
+# Test-specific configurations
+logging:
+  level:
+    com.busmate.routeschedule: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    
+# Disable Swagger in tests
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
