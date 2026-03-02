@@ -1,12 +1,13 @@
 package com.busmate.routeschedule.passenger.dto.request;
 
-import com.busmate.routeschedule.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.common.enums.TimePreferenceEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import com.busmate.routeschedule.schedule.entity.Schedule;
 
 /**
  * Request for Find My Bus Details API.

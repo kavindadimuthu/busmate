@@ -1,7 +1,7 @@
 package com.busmate.routeschedule.passenger.dto.request;
 
-import com.busmate.routeschedule.enums.RoadTypeEnum;
-import com.busmate.routeschedule.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.route.enums.RoadTypeEnum;
+import com.busmate.routeschedule.common.enums.TimePreferenceEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

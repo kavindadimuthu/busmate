@@ -1,8 +1,8 @@
 package com.busmate.routeschedule.passenger.dto.response;
 
-import com.busmate.routeschedule.dto.common.LocationDto;
-import com.busmate.routeschedule.enums.TimePreferenceEnum;
-import com.busmate.routeschedule.enums.TimeSourceEnum;
+import com.busmate.routeschedule.common.dto.LocationDto;
+import com.busmate.routeschedule.common.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.common.enums.TimeSourceEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -14,6 +14,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
+import com.busmate.routeschedule.bus.entity.Bus;
+import com.busmate.routeschedule.operator.entity.Operator;
+import com.busmate.routeschedule.route.entity.Route;
+import com.busmate.routeschedule.schedule.entity.Schedule;
+import com.busmate.routeschedule.stop.entity.Stop;
+import com.busmate.routeschedule.trip.entity.Trip;
 
 /**
  * Response for Find My Bus API.

@@ -11,6 +11,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
+import com.busmate.routeschedule.bus.entity.Bus;
+import com.busmate.routeschedule.operator.entity.Operator;
+import com.busmate.routeschedule.route.entity.Route;
+import com.busmate.routeschedule.schedule.entity.Schedule;
+import com.busmate.routeschedule.stop.entity.Stop;
+import com.busmate.routeschedule.trip.entity.Trip;
 
 /**
  * Repository for optimized passenger query operations.
@@ -22,7 +28,7 @@ import java.util.UUID;
  * - Calculated times (system-generated)
  */
 @Repository
-public interface PassengerQueryRepository extends JpaRepository<com.busmate.routeschedule.entity.Route, UUID> {
+public interface PassengerQueryRepository extends JpaRepository<com.busmate.routeschedule.route.entity.Route, UUID> {
     
     /**
      * Find buses between two stops with a single optimized query.

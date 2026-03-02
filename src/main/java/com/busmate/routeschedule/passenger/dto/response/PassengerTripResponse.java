@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.Builder;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import com.busmate.routeschedule.dto.common.LocationDto;
+import com.busmate.routeschedule.common.dto.LocationDto;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;

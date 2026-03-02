@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.busmate.routeschedule.enums.RoadTypeEnum;
-import com.busmate.routeschedule.enums.TimePreferenceEnum;
+import com.busmate.routeschedule.route.enums.RoadTypeEnum;
+import com.busmate.routeschedule.common.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passenger.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passenger.dto.response.FindMyBusDetailsResponse;
@@ -32,6 +32,11 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.busmate.routeschedule.bus.entity.Bus;
+import com.busmate.routeschedule.route.entity.Route;
+import com.busmate.routeschedule.schedule.entity.Schedule;
+import com.busmate.routeschedule.stop.entity.Stop;
+import com.busmate.routeschedule.trip.entity.Trip;
 
 /**
  * Controller for passenger query APIs.
