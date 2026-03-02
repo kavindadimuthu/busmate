@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.operations.dto.projection;
+package com.busmate.routeschedule.passengerinfo.dto.projection;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

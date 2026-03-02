@@ -1,11 +1,11 @@
-package com.busmate.routeschedule.operations.service;
+package com.busmate.routeschedule.passengerinfo.service;
 
-import com.busmate.routeschedule.operations.dto.request.FindMyBusDetailsRequest;
-import com.busmate.routeschedule.operations.dto.request.FindMyBusRequest;
-import com.busmate.routeschedule.operations.dto.response.FindMyBusDetailsResponse;
-import com.busmate.routeschedule.operations.dto.response.FindMyBusResponse;
-import com.busmate.routeschedule.operations.dto.response.PassengerPaginatedResponse;
-import com.busmate.routeschedule.operations.dto.response.PassengerStopResponse;
+import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusDetailsRequest;
+import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.PassengerStopResponse;
 
 /**
  * Service interface for passenger query operations.

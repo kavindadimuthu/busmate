@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.operations.dto.request;
+package com.busmate.routeschedule.passengerinfo.dto.request;
 
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;
 import io.swagger.v3.oas.annotations.media.Schema;

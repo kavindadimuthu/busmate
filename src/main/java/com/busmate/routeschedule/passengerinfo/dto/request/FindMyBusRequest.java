@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.operations.dto.request;
+package com.busmate.routeschedule.passengerinfo.dto.request;
 
 import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;

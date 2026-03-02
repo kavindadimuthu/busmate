@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.operations.controller;
+package com.busmate.routeschedule.passengerinfo.controller;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;
-import com.busmate.routeschedule.operations.dto.request.FindMyBusDetailsRequest;
-import com.busmate.routeschedule.operations.dto.request.FindMyBusRequest;
-import com.busmate.routeschedule.operations.dto.response.FindMyBusDetailsResponse;
-import com.busmate.routeschedule.operations.dto.response.FindMyBusResponse;
-import com.busmate.routeschedule.operations.dto.response.PassengerPaginatedResponse;
-import com.busmate.routeschedule.operations.dto.response.PassengerStopResponse;
-import com.busmate.routeschedule.operations.service.PassengerQueryService;
+import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusDetailsRequest;
+import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusRequest;
+import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.PassengerPaginatedResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.PassengerStopResponse;
+import com.busmate.routeschedule.passengerinfo.service.PassengerQueryService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

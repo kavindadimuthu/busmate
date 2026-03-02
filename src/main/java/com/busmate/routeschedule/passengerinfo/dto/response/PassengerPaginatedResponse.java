@@ -1,4 +1,4 @@
-package com.busmate.routeschedule.operations.dto.response;
+package com.busmate.routeschedule.passengerinfo.dto.response;
 
 import lombok.Data;
 import lombok.Builder;

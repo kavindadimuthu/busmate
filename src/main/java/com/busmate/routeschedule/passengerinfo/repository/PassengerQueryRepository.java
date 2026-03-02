@@ -1,7 +1,7 @@
-package com.busmate.routeschedule.operations.repository;
+package com.busmate.routeschedule.passengerinfo.repository;
 
-import com.busmate.routeschedule.operations.dto.projection.FindMyBusProjection;
-import com.busmate.routeschedule.operations.dto.projection.ScheduleStopDetailsProjection;
+import com.busmate.routeschedule.passengerinfo.dto.projection.FindMyBusProjection;
+import com.busmate.routeschedule.passengerinfo.dto.projection.ScheduleStopDetailsProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
