@@ -6,7 +6,7 @@ import {
   Calendar,
   User,
 } from 'lucide-react';
-import type { RouteGroupResponse } from '../../../../../generated/api-clients/route-management';
+import type { RouteGroupResponse } from '@busmate/api-client-route';
 
 // ── Types ─────────────────────────────────────────────────────────
 

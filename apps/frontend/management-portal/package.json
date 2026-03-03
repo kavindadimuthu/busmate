@@ -13,12 +13,7 @@
     "analyze:json": "node scripts/analyze-codebase.js --save --json",
     "analyze:quiet": "node scripts/analyze-codebase.js --save --quiet",
     "analyze-pages:console": "node scripts/analyze-pages.js",
-    "analyze-pages:file": "node scripts/analyze-pages.js --file",
-    "generate:api-route:cloud": "npx openapi-typescript-codegen --input http://18.140.161.237:8080/v3/api-docs  --output ./generated/api-clients/route-management",
-    "generate:api-route:local": "npx openapi-typescript-codegen --input http://localhost:8080/v3/api-docs  --output ./generated/api-clients/route-management",
-    "generate:api-location:local": "npx openapi-typescript-codegen --input http://localhost:4000/api-spec  --output ./generated/api-clients/location-tracking",
-    "generate:api-ticketing:cloud": "npx openapi-typescript-codegen --input http://54.91.217.117:8083/v3/api-docs  --output ./generated/api-clients/ticketing-management",
-    "generate:api-ticketing:local": "npx openapi-typescript-codegen --input http://localhost:8083/v3/api-docs  --output ./generated/api-clients/ticketing-management"
+    "analyze-pages:file": "node scripts/analyze-pages.js --file"
   },
   "dependencies": {
     "@asgardeo/nextjs": "^0.1.81",

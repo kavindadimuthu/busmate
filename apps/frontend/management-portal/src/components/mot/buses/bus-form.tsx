@@ -19,7 +19,7 @@ import type {
   BusResponse, 
   OperatorResponse,
   JsonNode 
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 interface BusFormProps {
   bus?: BusResponse;

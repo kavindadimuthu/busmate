@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { BusStopManagementService } from '../../../../generated/api-clients/route-management';
-import type { StopResponse, PageStopResponse, StopRequest } from '../../../../generated/api-clients/route-management';
+import { BusStopManagementService } from '@busmate/api-client-route';
+import type { StopResponse, PageStopResponse, StopRequest } from '@busmate/api-client-route';
 
 // Components
 import { BusStopStatsCards } from '@/components/mot/bus-stops/BusStopStatsCards';

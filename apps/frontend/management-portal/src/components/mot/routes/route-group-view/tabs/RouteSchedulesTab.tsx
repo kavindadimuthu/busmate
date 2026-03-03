@@ -14,11 +14,11 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
-import { ScheduleManagementService } from '../../../../../../generated/api-clients/route-management';
+import { ScheduleManagementService } from '@busmate/api-client-route';
 import type {
   RouteResponse,
   ScheduleResponse,
-} from '../../../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 // ── Types ─────────────────────────────────────────────────────────
 

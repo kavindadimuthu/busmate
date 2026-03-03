@@ -2,3 +2,6 @@ packages:
   # Frontend applications
   - "apps/frontend/management-portal"
   - "apps/frontend/passenger-web"
+
+  # Shared libraries
+  - "libs/api-clients/*"

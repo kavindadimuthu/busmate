@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Calendar, Clock, Plus, Play, RefreshCw, AlertCircle } from 'lucide-react';
 import type { WorkspaceState } from '../TripAssignmentWorkspace';
-import type { ScheduleResponse } from '../../../../../generated/api-clients/route-management/models/ScheduleResponse';
+import type { ScheduleResponse } from '@busmate/api-client-route';
 
 interface PlanningPanelProps {
   workspace: WorkspaceState;

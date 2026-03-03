@@ -14,7 +14,7 @@ import {
   Eye,
   Navigation2,
 } from 'lucide-react';
-import { TripResponse } from '../../../../generated/api-clients/route-management';
+import { TripResponse } from '@busmate/api-client-route';
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable';
 
 // ── Types ─────────────────────────────────────────────────────────

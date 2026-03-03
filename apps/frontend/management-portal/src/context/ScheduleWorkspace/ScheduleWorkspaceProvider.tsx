@@ -31,7 +31,7 @@ import {
   ScheduleRequest,
   ScheduleResponse,
   RouteResponse,
-} from '../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 import {
   serializeSchedulesToYaml,
   parseSchedulesFromYaml,

@@ -20,7 +20,7 @@ import type {
   OperatorResponse, 
   RouteGroupResponse,
   BusResponse 
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 interface DeletePermitModalProps {
   isOpen: boolean;

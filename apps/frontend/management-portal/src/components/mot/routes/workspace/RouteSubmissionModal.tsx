@@ -9,7 +9,7 @@ import {
   applyBulkSearchResultsToRouteStops,
   BulkStopExistenceSearchResult 
 } from '@/services/routeWorkspaceValidation';
-import { BusStopManagementService, StopRequest, RouteManagementService, RouteGroupRequest, RouteRequest } from '../../../../../generated/api-clients/route-management';
+import { BusStopManagementService, StopRequest, RouteManagementService, RouteGroupRequest, RouteRequest } from '@busmate/api-client-route';
 import { 
   RouteGroup, 
   Route, 

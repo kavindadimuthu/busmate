@@ -1,0 +1,7 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/libs/api-clients/user-management"
+  },
+  "include": ["src/**/*.ts"]
+}

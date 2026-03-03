@@ -12,11 +12,11 @@ import {
   RouteTabsEmpty,
 } from '@/components/mot/routes/route-group-view';
 import DeleteRouteConfirmation from '@/components/mot/routes/DeleteRouteConfirmation';
-import { RouteManagementService } from '../../../../../../generated/api-clients/route-management';
+import { RouteManagementService } from '@busmate/api-client-route';
 import type {
   RouteGroupResponse,
   RouteResponse,
-} from '../../../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 // ── Component ─────────────────────────────────────────────────────
 

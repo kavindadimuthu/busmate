@@ -14,7 +14,7 @@ import {
   User,
   Calendar
 } from 'lucide-react';
-import type { TripResponse } from '../../../../../generated/api-clients/route-management/models/TripResponse';
+import type { TripResponse } from '@busmate/api-client-route';
 
 interface TripStatusTabProps {
   trip: TripResponse;

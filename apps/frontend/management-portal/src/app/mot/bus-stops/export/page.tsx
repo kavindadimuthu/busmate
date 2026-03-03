@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { BusStopManagementService } from '../../../../../generated/api-clients/route-management';
-import type { StopFilterOptionsResponse } from '../../../../../generated/api-clients/route-management';
+import { BusStopManagementService } from '@busmate/api-client-route';
+import type { StopFilterOptionsResponse } from '@busmate/api-client-route';
 import { 
   Download, 
   ArrowLeft, 

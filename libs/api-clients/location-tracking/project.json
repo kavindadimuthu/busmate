@@ -1,0 +1,45 @@
+{
+  "name": "api-client-location",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/api-clients/location-tracking/src",
+  "tags": ["scope:shared", "type:lib", "lang:typescript"],
+  "targets": {
+    "generate:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx openapi-typescript-codegen --input http://localhost:4000/api-spec --output libs/api-clients/location-tracking/src",
+          "node scripts/post-generate-api-client.mjs libs/api-clients/location-tracking/src/core/OpenAPI.ts"
+        ],
+        "parallel": false
+      }
+    },
+    "generate:cloud": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx openapi-typescript-codegen --input https://location-tracking-service-production.up.railway.app/api-spec --output libs/api-clients/location-tracking/src",
+          "node scripts/post-generate-api-client.mjs libs/api-clients/location-tracking/src/core/OpenAPI.ts"
+        ],
+        "parallel": false
+      }
+    },
+    "generate:spec": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx openapi-typescript-codegen --input libs/api-clients/location-tracking/specs/openapi.json --output libs/api-clients/location-tracking/src",
+          "node scripts/post-generate-api-client.mjs libs/api-clients/location-tracking/src/core/OpenAPI.ts"
+        ],
+        "parallel": false
+      }
+    },
+    "fetch-spec:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mkdir -p libs/api-clients/location-tracking/specs && curl -s http://localhost:4000/api-spec -o libs/api-clients/location-tracking/specs/openapi.json"
+      }
+    }
+  }
+}

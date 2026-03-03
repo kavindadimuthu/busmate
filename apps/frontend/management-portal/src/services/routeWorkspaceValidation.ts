@@ -5,7 +5,7 @@
  * in the Route Workspace, including stop existence checks against the backend.
  */
 
-import { BusStopManagementService } from "../../generated/api-clients/route-management";
+import { BusStopManagementService } from '@busmate/api-client-route';
 import { Stop, RouteStop, Location, StopExistenceType } from "@/types/RouteWorkspaceData";
 
 // ============================================================================

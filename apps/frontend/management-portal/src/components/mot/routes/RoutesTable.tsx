@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { Navigation, Route as RouteIcon, MapPin, Eye, Edit2, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/shared/DataTable';
 import type { DataTableColumn } from '@/components/shared/DataTable';
-import type { RouteResponse } from '../../../../generated/api-clients/route-management';
+import type { RouteResponse } from '@busmate/api-client-route';
 
 // ── Types ─────────────────────────────────────────────────────────
 

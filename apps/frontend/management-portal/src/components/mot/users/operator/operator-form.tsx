@@ -13,7 +13,7 @@ import {
   User,
   Activity,
 } from 'lucide-react';
-import { OperatorRequest, OperatorResponse, OperatorManagementService } from '../../../../../generated/api-clients/route-management';
+import { OperatorRequest, OperatorResponse, OperatorManagementService } from '@busmate/api-client-route';
 
 interface OperatorFormProps {
   operatorId?: string;

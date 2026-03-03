@@ -19,7 +19,7 @@ import {
   StopResponse,
   RouteManagementService,
   BusStopManagementService 
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 import { ScheduleBasicForm } from './ScheduleBasicForm';
 import { ScheduleCalendarForm } from './ScheduleCalendarForm';
 import { ScheduleStopsForm } from './ScheduleStopsForm';

@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { RouteForm, type RouteGroupFormData } from '@/components/mot/routes/route-form/RouteForm';
-import { RouteManagementService } from '../../../../../../../generated/api-clients/route-management';
-import type { RouteGroupRequest, RouteGroupResponse } from '../../../../../../../generated/api-clients/route-management';
+import { RouteManagementService } from '@busmate/api-client-route';
+import type { RouteGroupRequest, RouteGroupResponse } from '@busmate/api-client-route';
 
 export default function EditRouteGroupPage() {
   const router = useRouter();

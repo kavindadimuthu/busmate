@@ -1,7 +1,7 @@
 'use client';
 
 import { Bus, User, Building2, Calendar, MapPin, Settings, ExternalLink } from 'lucide-react';
-import type { BusResponse, OperatorResponse } from '../../../../generated/api-clients/route-management';
+import type { BusResponse, OperatorResponse } from '@busmate/api-client-route';
 
 interface BusSummaryProps {
   bus: BusResponse;

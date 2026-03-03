@@ -5,14 +5,18 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { TripOverview } from '@/components/mot/trip-details/TripOverview';
 import { TripTabsSection } from '@/components/mot/trip-details/TripTabsSection';
-import { TripManagementService } from '../../../../../generated/api-clients/route-management/services/TripManagementService';
-import { RouteManagementService } from '../../../../../generated/api-clients/route-management/services/RouteManagementService';
-import { ScheduleManagementService } from '../../../../../generated/api-clients/route-management/services/ScheduleManagementService';
-import { PermitManagementService } from '../../../../../generated/api-clients/route-management/services/PermitManagementService';
-import type { TripResponse } from '../../../../../generated/api-clients/route-management/models/TripResponse';
-import type { RouteResponse } from '../../../../../generated/api-clients/route-management/models/RouteResponse';
-import type { ScheduleResponse } from '../../../../../generated/api-clients/route-management/models/ScheduleResponse';
-import type { PassengerServicePermitResponse } from '../../../../../generated/api-clients/route-management/models/PassengerServicePermitResponse';
+import {
+  TripManagementService,
+  RouteManagementService,
+  ScheduleManagementService,
+  PermitManagementService,
+} from '@busmate/api-client-route';
+import type {
+  TripResponse,
+  RouteResponse,
+  ScheduleResponse,
+  PassengerServicePermitResponse,
+} from '@busmate/api-client-route';
 import { 
   ArrowLeft, 
   RefreshCw, 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Route, Info, Calendar } from 'lucide-react';
-import { RouteResponse, RouteGroupResponse } from '../../../../generated/api-clients/route-management';
+import { RouteResponse, RouteGroupResponse } from '@busmate/api-client-route';
 import { ScheduleFormData } from './ScheduleForm';
 
 interface ScheduleBasicFormProps {

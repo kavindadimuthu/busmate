@@ -10,11 +10,11 @@ import { RouteActionButtons } from '@/components/mot/routes/RouteActionButtons';
 import { RoutesTable } from '@/components/mot/routes/RoutesTable';
 import { RoutePagination } from '@/components/mot/routes/RoutePagination';
 import { DeleteConfirmationModal } from '@/components/mot/confirmation-modals';
-import { RouteManagementService } from '../../../../generated/api-clients/route-management';
+import { RouteManagementService } from '@busmate/api-client-route';
 import type {
   RouteResponse,
   PageRouteResponse,
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 // ── Types ─────────────────────────────────────────────────────────
 

@@ -1,0 +1,7 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/libs/api-clients/ticketing-management"
+  },
+  "include": ["src/**/*.ts"]
+}

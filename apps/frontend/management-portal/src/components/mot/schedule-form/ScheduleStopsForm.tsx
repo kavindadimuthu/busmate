@@ -10,7 +10,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
-import { RouteResponse } from '../../../../generated/api-clients/route-management';
+import { RouteResponse } from '@busmate/api-client-route';
 import { ScheduleFormData } from './ScheduleForm';
 
 interface ScheduleStopsFormProps {

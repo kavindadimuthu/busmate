@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Map, Maximize2, Navigation, MapPin } from 'lucide-react';
-import type { RouteResponse } from '../../../../../../generated/api-clients/route-management';
+import type { RouteResponse } from '@busmate/api-client-route';
 import { RouteMap } from '../../RouteMap';
 import { RouteMapFullscreen } from '../../RouteMapFullscreen';
 

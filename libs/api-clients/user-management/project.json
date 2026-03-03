@@ -1,0 +1,45 @@
+{
+  "name": "api-client-user",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/api-clients/user-management/src",
+  "tags": ["scope:shared", "type:lib", "lang:typescript"],
+  "targets": {
+    "generate:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx openapi-typescript-codegen --input http://localhost:8081/v3/api-docs --output libs/api-clients/user-management/src",
+          "node scripts/post-generate-api-client.mjs libs/api-clients/user-management/src/core/OpenAPI.ts"
+        ],
+        "parallel": false
+      }
+    },
+    "generate:cloud": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx openapi-typescript-codegen --input http://54.91.217.117:8081/v3/api-docs --output libs/api-clients/user-management/src",
+          "node scripts/post-generate-api-client.mjs libs/api-clients/user-management/src/core/OpenAPI.ts"
+        ],
+        "parallel": false
+      }
+    },
+    "generate:spec": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx openapi-typescript-codegen --input libs/api-clients/user-management/specs/openapi.json --output libs/api-clients/user-management/src",
+          "node scripts/post-generate-api-client.mjs libs/api-clients/user-management/src/core/OpenAPI.ts"
+        ],
+        "parallel": false
+      }
+    },
+    "fetch-spec:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mkdir -p libs/api-clients/user-management/specs && curl -s http://localhost:8081/v3/api-docs -o libs/api-clients/user-management/specs/openapi.json"
+      }
+    }
+  }
+}

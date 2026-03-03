@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BusFront, Clock, ArrowRight, Route } from "lucide-react";
-import type { BusResult } from "@/generated/api-client/route-management";
+import type { BusResult } from "@busmate/api-client-route";
 
 interface BusCardProps {
   bus: BusResult;

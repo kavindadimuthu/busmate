@@ -21,7 +21,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { StopResponse, BusStopManagementService } from '../../../../../generated/api-clients/route-management';
+import { StopResponse, BusStopManagementService } from '@busmate/api-client-route';
 import { useToast } from '@/hooks/use-toast';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import DeleteBusStopModal from '@/components/mot/bus-stops/DeleteBusStopModal';

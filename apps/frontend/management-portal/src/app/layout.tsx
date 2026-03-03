@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {AsgardeoProvider} from '@asgardeo/nextjs/server';
+import ApiSetup from '@/components/ApiSetup';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased font-sans">
+        <ApiSetup />
         <AsgardeoProvider
           preferences={{
             theme: {

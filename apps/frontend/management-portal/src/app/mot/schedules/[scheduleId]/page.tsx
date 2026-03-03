@@ -26,7 +26,7 @@ import {
   ScheduleResponse, 
   RouteResponse,
   TripResponse
-} from '../../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 import {
   DeleteConfirmationModal,
   DeactivationConfirmationModal,

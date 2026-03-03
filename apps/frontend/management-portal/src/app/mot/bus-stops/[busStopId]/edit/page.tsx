@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import BusStopForm from '@/components/mot/bus-stops/bus-stop-form';
-import { StopResponse } from '../../../../../../generated/api-clients/route-management';
+import { StopResponse } from '@busmate/api-client-route';
 
 interface EditBusStopPageProps {
   params: { busStopId: string };

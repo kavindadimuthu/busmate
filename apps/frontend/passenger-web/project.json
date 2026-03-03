@@ -53,34 +53,6 @@
         "cwd": "{projectRoot}"
       },
       "cache": true
-    },
-    "generate:api-route:local": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx openapi-typescript-codegen --input http://localhost:8080/v3/api-docs --output ./generated/api-client/route-management",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "generate:api-user:local": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx openapi-typescript-codegen --input http://localhost:8081/v3/api-docs --output ./src/lib/api-client/user-management",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "generate:api-ticketing:local": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx openapi-typescript-codegen --input http://localhost:8083/v3/api-docs --output ./src/lib/api-client/ticketing-management",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "generate:api-location:local": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "npx openapi-typescript-codegen --input http://localhost:4000/api-spec --output ./src/lib/api-client/location-tracking",
-        "cwd": "{projectRoot}"
-      }
     }
   }
 }

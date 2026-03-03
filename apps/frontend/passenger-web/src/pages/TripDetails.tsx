@@ -33,12 +33,12 @@ import {
   Map,
   Loader2
 } from "lucide-react";
-import { PassengerApIsService } from "@/generated/api-client/route-management";
-import type { 
-  PassengerTripResponse, 
+import { PassengerApIsService } from "@busmate/api-client-route";
+import type {
+  PassengerTripResponse,
   PassengerRouteResponse,
   PassengerIntermediateStop
-} from "@/generated/api-client/route-management";
+} from "@busmate/api-client-route";
 
 // This component now uses real API data via PassengerAPIsService
 

@@ -5,8 +5,8 @@ import { AlertCircle, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-r
 import { RouteGroupInfo } from './RouteGroupInfo';
 import { RouteTabsContainer } from './RouteTabsContainer';
 import { MapPreviewPlaceholder } from './MapPreviewPlaceholder';
-import { BusStopManagementService } from '../../../../../generated/api-clients/route-management';
-import type { RouteGroupResponse, StopResponse } from '../../../../../generated/api-clients/route-management';
+import { BusStopManagementService } from '@busmate/api-client-route';
+import type { RouteGroupResponse, StopResponse } from '@busmate/api-client-route';
 
 export interface RouteStop {
   stopId: string;

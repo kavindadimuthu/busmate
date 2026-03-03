@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Navigation } from 'lucide-react';
 import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
 import type { TabItem } from '@/components/shared/SwitchableTabs';
-import type { RouteResponse } from '../../../../../generated/api-clients/route-management';
+import type { RouteResponse } from '@busmate/api-client-route';
 
 interface RouteSelectorProps {
   routes: RouteResponse[];

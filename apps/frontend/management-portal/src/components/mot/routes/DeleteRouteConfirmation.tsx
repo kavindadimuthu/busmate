@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, AlertTriangle, Trash2, ArrowLeft, Route, MapPin } from 'lucide-react';
-import type { RouteGroupResponse, RouteResponse } from '../../../../generated/api-clients/route-management';
+import type { RouteGroupResponse, RouteResponse } from '@busmate/api-client-route';
 
 interface DeleteRouteConfirmationProps {
   isOpen: boolean;
