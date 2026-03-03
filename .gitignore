@@ -54,3 +54,7 @@ coverage/
 # Misc
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated reports (keep directory, ignore output files)
+reports/api-usage/report.json
+reports/api-usage/report.md

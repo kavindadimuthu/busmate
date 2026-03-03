@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Usage Analyzer</title>
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #232636;
+      --surface3: #2c2f42;
+      --border: #333650;
+      --accent: #6c63ff;
+      --accent2: #8b85ff;
+      --text: #e2e4f0;
+      --text-muted: #8b90a8;
+      --text-dim: #5a6080;
+      --green: #4ade80;
+      --green-bg: rgba(74, 222, 128, 0.1);
+      --yellow: #facc15;
+      --yellow-bg: rgba(250, 204, 21, 0.1);
+      --red: #f87171;
+      --red-bg: rgba(248, 113, 113, 0.1);
+      --blue: #60a5fa;
+      --radius: 8px;
+      --radius-sm: 4px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-brand svg { flex-shrink: 0; }
+    .topbar-spacer { flex: 1; }
+
+    .topbar-meta { color: var(--text-muted); font-size: 12px; }
+
+    .load-label {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .load-label:hover { background: var(--accent2); }
+    #file-input { display: none; }
+
+    .main { flex: 1; max-width: 1440px; width: 100%; margin: 0 auto; padding: 24px; }
+
+    /* ── Welcome / empty state ── */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 80px 24px;
+      text-align: center;
+    }
+
+    .welcome-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--surface2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .welcome h2 { font-size: 22px; font-weight: 600; }
+    .welcome p { color: var(--text-muted); max-width: 420px; }
+    .welcome code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    /* ── Dashboard ── */
+    #dashboard { display: none; }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Stats cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card .label { color: var(--text-muted); font-size: 12px; }
+
+    .stat-used .value { color: var(--green); }
+    .stat-unused .value { color: var(--red); }
+    .stat-commented .value { color: var(--yellow); }
+    .stat-rate .value { color: var(--accent2); }
+
+    /* ── Progress bar ── */
+    .usage-bar-wrap { margin-bottom: 28px; }
+
+    .usage-bar {
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .usage-bar-fill { background: var(--green); height: 100%; transition: width 0.5s ease; border-radius: 99px; }
+
+    .usage-bar-label {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── Filters ── */
+    .filters {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-group label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    input[type="text"], select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    input[type="text"] { min-width: 220px; }
+
+    .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .pill {
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .pill-all { background: var(--surface3); color: var(--text); }
+    .pill-all.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pill-used { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,0.3); }
+    .pill-used.active { background: var(--green); color: #000; }
+    .pill-commented { background: var(--yellow-bg); color: var(--yellow); border-color: rgba(250,204,21,0.3); }
+    .pill-commented.active { background: var(--yellow); color: #000; }
+    .pill-unused { background: var(--red-bg); color: var(--red); border-color: rgba(248,113,113,0.3); }
+    .pill-unused.active { background: var(--red); color: #000; }
+
+    /* ── Client tabs ── */
+    .client-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .client-tab {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .client-tab:hover { color: var(--text); border-color: var(--accent); }
+    .client-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── Result count ── */
+    #result-count { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+
+    /* ── Endpoint list ── */
+    .endpoint-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .endpoint-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .endpoint-card:hover { border-color: var(--accent); }
+
+    .endpoint-card.ep-used { border-left: 3px solid var(--green); }
+    .endpoint-card.ep-commented { border-left: 3px solid var(--yellow); }
+    .endpoint-card.ep-unused { border-left: 3px solid var(--red); }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ep-status-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+
+    .method-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      flex-shrink: 0;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .method-GET { background: rgba(96,165,250,0.15); color: var(--blue); }
+    .method-POST { background: rgba(74,222,128,0.15); color: var(--green); }
+    .method-PUT { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .method-PATCH { background: rgba(249,115,22,0.15); color: #f97316; }
+    .method-DELETE { background: rgba(248,113,113,0.15); color: var(--red); }
+    .method-UNKNOWN { background: var(--surface3); color: var(--text-muted); }
+
+    .ep-url {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ep-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .ep-service {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .ep-count-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-weight: 600;
+    }
+
+    .ep-count-used { background: var(--green-bg); color: var(--green); }
+    .ep-count-commented { background: var(--yellow-bg); color: var(--yellow); }
+    .ep-count-zero { background: var(--red-bg); color: var(--red); }
+
+    .ep-chevron {
+      color: var(--text-dim);
+      font-size: 12px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .endpoint-card.open .ep-chevron { transform: rotate(180deg); }
+
+    .endpoint-body {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 16px;
+    }
+
+    .endpoint-card.open .endpoint-body { display: block; }
+
+    .ep-body-row { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+
+    .ep-body-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      min-width: 80px;
+    }
+
+    .ep-body-value {
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .ep-body-value.description {
+      font-family: inherit;
+      color: var(--text-muted);
+    }
+
+    .ep-usages-section { margin-top: 14px; }
+    .ep-usages-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+
+    .usage-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      margin-bottom: 4px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    .usage-item.commented-usage { opacity: 0.6; }
+
+    .usage-file { color: var(--accent2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .usage-line { color: var(--text-muted); flex-shrink: 0; }
+    .usage-commented-tag { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: var(--yellow-bg); color: var(--yellow); flex-shrink: 0; }
+
+    /* ── No results ── */
+    .no-results {
+      text-align: center;
+      padding: 48px;
+      color: var(--text-muted);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .topbar { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px; }
+      .main { padding: 16px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      API Usage Analyzer
+    </div>
+    <div class="topbar-spacer"></div>
+    <span class="topbar-meta" id="report-meta"></span>
+    <label class="load-label" for="file-input">Load Report JSON</label>
+    <input type="file" id="file-input" accept=".json" />
+  </header>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Welcome / empty state -->
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">📊</div>
+      <h2>No report loaded</h2>
+      <p>
+        Run the analyzer to generate a report, then load it here for an interactive view.
+      </p>
+      <p>
+        <code>node tools/api-usage-analyzer/analyzer.mjs</code>
+      </p>
+      <p style="color: var(--text-dim); font-size: 12px;">
+        Then open <code>reports/api-usage/report.json</code> using the button above.
+      </p>
+    </div>
+
+    <!-- Dashboard (hidden until report loaded) -->
+    <div id="dashboard">
+
+      <!-- Stats -->
+      <p class="section-title">Overview</p>
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <!-- Usage bar -->
+      <div class="usage-bar-wrap">
+        <div class="usage-bar">
+          <div class="usage-bar-fill" id="usage-bar-fill"></div>
+        </div>
+        <div class="usage-bar-label">
+          <span id="usage-bar-used-label"></span>
+          <span id="usage-bar-rate-label"></span>
+        </div>
+      </div>
+
+      <!-- Client tabs -->
+      <div class="client-tabs" id="client-tabs"></div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="text" id="search-input" placeholder="Service, method, or URL…" />
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <div class="filter-pills">
+            <div class="pill pill-all active" data-status="all">All</div>
+            <div class="pill pill-used" data-status="used">✅ Used</div>
+            <div class="pill pill-commented" data-status="commented">⚠️ Commented</div>
+            <div class="pill pill-unused" data-status="unused">❌ Unused</div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label>Method</label>
+          <select id="method-filter">
+            <option value="all">All methods</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="PATCH">PATCH</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="result-count"></div>
+      <div class="endpoint-list" id="endpoint-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let report = null;
+  let activeClient = 'all';
+  let activeStatus = 'all';
+  let activeMethod = 'all';
+  let searchQuery = '';
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const welcome = document.getElementById('welcome');
+  const dashboard = document.getElementById('dashboard');
+  const statGrid = document.getElementById('stat-grid');
+  const usageBarFill = document.getElementById('usage-bar-fill');
+  const usageBarUsedLabel = document.getElementById('usage-bar-used-label');
+  const usageBarRateLabel = document.getElementById('usage-bar-rate-label');
+  const clientTabs = document.getElementById('client-tabs');
+  const endpointList = document.getElementById('endpoint-list');
+  const resultCount = document.getElementById('result-count');
+  const reportMeta = document.getElementById('report-meta');
+  const searchInput = document.getElementById('search-input');
+  const methodFilter = document.getElementById('method-filter');
+
+  // ── File loading ───────────────────────────────────────────────────────────
+  document.getElementById('file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        loadReport(JSON.parse(ev.target.result));
+      } catch (err) {
+        alert('Failed to parse report JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    // Reset so same file can be re-loaded
+    e.target.value = '';
+  });
+
+  // Try auto-loading the default report path (works when served via local HTTP)
+  fetch('../../../reports/api-usage/report.json')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => { if (data && !report) loadReport(data); })
+    .catch(() => {}); // silently ignore — user can load manually
+
+  // ── Load & render ──────────────────────────────────────────────────────────
+  function loadReport(data) {
+    report = data;
+    activeClient = 'all';
+    activeStatus = 'all';
+    activeMethod = 'all';
+    searchQuery = '';
+    searchInput.value = '';
+    methodFilter.value = 'all';
+
+    welcome.style.display = 'none';
+    dashboard.style.display = 'block';
+
+    renderMeta();
+    renderStats();
+    renderClientTabs();
+    renderEndpoints();
+  }
+
+  function renderMeta() {
+    const { meta } = report;
+    const ts = meta.generatedAt
+      ? new Date(meta.generatedAt).toLocaleString()
+      : '';
+    reportMeta.textContent = ts ? `Generated ${ts}` : '';
+  }
+
+  function renderStats() {
+    const s = report.summary;
+    statGrid.innerHTML = '';
+    usageBarFill.style.width = s.usageRate + '%';
+    usageBarUsedLabel.textContent = `${s.usedEndpoints} used / ${s.totalEndpoints} total`;
+    usageBarRateLabel.textContent = `${s.usageRate}% usage rate`;
+
+    const cards = [
+      { label: 'Total endpoints', value: s.totalEndpoints, cls: '' },
+      { label: 'Used', value: s.usedEndpoints, cls: 'stat-used' },
+      { label: 'Unused', value: s.unusedEndpoints, cls: 'stat-unused' },
+      { label: 'Commented only', value: s.commentedCallSites, cls: 'stat-commented' },
+      { label: 'Usage rate', value: s.usageRate + '%', cls: 'stat-rate' },
+      { label: 'Call sites', value: s.totalCallSites, cls: '' },
+    ];
+
+    for (const c of cards) {
+      statGrid.innerHTML += `
+        <div class="stat-card ${c.cls}">
+          <div class="value">${c.value}</div>
+          <div class="label">${c.label}</div>
+        </div>`;
+    }
+  }
+
+  function renderClientTabs() {
+    clientTabs.innerHTML = '';
+    const allTab = makeTab('all', 'All Clients', activeClient === 'all');
+    clientTabs.appendChild(allTab);
+    for (const c of report.clients) {
+      const tab = makeTab(c.clientName, c.clientName, activeClient === c.clientName);
+      clientTabs.appendChild(tab);
+    }
+  }
+
+  function makeTab(key, label, isActive) {
+    const el = document.createElement('div');
+    el.className = 'client-tab' + (isActive ? ' active' : '');
+    el.textContent = label;
+    el.addEventListener('click', () => {
+      activeClient = key;
+      renderClientTabs();
+      renderEndpoints();
+    });
+    return el;
+  }
+
+  function getFilteredEndpoints() {
+    const clients = activeClient === 'all'
+      ? report.clients
+      : report.clients.filter(c => c.clientName === activeClient);
+
+    const alleps = clients.flatMap(c =>
+      c.endpoints.map(e => ({ ...e, clientName: c.clientName, packageName: c.packageName }))
+    );
+
+    return alleps.filter(ep => {
+      // Status filter
+      if (activeStatus === 'used' && !ep.isUsed) return false;
+      if (activeStatus === 'commented' && (ep.isUsed || ep.commentedUsages.length === 0)) return false;
+      if (activeStatus === 'unused' && (ep.isUsed || ep.commentedUsages.length > 0)) return false;
+
+      // Method filter
+      if (activeMethod !== 'all' && ep.httpMethod !== activeMethod) return false;
+
+      // Search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const haystack = [ep.serviceName, ep.methodName, ep.url, ep.description || ''].join(' ').toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+
+      return true;
+    });
+  }
+
+  function renderEndpoints() {
+    const eps = getFilteredEndpoints();
+    resultCount.textContent = `Showing ${eps.length} endpoint${eps.length !== 1 ? 's' : ''}`;
+
+    if (eps.length === 0) {
+      endpointList.innerHTML = '<div class="no-results">No endpoints match current filters.</div>';
+      return;
+    }
+
+    // Sort: unused first, then commented, then used
+    eps.sort((a, b) => {
+      const rank = ep => ep.isUsed ? 2 : ep.commentedUsages.length > 0 ? 1 : 0;
+      return rank(a) - rank(b);
+    });
+
+    endpointList.innerHTML = '';
+    for (const ep of eps) {
+      endpointList.appendChild(makeEndpointCard(ep));
+    }
+  }
+
+  function makeEndpointCard(ep) {
+    const isCommentedOnly = !ep.isUsed && ep.commentedUsages.length > 0;
+    const isFullyUnused = !ep.isUsed && ep.commentedUsages.length === 0;
+
+    const statusClass = ep.isUsed ? 'ep-used' : isCommentedOnly ? 'ep-commented' : 'ep-unused';
+    const statusIcon = ep.isUsed ? '✅' : isCommentedOnly ? '⚠️' : '❌';
+
+    const countBadgeClass = ep.isUsed
+      ? 'ep-count-used'
+      : isCommentedOnly
+      ? 'ep-count-commented'
+      : 'ep-count-zero';
+
+    const countText = ep.isUsed
+      ? `${ep.callSiteCount} site${ep.callSiteCount !== 1 ? 's' : ''}`
+      : isCommentedOnly
+      ? `${ep.commentedCallSiteCount} commented`
+      : 'unused';
+
+    const card = document.createElement('div');
+    card.className = `endpoint-card ${statusClass}`;
+
+    card.innerHTML = `
+      <div class="endpoint-header">
+        <span class="ep-status-icon">${statusIcon}</span>
+        <span class="method-badge method-${ep.httpMethod}">${ep.httpMethod}</span>
+        <span class="ep-url">${escapeHtml(ep.url)}</span>
+        <div class="ep-meta">
+          <span class="ep-service">${escapeHtml(ep.serviceName)}.${escapeHtml(ep.methodName)}</span>
+          <span class="ep-count-badge ${countBadgeClass}">${countText}</span>
+        </div>
+        <span class="ep-chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        ${ep.description ? `<div class="ep-body-row"><span class="ep-body-label">Description</span><span class="ep-body-value description">${escapeHtml(ep.description)}</span></div>` : ''}
+        <div class="ep-body-row">
+          <span class="ep-body-label">Service</span>
+          <span class="ep-body-value">${escapeHtml(ep.serviceName)}</span>
+        </div>
+        <div class="ep-body-row">
+          <span class="ep-body-label">Method</span>
+          <span class="ep-body-value">${escapeHtml(ep.methodName)}</span>
+        </div>
+        <div class="ep-body-row">
+          <span class="ep-body-label">Package</span>
+          <span class="ep-body-value">${escapeHtml(ep.packageName || '')}</span>
+        </div>
+        ${renderUsageSection(ep)}
+      </div>
+    `;
+
+    card.querySelector('.endpoint-header').addEventListener('click', () => {
+      card.classList.toggle('open');
+    });
+
+    return card;
+  }
+
+  function renderUsageSection(ep) {
+    if (ep.usages.length === 0 && (!ep.commentedUsages || ep.commentedUsages.length === 0)) {
+      return `<div class="ep-usages-section"><div class="ep-usages-title">No call sites found</div></div>`;
+    }
+
+    let html = '<div class="ep-usages-section">';
+
+    if (ep.usages.length > 0) {
+      html += `<div class="ep-usages-title">📍 Call Sites (${ep.usages.length})</div>`;
+      for (const u of ep.usages) {
+        html += `<div class="usage-item">
+          <span class="usage-file">${escapeHtml(u.file)}</span>
+          <span class="usage-line">line ${u.line}</span>
+        </div>`;
+      }
+    }
+
+    if (ep.commentedUsages && ep.commentedUsages.length > 0) {
+      html += `<div class="ep-usages-title" style="margin-top:10px">💬 Commented-Out (${ep.commentedUsages.length})</div>`;
+      for (const u of ep.commentedUsages) {
+        html += `<div class="usage-item commented-usage">
+          <span class="usage-file">${escapeHtml(u.file)}</span>
+          <span class="usage-line">line ${u.line}</span>
+          <span class="usage-commented-tag">commented</span>
+        </div>`;
+      }
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Filter events ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      activeStatus = p.dataset.status;
+      renderEndpoints();
+    });
+  });
+
+  methodFilter.addEventListener('change', () => {
+    activeMethod = methodFilter.value;
+    renderEndpoints();
+  });
+
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim();
+    renderEndpoints();
+  });
+</script>
+</body>
+</html>
