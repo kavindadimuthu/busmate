@@ -563,7 +563,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
             id: routeStop.id, // Include route stop ID for updates
             stopId: getStopId(routeStop.stop),
             stopOrder: index,
-            distanceFromStartKm: routeStop.distanceFromStart
+            distanceFromStartKm: routeStop.distanceFromStart || undefined
           }));
 
           return {
