@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { JourneySummary } from './JourneySummary';
 import type { RouteDetails } from './RouteDetails';
+import type { RouteScheduleStop } from './RouteScheduleStop';
 import type { ScheduleDetails } from './ScheduleDetails';
 import type { TripDetails } from './TripDetails';
 /**
@@ -31,9 +32,13 @@ export type FindMyBusDetailsResponse = {
      */
     route?: RouteDetails;
     /**
-     * Complete schedule information
+     * Schedule metadata (without stops)
      */
     schedule?: ScheduleDetails;
+    /**
+     * All stops in this route and schedule with unified data (route + schedule + stop info)
+     */
+    routeScheduleStops?: Array<RouteScheduleStop>;
     /**
      * Trip-specific information (only if tripId was provided)
      */

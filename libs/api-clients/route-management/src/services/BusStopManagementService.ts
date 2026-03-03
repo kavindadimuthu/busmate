@@ -173,7 +173,7 @@ export class BusStopManagementService {
      * @returns StopFilterOptionsResponse Filter options retrieved successfully
      * @throws ApiError
      */
-    public static getFilterOptions(): CancelablePromise<StopFilterOptionsResponse> {
+    public static getFilterOptions1(): CancelablePromise<StopFilterOptionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/stops/filters/options',

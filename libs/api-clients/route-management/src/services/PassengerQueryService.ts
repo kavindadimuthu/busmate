@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { FindMyBusDetailsResponse } from '../models/FindMyBusDetailsResponse';
 import type { FindMyBusResponse } from '../models/FindMyBusResponse';
+import type { PassengerPaginatedResponsePassengerStopResponse } from '../models/PassengerPaginatedResponsePassengerStopResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -118,6 +119,42 @@ export class PassengerQueryService {
             errors: {
                 400: `Invalid request parameters`,
                 404: `Schedule or stops not found`,
+            },
+        });
+    }
+    /**
+     * Search bus stops
+     * Search for bus stops by name, city, or general text. Used for autocomplete and stop selection when planning a journey.
+     * @param name Stop name or partial name
+     * @param city City name filter
+     * @param searchText General search text (overrides name if provided)
+     * @param accessibleOnly Return only wheelchair-accessible stops
+     * @param page Page number (0-based)
+     * @param size Page size (max 100)
+     * @returns PassengerPaginatedResponsePassengerStopResponse Stops found successfully
+     * @throws ApiError
+     */
+    public static searchStops(
+        name?: string,
+        city?: string,
+        searchText?: string,
+        accessibleOnly?: boolean,
+        page?: number,
+        size: number = 20,
+    ): CancelablePromise<PassengerPaginatedResponsePassengerStopResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/passenger/query/stops/search',
+            query: {
+                'name': name,
+                'city': city,
+                'searchText': searchText,
+                'accessibleOnly': accessibleOnly,
+                'page': page,
+                'size': size,
+            },
+            errors: {
+                400: `Invalid request parameters`,
             },
         });
     }

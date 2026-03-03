@@ -4,7 +4,6 @@
 /* eslint-disable */
 import type { ScheduleCalendarInfo } from './ScheduleCalendarInfo';
 import type { ScheduleExceptionInfo } from './ScheduleExceptionInfo';
-import type { ScheduleStopDetails } from './ScheduleStopDetails';
 /**
  * Detailed schedule information
  */
@@ -42,9 +41,9 @@ export type ScheduleDetails = {
      */
     isActiveOnDate?: boolean;
     /**
-     * All stops in this schedule with timing information
+     * Total number of stops in this schedule
      */
-    stops?: Array<ScheduleStopDetails>;
+    totalStops?: number;
     /**
      * Calendar information (days of operation)
      */
