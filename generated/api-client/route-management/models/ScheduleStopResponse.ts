@@ -28,12 +28,36 @@ export type ScheduleStopResponse = {
      */
     stopOrder?: number;
     /**
-     * Scheduled arrival time
+     * Scheduled arrival time (verified)
      */
     arrivalTime?: string;
     /**
-     * Scheduled departure time
+     * Scheduled departure time (verified)
      */
     departureTime?: string;
+    /**
+     * Unverified arrival time from experienced users
+     */
+    arrivalTimeUnverified?: string;
+    /**
+     * Unverified departure time from experienced users
+     */
+    departureTimeUnverified?: string;
+    /**
+     * Username who provided unverified arrival time
+     */
+    arrivalTimeUnverifiedBy?: string;
+    /**
+     * Username who provided unverified departure time
+     */
+    departureTimeUnverifiedBy?: string;
+    /**
+     * Calculated arrival time based on route distance and travel time
+     */
+    arrivalTimeCalculated?: string;
+    /**
+     * Calculated departure time based on route distance and travel time
+     */
+    departureTimeCalculated?: string;
 };
 

@@ -3,6 +3,8 @@ import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import busLogo from "@/assets/bus-logo.png";
+import busLogoText from "@/assets/bus-logo-text.png";
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,15 +28,15 @@ const Navbar = () => {
         : 'bg-transparent'
     }`}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="p-2 rounded-lg bg-gradient-primary">
-              <img src={busLogo} alt="BusMate" className="h-8 w-8 object-contain filter brightness-0 invert" />
+          <Link to="/" className="flex items-center space-x-0">
+            <div className="py-1 rounded-lg bg-gradient-primary">
+              <img src={busLogo} alt="BusMate" className="h-15 w-20 object-cover filter brightness-0 invert" />
             </div>
-            <span className={`text-2xl font-bold transition-colors ${
-              isScrolled ? 'text-foreground' : 'text-white'
-            }`}>BusMate</span>
+            <span className="text-2xl font-bold">
+              <img src={busLogoText} alt="BusMate" className="h-24 w-auto" />
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -77,7 +79,7 @@ const Navbar = () => {
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center space-x-2">
                 <div className="p-2 rounded-lg bg-gradient-primary">
-                  <img src={busLogo} alt="BusMate" className="h-6 w-6 object-contain filter brightness-0 invert" />
+                  <img src={busLogo} alt="BusMate" className="h-15 w-24 object-cover filter brightness-0 invert" />
                 </div>
                 <span className="text-xl font-bold text-foreground">BusMate</span>
               </div>

@@ -7,5 +7,7 @@ export type RouteStopRequest = {
     stopId: string;
     stopOrder: number;
     distanceFromStartKm?: number;
+    distanceFromStartKmUnverified?: number;
+    distanceFromStartKmCalculated?: number;
 };
 

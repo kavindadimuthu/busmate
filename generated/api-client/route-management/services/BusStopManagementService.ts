@@ -3,9 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PageStopResponse } from '../models/PageStopResponse';
+import type { RouteGroupStopDetailResponse } from '../models/RouteGroupStopDetailResponse';
 import type { RouteStopDetailResponse } from '../models/RouteStopDetailResponse';
 import type { ScheduleStopDetailResponse } from '../models/ScheduleStopDetailResponse';
 import type { StopBulkUpdateResponse } from '../models/StopBulkUpdateResponse';
+import type { StopExistsResponse } from '../models/StopExistsResponse';
 import type { StopFilterOptionsResponse } from '../models/StopFilterOptionsResponse';
 import type { StopImportResponse } from '../models/StopImportResponse';
 import type { StopRequest } from '../models/StopRequest';
@@ -80,6 +82,30 @@ export class BusStopManagementService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/stops/all',
+        });
+    }
+    /**
+     * Check if a stop exists by ID or name
+     * Check if a bus stop exists in the system by providing either an ID or a name. If the stop is found, its full data is returned. Priority: ID takes precedence over name if both are provided. Name search matches against English, Sinhala, and Tamil name variants (case-insensitive). Note: In a future implementation, this will support checking by both name and city for more precise matching.
+     * @param id Stop ID (UUID format)
+     * @param name Stop name (English, Sinhala, or Tamil)
+     * @returns StopExistsResponse Check completed - exists field indicates if stop was found
+     * @throws ApiError
+     */
+    public static checkStopExists(
+        id?: string,
+        name?: string,
+    ): CancelablePromise<StopExistsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/stops/exists',
+            query: {
+                'id': id,
+                'name': name,
+            },
+            errors: {
+                400: `Neither ID nor name provided`,
+            },
         });
     }
     /**
@@ -247,6 +273,28 @@ export class BusStopManagementService {
                 401: `Unauthorized`,
                 413: `File too large`,
                 415: `Unsupported file type`,
+            },
+        });
+    }
+    /**
+     * Get stops for all routes in a route group
+     * Retrieve all stops for all routes within a specific route group, ordered by route name and stop order. Each stop includes both stop details and route information to distinguish stops across different routes.
+     * @param routeGroupId Route Group ID
+     * @returns RouteGroupStopDetailResponse Route group stops retrieved successfully
+     * @throws ApiError
+     */
+    public static getStopsByRouteGroup(
+        routeGroupId: string,
+    ): CancelablePromise<Array<RouteGroupStopDetailResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/stops/route-group/{routeGroupId}',
+            path: {
+                'routeGroupId': routeGroupId,
+            },
+            errors: {
+                400: `Invalid route group ID format`,
+                404: `Route group not found`,
             },
         });
     }

@@ -2,16 +2,48 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BusFront, Clock, ArrowRight, Route } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { BusFront, Clock, ArrowRight, Route, CheckCircle, AlertCircle, Calculator } from "lucide-react";
 import type { BusResult } from "@/generated/api-client/route-management";
 
 interface BusCardProps {
   bus: BusResult;
   fromStopName?: string;
   toStopName?: string;
+  fromStopId?: string;
+  toStopId?: string;
   searchDate?: string;
+  timePreference?: 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
   onViewDetails?: () => void;
 }
+
+// Utility function to calculate duration from arrival and departure times if api does not provide duration
+const calculateDuration = (departureTime?: string, arrivalTime?: string) => {
+  if (!departureTime || !arrivalTime) return undefined;
+
+  // Create valid date objects by prefixing time strings with a date
+  const baseDate = "1970-01-01T";
+  const departure = new Date(baseDate + departureTime);
+  const arrival = new Date(baseDate + arrivalTime);
+
+  if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) {
+    return undefined;
+  }
+
+  const durationInMinutes = (arrival.getTime() - departure.getTime()) / (1000 * 60);
+
+  // Convert minutes to hours and minutes format
+  const hours = Math.floor(durationInMinutes / 60);
+  const minutes = Math.round(durationInMinutes % 60);
+
+  // return finalized duration string in human readable format
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
 
 // Helper function to format time
 const formatTime = (timeString?: string) => {
@@ -46,38 +78,92 @@ const formatDuration = (minutes?: number) => {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 };
 
-// Helper function to get departure time
+// Helper function to get departure time (prioritize actual over scheduled)
 const getDepartureTime = (bus: BusResult) => {
-  return bus.actualDepartureTime || bus.scheduledDepartureAtOrigin || null;
+  return bus.actualDepartureTime || bus.departureAtOrigin || null;
 };
 
-// Helper function to get arrival time
+// Helper function to get arrival time (prioritize actual over scheduled)
 const getArrivalTime = (bus: BusResult) => {
-  return bus.actualArrivalTime || bus.scheduledArrivalAtDestination || null;
+  return bus.actualArrivalTime || bus.arrivalAtDestination || null;
+};
+
+// Helper function to get time source badge config
+const getTimeSourceConfig = (source?: string) => {
+  switch (source) {
+    case 'VERIFIED':
+      return { 
+        label: 'Verified', 
+        variant: 'default' as const, 
+        icon: CheckCircle, 
+        className: 'bg-green-100 text-green-700 border-green-200',
+        tooltip: 'Time verified by official sources'
+      };
+    case 'UNVERIFIED':
+      return { 
+        label: 'Unverified', 
+        variant: 'secondary' as const, 
+        icon: AlertCircle, 
+        className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        tooltip: 'Time submitted by users, not officially verified'
+      };
+    case 'CALCULATED':
+      return { 
+        label: 'Calculated', 
+        variant: 'outline' as const, 
+        icon: Calculator, 
+        className: 'bg-blue-50 text-blue-600 border-blue-200',
+        tooltip: 'Time calculated based on average travel times'
+      };
+    default:
+      return null;
+  }
 };
 
 export default function BusCard({
   bus,
   fromStopName,
   toStopName,
+  fromStopId,
+  toStopId,
   searchDate,
+  timePreference,
   onViewDetails,
 }: BusCardProps) {
   const departureTime = getDepartureTime(bus);
   const arrivalTime = getArrivalTime(bus);
 
-  // Determine button action - prioritize trip, then schedule, then route
+  // Get start and end stop times (for the entire route)
+  const routeStartDepartureTime = bus.scheduleStartStopDepartureTime || departureTime;
+  const routeEndArrivalTime = bus.scheduleEndStopArrivalTime || arrivalTime;
+  const totalRouteDistance = bus.scheduleTotalDistanceKm || bus.distanceKm;
+
+  // Generate detail link with new API parameters
   const getDetailLink = () => {
-    if (bus.tripId) {
-      return `/findmybus/detail?type=trip&id=${bus.tripId}`;
-    } else if (bus.scheduleId) {
-      return `/findmybus/detail?type=schedule&id=${bus.scheduleId}&date=${
-        searchDate || new Date().toISOString().split("T")[0]
-      }`;
-    } else if (bus.routeId) {
-      return `/route/${bus.routeId}`;
+    if (!bus.scheduleId || !fromStopId || !toStopId) {
+      // Fall back to route page if required params are missing
+      if (bus.routeId) {
+        return `/route/${bus.routeId}`;
+      }
+      return null;
     }
-    return null;
+    
+    const params = new URLSearchParams();
+    params.set('scheduleId', bus.scheduleId);
+    params.set('fromStopId', fromStopId);
+    params.set('toStopId', toStopId);
+    
+    if (bus.tripId) {
+      params.set('tripId', bus.tripId);
+    }
+    
+    params.set('date', searchDate || new Date().toISOString().split("T")[0]);
+    
+    if (timePreference) {
+      params.set('timePreference', timePreference);
+    }
+    
+    return `/findmybus/detail?${params.toString()}`;
   };
 
   return (
@@ -106,43 +192,78 @@ export default function BusCard({
             </div>
           </div>
 
-          {/* Right side - Time and Distance info */}
+          {/* Right side - Route Start/End Times and Total Distance */}
           <div className="flex flex-col items-start sm:items-end gap-1 text-sm sm:text-base">
-            {departureTime && arrivalTime && (
-              <div className="flex items-center gap-1 sm:gap-2 text-sm sm:text-lg font-semibold text-foreground whitespace-nowrap">
-                <span>{formatTime(departureTime)}</span>
-                <ArrowRight className="h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground flex-shrink-0" />
-                <span>{formatTime(arrivalTime)}</span>
+            {/* Route Start to End Times */}
+            {routeStartDepartureTime && routeEndArrivalTime && (
+              <div className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-semibold text-foreground whitespace-nowrap">
+                {/* <span className="text-xs sm:text-sm text-muted-foreground">Start</span> */}
+                <span>{formatTime(routeStartDepartureTime)}</span>
+                <ArrowRight className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground flex-shrink-0" />
+                <span>{formatTime(routeEndArrivalTime)}</span>
+                {/* <span className="text-xs sm:text-sm text-muted-foreground">End</span> */}
               </div>
             )}
-            <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm font-medium">
-              {bus.distanceKm && <span>{bus.distanceKm.toFixed(1)} km</span>}
-              {bus.distanceKm && bus.roadType && (
-                <span className="hidden sm:inline">|</span>
+            
+            {/* Total Route Distance and Road Type */}
+            <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm font-medium text-muted-foreground">
+              {totalRouteDistance && (
+                <span>{totalRouteDistance.toFixed(1)} km total</span>
+              )}
+              {totalRouteDistance && bus.roadType && (
+                <span>•</span>
               )}
               {bus.roadType && (
-                <span className="hidden sm:inline">{bus.roadType}</span>
-              )}
-              {bus.roadType && (
-                <span className="sm:hidden text-muted-foreground">
-                  ({bus.roadType})
-                </span>
+                <span>{bus.roadType}</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* BADGES ROW - Operator and Bus Info */}
-        {(bus.operatorName || bus.busPlateNumber || bus.busModel || bus.busCapacity) && (
+        {/* BADGES ROW - Time Source, Operator and Bus Info */}
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-          {/* {bus.operatorType && (
+          {/* Time Source Badges */}
+          {/* <TooltipProvider>
+            {bus.departureAtOriginSource && getTimeSourceConfig(bus.departureAtOriginSource) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 flex items-center gap-1 ${getTimeSourceConfig(bus.departureAtOriginSource)?.className}`}
+                  >
+                    {React.createElement(getTimeSourceConfig(bus.departureAtOriginSource)!.icon, { className: "h-3 w-3" })}
+                    {getTimeSourceConfig(bus.departureAtOriginSource)?.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getTimeSourceConfig(bus.departureAtOriginSource)?.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider> */}
+          
+          {/* Trip Status Badge */}
+          {bus.hasTripData && bus.tripStatus && (
             <Badge
-              variant="secondary"
+              variant={bus.tripStatus === 'active' ? 'default' : 'secondary'}
+              className={`text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 ${
+                bus.tripStatus === 'active' ? 'bg-green-600' : ''
+              }`}
+            >
+              {bus.tripStatus === 'active' ? 'Live' : bus.tripStatus}
+            </Badge>
+          )}
+          
+          {/* Already Departed Badge */}
+          {bus.alreadyDeparted && (
+            <Badge
+              variant="destructive"
               className="text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1"
             >
-              {bus.operatorType}
+              Departed
             </Badge>
-          )} */}
+          )}
+          
           {bus.operatorName && (
             <Badge
               variant="secondary"
@@ -176,7 +297,6 @@ export default function BusCard({
             </Badge>
           )}
         </div>
-        )}
 
         <hr className="border-border" />
 
@@ -259,7 +379,13 @@ export default function BusCard({
               <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-foreground">
                 <Clock className="h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground flex-shrink-0" />
                 <span className="hidden sm:inline">Duration:</span>
-                <span>{formatDuration(bus.estimatedDurationMinutes)}</span>
+                <span>
+                  {/* {formatDuration(bus.estimatedDurationMinutes)} */}
+                  {/* calculateDuration */}
+                  {bus.estimatedDurationMinutes
+                    ? formatDuration(bus.estimatedDurationMinutes)
+                    : calculateDuration(departureTime, arrivalTime)}
+                  </span>
               </div>
               <span className="hidden sm:block border-l-2 border-gray-300 h-5"></span>
               <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-foreground">
