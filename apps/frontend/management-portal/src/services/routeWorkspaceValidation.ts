@@ -89,6 +89,14 @@ export function hasValidIdForSearch(stop: Stop): boolean {
 }
 
 /**
+ * Check if a string is a real UUID (not a temporary placeholder like 'new-stop-1')
+ */
+function isRealUUID(id: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id.trim());
+}
+
+/**
  * Check if a stop has a valid name for searching
  */
 export function hasValidNameForSearch(stop: Stop): boolean {
@@ -114,8 +122,12 @@ export function canSearchStop(stop: Stop): boolean {
  * @returns Promise<StopExistenceSearchResult> - The search result with stop data if found
  */
 export async function searchStopExistence(stop: Stop): Promise<StopExistenceSearchResult> {
-    // Determine search criteria: ID takes precedence, then name
-    const searchId = hasValidIdForSearch(stop) ? stop.id : undefined;
+    // Use ID only if it's a real UUID (not a temporary placeholder like 'new-stop-1').
+    // Placeholder IDs are not stored in the backend, so searching by them always returns
+    // not found. For stops with placeholder IDs, fall back to name search so we can
+    // detect stops that already exist in the system with the same name.
+    const hasRealId = hasValidIdForSearch(stop) && isRealUUID(stop.id);
+    const searchId = hasRealId ? stop.id : undefined;
     const searchName = !searchId && hasValidNameForSearch(stop) ? stop.name : undefined;
 
     if (!searchId && !searchName) {

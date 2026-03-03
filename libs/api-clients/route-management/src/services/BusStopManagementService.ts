@@ -6,6 +6,8 @@ import type { PageStopResponse } from '../models/PageStopResponse';
 import type { RouteGroupStopDetailResponse } from '../models/RouteGroupStopDetailResponse';
 import type { RouteStopDetailResponse } from '../models/RouteStopDetailResponse';
 import type { ScheduleStopDetailResponse } from '../models/ScheduleStopDetailResponse';
+import type { StopBatchCreateRequest } from '../models/StopBatchCreateRequest';
+import type { StopBatchCreateResponse } from '../models/StopBatchCreateResponse';
 import type { StopBulkUpdateResponse } from '../models/StopBulkUpdateResponse';
 import type { StopExistsResponse } from '../models/StopExistsResponse';
 import type { StopFilterOptionsResponse } from '../models/StopFilterOptionsResponse';
@@ -82,6 +84,27 @@ export class BusStopManagementService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/stops/all',
+        });
+    }
+    /**
+     * Create multiple bus stops in batch
+     * Creates multiple bus stops in a single request. Each stop is validated individually. Stops that already exist or fail validation will be reported in the response without blocking other stops. Requires authentication.
+     * @param requestBody
+     * @returns StopBatchCreateResponse Batch creation completed (check response for individual results)
+     * @throws ApiError
+     */
+    public static createStopsBatch(
+        requestBody: StopBatchCreateRequest,
+    ): CancelablePromise<StopBatchCreateResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/stops/batch',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Invalid input data`,
+                401: `Unauthorized`,
+            },
         });
     }
     /**

@@ -9,7 +9,7 @@ import {
   applyBulkSearchResultsToRouteStops,
   BulkStopExistenceSearchResult 
 } from '@/services/routeWorkspaceValidation';
-import { BusStopManagementService, StopRequest, RouteManagementService, RouteGroupRequest, RouteRequest } from '@busmate/api-client-route';
+import { BusStopManagementService, StopRequest, StopBatchCreateRequest, RouteManagementService, RouteGroupRequest, RouteRequest } from '@busmate/api-client-route';
 import { 
   RouteGroup, 
   Route, 
@@ -133,6 +133,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       const existingStops: Stop[] = [];
       const validationDetails: string[] = [];
       const validatedRoutes: Route[] = [];
+      // Track unique stops by name to avoid duplicates across routes
+      const seenNewStopNames = new Set<string>();
 
       for (let routeIndex = 0; routeIndex < data.routeGroup.routes.length; routeIndex++) {
         const route = data.routeGroup.routes[routeIndex];
@@ -186,8 +188,12 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
               rs => rs.orderNumber === result.orderNumber
             )?.stop;
             if (stopToCreate && stopToCreate.name) {
-              // Make a copy of the stop with the route context for later updating
-              stopsToCreate.push({ ...stopToCreate });
+              // Deduplicate: only add if we haven't seen this stop name before
+              // This prevents duplicate creation when the same stop appears in multiple routes
+              if (!seenNewStopNames.has(stopToCreate.name)) {
+                seenNewStopNames.add(stopToCreate.name);
+                stopsToCreate.push({ ...stopToCreate });
+              }
             }
           }
         });
@@ -237,9 +243,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     }
   }, [data.routeGroup.routes, updateRoute]);
 
-  // Step 2: Create new stops
-  // Now accepts stopsToCreate directly instead of reading from state
-  // Returns the created stops mapping for use by buildRouteGroup
+  // Step 2: Create new stops using batch API
+  // Accepts stopsToCreate directly and returns the created stops mapping for use by buildRouteGroup
   const createNewStops = useCallback(async (stopsToCreate: Stop[]): Promise<{ success: boolean; createdStops: { original: Stop; created: Stop }[] }> => {
     console.log("Creating new stops...", stopsToCreate);
 
@@ -249,8 +254,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         currentStep: 'building-route',
         steps: {
           ...prev.steps,
-          stopCreation: { 
-            status: 'skipped', 
+          stopCreation: {
+            status: 'skipped',
             message: 'No new stops to create',
             details: ['All stops already exist in the system']
           }
@@ -265,151 +270,208 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       currentStep: 'creating-stops',
       steps: {
         ...prev.steps,
-        stopCreation: { 
-          status: 'in-progress', 
-          message: `Creating ${stopsToCreate.length} new stops...`
+        stopCreation: {
+          status: 'in-progress',
+          message: `Creating ${stopsToCreate.length} new stops in batch...`
         }
       }
     }));
 
-    console.log("Stops to create:", stopsToCreate);
-    const createdStops: { original: Stop; created: Stop }[] = [];
+    setProgress({
+      current: 0,
+      total: stopsToCreate.length,
+      label: 'Preparing batch stop creation...'
+    });
+
+    // Pre-validate stops before sending to API
+    const validStops: Stop[] = [];
     const failedStops: { stop: Stop; error: string }[] = [];
 
-    for (let i = 0; i < stopsToCreate.length; i++) {
-      const stop = stopsToCreate[i];
-      
+    for (const stop of stopsToCreate) {
+      if (!stop.name || stop.name.trim() === '') {
+        failedStops.push({ stop, error: 'Stop name is required' });
+        continue;
+      }
+      if (!stop.location || stop.location.latitude === 0 || stop.location.longitude === 0) {
+        failedStops.push({ stop, error: 'Valid coordinates are required' });
+        continue;
+      }
+      validStops.push(stop);
+    }
+
+    if (validStops.length === 0) {
+      setState(prev => ({
+        ...prev,
+        failedStops,
+        steps: {
+          ...prev.steps,
+          stopCreation: {
+            status: 'failed',
+            message: `All ${failedStops.length} stops failed validation`,
+            details: failedStops.map(s => `✗ Failed: ${s.stop.name || 'unnamed'} - ${s.error}`)
+          }
+        },
+        currentStep: 'failed',
+        error: `All stops failed client-side validation.`
+      }));
+      return { success: false, createdStops: [] };
+    }
+
+    // Build batch request
+    const batchRequest: StopBatchCreateRequest = {
+      stops: validStops.map(stop => ({
+        name: stop.name,
+        nameSinhala: stop.nameSinhala,
+        nameTamil: stop.nameTamil,
+        description: stop.description,
+        location: {
+          latitude: stop.location!.latitude,
+          longitude: stop.location!.longitude,
+          address: stop.location!.address,
+          city: stop.location!.city,
+          state: stop.location!.state,
+          zipCode: stop.location!.zipCode,
+          country: stop.location!.country,
+          addressSinhala: stop.location!.addressSinhala,
+          citySinhala: stop.location!.citySinhala,
+          stateSinhala: stop.location!.stateSinhala,
+          countrySinhala: stop.location!.countrySinhala,
+          addressTamil: stop.location!.addressTamil,
+          cityTamil: stop.location!.cityTamil,
+          stateTamil: stop.location!.stateTamil,
+          countryTamil: stop.location!.countryTamil,
+        },
+        isAccessible: stop.isAccessible
+      }))
+    };
+
+    setProgress({
+      current: 1,
+      total: 2,
+      label: `Creating ${validStops.length} stops in batch...`
+    });
+
+    try {
+      const batchResponse = await BusStopManagementService.createStopsBatch(batchRequest);
+
+      console.log("Batch creation response:", batchResponse);
+
+      const createdStops: { original: Stop; created: Stop }[] = [];
+
+      // Process batch results
+      if (batchResponse.results) {
+        for (const resultItem of batchResponse.results) {
+          // Find the original stop by name
+          const originalStop = validStops.find(s => s.name === resultItem.requestedName);
+
+          if (resultItem.success && resultItem.stop && originalStop) {
+            const mappedCreatedStop: Stop = {
+              id: resultItem.stop.id ?? '',
+              name: resultItem.stop.name ?? '',
+              nameSinhala: resultItem.stop.nameSinhala,
+              nameTamil: resultItem.stop.nameTamil,
+              description: resultItem.stop.description,
+              location: {
+                latitude: resultItem.stop.location?.latitude ?? 0,
+                longitude: resultItem.stop.location?.longitude ?? 0,
+                address: resultItem.stop.location?.address,
+                city: resultItem.stop.location?.city,
+                state: resultItem.stop.location?.state,
+                zipCode: resultItem.stop.location?.zipCode,
+                country: resultItem.stop.location?.country,
+                addressSinhala: resultItem.stop.location?.addressSinhala,
+                citySinhala: resultItem.stop.location?.citySinhala,
+                stateSinhala: resultItem.stop.location?.stateSinhala,
+                countrySinhala: resultItem.stop.location?.countrySinhala,
+                addressTamil: resultItem.stop.location?.addressTamil,
+                cityTamil: resultItem.stop.location?.cityTamil,
+                stateTamil: resultItem.stop.location?.stateTamil,
+                countryTamil: resultItem.stop.location?.countryTamil,
+              },
+              isAccessible: resultItem.stop.isAccessible,
+              type: StopExistenceType.EXISTING
+            };
+
+            createdStops.push({ original: originalStop, created: mappedCreatedStop });
+          } else if (!resultItem.success && originalStop) {
+            failedStops.push({ stop: originalStop, error: resultItem.error || 'Unknown error' });
+          }
+        }
+      }
+
       setProgress({
-        current: i + 1,
-        total: stopsToCreate.length,
-        label: `Creating: ${stop.name}`
+        current: 2,
+        total: 2,
+        label: 'Batch creation complete'
       });
 
-      try {
-        // Validate required fields
-        if (!stop.name || stop.name.trim() === '') {
-          failedStops.push({ stop, error: 'Stop name is required' });
-          continue;
-        }
-
-        if (!stop.location || stop.location.latitude === 0 || stop.location.longitude === 0) {
-          failedStops.push({ stop, error: 'Valid coordinates are required' });
-          continue;
-        }
-
-        // Prepare stop request
-        const stopRequest: StopRequest = {
-          name: stop.name,
-          nameSinhala: stop.nameSinhala,
-          nameTamil: stop.nameTamil,
-          description: stop.description,
-          location: {
-            latitude: stop.location.latitude,
-            longitude: stop.location.longitude,
-            address: stop.location.address,
-            city: stop.location.city,
-            state: stop.location.state,
-            zipCode: stop.location.zipCode,
-            country: stop.location.country,
-            addressSinhala: stop.location.addressSinhala,
-            citySinhala: stop.location.citySinhala,
-            stateSinhala: stop.location.stateSinhala,
-            countrySinhala: stop.location.countrySinhala,
-            addressTamil: stop.location.addressTamil,
-            cityTamil: stop.location.cityTamil,
-            stateTamil: stop.location.stateTamil,
-            countryTamil: stop.location.countryTamil,
-          },
-          isAccessible: stop.isAccessible
-        };
-
-        // Create the stop
-        const createdStop = await BusStopManagementService.createStop(stopRequest);
-
-        const mappedCreatedStop: Stop = {
-          id: createdStop.id ?? '',
-          name: createdStop.name ?? '',
-          nameSinhala: createdStop.nameSinhala,
-          nameTamil: createdStop.nameTamil,
-          description: createdStop.description,
-          location: {
-            latitude: createdStop.location?.latitude ?? 0,
-            longitude: createdStop.location?.longitude ?? 0,
-            address: createdStop.location?.address,
-            city: createdStop.location?.city,
-            state: createdStop.location?.state,
-            zipCode: createdStop.location?.zipCode,
-            country: createdStop.location?.country,
-            addressSinhala: createdStop.location?.addressSinhala,
-            citySinhala: createdStop.location?.citySinhala,
-            stateSinhala: createdStop.location?.stateSinhala,
-            countrySinhala: createdStop.location?.countrySinhala,
-            addressTamil: createdStop.location?.addressTamil,
-            cityTamil: createdStop.location?.cityTamil,
-            stateTamil: createdStop.location?.stateTamil,
-            countryTamil: createdStop.location?.countryTamil,
-          },
-          isAccessible: createdStop.isAccessible,
-          type: StopExistenceType.EXISTING
-        };
-
-        createdStops.push({ original: stop, created: mappedCreatedStop });
-
-        // Update the stop in context (find by name since original has no ID)
+      // Update context for all created stops
+      for (const { original, created } of createdStops) {
         data.routeGroup.routes.forEach((route, routeIndex) => {
           route.routeStops.forEach((routeStop, stopIndex) => {
-            if (routeStop.stop.name === stop.name && 
+            if (routeStop.stop.name === original.name &&
                 routeStop.stop.type === StopExistenceType.NEW) {
               updateRoute(routeIndex, {
-                routeStops: route.routeStops.map((rs, idx) => 
-                  idx === stopIndex 
-                    ? { ...rs, stop: mappedCreatedStop }
+                routeStops: route.routeStops.map((rs, idx) =>
+                  idx === stopIndex
+                    ? { ...rs, stop: created }
                     : rs
                 )
               });
             }
           });
         });
-
-        // Small delay between creations
-        if (i < stopsToCreate.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      } catch (error: any) {
-        const errorMessage = error.body?.message || error.message || 'Failed to create stop';
-        failedStops.push({ stop, error: errorMessage });
       }
-    }
 
-    setState(prev => ({
-      ...prev,
-      createdStops,
-      failedStops,
-      steps: {
-        ...prev.steps,
-        stopCreation: { 
-          status: failedStops.length === 0 ? 'completed' : 'failed',
-          message: failedStops.length === 0 
-            ? `Successfully created ${createdStops.length} stops`
-            : `Created ${createdStops.length} stops, ${failedStops.length} failed`,
-          details: [
-            ...createdStops.map(s => `✓ Created: ${s.created.name} (ID: ${s.created.id})`),
-            ...failedStops.map(s => `✗ Failed: ${s.stop.name} - ${s.error}`)
-          ]
-        }
-      }
-    }));
-
-    if (failedStops.length > 0) {
       setState(prev => ({
         ...prev,
-        currentStep: 'failed',
-        error: `Failed to create ${failedStops.length} stops. Route group cannot be submitted with missing stops.`
+        createdStops,
+        failedStops,
+        steps: {
+          ...prev.steps,
+          stopCreation: {
+            status: failedStops.length === 0 ? 'completed' : 'failed',
+            message: failedStops.length === 0
+              ? `Successfully created ${createdStops.length} stops`
+              : `Created ${createdStops.length} stops, ${failedStops.length} failed`,
+            details: [
+              ...createdStops.map(s => `✓ Created: ${s.created.name} (ID: ${s.created.id})`),
+              ...failedStops.map(s => `✗ Failed: ${s.stop.name} - ${s.error}`)
+            ]
+          }
+        }
       }));
-      return { success: false, createdStops };
-    }
 
-    return { success: true, createdStops };
+      if (failedStops.length > 0) {
+        setState(prev => ({
+          ...prev,
+          currentStep: 'failed',
+          error: `Failed to create ${failedStops.length} stops. Route group cannot be submitted with missing stops.`
+        }));
+        return { success: false, createdStops };
+      }
+
+      return { success: true, createdStops };
+    } catch (error: any) {
+      const errorMessage = error.body?.message || error.message || 'Batch stop creation failed';
+      console.error('Batch stop creation failed:', error);
+
+      setState(prev => ({
+        ...prev,
+        failedStops: stopsToCreate.map(s => ({ stop: s, error: errorMessage })),
+        steps: {
+          ...prev.steps,
+          stopCreation: {
+            status: 'failed',
+            message: 'Batch stop creation failed',
+            details: [errorMessage]
+          }
+        },
+        currentStep: 'failed',
+        error: errorMessage
+      }));
+      return { success: false, createdStops: [] };
+    }
   }, [data.routeGroup.routes, updateRoute]);
 
   // Step 3: Build final route group object

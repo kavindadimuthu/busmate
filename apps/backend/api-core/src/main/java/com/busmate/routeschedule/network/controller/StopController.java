@@ -1,28 +1,7 @@
 package com.busmate.routeschedule.network.controller;
 
-import com.busmate.routeschedule.network.dto.request.StopRequest;
-import com.busmate.routeschedule.network.dto.request.StopExportRequest;
-import com.busmate.routeschedule.network.dto.response.RouteStopDetailResponse;
-import com.busmate.routeschedule.network.dto.response.RouteGroupStopDetailResponse;
-import com.busmate.routeschedule.scheduling.dto.response.ScheduleStopDetailResponse;
-import com.busmate.routeschedule.network.dto.response.StopResponse;
-import com.busmate.routeschedule.network.dto.response.StopExistsResponse;
-import com.busmate.routeschedule.network.dto.response.StopFilterOptionsResponse;
-import com.busmate.routeschedule.network.dto.response.StopStatisticsResponse;
-import com.busmate.routeschedule.network.dto.response.StopImportResponse;
-import com.busmate.routeschedule.network.dto.response.StopExportResponse;
-import com.busmate.routeschedule.network.dto.response.StopBulkUpdateResponse;
-
-import com.busmate.routeschedule.network.dto.request.StopBulkUpdateRequest;
-
-import com.busmate.routeschedule.network.service.StopService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,14 +11,41 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.List;
-import java.util.UUID;
-import com.busmate.routeschedule.fleet.entity.Bus;
-import com.busmate.routeschedule.network.entity.Route;
-import com.busmate.routeschedule.scheduling.entity.Schedule;
-import com.busmate.routeschedule.network.entity.Stop;
+
+import com.busmate.routeschedule.network.dto.request.StopBatchCreateRequest;
+import com.busmate.routeschedule.network.dto.request.StopBulkUpdateRequest;
+import com.busmate.routeschedule.network.dto.request.StopExportRequest;
+import com.busmate.routeschedule.network.dto.request.StopRequest;
+import com.busmate.routeschedule.network.dto.response.RouteGroupStopDetailResponse;
+import com.busmate.routeschedule.network.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.network.dto.response.StopBatchCreateResponse;
+import com.busmate.routeschedule.network.dto.response.StopBulkUpdateResponse;
+import com.busmate.routeschedule.network.dto.response.StopExistsResponse;
+import com.busmate.routeschedule.network.dto.response.StopExportResponse;
+import com.busmate.routeschedule.network.dto.response.StopFilterOptionsResponse;
+import com.busmate.routeschedule.network.dto.response.StopImportResponse;
+import com.busmate.routeschedule.network.dto.response.StopResponse;
+import com.busmate.routeschedule.network.dto.response.StopStatisticsResponse;
+import com.busmate.routeschedule.network.service.StopService;
+import com.busmate.routeschedule.scheduling.dto.response.ScheduleStopDetailResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/stops")
@@ -67,6 +73,28 @@ public class StopController {
         String userId = authentication.getName();
         StopResponse response = stopService.createStop(request, userId);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    // 1b. BATCH CREATE - Create multiple stops in a single request
+    @PostMapping("/batch")
+    @Operation(
+        summary = "Create multiple bus stops in batch",
+        description = "Creates multiple bus stops in a single request. Each stop is validated individually. " +
+                     "Stops that already exist or fail validation will be reported in the response without blocking other stops. " +
+                     "Requires authentication.",
+        operationId = "createStopsBatch"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Batch creation completed (check response for individual results)"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<StopBatchCreateResponse> createStopsBatch(
+            @Valid @RequestBody StopBatchCreateRequest request,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        StopBatchCreateResponse response = stopService.createStopsBatch(request, userId);
+        return ResponseEntity.ok(response);
     }
 
     // 2. READ ALL - Most commonly used operation

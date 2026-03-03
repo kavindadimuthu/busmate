@@ -1,45 +1,5 @@
 package com.busmate.routeschedule.network.service.impl;
 
-import com.busmate.routeschedule.shared.dto.LocationDto;
-import com.busmate.routeschedule.network.dto.request.StopRequest;
-import com.busmate.routeschedule.network.dto.request.StopExportRequest;
-import com.busmate.routeschedule.network.dto.response.RouteStopDetailResponse;
-import com.busmate.routeschedule.network.dto.response.RouteGroupStopDetailResponse;
-import com.busmate.routeschedule.scheduling.dto.response.ScheduleStopDetailResponse;
-import com.busmate.routeschedule.network.dto.response.StopExistsResponse;
-import com.busmate.routeschedule.network.dto.response.StopResponse;
-import com.busmate.routeschedule.network.dto.response.StopFilterOptionsResponse;
-import com.busmate.routeschedule.network.dto.response.StopStatisticsResponse;
-import com.busmate.routeschedule.network.dto.response.StopImportResponse;
-import com.busmate.routeschedule.network.dto.response.StopExportResponse;
-import com.busmate.routeschedule.network.dto.response.StopBulkUpdateResponse;
-
-import com.busmate.routeschedule.network.dto.request.StopBulkUpdateRequest;
-
-import com.busmate.routeschedule.network.entity.RouteStop;
-import com.busmate.routeschedule.network.entity.Route;
-import com.busmate.routeschedule.network.entity.RouteGroup;
-import com.busmate.routeschedule.scheduling.entity.ScheduleStop;
-import com.busmate.routeschedule.network.entity.Stop;
-import com.busmate.routeschedule.scheduling.entity.Schedule;
-import com.busmate.routeschedule.network.repository.RouteStopRepository;
-import com.busmate.routeschedule.network.repository.RouteRepository;
-import com.busmate.routeschedule.network.repository.RouteGroupRepository;
-import com.busmate.routeschedule.scheduling.repository.ScheduleRepository;
-import com.busmate.routeschedule.scheduling.repository.ScheduleStopRepository;
-import com.busmate.routeschedule.network.repository.StopRepository;
-import com.busmate.routeschedule.network.service.StopService;
-import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
-import com.busmate.routeschedule.shared.exception.ConflictException;
-import com.busmate.routeschedule.shared.util.MapperUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
@@ -52,8 +12,51 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.busmate.routeschedule.network.dto.request.StopBatchCreateRequest;
+import com.busmate.routeschedule.network.dto.request.StopBulkUpdateRequest;
+import com.busmate.routeschedule.network.dto.request.StopExportRequest;
+import com.busmate.routeschedule.network.dto.request.StopRequest;
+import com.busmate.routeschedule.network.dto.response.RouteGroupStopDetailResponse;
+import com.busmate.routeschedule.network.dto.response.RouteStopDetailResponse;
+import com.busmate.routeschedule.network.dto.response.StopBatchCreateResponse;
+import com.busmate.routeschedule.network.dto.response.StopBulkUpdateResponse;
+import com.busmate.routeschedule.network.dto.response.StopExistsResponse;
+import com.busmate.routeschedule.network.dto.response.StopExportResponse;
+import com.busmate.routeschedule.network.dto.response.StopFilterOptionsResponse;
+import com.busmate.routeschedule.network.dto.response.StopImportResponse;
+import com.busmate.routeschedule.network.dto.response.StopResponse;
+import com.busmate.routeschedule.network.dto.response.StopStatisticsResponse;
+import com.busmate.routeschedule.network.entity.Route;
+import com.busmate.routeschedule.network.entity.RouteGroup;
+import com.busmate.routeschedule.network.entity.RouteStop;
+import com.busmate.routeschedule.network.entity.Stop;
+import com.busmate.routeschedule.network.repository.RouteGroupRepository;
+import com.busmate.routeschedule.network.repository.RouteRepository;
+import com.busmate.routeschedule.network.repository.RouteStopRepository;
+import com.busmate.routeschedule.network.repository.StopRepository;
+import com.busmate.routeschedule.network.service.StopService;
+import com.busmate.routeschedule.scheduling.dto.response.ScheduleStopDetailResponse;
+import com.busmate.routeschedule.scheduling.entity.Schedule;
+import com.busmate.routeschedule.scheduling.entity.ScheduleStop;
+import com.busmate.routeschedule.scheduling.repository.ScheduleRepository;
+import com.busmate.routeschedule.scheduling.repository.ScheduleStopRepository;
+import com.busmate.routeschedule.shared.dto.LocationDto;
+import com.busmate.routeschedule.shared.exception.ConflictException;
+import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
+import com.busmate.routeschedule.shared.util.MapperUtils;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -87,6 +90,69 @@ public class StopServiceImpl implements StopService {
         stop.setUpdatedBy(userId);
         Stop savedStop = stopRepository.save(stop);
         return mapperUtils.map(savedStop, StopResponse.class);
+    }
+
+    @Override
+    @Transactional
+    public StopBatchCreateResponse createStopsBatch(StopBatchCreateRequest request, String userId) {
+        List<StopBatchCreateResponse.StopBatchResultItem> results = new ArrayList<>();
+        int successCount = 0;
+        int failedCount = 0;
+
+        for (StopRequest stopRequest : request.getStops()) {
+            String stopName = stopRequest.getName();
+            try {
+                // Check for duplicates across all language variants
+                String cityToCheck = stopRequest.getLocation() != null ?
+                    (stopRequest.getLocation().getCity() != null ? stopRequest.getLocation().getCity() :
+                     stopRequest.getLocation().getCitySinhala() != null ? stopRequest.getLocation().getCitySinhala() :
+                     stopRequest.getLocation().getCityTamil()) : null;
+
+                if (stopRepository.existsByAnyNameVariantAndAnyCity(
+                        stopRequest.getName(),
+                        stopRequest.getNameSinhala(),
+                        stopRequest.getNameTamil(),
+                        cityToCheck)) {
+                    // Stop already exists - return the existing stop as a success (idempotent)
+                    Optional<Stop> existingStop = stopRepository.findByAnyNameVariantAndAnyCity(
+                            stopRequest.getName(),
+                            stopRequest.getNameSinhala(),
+                            stopRequest.getNameTamil(),
+                            cityToCheck);
+                    if (existingStop.isPresent()) {
+                        StopResponse existingResponse = mapperUtils.map(existingStop.get(), StopResponse.class);
+                        results.add(StopBatchCreateResponse.StopBatchResultItem.success(stopName, existingResponse));
+                        successCount++;
+                    } else {
+                        results.add(StopBatchCreateResponse.StopBatchResultItem.failure(
+                            stopName, "Stop exists but could not be retrieved"));
+                        failedCount++;
+                    }
+                    continue;
+                }
+
+                Stop stop = mapperUtils.map(stopRequest, Stop.class);
+                stop.setCreatedBy(userId);
+                stop.setUpdatedBy(userId);
+                Stop savedStop = stopRepository.save(stop);
+                StopResponse response = mapperUtils.map(savedStop, StopResponse.class);
+
+                results.add(StopBatchCreateResponse.StopBatchResultItem.success(stopName, response));
+                successCount++;
+            } catch (Exception e) {
+                log.error("Failed to create stop '{}': {}", stopName, e.getMessage());
+                results.add(StopBatchCreateResponse.StopBatchResultItem.failure(
+                    stopName, e.getMessage()));
+                failedCount++;
+            }
+        }
+
+        return StopBatchCreateResponse.builder()
+                .totalRequested(request.getStops().size())
+                .successCount(successCount)
+                .failedCount(failedCount)
+                .results(results)
+                .build();
     }
 
     @Override

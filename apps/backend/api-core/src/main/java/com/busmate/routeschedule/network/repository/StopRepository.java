@@ -1,6 +1,9 @@
 package com.busmate.routeschedule.network.repository;
 
-import com.busmate.routeschedule.network.entity.Stop;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,9 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.busmate.routeschedule.network.entity.Stop;
 
 @Repository
 public interface StopRepository extends JpaRepository<Stop, UUID> {
@@ -32,10 +33,24 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
            "s.name = :nameSinhala OR s.nameSinhala = :nameSinhala OR s.nameTamil = :nameSinhala OR " +
            "s.name = :nameTamil OR s.nameSinhala = :nameTamil OR s.nameTamil = :nameTamil) " +
            "AND (s.location.city = :city OR s.location.citySinhala = :city OR s.location.cityTamil = :city))")
-    boolean existsByAnyNameVariantAndAnyCity(@Param("name") String name, 
-                                           @Param("nameSinhala") String nameSinhala, 
-                                           @Param("nameTamil") String nameTamil, 
+    boolean existsByAnyNameVariantAndAnyCity(@Param("name") String name,
+                                           @Param("nameSinhala") String nameSinhala,
+                                           @Param("nameTamil") String nameTamil,
                                            @Param("city") String city);
+
+    /**
+     * Find a stop by any name variant and any city variant.
+     * Used for idempotent batch creation - returns existing stop when duplicate detected.
+     */
+    @Query("SELECT s FROM Stop s WHERE " +
+           "((s.name = :name OR s.nameSinhala = :name OR s.nameTamil = :name OR " +
+           "s.name = :nameSinhala OR s.nameSinhala = :nameSinhala OR s.nameTamil = :nameSinhala OR " +
+           "s.name = :nameTamil OR s.nameSinhala = :nameTamil OR s.nameTamil = :nameTamil) " +
+           "AND (s.location.city = :city OR s.location.citySinhala = :city OR s.location.cityTamil = :city))")
+    Optional<Stop> findByAnyNameVariantAndAnyCity(@Param("name") String name,
+                                                  @Param("nameSinhala") String nameSinhala,
+                                                  @Param("nameTamil") String nameTamil,
+                                                  @Param("city") String city);
     
     @Query(value = "SELECT * FROM stop s WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +
