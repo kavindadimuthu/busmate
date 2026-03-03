@@ -76,13 +76,6 @@ const FindMyBusPage = () => {
     });
   }, [location.search]);
 
-  // Filter results that have valid timing data
-  const filterResultsWithTiming = (results: BusResult[]): BusResult[] => {
-    return results.filter(bus => 
-      bus.departureAtOrigin || bus.actualDepartureTime
-    );
-  };
-
   // Search buses function
   const searchBuses = async () => {
     if (!searchParams.fromStopId || !searchParams.toStopId) {
@@ -101,14 +94,13 @@ const FindMyBusPage = () => {
         filters.departureTimeFrom || undefined,
         filters.routeNumber || undefined,
         filters.roadType || undefined,
-        filters.timePreference
+        'DEFAULT',
       );
 
-      // Filter results to only include those with timing data
-      const filteredResults = filterResultsWithTiming(response.results || []);
-      
-      setBusResults(filteredResults);
-      setTotalResults(filteredResults.length);
+      const allResults = response.results || [];
+
+      setBusResults(allResults);
+      setTotalResults(allResults.length);
       
       // Store stop names from response
       if (response.fromStop?.name) setFromStopName(response.fromStop.name);
@@ -132,14 +124,7 @@ const FindMyBusPage = () => {
 
   // Helper to get departure time for sorting
   const getDepartureTimeForSort = (bus: BusResult) => {
-    // Prioritize actual departure time from trip, then scheduled departure
-    if (bus.actualDepartureTime) {
-      return bus.actualDepartureTime;
-    }
-    if (bus.departureAtOrigin) {
-      return bus.departureAtOrigin;
-    }
-    return null;
+    return bus.actualDepartureTime || bus.departureAtOrigin || null;
   };
 
   // Sort buses based on sortBy filter
@@ -149,12 +134,6 @@ const FindMyBusPage = () => {
         return (a.estimatedDurationMinutes || 0) - (b.estimatedDurationMinutes || 0);
       case 'distance':
         return (a.distanceKm || 0) - (b.distanceKm || 0);
-      case 'timeSource':
-        // Sort by time source reliability: VERIFIED > UNVERIFIED > CALCULATED
-        const sourceOrder = { VERIFIED: 0, UNVERIFIED: 1, CALCULATED: 2, UNAVAILABLE: 3 };
-        const sourceA = sourceOrder[a.departureAtOriginSource as keyof typeof sourceOrder] ?? 3;
-        const sourceB = sourceOrder[b.departureAtOriginSource as keyof typeof sourceOrder] ?? 3;
-        return sourceA - sourceB;
       case 'departure':
       default:
         // Sort by departure time
@@ -278,10 +257,10 @@ const FindMyBusPage = () => {
                       <BusCard
                         key={bus.tripId || bus.scheduleId || `${bus.routeId}-${index}`}
                         bus={bus}
-                        fromStopName={fromStopName}
-                        toStopName={toStopName}
                         fromStopId={searchParams.fromStopId}
                         toStopId={searchParams.toStopId}
+                        fromStopName={fromStopName}
+                        toStopName={toStopName}
                         searchDate={searchParams.date}
                         timePreference={filters.timePreference}
                       />

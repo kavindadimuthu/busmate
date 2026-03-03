@@ -10,10 +10,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
-  ArrowLeft, 
-  Bus, 
-  MapPin, 
+import {
+  ArrowLeft,
+  Bus,
+  MapPin,
+  Phone,
   Loader2,
   AlertCircle,
   AlertTriangle,
@@ -21,41 +22,35 @@ import {
   Calculator,
   Info,
   Calendar,
-  Route as RouteIcon
+  Route as RouteIcon,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
 import { PassengerQueryService } from "@busmate/api-client-route";
-import type { 
-  FindMyBusDetailsResponse,
-  RouteScheduleStop,
-  ScheduleCalendarInfo,
-  ScheduleExceptionInfo
-} from "@busmate/api-client-route";
+import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-route";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type StopViewMode = 'all' | 'with-times' | 'origin-destination';
+type StopViewMode = 'timings' | 'arrival-departure' | 'all';
 type TimeDisplayMode = 'resolved' | 'verified' | 'unverified' | 'calculated';
 
 /**
- * FindMyBusDetailPage - Comprehensive detail page for bus schedule/trip
- * 
+ * FindMyBusDetailPage - Unified detail page showing bus result details
+ *
  * URL Pattern:
- * /findmybus/detail?scheduleId=X&fromStopId=Y&toStopId=Z&tripId=T&date=YYYY-MM-DD&timePreference=DEFAULT
+ * - /findmybus/detail?scheduleId=X&fromStopId=Y&toStopId=Z
+ * - /findmybus/detail?scheduleId=X&fromStopId=Y&toStopId=Z&tripId=T&date=YYYY-MM-DD
  */
 const FindMyBusDetailPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  // Extract URL parameters
+
   const scheduleId = searchParams.get('scheduleId');
   const fromStopId = searchParams.get('fromStopId');
   const toStopId = searchParams.get('toStopId');
   const tripId = searchParams.get('tripId') || undefined;
   const dateParam = searchParams.get('date') || new Date().toISOString().split('T')[0];
-  const timePreferenceParam = (searchParams.get('timePreference') || 'DEFAULT') as 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FindMyBusDetailsResponse | null>(null);
@@ -63,11 +58,11 @@ const FindMyBusDetailPage = () => {
   const [timeDisplayMode, setTimeDisplayMode] = useState<TimeDisplayMode>('resolved');
   const [showExceptions, setShowExceptions] = useState(false);
 
-  // Fetch data using new API
+  // Fetch data using unified findMyBusDetails endpoint
   useEffect(() => {
     const fetchData = async () => {
       if (!scheduleId || !fromStopId || !toStopId) {
-        setError("Missing required parameters. Please go back and select a bus.");
+        setError("Invalid URL parameters: scheduleId, fromStopId and toStopId are required");
         setLoading(false);
         return;
       }
@@ -76,32 +71,26 @@ const FindMyBusDetailPage = () => {
         setLoading(true);
         setError(null);
 
-        const response = await PassengerQueryService.findMyBusDetails(
+        const detailResponse = await PassengerQueryService.findMyBusDetails(
           scheduleId,
           fromStopId,
           toStopId,
           tripId,
           dateParam,
-          timePreferenceParam
+          'DEFAULT',
         );
 
-        if (!response.success) {
-          setError(response.message || "Failed to load details");
-          return;
-        }
-
-        setData(response);
-      } catch (err: unknown) {
-        console.error("Failed to fetch details:", err);
-        const errorMessage = err instanceof Error ? err.message : "Failed to load details. Please try again.";
-        setError(errorMessage);
+        setData(detailResponse);
+      } catch (err: any) {
+        console.error('Failed to fetch bus details:', err);
+        setError(err.message || 'Failed to load details. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [scheduleId, fromStopId, toStopId, tripId, dateParam, timePreferenceParam]);
+  }, [scheduleId, fromStopId, toStopId, tripId, dateParam]);
 
   // Helper functions
   const formatTime = (timeString?: string | null) => {
@@ -128,6 +117,15 @@ const FindMyBusDetailPage = () => {
     }
   };
 
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return 'N/A';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const formatDuration = (minutes?: number) => {
     if (!minutes) return null;
     const hours = Math.floor(minutes / 60);
@@ -136,51 +134,7 @@ const FindMyBusDetailPage = () => {
     return `${mins}m`;
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return null;
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  // Get time source badge config
-  const getTimeSourceConfig = (source?: string) => {
-    switch (source) {
-      case 'VERIFIED':
-        return { 
-          label: 'Verified', 
-          icon: CheckCircle, 
-          className: 'bg-green-100 text-green-700 border-green-200',
-          tooltip: 'Time verified by official sources'
-        };
-      case 'UNVERIFIED':
-        return { 
-          label: 'Unverified', 
-          icon: AlertCircle, 
-          className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-          tooltip: 'Time submitted by users, not officially verified'
-        };
-      case 'CALCULATED':
-        return { 
-          label: 'Calculated', 
-          icon: Calculator, 
-          className: 'bg-blue-50 text-blue-600 border-blue-200',
-          tooltip: 'Time calculated based on average travel times'
-        };
-      default:
-        return null;
-    }
-  };
-
-  // Get operating days from calendar
-  const getOperatingDays = (calendar?: ScheduleCalendarInfo): string[] => {
+  const getOperatingDays = (calendar?: { monday?: boolean; tuesday?: boolean; wednesday?: boolean; thursday?: boolean; friday?: boolean; saturday?: boolean; sunday?: boolean }): string[] => {
     if (!calendar) return [];
     const days: string[] = [];
     if (calendar.monday) days.push('Mon');
@@ -193,15 +147,59 @@ const FindMyBusDetailPage = () => {
     return days;
   };
 
-  // Filter stops based on view mode
-  const getFilteredStops = (stops?: RouteScheduleStop[]): RouteScheduleStop[] => {
-    if (!stops) return [];
-    
+  const calculateDuration = (departureTime?: string, arrivalTime?: string) => {
+    if (!departureTime || !arrivalTime) return null;
+    try {
+      const departureStr = departureTime.includes('T') ? departureTime : `2000-01-01T${departureTime}`;
+      const arrivalStr = arrivalTime.includes('T') ? arrivalTime : `2000-01-01T${arrivalTime}`;
+      const departure = new Date(departureStr);
+      const arrival = new Date(arrivalStr);
+      if (isNaN(departure.getTime()) || isNaN(arrival.getTime())) return null;
+      const diffMs = arrival.getTime() - departure.getTime();
+      return Math.floor(diffMs / 60000);
+    } catch {
+      return null;
+    }
+  };
+
+  // Get time source badge config
+  const getTimeSourceConfig = (source?: string) => {
+    switch (source) {
+      case 'VERIFIED':
+        return {
+          label: 'Verified',
+          icon: CheckCircle,
+          className: 'bg-green-100 text-green-700 border-green-200',
+          tooltip: 'Time verified by official sources'
+        };
+      case 'UNVERIFIED':
+        return {
+          label: 'Unverified',
+          icon: AlertCircle,
+          className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+          tooltip: 'Time submitted by users, not officially verified'
+        };
+      case 'CALCULATED':
+        return {
+          label: 'Calculated',
+          icon: Calculator,
+          className: 'bg-blue-50 text-blue-600 border-blue-200',
+          tooltip: 'Time calculated based on average travel times'
+        };
+      default:
+        return null;
+    }
+  };
+
+  // Filter stops based on view mode using resolved times
+  const getFilteredStops = () => {
+    if (!data?.routeScheduleStops) return [];
+    const stops = [...data.routeScheduleStops].sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0));
     switch (stopViewMode) {
-      case 'with-times':
+      case 'timings':
         return stops.filter(s => s.resolvedArrivalTime || s.resolvedDepartureTime);
-      case 'origin-destination':
-        return stops.filter(s => s.isOrigin || s.isDestination);
+      case 'arrival-departure':
+        return stops.filter(s => s.resolvedArrivalTime && s.resolvedDepartureTime);
       case 'all':
       default:
         return stops;
@@ -212,23 +210,23 @@ const FindMyBusDetailPage = () => {
   const getDisplayTime = (stop: RouteScheduleStop, type: 'arrival' | 'departure'): { time: string | null; source: string | null } => {
     switch (timeDisplayMode) {
       case 'verified':
-        return { 
+        return {
           time: type === 'arrival' ? stop.arrivalTime || null : stop.departureTime || null,
           source: 'VERIFIED'
         };
       case 'unverified':
-        return { 
+        return {
           time: type === 'arrival' ? stop.arrivalTimeUnverified || null : stop.departureTimeUnverified || null,
           source: 'UNVERIFIED'
         };
       case 'calculated':
-        return { 
+        return {
           time: type === 'arrival' ? stop.arrivalTimeCalculated || null : stop.departureTimeCalculated || null,
           source: 'CALCULATED'
         };
       case 'resolved':
       default:
-        return { 
+        return {
           time: type === 'arrival' ? stop.resolvedArrivalTime || null : stop.resolvedDepartureTime || null,
           source: type === 'arrival' ? stop.arrivalTimeSource || null : stop.departureTimeSource || null
         };
@@ -237,9 +235,9 @@ const FindMyBusDetailPage = () => {
 
   // Get display distance based on available data (prefer verified > unverified > calculated)
   const getDisplayDistance = (stop: RouteScheduleStop): number | undefined => {
-    return stop.distanceFromStartKm || 
-           stop.distanceFromStartKmVerified || 
-           stop.distanceFromStartKmUnverified || 
+    return stop.distanceFromStartKm ||
+           stop.distanceFromStartKmVerified ||
+           stop.distanceFromStartKmUnverified ||
            stop.distanceFromStartKmCalculated;
   };
 
@@ -304,20 +302,22 @@ const FindMyBusDetailPage = () => {
     );
   }
 
-  const { route, schedule, trip, journeySummary, routeScheduleStops } = data;
-  const filteredStops = getFilteredStops(routeScheduleStops);
+  // Destructure API response for convenient access throughout JSX
+  const route = data.route;
+  const journeySummary = data.journeySummary;
+  const schedule = data.schedule;
+  const trip = data.trip;
   const operatingDays = getOperatingDays(schedule?.calendar);
-  
-  // Prepare stops for map with origin/destination markers
-  const stopsForMap = (routeScheduleStops || []).map((stop) => ({
+  const duration = calculateDuration(journeySummary?.departureFromOrigin, journeySummary?.arrivalAtDestination);
+  const filteredStops = getFilteredStops();
+  const allStops = [...(data.routeScheduleStops || [])].sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0));
+  const stopsForMap = allStops.map((stop) => ({
     name: stop.stop?.name || '',
     km: stop.distanceFromStartKm || 0,
     location: stop.stop?.location ? {
       latitude: stop.stop.location.latitude || 0,
       longitude: stop.stop.location.longitude || 0,
-    } : undefined,
-    isOrigin: stop.isOrigin || false,
-    isDestination: stop.isDestination || false
+    } : undefined
   }));
 
   return (
@@ -331,12 +331,12 @@ const FindMyBusDetailPage = () => {
         />
         <div className="absolute inset-0 bg-gradient-hero opacity-90" />
       </div>
-      
+
       <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 max-w-[1200px]">
         {/* Page Header */}
         <div className="mb-4 sm:mb-6 md:mb-8 flex gap-2 sm:gap-3 md:gap-4 items-center">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate(-1)}
             className="-ml-1 sm:-ml-2 bg-gray-200/90 hover:bg-gray-200/100 rounded-full hover:shadow transition-all p-1.5 sm:p-2 h-auto"
           >
@@ -423,7 +423,7 @@ const FindMyBusDetailPage = () => {
                 </p>
               </div>
             </div>
-            
+
             {journeySummary?.statusMessage && (
               <div className="mt-3 pt-3 border-t">
                 <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -440,9 +440,9 @@ const FindMyBusDetailPage = () => {
           <CardContent className="p-0">
             {stopsForMap.length >= 2 ? (
               <div className="min-h-[250px] sm:min-h-[300px] md:min-h-[400px]">
-                <RouteMap 
-                  stops={stopsForMap} 
-                  routeName={route?.name || 'Route'} 
+                <RouteMap
+                  stops={stopsForMap}
+                  routeName={route?.name || 'Route'}
                   originStopId={fromStopId || undefined}
                   destinationStopId={toStopId || undefined}
                 />
@@ -466,10 +466,10 @@ const FindMyBusDetailPage = () => {
               <div className="flex flex-col gap-3 mb-4 sm:mb-5 md:mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <h2 className="text-lg sm:text-xl font-semibold">
-                    Stop List ({routeScheduleStops?.length || 0} stops)
+                    Stop List ({allStops.length} stops)
                   </h2>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                   <Select value={stopViewMode} onValueChange={(value) => setStopViewMode(value as StopViewMode)}>
                     <SelectTrigger className="w-[140px] sm:w-[160px] text-xs sm:text-sm h-8">
@@ -477,11 +477,11 @@ const FindMyBusDetailPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Stops</SelectItem>
-                      <SelectItem value="with-times">With Times</SelectItem>
-                      <SelectItem value="origin-destination">Origin & Dest</SelectItem>
+                      <SelectItem value="timings">With Times</SelectItem>
+                      <SelectItem value="arrival-departure">Origin & Dest</SelectItem>
                     </SelectContent>
                   </Select>
-                  
+
                   <Select value={timeDisplayMode} onValueChange={(value) => setTimeDisplayMode(value as TimeDisplayMode)}>
                     <SelectTrigger className="w-[140px] sm:w-[160px] text-xs sm:text-sm h-8">
                       <SelectValue placeholder="Time Type" />
@@ -499,92 +499,62 @@ const FindMyBusDetailPage = () => {
               <div className="max-h-[400px] sm:max-h-[450px] md:max-h-[500px] overflow-y-auto pr-1 sm:pr-2">
                 {filteredStops.length > 0 ? (
                   <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-                    {filteredStops.map((stop, index) => {
-                      const arrivalInfo = getDisplayTime(stop, 'arrival');
-                      const departureInfo = getDisplayTime(stop, 'departure');
-                      const displayTime = departureInfo.time || arrivalInfo.time;
-                      const displaySource = departureInfo.source || arrivalInfo.source;
-                      const displayDistance = getDisplayDistance(stop);
-                      
-                      return (
-                        <div key={stop.scheduleStopId || index} className="flex gap-2 sm:gap-3 md:gap-4">
-                          <div className="flex-shrink-0 w-16 sm:w-20 md:w-24">
-                            <div className="text-sm sm:text-base md:text-lg font-semibold text-foreground">
-                              {formatTime(displayTime) || '-'}
-                            </div>
-                            {displaySource && timeDisplayMode === 'resolved' && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Badge variant="outline" className={`text-[9px] px-1 py-0 ${getTimeSourceConfig(displaySource)?.className}`}>
-                                      {getTimeSourceConfig(displaySource)?.label}
-                                    </Badge>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{getTimeSourceConfig(displaySource)?.tooltip}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
+                    {filteredStops.map((stop, index) => (
+                      <div key={stop.scheduleStopId || stop.routeStopId || index} className="flex gap-2 sm:gap-3 md:gap-4">
+                        {/* Time Column */}
+                        <div className="flex-shrink-0 w-12 sm:w-14 md:w-16">
+                          <div className="text-sm sm:text-base md:text-lg font-semibold text-foreground">
+                            {formatTime(stop.resolvedDepartureTime || stop.resolvedArrivalTime) || '-'}
                           </div>
+                        </div>
 
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <div className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
-                              <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
-                                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold border-2 flex-shrink-0 ${
-                                  stop.isOrigin ? 'bg-green-500 border-green-600 shadow-lg shadow-green-300/50' : 
-                                  stop.isDestination ? 'bg-red-500 border-red-600 shadow-lg shadow-red-300/50' : 
-                                  'bg-blue-500 border-blue-600 shadow-lg shadow-blue-300/50'
-                                }`}>
-                                  {stop.stopOrder + 1}
-                                </div>
-                                {index < filteredStops.length - 1 && (
-                                  <div className="w-0.5 h-8 sm:h-9 bg-border mt-1" />
-                                )}
-                              </div>
+                        {/* Timeline & Stop Info */}
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
+                            {/* Timeline Indicator */}
+                            <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
+                              <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
+                                stop.isOrigin ? 'bg-green-500' :
+                                stop.isDestination ? 'bg-red-500' :
+                                index === 0 ? 'bg-green-500' :
+                                index === filteredStops.length - 1 ? 'bg-red-500' :
+                                'bg-blue-500'
+                              }`} />
+                              {index < filteredStops.length - 1 && (
+                                <div className="w-0.5 h-8 sm:h-9 bg-border mt-1" />
+                              )}
+                            </div>
 
-                              <div className={`flex-1 min-w-0 px-2 sm:px-2.5 md:px-3 py-1.5 sm:py-2 rounded-sm ${
-                                stop.isOrigin ? 'bg-green-50 border border-green-200' :
-                                stop.isDestination ? 'bg-red-50 border border-red-200' :
-                                'bg-gray-200/60'
-                              }`}>
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="text-xs sm:text-sm font-medium text-foreground truncate">
-                                    {stop.stop?.name}
-                                  </p>
-                                  {/* {stop.isOrigin && (
-                                    <Badge className="bg-green-500 text-white text-[9px] px-1 py-0">Origin</Badge>
-                                  )}
-                                  {stop.isDestination && (
-                                    <Badge className="bg-red-500 text-white text-[9px] px-1 py-0">Dest</Badge>
-                                  )} */}
+                            {/* Stop Details */}
+                            <div className="flex-1 min-w-0 bg-gray-200/60 px-2 sm:px-2.5 md:px-3 py-1.5 sm:py-2 rounded-sm">
+                              <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+                                {stop.stop?.name}
+                              </p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+                                Stop {stop.stopOrder}
+                              </p>
+
+                              {stopViewMode === 'arrival-departure' && (
+                                <div className="flex gap-3 sm:gap-4 mt-1.5 sm:mt-2 text-[10px] sm:text-xs">
                                   <div>
-                                    <span>{displayDistance.toFixed(1)} km</span>
+                                    <span className="text-muted-foreground">Arr: </span>
+                                    <span className="font-medium">
+                                      {stop.resolvedArrivalTime ? formatTime(stop.resolvedArrivalTime) : '-'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Dep: </span>
+                                    <span className="font-medium">
+                                      {stop.resolvedDepartureTime ? formatTime(stop.resolvedDepartureTime) : '-'}
+                                    </span>
                                   </div>
                                 </div>
-                                
-                                {(arrivalInfo.time || departureInfo.time) && (
-                                  <div className="flex gap-3 sm:gap-4 mt-1.5 text-[10px] sm:text-xs">
-                                    {arrivalInfo.time && (
-                                      <div>
-                                        <span className="text-muted-foreground">Arr: </span>
-                                        <span className="font-medium">{formatTime(arrivalInfo.time)}</span>
-                                      </div>
-                                    )}
-                                    {departureInfo.time && (
-                                      <div>
-                                        <span className="text-muted-foreground">Dep: </span>
-                                        <span className="font-medium">{formatTime(departureInfo.time)}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 sm:py-10 md:py-12 text-muted-foreground">
@@ -618,7 +588,7 @@ const FindMyBusDetailPage = () => {
                       <Badge variant="secondary" className="text-xs">{schedule.scheduleType}</Badge>
                     </div>
                   )}
-                  
+
                   {operatingDays.length > 0 && (
                     <div>
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">Operating Days</p>
@@ -688,7 +658,7 @@ const FindMyBusDetailPage = () => {
                     {trip.status && (
                       <div className="flex justify-between items-center gap-2">
                         <span className="text-xs sm:text-sm text-muted-foreground">Trip Status:</span>
-                        <Badge variant={trip.status === 'active' ? 'default' : 'secondary'} 
+                        <Badge variant={trip.status === 'active' ? 'default' : 'secondary'}
                                className={trip.status === 'active' ? 'bg-green-600' : ''}>
                           {trip.status}
                         </Badge>
@@ -733,7 +703,7 @@ const FindMyBusDetailPage = () => {
                     {trip.delayMinutes !== undefined && trip.delayMinutes !== 0 && (
                       <div className="flex justify-between items-center gap-2">
                         <span className="text-xs sm:text-sm text-muted-foreground">Delay:</span>
-                        <Badge variant={trip.delayMinutes > 0 ? 'destructive' : 'default'} 
+                        <Badge variant={trip.delayMinutes > 0 ? 'destructive' : 'default'}
                                className={trip.delayMinutes < 0 ? 'bg-green-600' : ''}>
                           {trip.delayMinutes > 0 ? `+${trip.delayMinutes}` : trip.delayMinutes} min
                         </Badge>
@@ -776,22 +746,16 @@ const FindMyBusDetailPage = () => {
                       <span className="font-medium text-xs sm:text-sm text-right">{route.routeThrough}</span>
                     </div>
                   )}
-                  {route?.totalDistanceKm && (
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Total Distance:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{route.totalDistanceKm.toFixed(1)} km</span>
-                    </div>
-                  )}
-                  {route?.direction && (
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Direction:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{route.direction}</span>
-                    </div>
-                  )}
-                  {route?.routeGroup?.name && (
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Route Group:</span>
-                      <span className="font-medium text-xs sm:text-sm text-right">{route.routeGroup.name}</span>
+                  {trip?.operator?.contactNumber && (
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Contact:</span>
+                      <a
+                        href={`tel:${trip.operator.contactNumber}`}
+                        className="font-medium text-primary hover:underline flex items-center gap-1 text-xs sm:text-sm"
+                      >
+                        <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {trip.operator.contactNumber}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -810,33 +774,24 @@ const FindMyBusDetailPage = () => {
           <div className="max-h-[300px] sm:max-h-[350px] md:max-h-[400px] overflow-y-auto">
             {schedule?.exceptions && schedule.exceptions.length > 0 ? (
               <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
-                {schedule.exceptions.map((exception: ScheduleExceptionInfo, index: number) => (
-                  <div key={exception.id || index} className={`p-2.5 sm:p-3 border rounded-lg ${
-                    exception.affectsQueryDate ? 'bg-red-50 border-red-200' : 'bg-muted/50'
-                  }`}>
+                {schedule.exceptions.map((exception, index) => (
+                  <div key={exception.id || index} className="p-2.5 sm:p-3 border rounded-lg bg-muted/50">
                     <div className="flex gap-2 mb-1.5 sm:mb-2">
                       <AlertTriangle className={`h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 mt-0.5 ${
                         exception.affectsQueryDate ? 'text-red-600' : 'text-yellow-600'
                       }`} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground text-xs sm:text-sm">
-                          {formatDate(exception.exceptionDate)}
+                          {exception.exceptionDate || 'Exception'}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
                           {exception.reason || 'No description available'}
                         </p>
-                        <div className="flex gap-2 mt-1.5 sm:mt-2">
-                          {exception.exceptionType && (
-                            <Badge variant="outline" className="text-[10px] sm:text-xs">
-                              {exception.exceptionType}
-                            </Badge>
-                          )}
-                          {exception.affectsQueryDate && (
-                            <Badge variant="destructive" className="text-[10px] sm:text-xs">
-                              Affects Selected Date
-                            </Badge>
-                          )}
-                        </div>
+                        {exception.exceptionType && (
+                          <Badge variant="outline" className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs">
+                            {exception.exceptionType}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -41,14 +41,13 @@ const sortOptions = [
   { id: "departure", label: "Departure Time" },
   { id: "duration", label: "Duration" },
   { id: "distance", label: "Distance" },
-  { id: "timeSource", label: "Time Reliability" }
 ];
 
 const timePreferenceOptions = [
-  { id: "DEFAULT", label: "All Times (Default)", description: "Verified > Unverified > Calculated" },
-  { id: "VERIFIED_ONLY", label: "Verified Only", description: "Most reliable, fewer results" },
-  { id: "PREFER_UNVERIFIED", label: "Prefer Unverified", description: "Verified > Unverified" },
-  { id: "PREFER_CALCULATED", label: "Prefer Calculated", description: "Verified > Unverified > Calculated" }
+  { id: "DEFAULT", label: "Default", description: "Best available time data" },
+  { id: "VERIFIED_ONLY", label: "Verified Only", description: "Show only officially verified times" },
+  { id: "PREFER_UNVERIFIED", label: "Prefer Unverified", description: "Prefer user-submitted times" },
+  { id: "PREFER_CALCULATED", label: "Prefer Calculated", description: "Prefer system-calculated times" },
 ];
 
 const FilterSidebar = ({ filters, onFiltersChange, isOpen, onToggle }: FilterSidebarProps) => {

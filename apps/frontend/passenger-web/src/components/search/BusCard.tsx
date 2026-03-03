@@ -13,10 +13,10 @@ import type { BusResult } from "@busmate/api-client-route";
 
 interface BusCardProps {
   bus: BusResult;
-  fromStopName?: string;
-  toStopName?: string;
   fromStopId?: string;
   toStopId?: string;
+  fromStopName?: string;
+  toStopName?: string;
   searchDate?: string;
   timePreference?: 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
   onViewDetails?: () => void;
@@ -88,44 +88,12 @@ const getArrivalTime = (bus: BusResult) => {
   return bus.actualArrivalTime || bus.arrivalAtDestination || null;
 };
 
-// Helper function to get time source badge config
-const getTimeSourceConfig = (source?: string) => {
-  switch (source) {
-    case 'VERIFIED':
-      return { 
-        label: 'Verified', 
-        variant: 'default' as const, 
-        icon: CheckCircle, 
-        className: 'bg-green-100 text-green-700 border-green-200',
-        tooltip: 'Time verified by official sources'
-      };
-    case 'UNVERIFIED':
-      return { 
-        label: 'Unverified', 
-        variant: 'secondary' as const, 
-        icon: AlertCircle, 
-        className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-        tooltip: 'Time submitted by users, not officially verified'
-      };
-    case 'CALCULATED':
-      return { 
-        label: 'Calculated', 
-        variant: 'outline' as const, 
-        icon: Calculator, 
-        className: 'bg-blue-50 text-blue-600 border-blue-200',
-        tooltip: 'Time calculated based on average travel times'
-      };
-    default:
-      return null;
-  }
-};
-
 export default function BusCard({
   bus,
-  fromStopName,
-  toStopName,
   fromStopId,
   toStopId,
+  fromStopName,
+  toStopName,
   searchDate,
   timePreference,
   onViewDetails,
@@ -133,36 +101,16 @@ export default function BusCard({
   const departureTime = getDepartureTime(bus);
   const arrivalTime = getArrivalTime(bus);
 
-  // Get start and end stop times (for the entire route)
-  const routeStartDepartureTime = bus.scheduleStartStopDepartureTime || departureTime;
-  const routeEndArrivalTime = bus.scheduleEndStopArrivalTime || arrivalTime;
-  const totalRouteDistance = bus.scheduleTotalDistanceKm || bus.distanceKm;
-
-  // Generate detail link with new API parameters
+  // Build detail link using new PassengerQueryService.findMyBusDetails API
   const getDetailLink = () => {
-    if (!bus.scheduleId || !fromStopId || !toStopId) {
-      // Fall back to route page if required params are missing
-      if (bus.routeId) {
-        return `/route/${bus.routeId}`;
-      }
-      return null;
-    }
-    
-    const params = new URLSearchParams();
-    params.set('scheduleId', bus.scheduleId);
-    params.set('fromStopId', fromStopId);
-    params.set('toStopId', toStopId);
-    
-    if (bus.tripId) {
-      params.set('tripId', bus.tripId);
-    }
-    
-    params.set('date', searchDate || new Date().toISOString().split("T")[0]);
-    
-    if (timePreference) {
-      params.set('timePreference', timePreference);
-    }
-    
+    if (!bus.scheduleId || !fromStopId || !toStopId) return null;
+    const params = new URLSearchParams({
+      scheduleId: bus.scheduleId,
+      fromStopId,
+      toStopId,
+    });
+    if (bus.tripId) params.set('tripId', bus.tripId);
+    if (searchDate) params.set('date', searchDate);
     return `/findmybus/detail?${params.toString()}`;
   };
 
@@ -195,22 +143,22 @@ export default function BusCard({
           {/* Right side - Route Start/End Times and Total Distance */}
           <div className="flex flex-col items-start sm:items-end gap-1 text-sm sm:text-base">
             {/* Route Start to End Times */}
-            {routeStartDepartureTime && routeEndArrivalTime && (
+            {bus.scheduleStartStopDepartureTime && bus.scheduleEndStopArrivalTime && (
               <div className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-semibold text-foreground whitespace-nowrap">
                 {/* <span className="text-xs sm:text-sm text-muted-foreground">Start</span> */}
-                <span>{formatTime(routeStartDepartureTime)}</span>
+                <span>{formatTime(bus.scheduleStartStopDepartureTime)}</span>
                 <ArrowRight className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground flex-shrink-0" />
-                <span>{formatTime(routeEndArrivalTime)}</span>
+                <span>{formatTime(bus.scheduleEndStopArrivalTime)}</span>
                 {/* <span className="text-xs sm:text-sm text-muted-foreground">End</span> */}
               </div>
             )}
-            
+
             {/* Total Route Distance and Road Type */}
             <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm font-medium text-muted-foreground">
-              {totalRouteDistance && (
-                <span>{totalRouteDistance.toFixed(1)} km total</span>
+              {bus.scheduleTotalDistanceKm && (
+                <span>{bus.scheduleTotalDistanceKm.toFixed(1)} km total</span>
               )}
-              {totalRouteDistance && bus.roadType && (
+              {bus.scheduleTotalDistanceKm && bus.roadType && (
                 <span>•</span>
               )}
               {bus.roadType && (
