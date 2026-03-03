@@ -9,16 +9,20 @@ interface Stop {
     latitude: number;
     longitude: number;
   };
+  isOrigin?: boolean;
+  isDestination?: boolean;
 }
 
 interface RouteMapProps {
   stops: Stop[];
   routeName: string;
+  originStopId?: string;
+  destinationStopId?: string;
 }
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName, originStopId, destinationStopId }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +64,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
           return;
         }
 
+        // Find origin and destination indices
+        const originIndex = stopsWithCoordinates.findIndex(s => s.isOrigin);
+        const destIndex = stopsWithCoordinates.findIndex(s => s.isDestination);
+
         // Calculate center of the route
         const bounds = new google.maps.LatLngBounds();
         stopsWithCoordinates.forEach(stop => {
@@ -85,16 +93,30 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
 
         // Create route using Google Directions API for realistic road paths
         const directionsService = new google.maps.DirectionsService();
-        const directionsRenderer = new google.maps.DirectionsRenderer({
-          suppressMarkers: true, // We'll add custom markers
-          polylineOptions: {
-            strokeColor: "#2563eb", // Primary color
-            strokeOpacity: 1.0,
-            strokeWeight: 4,
-          }
-        });
         
-        directionsRenderer.setMap(mapInstance);
+        // Full route renderer (lighter color)
+        const fullRouteRenderer = new google.maps.DirectionsRenderer({
+          suppressMarkers: true,
+          polylineOptions: {
+            strokeColor: "#2563eb", // Light blue
+            strokeOpacity: 0.7,
+            strokeWeight: 3,
+          },
+          preserveViewport: true
+        });
+        fullRouteRenderer.setMap(mapInstance);
+
+        // Highlighted segment renderer (bold color)
+        const highlightedRenderer = new google.maps.DirectionsRenderer({
+          suppressMarkers: true,
+          polylineOptions: {
+            strokeColor: "#2563eb", // Primary blue
+            strokeOpacity: 1.0,
+            strokeWeight: 5,
+          },
+          preserveViewport: true
+        });
+        highlightedRenderer.setMap(mapInstance);
 
         // Prepare waypoints for directions
         const origin = stopsWithCoordinates[0].coords;
@@ -104,15 +126,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
           stopover: true
         }));
 
-        // Request directions
+        // Request directions for full route
         try {
-          const directionsResult = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
+          const fullRouteResult = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
             directionsService.route({
               origin: origin,
               destination: destination,
               waypoints: waypoints,
               travelMode: google.maps.TravelMode.DRIVING,
-              optimizeWaypoints: false, // Keep the order of stops
+              optimizeWaypoints: false,
               avoidHighways: false,
               avoidTolls: false
             }, (result, status) => {
@@ -124,40 +146,87 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
             });
           });
 
-          directionsRenderer.setDirections(directionsResult);
+          fullRouteRenderer.setDirections(fullRouteResult);
+
+          // Draw highlighted segment between origin and destination if specified
+          if (originIndex >= 0 && destIndex >= 0 && originIndex !== destIndex) {
+            const highlightOrigin = stopsWithCoordinates[originIndex].coords;
+            const highlightDest = stopsWithCoordinates[destIndex].coords;
+            const highlightWaypoints = stopsWithCoordinates
+              .slice(Math.min(originIndex, destIndex) + 1, Math.max(originIndex, destIndex))
+              .map(stop => ({
+                location: stop.coords,
+                stopover: true
+              }));
+
+            const highlightResult = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
+              directionsService.route({
+                origin: highlightOrigin,
+                destination: highlightDest,
+                waypoints: highlightWaypoints,
+                travelMode: google.maps.TravelMode.DRIVING,
+                optimizeWaypoints: false,
+                avoidHighways: false,
+                avoidTolls: false
+              }, (result, status) => {
+                if (status === google.maps.DirectionsStatus.OK && result) {
+                  resolve(result);
+                } else {
+                  reject(new Error(`Highlight directions request failed: ${status}`));
+                }
+              });
+            });
+
+            highlightedRenderer.setDirections(highlightResult);
+          }
         } catch (directionsError) {
           console.warn("Failed to get directions, falling back to straight lines:", directionsError);
           
-          // Fallback to straight-line polyline if Directions API fails
-          const routePath = stopsWithCoordinates.map(stop => stop.coords);
-          const routeLine = new google.maps.Polyline({
-            path: routePath,
+          // Fallback: Draw full route with straight lines
+          const fullRoutePath = stopsWithCoordinates.map(stop => stop.coords);
+          const fullRouteLine = new google.maps.Polyline({
+            path: fullRoutePath,
             geodesic: true,
-            strokeColor: "#2563eb",
-            strokeOpacity: 1.0,
-            strokeWeight: 4,
+            strokeColor: "#93c5fd",
+            strokeOpacity: 0.6,
+            strokeWeight: 3,
           });
-          routeLine.setMap(mapInstance);
+          fullRouteLine.setMap(mapInstance);
+
+          // Draw highlighted segment if specified
+          if (originIndex >= 0 && destIndex >= 0 && originIndex !== destIndex) {
+            const start = Math.min(originIndex, destIndex);
+            const end = Math.max(originIndex, destIndex);
+            const highlightPath = stopsWithCoordinates.slice(start, end + 1).map(stop => stop.coords);
+            const highlightLine = new google.maps.Polyline({
+              path: highlightPath,
+              geodesic: true,
+              strokeColor: "#2563eb",
+              strokeOpacity: 1.0,
+              strokeWeight: 5,
+            });
+            highlightLine.setMap(mapInstance);
+          }
         }
 
-        // Add markers for each stop
+        // Add markers for each stop with tooltip on hover/click
         stopsWithCoordinates.forEach((stop, index) => {
           const isFirst = index === 0;
           const isLast = index === stopsWithCoordinates.length - 1;
+          const isOrigin = stop.isOrigin || false;
+          const isDestination = stop.isDestination || false;
           
-          // Create custom marker element
+          // Create custom marker element - smaller and without stop name
           const markerDiv = document.createElement('div');
           markerDiv.className = 'flex flex-col items-center';
           markerDiv.innerHTML = `
-            <div class="flex flex-col items-center">
-              <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg ${
-                isFirst ? 'bg-green-500' : isLast ? 'bg-red-500' : 'bg-blue-500'
-              }">
-                ${isFirst ? 'S' : isLast ? 'E' : index + 1}
-              </div>
-              <div class="text-xs font-medium text-gray-800 bg-white px-2 py-1 rounded shadow-md mt-1 whitespace-nowrap">
-                ${stop.name}
-              </div>
+            <div class="w-4 h-4 rounded-full flex items-center justify-center shadow-lg ${
+              isOrigin ? 'bg-green-500 ring-2 ring-green-300' : 
+              isDestination ? 'bg-red-500 ring-2 ring-red-300' : 
+              isFirst ? 'bg-purple-500' :
+              isLast ? 'bg-orange-500' :
+              'bg-blue-500'
+            }">
             </div>
           `;
 
@@ -165,22 +234,40 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
             map: mapInstance,
             position: stop.coords,
             content: markerDiv,
-            title: `${stop.name} (${stop.km} km)`
+            title: stop.name
           });
 
-          // Add info window
+          // Create info window with comprehensive stop information
           const infoWindow = new google.maps.InfoWindow({
             content: `
-              <div class="p-2">
-                <h3 class="font-semibold text-sm">${stop.name}</h3>
-                <p class="text-xs text-gray-600">Distance: ${stop.km} km</p>
-                <p class="text-xs text-gray-600">${isFirst ? 'Starting Point' : isLast ? 'End Point' : 'Stop ' + (index + 1)}</p>
+              <div class="p-3 min-w-[200px]">
+                <h3 class="font-bold text-base mb-2 text-gray-800">${stop.name}</h3>
+                <div class="space-y-1 text-sm">
+                  <p class="text-gray-600">
+                    <span class="font-semibold">Distance:</span> ${stop.km.toFixed(1)} km
+                  </p>
+                  <p class="text-gray-600">
+                    <span class="font-semibold">Stop:</span> ${
+                      isOrigin ? '<span class="text-green-600 font-semibold">Your Origin</span>' :
+                      isDestination ? '<span class="text-red-600 font-semibold">Your Destination</span>' :
+                      isFirst ? '<span class="text-purple-600">Route Start</span>' :
+                      isLast ? '<span class="text-orange-600">Route End</span>' :
+                      `#${index + 1}`
+                    }
+                  </p>
+                </div>
               </div>
             `
           });
 
+          // Show tooltip on click
           marker.addListener("click", () => {
             infoWindow.open(mapInstance, marker);
+          });
+
+          // Optional: close info window when clicking elsewhere on the map
+          mapInstance.addListener("click", () => {
+            infoWindow.close();
           });
         });
 
@@ -194,7 +281,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, routeName }) => {
     };
 
     initMap();
-  }, [stops, routeName]);
+  }, [stops, routeName, originStopId, destinationStopId]);
 
   if (error) {
     return (

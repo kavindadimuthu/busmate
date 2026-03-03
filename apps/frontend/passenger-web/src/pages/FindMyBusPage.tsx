@@ -21,6 +21,7 @@ interface FilterState {
   routeNumber: string;
   roadType: 'NORMALWAY' | 'EXPRESSWAY' | '';
   sortBy: string;
+  timePreference: 'VERIFIED_ONLY' | 'PREFER_UNVERIFIED' | 'PREFER_CALCULATED' | 'DEFAULT';
 }
 
 interface SearchParams {
@@ -49,7 +50,8 @@ const FindMyBusPage = () => {
     departureTimeFrom: '',
     routeNumber: '',
     roadType: '',
-    sortBy: 'departure'
+    sortBy: 'departure',
+    timePreference: 'DEFAULT'
   });
 
   // Parse URL parameters
@@ -74,10 +76,10 @@ const FindMyBusPage = () => {
     });
   }, [location.search]);
 
-  // Filter function to only include REALTIME and SCHEDULE data
-  const filterResultsByDataMode = (results: BusResult[]): BusResult[] => {
+  // Filter results that have valid timing data
+  const filterResultsWithTiming = (results: BusResult[]): BusResult[] => {
     return results.filter(bus => 
-      bus.dataMode === 'REALTIME' || bus.dataMode === 'SCHEDULE'
+      bus.departureAtOrigin || bus.actualDepartureTime
     );
   };
 
@@ -99,12 +101,11 @@ const FindMyBusPage = () => {
         filters.departureTimeFrom || undefined,
         filters.routeNumber || undefined,
         filters.roadType || undefined,
-        true, // includeScheduledData
-        false  // includeRouteData - set to false to exclude STATIC route data
+        filters.timePreference
       );
 
-      // Filter results to only include REALTIME and SCHEDULE data modes
-      const filteredResults = filterResultsByDataMode(response.results || []);
+      // Filter results to only include those with timing data
+      const filteredResults = filterResultsWithTiming(response.results || []);
       
       setBusResults(filteredResults);
       setTotalResults(filteredResults.length);
@@ -131,11 +132,12 @@ const FindMyBusPage = () => {
 
   // Helper to get departure time for sorting
   const getDepartureTimeForSort = (bus: BusResult) => {
-    if (bus.dataMode === 'REALTIME' && bus.actualDepartureTime) {
+    // Prioritize actual departure time from trip, then scheduled departure
+    if (bus.actualDepartureTime) {
       return bus.actualDepartureTime;
     }
-    if (bus.dataMode === 'SCHEDULE' && bus.scheduledDepartureAtOrigin) {
-      return bus.scheduledDepartureAtOrigin;
+    if (bus.departureAtOrigin) {
+      return bus.departureAtOrigin;
     }
     return null;
   };
@@ -147,12 +149,12 @@ const FindMyBusPage = () => {
         return (a.estimatedDurationMinutes || 0) - (b.estimatedDurationMinutes || 0);
       case 'distance':
         return (a.distanceKm || 0) - (b.distanceKm || 0);
-      case 'dataMode':
-        // Sort by data mode priority: REALTIME > SCHEDULE > STATIC
-        const modeOrder = { REALTIME: 0, SCHEDULE: 1, STATIC: 2 };
-        const modeA = modeOrder[a.dataMode as keyof typeof modeOrder] ?? 3;
-        const modeB = modeOrder[b.dataMode as keyof typeof modeOrder] ?? 3;
-        return modeA - modeB;
+      case 'timeSource':
+        // Sort by time source reliability: VERIFIED > UNVERIFIED > CALCULATED
+        const sourceOrder = { VERIFIED: 0, UNVERIFIED: 1, CALCULATED: 2, UNAVAILABLE: 3 };
+        const sourceA = sourceOrder[a.departureAtOriginSource as keyof typeof sourceOrder] ?? 3;
+        const sourceB = sourceOrder[b.departureAtOriginSource as keyof typeof sourceOrder] ?? 3;
+        return sourceA - sourceB;
       case 'departure':
       default:
         // Sort by departure time
@@ -171,7 +173,7 @@ const FindMyBusPage = () => {
       {/* Header Section */}
       {/* Background image (low opacity) */}
         <img
-          src="/Autobus-de-luxe.jpg"
+          src="/bus-bg.png"
           alt="Bus background"
           className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
         />
@@ -278,7 +280,10 @@ const FindMyBusPage = () => {
                         bus={bus}
                         fromStopName={fromStopName}
                         toStopName={toStopName}
+                        fromStopId={searchParams.fromStopId}
+                        toStopId={searchParams.toStopId}
                         searchDate={searchParams.date}
+                        timePreference={filters.timePreference}
                       />
                     ))
                   ) : !loading && (searchParams.fromStopId && searchParams.toStopId) ? (
