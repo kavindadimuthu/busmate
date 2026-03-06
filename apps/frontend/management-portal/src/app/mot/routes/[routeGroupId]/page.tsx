@@ -86,7 +86,7 @@ export default function RouteGroupViewPage() {
 
   // Handlers
   const handleEdit = () => {
-    router.push(`/mot/routes/${routeGroupId}/edit`);
+    router.push(`/mot/routes/workspace?routeGroupId=${routeGroupId}`);
   };
 
   const handleDelete = () => {
@@ -229,7 +229,7 @@ export default function RouteGroupViewPage() {
               This route group doesn&apos;t have any routes yet. Add outbound and inbound routes to complete the route group.
             </p>
             <button
-              onClick={() => router.push(`/mot/routes/${routeGroupId}/edit`)}
+              onClick={() => router.push(`/mot/routes/workspace?routeGroupId=${routeGroupId}`)}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <RouteIcon className="w-4 h-4" />
