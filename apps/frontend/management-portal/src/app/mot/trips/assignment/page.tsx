@@ -11,7 +11,7 @@ export default function TripAssignmentPage() {
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Trip Assignment' }],
     padding: 0,
-  });
+  }, true);
 
   return (
       <TripAssignment />

@@ -23,7 +23,7 @@ function ScheduleWorkspaceContent() {
         showBreadcrumbs: true,
         breadcrumbs: [{ label: 'Schedules', href: '/mot/schedules' }, { label: 'Workspace' }],
         padding: 0,
-    });
+    }, true);
     const { schedules } = data;
     const searchParams = useSearchParams();
 

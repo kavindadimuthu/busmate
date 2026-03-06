@@ -33,7 +33,7 @@ function RouteWorkspaceContent() {
         showBreadcrumbs: true,
         breadcrumbs: [{ label: 'Routes', href: '/mot/routes' }, { label: 'Workspace' }],
         padding: 0,
-    });
+    }, true);
 
     // Load route group if ID is in URL params
     useEffect(() => {
