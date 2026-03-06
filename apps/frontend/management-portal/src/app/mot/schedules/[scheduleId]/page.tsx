@@ -115,7 +115,9 @@ export default function ScheduleDetailsPage() {
 
   // Handlers
   const handleEdit = () => {
-    router.push(`/mot/schedules/${scheduleId}/edit`);
+    if (schedule?.routeId) {
+      router.push(`/mot/schedules/workspace?routeId=${schedule.routeId}&scheduleId=${scheduleId}`);
+    }
   };
 
   const handleClone = () => {
