@@ -5,3 +5,6 @@ packages:
 
   # Shared libraries
   - "libs/api-clients/*"
+
+  # E2E tests
+  - "tests/e2e"

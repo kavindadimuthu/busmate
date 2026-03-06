@@ -51,6 +51,11 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Playwright E2E
+tests/e2e/auth/storage-state.json
+tests/e2e/playwright-report/
+tests/e2e/test-results/
+
 # Misc
 *.tsbuildinfo
 next-env.d.ts
@@ -61,6 +66,7 @@ reports/api-usage/report.md
 
 # Architectural reviews
 docs/architecture-review/
+docs/plans/
 
 # Copilot contexr files
 .github/context/

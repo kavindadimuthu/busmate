@@ -1,0 +1,41 @@
+{
+  "name": "e2e-management-portal",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "root": "tests/e2e",
+  "sourceRoot": "tests/e2e",
+  "tags": ["scope:e2e", "type:test"],
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx playwright test",
+        "cwd": "{projectRoot}"
+      },
+      "cache": false
+    },
+    "e2e:ui": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx playwright test --ui",
+        "cwd": "{projectRoot}"
+      },
+      "cache": false
+    },
+    "e2e:headed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx playwright test --headed",
+        "cwd": "{projectRoot}"
+      },
+      "cache": false
+    },
+    "e2e:report": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx playwright show-report",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}
