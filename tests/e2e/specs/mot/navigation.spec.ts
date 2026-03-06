@@ -18,49 +18,49 @@ test.describe('MOT > Navigation', () => {
   test('should navigate to Buses page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Buses', { exact: false }).click();
+    await page.locator('nav').getByText('Bus Management', { exact: false }).click();
     await page.waitForURL(/\/mot\/buses/);
   });
 
   test('should navigate to Operators page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Operators', { exact: false }).click();
+    await page.locator('nav').getByText('Operator', { exact: false }).click();
     await page.waitForURL(/\/mot\/operators/);
   });
 
   test('should navigate to Routes page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Routes', { exact: false }).click();
+    await page.locator('nav').getByText('Route', { exact: false }).click();
     await page.waitForURL(/\/mot\/routes/);
   });
 
   test('should navigate to Schedules page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Schedules', { exact: false }).click();
+    await page.locator('nav').getByText('Schedule', { exact: false }).click();
     await page.waitForURL(/\/mot\/schedules/);
   });
 
   test('should navigate to Trips page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Trips', { exact: false }).click();
+    await page.locator('nav').getByText('Trip', { exact: false }).click();
     await page.waitForURL(/\/mot\/trips/);
   });
 
   test('should navigate to Permits page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Permits', { exact: false }).click();
+    await page.locator('nav').getByText('Permit', { exact: false }).click();
     await page.waitForURL(/\/mot\/passenger-service-permits/);
   });
 
   test('should navigate to Fares page via sidebar', async ({ page }) => {
     await page.goto(MOT_URLS.dashboard);
     await page.waitForLoadState('networkidle');
-    await page.locator('nav').getByText('Fares', { exact: false }).click();
+    await page.locator('nav').getByText('Fare', { exact: false }).click();
     await page.waitForURL(/\/mot\/fares/);
   });
 

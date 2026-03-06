@@ -17,7 +17,12 @@
     "affected:test": "nx affected -t test",
     "affected:lint": "nx affected -t lint",
     "graph": "nx graph",
-    "nx": "nx"
+    "nx": "nx",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:debug": "playwright test --debug",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report tests/e2e/playwright-report"
   },
   "devDependencies": {
     "nx": "^21.0.0"

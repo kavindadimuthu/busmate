@@ -12,8 +12,45 @@ const STORAGE_STATE_PATH = path.resolve(__dirname, 'auth/storage-state.json');
 const AUTH_DIR = path.resolve(__dirname, 'auth');
 const TEST_RESULTS_DIR = path.resolve(__dirname, 'test-results');
 
+/**
+ * Check whether the saved storage state still grants access to the dashboard.
+ * Returns true if a quick headless navigation lands on /mot/dashboard (not
+ * redirected to the Asgardeo login page).
+ */
+async function isAuthStateValid(baseURL: string): Promise<boolean> {
+  if (!fs.existsSync(STORAGE_STATE_PATH)) {
+    console.log('[global-setup] No existing storage state found.');
+    return false;
+  }
+
+  console.log('[global-setup] Validating existing auth state...');
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ storageState: STORAGE_STATE_PATH });
+  const page = await context.newPage();
+
+  try {
+    await page.goto(`${baseURL}/mot/dashboard`, {
+      waitUntil: 'networkidle',
+      timeout: 20_000,
+    });
+    const currentURL = page.url();
+    const valid = currentURL.includes('/mot/dashboard');
+    console.log(
+      valid
+        ? '[global-setup] Existing auth state is valid — skipping re-authentication.'
+        : `[global-setup] Auth state is stale (landed on: ${currentURL}).`
+    );
+    return valid;
+  } catch {
+    console.log('[global-setup] Could not validate auth state (timeout or navigation error).');
+    return false;
+  } finally {
+    await browser.close();
+  }
+}
+
 async function globalSetup(config: FullConfig) {
-  const baseURL = config.projects[0].use.baseURL || 'http://localhost:3000';
+  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
   const username = process.env.ASGARDEO_TEST_USERNAME;
   const password = process.env.ASGARDEO_TEST_PASSWORD;
 
@@ -32,6 +69,14 @@ async function globalSetup(config: FullConfig) {
     fs.mkdirSync(TEST_RESULTS_DIR, { recursive: true });
   }
 
+  // Reuse existing session if still valid — avoids full Asgardeo round-trip
+  // on every individual test run.
+  if (await isAuthStateValid(baseURL)) {
+    return;
+  }
+
+  // --headed sets PWHEADLESS=0 (or leaves it unset); headless runs set it to 1.
+  // Keep setup headless regardless — the visible browser is the test browser.
   const browser = await chromium.launch({
     headless: true,
     args: [

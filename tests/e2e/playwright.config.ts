@@ -59,7 +59,8 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: './auth/storage-state.json',
+        // Absolute path so this config works regardless of working directory
+        storageState: path.resolve(__dirname, 'auth/storage-state.json'),
       },
     },
     // Uncomment to add more browser targets:
@@ -67,14 +68,14 @@ export default defineConfig({
     //   name: 'firefox',
     //   use: {
     //     ...devices['Desktop Firefox'],
-    //     storageState: './auth/storage-state.json',
+    //     storageState: path.resolve(__dirname, 'auth/storage-state.json'),
     //   },
     // },
     // {
     //   name: 'webkit',
     //   use: {
     //     ...devices['Desktop Safari'],
-    //     storageState: './auth/storage-state.json',
+    //     storageState: path.resolve(__dirname, 'auth/storage-state.json'),
     //   },
     // },
   ],
