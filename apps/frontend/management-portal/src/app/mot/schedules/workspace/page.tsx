@@ -108,7 +108,7 @@ function ScheduleWorkspaceContent() {
     return (
             <div className="min-h-screen bg-slate-50">
                 {/* Tab Bar */}
-                <div className="flex bg-white border-b border-slate-200 px-4 py-2 sticky top-20 z-10 justify-between items-center shadow-sm">
+                <div className="flex bg-white border-b border-slate-200 px-4 py-2 z-10 justify-between items-center shadow-sm">
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('form')}
