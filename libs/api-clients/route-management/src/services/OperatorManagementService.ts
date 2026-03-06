@@ -91,7 +91,7 @@ export class OperatorManagementService {
      * @returns OperatorFilterOptionsResponse Filter options retrieved successfully
      * @throws ApiError
      */
-    public static getFilterOptions(): CancelablePromise<OperatorFilterOptionsResponse> {
+    public static getOperatorFilterOptions(): CancelablePromise<OperatorFilterOptionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/operators/filter-options',

@@ -222,7 +222,7 @@ public class StopController {
         description = "Retrieve all available filter options including states, cities, countries, and accessibility statuses. " +
                      "This consolidated endpoint provides all filter data needed by the UI in a single call, " +
                      "improving performance and user experience. Also includes metadata about the available options.",
-        operationId = "getFilterOptions"
+        operationId = "getStopFilterOptions"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Filter options retrieved successfully")

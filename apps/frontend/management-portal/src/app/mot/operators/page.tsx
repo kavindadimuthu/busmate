@@ -84,7 +84,7 @@ export default function OperatorsPage() {
   const loadFilterOptions = useCallback(async () => {
     try {
       setFilterOptionsLoading(true);
-      const filterOptionsResponse = await OperatorManagementService.getFilterOptions();
+      const filterOptionsResponse = await OperatorManagementService.getOperatorFilterOptions();
 
       setFilterOptions({
         statuses: ['pending', 'active', 'inactive', 'cancelled'],

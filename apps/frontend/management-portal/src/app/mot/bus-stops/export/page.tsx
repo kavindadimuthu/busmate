@@ -130,7 +130,7 @@ function BusStopsExportPage() {
   const loadFilterOptions = useCallback(async () => {
     setFilterOptionsLoading(true);
     try {
-      const response: StopFilterOptionsResponse = await BusStopManagementService.getFilterOptions();
+      const response: StopFilterOptionsResponse = await BusStopManagementService.getStopFilterOptions();
       setFilterOptions({
         states: response.states || [],
         cities: response.cities || [],
