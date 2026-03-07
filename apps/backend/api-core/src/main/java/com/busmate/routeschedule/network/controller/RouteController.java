@@ -1,17 +1,41 @@
 package com.busmate.routeschedule.network.controller;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.busmate.routeschedule.network.dto.request.RouteExportRequest;
 import com.busmate.routeschedule.network.dto.request.RouteGroupRequest;
 import com.busmate.routeschedule.network.dto.request.RouteUnifiedImportRequest;
-import com.busmate.routeschedule.network.dto.request.RouteExportRequest;
+import com.busmate.routeschedule.network.dto.response.RouteExportResponse;
+import com.busmate.routeschedule.network.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.network.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.network.dto.response.RouteResponse;
-import com.busmate.routeschedule.network.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.network.dto.response.RouteStatisticsResponse;
 import com.busmate.routeschedule.network.dto.response.RouteUnifiedImportResponse;
-import com.busmate.routeschedule.network.dto.response.RouteExportResponse;
 import com.busmate.routeschedule.network.enums.DirectionEnum;
 import com.busmate.routeschedule.network.service.RouteGroupService;
+import com.busmate.routeschedule.network.service.RouteImportExportService;
 import com.busmate.routeschedule.network.service.RouteService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,23 +43,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import com.busmate.routeschedule.fleet.entity.Bus;
-import com.busmate.routeschedule.network.entity.Route;
-import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 
 @RestController
 @RequestMapping("/api/routes")
@@ -44,6 +51,7 @@ import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 public class RouteController {
     private final RouteService routeService;
     private final RouteGroupService routeGroupService;
+    private final RouteImportExportService routeImportExportService;
 
     // ========== ROUTE APIs ==========
 
@@ -108,26 +116,11 @@ public class RouteController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         
-        Page<RouteResponse> responses;
-        
-        // Determine which query method to use based on provided parameters
-        boolean hasFilters = routeGroupId != null || direction != null || roadType != null ||
-                           minDistance != null || maxDistance != null || 
-                           minDuration != null || maxDuration != null;
-        
-        boolean hasSearch = search != null && !search.trim().isEmpty();
-        
-        if (hasSearch && hasFilters) {
-            responses = routeService.getAllRoutesWithSearchAndFilters(
-                search.trim(), routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
-        } else if (hasSearch) {
-            responses = routeService.getAllRoutesWithSearch(search.trim(), pageable);
-        } else if (hasFilters) {
-            responses = routeService.getAllRoutesWithFilters(
-                routeGroupId, direction, roadType, minDistance, maxDistance, minDuration, maxDuration, pageable);
-        } else {
-            responses = routeService.getAllRoutes(pageable);
-        }
+        Page<RouteResponse> responses = routeService.getAllRoutes(
+                (search != null && !search.trim().isEmpty()) ? search.trim() : null,
+                routeGroupId, direction, roadType,
+                minDistance, maxDistance, minDuration, maxDuration,
+                pageable);
         
         return ResponseEntity.ok(responses);
     }
@@ -405,7 +398,7 @@ public class RouteController {
         importRequest.setDefaultRoadType(defaultRoadType);
         
         String userId = authentication.getName();
-        RouteUnifiedImportResponse response = routeService.importRoutesUnified(file, importRequest, userId);
+        RouteUnifiedImportResponse response = routeImportExportService.importRoutesUnified(file, importRequest, userId);
         return ResponseEntity.ok(response);
     }
 
@@ -556,7 +549,7 @@ public class RouteController {
         
         String userId = authentication != null ? authentication.getName() : "anonymous";
         
-        RouteExportResponse exportResponse = routeService.exportRoutes(exportRequest, userId);
+        RouteExportResponse exportResponse = routeImportExportService.exportRoutes(exportRequest, userId);
         
         return ResponseEntity.ok()
                 .header("Content-Type", exportResponse.getContentType())

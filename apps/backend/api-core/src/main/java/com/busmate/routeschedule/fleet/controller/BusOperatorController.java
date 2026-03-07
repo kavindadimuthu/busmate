@@ -1,42 +1,43 @@
 package com.busmate.routeschedule.fleet.controller;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.busmate.routeschedule.fleet.dto.response.BusResponse;
-import com.busmate.routeschedule.licensing.dto.response.PassengerServicePermitResponse;
-import com.busmate.routeschedule.operations.dto.response.TripResponse;
-import com.busmate.routeschedule.network.dto.response.RouteResponse;
-import com.busmate.routeschedule.scheduling.dto.response.ScheduleResponse;
 import com.busmate.routeschedule.fleet.dto.response.OperatorResponse;
+import com.busmate.routeschedule.fleet.service.BusService;
+import com.busmate.routeschedule.fleet.service.OperatorService;
+import com.busmate.routeschedule.licensing.dto.response.PassengerServicePermitResponse;
+import com.busmate.routeschedule.licensing.service.PassengerServicePermitService;
+import com.busmate.routeschedule.network.dto.response.RouteResponse;
+import com.busmate.routeschedule.network.service.RouteService;
+import com.busmate.routeschedule.operations.dto.response.TripResponse;
+import com.busmate.routeschedule.operations.enums.TripStatusEnum;
+import com.busmate.routeschedule.operations.service.TripService;
+import com.busmate.routeschedule.scheduling.dto.response.ScheduleResponse;
+import com.busmate.routeschedule.scheduling.enums.ScheduleStatusEnum;
+import com.busmate.routeschedule.scheduling.service.ScheduleService;
 import com.busmate.routeschedule.shared.dto.PaginatedResponse;
 import com.busmate.routeschedule.shared.enums.StatusEnum;
-import com.busmate.routeschedule.operations.enums.TripStatusEnum;
-import com.busmate.routeschedule.scheduling.enums.ScheduleStatusEnum;
-import com.busmate.routeschedule.fleet.service.BusService;
-import com.busmate.routeschedule.licensing.service.PassengerServicePermitService;
-import com.busmate.routeschedule.operations.service.TripService;
-import com.busmate.routeschedule.network.service.RouteService;
-import com.busmate.routeschedule.scheduling.service.ScheduleService;
-import com.busmate.routeschedule.fleet.service.OperatorService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-import com.busmate.routeschedule.fleet.entity.Bus;
-import com.busmate.routeschedule.shared.entity.BaseEntity;
-import com.busmate.routeschedule.fleet.entity.Operator;
-import com.busmate.routeschedule.scheduling.entity.Schedule;
-import com.busmate.routeschedule.operations.entity.Trip;
 
 /**
  * Bus Operator Controller
@@ -548,15 +549,9 @@ public class BusOperatorController {
         // Normalize search text
         String normalizedSearchText = (searchText != null && !searchText.trim().isEmpty()) ? searchText.trim() : null;
         
-        // Use existing route service methods
-        Page<RouteResponse> routes;
-        if (normalizedSearchText != null) {
-            routes = routeService.getAllRoutesWithSearchAndFilters(
+        // Use unified route service method
+        Page<RouteResponse> routes = routeService.getAllRoutes(
                 normalizedSearchText, routeGroupId, null, null, null, null, null, null, pageable);
-        } else {
-            routes = routeService.getAllRoutesWithFilters(
-                routeGroupId, null, null, null, null, null, null, pageable);
-        }
         return ResponseEntity.ok(routes);
     }
 

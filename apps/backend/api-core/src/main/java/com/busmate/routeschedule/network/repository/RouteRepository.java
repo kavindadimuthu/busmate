@@ -153,7 +153,91 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     
     @Query("SELECT r.name FROM Route r WHERE r.estimatedDurationMinutes = (SELECT MIN(r2.estimatedDurationMinutes) FROM Route r2 WHERE r2.estimatedDurationMinutes IS NOT NULL)")
     List<String> findShortestDurationRouteNames();
-    
+
+    // ─────────────── Performance: JOIN FETCH to eliminate N+1 ───────────────
+
+    /**
+     * Returns a page of routes with {@code startStop} and {@code endStop} eagerly loaded
+     * via {@code LEFT JOIN FETCH}.  Using {@code @ManyToOne} fetches with pagination is safe
+     * because there is at most one join row per route; Hibernate applies the LIMIT at the DB level.
+     *
+     * <p>This is the single consolidated query for Task 2.3 (N+1 fix) and Task 2.6
+     * (repository consolidation). It replaces the three separate methods
+     * ({@code findAllWithSearch}, {@code findAllWithFilters}, {@code findAllWithSearchAndFilters})
+     * by accepting all optional filter/search parameters and ignoring {@code null} values via the
+     * {@code (:param IS NULL OR …)} JPQL pattern.
+     */
+    @Query(value = "SELECT DISTINCT r FROM Route r " +
+            "LEFT JOIN FETCH r.startStop ss " +
+            "LEFT JOIN FETCH r.endStop es " +
+            "LEFT JOIN r.routeGroup rg " +
+            "WHERE (:searchText IS NULL OR :searchText = '' OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeNumber) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.description) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeThrough) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeThroughSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeThroughTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(rg.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(rg.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(rg.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(ss.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(es.name) LIKE LOWER(CONCAT('%', :searchText, '%'))) AND " +
+            "(:routeGroupId IS NULL OR r.routeGroup.id = :routeGroupId) AND " +
+            "(:direction IS NULL OR r.direction = :direction) AND " +
+            "(:roadType IS NULL OR r.roadType = :roadType) AND " +
+            "(:minDistance IS NULL OR r.distanceKm >= :minDistance) AND " +
+            "(:maxDistance IS NULL OR r.distanceKm <= :maxDistance) AND " +
+            "(:minDuration IS NULL OR r.estimatedDurationMinutes >= :minDuration) AND " +
+            "(:maxDuration IS NULL OR r.estimatedDurationMinutes <= :maxDuration)",
+            countQuery = "SELECT COUNT(DISTINCT r) FROM Route r " +
+            "LEFT JOIN r.routeGroup rg " +
+            "LEFT JOIN r.startStop ss " +
+            "LEFT JOIN r.endStop es " +
+            "WHERE (:searchText IS NULL OR :searchText = '' OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeNumber) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.description) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeThrough) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeThroughSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(r.routeThroughTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(rg.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(rg.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(rg.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(ss.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+            "LOWER(es.name) LIKE LOWER(CONCAT('%', :searchText, '%'))) AND " +
+            "(:routeGroupId IS NULL OR r.routeGroup.id = :routeGroupId) AND " +
+            "(:direction IS NULL OR r.direction = :direction) AND " +
+            "(:roadType IS NULL OR r.roadType = :roadType) AND " +
+            "(:minDistance IS NULL OR r.distanceKm >= :minDistance) AND " +
+            "(:maxDistance IS NULL OR r.distanceKm <= :maxDistance) AND " +
+            "(:minDuration IS NULL OR r.estimatedDurationMinutes >= :minDuration) AND " +
+            "(:maxDuration IS NULL OR r.estimatedDurationMinutes <= :maxDuration)")
+    Page<Route> findAllFiltered(
+            @Param("searchText") String searchText,
+            @Param("routeGroupId") UUID routeGroupId,
+            @Param("direction") DirectionEnum direction,
+            @Param("roadType") com.busmate.routeschedule.network.enums.RoadTypeEnum roadType,
+            @Param("minDistance") Double minDistance,
+            @Param("maxDistance") Double maxDistance,
+            @Param("minDuration") Integer minDuration,
+            @Param("maxDuration") Integer maxDuration,
+            Pageable pageable);
+
+    /**
+     * Fetches a single {@link Route} by ID with {@code startStop} and {@code endStop}
+     * eagerly loaded.  Used by {@code getRouteById} to avoid lazy-load round-trips.
+     */
+    @Query("SELECT r FROM Route r " +
+           "LEFT JOIN FETCH r.startStop " +
+           "LEFT JOIN FETCH r.endStop " +
+           "WHERE r.id = :id")
+    Optional<Route> findByIdWithStops(@Param("id") UUID id);
+
     @Query(value = "SELECT DISTINCT r.* FROM route r " +
            "LEFT JOIN route_group rg ON r.route_group_id = rg.id " +
            "LEFT JOIN route_stop rs ON r.id = rs.route_id " +

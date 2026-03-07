@@ -36,6 +36,7 @@ import com.busmate.routeschedule.network.dto.response.StopFilterOptionsResponse;
 import com.busmate.routeschedule.network.dto.response.StopImportResponse;
 import com.busmate.routeschedule.network.dto.response.StopResponse;
 import com.busmate.routeschedule.network.dto.response.StopStatisticsResponse;
+import com.busmate.routeschedule.network.service.StopImportExportService;
 import com.busmate.routeschedule.network.service.StopService;
 import com.busmate.routeschedule.scheduling.dto.response.ScheduleStopDetailResponse;
 
@@ -53,6 +54,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "01. Bus Stop Management", description = "APIs for managing bus stops")
 public class StopController {
     private final StopService stopService;
+    private final StopImportExportService stopImportExportService;
 
     // 1. CREATE - First operation for logical flow
     @PostMapping
@@ -383,7 +385,7 @@ public class StopController {
         }
         
         String userId = authentication != null ? authentication.getName() : "system";
-        StopImportResponse response = stopService.importStops(file, userId, defaultCountry);
+        StopImportResponse response = stopImportExportService.importStops(file, userId, defaultCountry);
         return ResponseEntity.ok(response);
     }
 
@@ -487,7 +489,7 @@ public class StopController {
         request.setCustomFields(customFields);
         
         String userId = authentication != null ? authentication.getName() : "system";
-        StopExportResponse exportResponse = stopService.exportStops(request, userId);
+        StopExportResponse exportResponse = stopImportExportService.exportStops(request, userId);
         
         return ResponseEntity.ok()
                 .header("Content-Type", exportResponse.getContentType())
@@ -563,7 +565,7 @@ public class StopController {
         
         String userId = authentication != null ? authentication.getName() : "system";
         // Process bulk update
-        StopBulkUpdateResponse response = stopService.bulkUpdateStops(csvFile, request, userId);
+        StopBulkUpdateResponse response = stopImportExportService.bulkUpdateStops(csvFile, request, userId);
         
         return ResponseEntity.ok(response);
     }

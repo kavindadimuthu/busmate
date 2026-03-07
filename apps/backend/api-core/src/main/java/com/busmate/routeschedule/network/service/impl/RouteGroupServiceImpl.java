@@ -1,5 +1,17 @@
 package com.busmate.routeschedule.network.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.busmate.routeschedule.network.dto.request.RouteGroupRequest;
 import com.busmate.routeschedule.network.dto.response.RouteGroupResponse;
 import com.busmate.routeschedule.network.dto.response.RouteResponse;
@@ -8,25 +20,17 @@ import com.busmate.routeschedule.network.entity.RouteGroup;
 import com.busmate.routeschedule.network.entity.RouteStop;
 import com.busmate.routeschedule.network.entity.Stop;
 import com.busmate.routeschedule.network.enums.DirectionEnum;
-import com.busmate.routeschedule.shared.exception.ConflictException;
-import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
+import com.busmate.routeschedule.network.mapper.RouteGroupMapper;
+import com.busmate.routeschedule.network.mapper.RouteMapper;
 import com.busmate.routeschedule.network.repository.RouteGroupRepository;
 import com.busmate.routeschedule.network.repository.RouteRepository;
 import com.busmate.routeschedule.network.repository.RouteStopRepository;
 import com.busmate.routeschedule.network.repository.StopRepository;
 import com.busmate.routeschedule.network.service.RouteGroupService;
-import com.busmate.routeschedule.shared.util.MapperUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.busmate.routeschedule.shared.exception.ConflictException;
+import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import com.busmate.routeschedule.shared.dto.LocationDto;
-import com.busmate.routeschedule.network.dto.request.RouteRequest;
-import com.busmate.routeschedule.network.enums.RoadTypeEnum;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -35,9 +39,11 @@ public class RouteGroupServiceImpl implements RouteGroupService {
     private final RouteRepository routeRepository;
     private final StopRepository stopRepository;
     private final RouteStopRepository routeStopRepository;
-    private final MapperUtils mapperUtils;
+    private final RouteMapper routeMapper;
+    private final RouteGroupMapper routeGroupMapper;
 
     @Override
+    @Transactional
     public RouteGroupResponse createRouteGroup(RouteGroupRequest request, String userId) {
         if (routeGroupRepository.existsByName(request.getName())) {
             throw new ConflictException("Route group with name " + request.getName() + " already exists");
@@ -68,8 +74,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 route.setRouteThroughSinhala(r.getRouteThroughSinhala());
                 route.setRouteThroughTamil(r.getRouteThroughTamil());
                 route.setRouteGroup(routeGroup);
-                route.setStartStopId(r.getStartStopId());
-                route.setEndStopId(r.getEndStopId());
+                route.setStartStop(startStop);
+                route.setEndStop(endStop);
                 route.setDistanceKm(r.getDistanceKm());
                 route.setEstimatedDurationMinutes(r.getEstimatedDurationMinutes());
                 
@@ -219,63 +225,29 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             }
         }
 
-        List<Route> routesToRemove = existingRoutes.stream()
-                .filter(route -> route.getId() != null && !requestRouteIds.contains(route.getId()))
-                .collect(Collectors.toList());
-
-        existingRoutes.clear();
-        existingRoutes.addAll(updatedRoutes);
+        // Remove routes that are no longer in the request
+        List<Route> routesToRemove = new ArrayList<>();
+        for (Route route : existingRoutes) {
+            if (route.getId() != null && !requestRouteIds.contains(route.getId())) {
+                routesToRemove.add(route);
+            }
+        }
+        existingRoutes.removeAll(routesToRemove);
+        
+        // Add only truly new routes (existing ones were already updated in-place)
+        for (Route route : updatedRoutes) {
+            if (route.getId() == null) {
+                existingRoutes.add(route);
+            }
+        }
     }
 
     private RouteGroupResponse mapToResponse(RouteGroup routeGroup) {
-        RouteGroupResponse response = mapperUtils.map(routeGroup, RouteGroupResponse.class);
-        if (routeGroup.getRoutes() != null) {
-            List<RouteResponse> routeResponses = routeGroup.getRoutes().stream()
-                    .map(this::mapRouteToResponse)
-                    .collect(Collectors.toList());
-            response.setRoutes(routeResponses);
-        }
-        return response;
+        return routeGroupMapper.toResponse(routeGroup);
     }
 
     private RouteResponse mapRouteToResponse(Route route) {
-        RouteResponse response = mapperUtils.map(route, RouteResponse.class);
-        response.setRouteGroupId(route.getRouteGroup().getId());
-        response.setRouteGroupName(route.getRouteGroup().getName());
-        response.setRouteGroupNameSinhala(route.getRouteGroup().getNameSinhala());
-        response.setRouteGroupNameTamil(route.getRouteGroup().getNameTamil());
-
-        Stop startStop = stopRepository.findById(route.getStartStopId()).orElse(null);
-        if (startStop != null) {
-            response.setStartStopName(startStop.getName());
-            response.setStartStopLocation(mapperUtils.map(startStop.getLocation(), com.busmate.routeschedule.shared.dto.LocationDto.class));
-        }
-
-        Stop endStop = stopRepository.findById(route.getEndStopId()).orElse(null);
-        if (endStop != null) {
-            response.setEndStopName(endStop.getName());
-            response.setEndStopLocation(mapperUtils.map(endStop.getLocation(), com.busmate.routeschedule.shared.dto.LocationDto.class));
-        }
-
-        if (route.getRouteStops() != null) {
-            List<RouteResponse.RouteStopResponse> routeStopResponses = route.getRouteStops().stream()
-                .sorted(Comparator.comparingInt(RouteStop::getStopOrder))
-                .map(rs -> {
-                    RouteResponse.RouteStopResponse rsResponse = new RouteResponse.RouteStopResponse();
-                    rsResponse.setId(rs.getId());  // Set route stop ID for updates
-                    rsResponse.setStopId(rs.getStop().getId());
-                    rsResponse.setStopName(rs.getStop().getName());
-                    rsResponse.setLocation(mapperUtils.map(rs.getStop().getLocation(), com.busmate.routeschedule.shared.dto.LocationDto.class));
-                    rsResponse.setStopOrder(rs.getStopOrder());
-                    rsResponse.setDistanceFromStartKm(rs.getDistanceFromStartKm());
-                    rsResponse.setDistanceFromStartKmUnverified(rs.getDistanceFromStartKmUnverified());
-                    rsResponse.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
-                    return rsResponse;
-                }).collect(Collectors.toList());
-            response.setRouteStops(routeStopResponses);
-        }
-
-        return response;
+        return routeMapper.toResponse(route);
     }
 
     private void updateExistingRoute(Route existingRoute, RouteGroupRequest.RouteRequest routeRequest, String userId) {
@@ -292,8 +264,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         existingRoute.setRouteThrough(routeRequest.getRouteThrough());
         existingRoute.setRouteThroughSinhala(routeRequest.getRouteThroughSinhala());
         existingRoute.setRouteThroughTamil(routeRequest.getRouteThroughTamil());
-        existingRoute.setStartStopId(routeRequest.getStartStopId());
-        existingRoute.setEndStopId(routeRequest.getEndStopId());
+        existingRoute.setStartStop(startStop);
+        existingRoute.setEndStop(endStop);
         existingRoute.setDistanceKm(routeRequest.getDistanceKm());
         existingRoute.setEstimatedDurationMinutes(routeRequest.getEstimatedDurationMinutes());
         existingRoute.setUpdatedBy(userId);
@@ -372,8 +344,21 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             }
         }
 
-        existingRouteStops.clear();
-        existingRouteStops.addAll(updatedRouteStops);
+        // Remove route stops that are no longer in the request
+        List<RouteStop> routeStopsToRemove = new ArrayList<>();
+        for (RouteStop rs : existingRouteStops) {
+            if (rs.getId() != null && !requestRouteStopIds.contains(rs.getId())) {
+                routeStopsToRemove.add(rs);
+            }
+        }
+        existingRouteStops.removeAll(routeStopsToRemove);
+        
+        // Add only truly new route stops (existing ones were already updated in-place)
+        for (RouteStop rs : updatedRouteStops) {
+            if (rs.getId() == null) {
+                existingRouteStops.add(rs);
+            }
+        }
     }
 
     private Route createNewRoute(RouteGroupRequest.RouteRequest routeRequest, RouteGroup routeGroup, String userId) {
@@ -392,8 +377,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         route.setRouteThroughSinhala(routeRequest.getRouteThroughSinhala());
         route.setRouteThroughTamil(routeRequest.getRouteThroughTamil());
         route.setRouteGroup(routeGroup);
-        route.setStartStopId(routeRequest.getStartStopId());
-        route.setEndStopId(routeRequest.getEndStopId());
+        route.setStartStop(startStop);
+        route.setEndStop(endStop);
         route.setDistanceKm(routeRequest.getDistanceKm());
         route.setEstimatedDurationMinutes(routeRequest.getEstimatedDurationMinutes());
         route.setCreatedBy(userId);

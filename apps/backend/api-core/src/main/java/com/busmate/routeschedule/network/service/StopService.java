@@ -5,20 +5,14 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.busmate.routeschedule.network.dto.request.StopBatchCreateRequest;
-import com.busmate.routeschedule.network.dto.request.StopBulkUpdateRequest;
-import com.busmate.routeschedule.network.dto.request.StopExportRequest;
 import com.busmate.routeschedule.network.dto.request.StopRequest;
 import com.busmate.routeschedule.network.dto.response.RouteGroupStopDetailResponse;
 import com.busmate.routeschedule.network.dto.response.RouteStopDetailResponse;
 import com.busmate.routeschedule.network.dto.response.StopBatchCreateResponse;
-import com.busmate.routeschedule.network.dto.response.StopBulkUpdateResponse;
 import com.busmate.routeschedule.network.dto.response.StopExistsResponse;
-import com.busmate.routeschedule.network.dto.response.StopExportResponse;
 import com.busmate.routeschedule.network.dto.response.StopFilterOptionsResponse;
-import com.busmate.routeschedule.network.dto.response.StopImportResponse;
 import com.busmate.routeschedule.network.dto.response.StopResponse;
 import com.busmate.routeschedule.network.dto.response.StopStatisticsResponse;
 import com.busmate.routeschedule.scheduling.dto.response.ScheduleStopDetailResponse;
@@ -44,13 +38,4 @@ public interface StopService {
     
     // Statistics methods
     StopStatisticsResponse getStatistics();
-    
-    // Import methods - Intelligent import supporting multiple CSV formats
-    StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry);
-    
-    // Export methods - Flexible export supporting multiple formats and filters
-    StopExportResponse exportStops(StopExportRequest request, String userId);
-    
-    // Bulk update methods - Flexible bulk update supporting CSV files with various matching strategies
-    StopBulkUpdateResponse bulkUpdateStops(MultipartFile csvFile, StopBulkUpdateRequest request, String userId);
 }
