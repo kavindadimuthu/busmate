@@ -1,13 +1,27 @@
 package com.busmate.routeschedule.network.entity;
 
-import com.busmate.routeschedule.network.enums.DirectionEnum;
-import com.busmate.routeschedule.network.enums.RoadTypeEnum;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import java.util.List;
 import java.util.UUID;
+
+import com.busmate.routeschedule.network.enums.DirectionEnum;
+import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 import com.busmate.routeschedule.shared.entity.BaseEntity;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -51,11 +65,13 @@ public class Route extends BaseEntity {
     @JoinColumn(name = "route_group_id")
     private RouteGroup routeGroup;
 
-    @Column(name = "start_stop_id", columnDefinition = "UUID")
-    private UUID startStopId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "start_stop_id")
+    private Stop startStop;
 
-    @Column(name = "end_stop_id", columnDefinition = "UUID")
-    private UUID endStopId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "end_stop_id")
+    private Stop endStop;
 
     @Column(name = "distance_km")
     private Double distanceKm;
@@ -69,4 +85,42 @@ public class Route extends BaseEntity {
 
     @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RouteStop> routeStops;
+    
+    // Transient getters for backward compatibility during migration
+    @Transient
+    public UUID getStartStopId() {
+        return startStop != null ? startStop.getId() : null;
+    }
+    
+    @Transient
+    public UUID getEndStopId() {
+        return endStop != null ? endStop.getId() : null;
+    }
+    
+    // Transient setters for backward compatibility during migration
+    @Transient
+    public void setStartStopId(UUID startStopId) {
+        if (startStopId == null) {
+            this.startStop = null;
+        } else if (this.startStop == null || !startStopId.equals(this.startStop.getId())) {
+            // Create a minimal Stop proxy with just the ID
+            // Hibernate will handle loading the full entity when needed
+            Stop stop = new Stop();
+            stop.setId(startStopId);
+            this.startStop = stop;
+        }
+    }
+    
+    @Transient
+    public void setEndStopId(UUID endStopId) {
+        if (endStopId == null) {
+            this.endStop = null;
+        } else if (this.endStop == null || !endStopId.equals(this.endStop.getId())) {
+            // Create a minimal Stop proxy with just the ID
+            // Hibernate will handle loading the full entity when needed
+            Stop stop = new Stop();
+            stop.setId(endStopId);
+            this.endStop = stop;
+        }
+    }
 }

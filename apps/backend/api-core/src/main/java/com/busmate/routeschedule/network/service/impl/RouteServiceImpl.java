@@ -1,41 +1,54 @@
 package com.busmate.routeschedule.network.service.impl;
 
-import com.busmate.routeschedule.network.dto.request.RouteUnifiedImportRequest;
-import com.busmate.routeschedule.network.dto.request.RouteExportRequest;
-import com.busmate.routeschedule.network.dto.response.RouteResponse;
-import com.busmate.routeschedule.network.dto.response.RouteFilterOptionsResponse;
-import com.busmate.routeschedule.network.dto.response.RouteStatisticsResponse;
-import com.busmate.routeschedule.network.dto.response.RouteUnifiedImportResponse;
-import com.busmate.routeschedule.network.dto.response.RouteExportResponse;
-import com.busmate.routeschedule.network.entity.Route;
-import com.busmate.routeschedule.network.entity.RouteStop;
-import com.busmate.routeschedule.network.entity.Stop;
-import com.busmate.routeschedule.network.entity.RouteGroup;
-import com.busmate.routeschedule.network.enums.DirectionEnum;
-import com.busmate.routeschedule.network.enums.RoadTypeEnum;
-import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
-import com.busmate.routeschedule.network.repository.RouteRepository;
-import com.busmate.routeschedule.network.repository.RouteGroupRepository;
-import com.busmate.routeschedule.network.repository.RouteStopRepository;
-import com.busmate.routeschedule.network.repository.StopRepository;
-import com.busmate.routeschedule.network.service.RouteService;
-import com.busmate.routeschedule.shared.util.MapperUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import com.busmate.routeschedule.shared.dto.LocationDto;
-import com.busmate.routeschedule.network.dto.response.StopResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.busmate.routeschedule.network.dto.request.RouteExportRequest;
+import com.busmate.routeschedule.network.dto.request.RouteUnifiedImportRequest;
+import com.busmate.routeschedule.network.dto.response.RouteExportResponse;
+import com.busmate.routeschedule.network.dto.response.RouteFilterOptionsResponse;
+import com.busmate.routeschedule.network.dto.response.RouteResponse;
+import com.busmate.routeschedule.network.dto.response.RouteStatisticsResponse;
+import com.busmate.routeschedule.network.dto.response.RouteUnifiedImportResponse;
+import com.busmate.routeschedule.network.entity.Route;
+import com.busmate.routeschedule.network.entity.RouteGroup;
+import com.busmate.routeschedule.network.entity.RouteStop;
+import com.busmate.routeschedule.network.entity.Stop;
+import com.busmate.routeschedule.network.enums.DirectionEnum;
+import com.busmate.routeschedule.network.enums.RoadTypeEnum;
+import com.busmate.routeschedule.network.repository.RouteGroupRepository;
+import com.busmate.routeschedule.network.repository.RouteRepository;
+import com.busmate.routeschedule.network.repository.RouteStopRepository;
+import com.busmate.routeschedule.network.repository.StopRepository;
+import com.busmate.routeschedule.network.repository.projection.DistanceRange;
+import com.busmate.routeschedule.network.repository.projection.DistanceStatistics;
+import com.busmate.routeschedule.network.repository.projection.DurationRange;
+import com.busmate.routeschedule.network.repository.projection.DurationStatistics;
+import com.busmate.routeschedule.network.repository.projection.RouteGroupSummary;
+import com.busmate.routeschedule.network.service.RouteService;
+import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
+import com.busmate.routeschedule.shared.util.MapperUtils;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -113,22 +126,21 @@ public class RouteServiceImpl implements RouteService {
     }
 
     private List<Map<String, Object>> getDistinctRouteGroups() {
-        List<Object[]> results = routeRepository.findDistinctRouteGroups();
+        List<RouteGroupSummary> results = routeRepository.findDistinctRouteGroups();
         return results.stream().map(result -> {
             Map<String, Object> routeGroup = new HashMap<>();
-            routeGroup.put("id", result[0]);
-            routeGroup.put("name", result[1]);
+            routeGroup.put("id", result.getId());
+            routeGroup.put("name", result.getName());
             return routeGroup;
         }).collect(Collectors.toList());
     }
 
     private Map<String, Object> getDistanceRange() {
-        List<Object[]> results = routeRepository.findDistanceRange();
+        DistanceRange result = routeRepository.findDistanceRange();
         Map<String, Object> range = new HashMap<>();
-        if (!results.isEmpty() && results.get(0) != null) {
-            Object[] result = results.get(0);
-            range.put("min", result[0]);
-            range.put("max", result[1]);
+        if (result != null) {
+            range.put("min", result.getMin());
+            range.put("max", result.getMax());
         } else {
             range.put("min", 0.0);
             range.put("max", 0.0);
@@ -137,12 +149,11 @@ public class RouteServiceImpl implements RouteService {
     }
 
     private Map<String, Object> getDurationRange() {
-        List<Object[]> results = routeRepository.findDurationRange();
+        DurationRange result = routeRepository.findDurationRange();
         Map<String, Object> range = new HashMap<>();
-        if (!results.isEmpty() && results.get(0) != null) {
-            Object[] result = results.get(0);
-            range.put("min", result[0]);
-            range.put("max", result[1]);
+        if (result != null) {
+            range.put("min", result.getMin());
+            range.put("max", result.getMax());
         } else {
             range.put("min", 0);
             range.put("max", 0);
@@ -165,18 +176,16 @@ public class RouteServiceImpl implements RouteService {
         response.setRouteGroups(routeGroups);
         
         // Get distance range
-        List<Object[]> distanceResults = routeRepository.findDistanceRange();
+        DistanceRange distanceResult = routeRepository.findDistanceRange();
         RouteFilterOptionsResponse.RangeFilter distanceRange = new RouteFilterOptionsResponse.RangeFilter();
-        if (!distanceResults.isEmpty() && distanceResults.get(0) != null) {
-            Object[] result = distanceResults.get(0);
-            distanceRange.setMin((Double) result[0]);
-            distanceRange.setMax((Double) result[1]);
+        if (distanceResult != null && distanceResult.getMin() != null) {
+            distanceRange.setMin(distanceResult.getMin());
+            distanceRange.setMax(distanceResult.getMax());
             
             // Calculate average and count for additional metadata
-            List<Object[]> distanceStats = routeRepository.getDistanceStatistics();
-            if (!distanceStats.isEmpty() && distanceStats.get(0) != null) {
-                Object[] stats = distanceStats.get(0);
-                distanceRange.setAverage((Double) stats[0]);
+            DistanceStatistics distanceStats = routeRepository.getDistanceStatistics();
+            if (distanceStats != null && distanceStats.getAvg() != null) {
+                distanceRange.setAverage(distanceStats.getAvg());
                 distanceRange.setCount(routeRepository.count()); // Total routes count
             }
         } else {
@@ -188,18 +197,16 @@ public class RouteServiceImpl implements RouteService {
         response.setDistanceRange(distanceRange);
         
         // Get duration range
-        List<Object[]> durationResults = routeRepository.findDurationRange();
+        DurationRange durationResult = routeRepository.findDurationRange();
         RouteFilterOptionsResponse.RangeFilter durationRange = new RouteFilterOptionsResponse.RangeFilter();
-        if (!durationResults.isEmpty() && durationResults.get(0) != null) {
-            Object[] result = durationResults.get(0);
-            durationRange.setMin(((Number) result[0]).doubleValue());
-            durationRange.setMax(((Number) result[1]).doubleValue());
+        if (durationResult != null && durationResult.getMin() != null) {
+            durationRange.setMin(durationResult.getMin().doubleValue());
+            durationRange.setMax(durationResult.getMax().doubleValue());
             
             // Calculate average and count for additional metadata
-            List<Object[]> durationStats = routeRepository.getDurationStatistics();
-            if (!durationStats.isEmpty() && durationStats.get(0) != null) {
-                Object[] stats = durationStats.get(0);
-                durationRange.setAverage((Double) stats[0]);
+            DurationStatistics durationStats = routeRepository.getDurationStatistics();
+            if (durationStats != null && durationStats.getAvg() != null) {
+                durationRange.setAverage(durationStats.getAvg());
                 durationRange.setCount(routeRepository.count()); // Total routes count
             }
         } else {
@@ -278,40 +285,40 @@ public class RouteServiceImpl implements RouteService {
         
         // Routes by route group
         Map<String, Long> routesByGroup = new LinkedHashMap<>();
-        routeRepository.countRoutesByRouteGroup().forEach(obj -> 
-            routesByGroup.put((String) obj[0], (Long) obj[1]));
+        routeRepository.countRoutesByRouteGroup().forEach(result -> 
+            routesByGroup.put(result.getRouteGroupName(), result.getCount()));
         stats.setRoutesByRouteGroup(routesByGroup);
         
         // Routes by direction
         Map<String, Long> routesByDirection = new LinkedHashMap<>();
-        routeRepository.countRoutesByDirection().forEach(obj -> 
-            routesByDirection.put(obj[0] != null ? obj[0].toString() : "UNKNOWN", (Long) obj[1]));
+        routeRepository.countRoutesByDirection().forEach(result -> 
+            routesByDirection.put(result.getDirection() != null ? result.getDirection().toString() : "UNKNOWN", result.getCount()));
         stats.setRoutesByDirection(routesByDirection);
         
         // Distance statistics
-        List<Object[]> distanceStats = routeRepository.getDistanceStatistics();
-        if (!distanceStats.isEmpty() && distanceStats.get(0)[0] != null) {
-            stats.setAverageDistanceKm(((Number) distanceStats.get(0)[0]).doubleValue());
-            stats.setTotalDistanceKm(((Number) distanceStats.get(0)[1]).doubleValue());
+        DistanceStatistics distanceStats = routeRepository.getDistanceStatistics();
+        if (distanceStats != null && distanceStats.getAvg() != null) {
+            stats.setAverageDistanceKm(distanceStats.getAvg());
+            stats.setTotalDistanceKm(distanceStats.getSum());
         }
         
-        List<Object[]> distanceRange = routeRepository.findDistanceRange();
-        if (!distanceRange.isEmpty() && distanceRange.get(0)[0] != null) {
-            stats.setMinDistanceKm(((Number) distanceRange.get(0)[0]).doubleValue());
-            stats.setMaxDistanceKm(((Number) distanceRange.get(0)[1]).doubleValue());
+        DistanceRange distanceRange = routeRepository.findDistanceRange();
+        if (distanceRange != null && distanceRange.getMin() != null) {
+            stats.setMinDistanceKm(distanceRange.getMin());
+            stats.setMaxDistanceKm(distanceRange.getMax());
         }
         
         // Duration statistics
-        List<Object[]> durationStats = routeRepository.getDurationStatistics();
-        if (!durationStats.isEmpty() && durationStats.get(0)[0] != null) {
-            stats.setAverageDurationMinutes(((Number) durationStats.get(0)[0]).doubleValue());
-            stats.setTotalDurationMinutes(((Number) durationStats.get(0)[1]).doubleValue());
+        DurationStatistics durationStats = routeRepository.getDurationStatistics();
+        if (durationStats != null && durationStats.getAvg() != null) {
+            stats.setAverageDurationMinutes(durationStats.getAvg());
+            stats.setTotalDurationMinutes(durationStats.getSum().doubleValue());
         }
         
-        List<Object[]> durationRange = routeRepository.findDurationRange();
-        if (!durationRange.isEmpty() && durationRange.get(0)[0] != null) {
-            stats.setMinDurationMinutes(((Number) durationRange.get(0)[0]).doubleValue());
-            stats.setMaxDurationMinutes(((Number) durationRange.get(0)[1]).doubleValue());
+        DurationRange durationRange = routeRepository.findDurationRange();
+        if (durationRange != null && durationRange.getMin() != null) {
+            stats.setMinDurationMinutes(durationRange.getMin().doubleValue());
+            stats.setMaxDurationMinutes(durationRange.getMax().doubleValue());
         }
         
         // Route name statistics

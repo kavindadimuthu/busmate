@@ -1,17 +1,25 @@
 package com.busmate.routeschedule.network.repository;
 
-import com.busmate.routeschedule.network.entity.Route;
-import com.busmate.routeschedule.network.enums.DirectionEnum;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import com.busmate.routeschedule.network.enums.RoadTypeEnum;
+
+import com.busmate.routeschedule.network.entity.Route;
+import com.busmate.routeschedule.network.enums.DirectionEnum;
+import com.busmate.routeschedule.network.repository.projection.DirectionCount;
+import com.busmate.routeschedule.network.repository.projection.DistanceRange;
+import com.busmate.routeschedule.network.repository.projection.DistanceStatistics;
+import com.busmate.routeschedule.network.repository.projection.DurationRange;
+import com.busmate.routeschedule.network.repository.projection.DurationStatistics;
+import com.busmate.routeschedule.network.repository.projection.RouteGroupCount;
+import com.busmate.routeschedule.network.repository.projection.RouteGroupSummary;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, UUID> {
@@ -100,14 +108,14 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     @Query("SELECT DISTINCT r.roadType FROM Route r WHERE r.roadType IS NOT NULL ORDER BY r.roadType")
     List<com.busmate.routeschedule.network.enums.RoadTypeEnum> findDistinctRoadTypes();
     
-    @Query("SELECT DISTINCT rg.id, rg.name FROM Route r JOIN r.routeGroup rg ORDER BY rg.name")
-    List<Object[]> findDistinctRouteGroups();
+    @Query("SELECT DISTINCT rg.id as id, rg.name as name FROM Route r JOIN r.routeGroup rg ORDER BY rg.name")
+    List<RouteGroupSummary> findDistinctRouteGroups();
     
-    @Query("SELECT MIN(r.distanceKm), MAX(r.distanceKm) FROM Route r WHERE r.distanceKm IS NOT NULL")
-    List<Object[]> findDistanceRange();
+    @Query("SELECT MIN(r.distanceKm) as min, MAX(r.distanceKm) as max FROM Route r WHERE r.distanceKm IS NOT NULL")
+    DistanceRange findDistanceRange();
     
-    @Query("SELECT MIN(r.estimatedDurationMinutes), MAX(r.estimatedDurationMinutes) FROM Route r WHERE r.estimatedDurationMinutes IS NOT NULL")
-    List<Object[]> findDurationRange();
+    @Query("SELECT MIN(r.estimatedDurationMinutes) as min, MAX(r.estimatedDurationMinutes) as max FROM Route r WHERE r.estimatedDurationMinutes IS NOT NULL")
+    DurationRange findDurationRange();
     
     // Statistics methods
     @Query("SELECT COUNT(r) FROM Route r WHERE r.direction = :direction")
@@ -119,17 +127,17 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     @Query("SELECT COUNT(r) FROM Route r WHERE r.routeStops IS EMPTY")
     Long countRoutesWithoutStops();
     
-    @Query("SELECT rg.name, COUNT(r) FROM Route r JOIN r.routeGroup rg GROUP BY rg.name ORDER BY rg.name")
-    List<Object[]> countRoutesByRouteGroup();
+    @Query("SELECT rg.name as routeGroupName, COUNT(r) as count FROM Route r JOIN r.routeGroup rg GROUP BY rg.name ORDER BY rg.name")
+    List<RouteGroupCount> countRoutesByRouteGroup();
     
-    @Query("SELECT r.direction, COUNT(r) FROM Route r GROUP BY r.direction ORDER BY r.direction")
-    List<Object[]> countRoutesByDirection();
+    @Query("SELECT r.direction as direction, COUNT(r) as count FROM Route r GROUP BY r.direction ORDER BY r.direction")
+    List<DirectionCount> countRoutesByDirection();
     
-    @Query("SELECT AVG(r.distanceKm), SUM(r.distanceKm) FROM Route r WHERE r.distanceKm IS NOT NULL")
-    List<Object[]> getDistanceStatistics();
+    @Query("SELECT AVG(r.distanceKm) as avg, MIN(r.distanceKm) as min, MAX(r.distanceKm) as max, SUM(r.distanceKm) as sum FROM Route r WHERE r.distanceKm IS NOT NULL")
+    DistanceStatistics getDistanceStatistics();
     
-    @Query("SELECT AVG(r.estimatedDurationMinutes), SUM(r.estimatedDurationMinutes) FROM Route r WHERE r.estimatedDurationMinutes IS NOT NULL")
-    List<Object[]> getDurationStatistics();
+    @Query("SELECT AVG(r.estimatedDurationMinutes) as avg, MIN(r.estimatedDurationMinutes) as min, MAX(r.estimatedDurationMinutes) as max, SUM(r.estimatedDurationMinutes) as sum FROM Route r WHERE r.estimatedDurationMinutes IS NOT NULL")
+    DurationStatistics getDurationStatistics();
     
     @Query("SELECT COUNT(DISTINCT r.routeGroup) FROM Route r")
     Long countDistinctRouteGroups();
