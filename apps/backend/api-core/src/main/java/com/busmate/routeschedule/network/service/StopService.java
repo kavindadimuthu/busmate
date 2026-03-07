@@ -25,6 +25,7 @@ public interface StopService {
     List<StopResponse> getAllStops();
     Page<StopResponse> getAllStops(Pageable pageable);
     Page<StopResponse> getAllStopsWithSearch(String searchText, Pageable pageable);
+    Page<StopResponse> getAllStopsFiltered(String searchText, String state, String city, Boolean isAccessible, Pageable pageable);
     StopResponse updateStop(UUID id, StopRequest request, String userId);
     void deleteStop(UUID id);
     

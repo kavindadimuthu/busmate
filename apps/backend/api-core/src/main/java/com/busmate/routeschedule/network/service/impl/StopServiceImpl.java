@@ -206,6 +206,29 @@ public class StopServiceImpl implements StopService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<StopResponse> getAllStopsFiltered(String searchText, String state, String city, Boolean isAccessible, Pageable pageable) {
+        // If no filters are provided, delegate to the simpler pageable query
+        boolean hasFilters = (state != null && !state.isBlank())
+                || (city != null && !city.isBlank())
+                || (isAccessible != null);
+        String effectiveSearch = (searchText != null && !searchText.isBlank()) ? searchText.trim() : null;
+
+        if (!hasFilters && effectiveSearch == null) {
+            return stopRepository.findAll(pageable)
+                    .map(stop -> mapperUtils.map(stop, StopResponse.class));
+        }
+
+        return stopRepository.findAllWithFilters(
+                effectiveSearch,
+                (state != null && !state.isBlank()) ? state.trim() : null,
+                (city != null && !city.isBlank()) ? city.trim() : null,
+                isAccessible,
+                pageable)
+                .map(stop -> mapperUtils.map(stop, StopResponse.class));
+    }
+
+    @Override
     @Transactional
     public StopResponse updateStop(UUID id, StopRequest request, String userId) {
         Stop stop = stopRepository.findById(id)

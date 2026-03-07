@@ -20,6 +20,7 @@ import com.busmate.routeschedule.network.repository.projection.DurationRange;
 import com.busmate.routeschedule.network.repository.projection.DurationStatistics;
 import com.busmate.routeschedule.network.repository.projection.RouteGroupCount;
 import com.busmate.routeschedule.network.repository.projection.RouteGroupSummary;
+import com.busmate.routeschedule.network.repository.projection.RouteStatisticsProjection;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, UUID> {
@@ -147,6 +148,35 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     
     @Query("SELECT r.name FROM Route r WHERE r.distanceKm = (SELECT MIN(r2.distanceKm) FROM Route r2 WHERE r2.distanceKm IS NOT NULL)")
     List<String> findShortestRouteNames();
+
+    // ─────────────── Consolidated Statistics Query (Phase 3 – Task 3.3) ───────────────
+
+    /**
+     * Single native SQL query that computes all primary route statistics in one database
+     * round-trip, reducing the original 12+ individual queries to a single call.
+     *
+     * <p>The per-group and per-direction breakdowns (which return multiple rows) and the
+     * longest/shortest route name lookups are still handled by separate queries, but the bulk of
+     * the numeric aggregates are now fetched here.</p>
+     */
+    @Query(nativeQuery = true, value =
+            "SELECT " +
+            "  COUNT(*) AS totalRoutes, " +
+            "  SUM(CASE WHEN direction = 'OUTBOUND' THEN 1 ELSE 0 END) AS outboundCount, " +
+            "  SUM(CASE WHEN direction = 'INBOUND'  THEN 1 ELSE 0 END) AS inboundCount, " +
+            "  (SELECT COUNT(DISTINCT rs.route_id) FROM route_stop rs) AS routesWithStops, " +
+            "  ((SELECT COUNT(*) FROM route) - (SELECT COUNT(DISTINCT rs.route_id) FROM route_stop rs)) AS routesWithoutStops, " +
+            "  (SELECT COUNT(DISTINCT route_group_id) FROM route WHERE route_group_id IS NOT NULL) AS totalRouteGroups, " +
+            "  AVG(distance_km)                        AS avgDistance, " +
+            "  MIN(distance_km)                        AS minDistance, " +
+            "  MAX(distance_km)                        AS maxDistance, " +
+            "  SUM(distance_km)                        AS sumDistance, " +
+            "  AVG(estimated_duration_minutes)         AS avgDuration, " +
+            "  MIN(estimated_duration_minutes)         AS minDuration, " +
+            "  MAX(estimated_duration_minutes)         AS maxDuration, " +
+            "  SUM(CAST(estimated_duration_minutes AS BIGINT)) AS sumDuration " +
+            "FROM route")
+    RouteStatisticsProjection getRouteStatisticsConsolidated();
     
     @Query("SELECT r.name FROM Route r WHERE r.estimatedDurationMinutes = (SELECT MAX(r2.estimatedDurationMinutes) FROM Route r2)")
     List<String> findLongestDurationRouteNames();

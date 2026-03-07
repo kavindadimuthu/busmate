@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.network.controller;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -53,6 +54,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "01. Bus Stop Management", description = "APIs for managing bus stops")
 public class StopController {
+
+    /** Allowed field names for the {@code sortBy} query parameter. */
+    private static final Set<String> VALID_STOP_SORT_FIELDS = Set.of(
+            "name", "nameSinhala", "nameTamil",
+            "location.city", "location.state",
+            "isAccessible", "createdAt", "updatedAt");
+
     private final StopService stopService;
     private final StopImportExportService stopImportExportService;
 
@@ -102,15 +110,16 @@ public class StopController {
     // 2. READ ALL - Most commonly used operation
     @GetMapping
     @Operation(
-        summary = "Get all stops with pagination, sorting, and search", 
-        description = "Retrieve all stops with optional pagination, sorting, and multi-column search. " +
+        summary = "Get all stops with pagination, sorting, search and server-side filtering", 
+        description = "Retrieve all stops with optional pagination, sorting, multi-column search, and server-side filtering. " +
                      "Search is performed across name, address, city, and state columns. " +
+                     "Filters (state, city, isAccessible) narrow results server-side, eliminating the need for client-side filtering. " +
                      "Default: page=0, size=10, sort=name",
         operationId = "getAllStops"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Stops retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid pagination or sorting parameters")
+        @ApiResponse(responseCode = "400", description = "Invalid pagination, sorting, or filtering parameters")
     })
     public ResponseEntity<Page<StopResponse>> getAllStops(
             @Parameter(description = "Page number (0-based)", example = "0")
@@ -119,18 +128,32 @@ public class StopController {
             @Parameter(description = "Page size (max 100)", example = "10")
             @RequestParam(defaultValue = "10") int size,
             
-            @Parameter(description = "Sort by field name (name, createdAt, updatedAt, city, state)", example = "name")
+            @Parameter(description = "Sort by field (name, nameSinhala, nameTamil, location.city, location.state, isAccessible, createdAt, updatedAt)", example = "name")
             @RequestParam(defaultValue = "name") String sortBy,
             
             @Parameter(description = "Sort direction (asc or desc)", example = "asc")
             @RequestParam(defaultValue = "asc") String sortDir,
             
             @Parameter(description = "Search text to filter stops by name, address, city, or state", example = "Central")
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+
+            @Parameter(description = "Filter by state/province (exact match)", example = "Western Province")
+            @RequestParam(required = false) String state,
+
+            @Parameter(description = "Filter by city (exact match)", example = "Colombo")
+            @RequestParam(required = false) String city,
+
+            @Parameter(description = "Filter by accessibility status", example = "true")
+            @RequestParam(required = false) Boolean isAccessible) {
         
         // Validate page size
         if (size > 100) {
             size = 100; // Maximum page size limit
+        }
+
+        // Validate sort field
+        if (!VALID_STOP_SORT_FIELDS.contains(sortBy)) {
+            return ResponseEntity.badRequest().build();
         }
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
@@ -139,12 +162,8 @@ public class StopController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         
-        Page<StopResponse> responses;
-        if (search != null && !search.trim().isEmpty()) {
-            responses = stopService.getAllStopsWithSearch(search.trim(), pageable);
-        } else {
-            responses = stopService.getAllStops(pageable);
-        }
+        // Use the unified filtered query which handles all combinations
+        Page<StopResponse> responses = stopService.getAllStopsFiltered(search, state, city, isAccessible, pageable);
         
         return ResponseEntity.ok(responses);
     }

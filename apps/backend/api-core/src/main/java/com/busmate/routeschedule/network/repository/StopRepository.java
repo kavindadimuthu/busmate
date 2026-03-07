@@ -69,6 +69,28 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
            nativeQuery = true)
     Page<Stop> findAllWithSearch(@Param("searchText") String searchText, Pageable pageable);
     
+    /**
+     * Unified filtered query supporting search text, state, city and accessibility filter.
+     * All parameters are optional – passing {@code null} disables that filter clause.
+     */
+    @Query("SELECT s FROM Stop s WHERE " +
+           "(:searchText IS NULL OR :searchText = '' OR " +
+           "LOWER(s.name) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.nameSinhala) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.nameTamil) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.address) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.city) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +
+           "LOWER(s.location.state) LIKE LOWER(CONCAT('%', :searchText, '%'))) AND " +
+           "(:state IS NULL OR s.location.state = :state) AND " +
+           "(:city IS NULL OR s.location.city = :city) AND " +
+           "(:isAccessible IS NULL OR s.isAccessible = :isAccessible)")
+    Page<Stop> findAllWithFilters(
+            @Param("searchText") String searchText,
+            @Param("state") String state,
+            @Param("city") String city,
+            @Param("isAccessible") Boolean isAccessible,
+            Pageable pageable);
+
     @Query("SELECT DISTINCT s.location.state FROM Stop s WHERE s.location.state IS NOT NULL ORDER BY s.location.state")
     List<String> findDistinctStates();
     

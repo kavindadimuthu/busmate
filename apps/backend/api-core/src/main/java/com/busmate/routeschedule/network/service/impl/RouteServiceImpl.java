@@ -1,5 +1,6 @@
 package com.busmate.routeschedule.network.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,22 +11,30 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.busmate.routeschedule.network.dto.request.RouteRequest;
 import com.busmate.routeschedule.network.dto.response.RouteFilterOptionsResponse;
 import com.busmate.routeschedule.network.dto.response.RouteResponse;
 import com.busmate.routeschedule.network.dto.response.RouteStatisticsResponse;
 import com.busmate.routeschedule.network.entity.Route;
+import com.busmate.routeschedule.network.entity.RouteGroup;
+import com.busmate.routeschedule.network.entity.RouteStop;
+import com.busmate.routeschedule.network.entity.Stop;
 import com.busmate.routeschedule.network.enums.DirectionEnum;
 import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 import com.busmate.routeschedule.network.mapper.RouteMapper;
 import com.busmate.routeschedule.network.repository.RouteGroupRepository;
 import com.busmate.routeschedule.network.repository.RouteRepository;
+import com.busmate.routeschedule.network.repository.StopRepository;
 import com.busmate.routeschedule.network.repository.projection.DistanceRange;
 import com.busmate.routeschedule.network.repository.projection.DistanceStatistics;
 import com.busmate.routeschedule.network.repository.projection.DurationRange;
 import com.busmate.routeschedule.network.repository.projection.DurationStatistics;
 import com.busmate.routeschedule.network.repository.projection.RouteGroupSummary;
+import com.busmate.routeschedule.network.repository.projection.RouteStatisticsProjection;
 import com.busmate.routeschedule.network.service.RouteService;
+import com.busmate.routeschedule.shared.exception.ConflictException;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RouteServiceImpl implements RouteService {
     private final RouteRepository routeRepository;
     private final RouteGroupRepository routeGroupRepository;
+    private final StopRepository stopRepository;
     private final RouteMapper routeMapper;
 
     @Override
@@ -73,6 +83,131 @@ public class RouteServiceImpl implements RouteService {
                 searchText, routeGroupId, direction, roadType,
                 minDistance, maxDistance, minDuration, maxDuration, pageable)
                 .map(routeMapper::toResponse);
+    }
+
+    // ─────────────── Independent Route CRUD ───────────────
+
+    @Override
+    @Transactional
+    public RouteResponse createRoute(RouteRequest request, String userId) {
+        RouteGroup routeGroup = routeGroupRepository.findById(request.getRouteGroupId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Route group not found with id: " + request.getRouteGroupId()));
+
+        if (routeRepository.existsByNameAndRouteGroup_Id(request.getName(), routeGroup.getId())) {
+            throw new ConflictException(
+                    "Route with name '" + request.getName() + "' already exists in route group '" + routeGroup.getName() + "'");
+        }
+
+        Stop startStop = stopRepository.findById(request.getStartStopId())
+                .orElseThrow(() -> new ResourceNotFoundException("Start stop not found with id: " + request.getStartStopId()));
+        Stop endStop = stopRepository.findById(request.getEndStopId())
+                .orElseThrow(() -> new ResourceNotFoundException("End stop not found with id: " + request.getEndStopId()));
+
+        Route route = new Route();
+        applyRouteFields(route, request, routeGroup, startStop, endStop, userId, true);
+
+        Route saved = routeRepository.save(route);
+        return routeMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public RouteResponse updateRoute(UUID id, RouteRequest request, String userId) {
+        Route route = routeRepository.findByIdWithStops(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found with id: " + id));
+
+        RouteGroup routeGroup = routeGroupRepository.findById(request.getRouteGroupId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Route group not found with id: " + request.getRouteGroupId()));
+
+        // Validate name uniqueness within route group, excluding this route
+        if (routeRepository.existsByNameAndRouteGroup_IdAndIdNot(request.getName(), routeGroup.getId(), id)) {
+            throw new ConflictException(
+                    "Route with name '" + request.getName() + "' already exists in route group '" + routeGroup.getName() + "'");
+        }
+
+        Stop startStop = stopRepository.findById(request.getStartStopId())
+                .orElseThrow(() -> new ResourceNotFoundException("Start stop not found with id: " + request.getStartStopId()));
+        Stop endStop = stopRepository.findById(request.getEndStopId())
+                .orElseThrow(() -> new ResourceNotFoundException("End stop not found with id: " + request.getEndStopId()));
+
+        applyRouteFields(route, request, routeGroup, startStop, endStop, userId, false);
+
+        Route saved = routeRepository.save(route);
+        return routeMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRoute(UUID id) {
+        Route route = routeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found with id: " + id));
+        routeRepository.delete(route);
+    }
+
+    /**
+     * Applies all scalar fields from a {@link RouteRequest} onto an existing or new {@link Route} entity.
+     * Route stops are replaced in full when present in the request.
+     */
+    private void applyRouteFields(Route route, RouteRequest request,
+                                  RouteGroup routeGroup, Stop startStop, Stop endStop,
+                                  String userId, boolean isNew) {
+        route.setName(request.getName());
+        route.setNameSinhala(request.getNameSinhala());
+        route.setNameTamil(request.getNameTamil());
+        route.setRouteNumber(request.getRouteNumber());
+        route.setDescription(request.getDescription());
+        route.setRouteThrough(request.getRouteThrough());
+        route.setRouteThroughSinhala(request.getRouteThroughSinhala());
+        route.setRouteThroughTamil(request.getRouteThroughTamil());
+        route.setRouteGroup(routeGroup);
+        route.setStartStop(startStop);
+        route.setEndStop(endStop);
+        route.setDistanceKm(request.getDistanceKm());
+        route.setEstimatedDurationMinutes(request.getEstimatedDurationMinutes());
+        route.setUpdatedBy(userId);
+        if (isNew) {
+            route.setCreatedBy(userId);
+        }
+
+        try {
+            route.setDirection(DirectionEnum.valueOf(request.getDirection()));
+        } catch (IllegalArgumentException e) {
+            throw new ConflictException("Invalid direction: " + request.getDirection());
+        }
+
+        if (request.getRoadType() != null && !request.getRoadType().trim().isEmpty()) {
+            try {
+                route.setRoadType(RoadTypeEnum.valueOf(request.getRoadType()));
+            } catch (IllegalArgumentException e) {
+                throw new ConflictException("Invalid road type: " + request.getRoadType());
+            }
+        }
+
+        // Replace route stops when provided
+        if (request.getRouteStops() != null) {
+            List<RouteStop> existingStops = route.getRouteStops();
+            if (existingStops == null) {
+                existingStops = new ArrayList<>();
+                route.setRouteStops(existingStops);
+            }
+            existingStops.clear();
+
+            for (RouteRequest.RouteStopRequest rs : request.getRouteStops()) {
+                Stop stop = stopRepository.findById(rs.getStopId())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Stop not found with id: " + rs.getStopId()));
+                RouteStop routeStop = new RouteStop();
+                routeStop.setRoute(route);
+                routeStop.setStop(stop);
+                routeStop.setStopOrder(rs.getStopOrder());
+                routeStop.setDistanceFromStartKm(rs.getDistanceFromStartKm());
+                routeStop.setDistanceFromStartKmUnverified(rs.getDistanceFromStartKmUnverified());
+                routeStop.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
+                existingStops.add(routeStop);
+            }
+        }
     }
 
     private List<DirectionEnum> getDistinctDirections() {
@@ -195,71 +330,67 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public RouteStatisticsResponse getStatistics() {
         RouteStatisticsResponse stats = new RouteStatisticsResponse();
-        
-        // Basic counts
-        stats.setTotalRoutes(routeRepository.count());
-        stats.setOutboundRoutes(routeRepository.countByDirection(DirectionEnum.OUTBOUND));
-        stats.setInboundRoutes(routeRepository.countByDirection(DirectionEnum.INBOUND));
-        stats.setRoutesWithStops(routeRepository.countRoutesWithStops());
-        stats.setRoutesWithoutStops(routeRepository.countRoutesWithoutStops());
-        stats.setTotalRouteGroups(routeRepository.countDistinctRouteGroups());
-        
-        // Routes by route group
+
+        // ── 1. Consolidated numeric aggregates (1 query instead of ~12) ─────────
+        RouteStatisticsProjection agg = routeRepository.getRouteStatisticsConsolidated();
+        if (agg != null) {
+            stats.setTotalRoutes(agg.getTotalRoutes());
+            stats.setOutboundRoutes(agg.getOutboundCount());
+            stats.setInboundRoutes(agg.getInboundCount());
+            stats.setRoutesWithStops(agg.getRoutesWithStops());
+            stats.setRoutesWithoutStops(agg.getRoutesWithoutStops());
+            stats.setTotalRouteGroups(agg.getTotalRouteGroups());
+
+            if (agg.getAvgDistance() != null) {
+                stats.setAverageDistanceKm(agg.getAvgDistance());
+                stats.setMinDistanceKm(agg.getMinDistance());
+                stats.setMaxDistanceKm(agg.getMaxDistance());
+                stats.setTotalDistanceKm(agg.getSumDistance());
+            }
+
+            if (agg.getAvgDuration() != null) {
+                stats.setAverageDurationMinutes(agg.getAvgDuration());
+                stats.setMinDurationMinutes(agg.getMinDuration() != null ? agg.getMinDuration().doubleValue() : null);
+                stats.setMaxDurationMinutes(agg.getMaxDuration() != null ? agg.getMaxDuration().doubleValue() : null);
+                stats.setTotalDurationMinutes(agg.getSumDuration() != null ? agg.getSumDuration().doubleValue() : null);
+            }
+        }
+
+        // ── 2. Routes by route group (1 query) ──────────────────────────────────
         Map<String, Long> routesByGroup = new LinkedHashMap<>();
-        routeRepository.countRoutesByRouteGroup().forEach(result -> 
-            routesByGroup.put(result.getRouteGroupName(), result.getCount()));
+        routeRepository.countRoutesByRouteGroup().forEach(result ->
+                routesByGroup.put(result.getRouteGroupName(), result.getCount()));
         stats.setRoutesByRouteGroup(routesByGroup);
-        
-        // Routes by direction
+
+        // ── 3. Routes by direction (1 query) ────────────────────────────────────
         Map<String, Long> routesByDirection = new LinkedHashMap<>();
-        routeRepository.countRoutesByDirection().forEach(result -> 
-            routesByDirection.put(result.getDirection() != null ? result.getDirection().toString() : "UNKNOWN", result.getCount()));
+        routeRepository.countRoutesByDirection().forEach(result ->
+                routesByDirection.put(
+                        result.getDirection() != null ? result.getDirection().toString() : "UNKNOWN",
+                        result.getCount()));
         stats.setRoutesByDirection(routesByDirection);
-        
-        // Distance statistics
-        DistanceStatistics distanceStats = routeRepository.getDistanceStatistics();
-        if (distanceStats != null && distanceStats.getAvg() != null) {
-            stats.setAverageDistanceKm(distanceStats.getAvg());
-            stats.setTotalDistanceKm(distanceStats.getSum());
-        }
-        
-        DistanceRange distanceRange = routeRepository.findDistanceRange();
-        if (distanceRange != null && distanceRange.getMin() != null) {
-            stats.setMinDistanceKm(distanceRange.getMin());
-            stats.setMaxDistanceKm(distanceRange.getMax());
-        }
-        
-        // Duration statistics
-        DurationStatistics durationStats = routeRepository.getDurationStatistics();
-        if (durationStats != null && durationStats.getAvg() != null) {
-            stats.setAverageDurationMinutes(durationStats.getAvg());
-            stats.setTotalDurationMinutes(durationStats.getSum().doubleValue());
-        }
-        
-        DurationRange durationRange = routeRepository.findDurationRange();
-        if (durationRange != null && durationRange.getMin() != null) {
-            stats.setMinDurationMinutes(durationRange.getMin().doubleValue());
-            stats.setMaxDurationMinutes(durationRange.getMax().doubleValue());
-        }
-        
-        // Route name statistics
+
+        // ── 4. Route name extremes – distance (2 queries) ───────────────────────
         List<String> longestRoutes = routeRepository.findLongestRouteNames();
         stats.setLongestRoute(!longestRoutes.isEmpty() ? longestRoutes.get(0) : null);
-        
+
         List<String> shortestRoutes = routeRepository.findShortestRouteNames();
         stats.setShortestRoute(!shortestRoutes.isEmpty() ? shortestRoutes.get(0) : null);
-        
+
+        // ── 5. Route name extremes – duration (2 queries) ───────────────────────
         List<String> longestDurationRoutes = routeRepository.findLongestDurationRouteNames();
         stats.setLongestDurationRoute(!longestDurationRoutes.isEmpty() ? longestDurationRoutes.get(0) : null);
-        
+
         List<String> shortestDurationRoutes = routeRepository.findShortestDurationRouteNames();
         stats.setShortestDurationRoute(!shortestDurationRoutes.isEmpty() ? shortestDurationRoutes.get(0) : null);
-        
-        // Average routes per group
-        if (stats.getTotalRouteGroups() > 0) {
-            stats.setAverageRoutesPerGroup(stats.getTotalRoutes().doubleValue() / stats.getTotalRouteGroups().doubleValue());
+
+        // ── Derived: average routes per group ────────────────────────────────────
+        if (stats.getTotalRouteGroups() != null && stats.getTotalRouteGroups() > 0
+                && stats.getTotalRoutes() != null) {
+            stats.setAverageRoutesPerGroup(
+                    stats.getTotalRoutes().doubleValue() / stats.getTotalRouteGroups().doubleValue());
         }
-        
+
         return stats;
     }
 }

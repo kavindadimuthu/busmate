@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.network.controller;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.busmate.routeschedule.network.dto.request.RouteExportRequest;
 import com.busmate.routeschedule.network.dto.request.RouteGroupRequest;
+import com.busmate.routeschedule.network.dto.request.RouteRequest;
 import com.busmate.routeschedule.network.dto.request.RouteUnifiedImportRequest;
 import com.busmate.routeschedule.network.dto.response.RouteExportResponse;
 import com.busmate.routeschedule.network.dto.response.RouteFilterOptionsResponse;
@@ -49,6 +51,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "02. Route Management", description = "APIs for managing routes and route groups")
 public class RouteController {
+
+    /** Allowed field names for route {@code sortBy} query parameter. */
+    private static final Set<String> VALID_ROUTE_SORT_FIELDS = Set.of(
+            "name", "nameSinhala", "nameTamil", "routeNumber",
+            "distanceKm", "estimatedDurationMinutes",
+            "direction", "roadType", "createdAt", "updatedAt");
+
+    /** Allowed field names for route-group {@code sortBy} query parameter. */
+    private static final Set<String> VALID_ROUTE_GROUP_SORT_FIELDS = Set.of(
+            "name", "nameSinhala", "nameTamil",
+            "createdAt", "updatedAt");
+
     private final RouteService routeService;
     private final RouteGroupService routeGroupService;
     private final RouteImportExportService routeImportExportService;
@@ -109,6 +123,11 @@ public class RouteController {
         if (size > 100) {
             size = 100; // Maximum page size limit
         }
+
+        // Validate sort field
+        if (!VALID_ROUTE_SORT_FIELDS.contains(sortBy)) {
+            return ResponseEntity.badRequest().build();
+        }
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
                    Sort.by(sortBy).descending() : 
@@ -162,7 +181,74 @@ public class RouteController {
 
 
 
-    // 5. FILTER OPTIONS - Consolidated endpoint for all filter options
+    // 4. CREATE STANDALONE ROUTE
+    @PostMapping
+    @Operation(
+        summary = "Create an individual route",
+        description = "Creates a standalone route linked to an existing route group. " +
+                     "The routeGroupId in the request body determines the parent group. Requires authentication.",
+        operationId = "createRoute"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Route created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "404", description = "Route group or stop not found"),
+        @ApiResponse(responseCode = "409", description = "Route with same name already exists in the route group"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<RouteResponse> createRoute(
+            @Valid @RequestBody RouteRequest request,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        RouteResponse response = routeService.createRoute(request, userId);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    // 5. UPDATE STANDALONE ROUTE
+    @PutMapping("/{id}")
+    @Operation(
+        summary = "Update an individual route",
+        description = "Updates an existing route by its ID. All fields are replaced from the request body. Requires authentication.",
+        operationId = "updateRoute"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Route updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Route, route group, or stop not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "409", description = "Route name conflict within route group"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<RouteResponse> updateRoute(
+            @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID id,
+            @Valid @RequestBody RouteRequest request,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        RouteResponse response = routeService.updateRoute(id, request, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // 6. DELETE STANDALONE ROUTE
+    @DeleteMapping("/{id}")
+    @Operation(
+        summary = "Delete an individual route",
+        description = "Permanently deletes a route and its associated route stops. This action cannot be undone. Requires authentication.",
+        operationId = "deleteRoute"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Route deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Route not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid UUID format"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<Void> deleteRoute(
+            @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID id) {
+        routeService.deleteRoute(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 7. FILTER OPTIONS - Consolidated endpoint for all filter options
     @GetMapping("/filters/options")
     @Operation(
         summary = "Get all route filter options",
@@ -233,6 +319,11 @@ public class RouteController {
         // Validate page size
         if (size > 100) {
             size = 100; // Maximum page size limit
+        }
+
+        // Validate sort field
+        if (!VALID_ROUTE_GROUP_SORT_FIELDS.contains(sortBy)) {
+            return ResponseEntity.badRequest().build();
         }
         
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
