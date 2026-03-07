@@ -23,10 +23,10 @@ import {
   ChevronRight
 } from 'lucide-react';
 import type { WorkspaceState } from '../TripAssignmentWorkspace';
-import type { TripResponse } from '../../../../../generated/api-clients/route-management/models/TripResponse';
+import type { TripResponse } from '@busmate/api-client-route';
 import { TripContextMenu } from './TripContextMenu';
 import { TripDetailsModal } from './TripDetailsModal';
-import { TripManagementService } from '../../../../../generated/api-clients/route-management/services/TripManagementService';
+import { TripManagementService } from '@busmate/api-client-route';
 
 interface TripsWorkspaceProps {
   workspace: WorkspaceState;

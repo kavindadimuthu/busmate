@@ -12,7 +12,7 @@ import {
   PassengerServicePermitRequest,
   OperatorResponse,
   RouteGroupResponse
-} from '../../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 export default function AddPermitPage() {
   const router = useRouter();

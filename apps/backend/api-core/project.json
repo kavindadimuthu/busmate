@@ -1,0 +1,84 @@
+{
+  "name": "api-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "root": "apps/backend/api-core",
+  "sourceRoot": "apps/backend/api-core/src",
+  "tags": ["scope:backend", "type:app", "framework:spring-boot", "lang:java"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./mvnw clean compile -DskipTests",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/target/classes"],
+      "inputs": [
+        "{projectRoot}/src/**/*.java",
+        "{projectRoot}/pom.xml",
+        "{projectRoot}/src/main/resources/**"
+      ],
+      "cache": true
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./mvnw test",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/target/surefire-reports"],
+      "cache": true
+    },
+    "package": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./mvnw clean package -DskipTests",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/target/*.jar"],
+      "cache": true
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./mvnw spring-boot:run",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "serve:local": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make run-local",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "serve:prod": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make run-prod",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "serve:aws": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make run-aws",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./mvnw clean",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t busmate/api-core:latest .",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

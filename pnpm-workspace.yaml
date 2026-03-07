@@ -1,0 +1,10 @@
+packages:
+  # Frontend applications
+  - "apps/frontend/management-portal"
+  - "apps/frontend/passenger-web"
+
+  # Shared libraries
+  - "libs/api-clients/*"
+
+  # E2E tests
+  - "tests/e2e"

@@ -14,7 +14,7 @@ import {
   RotateCcw,
   Maximize2,
 } from 'lucide-react';
-import { StopRequest, StopResponse, LocationDto, BusStopManagementService } from '../../../../generated/api-clients/route-management';
+import { StopRequest, StopResponse, LocationDto, BusStopManagementService } from '@busmate/api-client-route';
 import { useToast } from '@/hooks/use-toast';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 

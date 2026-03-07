@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { DataTable } from '@/components/shared/DataTable';
 import type { DataTableColumn } from '@/components/shared/DataTable';
-import type { StopResponse } from '../../../../generated/api-clients/route-management';
+import type { StopResponse } from '@busmate/api-client-route';
 
 interface BusStopsTableProps {
   busStops: StopResponse[];

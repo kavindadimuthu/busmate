@@ -23,7 +23,6 @@ export function createRouteAIService(
   switch (provider) {
     case 'gemini':
       return createRouteGeminiService({
-        apiKey: config?.apiKey,
         model: config?.model,
         temperature: config?.temperature,
         maxTokens: config?.maxTokens,

@@ -13,7 +13,7 @@ import {
   Users,
   Route as RouteIcon,
 } from 'lucide-react';
-import { ScheduleResponse } from '../../../../generated/api-clients/route-management/models/ScheduleResponse';
+import { ScheduleResponse } from '@busmate/api-client-route';
 import { DataTable } from '@/components/shared/DataTable';
 import type { DataTableColumn, SortState } from '@/components/shared/DataTable';
 

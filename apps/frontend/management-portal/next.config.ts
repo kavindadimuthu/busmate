@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  transpilePackages: [
+    '@busmate/api-client-route',
+    '@busmate/api-client-ticketing',
+    '@busmate/api-client-location',
+    '@busmate/api-client-user',
+  ],
   turbopack: {
     rules: {
       '*.woff2': ['file-loader'],

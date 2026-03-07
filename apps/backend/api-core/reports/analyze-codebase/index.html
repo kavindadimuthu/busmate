@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BusMate — Codebase Analysis Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+/* ── Reset & Variables ──────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2336;--surface3:#252c42;
+  --border:#2a3150;--accent:#4f8ef7;--accent2:#6fc97e;--accent3:#f5a623;
+  --accent4:#e05c5c;--text:#e2e8f0;--text2:#8896b3;--text3:#5a6a8a;
+  --radius:10px;--radius-sm:6px;--font:'Inter',system-ui,sans-serif;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+/* ── Layout ─────────────────────────────────────────────────── */
+#app{display:flex;flex:1;overflow:hidden;height:100vh}
+/* ── Sidebar ────────────────────────────────────────────────── */
+#sidebar{
+  width:260px;min-width:260px;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  overflow:hidden;
+}
+#sidebar-header{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+#sidebar-header h1{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.3px}
+#sidebar-header p{font-size:11px;color:var(--text3);margin-top:3px}
+#sidebar-label{
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text3);padding:14px 18px 6px
+}
+#report-list{flex:1;overflow-y:auto;padding:0 10px 10px}
+.report-item{
+  border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;
+  border:1px solid transparent;margin-bottom:4px;transition:all .15s;
+}
+.report-item:hover{background:var(--surface2);border-color:var(--border)}
+.report-item.active{background:var(--surface3);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)20}
+.report-item .ri-date{font-size:12px;font-weight:600;color:var(--text)}
+.report-item .ri-slug{font-size:10px;color:var(--text3);margin-top:2px;font-family:monospace}
+#sidebar-foot{
+  padding:14px 18px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text3)
+}
+#sidebar-foot span{color:var(--accent2)}
+/* ── Main Content ───────────────────────────────────────────── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* ── Top bar ────────────────────────────────────────────────── */
+#topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;gap:24px;min-height:52px;
+  flex-shrink:0
+}
+#topbar-title{font-size:13px;font-weight:600;color:var(--text2);flex:1}
+#topbar-ts{font-size:11px;color:var(--text3);font-family:monospace}
+/* ── Tabs ───────────────────────────────────────────────────── */
+#tabs{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;gap:2px;flex-shrink:0
+}
+.tab-btn{
+  background:none;border:none;color:var(--text2);padding:12px 18px;
+  font-size:13px;font-weight:500;border-bottom:2px solid transparent;
+  transition:all .15s;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+/* ── Content area ───────────────────────────────────────────── */
+#content{flex:1;overflow-y:auto;padding:24px 28px}
+/* ── KPI Cards ──────────────────────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;
+}
+.kpi-card .kc-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.kpi-card .kc-val{font-size:26px;font-weight:700;margin:6px 0 2px;color:var(--text)}
+.kpi-card .kc-sub{font-size:11px;color:var(--text3)}
+.kpi-card.accent-blue .kc-val{color:var(--accent)}
+.kpi-card.accent-green .kc-val{color:var(--accent2)}
+.kpi-card.accent-orange .kc-val{color:var(--accent3)}
+.kpi-card.accent-red .kc-val{color:var(--accent4)}
+/* ── Charts grid ────────────────────────────────────────────── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;
+}
+.chart-card.wide{grid-column:1/-1}
+.chart-card h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px}
+.chart-wrap{position:relative}
+/* ── Tables ─────────────────────────────────────────────────── */
+.table-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:18px;
+}
+.table-card h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.table-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.filter-input{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);padding:6px 12px;font-size:12px;font-family:inherit;flex:1;max-width:280px;
+  outline:none;
+}
+.filter-input:focus{border-color:var(--accent)}
+.sort-hint{font-size:11px;color:var(--text3)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{
+  text-align:left;padding:8px 10px;color:var(--text3);font-weight:600;
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--border);cursor:pointer;user-select:none;
+  white-space:nowrap;
+}
+thead th:hover{color:var(--text)}
+thead th.sort-asc::after{content:" ▲"}
+thead th.sort-desc::after{content:" ▼"}
+tbody tr{border-bottom:1px solid var(--border)20}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:7px 10px;color:var(--text);font-family:inherit}
+tbody td.mono{font-family:monospace;font-size:11px;color:var(--text2)}
+tbody td.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody td .bar{background:var(--accent)20;border-radius:2px;overflow:hidden;height:4px;margin-top:4px}
+tbody td .bar-fill{background:var(--accent);height:100%;border-radius:2px;transition:width .3s}
+.badge{
+  display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;
+}
+.badge-java{background:#f8951520;color:#f89515}
+.badge-xml{background:#4f8ef720;color:#4f8ef7}
+.badge-yaml{background:#9b59b620;color:#9b59b6}
+.badge-sql{background:#e05c5c20;color:#e05c5c}
+.badge-ts{background:#3178c620;color:#3178c6}
+.badge-js{background:#f5a62320;color:#f5a623}
+.badge-html{background:#e06b1520;color:#e06b15}
+.badge-css{background:#1572b620;color:#1572b6}
+.badge-py{background:#4584b620;color:#4584b6}
+.badge-default{background:#8896b320;color:#8896b3}
+/* ── Empty / loading states ─────────────────────────────────── */
+#empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;min-height:400px;color:var(--text3);text-align:center;gap:10px;
+}
+#empty-state .es-icon{font-size:40px;opacity:.4}
+#empty-state h2{font-size:16px;color:var(--text2)}
+#empty-state p{font-size:13px;max-width:360px;line-height:1.6}
+#empty-state code{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;
+  display:block;margin-top:8px;color:var(--accent2)
+}
+/* ── Progress bars in KPI ───────────────────────────────────── */
+.kpi-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:8px;overflow:hidden}
+.kpi-bar-fill{height:100%;border-radius:2px}
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+/* ── Responsive ─────────────────────────────────────────────── */
+@media(max-width:900px){
+  #sidebar{width:200px;min-width:200px}
+  .charts-row{grid-template-columns:1fr}
+  .chart-card.wide{grid-column:auto}
+}
+@media(max-width:640px){
+  #sidebar{display:none}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Sidebar ── -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <h1>🚌 BusMate</h1>
+      <p>Codebase Analysis Dashboard</p>
+    </div>
+    <div id="sidebar-label">Reports</div>
+    <div id="report-list"></div>
+    <div id="sidebar-foot">
+      Generated by <span>analyze_codebase.py</span>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div id="main">
+    <div id="topbar">
+      <span id="topbar-title">Select a report from the sidebar</span>
+      <span id="topbar-ts"></span>
+    </div>
+    <div id="tabs">
+      <button class="tab-btn active" onclick="switchTab('summary')">Summary</button>
+      <button class="tab-btn" onclick="switchTab('main')">src/main</button>
+      <button class="tab-btn" onclick="switchTab('test')">src/test</button>
+    </div>
+    <div id="content">
+      <div id="empty-state">
+        <div class="es-icon">📊</div>
+        <h2>No report loaded</h2>
+        <p>Run the analysis script to generate a report, then select it from the sidebar.</p>
+        <code>python3 scripts/analyze_codebase.py</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  State
+// ══════════════════════════════════════════════════════
+let currentTab  = 'summary';
+let currentData = null;
+let charts      = [];
+let sortState   = {};
+
+// ══════════════════════════════════════════════════════
+//  Bootstrap – load manifest then latest report
+// ══════════════════════════════════════════════════════
+(function boot(){
+  injectScript('data/manifest.js', () => {
+    const manifest = window.__BUSMATE_MANIFEST__;
+    if(!manifest || !manifest.length){ return; }
+    renderSidebar(manifest);
+    loadReport(manifest[0]);
+  });
+})();
+
+function injectScript(src, cb){
+  const s = document.createElement('script');
+  s.src   = src + '?t=' + Date.now();
+  s.onload  = cb;
+  s.onerror = () => { cb && cb(); };
+  document.head.appendChild(s);
+}
+
+// ══════════════════════════════════════════════════════
+//  Sidebar
+// ══════════════════════════════════════════════════════
+function renderSidebar(manifest){
+  const list = document.getElementById('report-list');
+  list.innerHTML = manifest.map((r,i) => `
+    <div class="report-item${i===0?' active':''}" onclick="selectReport('${r.timestamp}','${r.file}',this)">
+      <div class="ri-date">${r.timestamp}</div>
+      <div class="ri-slug">${r.slug}</div>
+    </div>`).join('');
+}
+
+function selectReport(ts, file, el){
+  document.querySelectorAll('.report-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  const data = (window.__BUSMATE_REPORTS__ || {})[ts];
+  if(data){ renderDashboard(data); return; }
+  injectScript('data/' + file, () => {
+    const d = (window.__BUSMATE_REPORTS__ || {})[ts];
+    if(d) renderDashboard(d);
+  });
+}
+
+function loadReport(entry){
+  const data = (window.__BUSMATE_REPORTS__ || {})[entry.timestamp];
+  if(data){ renderDashboard(data); return; }
+  injectScript('data/' + entry.file, () => {
+    const d = (window.__BUSMATE_REPORTS__ || {})[entry.timestamp];
+    if(d) renderDashboard(d);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  Tab switching
+// ══════════════════════════════════════════════════════
+function switchTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['summary','main','test'][i] === tab);
+  });
+  if(currentData) renderContent();
+}
+
+// ══════════════════════════════════════════════════════
+//  Dashboard entry-point
+// ══════════════════════════════════════════════════════
+function renderDashboard(data){
+  currentData = data;
+  document.getElementById('topbar-title').textContent =
+    'Report — ' + data.timestamp;
+  document.getElementById('topbar-ts').textContent = '';
+  destroyCharts();
+  renderContent();
+}
+
+function renderContent(){
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+  if(currentTab === 'summary')     renderSummaryTab(content);
+  else if(currentTab === 'main')   renderSectionTab(content, currentData.main,  'src/main');
+  else if(currentTab === 'test')   renderSectionTab(content, currentData.test,  'src/test');
+}
+
+// ══════════════════════════════════════════════════════
+//  Summary Tab
+// ══════════════════════════════════════════════════════
+function renderSummaryTab(root){
+  const s  = currentData.summary;
+  const ov = s.combined_overview;
+  const mo = currentData.main.overview;
+  const to = currentData.test.overview;
+
+  // KPI cards
+  root.appendChild(kpiRow([
+    kpi('Total Files',  fmt(ov.file_count),       `${ov.directory_count} directories`, 'accent-blue'),
+    kpi('Total Lines',  fmtN(ov.total_lines),     '', ''),
+    kpi('Code Lines',   fmtN(ov.code_lines),      pct(ov.code_lines,ov.total_lines) + ' of total', 'accent-green'),
+    kpi('Comment Lines',fmtN(ov.comment_lines),   pct(ov.comment_lines,ov.total_lines) + ' of total', 'accent-orange'),
+    kpi('Blank Lines',  fmtN(ov.blank_lines),     pct(ov.blank_lines,ov.total_lines) + ' of total', ''),
+    kpi('Avg LOC/File', ov.avg_loc_per_file, 'lines per file', 'accent-blue'),
+  ]));
+
+  // Compare Main vs Test
+  const compRow = div('charts-row');
+  compRow.appendChild(pieCard('Line Type Distribution', [
+    {label:'Code',    val:ov.code_lines,    color:'#4f8ef7'},
+    {label:'Comment', val:ov.comment_lines, color:'#6fc97e'},
+    {label:'Blank',   val:ov.blank_lines,   color:'#2a3150'},
+  ]));
+  compRow.appendChild(barCard('Main vs Test Code Lines', [
+    {label:'src/main',val:mo.code_lines,color:'#4f8ef7'},
+    {label:'src/test',val:to.code_lines,color:'#6fc97e'},
+  ]));
+  root.appendChild(compRow);
+
+  // Language distribution
+  root.appendChild(horizBarCard('Language Distribution (Combined)', s.combined_languages, 'code_lines'));
+
+  // Language Table
+  root.appendChild(langTable('Combined Language Statistics', s.combined_languages));
+
+  // Health insights
+  root.appendChild(insightsCard(s));
+}
+
+// ══════════════════════════════════════════════════════
+//  Section Tab (main / test)
+// ══════════════════════════════════════════════════════
+function renderSectionTab(root, data, label){
+  const ov = data.overview;
+
+  // KPIs
+  root.appendChild(kpiRow([
+    kpi('Files',        fmt(ov.file_count),       `${ov.directory_count} directories`, 'accent-blue'),
+    kpi('Total Lines',  fmtN(ov.total_lines),     '', ''),
+    kpi('Code Lines',   fmtN(ov.code_lines),      pct(ov.code_lines,ov.total_lines) + ' of total', 'accent-green'),
+    kpi('Comment Lines',fmtN(ov.comment_lines),   pct(ov.comment_lines,ov.total_lines) + ' of total', 'accent-orange'),
+    kpi('Blank Lines',  fmtN(ov.blank_lines),     pct(ov.blank_lines,ov.total_lines) + ' of total', ''),
+    kpi('Avg LOC/File', ov.avg_loc_per_file,      'code lines/file', 'accent-blue'),
+    kpi('Code:Comment', ov.code_to_comment_ratio+'x', 'ratio', 'accent-orange'),
+  ]));
+
+  // Charts
+  const chartsRow = div('charts-row');
+  chartsRow.appendChild(pieCard('Line Distribution', [
+    {label:'Code',    val:ov.code_lines,    color:'#4f8ef7'},
+    {label:'Comment', val:ov.comment_lines, color:'#6fc97e'},
+    {label:'Blank',   val:ov.blank_lines,   color:'#2a3150'},
+  ]));
+  chartsRow.appendChild(pieCard('Language Share (by LOC)', data.languages.map((l,i)=>({
+    label: l.name, val: l.code_lines,
+    color: COLORS[i % COLORS.length],
+  }))));
+  root.appendChild(chartsRow);
+
+  root.appendChild(horizBarCard('Directory Contribution', data.directories, 'total_lines'));
+
+  // Tables
+  root.appendChild(langTable('Language Breakdown', data.languages));
+  root.appendChild(dirTable('Directory Breakdown', data.directories));
+  root.appendChild(fileTable('File Breakdown', data.files));
+}
+
+// ══════════════════════════════════════════════════════
+//  Component builders
+// ══════════════════════════════════════════════════════
+const COLORS = [
+  '#4f8ef7','#6fc97e','#f5a623','#e05c5c','#9b59b6',
+  '#1abc9c','#e67e22','#3498db','#e74c3c','#f39c12',
+  '#2ecc71','#16a085','#8e44ad','#d35400','#27ae60',
+];
+
+function kpiRow(cards){
+  const row = div('kpi-row');
+  cards.forEach(c => row.appendChild(c));
+  return row;
+}
+
+function kpi(label, val, sub, accent){
+  const c = div('kpi-card' + (accent ? ' ' + accent : ''));
+  c.innerHTML = `
+    <div class="kc-label">${label}</div>
+    <div class="kc-val">${val}</div>
+    <div class="kc-sub">${sub || '&nbsp;'}</div>`;
+  return c;
+}
+
+function pieCard(title, items){
+  const card = div('chart-card');
+  card.innerHTML = `<h3>${title}</h3><div class="chart-wrap"><canvas></canvas></div>`;
+  const canvas = card.querySelector('canvas');
+  setTimeout(() => {
+    const ch = new Chart(canvas, {
+      type:'doughnut',
+      data:{
+        labels: items.map(i=>i.label),
+        datasets:[{data:items.map(i=>i.val),
+          backgroundColor:items.map(i=>i.color),
+          borderColor:'#0f1117',borderWidth:2}]
+      },
+      options:{
+        responsive:true,cutout:'65%',
+        plugins:{
+          legend:{position:'bottom',labels:{color:'#8896b3',font:{size:11},boxWidth:12,padding:10}},
+          tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtN(ctx.raw)} (${pct(ctx.raw,
+            ctx.dataset.data.reduce((a,b)=>a+b,0))})`}}
+        }
+      }
+    });
+    charts.push(ch);
+  },0);
+  return card;
+}
+
+function barCard(title, items){
+  const card = div('chart-card');
+  card.innerHTML = `<h3>${title}</h3><div class="chart-wrap"><canvas></canvas></div>`;
+  const canvas = card.querySelector('canvas');
+  setTimeout(() => {
+    const ch = new Chart(canvas, {
+      type:'bar',
+      data:{
+        labels:items.map(i=>i.label),
+        datasets:[{data:items.map(i=>i.val),
+          backgroundColor:items.map(i=>i.color),
+          borderRadius:6,borderSkipped:false}]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${fmtN(ctx.raw)} lines`}}},
+        scales:{
+          x:{ticks:{color:'#8896b3'},grid:{color:'#2a315020'}},
+          y:{ticks:{color:'#8896b3'},grid:{color:'#2a315040'},
+            beginAtZero:true,
+            ticks:{callback:v=>fmtN(v)}}
+        }
+      }
+    });
+    charts.push(ch);
+  },0);
+  return card;
+}
+
+function horizBarCard(title, items, field){
+  const topN  = items.slice(0, 12);
+  const maxV  = Math.max(...topN.map(i=>i[field]||0)) || 1;
+  const card  = div('chart-card wide');
+  card.innerHTML = `<h3>${title}</h3>`;
+  topN.forEach((item, idx) => {
+    const width = Math.round((item[field] || 0) / maxV * 100);
+    const label = item.name || item.path || '';
+    const row   = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:7px;';
+    row.innerHTML = `
+      <div style="width:160px;font-size:11px;color:#8896b3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0"
+           title="${escHtml(label)}">${escHtml(label)}</div>
+      <div style="flex:1;background:#2a3150;border-radius:3px;height:10px;overflow:hidden">
+        <div style="width:${width}%;background:${COLORS[idx%COLORS.length]};height:100%;border-radius:3px;transition:width .4s"></div>
+      </div>
+      <div style="width:70px;text-align:right;font-size:11px;font-variant-numeric:tabular-nums;color:#e2e8f0">
+        ${fmtN(item[field]||0)}
+      </div>
+      <div style="width:42px;text-align:right;font-size:10px;color:#5a6a8a">${item.percentage||0}%</div>`;
+    card.appendChild(row);
+  });
+  return card;
+}
+
+function insightsCard(s){
+  const card = div('table-card');
+  card.innerHTML = `<h3>Code Health Insights</h3>`;
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;';
+  const metrics = [
+    {label:'Main Comment Coverage',val:s.main_comment_pct+'%', desc:'comments ÷ code lines (src/main)'},
+    {label:'Test Comment Coverage', val:s.test_comment_pct+'%',  desc:'comments ÷ code lines (src/test)'},
+    {label:'Overall Comment Coverage',val:s.overall_comment_pct+'%',desc:'across entire codebase'},
+    {label:'Test-to-Production Ratio',val:s.test_to_prod_ratio+'%',desc:'test code lines vs production'},
+    {label:'Production Code Share', val:s.main_code_pct+'%', desc:'src/main code share of combined'},
+    {label:'Test Code Share',       val:s.test_code_pct+'%', desc:'src/test code share of combined'},
+  ];
+  metrics.forEach(m => {
+    const item = document.createElement('div');
+    item.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px';
+    item.innerHTML = `
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">${m.label}</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent2);margin:6px 0 4px">${m.val}</div>
+      <div style="font-size:11px;color:var(--text3)">${m.desc}</div>`;
+    grid.appendChild(item);
+  });
+  card.appendChild(grid);
+  return card;
+}
+
+// ── Tables ───────────────────────────────────────────────────────
+function langTable(title, langs){
+  const cols = [
+    {key:'name',      label:'Language',      sortable:true,  render:(v,r)=>`<span class="badge ${langBadge(v)}">${escHtml(v)}</span>`},
+    {key:'file_count',label:'Files',         sortable:true,  num:true},
+    {key:'total_lines',label:'Total Lines',  sortable:true,  num:true, fmt:fmtN},
+    {key:'code_lines', label:'Code Lines',   sortable:true,  num:true, fmt:fmtN},
+    {key:'comment_lines',label:'Comments',   sortable:true,  num:true, fmt:fmtN},
+    {key:'blank_lines',label:'Blank',        sortable:true,  num:true, fmt:fmtN},
+    {key:'percentage', label:'%',            sortable:true,  num:true, fmt:v=>v+'%'},
+  ];
+  return makeTableCard(title, JSON.parse(JSON.stringify(langs)), cols, 'lang');
+}
+
+function dirTable(title, dirs){
+  const cols = [
+    {key:'path',       label:'Directory',    sortable:true,  render:(v)=>`<span class="mono" title="${escHtml(v)}">${escHtml(v)}</span>`},
+    {key:'file_count', label:'Files',        sortable:true,  num:true},
+    {key:'total_lines',label:'Total Lines',  sortable:true,  num:true, fmt:fmtN},
+    {key:'code_lines', label:'Code Lines',   sortable:true,  num:true, fmt:fmtN},
+    {key:'comment_lines',label:'Comments',   sortable:true,  num:true, fmt:fmtN},
+    {key:'blank_lines',label:'Blank',        sortable:true,  num:true, fmt:fmtN},
+    {key:'percentage', label:'%',            sortable:true,  num:true, fmt:v=>v+'%'},
+  ];
+  return makeTableCard(title, JSON.parse(JSON.stringify(dirs)), cols, 'dir');
+}
+
+function fileTable(title, files){
+  const cols = [
+    {key:'path',      label:'File',          sortable:true,  render:(v)=>`<span class="mono" style="font-size:10px" title="${escHtml(v)}">${escHtml(v)}</span>`},
+    {key:'language',  label:'Language',      sortable:true,  render:(v)=>`<span class="badge ${langBadge(v)}">${escHtml(v)}</span>`},
+    {key:'total_lines',label:'Total',        sortable:true,  num:true, fmt:fmtN},
+    {key:'code_lines', label:'Code',         sortable:true,  num:true, fmt:fmtN},
+    {key:'comment_lines',label:'Comments',   sortable:true,  num:true, fmt:fmtN},
+    {key:'blank_lines',label:'Blank',        sortable:true,  num:true, fmt:fmtN},
+  ];
+  return makeTableCard(title, JSON.parse(JSON.stringify(files)), cols, 'file', true);
+}
+
+function makeTableCard(title, data, cols, key, filterable=false){
+  const id  = 'table-' + key + '-' + Math.random().toString(36).slice(2,6);
+  const card = div('table-card');
+  const h3   = document.createElement('h3');
+  h3.textContent = title;
+  card.appendChild(h3);
+
+  let filtered = [...data];
+  let sortCol  = null;
+  let sortDir  = 1;
+
+  const toolbar = div('table-toolbar');
+  if(filterable){
+    const inp = document.createElement('input');
+    inp.className   = 'filter-input';
+    inp.placeholder = 'Filter by path or language…';
+    inp.oninput = () => {
+      const q = inp.value.toLowerCase();
+      filtered = data.filter(r =>
+        (r.path||'').toLowerCase().includes(q) ||
+        (r.language||'').toLowerCase().includes(q) ||
+        (r.name||'').toLowerCase().includes(q));
+      render();
+    };
+    toolbar.appendChild(inp);
+  }
+  const hint = document.createElement('span');
+  hint.className = 'sort-hint';
+  hint.textContent = 'Click column headers to sort';
+  toolbar.appendChild(hint);
+  card.appendChild(toolbar);
+
+  const tableWrap = document.createElement('div');
+  tableWrap.style.overflowX = 'auto';
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  cols.forEach((col,ci) => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    if(col.sortable){
+      th.onclick = () => {
+        if(sortCol === ci) sortDir *= -1;
+        else { sortCol = ci; sortDir = -1; }
+        filtered.sort((a,b) => {
+          const av = a[col.key] ?? 0;
+          const bv = b[col.key] ?? 0;
+          return (av < bv ? -1 : av > bv ? 1 : 0) * sortDir;
+        });
+        thead.querySelectorAll('th').forEach(t=>{ t.classList.remove('sort-asc','sort-desc'); });
+        th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+        render();
+      };
+    }
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  card.appendChild(tableWrap);
+
+  function render(){
+    tbody.innerHTML = '';
+    filtered.forEach(row => {
+      const tr = document.createElement('tr');
+      cols.forEach(col => {
+        const td = document.createElement('td');
+        const v  = row[col.key];
+        if(col.render){
+          td.innerHTML = col.render(v, row);
+        } else {
+          td.textContent = col.fmt ? col.fmt(v) : (v ?? '');
+          if(col.num) td.className = 'num';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    hint.textContent = `${filtered.length} of ${data.length} rows`;
+  }
+
+  render();
+  return card;
+}
+
+// ══════════════════════════════════════════════════════
+//  Utilities
+// ══════════════════════════════════════════════════════
+function div(cls) {
+  const d = document.createElement('div');
+  if(cls) d.className = cls;
+  return d;
+}
+function fmt(n)  { return n != null ? n.toLocaleString() : '—'; }
+function fmtN(n) { return n != null ? Number(n).toLocaleString() : '—'; }
+function pct(a,b){ return b ? (a/b*100).toFixed(1)+'%' : '0%'; }
+function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function langBadge(lang){
+  const map = {
+    'Java':'badge-java','XML':'badge-xml','YAML':'badge-yaml',
+    'SQL':'badge-sql','TypeScript':'badge-ts','JavaScript':'badge-js',
+    'Kotlin':'badge-ts','HTML':'badge-html','CSS':'badge-css',
+    'SCSS':'badge-css','Python':'badge-py',
+  };
+  return map[lang] || 'badge-default';
+}
+
+function destroyCharts(){
+  charts.forEach(c => c.destroy());
+  charts = [];
+}
+</script>
+</body>
+</html>

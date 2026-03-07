@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RouteFormMode from '@/components/mot/routes/workspace/form-mode/RouteFormMode';
 import RouteTextualMode from '@/components/mot/routes/workspace/textual-mode/RouteTextualMode';
@@ -11,6 +11,7 @@ import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import RouteSubmissionModal from '@/components/mot/routes/workspace/RouteSubmissionModal';
+import { ErrorBoundary, WorkspaceErrorFallback } from '@/components/shared/ErrorBoundary';
 import { useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 
@@ -20,6 +21,11 @@ function RouteWorkspaceContent() {
     const { getRouteGroupData, mode, isLoading, loadError, loadRouteGroup, routeGroupId } = useRouteWorkspace();
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    
+    // Track the route group ID we've attempted to load to avoid showing
+    // error toast for transient failures on initial load
+    const attemptedLoadIdRef = useRef<string | null>(null);
+    const lastErrorRef = useRef<string | null>(null);
 
     const pageTitle = mode === 'edit' ? 'Edit Route Group' : 'Create Route Group';
     const pageDescription = mode === 'edit'
@@ -33,23 +39,28 @@ function RouteWorkspaceContent() {
         showBreadcrumbs: true,
         breadcrumbs: [{ label: 'Routes', href: '/mot/routes' }, { label: 'Workspace' }],
         padding: 0,
-    });
+    }, true);
 
     // Load route group if ID is in URL params
     useEffect(() => {
         const routeGroupIdParam = searchParams.get('routeGroupId');
         if (routeGroupIdParam && !routeGroupId) {
-            loadRouteGroup(routeGroupIdParam).then((success) => {
-                if (!success) {
-                    toast({
-                        title: 'Error',
-                        description: 'Failed to load route group for editing',
-                        variant: 'destructive',
-                    });
-                }
+            attemptedLoadIdRef.current = routeGroupIdParam;
+            loadRouteGroup(routeGroupIdParam);
+        }
+    }, [searchParams, loadRouteGroup, routeGroupId]);
+
+    // Show error toast only when loadError becomes set (and avoid duplicate toasts)
+    useEffect(() => {
+        if (loadError && loadError !== lastErrorRef.current) {
+            lastErrorRef.current = loadError;
+            toast({
+                title: 'Error',
+                description: loadError,
+                variant: 'destructive',
             });
         }
-    }, [searchParams, loadRouteGroup, routeGroupId, toast]);
+    }, [loadError, toast]);
 
     const handleSubmit = () => {
         const routeGroupData = getRouteGroupData();
@@ -90,7 +101,7 @@ function RouteWorkspaceContent() {
         <>
             <div className="min-h-screen bg-slate-50">
                 {/* Tab Bar */}
-                <div className="flex bg-white border-b border-slate-200 px-4 py-2 sticky top-20 z-10 justify-between items-center shadow-sm">
+                <div className="flex bg-white border-b border-slate-200 px-4 py-2 z-10 justify-between items-center shadow-sm">
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('form')}
@@ -144,16 +155,22 @@ function RouteWorkspaceContent() {
 
 export default function RoutesWorkspacePage() {
     return (
-        <RouteWorkspaceProvider>
-            <Suspense fallback={
-                <div className="flex flex-col h-96 justify-center items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                    <p className="text-gray-600">Loading routes workspace...</p>
-                </div>
-            }>
-                <RouteWorkspaceContent />
-            </Suspense>
-            <Toaster />
-        </RouteWorkspaceProvider>
+        <ErrorBoundary
+            fallback={(error, reset) => (
+                <WorkspaceErrorFallback error={error} onReset={reset} />
+            )}
+        >
+            <RouteWorkspaceProvider>
+                <Suspense fallback={
+                    <div className="flex flex-col h-96 justify-center items-center gap-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        <p className="text-gray-600">Loading routes workspace...</p>
+                    </div>
+                }>
+                    <RouteWorkspaceContent />
+                </Suspense>
+                <Toaster />
+            </RouteWorkspaceProvider>
+        </ErrorBoundary>
     );
 }

@@ -1,12 +1,14 @@
 // Dashboard service helper to fetch and aggregate data from various API services
-import { AdminDashboardService } from '../../../generated/api-clients/route-management/services/AdminDashboardService';
-import { BusManagementService } from '../../../generated/api-clients/route-management/services/BusManagementService';
-import { OperatorManagementService } from '../../../generated/api-clients/route-management/services/OperatorManagementService';
-import { RouteManagementService } from '../../../generated/api-clients/route-management/services/RouteManagementService';
-import { PermitManagementService } from '../../../generated/api-clients/route-management/services/PermitManagementService';
-import { ScheduleManagementService } from '../../../generated/api-clients/route-management/services/ScheduleManagementService';
-import { TripManagementService } from '../../../generated/api-clients/route-management/services/TripManagementService';
-import { BusStopManagementService } from '../../../generated/api-clients/route-management/services/BusStopManagementService';
+import {
+  AdminDashboardService,
+  BusManagementService,
+  OperatorManagementService,
+  RouteManagementService,
+  PermitManagementService,
+  ScheduleManagementService,
+  TripManagementService,
+  BusStopManagementService,
+} from '@busmate/api-client-route';
 
 export interface DashboardMetrics {
   totalBuses: number;

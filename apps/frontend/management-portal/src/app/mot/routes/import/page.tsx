@@ -7,7 +7,7 @@ import { CSVEditor } from '@/components/tools/csv-editor';
 import { ROUTE_VALIDATION_RULES } from '@/components/tools/csv-editor';
 import { CSVData } from '@/components/tools/csv-editor/types';
 import { useToast } from '@/hooks/use-toast';
-import { RouteManagementService } from '../../../../../generated/api-clients/route-management';
+import { RouteManagementService } from '@busmate/api-client-route';
 
 function RoutesImportPage() {
     const router = useRouter();

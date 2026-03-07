@@ -1,0 +1,39 @@
+# Multi-stage Dockerfile for e2e test environment
+#
+# Builds the Spring Boot application from source and packages it into a
+# minimal runtime image. Used exclusively by docker-compose.e2e.yml.
+#
+# Layer caching strategy:
+#   1. Copy pom.xml and resolve dependencies (cached unless pom.xml changes)
+#   2. Copy source and compile (invalidated only when source changes)
+
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM maven:3.9.6-amazoncorretto-21 AS build
+
+WORKDIR /app
+
+# Resolve dependencies in a separate layer so they are cached between builds
+# unless the POM changes.
+COPY pom.xml .
+RUN mvn dependency:go-offline -B --no-transfer-progress
+
+# Compile and package (tests are not run here — Playwright handles that)
+COPY src ./src
+RUN mvn clean package -DskipTests -B --no-transfer-progress
+
+# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
+FROM amazoncorretto:21-alpine
+
+WORKDIR /app
+
+# curl is required by the Docker health-check defined in docker-compose.e2e.yml
+RUN apk add --no-cache curl
+
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", \
+  "-Xms256m", \
+  "-Xmx512m", \
+  "-jar", "app.jar"]

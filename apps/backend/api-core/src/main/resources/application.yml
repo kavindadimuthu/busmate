@@ -92,13 +92,8 @@ spring:
 server:
   port: 8080
 
-supabase:
-  api:
-    key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg
-  auth:
-    url: https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1
-  jwt:
-    secret: v7dyiu735nxybSzPS41oWmOtOLwZyaJOApdGaFqWpTNGYkmL7yWP6fnKPG2FWSxr5AB5kSdFiRiT78YcB7vT5w==
+asgardeo:
+  jwks-url: https://api.asgardeo.io/t/busmate/oauth2/jwks
 
 logging:
   level:

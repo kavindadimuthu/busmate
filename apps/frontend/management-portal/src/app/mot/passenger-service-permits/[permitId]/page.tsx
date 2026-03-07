@@ -21,7 +21,7 @@ import {
   OperatorResponse,
   RouteGroupResponse,
   BusResponse
-} from '../../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 import { DeletePermitModal } from '@/components/mot/passenger-service-permits/DeletePermitModal';
 
 export default function PermitDetailsPage() {

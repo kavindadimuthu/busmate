@@ -13,7 +13,7 @@ import { Sparkles } from 'lucide-react';
 
 function ScheduleWorkspaceContent() {
     const [activeTab, setActiveTab] = useState<'form' | 'textual' | 'ai-studio'>('form');
-    const { mode, validateAllSchedules, submitAllSchedules, resetToCreateMode, data, setSelectedRoute, isLoading } = useScheduleWorkspace();
+    const { mode, validateAllSchedules, submitAllSchedules, resetToCreateMode, data, setSelectedRoute, setActiveScheduleIndex, setHighlightedScheduleIndex, isLoading } = useScheduleWorkspace();
     const { toast } = useToast();
 
     useSetPageMetadata({
@@ -23,13 +23,15 @@ function ScheduleWorkspaceContent() {
         showBreadcrumbs: true,
         breadcrumbs: [{ label: 'Schedules', href: '/mot/schedules' }, { label: 'Workspace' }],
         padding: 0,
-    });
+    }, true);
     const { schedules } = data;
     const searchParams = useSearchParams();
 
     // Load route from query param on mount
     useEffect(() => {
         const routeIdParam = searchParams.get('routeId');
+        const scheduleIdParam = searchParams.get('scheduleId');
+        
         if (routeIdParam && !isLoading && data.availableRoutes.length > 0 && !data.selectedRouteId) {
             // Check if route exists in available routes
             const routeExists = data.availableRoutes.some(route => route.id === routeIdParam);
@@ -38,6 +40,19 @@ function ScheduleWorkspaceContent() {
             }
         }
     }, [searchParams, setSelectedRoute, isLoading, data.availableRoutes, data.selectedRouteId]);
+
+    // Highlight and select specific schedule if scheduleId param is provided
+    useEffect(() => {
+        const scheduleIdParam = searchParams.get('scheduleId');
+        if (scheduleIdParam && data.schedules.length > 0) {
+            const scheduleIndex = data.schedules.findIndex(s => s.id === scheduleIdParam);
+            if (scheduleIndex !== -1) {
+                // Set both active and highlighted
+                setActiveScheduleIndex(scheduleIndex);
+                setHighlightedScheduleIndex(scheduleIndex);
+            }
+        }
+    }, [searchParams, data.schedules, setActiveScheduleIndex, setHighlightedScheduleIndex]);
 
     const handleSubmit = async () => {
         const validation = validateAllSchedules();
@@ -93,7 +108,7 @@ function ScheduleWorkspaceContent() {
     return (
             <div className="min-h-screen bg-slate-50">
                 {/* Tab Bar */}
-                <div className="flex bg-white border-b border-slate-200 px-4 py-2 sticky top-20 z-10 justify-between items-center shadow-sm">
+                <div className="flex bg-white border-b border-slate-200 px-4 py-2 z-10 justify-between items-center shadow-sm">
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('form')}

@@ -1,0 +1,25 @@
+{
+  "name": "@busmate/e2e-management-portal",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "dotenv": "^16.4.7",
+    "axios": "^1.10.0"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "report": "playwright show-report",
+
+    "test:docker": "E2E_DOCKER=true playwright test",
+
+    "env:start": "bash scripts/e2e-env.sh start",
+    "env:stop": "bash scripts/e2e-env.sh stop",
+    "env:status": "bash scripts/e2e-env.sh status",
+    "env:logs": "bash scripts/e2e-env.sh logs"
+  }
+}

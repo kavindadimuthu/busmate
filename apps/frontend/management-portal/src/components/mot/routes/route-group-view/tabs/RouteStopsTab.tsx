@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { MapPin, Eye, ChevronRight, Navigation, ExternalLink } from 'lucide-react';
-import type { RouteResponse } from '../../../../../../generated/api-clients/route-management';
+import type { RouteResponse } from '@busmate/api-client-route';
 
 // ── Types ─────────────────────────────────────────────────────────
 

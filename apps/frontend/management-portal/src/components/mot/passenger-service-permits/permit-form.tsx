@@ -18,7 +18,7 @@ import type {
   PassengerServicePermitResponse, 
   OperatorResponse,
   RouteGroupResponse
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 interface PermitFormProps {
   permit?: PassengerServicePermitResponse;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
-import { StopTypeEnum, StopExistenceType, createEmptyRouteStop } from '@/types/RouteWorkspaceData';
+import { StopTypeEnum, StopExistenceType, createEmptyRouteStop, RouteStop } from '@/types/RouteWorkspaceData';
 import { GripVertical, LocationEditIcon, Trash, EllipsisVertical, Loader2, Search, Copy, CopyIcon } from 'lucide-react';
 import {
     DndContext,
@@ -22,7 +22,7 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { fetchRouteDirections, applyDistancesToRouteStops, extractValidStops, fetchAllStopCoordinates, fetchMissingStopCoordinates, applyCoordinatesToRouteStops, extractStopsForCoordinateFetch } from '@/services/routeWorkspaceMap';
 import {
     searchStopExistence,
@@ -36,6 +36,249 @@ import { useToast } from '@/hooks/use-toast';
 interface RouteStopsListProps {
     routeIndex: number;
 }
+
+// ─── Helpers extracted outside component to avoid recreation on every render ───
+
+const getOrderBadgeColor = (stopIndex: number, stopsCount: number): string => {
+    if (stopIndex === 0) return 'bg-green-500';
+    if (stopIndex === stopsCount - 1) return 'bg-red-500';
+    return 'bg-blue-500';
+};
+
+// ─── SortableStopRow ── extracted & memoized ──────────────────────────────────
+// Defining this OUTSIDE RouteStopsList ensures that React sees the same component
+// type across renders, preventing unnecessary unmount/remount of every row when
+// the parent re-renders (e.g., on a single keystroke in a stop name field).
+
+interface SortableStopRowProps {
+    routeStop: RouteStop;
+    actualIndex: number;
+    /** Total number of stops in this route (used to identify first/last rows). */
+    stopsCount: number;
+    isSelected: boolean;
+    isInCoordinateEditingMode: boolean;
+    isSearchingThis: boolean;
+    isSearchingAllStops: boolean;
+    onSelect: (index: number) => void;
+    onCopyRouteStopId: (id: string | undefined, e: React.MouseEvent) => void;
+    onCopyStopId: (id: string | undefined, e: React.MouseEvent) => void;
+    onSearch: (index: number) => void;
+    onFieldChange: (index: number, field: string, value: any) => void;
+    onToggleCoordinateEditing: (index: number, e: React.MouseEvent) => void;
+    onDelete: (index: number) => void;
+}
+
+const SortableStopRow = memo(function SortableStopRow({
+    routeStop,
+    actualIndex,
+    stopsCount,
+    isSelected,
+    isInCoordinateEditingMode,
+    isSearchingThis,
+    isSearchingAllStops,
+    onSelect,
+    onCopyRouteStopId,
+    onCopyStopId,
+    onSearch,
+    onFieldChange,
+    onToggleCoordinateEditing,
+    onDelete,
+}: SortableStopRowProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: `stop-${routeStop.orderNumber}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <tr
+            ref={setNodeRef}
+            style={style}
+            onClick={() => onSelect(actualIndex)}
+            className={`cursor-pointer transition-colors text-sm ${isSelected
+                ? 'bg-blue-50 hover:bg-blue-100'
+                : 'hover:bg-slate-50'
+                } ${isDragging ? 'relative z-50' : ''}`}
+        >
+            <td className="border-b border-slate-100 w-8">
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-slate-100 rounded transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Drag to reorder stop: ${routeStop.stop.name || `stop ${routeStop.orderNumber}`}`}
+                    aria-roledescription="sortable"
+                    title="Drag to reorder"
+                >
+                    <GripVertical className="text-slate-400" size={16} />
+                </button>
+            </td>
+            <td className={`border-b border-slate-100 px-2 py-2 ${getOrderBadgeColor(actualIndex, stopsCount)} text-white text-center font-bold text-xs`}>
+                {routeStop.orderNumber}
+            </td>
+            <td className="border-b border-slate-100 px-3 py-2">
+                <div className='flex items-center gap-2'>
+                    <span className='font-mono text-xs text-slate-600'>
+                        {routeStop.id ? routeStop.id.substring(0, 8) + '...' : '(new)'}
+                    </span>
+                    <button
+                        onClick={(e) => onCopyRouteStopId(routeStop.id, e)}
+                        disabled={!routeStop.id}
+                        className="p-1 border border-slate-300 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                        title='Copy full Route Stop ID'
+                        aria-label='Copy Route Stop ID to clipboard'
+                    >
+                        <Copy size={12} />
+                    </button>
+                </div>
+            </td>
+            <td className="border-b border-slate-100 px-3 py-2">
+                <div className='flex items-center gap-2'>
+                    <div className='flex flex-col gap-1 grow'>
+                        <div className='flex items-center gap-1'>
+                            <span className='font-mono text-xs text-slate-600'>
+                                {routeStop.stop.id ? routeStop.stop.id.substring(0, 8) + '...' : ''}
+                            </span>
+                            {!routeStop.stop.id && (
+                                <span className="inline-block px-1.5 py-0.5 rounded-full text-white text-xs font-medium bg-amber-500">
+                                    New
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className='flex gap-1'>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onSearch(actualIndex);
+                            }}
+                            disabled={isSearchingThis || isSearchingAllStops}
+                            className="p-1 border border-blue-400 text-blue-500 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                            title="Search for existing stop"
+                            aria-label={`Search database for stop: ${routeStop.stop.name || 'unnamed'}`}
+                        >
+                            {isSearchingThis ? (
+                                <Loader2 className="animate-spin" size={12} />
+                            ) : (
+                                <Search size={12} />
+                            )}
+                        </button>
+                        <button
+                            onClick={(e) => onCopyStopId(routeStop.stop.id, e)}
+                            disabled={!routeStop.stop.id}
+                            className="p-1 border border-slate-300 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                            title='Copy full Stop ID'
+                            aria-label='Copy Stop ID to clipboard'
+                        >
+                            <Copy size={12} />
+                        </button>
+                    </div>
+                </div>
+            </td>
+            <td className="border-b border-slate-100">
+                <input
+                    type="text"
+                    defaultValue={routeStop.stop.name || ''}
+                    onClick={(e) => e.stopPropagation()}
+                    onBlur={(e) => onFieldChange(actualIndex, 'stopName', e.target.value)}
+                    className="w-full px-3 py-1.5 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-sm"
+                    aria-label={`Stop name for position ${actualIndex}`}
+                />
+            </td>
+            <td className="border-b border-slate-100">
+                <div className="flex items-center gap-1">
+                    <input
+                        type="number"
+                        step="0.1"
+                        defaultValue={routeStop.distanceFromStart ?? ''}
+                        placeholder="Auto"
+                        onClick={(e) => e.stopPropagation()}
+                        onBlur={(e) => {
+                            const value = e.target.value.trim();
+                            if (value === '') {
+                                onFieldChange(actualIndex, 'distanceFromStart', null);
+                            } else {
+                                const numValue = parseFloat(value);
+                                onFieldChange(actualIndex, 'distanceFromStart', isNaN(numValue) ? null : numValue);
+                            }
+                        }}
+                        className="w-full px-3 py-1.5 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-sm"
+                        aria-label={`Distance from start for stop at position ${actualIndex} (km)`}
+                    />
+                    {routeStop.distanceFromStart !== null && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onFieldChange(actualIndex, 'distanceFromStart', null);
+                                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                if (input) input.value = '';
+                            }}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Clear distance (use calculated value)"
+                            aria-label="Clear distance override"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
+            </td>
+            <td className="border-b border-slate-100 w-8">
+                <button
+                    onClick={(e) => onToggleCoordinateEditing(actualIndex, e)}
+                    className={`p-1.5 rounded transition-colors ${isInCoordinateEditingMode
+                        ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                        }`}
+                    title={isInCoordinateEditingMode ? "Deactivate coordinates editing mode" : "Activate coordinates editing mode on map"}
+                    aria-label={isInCoordinateEditingMode ? "Deactivate coordinate editing on map" : "Activate coordinate editing on map"}
+                    aria-pressed={isInCoordinateEditingMode}
+                >
+                    <LocationEditIcon size={14} />
+                </button>
+            </td>
+            <td className="border-b border-slate-100 w-8">
+                {actualIndex !== 0 && actualIndex !== stopsCount - 1 && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(actualIndex);
+                        }}
+                        className="text-rose-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded transition-colors"
+                        title="Delete stop"
+                        aria-label={`Delete stop: ${routeStop.stop.name || `stop ${routeStop.orderNumber}`}`}
+                    >
+                        <Trash size={14} />
+                    </button>
+                )}
+            </td>
+        </tr>
+    );
+}, (prevProps, nextProps) => {
+    // Custom equality: only re-render if data that affects this row's output changes.
+    // Stable useCallback handlers (passed from parent) are intentionally excluded here.
+    return (
+        prevProps.routeStop === nextProps.routeStop &&
+        prevProps.actualIndex === nextProps.actualIndex &&
+        prevProps.stopsCount === nextProps.stopsCount &&
+        prevProps.isSelected === nextProps.isSelected &&
+        prevProps.isInCoordinateEditingMode === nextProps.isInCoordinateEditingMode &&
+        prevProps.isSearchingThis === nextProps.isSearchingThis &&
+        prevProps.isSearchingAllStops === nextProps.isSearchingAllStops
+    );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const { data, updateRoute, updateRouteStop, addRouteStop, removeRouteStop, reorderRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex, coordinateEditingMode, setCoordinateEditingMode, clearCoordinateEditingMode, mapActions } = useRouteWorkspace();
@@ -63,7 +306,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         })
     );
 
-    const handleCopyRouteStopId = (routeStopId: string | undefined, e: React.MouseEvent) => {
+    const handleCopyRouteStopId = useCallback((routeStopId: string | undefined, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!routeStopId) {
             toast({
@@ -85,9 +328,9 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                 variant: "destructive"
             });
         });
-    };
+    }, [toast]);
 
-    const handleCopyStopId = (stopId: string | undefined, e: React.MouseEvent) => {
+    const handleCopyStopId = useCallback((stopId: string | undefined, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!stopId) {
             toast({
@@ -109,7 +352,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                 variant: "destructive"
             });
         });
-    };
+    }, [toast]);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -139,19 +382,27 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
 
     const stops = route.routeStops || [];
 
-    const handleFetchDistancesFromMap = async () => {
+    const handleFetchDistancesFromMap = useCallback(async () => {
         // Check if we have enough stops with coordinates
         const validStops = extractValidStops(stops);
 
         if (validStops.length < 2) {
-            alert('At least 2 stops with valid coordinates are required to calculate distances.');
+            toast({
+                title: 'Validation Error',
+                description: 'At least 2 stops with valid coordinates are required to calculate distances.',
+                variant: 'destructive',
+            });
             return;
         }
 
         // Check if start stop (first stop in list) has coordinates
         const firstStopHasCoordinates = stops[0]?.stop?.location?.latitude && stops[0]?.stop?.location?.longitude;
         if (!firstStopHasCoordinates) {
-            alert('Start stop coordinates are required to fetch distances.');
+            toast({
+                title: 'Validation Error',
+                description: 'Start stop coordinates are required to fetch distances.',
+                variant: 'destructive',
+            });
             return;
         }
 
@@ -170,20 +421,31 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
             // Update the route with new distances
             updateRoute(routeIndex, { routeStops: updatedStops });
 
-            alert(`Distances fetched successfully! Total distance: ${result.totalDistanceKm} km`);
+            toast({
+                title: 'Success',
+                description: `Distances fetched successfully! Total distance: ${result.totalDistanceKm} km`,
+            });
         } catch (error) {
             console.error('Error fetching distances:', error);
-            alert(`Failed to fetch distances. Please try again. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast({
+                title: 'Error',
+                description: `Failed to fetch distances: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: 'destructive',
+            });
         } finally {
             setIsFetchingDistances(false);
         }
-    };
+    }, [stops, routeIndex, updateRoute, toast]);
 
-    const handleFetchAllCoordinates = async () => {
+    const handleFetchAllCoordinates = useCallback(async () => {
         // Check if we have at least 2 stops with names
         const stopsWithNames = stops.filter(s => s.stop?.name?.trim());
         if (stopsWithNames.length < 2) {
-            alert('At least 2 stops with names are required to fetch coordinates.');
+            toast({
+                title: 'Validation Error',
+                description: 'At least 2 stops with names are required to fetch coordinates.',
+                variant: 'destructive',
+            });
             return;
         }
 
@@ -202,32 +464,50 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
 
             if (result.failedStops.length > 0) {
                 const failedNames = result.failedStops.map(s => s.name).join(', ');
-                alert(`Coordinates fetched for ${result.successCount} stops.\nFailed to get coordinates for: ${failedNames}`);
+                toast({
+                    title: 'Partial Success',
+                    description: `Coordinates fetched for ${result.successCount} stops. Failed: ${failedNames}`,
+                    variant: 'destructive',
+                });
             } else {
-                alert(`Successfully fetched coordinates for all ${result.successCount} stops!`);
+                toast({
+                    title: 'Success',
+                    description: `Successfully fetched coordinates for all ${result.successCount} stops!`,
+                });
             }
         } catch (error) {
             console.error('Error fetching coordinates:', error);
-            alert(`Failed to fetch coordinates. ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast({
+                title: 'Error',
+                description: `Failed to fetch coordinates. ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: 'destructive',
+            });
         } finally {
             setIsFetchingAllCoordinates(false);
             setCoordinateFetchProgress('');
         }
-    };
+    }, [stops, routeIndex, updateRoute, toast]);
 
-    const handleFetchMissingCoordinates = async () => {
+    const handleFetchMissingCoordinates = useCallback(async () => {
         // Check stops info
         const stopsInfo = extractStopsForCoordinateFetch(stops);
         const stopsWithCoordinates = stopsInfo.filter(s => s.hasCoordinates);
         const stopsWithoutCoordinates = stopsInfo.filter(s => !s.hasCoordinates && s.name.trim() !== '');
 
         if (stopsWithoutCoordinates.length === 0) {
-            alert('All stops already have coordinates.');
+            toast({
+                title: 'Nothing to do',
+                description: 'All stops already have coordinates.',
+            });
             return;
         }
 
         if (stopsWithCoordinates.length === 0) {
-            alert('At least one stop with coordinates is required. Use "Fetch All Coordinates" instead.');
+            toast({
+                title: 'Validation Error',
+                description: 'At least one stop with coordinates is required. Use "Fetch All Coordinates" instead.',
+                variant: 'destructive',
+            });
             return;
         }
 
@@ -246,18 +526,29 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
 
             if (result.failedStops.length > 0) {
                 const failedNames = result.failedStops.map(s => s.name).join(', ');
-                alert(`Coordinates fetched for ${result.successCount} of ${result.totalProcessed} missing stops.\nFailed: ${failedNames}`);
+                toast({
+                    title: 'Partial Success',
+                    description: `Fetched ${result.successCount} of ${result.totalProcessed} missing stops. Failed: ${failedNames}`,
+                    variant: 'destructive',
+                });
             } else {
-                alert(`Successfully fetched coordinates for all ${result.successCount} missing stops!`);
+                toast({
+                    title: 'Success',
+                    description: `Successfully fetched coordinates for all ${result.successCount} missing stops!`,
+                });
             }
         } catch (error) {
             console.error('Error fetching missing coordinates:', error);
-            alert(`Failed to fetch coordinates. ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast({
+                title: 'Error',
+                description: `Failed to fetch coordinates. ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: 'destructive',
+            });
         } finally {
             setIsFetchingMissingCoordinates(false);
             setCoordinateFetchProgress('');
         }
-    };
+    }, [stops, routeIndex, updateRoute, toast]);
 
     // Handler for searching a single stop's existence
     const handleSearchSingleStopExistence = async (stopIndex: number) => {
@@ -381,7 +672,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         }
     };
 
-    const handleFieldChange = (stopIndex: number, field: string, value: any) => {
+    const handleFieldChange = useCallback((stopIndex: number, field: string, value: any) => {
         const currentStop = stops[stopIndex];
         if (field === 'stopName') {
             updateRouteStop(routeIndex, stopIndex, {
@@ -407,7 +698,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                 }
             });
         }
-    };
+    }, [stops, routeIndex, updateRouteStop]);
 
     const handleAddIntermediateStop = () => {
         const insertIndex = stops.length - 1;
@@ -426,7 +717,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         updateRoute(routeIndex, { routeStops: newStops });
     };
 
-    const handleDeleteStop = (stopIndex: number) => {
+    const handleDeleteStop = useCallback((stopIndex: number) => {
         // Remove the stop
         const newStops = stops.filter((_, idx) => idx !== stopIndex);
 
@@ -436,21 +727,14 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         });
 
         updateRoute(routeIndex, { routeStops: newStops });
-    };
+    }, [stops, routeIndex, updateRoute]);
 
-    const getOrderBadgeColor = (stopIndex: number) => {
-        if (stopIndex === 0) return 'bg-green-500'; // Start
-        if (stopIndex === stops.length - 1) return 'bg-red-500'; // End
-        return 'bg-blue-500'; // Intermediate
-    };
+    /** Stable callback passed to memoized SortableStopRow rows. */
+    const handleSelectStop = useCallback((index: number) => {
+        setSelectedStop(routeIndex, index);
+    }, [routeIndex, setSelectedStop]);
 
-    const getStopTypeLabel = (stopIndex: number) => {
-        if (stopIndex === 0) return 'S'; // Start
-        if (stopIndex === stops.length - 1) return 'E'; // End
-        return 'I'; // Intermediate
-    };
-
-    const handleToggleCoordinateEditingMode = (stopIndex: number, e: React.MouseEvent) => {
+    const handleToggleCoordinateEditingMode = useCallback((stopIndex: number, e: React.MouseEvent) => {
         e.stopPropagation();
 
         // If this stop is already in editing mode, deactivate it
@@ -460,7 +744,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
             // Activate editing mode for this stop
             setCoordinateEditingMode(routeIndex, stopIndex);
         }
-    };
+    }, [coordinateEditingMode, routeIndex, clearCoordinateEditingMode, setCoordinateEditingMode]);
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
@@ -488,187 +772,8 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const startEndStops = stops.filter((_, idx) => idx === 0 || idx === stops.length - 1);
     const intermediateStops = stops.filter((_, idx) => idx !== 0 && idx !== stops.length - 1);
 
-    // Sortable Row Component
-    interface SortableStopRowProps {
-        routeStop: typeof stops[0];
-        actualIndex: number;
-        isSelected: boolean;
-        isInCoordinateEditingMode: boolean;
-        isSearchingThis: boolean;
-    }
-
-    const SortableStopRow = ({ routeStop, actualIndex, isSelected, isInCoordinateEditingMode, isSearchingThis }: SortableStopRowProps) => {
-        const {
-            attributes,
-            listeners,
-            setNodeRef,
-            transform,
-            transition,
-            isDragging,
-        } = useSortable({ id: `stop-${routeStop.orderNumber}` });
-
-        const style = {
-            transform: CSS.Transform.toString(transform),
-            transition,
-            opacity: isDragging ? 0.5 : 1,
-        };
-
-        return (
-            <tr
-                ref={setNodeRef}
-                style={style}
-                onClick={() => setSelectedStop(routeIndex, actualIndex)}
-                className={`cursor-pointer transition-colors text-sm ${isSelected
-                    ? 'bg-blue-50 hover:bg-blue-100'
-                    : 'hover:bg-slate-50'
-                    } ${isDragging ? 'relative z-50' : ''}`}
-            >
-                <td className="border-b border-slate-100 w-8">
-                    <button
-                        {...attributes}
-                        {...listeners}
-                        className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-slate-100 rounded transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <GripVertical className="text-slate-400" size={16} />
-                    </button>
-                </td>
-                <td className={`border-b border-slate-100 px-2 py-2 ${getOrderBadgeColor(actualIndex)} text-white text-center font-bold text-xs`}>
-                    {routeStop.orderNumber}
-                </td>
-                <td className="border-b border-slate-100 px-3 py-2">
-                    <div className='flex items-center gap-2'>
-                        <span className='font-mono text-xs text-slate-600'>
-                            {routeStop.id ? routeStop.id.substring(0, 8) + '...' : '(new)'}
-                        </span>
-                        <button
-                            onClick={(e) => handleCopyRouteStopId(routeStop.id, e)}
-                            disabled={!routeStop.id}
-                            className="p-1 border border-slate-300 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                            title='Copy full Route Stop ID'
-                        >
-                            <Copy size={12} />
-                        </button>
-                    </div>
-                </td>
-                <td className="border-b border-slate-100 px-3 py-2">
-                    <div className='flex items-center gap-2'>
-                        <div className='flex flex-col gap-1 grow'>
-                            <div className='flex items-center gap-1'>
-                                <span className='font-mono text-xs text-slate-600'>
-                                    {routeStop.stop.id ? routeStop.stop.id.substring(0, 8) + '...' : ''}
-                                </span>
-                                {!routeStop.stop.id && (
-                                    <span className="inline-block px-1.5 py-0.5 rounded-full text-white text-xs font-medium bg-amber-500">
-                                        New
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <div className='flex gap-1'>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSearchSingleStopExistence(actualIndex);
-                                }}
-                                disabled={isSearchingThis || isSearchingAllStops}
-                                className="p-1 border border-blue-400 text-blue-500 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                                title="Search for existing stop"
-                            >
-                                {isSearchingThis ? (
-                                    <Loader2 className="animate-spin" size={12} />
-                                ) : (
-                                    <Search size={12} />
-                                )}
-                            </button>
-                            <button
-                                onClick={(e) => handleCopyStopId(routeStop.stop.id, e)}
-                                disabled={!routeStop.stop.id}
-                                className="p-1 border border-slate-300 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                                title='Copy full Stop ID'
-                            >
-                                <Copy size={12} />
-                            </button>
-                        </div>
-                    </div>
-                </td>
-                <td className="border-b border-slate-100">
-                    <input
-                        type="text"
-                        defaultValue={routeStop.stop.name || ''}
-                        onClick={(e) => e.stopPropagation()}
-                        onBlur={(e) => handleFieldChange(actualIndex, 'stopName', e.target.value)}
-                        className="w-full px-3 py-1.5 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-sm"
-                    />
-                </td>
-                <td className="border-b border-slate-100">
-                    <div className="flex items-center gap-1">
-                        <input
-                            type="number"
-                            step="0.1"
-                            defaultValue={routeStop.distanceFromStart ?? ''}
-                            placeholder="Auto"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => {
-                                const value = e.target.value.trim();
-                                if (value === '') {
-                                    handleFieldChange(actualIndex, 'distanceFromStart', null);
-                                } else {
-                                    const numValue = parseFloat(value);
-                                    handleFieldChange(actualIndex, 'distanceFromStart', isNaN(numValue) ? null : numValue);
-                                }
-                            }}
-                            className="w-full px-3 py-1.5 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-sm"
-                        />
-                        {routeStop.distanceFromStart !== null && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleFieldChange(actualIndex, 'distanceFromStart', null);
-                                    // Force input to clear by updating the DOM element
-                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                    if (input) input.value = '';
-                                }}
-                                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                title="Clear distance (use calculated value)"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                </td>
-                <td className="border-b border-slate-100 w-8">
-                    <button
-                        onClick={(e) => handleToggleCoordinateEditingMode(actualIndex, e)}
-                        className={`p-1.5 rounded transition-colors ${isInCoordinateEditingMode
-                            ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                            }`}
-                        title={isInCoordinateEditingMode ? "Deactivate coordinates editing mode" : "Activate coordinates editing mode on map"}
-                    >
-                        <LocationEditIcon size={14} />
-                    </button>
-                </td>
-                <td className="border-b border-slate-100 w-8">
-                    {actualIndex !== 0 && actualIndex !== stops.length - 1 && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStop(actualIndex);
-                            }}
-                            className="text-rose-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded transition-colors"
-                            title="Delete stop"
-                        >
-                            <Trash size={14} />
-                        </button>
-                    )}
-                </td>
-            </tr>
-        );
-    };
-
+    // StopTable renders a sortable table of stops, delegating row rendering
+    // to the externally-defined (memoized) SortableStopRow component.
     const StopTable = ({ stops: tableStops, title }: { stops: typeof stops, title: string }) => {
         const sortableIds = tableStops.map(stop => `stop-${stop.orderNumber}`);
 
@@ -703,9 +808,18 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                             key={routeStop.orderNumber}
                                             routeStop={routeStop}
                                             actualIndex={actualIndex}
+                                            stopsCount={stops.length}
                                             isSelected={isSelected}
                                             isInCoordinateEditingMode={isInCoordinateEditingMode}
                                             isSearchingThis={isSearchingThis}
+                                            isSearchingAllStops={isSearchingAllStops}
+                                            onSelect={handleSelectStop}
+                                            onCopyRouteStopId={handleCopyRouteStopId}
+                                            onCopyStopId={handleCopyStopId}
+                                            onSearch={handleSearchSingleStopExistence}
+                                            onFieldChange={handleFieldChange}
+                                            onToggleCoordinateEditing={handleToggleCoordinateEditingMode}
+                                            onDelete={handleDeleteStop}
                                         />
                                     );
                                 })}

@@ -12,7 +12,7 @@ import { DataPagination } from '@/components/shared/DataPagination';
 import { 
   PermitManagementService,
   PassengerServicePermitResponse 
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 import { DeletePermitModal } from '@/components/mot/passenger-service-permits/DeletePermitModal';
 
 interface PermitFilters {

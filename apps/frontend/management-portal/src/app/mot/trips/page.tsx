@@ -8,7 +8,7 @@ import {
   PageTripResponse,
   TripStatisticsResponse,
   TripFilterOptionsResponse,
-} from '../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 // Import our custom components
 import { TripStatsCards } from '@/components/mot/trips/TripStatsCards';

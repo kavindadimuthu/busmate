@@ -41,6 +41,9 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
   const [lastFetchedDistances, setLastFetchedDistances] = useState<Map<number, number> | null>(null);
   const [currentZoom, setCurrentZoom] = useState<number>(9);
   const mapRef = useRef<google.maps.Map | null>(null);
+  // Stores the Google Maps event listener for 'zoom_changed' so it can be
+  // explicitly removed on unmount, preventing memory leaks.
+  const zoomListenerRef = useRef<google.maps.MapsEventListener | null>(null);
 
   // Load Google Maps script
   const { isLoaded, loadError } = useGoogleMaps();
@@ -176,8 +179,16 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
   const handleMapLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
 
-    // Track zoom changes
-    map.addListener('zoom_changed', () => {
+    // Remove any previously registered zoom listener before adding a new one.
+    // This guards against handleMapLoad being called multiple times (e.g., if the
+    // GoogleMap component re-mounts), which would leak stale listeners.
+    if (zoomListenerRef.current) {
+      google.maps.event.removeListener(zoomListenerRef.current);
+      zoomListenerRef.current = null;
+    }
+
+    // Track zoom level changes and store the listener ref for cleanup.
+    zoomListenerRef.current = map.addListener('zoom_changed', () => {
       const zoom = map.getZoom();
       if (zoom !== undefined) {
         setCurrentZoom(zoom);
@@ -186,6 +197,18 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
 
     fetchDirections();
   }, [fetchDirections]);
+
+  // Cleanup the zoom listener when the map component unmounts.
+  // Without this, the Google Maps event listener persists in memory even after
+  // the React component tree is destroyed.
+  useEffect(() => {
+    return () => {
+      if (zoomListenerRef.current) {
+        google.maps.event.removeListener(zoomListenerRef.current);
+        zoomListenerRef.current = null;
+      }
+    };
+  }, []);
 
   // Focus on the stop when coordinate editing mode is activated
   useEffect(() => {

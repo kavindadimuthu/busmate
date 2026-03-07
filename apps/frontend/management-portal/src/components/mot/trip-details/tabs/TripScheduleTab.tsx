@@ -11,8 +11,7 @@ import {
   XCircle,
   AlertTriangle
 } from 'lucide-react';
-import type { TripResponse } from '../../../../../generated/api-clients/route-management/models/TripResponse';
-import type { ScheduleResponse } from '../../../../../generated/api-clients/route-management/models/ScheduleResponse';
+import type { TripResponse, ScheduleResponse } from '@busmate/api-client-route';
 
 interface TripScheduleTabProps {
   trip: TripResponse;

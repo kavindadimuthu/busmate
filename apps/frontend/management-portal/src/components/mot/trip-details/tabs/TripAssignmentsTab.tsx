@@ -14,8 +14,7 @@ import {
   Mail,
   MapPin
 } from 'lucide-react';
-import type { TripResponse } from '../../../../../generated/api-clients/route-management/models/TripResponse';
-import type { PassengerServicePermitResponse } from '../../../../../generated/api-clients/route-management/models/PassengerServicePermitResponse';
+import type { TripResponse, PassengerServicePermitResponse } from '@busmate/api-client-route';
 
 interface TripAssignmentsTabProps {
   trip: TripResponse;

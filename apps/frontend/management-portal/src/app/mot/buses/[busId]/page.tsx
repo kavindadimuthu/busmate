@@ -14,7 +14,7 @@ import {
   OperatorResponse,
   TripManagementService,
   TripResponse
-} from '../../../../../generated/api-clients/route-management';
+} from '@busmate/api-client-route';
 
 export default function BusDetailsPage() {
   const router = useRouter();

@@ -4,9 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AlertCircle, Trash2 } from 'lucide-react';
-import { ScheduleResponse } from '../../../../generated/api-clients/route-management/models/ScheduleResponse';
-import { ScheduleManagementService } from '../../../../generated/api-clients/route-management/services/ScheduleManagementService';
-import { RouteManagementService } from '../../../../generated/api-clients/route-management/services/RouteManagementService';
+import { ScheduleResponse, ScheduleManagementService, RouteManagementService } from '@busmate/api-client-route';
 import { ScheduleAdvancedFilters } from '@/components/mot/schedules/ScheduleAdvancedFilters';
 import { ScheduleActionButtons } from '@/components/mot/schedules/ScheduleActionButtons';
 import { ScheduleStatsCards } from '@/components/mot/schedules/ScheduleStatsCards';
@@ -242,7 +240,7 @@ export default function SchedulesPage() {
     }));
   }, []);
 
-  const handleAddNewSchedule  = () => router.push('/mot/schedules/add-new');
+  const handleAddNewSchedule  = () => router.push('/mot/schedules/workspace');
   const handleImportSchedules = () => router.push('/mot/schedules/import');
 
   const handleExportAll = async () => {
@@ -272,7 +270,12 @@ export default function SchedulesPage() {
   };
 
   const handleView        = (id: string) => router.push(`/mot/schedules/${id}`);
-  const handleEdit        = (id: string) => router.push(`/mot/schedules/${id}/edit`);
+  const handleEdit        = (id: string) => {
+    const schedule = schedules.find((x) => x.id === id);
+    if (schedule?.routeId) {
+      router.push(`/mot/schedules/workspace?routeId=${schedule.routeId}&scheduleId=${id}`);
+    }
+  };
   const handleAssignBuses = (id: string) => router.push(`/mot/schedules/${id}/assign-buses`);
 
   const handleDelete = (id: string) => {

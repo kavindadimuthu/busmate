@@ -11,8 +11,21 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
+    // Force all packages (including pre-bundled deps like @tanstack/react-query)
+    // to resolve React from this app's own node_modules (React 18).
+    // Without this, pnpm hoisting causes the root React 19 (from management-portal)
+    // to be used instead, producing "Invalid hook call" / multiple-React crashes.
+    dedupe: ["react", "react-dom", "react/jsx-runtime"],
     alias: {
-      "@/generated": path.resolve(__dirname, "./generated"),
+      // Explicit aliases ensure Vite's dep pre-bundler and runtime both use
+      // the same React 18 copy installed in this workspace package's node_modules.
+      "react": path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
+      "@busmate/api-client-route": path.resolve(__dirname, "../../../libs/api-clients/route-management/src/index.ts"),
+      "@busmate/api-client-ticketing": path.resolve(__dirname, "../../../libs/api-clients/ticketing-management/src/index.ts"),
+      "@busmate/api-client-location": path.resolve(__dirname, "../../../libs/api-clients/location-tracking/src/index.ts"),
+      "@busmate/api-client-user": path.resolve(__dirname, "../../../libs/api-clients/user-management/src/index.ts"),
       "@": path.resolve(__dirname, "./src"),
     },
   },

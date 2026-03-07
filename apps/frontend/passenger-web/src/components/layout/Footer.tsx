@@ -2,6 +2,7 @@ import { Bus, Facebook, Twitter, Instagram, Mail, Phone, MapPin } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import busLogo from "@/assets/bus-logo.png";
+import busLogoText from "@/assets/bus-logo-text.png";
 
 const Footer = () => {
   return (
@@ -10,11 +11,13 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Logo & Description */}
           <div className="md:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="p-2 rounded-lg bg-gradient-primary">
-                <img src={busLogo} alt="BusMate" className="h-8 w-8 object-contain filter brightness-0 invert" />
+            <div className="flex items-center space-x-0 mb-0">
+              <div className="py-1 rounded-lg bg-gradient-primary">
+                <img src={busLogo} alt="BusMate" className="h-10 w-auto object-cover filter brightness-0 invert" />
               </div>
-              <span className="text-2xl font-bold">BusMate</span>
+              <span className="text-2xl font-bold">
+                <img src={busLogoText} alt="BusMate" className="h-24 w-auto" />
+              </span>
             </div>
             <p className="text-slate-300 mb-4">
               Your trusted companion for Sri Lanka's public transportation. Real-time updates, smart route planning, and reliable journey information.
