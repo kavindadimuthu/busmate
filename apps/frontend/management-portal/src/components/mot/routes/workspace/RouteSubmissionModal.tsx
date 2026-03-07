@@ -133,17 +133,25 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       const existingStops: Stop[] = [];
       const validationDetails: string[] = [];
       const validatedRoutes: Route[] = [];
-      // Track unique stops by name to avoid duplicates across routes
-      const seenNewStopNames = new Set<string>();
+      const skippedRouteLabels: string[] = [];
+      // Track unique stops by coordinates to avoid duplicates across routes.
+      // Coordinate-based deduplication is more precise than name-based: two stops
+      // can share the same name but be at different locations (and vice versa).
+      const seenNewStopCoords = new Set<string>();
 
       for (let routeIndex = 0; routeIndex < data.routeGroup.routes.length; routeIndex++) {
         const route = data.routeGroup.routes[routeIndex];
         const routeStops = route.routeStops;
 
-        if (routeStops.length === 0) {
-          validationDetails.push(`Route "${route.name}" has no stops`);
-          // Keep the route as-is even if it has no stops
-          validatedRoutes.push(route);
+        // Skip routes that have no stops with valid names — these are empty placeholder
+        // routes (e.g. a default blank route that was never filled in). Including them
+        // would cause existence-check errors for nameless stops and ultimately block
+        // the entire submission.
+        const hasAnyNamedStop = routeStops.some(rs => rs.stop.name?.trim());
+        if (routeStops.length === 0 || !hasAnyNamedStop) {
+          const routeLabel = route.name?.trim() || '(unnamed)';
+          skippedRouteLabels.push(routeLabel);
+          validationDetails.push(`Route "${routeLabel}" skipped — no valid stops`);
           continue;
         }
 
@@ -188,10 +196,14 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
               rs => rs.orderNumber === result.orderNumber
             )?.stop;
             if (stopToCreate && stopToCreate.name) {
-              // Deduplicate: only add if we haven't seen this stop name before
-              // This prevents duplicate creation when the same stop appears in multiple routes
-              if (!seenNewStopNames.has(stopToCreate.name)) {
-                seenNewStopNames.add(stopToCreate.name);
+              // Deduplicate by coordinates (more precise than name: two stops can share
+              // the same name but sit at different locations).
+              const coordKey = (stopToCreate.location &&
+                (stopToCreate.location.latitude !== 0 || stopToCreate.location.longitude !== 0))
+                ? `${stopToCreate.location.latitude.toFixed(7)},${stopToCreate.location.longitude.toFixed(7)}`
+                : `name:${stopToCreate.name}`;
+              if (!seenNewStopCoords.has(coordKey)) {
+                seenNewStopCoords.add(coordKey);
                 stopsToCreate.push({ ...stopToCreate });
               }
             }
@@ -212,12 +224,15 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         stopsToCreate,
         steps: {
           ...prev.steps,
-          validation: { 
-            status: 'completed', 
+          validation: {
+            status: 'completed',
             message: `Validation complete`,
             details: [
               `Found ${existingStops.length} existing stops`,
               `${stopsToCreate.length} new stops need to be created`,
+              ...(skippedRouteLabels.length > 0
+                ? [`${skippedRouteLabels.length} empty route(s) skipped: ${skippedRouteLabels.join(', ')}`]
+                : []),
               ...validationDetails
             ]
           }
@@ -502,24 +517,41 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       // Use the route group info from context, but use validatedRoutes for the routes themselves
       const routeGroup = data.routeGroup;
       
-      // Create a map of original stop names to their created IDs
-      // This is used to look up IDs for newly created stops since React state updates are async
-      const createdStopIdMap = new Map<string, string>();
+      // Build coordinate-keyed lookup (primary) and name-keyed lookup (fallback).
+      // Using coordinates as the primary key handles:
+      //   - Same-named stops at different locations (different stops, same name)
+      //   - Reverse routes that share stops with the forward route by location
+      const createdStopByCoord = new Map<string, string>(); // "lat,lng" → created id
+      const createdStopByName = new Map<string, string>();   // name → created id (fallback)
       createdStopsMapping.forEach(({ original, created }) => {
-        if (original.name && created.id) {
-          createdStopIdMap.set(original.name, created.id);
+        if (!created.id) return;
+        if (original.location &&
+            (original.location.latitude !== 0 || original.location.longitude !== 0)) {
+          const coordKey = `${original.location.latitude.toFixed(7)},${original.location.longitude.toFixed(7)}`;
+          createdStopByCoord.set(coordKey, created.id);
+        }
+        if (original.name) {
+          createdStopByName.set(original.name, created.id);
         }
       });
 
-      console.log('Created stops ID mapping:', Object.fromEntries(createdStopIdMap));
+      console.log('Created stops coord mapping:', Object.fromEntries(createdStopByCoord));
 
-      // Helper function to get stop ID - checks created mapping first, then existing ID
+      // Helper: resolve the correct stop ID from created-stop mappings or pre-existing ID.
       const getStopId = (stop: Stop): string => {
-        // First check if this stop was just created (use the mapping)
-        if (stop.name && createdStopIdMap.has(stop.name)) {
-          return createdStopIdMap.get(stop.name)!;
+        // 1. Coordinate lookup — most precise, handles duplicate names
+        if (stop.location &&
+            (stop.location.latitude !== 0 || stop.location.longitude !== 0)) {
+          const coordKey = `${stop.location.latitude.toFixed(7)},${stop.location.longitude.toFixed(7)}`;
+          if (createdStopByCoord.has(coordKey)) {
+            return createdStopByCoord.get(coordKey)!;
+          }
         }
-        // Otherwise use the existing ID (from validation)
+        // 2. Name lookup — fallback when coordinates aren't exact matches
+        if (stop.name && createdStopByName.has(stop.name)) {
+          return createdStopByName.get(stop.name)!;
+        }
+        // 3. Use the stop's own ID (set during validation for existing stops)
         return stop.id || '';
       };
       
@@ -769,58 +801,93 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   };
 
   // Render confirmation view
-  const renderConfirmation = () => (
-    <>
-      <DialogHeader>
-        <DialogTitle>{mode === 'edit' ? 'Update Route Group' : 'Submit Route Group'}</DialogTitle>
-        <DialogDescription>
-          {mode === 'edit' 
-            ? 'Are you sure you want to update this route group?' 
-            : 'Are you sure you want to submit this route group?'}
-        </DialogDescription>
-      </DialogHeader>
-      
-      <div className="py-4">
-        <div className={`p-4 rounded-lg space-y-2 ${mode === 'edit' ? 'bg-yellow-50' : 'bg-gray-50'}`}>
-          <p className="font-medium text-gray-900">{data.routeGroup.name || 'Unnamed Route Group'}</p>
-          {mode === 'edit' && routeGroupId && (
-            <p className="text-xs text-gray-500">ID: {routeGroupId}</p>
-          )}
-          <div className="text-sm text-gray-600 space-y-1">
-            <p>Routes: {data.routeGroup.routes.length}</p>
-            <p>Total Stops: {data.routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}</p>
-          </div>
-        </div>
+  const renderConfirmation = () => {
+    // Identify routes that are empty (no stop has a name) — they will be skipped
+    // during submission. Show a warning so the user knows ahead of time.
+    const emptyRoutes = data.routeGroup.routes.filter(
+      route => !route.routeStops.some(rs => rs.stop.name?.trim())
+    );
+    const validRoutes = data.routeGroup.routes.filter(
+      route => route.routeStops.some(rs => rs.stop.name?.trim())
+    );
 
-        <div className={`mt-4 p-4 border rounded-lg ${mode === 'edit' ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
-          <div className="flex gap-3">
-            <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${mode === 'edit' ? 'text-yellow-600' : 'text-blue-600'}`} />
-            <div className={`text-sm ${mode === 'edit' ? 'text-yellow-800' : 'text-blue-800'}`}>
-              <p className="font-medium mb-1">{mode === 'edit' ? 'Update Process:' : 'Submission Process:'}</p>
-              <ol className="list-decimal list-inside space-y-1">
-                <li>Validate all stop existence in the system</li>
-                <li>Create any new stops that don't exist</li>
-                <li>{mode === 'edit' ? 'Update the route group' : 'Build and submit the route group'}</li>
-              </ol>
+    return (
+      <>
+        <DialogHeader>
+          <DialogTitle>{mode === 'edit' ? 'Update Route Group' : 'Submit Route Group'}</DialogTitle>
+          <DialogDescription>
+            {mode === 'edit'
+              ? 'Are you sure you want to update this route group?'
+              : 'Are you sure you want to submit this route group?'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-4">
+          <div className={`p-4 rounded-lg space-y-2 ${mode === 'edit' ? 'bg-yellow-50' : 'bg-gray-50'}`}>
+            <p className="font-medium text-gray-900">{data.routeGroup.name || 'Unnamed Route Group'}</p>
+            {mode === 'edit' && routeGroupId && (
+              <p className="text-xs text-gray-500">ID: {routeGroupId}</p>
+            )}
+            <div className="text-sm text-gray-600 space-y-1">
+              <p>Routes: {validRoutes.length}{emptyRoutes.length > 0 ? ` (${emptyRoutes.length} empty, will be skipped)` : ''}</p>
+              <p>Total Stops: {validRoutes.reduce((acc, r) => acc + r.routeStops.length, 0)}</p>
+            </div>
+          </div>
+
+          {emptyRoutes.length > 0 && (
+            <div className="mt-3 p-4 border border-amber-300 bg-amber-50 rounded-lg">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">
+                    {emptyRoutes.length === 1 ? '1 route has no stops and will be skipped:' : `${emptyRoutes.length} routes have no stops and will be skipped:`}
+                  </p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {emptyRoutes.map((r, i) => (
+                      <li key={i} className="text-amber-700">
+                        {r.name?.trim() ? `"${r.name}"` : '(unnamed route)'}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-amber-600 text-xs">
+                    Only routes with at least one stop will be submitted.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={`mt-4 p-4 border rounded-lg ${mode === 'edit' ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
+            <div className="flex gap-3">
+              <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${mode === 'edit' ? 'text-yellow-600' : 'text-blue-600'}`} />
+              <div className={`text-sm ${mode === 'edit' ? 'text-yellow-800' : 'text-blue-800'}`}>
+                <p className="font-medium mb-1">{mode === 'edit' ? 'Update Process:' : 'Submission Process:'}</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Validate all stop existence in the system</li>
+                  <li>Create any new stops that don't exist</li>
+                  <li>{mode === 'edit' ? 'Update the route group' : 'Build and submit the route group'}</li>
+                </ol>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <DialogFooter className="gap-2">
-        <Button variant="outline" onClick={handleClose}>
-          Cancel
-        </Button>
-        <Button 
-          onClick={handleProceed}
-          className={mode === 'edit' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-        >
-          <ArrowRight className="w-4 h-4 mr-2" />
-          {mode === 'edit' ? 'Update' : 'Proceed'}
-        </Button>
-      </DialogFooter>
-    </>
-  );
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleProceed}
+            className={mode === 'edit' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+            disabled={validRoutes.length === 0}
+          >
+            <ArrowRight className="w-4 h-4 mr-2" />
+            {mode === 'edit' ? 'Update' : 'Proceed'}
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  };
 
   // Render processing view
   const renderProcessing = () => (
