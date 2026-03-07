@@ -8,8 +8,8 @@
  *   pnpm exec playwright test tests/e2e/specs/mot/navigation.spec.ts # single file
  *   pnpm exec playwright test -g "should navigate to Schedules"      # single test
  *   pnpm exec playwright test --headed                               # headed mode
- *   pnpm e2e                                                         # via npm script
- *   pnpm e2e:headed                                                  # headed via script
+ *   pnpm e2e                                                         # via npm script (dev env)
+ *   pnpm e2e:docker                                                  # via npm script (Docker env)
  */
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -21,6 +21,13 @@ const e2eDir = path.resolve(__dirname, 'tests/e2e');
 dotenv.config({ path: path.resolve(e2eDir, '.env') });
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+// When running against the Docker e2e environment the backend is on port 8081.
+// When running against the local dev environment the backend is on port 8080.
+const API_URL = process.env.API_URL || 'http://localhost:8080';
+
+// Set to true when using the Docker e2e environment (pnpm run e2e:docker).
+const isDockerEnv = process.env.E2E_DOCKER === 'true';
 
 export default defineConfig({
   testDir: path.resolve(e2eDir, 'specs'),
@@ -65,8 +72,11 @@ export default defineConfig({
   webServer: {
     command: 'pnpm --filter @busmate/management-portal dev',
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && !isDockerEnv,
     timeout: 120_000,
     cwd: __dirname,
+    env: {
+      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
+    },
   },
 });

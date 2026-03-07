@@ -22,7 +22,14 @@
     "e2e:headed": "playwright test --headed",
     "e2e:debug": "playwright test --debug",
     "e2e:ui": "playwright test --ui",
-    "e2e:report": "playwright show-report tests/e2e/playwright-report"
+    "e2e:report": "playwright show-report tests/e2e/playwright-report",
+
+    "e2e:docker": "E2E_DOCKER=true playwright test",
+
+    "e2e:env:start": "bash tests/e2e/scripts/e2e-env.sh start",
+    "e2e:env:stop": "bash tests/e2e/scripts/e2e-env.sh stop",
+    "e2e:env:status": "bash tests/e2e/scripts/e2e-env.sh status",
+    "e2e:env:logs": "bash tests/e2e/scripts/e2e-env.sh logs"
   },
   "devDependencies": {
     "nx": "^21.0.0"

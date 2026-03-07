@@ -9,6 +9,17 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+// When running against the Docker e2e environment the backend is on port 8081.
+// When running against the local dev environment the backend is on port 8080.
+// The API_URL variable (set in .env) controls which backend the Next.js dev
+// server points to via the NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL env var.
+const API_URL = process.env.API_URL || 'http://localhost:8080';
+
+// Set to true when using the Docker e2e environment (pnpm run e2e:docker).
+// In Docker mode we never reuse an already-running server because it may be
+// pointing at the wrong backend (e.g. a local dev server on port 8080).
+const isDockerEnv = process.env.E2E_DOCKER === 'true';
+
 export default defineConfig({
   testDir: './specs',
   testMatch: '**/*.spec.ts',
@@ -80,12 +91,24 @@ export default defineConfig({
     // },
   ],
 
-  /* Start the Next.js dev server before running tests */
+  /* Start the Next.js dev server before running tests.
+   *
+   * In Docker e2e mode (E2E_DOCKER=true) the server is always started fresh so
+   * that the NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL env var is guaranteed to point
+   * at the Docker test backend, not a stale dev server on port 8080.
+   *
+   * In standard dev mode the server is reused if already running (unless on CI).
+   */
   webServer: {
     command: 'pnpm --filter @busmate/management-portal dev',
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && !isDockerEnv,
     timeout: 120_000,
     cwd: path.resolve(__dirname, '../..'), // monorepo root
+    env: {
+      // Forward the test backend URL so the Next.js dev server uses the correct
+      // API endpoint (Docker: http://localhost:8081, dev: http://localhost:8080).
+      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
+    },
   },
 });
