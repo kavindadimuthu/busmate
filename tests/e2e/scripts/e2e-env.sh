@@ -20,7 +20,7 @@ COMPOSE_FILE="$REPO_ROOT/docker-compose.e2e.yml"
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 BACKEND_HEALTH_URL="http://localhost:8081/actuator/health"
-BACKEND_MAX_WAIT=180   # seconds to wait for Spring Boot to become healthy
+BACKEND_MAX_WAIT=300   # seconds to wait for Spring Boot to become healthy
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 command_exists() {

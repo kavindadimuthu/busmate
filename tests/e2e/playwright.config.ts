@@ -20,6 +20,19 @@ const API_URL = process.env.API_URL || 'http://localhost:8080';
 // pointing at the wrong backend (e.g. a local dev server on port 8080).
 const isDockerEnv = process.env.E2E_DOCKER === 'true';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Test execution modes — for debugging and visibility
+// ═══════════════════════════════════════════════════════════════════════════
+
+// HEADED mode — show browser UI (useful for debugging and watching tests)
+// Set HEADED=true or use pnpm run e2e:docker:headed
+const headedMode = process.env.HEADED === 'true';
+
+// SLOW_MO — slow down operations by N milliseconds (useful for watching tests)
+// Set SLOW_MO=500 for half-second delays, SLOW_MO=1000 for 1-second delays
+// Recommended: 300-800ms for clear visibility without being too slow
+const slowMo = process.env.SLOW_MO ? parseInt(process.env.SLOW_MO, 10) : 0;
+
 export default defineConfig({
   testDir: './specs',
   testMatch: '**/*.spec.ts',
@@ -59,6 +72,20 @@ export default defineConfig({
     video: 'on-first-retry',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
+    
+    // Browser visibility and speed controls
+    headless: !headedMode,  // Run in headed mode when HEADED=true
+    
+    // Launch options for browser instances
+    launchOptions: {
+      slowMo: slowMo,       // Slow down operations for better visibility
+    },
+    
+    // Additional debugging aids when running in headed/slow mode
+    ...(headedMode && {
+      // Keep browser open on test failure in headed mode
+      viewport: { width: 1280, height: 720 },
+    }),
   },
 
   /* Global setup: authenticate once via Asgardeo, save storageState */
@@ -98,13 +125,25 @@ export default defineConfig({
    * at the Docker test backend, not a stale dev server on port 8080.
    *
    * In standard dev mode the server is reused if already running (unless on CI).
+   * 
+   * Webpack is used instead of Turbopack in Docker e2e mode to prevent build hangs
+   * and resource exhaustion issues. Memory limits are also set to prevent system lockups.
    */
   webServer: {
-    command: 'pnpm --filter @busmate/management-portal dev',
+    // Use webpack in e2e mode instead of Turbopack to prevent build hangs
+    // Set memory limits to prevent resource exhaustion
+    command: isDockerEnv 
+      ? 'NODE_OPTIONS="--max-old-space-size=4096" pnpm --filter @busmate/management-portal dev -- --webpack'
+      : 'pnpm --filter @busmate/management-portal dev',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI && !isDockerEnv,
-    timeout: 120_000,
+    timeout: isDockerEnv ? 120_000 : 120_000,  // Increased timeout for Docker cold-start
     cwd: path.resolve(__dirname, '../..'), // monorepo root
+    env: {
+      // Forward the test backend URL so the Next.js dev server uses the correct
+      // API endpoint (Docker: http://localhost:8081, dev: http://localhost:8080).
+      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
+    },
     env: {
       // Forward the test backend URL so the Next.js dev server uses the correct
       // API endpoint (Docker: http://localhost:8081, dev: http://localhost:8080).

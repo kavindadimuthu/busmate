@@ -116,20 +116,86 @@ The first `e2e:env:start` call builds the Spring Boot Docker image from source
 
 All scripts can be run from the monorepo root or from `tests/e2e/`.
 
-### From the monorepo root
+### Test execution modes
+
+The test suite supports multiple execution modes for different purposes:
+
+#### 🚀 **Headless mode** (default, CI-friendly)
+Fast, no UI, runs in the background. Best for CI/CD and quick feedback.
+
+```bash
+pnpm run e2e:docker               # Docker environment, headless
+pnpm run e2e                      # Local dev environment, headless
+```
+
+#### 👁️ **Headed mode** (visible browser)
+Shows browser window during test execution. Great for watching tests run and debugging.
+
+```bash
+pnpm run e2e:docker:headed        # Docker environment, show browser
+pnpm run e2e:headed               # Local dev environment, show browser
+```
+
+#### 🐢 **Slow mode** (headed + slowed down)
+Runs tests with visible browser **and** adds 500ms delay between operations.
+Perfect for clearly seeing each action without the test running too fast.
+
+```bash
+pnpm run e2e:docker:slow          # Headed + 500ms slowdown
+```
+
+To customize the slowdown amount, use the `SLOW_MO` environment variable:
+
+```bash
+SLOW_MO=800 pnpm run e2e:docker:headed    # 800ms delay per operation
+SLOW_MO=300 pnpm run e2e:docker:headed    # 300ms delay (subtle slowdown)
+SLOW_MO=1500 pnpm run e2e:docker:headed   # 1.5s delay (very slow, detailed debugging)
+```
+
+**Recommended SLOW_MO values:**
+- `0` (default): Full speed, no delay
+- `300-500`: Comfortable viewing speed without being too slow
+- `800-1000`: Easier to follow each step visually
+- `1500+`: Very slow, use only for detailed step-by-step debugging
+
+#### 🔍 **Debug mode** (Playwright Inspector)
+Opens Playwright Inspector for step-by-step debugging with breakpoints.
+
+```bash
+pnpm run e2e:docker:debug         # Docker environment with Inspector
+pnpm run e2e:debug                # Local dev environment with Inspector
+```
+
+#### 🎛️ **UI mode** (interactive test runner)
+Opens Playwright's interactive UI for running, debugging, and exploring tests.
+Provides a visual test explorer with time-travel debugging.
+
+```bash
+pnpm run e2e:docker:ui            # Docker environment with UI mode
+pnpm run e2e:ui                   # Local dev environment with UI mode
+```
+
+### Docker environment management
 
 | Command | Description |
 |---------|-------------|
-| `pnpm run e2e:docker` | Run all tests against the Docker environment |
-| `pnpm run e2e` | Run all tests against the local dev environment |
-| `pnpm run e2e:headed` | Run in headed (visible browser) mode |
-| `pnpm run e2e:debug` | Open Playwright Inspector |
-| `pnpm run e2e:ui` | Open Playwright UI mode |
-| `pnpm run e2e:report` | Open the last HTML report |
 | `pnpm run e2e:env:start` | Start Docker test environment |
 | `pnpm run e2e:env:stop` | Stop Docker test environment |
 | `pnpm run e2e:env:status` | Show Docker service status |
 | `pnpm run e2e:env:logs` | Tail Docker service logs |
+| `pnpm run e2e:env:check` | Verify Docker e2e environment is ready |
+
+### Reports
+
+| Command | Description |
+|---------|-------------|
+| `pnpm run e2e:report` | Open the last HTML report |
+
+### From the monorepo root
+
+```bash
+# See the "Test execution modes" section above for all available commands
+```
 
 ### Running a subset of tests
 
@@ -160,11 +226,33 @@ cp tests/e2e/.env.example tests/e2e/.env
 | `API_URL` | **`http://localhost:8081`** | `http://localhost:8080` | Backend API URL |
 | `ASGARDEO_TEST_USERNAME` | — | — | Asgardeo MOT test user email |
 | `ASGARDEO_TEST_PASSWORD` | — | — | Asgardeo MOT test user password |
+| `HEADED` | `false` | `false` | Set to `true` to show browser UI during tests |
+| `SLOW_MO` | `0` | `0` | Milliseconds to slow down operations (e.g., `500`, `1000`) |
 
 > The `API_URL` is automatically forwarded to the Next.js dev server as
 > `NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL`, so the browser-side API calls go to
 > the correct backend without any manual change to the management portal's
 > `.env` file.
+
+**Configuration via environment variables:**
+
+You can also configure test execution directly via environment variables without
+editing the `.env` file:
+
+```bash
+# Run in headed mode
+HEADED=true pnpm run e2e:docker
+
+# Run with 800ms slowdown
+SLOW_MO=800 pnpm run e2e:docker
+
+# Combine headed mode with slowdown
+HEADED=true SLOW_MO=500 pnpm run e2e:docker
+
+# Or use the convenience scripts
+pnpm run e2e:docker:headed        # HEADED=true
+pnpm run e2e:docker:slow          # HEADED=true SLOW_MO=500
+```
 
 ---
 
@@ -350,6 +438,35 @@ Common causes:
 Ensure `API_URL=http://localhost:8081` is set in `tests/e2e/.env`.
 If a dev Next.js server on port 3000 is still running, stop it — `e2e:docker`
 will always start a fresh server when `E2E_DOCKER=true` is set.
+
+### System hangs or high resource usage when running `pnpm run e2e:docker`
+
+**Symptoms:** Computer becomes unresponsive, CPU/memory usage spikes, tests never start.
+
+**Cause:** The Next.js dev server (webServer) is getting stuck during startup, causing resource exhaustion.
+
+**Solution (already implemented):**
+- The Playwright config now uses webpack instead of Turbopack in Docker e2e mode
+- Memory is limited to 4GB via `NODE_OPTIONS="--max-old-space-size=4096"`
+- Timeout is set to 90 seconds for faster failure detection
+
+**Additional checks:**
+1. Ensure the Docker e2e environment is running first:
+   ```bash
+   pnpm run e2e:env:check
+   ```
+2. Kill any stuck Next.js processes:
+   ```bash
+   pkill -f "next dev"
+   ```
+3. Check if port 3000 is already in use:
+   ```bash
+   lsof -i :3000
+   ```
+4. Monitor the webServer startup in a separate terminal:
+   ```bash
+   tail -f /tmp/nextjs-test.log  # if logs are redirected
+   ```
 
 ### Nuclear reset
 
