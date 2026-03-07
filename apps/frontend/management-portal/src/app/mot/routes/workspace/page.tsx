@@ -11,6 +11,7 @@ import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import RouteSubmissionModal from '@/components/mot/routes/workspace/RouteSubmissionModal';
+import { ErrorBoundary, WorkspaceErrorFallback } from '@/components/shared/ErrorBoundary';
 import { useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 
@@ -154,16 +155,22 @@ function RouteWorkspaceContent() {
 
 export default function RoutesWorkspacePage() {
     return (
-        <RouteWorkspaceProvider>
-            <Suspense fallback={
-                <div className="flex flex-col h-96 justify-center items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                    <p className="text-gray-600">Loading routes workspace...</p>
-                </div>
-            }>
-                <RouteWorkspaceContent />
-            </Suspense>
-            <Toaster />
-        </RouteWorkspaceProvider>
+        <ErrorBoundary
+            fallback={(error, reset) => (
+                <WorkspaceErrorFallback error={error} onReset={reset} />
+            )}
+        >
+            <RouteWorkspaceProvider>
+                <Suspense fallback={
+                    <div className="flex flex-col h-96 justify-center items-center gap-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        <p className="text-gray-600">Loading routes workspace...</p>
+                    </div>
+                }>
+                    <RouteWorkspaceContent />
+                </Suspense>
+                <Toaster />
+            </RouteWorkspaceProvider>
+        </ErrorBoundary>
     );
 }

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,6 +67,7 @@ public class StopController {
 
     // 1. CREATE - First operation for logical flow
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Create a new bus stop", 
         description = "Creates a new bus stop with the provided details. Requires authentication.",
@@ -75,7 +77,8 @@ public class StopController {
         @ApiResponse(responseCode = "201", description = "Stop created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "409", description = "Stop already exists in the same city"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<StopResponse> createStop(
             @Valid @RequestBody StopRequest request, 
@@ -87,6 +90,7 @@ public class StopController {
 
     // 1b. BATCH CREATE - Create multiple stops in a single request
     @PostMapping("/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Create multiple bus stops in batch",
         description = "Creates multiple bus stops in a single request. Each stop is validated individually. " +
@@ -97,7 +101,8 @@ public class StopController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Batch creation completed (check response for individual results)"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<StopBatchCreateResponse> createStopsBatch(
             @Valid @RequestBody StopBatchCreateRequest request,
@@ -255,6 +260,7 @@ public class StopController {
 
     // 7. UPDATE - Modification operation
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Update an existing stop", 
         description = "Update an existing bus stop with new details. Requires authentication.",
@@ -265,7 +271,8 @@ public class StopController {
         @ApiResponse(responseCode = "404", description = "Stop not found"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "409", description = "Stop name already exists in the same city"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<StopResponse> updateStop(
             @Parameter(description = "Stop ID", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -279,6 +286,7 @@ public class StopController {
 
     // 8. DELETE - Destructive operation (last)
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Delete a stop", 
         description = "Permanently delete a bus stop. This action cannot be undone. Requires authentication.",
@@ -288,7 +296,8 @@ public class StopController {
         @ApiResponse(responseCode = "204", description = "Stop deleted successfully"),
         @ApiResponse(responseCode = "404", description = "Stop not found"),
         @ApiResponse(responseCode = "400", description = "Invalid UUID format"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<Void> deleteStop(
             @Parameter(description = "Stop ID", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -374,6 +383,7 @@ public class StopController {
 
     // STOP IMPORT - For bulk stop import from file
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Import stops from CSV file", 
         description = "Dynamically import stops from CSV files with flexible field combinations. " +
@@ -388,7 +398,8 @@ public class StopController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results including imported stop IDs)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<StopImportResponse> importStops(
             @Parameter(description = "CSV file containing stop data (supports multiple formats)")
@@ -434,6 +445,7 @@ public class StopController {
 
     // EXPORT - Flexible stop data export
     @PostMapping("/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Export stops with flexible filtering and format options", 
         description = "Export stops to CSV or JSON format with highly flexible filtering options. " +
@@ -447,6 +459,7 @@ public class StopController {
         @ApiResponse(responseCode = "200", description = "Export completed successfully - returns file content with metadata"),
         @ApiResponse(responseCode = "400", description = "Invalid export request parameters"),
         @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role"),
         @ApiResponse(responseCode = "500", description = "Internal server error during export processing")
     })
     public ResponseEntity<byte[]> exportStops(
@@ -523,6 +536,7 @@ public class StopController {
 
     // 11. BULK UPDATE - Update or create multiple stops via CSV file
     @PutMapping(value = "/import/upsert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Bulk update stops from CSV file", 
         description = "Update multiple bus stops at once using a CSV file. " +
@@ -537,7 +551,8 @@ public class StopController {
         @ApiResponse(responseCode = "400", description = "Invalid file format or request parameters"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "413", description = "File too large"),
-        @ApiResponse(responseCode = "415", description = "Unsupported file type")
+        @ApiResponse(responseCode = "415", description = "Unsupported file type"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<StopBulkUpdateResponse> bulkUpdateStops(
             @Parameter(description = "CSV file containing stops to update", required = true)

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -183,6 +184,7 @@ public class RouteController {
 
     // 4. CREATE STANDALONE ROUTE
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Create an individual route",
         description = "Creates a standalone route linked to an existing route group. " +
@@ -194,7 +196,8 @@ public class RouteController {
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "404", description = "Route group or stop not found"),
         @ApiResponse(responseCode = "409", description = "Route with same name already exists in the route group"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<RouteResponse> createRoute(
             @Valid @RequestBody RouteRequest request,
@@ -206,6 +209,7 @@ public class RouteController {
 
     // 5. UPDATE STANDALONE ROUTE
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Update an individual route",
         description = "Updates an existing route by its ID. All fields are replaced from the request body. Requires authentication.",
@@ -216,7 +220,8 @@ public class RouteController {
         @ApiResponse(responseCode = "404", description = "Route, route group, or stop not found"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "409", description = "Route name conflict within route group"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<RouteResponse> updateRoute(
             @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -230,6 +235,7 @@ public class RouteController {
 
     // 6. DELETE STANDALONE ROUTE
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Delete an individual route",
         description = "Permanently deletes a route and its associated route stops. This action cannot be undone. Requires authentication.",
@@ -239,7 +245,8 @@ public class RouteController {
         @ApiResponse(responseCode = "204", description = "Route deleted successfully"),
         @ApiResponse(responseCode = "404", description = "Route not found"),
         @ApiResponse(responseCode = "400", description = "Invalid UUID format"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<Void> deleteRoute(
             @Parameter(description = "Route ID", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -268,6 +275,7 @@ public class RouteController {
 
     // 1. CREATE ROUTE GROUP
     @PostMapping("/groups")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Create a new route group",
         description = "Creates a new route group with the provided details and optional routes. Requires authentication.",
@@ -277,7 +285,8 @@ public class RouteController {
         @ApiResponse(responseCode = "201", description = "Route group created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "409", description = "Route group already exists"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<RouteGroupResponse> createRouteGroup(
             @Valid @RequestBody RouteGroupRequest request, 
@@ -379,6 +388,7 @@ public class RouteController {
 
     // 5. UPDATE ROUTE GROUP
     @PutMapping("/groups/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Update an existing route group",
         description = "Update an existing route group with new details. Requires authentication.",
@@ -389,7 +399,8 @@ public class RouteController {
         @ApiResponse(responseCode = "404", description = "Route group not found"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "409", description = "Route group name already exists"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<RouteGroupResponse> updateRouteGroup(
             @Parameter(description = "Route Group ID", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -403,6 +414,7 @@ public class RouteController {
 
     // 6. DELETE ROUTE GROUP
     @DeleteMapping("/groups/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Delete a route group",
         description = "Permanently delete a route group and all its associated routes. This action cannot be undone. Requires authentication.",
@@ -412,7 +424,8 @@ public class RouteController {
         @ApiResponse(responseCode = "204", description = "Route group deleted successfully"),
         @ApiResponse(responseCode = "404", description = "Route group not found"),
         @ApiResponse(responseCode = "400", description = "Invalid UUID format"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<Void> deleteRouteGroup(
             @Parameter(description = "Route Group ID", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -442,6 +455,7 @@ public class RouteController {
 
     // UNIFIED ROUTE IMPORT - Import route groups, routes, and route stops from single CSV
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @Operation(
         summary = "Import complete route data from unified CSV file", 
         description = "Import route groups, routes, and route stops from a single CSV file with flexible options. " +
@@ -452,7 +466,8 @@ public class RouteController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Import completed (check response for detailed results)"),
         @ApiResponse(responseCode = "400", description = "Invalid file format or content"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires MOT role")
     })
     public ResponseEntity<RouteUnifiedImportResponse> importRoutesUnified(
             @Parameter(description = "CSV file containing complete route data")

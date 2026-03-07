@@ -1,8 +1,10 @@
 /**
  * Gemini AI Service Implementation for Route Generation
- * 
- * Implements the IRouteAIService interface for Google's Gemini API
- * to generate route data based on user prompts.
+ *
+ * Implements the IRouteAIService interface for Google's Gemini API.
+ * All Gemini API calls are proxied through `/api/ai/generate-route` — a
+ * Next.js server-side route — so the API key never appears in the browser
+ * Network tab. The frontend only sends prompts; the server holds the key.
  */
 
 import { AIServiceProvider } from './types';
@@ -14,10 +16,11 @@ import {
 } from './routeTypes';
 
 // ============================================================================
-// GEMINI API CONFIGURATION
+// INTERNAL PROXY ENDPOINT
 // ============================================================================
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+/** Next.js API route that proxies requests to Gemini server-side. */
+const AI_PROXY_ROUTE = '/api/ai/generate-route';
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 // ============================================================================
@@ -167,31 +170,37 @@ RESPOND ONLY WITH THE ${outputFormat.toUpperCase()} DATA - NO ADDITIONAL TEXT, E
 export class RouteGeminiAIService implements IRouteAIService {
   readonly provider: AIServiceProvider = 'gemini';
   readonly modelName: string;
-  private apiKey: string;
   private temperature: number;
   private maxTokens: number;
 
   constructor(config?: {
-    apiKey?: string;
     model?: string;
     temperature?: number;
     maxTokens?: number;
   }) {
-    this.apiKey = config?.apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
     this.modelName = config?.model || DEFAULT_MODEL;
     this.temperature = config?.temperature ?? 0.7;
     this.maxTokens = config?.maxTokens ?? 8192;
   }
 
   /**
-   * Check if the Gemini service is available
+   * Check if the Gemini service is available.
+   *
+   * The feature can be disabled at the deployment level by setting
+   * NEXT_PUBLIC_GEMINI_ENABLED=false in the frontend environment.
+   * When not explicitly disabled, the service is considered available;
+   * the server route will return 503 if the server-side key is missing.
    */
   isAvailable(): boolean {
-    return !!this.apiKey && this.apiKey.trim().length > 0;
+    return process.env.NEXT_PUBLIC_GEMINI_ENABLED !== 'false';
   }
 
   /**
-   * Generate route data using Gemini API
+   * Generate route data by forwarding the request to the server-side proxy.
+   *
+   * The proxy route at `/api/ai/generate-route` holds the Gemini API key and
+   * forwards the prompts to Google's Generative Language API, returning only
+   * the generated text back to the browser.
    */
   async generateRouteData(
     request: AIRouteGenerationRequest
@@ -199,7 +208,7 @@ export class RouteGeminiAIService implements IRouteAIService {
     if (!this.isAvailable()) {
       return {
         success: false,
-        error: 'Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY in your environment variables.',
+        error: 'AI route generation is disabled. Set NEXT_PUBLIC_GEMINI_ENABLED=true to enable it.',
         provider: this.provider,
         model: this.modelName,
       };
@@ -209,78 +218,45 @@ export class RouteGeminiAIService implements IRouteAIService {
       const systemPrompt = buildRouteSystemPrompt(request.context, request.outputFormat);
       const userPrompt = request.prompt;
 
-      const response = await fetch(
-        `${GEMINI_API_URL}/${this.modelName}:generateContent?key=${this.apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: systemPrompt },
-                  { text: `\n\nUSER REQUEST: ${userPrompt}` },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: this.temperature,
-              maxOutputTokens: this.maxTokens,
-              topP: 0.95,
-              topK: 64,
-            },
-            safetySettings: [
-              {
-                category: 'HARM_CATEGORY_HARASSMENT',
-                threshold: 'BLOCK_ONLY_HIGH',
-              },
-              {
-                category: 'HARM_CATEGORY_HATE_SPEECH',
-                threshold: 'BLOCK_ONLY_HIGH',
-              },
-              {
-                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                threshold: 'BLOCK_ONLY_HIGH',
-              },
-              {
-                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                threshold: 'BLOCK_ONLY_HIGH',
-              },
-            ],
-          }),
-        }
-      );
+      // Call the server-side proxy — Gemini API key never leaves the server.
+      const response = await fetch(AI_PROXY_ROUTE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemPrompt,
+          userPrompt,
+          model: this.modelName,
+          temperature: this.temperature,
+          maxTokens: this.maxTokens,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         return {
           success: false,
-          error: `Gemini API error: ${errorData.error?.message || response.statusText}`,
+          error: `AI generation error: ${
+            (errorData as { error?: string }).error || response.statusText
+          }`,
           provider: this.provider,
           model: this.modelName,
         };
       }
 
-      const data = await response.json();
-      
-      // Extract the generated text from Gemini response
-      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      
+      const data = await response.json() as { text?: string; tokensUsed?: number };
+      const generatedText = data.text;
+
       if (!generatedText) {
         return {
           success: false,
-          error: 'No content generated by Gemini. The model may have blocked the request.',
+          error: 'No content generated by the AI model. The model may have blocked the request.',
           provider: this.provider,
           model: this.modelName,
         };
       }
 
-      // Clean up the response - remove markdown code blocks if present
+      // Clean up the response — remove markdown code block markers if present.
       let cleanedData = generatedText.trim();
-      
-      // Remove markdown code block markers
       if (cleanedData.startsWith('```json')) {
         cleanedData = cleanedData.slice(7);
       } else if (cleanedData.startsWith('```yaml')) {
@@ -288,28 +264,23 @@ export class RouteGeminiAIService implements IRouteAIService {
       } else if (cleanedData.startsWith('```')) {
         cleanedData = cleanedData.slice(3);
       }
-      
       if (cleanedData.endsWith('```')) {
         cleanedData = cleanedData.slice(0, -3);
       }
-      
       cleanedData = cleanedData.trim();
-
-      // Calculate tokens used (approximate for Gemini)
-      const tokensUsed = data.usageMetadata?.totalTokenCount || undefined;
 
       return {
         success: true,
         data: cleanedData,
         provider: this.provider,
         model: this.modelName,
-        tokensUsed,
+        tokensUsed: data.tokensUsed,
       };
     } catch (error) {
-      console.error('Gemini API error:', error);
+      console.error('AI proxy error:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred while calling Gemini API',
+        error: error instanceof Error ? error.message : 'Unknown error occurred while calling AI service',
         provider: this.provider,
         model: this.modelName,
       };
@@ -318,10 +289,12 @@ export class RouteGeminiAIService implements IRouteAIService {
 }
 
 /**
- * Create a new Route Gemini AI service instance
+ * Create a new Route Gemini AI service instance.
+ *
+ * Note: The `apiKey` parameter is no longer accepted — the key is now managed
+ * exclusively on the server side via the `GEMINI_API_KEY` environment variable.
  */
 export function createRouteGeminiService(config?: {
-  apiKey?: string;
   model?: string;
   temperature?: number;
   maxTokens?: number;
