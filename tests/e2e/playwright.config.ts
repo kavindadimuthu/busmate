@@ -20,16 +20,18 @@ const API_URL = process.env.API_URL || 'http://localhost:8080';
 // pointing at the wrong backend (e.g. a local dev server on port 8080).
 const isDockerEnv = process.env.E2E_DOCKER === 'true';
 
-// When running against the Docker e2e environment the backend is on port 8081.
-// When running against the local dev environment the backend is on port 8080.
-// The API_URL variable (set in .env) controls which backend the Next.js dev
-// server points to via the NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL env var.
-const API_URL = process.env.API_URL || 'http://localhost:8080';
+// ═══════════════════════════════════════════════════════════════════════════
+// Test execution modes — for debugging and visibility
+// ═══════════════════════════════════════════════════════════════════════════
 
-// Set to true when using the Docker e2e environment (pnpm run e2e:docker).
-// In Docker mode we never reuse an already-running server because it may be
-// pointing at the wrong backend (e.g. a local dev server on port 8080).
-const isDockerEnv = process.env.E2E_DOCKER === 'true';
+// HEADED mode — show browser UI (useful for debugging and watching tests)
+// Set HEADED=true or use pnpm run e2e:docker:headed
+const headedMode = process.env.HEADED === 'true';
+
+// SLOW_MO — slow down operations by N milliseconds (useful for watching tests)
+// Set SLOW_MO=500 for half-second delays, SLOW_MO=1000 for 1-second delays
+// Recommended: 300-800ms for clear visibility without being too slow
+const slowMo = process.env.SLOW_MO ? parseInt(process.env.SLOW_MO, 10) : 0;
 
 export default defineConfig({
   testDir: './specs',
@@ -70,6 +72,20 @@ export default defineConfig({
     video: 'on-first-retry',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
+    
+    // Browser visibility and speed controls
+    headless: !headedMode,  // Run in headed mode when HEADED=true
+    
+    // Launch options for browser instances
+    launchOptions: {
+      slowMo: slowMo,       // Slow down operations for better visibility
+    },
+    
+    // Additional debugging aids when running in headed/slow mode
+    ...(headedMode && {
+      // Keep browser open on test failure in headed mode
+      viewport: { width: 1280, height: 720 },
+    }),
   },
 
   /* Global setup: authenticate once via Asgardeo, save storageState */
