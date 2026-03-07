@@ -130,6 +130,7 @@ All scripts can be run from the monorepo root or from `tests/e2e/`.
 | `pnpm run e2e:env:stop` | Stop Docker test environment |
 | `pnpm run e2e:env:status` | Show Docker service status |
 | `pnpm run e2e:env:logs` | Tail Docker service logs |
+| `pnpm run e2e:env:check` | Verify Docker e2e environment is ready |
 
 ### Running a subset of tests
 
@@ -350,6 +351,35 @@ Common causes:
 Ensure `API_URL=http://localhost:8081` is set in `tests/e2e/.env`.
 If a dev Next.js server on port 3000 is still running, stop it — `e2e:docker`
 will always start a fresh server when `E2E_DOCKER=true` is set.
+
+### System hangs or high resource usage when running `pnpm run e2e:docker`
+
+**Symptoms:** Computer becomes unresponsive, CPU/memory usage spikes, tests never start.
+
+**Cause:** The Next.js dev server (webServer) is getting stuck during startup, causing resource exhaustion.
+
+**Solution (already implemented):**
+- The Playwright config now uses webpack instead of Turbopack in Docker e2e mode
+- Memory is limited to 4GB via `NODE_OPTIONS="--max-old-space-size=4096"`
+- Timeout is set to 90 seconds for faster failure detection
+
+**Additional checks:**
+1. Ensure the Docker e2e environment is running first:
+   ```bash
+   pnpm run e2e:env:check
+   ```
+2. Kill any stuck Next.js processes:
+   ```bash
+   pkill -f "next dev"
+   ```
+3. Check if port 3000 is already in use:
+   ```bash
+   lsof -i :3000
+   ```
+4. Monitor the webServer startup in a separate terminal:
+   ```bash
+   tail -f /tmp/nextjs-test.log  # if logs are redirected
+   ```
 
 ### Nuclear reset
 

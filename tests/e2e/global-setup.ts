@@ -96,26 +96,39 @@ async function globalSetup(config: FullConfig) {
   const page = await context.newPage();
 
   try {
-    // 1. Navigate to the landing page
-    console.log('[global-setup] Navigating to landing page...');
-    await page.goto(baseURL, { waitUntil: 'networkidle' });
+    // 1. Pre-warm the Next.js app to ensure pages are compiled (important in Docker mode)
+    console.log('[global-setup] Pre-warming Next.js application...');
+    try {
+      await page.goto(baseURL, { waitUntil: 'networkidle', timeout: 60_000 });
+      console.log('[global-setup] Application is ready.');
+    } catch (error) {
+      console.warn(`[global-setup] Pre-warm failed (may be expected): ${error}`);
+      // Continue anyway - the app might just be slow to start
+    }
 
-    // 2. Click the Asgardeo Sign In button
+    // Wait a bit to ensure all resources are loaded
+    await page.waitForTimeout(2000);
+
+    // 2. Navigate to the landing page (refresh to ensure clean state)
+    console.log('[global-setup] Navigating to landing page...');
+    await page.goto(baseURL, { waitUntil: 'networkidle', timeout: 30_000 });
+
+    // 3. Click the Asgardeo Sign In button
     console.log('[global-setup] Clicking Sign In button...');
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    // 3. Wait for redirect to Asgardeo login page
+    // 4. Wait for redirect to Asgardeo login page
     console.log('[global-setup] Waiting for Asgardeo login page...');
     await page.waitForURL(/accounts\.asgardeo\.io|asgardeo/, { timeout: 30_000 });
     console.log(`[global-setup] Asgardeo page URL: ${page.url()}`);
 
-    // 4. Fill in Asgardeo login form
+    // 5. Fill in Asgardeo login form
     console.log('[global-setup] Filling in credentials...');
     await page.getByPlaceholder(/enter your username/i).fill(username);
     await page.getByPlaceholder(/enter your password/i).fill(password);
     await page.getByRole('button', { name: /sign in|log in|continue/i }).click();
 
-    // 5. Handle potential consent screen (may not appear in test environments)
+    // 6. Handle potential consent screen (may not appear in test environments)
     try {
       const consentButton = page.getByRole('button', { name: /allow|approve|continue/i });
       await consentButton.click({ timeout: 5_000 });
@@ -123,14 +136,41 @@ async function globalSetup(config: FullConfig) {
       // No consent screen — continue
     }
 
-    // 6. Wait for redirect back to the MOT dashboard
+    // 7. Wait for redirect back to the application
+    // In Docker mode, the OAuth callback lands at the root (/) and then the app
+    // processes the session and redirects to the appropriate dashboard. This can
+    // take longer in Docker due to cold-start of Next.js server.
+    console.log('[global-setup] Waiting for redirect from Asgardeo...');
+    await page.waitForURL(url => !url.toString().includes('asgardeo'), { timeout: 45_000 });
+    console.log(`[global-setup] Redirected to: ${page.url()}`);
+
+    // 8. Wait for the app to process authentication and redirect to dashboard
+    // The root page calls getUserData() which may take time in Docker mode.
+    // We use a polling approach with a generous timeout.
     console.log('[global-setup] Waiting for redirect to MOT dashboard...');
-    await page.waitForURL(/\/mot\/dashboard/, { timeout: 30_000 });
+    const dashboardReached = await page.waitForURL(/\/mot\/dashboard/, { 
+      timeout: 60_000,  // Increased timeout for Docker cold-start
+      waitUntil: 'load'
+    }).then(() => true).catch(() => false);
 
-    // 7. Wait for dashboard content to verify auth worked
-    await page.waitForLoadState('networkidle');
+    if (!dashboardReached) {
+      // If we're still at root after 60s, something is wrong with the auth flow
+      const currentURL = page.url();
+      console.error(`[global-setup] Failed to reach dashboard. Current URL: ${currentURL}`);
+      
+      // Wait a bit more and check the page content for debugging
+      await page.waitForTimeout(5000);
+      const pageContent = await page.textContent('body');
+      console.error(`[global-setup] Page content: ${pageContent?.substring(0, 200)}...`);
+      
+      throw new Error(`Authentication completed but redirect to dashboard failed. Stuck at: ${currentURL}`);
+    }
 
-    // 8. Save authenticated browser state
+    // 9. Wait for dashboard content to verify auth worked
+    console.log('[global-setup] Dashboard reached. Waiting for content to load...');
+    await page.waitForLoadState('networkidle', { timeout: 30_000 });
+
+    // 10. Save authenticated browser state
     await context.storageState({ path: STORAGE_STATE_PATH });
     console.log('[global-setup] Authentication successful. Storage state saved.');
   } catch (error) {

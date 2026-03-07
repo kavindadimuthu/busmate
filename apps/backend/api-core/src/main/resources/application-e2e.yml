@@ -40,16 +40,13 @@ spring:
         jdbc:
           batch_size: 10
         connection:
-          provider_disables_autocommit: true
+          provider_disables_autocommit: false
     defer-datasource-initialization: true
 
   sql:
     init:
       # No seed data — tests create and clean up their own records
       mode: never
-
-  profiles:
-    active: e2e
 
 server:
   port: 8080
