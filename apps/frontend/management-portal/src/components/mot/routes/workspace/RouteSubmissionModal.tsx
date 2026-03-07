@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
@@ -77,11 +77,24 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   const [state, setState] = useState<SubmissionState>(initialState);
   const [progress, setProgress] = useState({ current: 0, total: 0, label: '' });
 
+  // ── Task 4.3: Submission Idempotency ──────────────────────────────────────
+  // Prevents duplicate submissions when the user clicks "Proceed" more than
+  // once (e.g., double-click, slow network, re-renders).
+  //
+  // We use both a boolean state (for disabling the button in the UI) and a
+  // ref-based submission ID (to guard against race conditions in async flows
+  // where state might be stale inside async callbacks).
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionIdRef = useRef<string | null>(null);
+
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setState(initialState);
       setProgress({ current: 0, total: 0, label: '' });
+      // Reset idempotency guards so the modal is ready for the next open
+      setIsSubmitting(false);
+      submissionIdRef.current = null;
     }
   }, [isOpen]);
 
@@ -420,23 +433,48 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         label: 'Batch creation complete'
       });
 
-      // Update context for all created stops
-      for (const { original, created } of createdStops) {
-        data.routeGroup.routes.forEach((route, routeIndex) => {
-          route.routeStops.forEach((routeStop, stopIndex) => {
-            if (routeStop.stop.name === original.name &&
-                routeStop.stop.type === StopExistenceType.NEW) {
-              updateRoute(routeIndex, {
-                routeStops: route.routeStops.map((rs, idx) =>
-                  idx === stopIndex
-                    ? { ...rs, stop: created }
-                    : rs
-                )
-              });
+      // ── Task 4.4: Batch context update — single pass, one call per route ──
+      //
+      // Problem with the previous approach:
+      //   for (created of createdStops) {
+      //     routes.forEach(route => route.routeStops.forEach(rs => {
+      //       if (match) updateRoute(routeIndex, { routeStops: route.routeStops.map(...) });
+      //     }));
+      //   }
+      //
+      // This called `updateRoute` once per (createdStop × matching routeStop), so
+      // for N created stops and M matching route stops it fired N×M state updates.
+      // Each intermediate React setState call could be applied to stale state,
+      // causing later updates to overwrite earlier ones (race condition). It could
+      // also trigger N×M re-renders before the data was fully consistent.
+      //
+      // Fix: build a name→createdStop lookup map, then do a single O(routes) pass.
+      // At most one `updateRoute` is called per route, ensuring each route's stops
+      // are updated atomically in a single React state transition.
+
+      // Build stop-name → created-stop mapping (primary key: name)
+      const createdStopByName = new Map<string, Stop>(
+        createdStops.map(({ original, created }) => [original.name, created])
+      );
+
+      // Single pass — one updateRoute call per route that had new stops swapped
+      data.routeGroup.routes.forEach((route, routeIndex) => {
+        const updatedRouteStops = route.routeStops.map(routeStop => {
+          if (routeStop.stop.type === StopExistenceType.NEW && routeStop.stop.name) {
+            const created = createdStopByName.get(routeStop.stop.name);
+            if (created) {
+              return { ...routeStop, stop: { ...created } };
             }
-          });
+          }
+          return routeStop;
         });
-      }
+
+        // Skip routes where nothing changed to avoid unnecessary re-renders
+        const hasChanges = updatedRouteStops.some((rs, idx) => rs !== route.routeStops[idx]);
+        if (hasChanges) {
+          updateRoute(routeIndex, { routeStops: updatedRouteStops });
+        }
+      });
 
       setState(prev => ({
         ...prev,
@@ -688,25 +726,50 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
   // Main submission flow
   const handleProceed = useCallback(async () => {
-    // Step 1: Validation - returns the stops that need to be created AND validated routes with correct IDs
-    console.log("Step 1: Starting validation...");
-    const validationResult = await validateStops();
-    console.log("Step 1 complete. Success:", validationResult.success, "Stops to create:", validationResult.stopsToCreate.length, "Validated routes:", validationResult.validatedRoutes.length);
-    
-    if (!validationResult.success) return;
+    // ── Task 4.3: Idempotency guard ──────────────────────────────────────────
+    // Reject concurrent calls caused by rapid clicks or re-renders.
+    if (isSubmitting) {
+      console.warn('[RouteSubmissionModal] Submission already in progress — ignoring duplicate call.');
+      return;
+    }
 
-    // Step 2: Create stops - pass the stops directly and get the created mapping back
-    console.log("Step 2: Creating new stops...");
-    const creationResult = await createNewStops(validationResult.stopsToCreate);
-    console.log("Step 2 complete. Success:", creationResult.success, "Created stops:", creationResult.createdStops.length);
-    
-    if (!creationResult.success) return;
+    // Stamp this submission attempt with a unique ID so that, if an older
+    // async call somehow survives long enough to reach the finally block, it
+    // will detect the mismatch and skip clearing the flag.
+    const submissionId = crypto.randomUUID();
+    submissionIdRef.current = submissionId;
+    setIsSubmitting(true);
 
-    // Step 3: Build route group - pass the validated routes AND created stops mapping to avoid async state issues
-    console.log("Step 3: Building route group...");
-    await buildRouteGroup(validationResult.validatedRoutes, creationResult.createdStops);
-    console.log("Step 3 complete.");
-  }, [validateStops, createNewStops, buildRouteGroup]);
+    try {
+      // Step 1: Validation - returns the stops that need to be created AND validated routes with correct IDs
+      console.log("Step 1: Starting validation...");
+      const validationResult = await validateStops();
+      console.log("Step 1 complete. Success:", validationResult.success, "Stops to create:", validationResult.stopsToCreate.length, "Validated routes:", validationResult.validatedRoutes.length);
+      
+      if (!validationResult.success) return;
+
+      // Step 2: Create stops - pass the stops directly and get the created mapping back
+      console.log("Step 2: Creating new stops...");
+      const creationResult = await createNewStops(validationResult.stopsToCreate);
+      console.log("Step 2 complete. Success:", creationResult.success, "Created stops:", creationResult.createdStops.length);
+      
+      if (!creationResult.success) return;
+
+      // Step 3: Build route group - pass the validated routes AND created stops mapping to avoid async state issues
+      console.log("Step 3: Building route group...");
+      await buildRouteGroup(validationResult.validatedRoutes, creationResult.createdStops);
+      console.log("Step 3 complete.");
+    } finally {
+      // ── Task 4.3: Release submission lock ─────────────────────────────────
+      // Only clear the flag if this is still the active submission attempt.
+      // A stale async callback from a previous attempt should not clear the
+      // flag of a newer, currently running submission.
+      if (submissionIdRef.current === submissionId) {
+        setIsSubmitting(false);
+        submissionIdRef.current = null;
+      }
+    }
+  }, [isSubmitting, validateStops, createNewStops, buildRouteGroup]);
 
   const handleClose = () => {
     setState(initialState);
@@ -873,16 +936,25 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             onClick={handleProceed}
             className={mode === 'edit' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-            disabled={validRoutes.length === 0}
+            disabled={validRoutes.length === 0 || isSubmitting}
           >
-            <ArrowRight className="w-4 h-4 mr-2" />
-            {mode === 'edit' ? 'Update' : 'Proceed'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {mode === 'edit' ? 'Updating...' : 'Processing...'}
+              </>
+            ) : (
+              <>
+                <ArrowRight className="w-4 h-4 mr-2" />
+                {mode === 'edit' ? 'Update' : 'Proceed'}
+              </>
+            )}
           </Button>
         </DialogFooter>
       </>

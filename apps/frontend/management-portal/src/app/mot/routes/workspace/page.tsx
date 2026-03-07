@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RouteFormMode from '@/components/mot/routes/workspace/form-mode/RouteFormMode';
 import RouteTextualMode from '@/components/mot/routes/workspace/textual-mode/RouteTextualMode';
@@ -20,6 +20,11 @@ function RouteWorkspaceContent() {
     const { getRouteGroupData, mode, isLoading, loadError, loadRouteGroup, routeGroupId } = useRouteWorkspace();
     const searchParams = useSearchParams();
     const { toast } = useToast();
+    
+    // Track the route group ID we've attempted to load to avoid showing
+    // error toast for transient failures on initial load
+    const attemptedLoadIdRef = useRef<string | null>(null);
+    const lastErrorRef = useRef<string | null>(null);
 
     const pageTitle = mode === 'edit' ? 'Edit Route Group' : 'Create Route Group';
     const pageDescription = mode === 'edit'
@@ -39,17 +44,22 @@ function RouteWorkspaceContent() {
     useEffect(() => {
         const routeGroupIdParam = searchParams.get('routeGroupId');
         if (routeGroupIdParam && !routeGroupId) {
-            loadRouteGroup(routeGroupIdParam).then((success) => {
-                if (!success) {
-                    toast({
-                        title: 'Error',
-                        description: 'Failed to load route group for editing',
-                        variant: 'destructive',
-                    });
-                }
+            attemptedLoadIdRef.current = routeGroupIdParam;
+            loadRouteGroup(routeGroupIdParam);
+        }
+    }, [searchParams, loadRouteGroup, routeGroupId]);
+
+    // Show error toast only when loadError becomes set (and avoid duplicate toasts)
+    useEffect(() => {
+        if (loadError && loadError !== lastErrorRef.current) {
+            lastErrorRef.current = loadError;
+            toast({
+                title: 'Error',
+                description: loadError,
+                variant: 'destructive',
             });
         }
-    }, [searchParams, loadRouteGroup, routeGroupId, toast]);
+    }, [loadError, toast]);
 
     const handleSubmit = () => {
         const routeGroupData = getRouteGroupData();

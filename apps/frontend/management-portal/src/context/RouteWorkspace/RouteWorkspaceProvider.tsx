@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState, useCallback } from 'react';
+import { ReactNode, useState, useCallback, useRef, useEffect } from 'react';
 import { RouteWorkspaceContext, WorkspaceMode } from './RouteWorkspaceContext';
 import { RouteWorkspaceData, createEmptyRouteWorkspaceData, RouteGroup, Route, RouteStop, createEmptyRoute, moveRouteStop, DirectionEnum, StopExistenceType, createEmptyLocation } from '@/types/RouteWorkspaceData';
 import { serializeToYaml, parseFromYaml, serializeToJson, parseFromJson } from '@/services/routeWorkspaceSerializer';
@@ -12,6 +12,10 @@ import {
   RouteAutoGenerationResult
 } from '@/services/routeAutoGeneration';
 import { RouteManagementService, BusStopManagementService } from '@busmate/api-client-route';
+import {
+  validateRouteGroupApiResponse,
+  validateStopDetailsApiResponse,
+} from '@/types/schemas/routeWorkspace.schema';
 
 interface RouteWorkspaceProviderProps {
   children: ReactNode;
@@ -32,21 +36,80 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
     fitBoundsToRoute: null,
   });
 
+  // ── Task 4.2: Request Cancellation ────────────────────────────────────────
+  // Track whether the provider is still mounted so we never call setState on
+  // an unmounted component (which would cause a React warning / memory leak).
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      // Note: We do NOT cancel in-flight requests here because React StrictMode
+      // (enabled in Next.js dev mode) intentionally unmounts/remounts components,
+      // which would abort legitimate requests. The mountedRef guards in
+      // loadRouteGroup are sufficient to prevent setState on unmounted components.
+    };
+  }, []);
+
+  // Holds CancelablePromise objects that are currently in flight.
+  // Used to cancel previous requests when starting a new loadRouteGroup call.
+  // Storing them in a ref avoids triggering re-renders.
+  const pendingRequestsRef = useRef<{ cancel: () => void }[]>([]);
+  
+  // Track the currently loading route group ID to prevent canceling requests
+  // for the same route group during React StrictMode's mount → unmount → remount cycle
+  const loadingRouteGroupIdRef = useRef<string | null>(null);
+
   // Load existing route group for editing
   const loadRouteGroup = useCallback(async (id: string): Promise<boolean> => {
+    // ── Task 4.2: Cancel in-flight requests only if loading a different route group ──
+    // This prevents StrictMode's remount from canceling the initial request for the same ID
+    if (loadingRouteGroupIdRef.current !== id) {
+      pendingRequestsRef.current.forEach(p => { try { p.cancel(); } catch { /* noop */ } });
+      pendingRequestsRef.current = [];
+    }
+    
+    loadingRouteGroupIdRef.current = id;
+
+    if (!mountedRef.current) return false;
+
     setIsLoading(true);
     setLoadError(null);
     
     try {
       // Fetch the route group data
-      const routeGroupResponse = await RouteManagementService.getRouteGroupById(id);
-      
-      if (!routeGroupResponse) {
+      const routeGroupPromise = RouteManagementService.getRouteGroupById(id);
+      pendingRequestsRef.current.push(routeGroupPromise);
+      const routeGroupResponseRaw = await routeGroupPromise;
+
+      if (!mountedRef.current) return false;
+
+      if (!routeGroupResponseRaw) {
         throw new Error('Route group not found');
       }
 
+      // ── Task 4.1: Validate API response at runtime with Zod ───────────────
+      const routeGroupValidation = validateRouteGroupApiResponse(routeGroupResponseRaw);
+      if (!routeGroupValidation.success) {
+        // Log the warning but continue — the generated TS types are usually
+        // accurate enough; Zod mismatch is treated as a non-fatal warning.
+        console.warn('[loadRouteGroup] Route group response validation warning:', routeGroupValidation.error);
+      }
+      const routeGroupResponse = routeGroupResponseRaw;
+
       // Fetch all stop details for the route group in one API call
-      const allStopDetails = await BusStopManagementService.getStopsByRouteGroup(id);
+      const stopDetailsPromise = BusStopManagementService.getStopsByRouteGroup(id);
+      pendingRequestsRef.current.push(stopDetailsPromise);
+      const allStopDetailsRaw = await stopDetailsPromise;
+
+      if (!mountedRef.current) return false;
+
+      // ── Task 4.1: Validate stop details response at runtime with Zod ──────
+      const stopDetailsValidation = validateStopDetailsApiResponse(allStopDetailsRaw);
+      if (!stopDetailsValidation.success) {
+        console.warn('[loadRouteGroup] Stop details response validation warning:', stopDetailsValidation.error);
+      }
+      const allStopDetails = allStopDetailsRaw;
       
       // Create a map of routeStopId -> stop details for quick lookup
       const stopDetailsMap = new Map(
@@ -171,6 +234,8 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
       }
 
       // Set the loaded data
+      if (!mountedRef.current) return false;
+
       setData({
         routeGroup: {
           id: routeGroupResponse.id,
@@ -187,11 +252,16 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
       setIsLoading(false);
       return true;
     } catch (error: any) {
+      if (!mountedRef.current) return false;
       const errorMessage = error.body?.message || error.message || 'Failed to load route group';
       console.error('Failed to load route group:', error);
       setLoadError(errorMessage);
       setIsLoading(false);
       return false;
+    } finally {
+      // Clear the pending requests list and loading ID once this load is complete
+      pendingRequestsRef.current = [];
+      loadingRouteGroupIdRef.current = null;
     }
   }, []);
 
