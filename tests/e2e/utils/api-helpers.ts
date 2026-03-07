@@ -47,53 +47,6 @@ export async function deleteTestBusStop(client: AxiosInstance, id: string) {
   await client.delete(`/api/stops/${id}`);
 }
 
-// ── Operators ────────────────────────────────────────────────────────
-
-export async function createTestOperator(
-  client: AxiosInstance,
-  overrides: Record<string, unknown> = {},
-) {
-  const timestamp = Date.now();
-  const data = {
-    name: `${TEST_PREFIX}Operator ${timestamp}`,
-    operatorType: 'PRIVATE',
-    region: 'Western Province',
-    status: 'active',
-    ...overrides,
-  };
-  const response = await client.post('/api/operators', data);
-  return response.data;
-}
-
-export async function deleteTestOperator(client: AxiosInstance, id: string) {
-  await client.delete(`/api/operators/${id}`);
-}
-
-// ── Buses ────────────────────────────────────────────────────────────
-
-export async function createTestBus(
-  client: AxiosInstance,
-  operatorId: string,
-  overrides: Record<string, unknown> = {},
-) {
-  const timestamp = Date.now();
-  const data = {
-    ntcRegistrationNumber: `${TEST_PREFIX}REG-${timestamp}`,
-    plateNumber: `E2E-${timestamp}`,
-    operatorId,
-    model: 'Test Model',
-    capacity: 50,
-    status: 'ACTIVE',
-    ...overrides,
-  };
-  const response = await client.post('/api/buses', data);
-  return response.data;
-}
-
-export async function deleteTestBus(client: AxiosInstance, id: string) {
-  await client.delete(`/api/buses/${id}`);
-}
-
 // ── Generic Cleanup ──────────────────────────────────────────────────
 
 /**
@@ -103,8 +56,6 @@ export async function deleteTestBus(client: AxiosInstance, id: string) {
 export async function cleanupAllTestData(client: AxiosInstance) {
   const cleanupEndpoints = [
     { endpoint: '/api/stops', listEndpoint: '/api/stops/all', nameField: 'name' },
-    { endpoint: '/api/operators', listEndpoint: '/api/operators', nameField: 'name' },
-    { endpoint: '/api/buses', listEndpoint: '/api/buses', nameField: 'ntcRegistrationNumber' },
   ];
 
   for (const { endpoint, listEndpoint, nameField } of cleanupEndpoints) {
