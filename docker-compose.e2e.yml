@@ -1,0 +1,66 @@
+# E2E Test Environment — Isolated Docker Compose Stack
+#
+# Provides a dedicated PostgreSQL database and Spring Boot backend for
+# Playwright e2e tests. The Next.js management portal is managed separately
+# by Playwright's webServer configuration.
+#
+# Ports are intentionally offset from the development defaults:
+#   PostgreSQL : 5433  (dev default: 5432)
+#   Backend    : 8081  (dev default: 8080)
+#
+# Usage:
+#   pnpm run e2e:env:start   — build images and start services
+#   pnpm run e2e:env:stop    — stop services and remove volumes (clean state)
+#   pnpm run e2e:env:status  — show running service status
+
+name: busmate-e2e
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: busmate-e2e-postgres
+    environment:
+      POSTGRES_DB: busmate_e2e
+      POSTGRES_USER: busmate_e2e
+      POSTGRES_PASSWORD: busmate_e2e
+    ports:
+      - "5433:5432"
+    volumes:
+      - e2e_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U busmate_e2e -d busmate_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Spring Boot backend ────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./apps/backend/api-core
+      dockerfile: Dockerfile.e2e
+    container_name: busmate-e2e-backend
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: e2e
+      # Override datasource to point at the co-located test PostgreSQL container
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/busmate_e2e
+      SPRING_DATASOURCE_USERNAME: busmate_e2e
+      SPRING_DATASOURCE_PASSWORD: busmate_e2e
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      # Spring Boot needs time to build the schema (ddl-auto: create-drop)
+      start_period: 120s
+
+volumes:
+  e2e_postgres_data:
+    driver: local

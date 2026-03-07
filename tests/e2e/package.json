@@ -13,6 +13,13 @@
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+
+    "test:docker": "E2E_DOCKER=true playwright test",
+
+    "env:start": "bash scripts/e2e-env.sh start",
+    "env:stop": "bash scripts/e2e-env.sh stop",
+    "env:status": "bash scripts/e2e-env.sh status",
+    "env:logs": "bash scripts/e2e-env.sh logs"
   }
 }

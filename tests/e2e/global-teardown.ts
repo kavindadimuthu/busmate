@@ -1,14 +1,27 @@
 import type { FullConfig } from '@playwright/test';
 
 async function globalTeardown(_config: FullConfig) {
-  // Optional: Clean up test data created during the test run.
-  // The cleanupAllTestData() function from utils/api-helpers.ts can be called
-  // here to remove any orphaned E2E_TEST_ prefixed records from the database.
+  // ── Docker e2e environment ────────────────────────────────────────────────
+  // When running against the Docker test environment (pnpm run e2e:docker),
+  // all test data cleanup is handled automatically by stopping the environment:
   //
-  // For now this is a no-op. Uncomment and implement when needed:
+  //   pnpm run e2e:env:stop
   //
-  // import { cleanupAllTestData } from './utils/api-helpers';
-  // await cleanupAllTestData(token);
+  // That command runs `docker compose down -v`, which removes the PostgreSQL
+  // container and its volume, wiping every record created during the test run.
+  // No explicit per-record cleanup is needed here.
+  //
+  // ── Local dev environment ─────────────────────────────────────────────────
+  // When running against a shared dev environment, test data prefixed with
+  // E2E_TEST_ can be removed via cleanupAllTestData() from utils/api-helpers.
+  // Uncomment and adapt the block below if required:
+  //
+  // import { createApiClient, cleanupAllTestData } from './utils/api-helpers.js';
+  // const token = process.env.E2E_API_TOKEN;
+  // if (token) {
+  //   const client = createApiClient(token);
+  //   await cleanupAllTestData(client);
+  // }
 
   console.log('[global-teardown] Teardown complete.');
 }

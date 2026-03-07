@@ -1,0 +1,82 @@
+# Spring Boot profile: e2e
+#
+# Activated via SPRING_PROFILES_ACTIVE=e2e (set in docker-compose.e2e.yml).
+# Overrides the root application.yml with settings optimised for an isolated,
+# ephemeral test environment.
+#
+# The datasource connection details are further overridden at container runtime
+# by the SPRING_DATASOURCE_* environment variables injected by Docker Compose,
+# so the values below act only as local-development fallbacks.
+
+spring:
+  datasource:
+    # Fallback values — overridden by SPRING_DATASOURCE_* env vars in Docker
+    url: jdbc:postgresql://localhost:5433/busmate_e2e
+    username: busmate_e2e
+    password: busmate_e2e
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Minimal pool size for a single-run test environment
+      minimum-idle: 1
+      maximum-pool-size: 5
+      connection-timeout: 10000
+      idle-timeout: 120000
+      max-lifetime: 300000
+      validation-timeout: 3000
+      connection-test-query: SELECT 1
+      pool-name: BusMateE2EPool
+      auto-commit: false
+
+  jpa:
+    hibernate:
+      # Create schema on startup and drop it on shutdown.
+      # This guarantees every test run starts with a fresh, empty database.
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 10
+        connection:
+          provider_disables_autocommit: false
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      # No seed data — tests create and clean up their own records
+      mode: never
+
+server:
+  port: 8080
+
+# Asgardeo JWT validation still uses the real JWKS endpoint.
+# Tests authenticate with real Asgardeo test-user credentials and the issued
+# JWTs are validated by the same public keys as in any other environment.
+asgardeo:
+  jwks-url: https://api.asgardeo.io/t/busmate/oauth2/jwks
+
+logging:
+  level:
+    com.busmate.routeschedule: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{25} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
