@@ -4,6 +4,9 @@
 // ── Utilities ─────────────────────────────────────────────
 export { cn } from "./lib/utils";
 
+// ── Hooks ─────────────────────────────────────────────────
+export { useMediaQuery, useMobile } from "./hooks";
+
 // ── Base Components (shadcn/ui primitives) ────────────────
 
 // Accordion
