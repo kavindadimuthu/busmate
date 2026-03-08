@@ -1,7 +1,11 @@
 'use client';
 
 import { useRouteWorkspace } from "@/context/RouteWorkspace/useRouteWorkspace";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Copy, Check, AlertTriangle } from "lucide-react";
 
 type TextualFormat = 'yaml' | 'json';
 
@@ -9,6 +13,8 @@ export default function RouteTextualMode() {
   const { data, updateFromYaml, getYaml, updateFromJson, getJson } = useRouteWorkspace();
   const [textContent, setTextContent] = useState('');
   const [format, setFormat] = useState<TextualFormat>('yaml');
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Sync context data to textarea when form changes or format changes
   useEffect(() => {
@@ -17,22 +23,23 @@ export default function RouteTextualMode() {
     } else {
       setTextContent(getJson());
     }
+    setParseError(null);
   }, [data, getYaml, getJson, format]);
 
   // Handle textarea changes and update context
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setTextContent(newText);
+    setParseError(null);
 
-    // Parse and update context based on format
     try {
       if (format === 'yaml') {
         updateFromYaml(newText);
       } else {
         updateFromJson(newText);
       }
-    } catch (error) {
-      console.error(`Failed to parse ${format.toUpperCase()}:`, error);
+    } catch (error: any) {
+      setParseError(error.message || `Invalid ${format.toUpperCase()} syntax`);
     }
   };
 
@@ -40,11 +47,23 @@ export default function RouteTextualMode() {
   const handleFormatChange = (newFormat: TextualFormat) => {
     if (newFormat !== format) {
       setFormat(newFormat);
-      // Content will be updated by the useEffect
     }
   };
 
-  const placeholder = format === 'yaml' 
+  // Copy content to clipboard
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(textContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for environments without clipboard API
+    }
+  }, [textContent]);
+
+  const lineCount = textContent.split('\n').length;
+
+  const placeholder = format === 'yaml'
     ? `# Example:
 route_group:
   name: Colombo - Kandy Express Routes
@@ -61,52 +80,98 @@ route_group:
 }`;
 
   return (
-    <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
-      {/* Section Header */}
-      <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-700">
-            {format === 'yaml' ? 'YAML Editor' : 'JSON Editor'}
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Enter or paste route group data in {format.toUpperCase()} format. Changes sync with Form Mode in real-time.
-          </p>
+    <TooltipProvider>
+      <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden h-full">
+        {/* Header */}
+        <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-slate-700">
+              {format === 'yaml' ? 'YAML Editor' : 'JSON Editor'}
+            </h3>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 tabular-nums">
+              {lineCount} lines
+            </Badge>
+            {parseError && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Parse Error
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Copy button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={handleCopy}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{copied ? 'Copied!' : 'Copy to clipboard'}</TooltipContent>
+            </Tooltip>
+
+            {/* Format toggle */}
+            <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => handleFormatChange('yaml')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
+                  format === 'yaml'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                YAML
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFormatChange('json')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
+                  format === 'json'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                JSON
+              </button>
+            </div>
+          </div>
         </div>
-        {/* Format Toggle */}
-        <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-          <button
-            type="button"
-            onClick={() => handleFormatChange('yaml')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
-              format === 'yaml'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+
+        {/* Parse error banner */}
+        {parseError && (
+          <div className="px-4 py-2 bg-red-50 border-b border-red-200 flex items-start gap-2 shrink-0">
+            <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-700 font-mono break-all">{parseError}</p>
+          </div>
+        )}
+
+        {/* Editor area — takes remaining height */}
+        <div className="flex-1 p-4 min-h-0">
+          <textarea
+            className={`w-full h-full min-h-[500px] border rounded-lg px-4 py-3 bg-slate-50 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:border-blue-500 transition-all duration-200 resize-none ${
+              parseError
+                ? 'border-red-300 focus:ring-red-200'
+                : 'border-slate-200 focus:ring-blue-200'
             }`}
-          >
-            YAML
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFormatChange('json')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
-              format === 'json'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            JSON
-          </button>
+            value={textContent}
+            onChange={handleTextChange}
+            placeholder={placeholder}
+            spellCheck={false}
+          />
+        </div>
+
+        {/* Footer status */}
+        <div className="px-5 py-1.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400 shrink-0">
+          <span>Changes sync with Form Mode in real-time</span>
+          <span className="tabular-nums">{textContent.length} characters</span>
         </div>
       </div>
-      {/* Full available screen sized text editor area to type or paste full route group data with route data and routestop data in textual format */}
-      <div className="p-4">
-        <textarea
-          className="w-full h-[700px] border border-slate-300 rounded-lg px-3 py-2.5 bg-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
-          value={textContent}
-          onChange={handleTextChange}
-          placeholder={placeholder}
-        />
-      </div>
-    </div>
-  )
+    </TooltipProvider>
+  );
 }

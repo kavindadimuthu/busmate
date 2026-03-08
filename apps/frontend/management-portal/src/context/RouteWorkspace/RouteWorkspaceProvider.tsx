@@ -487,22 +487,25 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
       };
     }
 
-    // Generate the route using the service
-    const result = generateRouteFromCorrespondingService(sourceRoute, options);
+    // Find if a route with the target direction already exists (for matching route stops)
+    const existingTargetRoute = findRouteByDirection(data.routeGroup.routes, targetDirection);
+
+    // Generate the route using the service, passing existing route for ID matching
+    const result = generateRouteFromCorrespondingService(
+      sourceRoute,
+      options,
+      existingTargetRoute
+    );
 
     if (result.success) {
       // Find if a route with the target direction already exists
       const existingIndex = findRouteIndexByDirection(data.routeGroup.routes, targetDirection);
 
       if (existingIndex >= 0) {
-        // Replace the existing route, preserving its ID
+        // Replace the existing route (IDs already preserved by service)
         setData(prevData => {
           const routes = [...prevData.routeGroup.routes];
-          const existingRouteId = routes[existingIndex].id;
-          routes[existingIndex] = {
-            ...result.route,
-            id: existingRouteId, // Preserve the existing route ID
-          };
+          routes[existingIndex] = result.route;
           return {
             ...prevData,
             routeGroup: {

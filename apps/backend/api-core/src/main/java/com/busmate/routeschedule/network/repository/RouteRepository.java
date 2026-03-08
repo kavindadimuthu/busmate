@@ -28,7 +28,8 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     Optional<Route> findByNameAndRouteGroup_Id(String name, UUID routeGroupId);
     
     @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM Route r " +
-           "WHERE r.name = :name AND r.routeGroup.id = :routeGroupId AND r.id <> :excludeId")
+           "WHERE r.name = :name AND r.routeGroup.id = :routeGroupId AND " +
+           "(:excludeId IS NULL OR r.id <> :excludeId)")
     boolean existsByNameAndRouteGroup_IdAndIdNot(@Param("name") String name, 
                                                    @Param("routeGroupId") UUID routeGroupId,
                                                    @Param("excludeId") UUID excludeId);

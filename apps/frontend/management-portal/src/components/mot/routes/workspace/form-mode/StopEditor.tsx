@@ -12,17 +12,80 @@ import {
 import { BusStopManagementService } from '@busmate/api-client-route';
 import type { StopRequest } from '@busmate/api-client-route';
 
-interface StopEditorProps {
-    onToggle: () => void;
-    collapsed: boolean;
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import {
+    X, ChevronDown, MapPin, Search, Plus, Save,
+    Loader2, Accessibility, Type, Navigation, Globe,
+} from "lucide-react";
+
+/* ─── Fields that update stop.location rather than stop directly ─── */
+const LOCATION_FIELDS = new Set([
+    'latitude', 'longitude',
+    'address', 'addressSinhala', 'addressTamil',
+    'city', 'citySinhala', 'cityTamil',
+    'state', 'stateSinhala', 'stateTamil',
+    'zipCode',
+    'country', 'countrySinhala', 'countryTamil',
+]);
+
+/* ─── Collapsible section for the editor ─── */
+function EditorSection({ title, icon, defaultOpen = false, badge, children }: {
+    title: string;
+    icon: React.ReactNode;
+    defaultOpen?: boolean;
+    badge?: React.ReactNode;
+    children: React.ReactNode;
+}) {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+    return (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <CollapsibleTrigger asChild>
+                <button className="flex items-center justify-between w-full py-2 px-3 hover:bg-slate-50 rounded-md transition-colors text-left">
+                    <div className="flex items-center gap-2">
+                        {icon}
+                        <span className="text-sm font-medium text-slate-700">{title}</span>
+                        {badge}
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <div className="px-3 pt-1 pb-3 space-y-3">
+                    {children}
+                </div>
+            </CollapsibleContent>
+        </Collapsible>
+    );
 }
 
-export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
-    const { data, selectedRouteIndex, selectedStopIndex, updateRouteStop } = useRouteWorkspace();
+/* ─── Compact form field wrapper ─── */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div className="space-y-1">
+            <Label className="text-xs text-slate-500">{label}</Label>
+            {children}
+        </div>
+    );
+}
+
+export default function StopEditor() {
+    const { data, selectedRouteIndex, selectedStopIndex, updateRouteStop, clearSelectedStop } = useRouteWorkspace();
     const { toast } = useToast();
     const [isSearching, setIsSearching] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
-    const [isUpdating, setIsUpdating] = useState(false);    // Get selected stop data
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const open = selectedStopIndex !== null && selectedRouteIndex !== null;
+
+    // Get selected stop data
     const selectedStop =
         selectedRouteIndex !== null &&
             selectedStopIndex !== null &&
@@ -30,159 +93,40 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
             ? data.routeGroup.routes[selectedRouteIndex].routeStops[selectedStopIndex]
             : null;
 
+    /* ─── Generic field change handler (replaces long if-else chain) ─── */
     const handleFieldChange = (field: string, value: any) => {
         if (selectedRouteIndex === null || selectedStopIndex === null) return;
-
         const currentStop = selectedStop?.stop;
         if (!currentStop) return;
 
-        // Helper to ensure location has required fields
-        const ensureValidLocation = (partialLocation: Partial<Location>): Location => {
-            const existingLocation = currentStop.location;
+        const ensureValidLocation = (partial: Partial<Location>): Location => {
+            const loc = currentStop.location;
             return {
-                latitude: partialLocation.latitude ?? existingLocation?.latitude ?? 0,
-                longitude: partialLocation.longitude ?? existingLocation?.longitude ?? 0,
-                address: partialLocation.address ?? existingLocation?.address,
-                city: partialLocation.city ?? existingLocation?.city,
-                state: partialLocation.state ?? existingLocation?.state,
-                zipCode: partialLocation.zipCode ?? existingLocation?.zipCode,
-                country: partialLocation.country ?? existingLocation?.country,
-                addressSinhala: partialLocation.addressSinhala ?? existingLocation?.addressSinhala,
-                citySinhala: partialLocation.citySinhala ?? existingLocation?.citySinhala,
-                stateSinhala: partialLocation.stateSinhala ?? existingLocation?.stateSinhala,
-                countrySinhala: partialLocation.countrySinhala ?? existingLocation?.countrySinhala,
-                addressTamil: partialLocation.addressTamil ?? existingLocation?.addressTamil,
-                cityTamil: partialLocation.cityTamil ?? existingLocation?.cityTamil,
-                stateTamil: partialLocation.stateTamil ?? existingLocation?.stateTamil,
-                countryTamil: partialLocation.countryTamil ?? existingLocation?.countryTamil,
+                latitude: partial.latitude ?? loc?.latitude ?? 0,
+                longitude: partial.longitude ?? loc?.longitude ?? 0,
+                address: partial.address ?? loc?.address,
+                city: partial.city ?? loc?.city,
+                state: partial.state ?? loc?.state,
+                zipCode: partial.zipCode ?? loc?.zipCode,
+                country: partial.country ?? loc?.country,
+                addressSinhala: partial.addressSinhala ?? loc?.addressSinhala,
+                citySinhala: partial.citySinhala ?? loc?.citySinhala,
+                stateSinhala: partial.stateSinhala ?? loc?.stateSinhala,
+                countrySinhala: partial.countrySinhala ?? loc?.countrySinhala,
+                addressTamil: partial.addressTamil ?? loc?.addressTamil,
+                cityTamil: partial.cityTamil ?? loc?.cityTamil,
+                stateTamil: partial.stateTamil ?? loc?.stateTamil,
+                countryTamil: partial.countryTamil ?? loc?.countryTamil,
             };
         };
 
-        // Update specific fields in the context
-        if (field === 'name') {
+        if (LOCATION_FIELDS.has(field)) {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { ...currentStop, name: value }
+                stop: { ...currentStop, location: ensureValidLocation({ [field]: value }) }
             });
-        } else if (field === 'nameSinhala') {
+        } else {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { ...currentStop, nameSinhala: value }
-            });
-        } else if (field === 'nameTamil') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { ...currentStop, nameTamil: value }
-            });
-        } else if (field === 'description') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { ...currentStop, description: value }
-            });
-        } else if (field === 'latitude') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ latitude: value })
-                }
-            });
-        } else if (field === 'longitude') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ longitude: value })
-                }
-            });
-        } else if (field === 'address') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ address: value })
-                }
-            });
-        } else if (field === 'addressSinhala') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ addressSinhala: value })
-                }
-            });
-        } else if (field === 'addressTamil') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ addressTamil: value })
-                }
-            });
-        } else if (field === 'city') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ city: value })
-                }
-            });
-        } else if (field === 'citySinhala') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ citySinhala: value })
-                }
-            });
-        } else if (field === 'cityTamil') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ cityTamil: value })
-                }
-            });
-        } else if (field === 'state') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ state: value })
-                }
-            });
-        } else if (field === 'stateSinhala') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ stateSinhala: value })
-                }
-            });
-        } else if (field === 'stateTamil') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ stateTamil: value })
-                }
-            });
-        } else if (field === 'zipCode') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ zipCode: value })
-                }
-            });
-        } else if (field === 'country') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ country: value })
-                }
-            });
-        } else if (field === 'countrySinhala') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ countrySinhala: value })
-                }
-            });
-        } else if (field === 'countryTamil') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: {
-                    ...currentStop,
-                    location: ensureValidLocation({ countryTamil: value })
-                }
-            });
-        } else if (field === 'isAccessible') {
-            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { ...currentStop, isAccessible: value }
+                stop: { ...currentStop, [field]: value }
             });
         }
     };
@@ -523,311 +467,334 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
         }
     };
 
+    const isBusy = isSearching || isCreating || isUpdating;
+
     return (
-        <div className={`flex flex-col border-r-3 border-gray-300 px-2 py-2 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
-            <div className={`flex ${collapsed ? 'flex-col items-center py-3' : 'justify-between items-center px-3 py-2'}`}>
-                {collapsed ? (
-                    <div className="flex flex-col gap-8">
-                        <button onClick={onToggle} className="p-1.5 hover:bg-slate-200 rounded transition-colors flex items-center justify-center">
-                            <img src="/icons/Sidebar-Collapse--Streamline-Iconoir.svg" className="w-4 h-4 rotate-180 opacity-60" alt="Expand" />
-                        </button>
-                        <span className="transform -rotate-90 origin-center whitespace-nowrap text-xs font-medium text-slate-600">Stop Editor</span>
+        <TooltipProvider>
+            {/* Backdrop — click to close */}
+            {open && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/20 transition-opacity"
+                    onClick={clearSelectedStop}
+                />
+            )}
+
+            {/* Slide-over panel */}
+            <div
+                className={`fixed top-0 right-0 z-50 h-full w-[420px] bg-white border-l border-slate-200 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+                    open ? 'translate-x-0' : 'translate-x-full'
+                }`}
+            >
+                {/* ── Header ── */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
+                        <h3 className="text-sm font-semibold text-slate-700 truncate">
+                            {selectedStop?.stop.name || 'Stop Editor'}
+                        </h3>
+                        {selectedStop && (
+                            <Badge
+                                variant={selectedStop.stop.type === StopExistenceType.EXISTING ? 'default' : 'secondary'}
+                                className="text-[10px] px-1.5 py-0 shrink-0"
+                            >
+                                {selectedStop.stop.type === StopExistenceType.EXISTING ? 'Existing' : 'New'}
+                            </Badge>
+                        )}
                     </div>
-                ) : (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={clearSelectedStop}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                {selectedStop ? (
                     <>
-                        <span className="text-sm font-medium text-slate-700">Stop Editor</span>
-                        <button onClick={onToggle} className="p-1.5 hover:bg-slate-200 rounded transition-colors flex items-center justify-center">
-                            <img src="/icons/Sidebar-Collapse--Streamline-Iconoir.svg" className="w-4 h-4 opacity-60" alt="Collapse" />
-                        </button>
+                        {/* ── Action bar ── */}
+                        <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-2 shrink-0">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleSearchExistingStop}
+                                        disabled={isBusy}
+                                        className="h-8 text-xs gap-1.5"
+                                    >
+                                        {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                                        Search
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Search for this stop in the database</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleCreateStop}
+                                        disabled={isBusy}
+                                        className="h-8 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700"
+                                    >
+                                        {isCreating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                                        Create
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Create a new stop in the database</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleUpdateStop}
+                                        disabled={isBusy}
+                                        className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                                    >
+                                        {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                                        Update
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Update this stop in the database</TooltipContent>
+                            </Tooltip>
+                        </div>
+
+                        {/* ── Scrollable form ── */}
+                        <ScrollArea className="flex-1">
+                            <div className="p-2 space-y-1">
+                                {/* Basic Info */}
+                                <EditorSection
+                                    title="Basic Info"
+                                    icon={<Type className="h-4 w-4 text-slate-400" />}
+                                    defaultOpen
+                                    badge={
+                                        selectedStop.stop.id ? (
+                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
+                                                {selectedStop.stop.id.length > 12
+                                                    ? `${selectedStop.stop.id.substring(0, 12)}…`
+                                                    : selectedStop.stop.id}
+                                            </Badge>
+                                        ) : null
+                                    }
+                                >
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-slate-400">ID:</span>
+                                        <span className="font-mono text-slate-600">
+                                            {selectedStop.stop.id || <span className="text-slate-300 italic">Not assigned</span>}
+                                        </span>
+                                    </div>
+
+                                    <Field label="Name (English)">
+                                        <Input
+                                            value={selectedStop.stop.name || ''}
+                                            onChange={(e) => handleFieldChange('name', e.target.value)}
+                                            placeholder="Enter stop name"
+                                            className="h-8 text-sm"
+                                        />
+                                    </Field>
+
+                                    <Field label="Description">
+                                        <Textarea
+                                            value={selectedStop.stop.description || ''}
+                                            onChange={(e) => handleFieldChange('description', e.target.value)}
+                                            placeholder="Optional description"
+                                            rows={2}
+                                            className="text-sm resize-none"
+                                        />
+                                    </Field>
+                                </EditorSection>
+
+                                <Separator />
+
+                                {/* Translations */}
+                                <EditorSection
+                                    title="Translations"
+                                    icon={<Globe className="h-4 w-4 text-slate-400" />}
+                                >
+                                    <Field label="Name (Sinhala)">
+                                        <Input
+                                            value={selectedStop.stop.nameSinhala || ''}
+                                            onChange={(e) => handleFieldChange('nameSinhala', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </Field>
+                                    <Field label="Name (Tamil)">
+                                        <Input
+                                            value={selectedStop.stop.nameTamil || ''}
+                                            onChange={(e) => handleFieldChange('nameTamil', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </Field>
+                                </EditorSection>
+
+                                <Separator />
+
+                                {/* Coordinates */}
+                                <EditorSection
+                                    title="Coordinates"
+                                    icon={<Navigation className="h-4 w-4 text-slate-400" />}
+                                    defaultOpen
+                                >
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Field label="Latitude">
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                value={selectedStop.stop.location?.latitude || ''}
+                                                onChange={(e) => handleFieldChange('latitude', parseFloat(e.target.value) || 0)}
+                                                className="h-8 text-sm font-mono"
+                                            />
+                                        </Field>
+                                        <Field label="Longitude">
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                value={selectedStop.stop.location?.longitude || ''}
+                                                onChange={(e) => handleFieldChange('longitude', parseFloat(e.target.value) || 0)}
+                                                className="h-8 text-sm font-mono"
+                                            />
+                                        </Field>
+                                    </div>
+                                </EditorSection>
+
+                                <Separator />
+
+                                {/* Address */}
+                                <EditorSection
+                                    title="Address"
+                                    icon={<MapPin className="h-4 w-4 text-slate-400" />}
+                                >
+                                    <Field label="Address (English)">
+                                        <Input
+                                            value={selectedStop.stop.location?.address || ''}
+                                            onChange={(e) => handleFieldChange('address', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </Field>
+                                    <Field label="Address (Sinhala)">
+                                        <Input
+                                            value={selectedStop.stop.location?.addressSinhala || ''}
+                                            onChange={(e) => handleFieldChange('addressSinhala', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </Field>
+                                    <Field label="Address (Tamil)">
+                                        <Input
+                                            value={selectedStop.stop.location?.addressTamil || ''}
+                                            onChange={(e) => handleFieldChange('addressTamil', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </Field>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Field label="City (Eng)">
+                                            <Input
+                                                value={selectedStop.stop.location?.city || ''}
+                                                onChange={(e) => handleFieldChange('city', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                        <Field label="City (Sin)">
+                                            <Input
+                                                value={selectedStop.stop.location?.citySinhala || ''}
+                                                onChange={(e) => handleFieldChange('citySinhala', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                        <Field label="City (Tam)">
+                                            <Input
+                                                value={selectedStop.stop.location?.cityTamil || ''}
+                                                onChange={(e) => handleFieldChange('cityTamil', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Field label="State (Eng)">
+                                            <Input
+                                                value={selectedStop.stop.location?.state || ''}
+                                                onChange={(e) => handleFieldChange('state', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                        <Field label="State (Sin)">
+                                            <Input
+                                                value={selectedStop.stop.location?.stateSinhala || ''}
+                                                onChange={(e) => handleFieldChange('stateSinhala', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                        <Field label="State (Tam)">
+                                            <Input
+                                                value={selectedStop.stop.location?.stateTamil || ''}
+                                                onChange={(e) => handleFieldChange('stateTamil', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                    </div>
+
+                                    <Field label="Zip Code">
+                                        <Input
+                                            value={selectedStop.stop.location?.zipCode || ''}
+                                            onChange={(e) => handleFieldChange('zipCode', e.target.value)}
+                                            className="h-8 text-sm w-1/3"
+                                        />
+                                    </Field>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Field label="Country (Eng)">
+                                            <Input
+                                                value={selectedStop.stop.location?.country || ''}
+                                                onChange={(e) => handleFieldChange('country', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                        <Field label="Country (Sin)">
+                                            <Input
+                                                value={selectedStop.stop.location?.countrySinhala || ''}
+                                                onChange={(e) => handleFieldChange('countrySinhala', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                        <Field label="Country (Tam)">
+                                            <Input
+                                                value={selectedStop.stop.location?.countryTamil || ''}
+                                                onChange={(e) => handleFieldChange('countryTamil', e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </Field>
+                                    </div>
+                                </EditorSection>
+
+                                <Separator />
+
+                                {/* Options */}
+                                <EditorSection
+                                    title="Options"
+                                    icon={<Accessibility className="h-4 w-4 text-slate-400" />}
+                                >
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedStop.stop.isAccessible || false}
+                                            onChange={(e) => handleFieldChange('isAccessible', e.target.checked)}
+                                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm text-slate-700">Wheelchair accessible</span>
+                                    </label>
+                                </EditorSection>
+                            </div>
+                        </ScrollArea>
                     </>
+                ) : (
+                    /* Empty state when panel is open but no stop selected */
+                    <div className="flex-1 flex items-center justify-center p-8">
+                        <div className="text-center text-slate-400">
+                            <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                            <p className="text-sm">Select a stop from the list to edit its details</p>
+                        </div>
+                    </div>
                 )}
             </div>
-            {!collapsed && (
-                <div className="px-3 pb-3">
-                    {!selectedStop ? (
-                        <div className="text-center text-slate-400 py-8">
-                            <p className="text-xs">Select a route stop from the list to edit</p>
-                        </div>
-                    ) : (
-                        <form className="space-y-3">
-                            {/* Top action bar for stop tasks */}
-                            <div className="bg-white border border-slate-200 px-2 py-1.5 rounded-lg flex gap-2 justify-between">
-                                <div className="flex gap-1.5">
-                                    <button
-                                        type="button"
-                                        onClick={handleCreateStop}
-                                        disabled={isCreating || isUpdating || isSearching}
-                                        className="px-2.5 py-1 bg-violet-600 text-xs font-medium text-white rounded-md hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-                                    >
-                                        {isCreating ? (
-                                            <>
-                                                <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Creating...
-                                            </>
-                                        ) : (
-                                            'Create'
-                                        )}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleUpdateStop}
-                                        disabled={isUpdating || isCreating || isSearching}
-                                        className="px-2.5 py-1 bg-emerald-600 text-xs font-medium text-white rounded-md hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-                                    >
-                                        {isUpdating ? (
-                                            <>
-                                                <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Updating...
-                                            </>
-                                        ) : (
-                                            'Update'
-                                        )}
-                                    </button>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleSearchExistingStop}
-                                    disabled={isSearching || isCreating || isUpdating}
-                                    className="px-2.5 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
-                                >
-                                    {isSearching ? (
-                                        <>
-                                            <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            Searching...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                            </svg>
-                                            Search
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                            <div className="flex gap-3 items-center">
-                                <label className="text-xs font-medium text-slate-600">Id:</label>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${selectedStop.stop.type === StopExistenceType.EXISTING ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
-                                    {selectedStop.stop.id || 'new'}
-                                </span>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Name (Eng)</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                    value={selectedStop.stop.name || ''}
-                                    onChange={(e) => handleFieldChange('name', e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Name (Sin)</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                    value={selectedStop.stop.nameSinhala || ''}
-                                    onChange={(e) => handleFieldChange('nameSinhala', e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Name (Tam)</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                    value={selectedStop.stop.nameTamil || ''}
-                                    onChange={(e) => handleFieldChange('nameTamil', e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
-                                <textarea
-                                    className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                                    rows={2}
-                                    value={selectedStop.stop.description || ''}
-                                    onChange={(e) => handleFieldChange('description', e.target.value)}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Latitude</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                        value={selectedStop.stop.location?.latitude || ''}
-                                        onChange={(e) => handleFieldChange('latitude', parseFloat(e.target.value) || 0)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Longitude</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                        value={selectedStop.stop.location?.longitude || ''}
-                                        onChange={(e) => handleFieldChange('longitude', parseFloat(e.target.value) || 0)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Address (Eng)</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-slate-300 rounded-md px-2.5 py-1.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                    value={selectedStop.stop.location?.address || ''}
-                                    onChange={(e) => handleFieldChange('address', e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium">Address (Sin)</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                    value={selectedStop.stop.location?.addressSinhala || ''}
-                                    onChange={(e) => handleFieldChange('addressSinhala', e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium">Address (Tam)</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                    value={selectedStop.stop.location?.addressTamil || ''}
-                                    onChange={(e) => handleFieldChange('addressTamil', e.target.value)}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-2">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">City (Eng)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.city || ''}
-                                        onChange={(e) => handleFieldChange('city', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">City (Sin)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.citySinhala || ''}
-                                        onChange={(e) => handleFieldChange('citySinhala', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">City (Tam)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.cityTamil || ''}
-                                        onChange={(e) => handleFieldChange('cityTamil', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-2">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">State (Eng)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.state || ''}
-                                        onChange={(e) => handleFieldChange('state', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">State (Sin)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.stateSinhala || ''}
-                                        onChange={(e) => handleFieldChange('stateSinhala', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">State (Tam)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.stateTamil || ''}
-                                        onChange={(e) => handleFieldChange('stateTamil', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Zip Code</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.zipCode || ''}
-                                        onChange={(e) => handleFieldChange('zipCode', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-2">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Country (Eng)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.country || ''}
-                                        onChange={(e) => handleFieldChange('country', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Country (Sin)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.countrySinhala || ''}
-                                        onChange={(e) => handleFieldChange('countrySinhala', e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Country (Tam)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
-                                        value={selectedStop.stop.location?.countryTamil || ''}
-                                        onChange={(e) => handleFieldChange('countryTamil', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="accessible"
-                                    checked={selectedStop.stop.isAccessible || false}
-                                    onChange={(e) => handleFieldChange('isAccessible', e.target.checked)}
-                                />
-                                <label htmlFor="accessible" className="ml-2 text-sm">Accessible</label>
-                            </div>
-                        </form>
-                    )}
-                </div>
-            )}
-        </div>
-    )
+        </TooltipProvider>
+    );
 }

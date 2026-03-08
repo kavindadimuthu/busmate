@@ -27,8 +27,11 @@ import {
   CheckCircle2, 
   CircleDot,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  SkipForward
 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 interface RouteSubmissionModalProps {
   isOpen: boolean;
@@ -228,9 +231,6 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         );
       }
 
-      console.log('Validation complete. Stops to create:', stopsToCreate);
-      console.log('Validated routes with updated stop IDs:', validatedRoutes.length);
-
       setState(prev => ({
         ...prev,
         validationResults: undefined, // We aggregated results
@@ -274,8 +274,6 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   // Step 2: Create new stops using batch API
   // Accepts stopsToCreate directly and returns the created stops mapping for use by buildRouteGroup
   const createNewStops = useCallback(async (stopsToCreate: Stop[]): Promise<{ success: boolean; createdStops: { original: Stop; created: Stop }[] }> => {
-    console.log("Creating new stops...", stopsToCreate);
-
     if (stopsToCreate.length === 0) {
       setState(prev => ({
         ...prev,
@@ -289,7 +287,6 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
           }
         }
       }));
-      console.log("No new stops to create.");
       return { success: true, createdStops: [] };
     }
 
@@ -381,8 +378,6 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
     try {
       const batchResponse = await BusStopManagementService.createStopsBatch(batchRequest);
-
-      console.log("Batch creation response:", batchResponse);
 
       const createdStops: { original: Stop; created: Stop }[] = [];
 
@@ -573,8 +568,6 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         }
       });
 
-      console.log('Created stops coord mapping:', Object.fromEntries(createdStopByCoord));
-
       // Helper: resolve the correct stop ID from created-stop mappings or pre-existing ID.
       const getStopId = (stop: Stop): string => {
         // 1. Coordinate lookup — most precise, handles duplicate names
@@ -657,13 +650,6 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         })
       };
 
-      // Console log the final route group object
-      console.log('='.repeat(80));
-      console.log(`ROUTE GROUP ${mode === 'edit' ? 'UPDATE' : 'SUBMISSION'} - Final Request Object`);
-      console.log('='.repeat(80));
-      console.log(JSON.stringify(routeGroupRequest, null, 2));
-      console.log('='.repeat(80));
-
       setProgress({
         current: 2,
         total: 2,
@@ -675,11 +661,9 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       if (mode === 'edit' && routeGroupId) {
         // Update existing route group
         resultRouteGroup = await RouteManagementService.updateRouteGroup(routeGroupId, routeGroupRequest);
-        console.log('Route group updated successfully:', resultRouteGroup);
       } else {
         // Create new route group
         resultRouteGroup = await RouteManagementService.createRouteGroup(routeGroupRequest);
-        console.log('Route group created successfully:', resultRouteGroup);
       }
 
       setState(prev => ({
@@ -742,23 +726,15 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
     try {
       // Step 1: Validation - returns the stops that need to be created AND validated routes with correct IDs
-      console.log("Step 1: Starting validation...");
       const validationResult = await validateStops();
-      console.log("Step 1 complete. Success:", validationResult.success, "Stops to create:", validationResult.stopsToCreate.length, "Validated routes:", validationResult.validatedRoutes.length);
-      
       if (!validationResult.success) return;
 
       // Step 2: Create stops - pass the stops directly and get the created mapping back
-      console.log("Step 2: Creating new stops...");
       const creationResult = await createNewStops(validationResult.stopsToCreate);
-      console.log("Step 2 complete. Success:", creationResult.success, "Created stops:", creationResult.createdStops.length);
-      
       if (!creationResult.success) return;
 
       // Step 3: Build route group - pass the validated routes AND created stops mapping to avoid async state issues
-      console.log("Step 3: Building route group...");
       await buildRouteGroup(validationResult.validatedRoutes, creationResult.createdStops);
-      console.log("Step 3 complete.");
     } finally {
       // ── Task 4.3: Release submission lock ─────────────────────────────────
       // Only clear the flag if this is still the active submission attempt.
@@ -782,58 +758,61 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     handleClose();
   };
 
-  // Render step indicator
+  // Render step indicator — compact row design
   const renderStepIndicator = (step: StepStatus, label: string, stepNumber: number) => {
     const getIcon = () => {
       switch (step.status) {
         case 'completed':
-          return <CheckCircle2 className="w-6 h-6 text-green-600" />;
+          return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
         case 'failed':
-          return <X className="w-6 h-6 text-red-600" />;
+          return <X className="w-5 h-5 text-red-600" />;
         case 'in-progress':
-          return <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />;
+          return <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />;
         case 'skipped':
-          return <Check className="w-6 h-6 text-gray-400" />;
+          return <SkipForward className="w-5 h-5 text-slate-400" />;
         default:
-          return <CircleDot className="w-6 h-6 text-gray-300" />;
+          return <CircleDot className="w-5 h-5 text-slate-300" />;
       }
     };
 
-    const getStatusColor = () => {
-      switch (step.status) {
-        case 'completed':
-          return 'border-green-600 bg-green-50';
-        case 'failed':
-          return 'border-red-600 bg-red-50';
-        case 'in-progress':
-          return 'border-blue-600 bg-blue-50';
-        case 'skipped':
-          return 'border-gray-300 bg-gray-50';
-        default:
-          return 'border-gray-200 bg-white';
-      }
-    };
+    const statusBg = {
+      completed: 'bg-emerald-50 border-emerald-200',
+      failed: 'bg-red-50 border-red-200',
+      'in-progress': 'bg-blue-50 border-blue-200',
+      skipped: 'bg-slate-50 border-slate-200',
+      pending: 'bg-white border-slate-100',
+    }[step.status];
 
     return (
-      <div className={`p-4 rounded-lg border-2 ${getStatusColor()} transition-all duration-300`}>
-        <div className="flex items-center gap-3">
-          <div className="shrink-0">
-            {getIcon()}
-          </div>
-          <div className="grow">
+      <div className={`px-3 py-2.5 rounded-lg border ${statusBg} transition-all duration-300`}>
+        <div className="flex items-center gap-2.5">
+          {getIcon()}
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-700">Step {stepNumber}:</span>
-              <span className="font-semibold text-gray-900">{label}</span>
+              <span className="text-sm font-medium text-slate-800">{label}</span>
+              {step.status !== 'pending' && (
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] px-1.5 py-0 capitalize ${
+                    step.status === 'completed' ? 'text-emerald-700 border-emerald-300' :
+                    step.status === 'failed' ? 'text-red-700 border-red-300' :
+                    step.status === 'in-progress' ? 'text-blue-700 border-blue-300' :
+                    'text-slate-500 border-slate-300'
+                  }`}
+                >
+                  {step.status === 'in-progress' ? 'running' : step.status}
+                </Badge>
+              )}
             </div>
             {step.message && (
-              <p className="text-sm text-gray-600 mt-1">{step.message}</p>
+              <p className="text-xs text-slate-500 mt-0.5 truncate">{step.message}</p>
             )}
           </div>
         </div>
         {step.details && step.details.length > 0 && (
-          <div className="mt-3 ml-9 space-y-1">
+          <div className="mt-2 ml-7 space-y-0.5 max-h-24 overflow-y-auto">
             {step.details.map((detail, idx) => (
-              <p key={idx} className="text-xs text-gray-500">{detail}</p>
+              <p key={idx} className="text-xs text-slate-500">{detail}</p>
             ))}
           </div>
         )}
@@ -841,24 +820,19 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     );
   };
 
-  // Render progress bar
+  // Render progress bar using shadcn Progress component
   const renderProgressBar = () => {
     if (progress.total === 0) return null;
 
     const percentage = Math.round((progress.current / progress.total) * 100);
 
     return (
-      <div className="mt-4">
-        <div className="flex justify-between text-sm text-gray-600 mb-1">
-          <span>{progress.label}</span>
-          <span>{progress.current} / {progress.total}</span>
+      <div className="mt-3 px-1">
+        <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+          <span className="truncate mr-2">{progress.label}</span>
+          <span className="shrink-0 tabular-nums">{progress.current}/{progress.total}</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
+        <Progress value={percentage} className="h-1.5" />
       </div>
     );
   };
@@ -965,19 +939,21 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   const renderProcessing = () => (
     <>
       <DialogHeader>
-        <DialogTitle>{mode === 'edit' ? 'Updating Route Group' : 'Submitting Route Group'}</DialogTitle>
+        <DialogTitle className="flex items-center gap-2">
+          <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+          {mode === 'edit' ? 'Updating Route Group' : 'Submitting Route Group'}
+        </DialogTitle>
         <DialogDescription>
           {mode === 'edit' 
-            ? 'Please wait while we process your update...' 
-            : 'Please wait while we process your submission...'}
+            ? 'Processing your update — please wait.' 
+            : 'Processing your submission — please wait.'}
         </DialogDescription>
       </DialogHeader>
 
-      <div className="py-4 space-y-4">
-        {renderStepIndicator(state.steps.validation, 'Stop Validation', 1)}
+      <div className="py-3 space-y-2">
+        {renderStepIndicator(state.steps.validation, 'Validate Stops', 1)}
         {renderStepIndicator(state.steps.stopCreation, 'Create New Stops', 2)}
         {renderStepIndicator(state.steps.routeBuilding, mode === 'edit' ? 'Update Route Group' : 'Build Route Group', 3)}
-        
         {renderProgressBar()}
       </div>
     </>
@@ -987,8 +963,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   const renderCompleted = () => (
     <>
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2 text-green-700">
-          <CheckCircle2 className="w-6 h-6" />
+        <DialogTitle className="flex items-center gap-2 text-emerald-700">
+          <CheckCircle2 className="w-5 h-5" />
           {mode === 'edit' ? 'Update Complete' : 'Submission Complete'}
         </DialogTitle>
         <DialogDescription>
@@ -998,36 +974,42 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         </DialogDescription>
       </DialogHeader>
 
-      <div className="py-4">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
-          <div className="font-medium text-green-800">Summary</div>
-          <div className="text-sm text-green-700 space-y-2">
-            <p><strong>Route Group:</strong> {data.routeGroup.name}</p>
-            <p><strong>Routes:</strong> {data.routeGroup.routes.length}</p>
-            <p><strong>Total Stops:</strong> {data.routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}</p>
+      <div className="py-3">
+        {/* Summary card */}
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div className="text-slate-600">Route Group</div>
+            <div className="font-medium text-slate-800 truncate">{data.routeGroup.name}</div>
+            {state.createdRouteGroupId && (
+              <>
+                <div className="text-slate-600">ID</div>
+                <div className="font-mono text-xs text-slate-700 truncate">{state.createdRouteGroupId}</div>
+              </>
+            )}
+            <div className="text-slate-600">Routes</div>
+            <div className="font-medium text-slate-800">{data.routeGroup.routes.length}</div>
+            <div className="text-slate-600">Total Stops</div>
+            <div className="font-medium text-slate-800">{data.routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}</div>
             {state.createdStops.length > 0 && (
-              <p><strong>New Stops Created:</strong> {state.createdStops.length}</p>
+              <>
+                <div className="text-slate-600">New Stops Created</div>
+                <div className="font-medium text-emerald-700">{state.createdStops.length}</div>
+              </>
             )}
           </div>
         </div>
 
-        {state.createdRouteGroupId && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex gap-3">
-              <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium">{mode === 'edit' ? 'Route Group Updated' : 'Route Group Created'}</p>
-                <p>ID: {state.createdRouteGroupId}</p>
-              </div>
-            </div>
+        {/* Step results (collapsed by default) */}
+        <details className="group">
+          <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 mb-2">
+            Show step details
+          </summary>
+          <div className="space-y-2">
+            {renderStepIndicator(state.steps.validation, 'Validate Stops', 1)}
+            {renderStepIndicator(state.steps.stopCreation, 'Create New Stops', 2)}
+            {renderStepIndicator(state.steps.routeBuilding, 'Build Route Group', 3)}
           </div>
-        )}
-
-        <div className="mt-4 space-y-3">
-          {renderStepIndicator(state.steps.validation, 'Stop Validation', 1)}
-          {renderStepIndicator(state.steps.stopCreation, 'Create New Stops', 2)}
-          {renderStepIndicator(state.steps.routeBuilding, 'Build Route Group', 3)}
-        </div>
+        </details>
       </div>
 
       <DialogFooter className="gap-2">
@@ -1051,26 +1033,23 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2 text-red-700">
-          <X className="w-6 h-6" />
+          <AlertCircle className="w-5 h-5" />
           Submission Failed
         </DialogTitle>
         <DialogDescription>
-          There was an error during the submission process.
+          An error occurred during the submission process.
         </DialogDescription>
       </DialogHeader>
 
-      <div className="py-4">
+      <div className="py-3">
         {state.error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <p className="text-sm text-red-800">{state.error}</p>
-            </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 mb-3">
+            <p className="text-sm text-red-800">{state.error}</p>
           </div>
         )}
 
-        <div className="space-y-3">
-          {renderStepIndicator(state.steps.validation, 'Stop Validation', 1)}
+        <div className="space-y-2">
+          {renderStepIndicator(state.steps.validation, 'Validate Stops', 1)}
           {renderStepIndicator(state.steps.stopCreation, 'Create New Stops', 2)}
           {renderStepIndicator(state.steps.routeBuilding, 'Build Route Group', 3)}
         </div>
