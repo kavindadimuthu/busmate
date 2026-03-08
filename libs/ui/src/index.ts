@@ -243,3 +243,19 @@ export { StatsCard, StatsCardGrid } from "./patterns/stats-card";
 
 // Dialogs
 export { ConfirmDialog, FormDialog, useDialog } from "./patterns/dialogs";
+
+// FilterBar
+export { FilterBar, FilterSelect } from "./patterns/filter-bar";
+
+// Form
+export { FormWrapper, FormSection, FormGrid } from "./patterns/form";
+
+// EmptyState
+export { EmptyState } from "./patterns/empty-state";
+
+// ActivityLog
+export { ActivityLog } from "./patterns/activity-log";
+export type { ActivityItem } from "./patterns/activity-log";
+
+// Dashboard
+export { DashboardGrid } from "./patterns/dashboard";
