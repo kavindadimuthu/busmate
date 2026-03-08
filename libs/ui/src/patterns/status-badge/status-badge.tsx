@@ -1,7 +1,7 @@
 // libs/ui/src/patterns/status-badge/status-badge.tsx
 
-import { Badge } from "@/components/badge";
-import { cn } from "@/lib/utils";
+import { Badge } from "../../components/badge";
+import { cn } from "../../lib/utils";
 
 type StatusType =
   | "active" | "inactive" | "pending" | "approved" | "rejected"

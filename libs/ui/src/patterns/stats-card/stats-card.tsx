@@ -1,8 +1,8 @@
 // libs/ui/src/patterns/stats-card/stats-card.tsx
 
 import * as React from "react";
-import { Card, CardContent } from "@/components/card";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "../../components/card";
+import { cn } from "../../lib/utils";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 interface StatsCardProps {

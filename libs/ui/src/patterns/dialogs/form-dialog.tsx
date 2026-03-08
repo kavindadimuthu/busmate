@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/dialog";
+} from "../../components/dialog";
 
 interface FormDialogProps {
   open: boolean;

@@ -1,7 +1,7 @@
 // libs/ui/src/patterns/stats-card/stats-card-grid.tsx
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 interface StatsCardGridProps {
   children: React.ReactNode;

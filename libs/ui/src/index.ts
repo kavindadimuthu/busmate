@@ -226,6 +226,15 @@ export {
 
 // ── Patterns ──────────────────────────────────────────────
 
+// DataTable
+export { DataTable, DataTablePagination, useDataTable } from "./patterns/data-table";
+export type {
+  ColumnDef,
+  DataTableProps,
+  DataTableState,
+  UseDataTableOptions,
+} from "./patterns/data-table";
+
 // StatusBadge
 export { StatusBadge } from "./patterns/status-badge";
 

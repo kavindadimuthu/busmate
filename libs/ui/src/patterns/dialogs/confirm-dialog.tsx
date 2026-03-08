@@ -12,10 +12,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/alert-dialog";
-import { buttonVariants } from "@/components/button";
+} from "../../components/alert-dialog";
+import { buttonVariants } from "../../components/button";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 type DialogVariant = "default" | "destructive" | "warning";
 
