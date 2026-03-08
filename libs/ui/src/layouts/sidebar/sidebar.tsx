@@ -1,17 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/button";
-import { ScrollArea } from "@/components/scroll-area";
-import { Separator } from "@/components/separator";
+import { Button } from "../../components/button";
+import { ScrollArea } from "../../components/scroll-area";
+import { Separator } from "../../components/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/tooltip";
+} from "../../components/tooltip";
 import type { NavGroup, NavItem } from "./types";
 
 export type { NavItem, NavGroup, NavigationConfig, SidebarNavItem, SidebarNavGroup } from "./types";

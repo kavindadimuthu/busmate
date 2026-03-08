@@ -3,7 +3,7 @@
 import * as React from "react";
 import { AppShell } from "./app-shell";
 import { MobileAppShell } from "./mobile-app-shell";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from "../hooks/use-media-query";
 
 interface ResponsiveShellProps {
   sidebar: React.ReactNode;

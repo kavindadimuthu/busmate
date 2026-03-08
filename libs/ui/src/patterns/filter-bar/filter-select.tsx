@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/select";
+} from "../../components/select";
 
 interface FilterSelectProps {
   label: string;

@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Sheet, SheetContent } from "@/components/sheet";
-import { Button } from "@/components/button";
+import { Sheet, SheetContent } from "../components/sheet";
+import { Button } from "../components/button";
 import { Menu } from "lucide-react";
 
 interface MobileAppShellProps {

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { FormProvider, type UseFormReturn, type FieldValues } from "react-hook-form";
-import { Button } from "@/components/button";
+import { Button } from "../../components/button";
 import { Loader2 } from "lucide-react";
 
 interface FormWrapperProps<T extends FieldValues> {

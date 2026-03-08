@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/input";
-import { Button } from "@/components/button";
+import { cn } from "../../lib/utils";
+import { Input } from "../../components/input";
+import { Button } from "../../components/button";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import {
   Sheet,
@@ -11,8 +11,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/sheet";
-import { useMediaQuery } from "@/hooks/use-media-query";
+} from "../../components/sheet";
+import { useMediaQuery } from "../../hooks/use-media-query";
 
 interface FilterBarProps {
   searchValue: string;

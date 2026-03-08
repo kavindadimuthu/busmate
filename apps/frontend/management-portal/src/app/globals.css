@@ -1,5 +1,9 @@
 @import "@busmate/ui/styles";
 
+/* ── Tell Tailwind to scan libs/ui/src for used utility classes ── */
+/* Needed so bg-sidebar, w-68, text-sidebar-foreground etc. are emitted */
+@source "../../../../../libs/ui/src";
+
 /* ── App-specific overrides ──────────────────────── */
 
 @keyframes fadeIn {

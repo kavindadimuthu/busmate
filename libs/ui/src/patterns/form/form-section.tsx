@@ -5,7 +5,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/card";
+} from "../../components/card";
 
 interface FormSectionProps {
   title: string;
