@@ -214,11 +214,13 @@ function generateRouteName(
  * 
  * @param sourceRoute - The source route to generate from
  * @param options - Optional configuration for the generation
+ * @param existingTargetRoute - Optional existing route to match route stops with (for updates)
  * @returns The generated route with the opposite direction
  */
 export function generateRouteFromCorresponding(
   sourceRoute: Route,
-  options: AutoGenerationOptions = {}
+  options: AutoGenerationOptions = {},
+  existingTargetRoute?: Route
 ): RouteAutoGenerationResult {
   const {
     swapDirectionWords: swapWords = true,
@@ -267,13 +269,27 @@ export function generateRouteFromCorresponding(
   // Calculate reversed distances
   const stopsWithReversedDistances = calculateReversedDistances(reversedStops, totalDistance);
 
-  // Update order numbers
-  const stopsWithUpdatedOrder = stopsWithReversedDistances.map((stop, index) => ({
-    ...stop,
-    orderNumber: index,
-    // Clear the route stop ID since this is a new route stop
-    id: undefined,
-  }));
+  // Update order numbers and handle route stop IDs
+  const stopsWithUpdatedOrder = stopsWithReversedDistances.map((stop, index) => {
+    // Try to match with existing route stop if provided (for updates)
+    let routeStopId: string | undefined = undefined;
+    if (existingTargetRoute?.routeStops) {
+      // Find matching route stop by stop ID (the actual bus stop, not route stop)
+      const matchingRouteStop = existingTargetRoute.routeStops.find(
+        rs => rs.stop.id === stop.stop.id
+      );
+      if (matchingRouteStop?.id) {
+        routeStopId = matchingRouteStop.id;
+      }
+    }
+    
+    return {
+      ...stop,
+      orderNumber: index,
+      // Preserve route stop ID if we found a match, otherwise leave undefined for new route stops
+      id: routeStopId,
+    };
+  });
 
   // Update stop types (first = START, last = END, others = INTERMEDIATE)
   const stopsWithUpdatedTypes = updateStopTypes(stopsWithUpdatedOrder);
@@ -283,8 +299,8 @@ export function generateRouteFromCorresponding(
 
   // Generate the new route
   const generatedRoute: Route = {
-    // Clear the ID since this is a new route
-    id: undefined,
+    // Preserve the route ID if we're updating an existing route
+    id: existingTargetRoute?.id,
     // Generate new name
     name: generateRouteName(sourceRoute.name, newDirection, swapWords) + (nameSuffix ? ` ${nameSuffix}` : ''),
     nameSinhala: swapWords

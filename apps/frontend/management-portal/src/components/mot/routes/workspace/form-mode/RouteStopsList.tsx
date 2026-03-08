@@ -2,7 +2,21 @@
 
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { StopTypeEnum, StopExistenceType, createEmptyRouteStop, RouteStop } from '@/types/RouteWorkspaceData';
-import { GripVertical, LocationEditIcon, Trash, EllipsisVertical, Loader2, Search, Copy, CopyIcon } from 'lucide-react';
+import {
+    GripVertical,
+    LocationEditIcon,
+    Trash2,
+    MoreVertical,
+    Loader2,
+    Search,
+    Copy,
+    Plus,
+    MapPin,
+    Ruler,
+    SearchCheck,
+    Crosshair,
+    Map,
+} from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -32,28 +46,35 @@ import {
     canSearchStop
 } from '@/services/routeWorkspaceValidation';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface RouteStopsListProps {
     routeIndex: number;
 }
 
-// ─── Helpers extracted outside component to avoid recreation on every render ───
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-const getOrderBadgeColor = (stopIndex: number, stopsCount: number): string => {
-    if (stopIndex === 0) return 'bg-green-500';
-    if (stopIndex === stopsCount - 1) return 'bg-red-500';
-    return 'bg-blue-500';
+const getStopTypeBadge = (stopIndex: number, stopsCount: number) => {
+    if (stopIndex === 0) return { label: 'Start', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+    if (stopIndex === stopsCount - 1) return { label: 'End', className: 'bg-red-100 text-red-700 border-red-200' };
+    return { label: `${stopIndex}`, className: 'bg-slate-100 text-slate-600 border-slate-200' };
 };
 
 // ─── SortableStopRow ── extracted & memoized ──────────────────────────────────
-// Defining this OUTSIDE RouteStopsList ensures that React sees the same component
-// type across renders, preventing unnecessary unmount/remount of every row when
-// the parent re-renders (e.g., on a single keystroke in a stop name field).
 
 interface SortableStopRowProps {
     routeStop: RouteStop;
     actualIndex: number;
-    /** Total number of stops in this route (used to identify first/last rows). */
     stopsCount: number;
     isSelected: boolean;
     isInCoordinateEditingMode: boolean;
@@ -99,174 +120,168 @@ const SortableStopRow = memo(function SortableStopRow({
         opacity: isDragging ? 0.5 : 1,
     };
 
+    const badge = getStopTypeBadge(actualIndex, stopsCount);
+    const isStartOrEnd = actualIndex === 0 || actualIndex === stopsCount - 1;
+    const hasCoords = !!(routeStop.stop?.location?.latitude && routeStop.stop?.location?.longitude);
+    const isExisting = !!routeStop.stop.id;
+
     return (
         <tr
             ref={setNodeRef}
             style={style}
             onClick={() => onSelect(actualIndex)}
-            className={`cursor-pointer transition-colors text-sm ${isSelected
-                ? 'bg-blue-50 hover:bg-blue-100'
-                : 'hover:bg-slate-50'
-                } ${isDragging ? 'relative z-50' : ''}`}
+            className={`group cursor-pointer transition-colors text-sm ${
+                isSelected
+                    ? 'bg-blue-50 hover:bg-blue-100 ring-1 ring-inset ring-blue-200'
+                    : 'hover:bg-slate-50'
+            } ${isDragging ? 'relative z-50' : ''}`}
         >
-            <td className="border-b border-slate-100 w-8">
+            {/* Drag handle */}
+            <td className="border-b border-slate-100 w-8 pl-1">
                 <button
                     {...attributes}
                     {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-slate-100 rounded transition-colors"
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-slate-100 rounded transition-colors opacity-0 group-hover:opacity-100"
                     onClick={(e) => e.stopPropagation()}
                     aria-label={`Drag to reorder stop: ${routeStop.stop.name || `stop ${routeStop.orderNumber}`}`}
                     aria-roledescription="sortable"
-                    title="Drag to reorder"
                 >
-                    <GripVertical className="text-slate-400" size={16} />
+                    <GripVertical className="text-slate-400" size={14} />
                 </button>
             </td>
-            <td className={`border-b border-slate-100 px-2 py-2 ${getOrderBadgeColor(actualIndex, stopsCount)} text-white text-center font-bold text-xs`}>
-                {routeStop.orderNumber}
+
+            {/* Order badge / type */}
+            <td className="border-b border-slate-100 px-2 py-2 w-16">
+                <Badge variant="outline" className={`text-[10px] font-semibold px-1.5 py-0 ${badge.className}`}>
+                    {badge.label}
+                </Badge>
             </td>
-            <td className="border-b border-slate-100 px-3 py-2">
-                <div className='flex items-center gap-2'>
-                    <span className='font-mono text-xs text-slate-600'>
-                        {routeStop.id ? routeStop.id.substring(0, 8) + '...' : '(new)'}
-                    </span>
-                    <button
-                        onClick={(e) => onCopyRouteStopId(routeStop.id, e)}
-                        disabled={!routeStop.id}
-                        className="p-1 border border-slate-300 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                        title='Copy full Route Stop ID'
-                        aria-label='Copy Route Stop ID to clipboard'
-                    >
-                        <Copy size={12} />
-                    </button>
-                </div>
-            </td>
-            <td className="border-b border-slate-100 px-3 py-2">
-                <div className='flex items-center gap-2'>
-                    <div className='flex flex-col gap-1 grow'>
-                        <div className='flex items-center gap-1'>
-                            <span className='font-mono text-xs text-slate-600'>
-                                {routeStop.stop.id ? routeStop.stop.id.substring(0, 8) + '...' : ''}
-                            </span>
-                            {!routeStop.stop.id && (
-                                <span className="inline-block px-1.5 py-0.5 rounded-full text-white text-xs font-medium bg-amber-500">
-                                    New
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    <div className='flex gap-1'>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onSearch(actualIndex);
-                            }}
-                            disabled={isSearchingThis || isSearchingAllStops}
-                            className="p-1 border border-blue-400 text-blue-500 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                            title="Search for existing stop"
-                            aria-label={`Search database for stop: ${routeStop.stop.name || 'unnamed'}`}
-                        >
-                            {isSearchingThis ? (
-                                <Loader2 className="animate-spin" size={12} />
-                            ) : (
-                                <Search size={12} />
-                            )}
-                        </button>
-                        <button
-                            onClick={(e) => onCopyStopId(routeStop.stop.id, e)}
-                            disabled={!routeStop.stop.id}
-                            className="p-1 border border-slate-300 text-slate-500 rounded hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                            title='Copy full Stop ID'
-                            aria-label='Copy Stop ID to clipboard'
-                        >
-                            <Copy size={12} />
-                        </button>
+
+            {/* Stop name — controlled input */}
+            <td className="border-b border-slate-100 px-2 py-1">
+                <div className="flex items-center gap-1.5">
+                    <input
+                        type="text"
+                        value={routeStop.stop.name || ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => onFieldChange(actualIndex, 'stopName', e.target.value)}
+                        className="flex-1 px-2 py-1 border-none bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white rounded text-sm"
+                        placeholder={isStartOrEnd ? (actualIndex === 0 ? 'Start stop name' : 'End stop name') : 'Stop name'}
+                        aria-label={`Stop name for position ${actualIndex}`}
+                    />
+                    {/* Status indicators */}
+                    <div className="flex items-center gap-0.5 shrink-0">
+                        {isExisting && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">Existing stop in system</TooltipContent>
+                            </Tooltip>
+                        )}
+                        {!isExisting && routeStop.stop.name && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">New stop (will be created)</TooltipContent>
+                            </Tooltip>
+                        )}
+                        {hasCoords && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <MapPin className="h-3 w-3 text-blue-400" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                    {routeStop.stop.location?.latitude?.toFixed(4)}, {routeStop.stop.location?.longitude?.toFixed(4)}
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
                     </div>
                 </div>
             </td>
-            <td className="border-b border-slate-100">
+
+            {/* Distance */}
+            <td className="border-b border-slate-100 w-24">
                 <input
-                    type="text"
-                    defaultValue={routeStop.stop.name || ''}
+                    type="number"
+                    step="0.1"
+                    value={routeStop.distanceFromStart ?? ''}
+                    placeholder="—"
                     onClick={(e) => e.stopPropagation()}
-                    onBlur={(e) => onFieldChange(actualIndex, 'stopName', e.target.value)}
-                    className="w-full px-3 py-1.5 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-sm"
-                    aria-label={`Stop name for position ${actualIndex}`}
+                    onChange={(e) => {
+                        const val = e.target.value.trim();
+                        if (val === '') {
+                            onFieldChange(actualIndex, 'distanceFromStart', null);
+                        } else {
+                            const numVal = parseFloat(val);
+                            onFieldChange(actualIndex, 'distanceFromStart', isNaN(numVal) ? null : numVal);
+                        }
+                    }}
+                    className="w-full px-2 py-1 border-none bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white rounded text-sm text-right tabular-nums"
+                    aria-label={`Distance from start for stop at position ${actualIndex} (km)`}
                 />
             </td>
-            <td className="border-b border-slate-100">
-                <div className="flex items-center gap-1">
-                    <input
-                        type="number"
-                        step="0.1"
-                        defaultValue={routeStop.distanceFromStart ?? ''}
-                        placeholder="Auto"
-                        onClick={(e) => e.stopPropagation()}
-                        onBlur={(e) => {
-                            const value = e.target.value.trim();
-                            if (value === '') {
-                                onFieldChange(actualIndex, 'distanceFromStart', null);
-                            } else {
-                                const numValue = parseFloat(value);
-                                onFieldChange(actualIndex, 'distanceFromStart', isNaN(numValue) ? null : numValue);
-                            }
-                        }}
-                        className="w-full px-3 py-1.5 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-sm"
-                        aria-label={`Distance from start for stop at position ${actualIndex} (km)`}
-                    />
-                    {routeStop.distanceFromStart !== null && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onFieldChange(actualIndex, 'distanceFromStart', null);
-                                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                if (input) input.value = '';
-                            }}
-                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Clear distance (use calculated value)"
-                            aria-label="Clear distance override"
-                        >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+
+            {/* Row actions */}
+            <td className="border-b border-slate-100 w-24">
+                <div className="flex items-center gap-0.5 justify-end pr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSearch(actualIndex);
+                                }}
+                                disabled={isSearchingThis || isSearchingAllStops}
+                                className="p-1 text-blue-500 hover:bg-blue-50 rounded transition-colors disabled:opacity-40"
+                                aria-label={`Search database for stop: ${routeStop.stop.name || 'unnamed'}`}
+                            >
+                                {isSearchingThis ? <Loader2 className="animate-spin" size={13} /> : <Search size={13} />}
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">Search existing stops</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={(e) => onToggleCoordinateEditing(actualIndex, e)}
+                                className={`p-1 rounded transition-colors ${
+                                    isInCoordinateEditingMode
+                                        ? 'text-blue-600 bg-blue-100'
+                                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                                }`}
+                                aria-label={isInCoordinateEditingMode ? "Deactivate coordinate editing" : "Edit coordinates on map"}
+                                aria-pressed={isInCoordinateEditingMode}
+                            >
+                                <LocationEditIcon size={13} />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                            {isInCoordinateEditingMode ? 'Deactivate map editing' : 'Edit coordinates on map'}
+                        </TooltipContent>
+                    </Tooltip>
+
+                    {!isStartOrEnd && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(actualIndex); }}
+                                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                    aria-label={`Delete stop: ${routeStop.stop.name || `stop ${routeStop.orderNumber}`}`}
+                                >
+                                    <Trash2 size={13} />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">Delete stop</TooltipContent>
+                        </Tooltip>
                     )}
                 </div>
-            </td>
-            <td className="border-b border-slate-100 w-8">
-                <button
-                    onClick={(e) => onToggleCoordinateEditing(actualIndex, e)}
-                    className={`p-1.5 rounded transition-colors ${isInCoordinateEditingMode
-                        ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
-                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                        }`}
-                    title={isInCoordinateEditingMode ? "Deactivate coordinates editing mode" : "Activate coordinates editing mode on map"}
-                    aria-label={isInCoordinateEditingMode ? "Deactivate coordinate editing on map" : "Activate coordinate editing on map"}
-                    aria-pressed={isInCoordinateEditingMode}
-                >
-                    <LocationEditIcon size={14} />
-                </button>
-            </td>
-            <td className="border-b border-slate-100 w-8">
-                {actualIndex !== 0 && actualIndex !== stopsCount - 1 && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(actualIndex);
-                        }}
-                        className="text-rose-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded transition-colors"
-                        title="Delete stop"
-                        aria-label={`Delete stop: ${routeStop.stop.name || `stop ${routeStop.orderNumber}`}`}
-                    >
-                        <Trash size={14} />
-                    </button>
-                )}
             </td>
         </tr>
     );
 }, (prevProps, nextProps) => {
-    // Custom equality: only re-render if data that affects this row's output changes.
-    // Stable useCallback handlers (passed from parent) are intentionally excluded here.
     return (
         prevProps.routeStop === nextProps.routeStop &&
         prevProps.actualIndex === nextProps.actualIndex &&
@@ -284,7 +299,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const { data, updateRoute, updateRouteStop, addRouteStop, removeRouteStop, reorderRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex, coordinateEditingMode, setCoordinateEditingMode, clearCoordinateEditingMode, mapActions } = useRouteWorkspace();
     const route = data.routeGroup.routes[routeIndex];
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
     const [isFetchingDistances, setIsFetchingDistances] = useState(false);
     const [isFetchingAllCoordinates, setIsFetchingAllCoordinates] = useState(false);
     const [isFetchingMissingCoordinates, setIsFetchingMissingCoordinates] = useState(false);
@@ -292,7 +306,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const [isSearchingAllStops, setIsSearchingAllStops] = useState(false);
     const [searchingStopIndex, setSearchingStopIndex] = useState<number | null>(null);
     const [searchProgress, setSearchProgress] = useState<string>('');
-    const actionsMenuRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
     const sensors = useSensors(
@@ -354,23 +367,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         });
     }, [toast]);
 
-    // Close menu when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
-                setIsActionsMenuOpen(false);
-            }
-        };
-
-        if (isActionsMenuOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isActionsMenuOpen]);
-
     if (!route) {
         return (
             <div className="flex flex-col rounded-lg bg-slate-50 p-4">
@@ -407,7 +403,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         }
 
         setIsFetchingDistances(true);
-        setIsActionsMenuOpen(false);
 
         try {
             // Use the shared service to fetch directions and calculate distances
@@ -450,7 +445,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         }
 
         setIsFetchingAllCoordinates(true);
-        setIsActionsMenuOpen(false);
         setCoordinateFetchProgress('Starting...');
 
         try {
@@ -512,7 +506,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         }
 
         setIsFetchingMissingCoordinates(true);
-        setIsActionsMenuOpen(false);
         setCoordinateFetchProgress('Starting...');
 
         try {
@@ -641,7 +634,6 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         }
 
         setIsSearchingAllStops(true);
-        setIsActionsMenuOpen(false);
         setSearchProgress('Starting...');
 
         try {
@@ -704,44 +696,27 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         const insertIndex = stops.length - 1;
         const newOrderNumber = insertIndex;
         const newStop = createEmptyRouteStop(newOrderNumber);
-
-        // Create new array with the new stop inserted before the end
         const newStops = [...stops];
         newStops.splice(insertIndex, 0, newStop);
-
-        // Recalculate order numbers to be sequential (0, 1, 2, ...)
-        newStops.forEach((stop, index) => {
-            stop.orderNumber = index;
-        });
-
+        newStops.forEach((stop, index) => { stop.orderNumber = index; });
         updateRoute(routeIndex, { routeStops: newStops });
     };
 
     const handleDeleteStop = useCallback((stopIndex: number) => {
-        // Remove the stop
         const newStops = stops.filter((_, idx) => idx !== stopIndex);
-
-        // Recalculate order numbers to be sequential (0, 1, 2, ...)
-        newStops.forEach((stop, index) => {
-            stop.orderNumber = index;
-        });
-
+        newStops.forEach((stop, index) => { stop.orderNumber = index; });
         updateRoute(routeIndex, { routeStops: newStops });
     }, [stops, routeIndex, updateRoute]);
 
-    /** Stable callback passed to memoized SortableStopRow rows. */
     const handleSelectStop = useCallback((index: number) => {
         setSelectedStop(routeIndex, index);
     }, [routeIndex, setSelectedStop]);
 
     const handleToggleCoordinateEditingMode = useCallback((stopIndex: number, e: React.MouseEvent) => {
         e.stopPropagation();
-
-        // If this stop is already in editing mode, deactivate it
         if (coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === stopIndex) {
             clearCoordinateEditingMode();
         } else {
-            // Activate editing mode for this stop
             setCoordinateEditingMode(routeIndex, stopIndex);
         }
     }, [coordinateEditingMode, routeIndex, clearCoordinateEditingMode, setCoordinateEditingMode]);
@@ -752,65 +727,169 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-
         if (over && active.id !== over.id) {
             const oldIndex = stops.findIndex(stop => `stop-${stop.orderNumber}` === active.id);
             const newIndex = stops.findIndex(stop => `stop-${stop.orderNumber}` === over.id);
-
             if (oldIndex !== -1 && newIndex !== -1) {
                 reorderRouteStop(routeIndex, oldIndex, newIndex);
             }
         }
-
         setActiveId(null);
     };
 
-    const handleDragCancel = () => {
-        setActiveId(null);
-    };
+    const handleDragCancel = () => { setActiveId(null); };
 
-    const startEndStops = stops.filter((_, idx) => idx === 0 || idx === stops.length - 1);
-    const intermediateStops = stops.filter((_, idx) => idx !== 0 && idx !== stops.length - 1);
+    // Summary counts
+    const existingCount = stops.filter(s => !!s.stop.id).length;
+    const newCount = stops.length - existingCount;
+    const withCoordsCount = stops.filter(s => !!(s.stop?.location?.latitude && s.stop?.location?.longitude)).length;
+    const isBusy = isFetchingDistances || isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops;
 
-    // StopTable renders a sortable table of stops, delegating row rendering
-    // to the externally-defined (memoized) SortableStopRow component.
-    const StopTable = ({ stops: tableStops, title }: { stops: typeof stops, title: string }) => {
-        const sortableIds = tableStops.map(stop => `stop-${stop.orderNumber}`);
+    const sortableIds = stops.map(stop => `stop-${stop.orderNumber}`);
 
-        return (
-            <div>
-                <h3 className="text-sm font-medium text-slate-700 mb-2">{title}</h3>
-                <div className="overflow-x-auto rounded-lg border border-slate-200">
+    return (
+        <div className="flex flex-col bg-white">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                        Stops
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                        {stops.length}
+                    </Badge>
+                    {existingCount > 0 && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-50 text-emerald-700 border-emerald-200">
+                                    {existingCount} existing
+                                </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-xs">{existingCount} stops already in the system</TooltipContent>
+                        </Tooltip>
+                    )}
+                    {newCount > 0 && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-amber-50 text-amber-700 border-amber-200">
+                            {newCount} new
+                        </Badge>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => mapActions.fitBoundsToRoute?.()}
+                                disabled={!mapActions.fitBoundsToRoute}
+                            >
+                                <Map className="h-3.5 w-3.5 mr-1" />
+                                View Route
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs">Fit map to show full route</TooltipContent>
+                    </Tooltip>
+
+                    {/* Batch actions dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" disabled={isBusy}>
+                                {isBusy ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <MoreVertical className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel className="text-xs text-slate-500">Coordinates</DropdownMenuLabel>
+                            <DropdownMenuItem
+                                onClick={handleFetchAllCoordinates}
+                                disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
+                            >
+                                <Crosshair className="h-4 w-4 mr-2 text-slate-500" />
+                                <span>Fetch all coordinates</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={handleFetchMissingCoordinates}
+                                disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
+                            >
+                                <MapPin className="h-4 w-4 mr-2 text-slate-500" />
+                                <span>Fetch missing only</span>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-slate-500">Distances</DropdownMenuLabel>
+                            <DropdownMenuItem
+                                onClick={handleFetchDistancesFromMap}
+                                disabled={isBusy}
+                            >
+                                <Ruler className="h-4 w-4 mr-2 text-slate-500" />
+                                <span>Calculate distances</span>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-slate-500">Validate</DropdownMenuLabel>
+                            <DropdownMenuItem
+                                onClick={handleSearchAllStopsExistence}
+                                disabled={isBusy}
+                            >
+                                <SearchCheck className="h-4 w-4 mr-2 text-slate-500" />
+                                <span>Verify all stops exist</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+
+            {/* Progress indicator for batch operations */}
+            {isBusy && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border-b border-blue-100 text-xs text-blue-700">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>
+                        {isFetchingDistances && 'Calculating distances...'}
+                        {isFetchingAllCoordinates && (coordinateFetchProgress || 'Fetching all coordinates...')}
+                        {isFetchingMissingCoordinates && (coordinateFetchProgress || 'Fetching missing coordinates...')}
+                        {isSearchingAllStops && (searchProgress || 'Verifying stops...')}
+                    </span>
+                </div>
+            )}
+
+            {/* Unified Stop Table */}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragCancel={handleDragCancel}
+            >
+                <div className="overflow-x-auto">
                     <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                        <table className="w-full border-collapse bg-white">
+                        <table className="w-full border-collapse">
                             <thead>
-                                <tr className="bg-slate-50 text-xs font-medium text-slate-600">
+                                <tr className="bg-slate-50/80 text-[11px] font-medium text-slate-500 uppercase tracking-wider">
                                     <th className="w-8 py-2"></th>
-                                    <th className="border-b border-slate-200 px-2 py-2 text-left" title='Stop Order Number'>#</th>
-                                    <th className="border-b border-slate-200 px-3 py-2 text-left" title='Route Stop ID'>Route Stop Id</th>
-                                    <th className="border-b border-slate-200 px-3 py-2 text-left" title='Stop ID with existence status'>Stop Id</th>
-                                    <th className="border-b border-slate-200 px-3 py-2 text-left">Name</th>
-                                    <th className="border-b border-slate-200 px-3 py-2 text-left" title='Distance from start(km)'>
-                                        Distance (km)
-                                    </th>
-                                    <th className="border-b border-slate-200 w-8 py-2"></th>
-                                    <th className="border-b border-slate-200 w-8 py-2"></th>
+                                    <th className="w-16 py-2 px-2 text-left">#</th>
+                                    <th className="py-2 px-2 text-left">Stop Name</th>
+                                    <th className="w-24 py-2 px-2 text-right">Dist (km)</th>
+                                    <th className="w-24 py-2 pr-2 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {tableStops.map((routeStop) => {
-                                    const actualIndex = stops.findIndex(s => s.orderNumber === routeStop.orderNumber);
-                                    const isSelected = selectedRouteIndex === routeIndex && selectedStopIndex === actualIndex;
-                                    const isInCoordinateEditingMode = coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === actualIndex;
-                                    const isSearchingThis = searchingStopIndex === actualIndex;
+                                {stops.map((routeStop, idx) => {
+                                    const isSelected = selectedRouteIndex === routeIndex && selectedStopIndex === idx;
+                                    const isInCoordMode = coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === idx;
+                                    const isSearchingThis = searchingStopIndex === idx;
                                     return (
                                         <SortableStopRow
                                             key={routeStop.orderNumber}
                                             routeStop={routeStop}
-                                            actualIndex={actualIndex}
+                                            actualIndex={idx}
                                             stopsCount={stops.length}
                                             isSelected={isSelected}
-                                            isInCoordinateEditingMode={isInCoordinateEditingMode}
+                                            isInCoordinateEditingMode={isInCoordMode}
                                             isSearchingThis={isSearchingThis}
                                             isSearchingAllStops={isSearchingAllStops}
                                             onSelect={handleSelectStop}
@@ -827,159 +906,27 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                         </table>
                     </SortableContext>
                 </div>
-            </div>
-        );
-    };
 
-    return (
-        <div className="flex flex-col border-r-3 border-gray-300 bg-gray-50 px-4 py-4">
-            <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-slate-700">Route Stops List</span>
-                <div className='flex gap-2'>
-                    <button
-                        onClick={() => mapActions.fitBoundsToRoute?.()}
-                        disabled={!mapActions.fitBoundsToRoute}
-                        className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200 shadow-sm"
-                        title="View full route on map"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
-                            <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1H8a1 1 0 110-2h1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v1a1 1 0 11-2 0v-1a1 1 0 01-1-1zM7 16a1 1 0 100-2H4a1 1 0 100 2h3zM15 14a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1z" />
-                        </svg>
-                        View Full Route
-                    </button>
-                    <div className="relative">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsActionsMenuOpen(!isActionsMenuOpen);
-                            }}
-                            disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops}
-                            className="px-2 py-1.5 text-sm text-slate-600 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-all duration-200"
-                            title="Actions"
-                        >
-                            {(isFetchingAllCoordinates || isFetchingMissingCoordinates) ? (
-                                <div className="flex items-center gap-1">
-                                    <Loader2 className="animate-spin" size={16} />
-                                    <span className="text-xs">{coordinateFetchProgress}</span>
-                                </div>
-                            ) : isSearchingAllStops ? (
-                                <div className="flex items-center gap-1">
-                                    <Loader2 className="animate-spin" size={16} />
-                                    <span className="text-xs">{searchProgress}</span>
-                                </div>
-                            ) : (
-                                <EllipsisVertical size={16} />
-                            )}
-                        </button>
-                        {isActionsMenuOpen && (
-                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 min-w-[250px] overflow-hidden" ref={actionsMenuRef}>
-                                {/* Coordinates Section */}
-                                <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
-                                    Coordinates
-                                </div>
-                                <button
-                                    onClick={handleFetchAllCoordinates}
-                                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
-                                    className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Fetch coordinates for all stops using their names via Google Directions API"
-                                >
-                                    {isFetchingAllCoordinates ? (
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="animate-spin" size={14} />
-                                            Fetching all coordinates...
-                                        </div>
-                                    ) : (
-                                        '📍 Fetch all coordinates by names'
-                                    )}
-                                </button>
-                                <button
-                                    onClick={handleFetchMissingCoordinates}
-                                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
-                                    className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Fetch coordinates only for stops that are missing coordinates, using existing coordinates as anchors"
-                                >
-                                    {isFetchingMissingCoordinates ? (
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="animate-spin" size={14} />
-                                            Fetching missing coordinates...
-                                        </div>
-                                    ) : (
-                                        '📍 Fetch missing coordinates only'
-                                    )}
-                                </button>
-
-                                {/* Distances Section */}
-                                <div className="px-3 py-1 bg-gray-50 border-b border-t border-gray-200 text-xs font-semibold text-gray-500 uppercase mt-1">
-                                    Distances
-                                </div>
-                                <button
-                                    onClick={handleFetchDistancesFromMap}
-                                    disabled={isFetchingDistances || isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops}
-                                    className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Calculate distances from start for all stops using Google Directions API"
-                                >
-                                    {isFetchingDistances ? (
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="animate-spin" size={14} />
-                                            Fetching distances...
-                                        </div>
-                                    ) : (
-                                        '📏 Fetch all distances from map'
-                                    )}
-                                </button>
-
-                                {/* Validate Section */}
-                                <div className="px-3 py-1 bg-gray-50 border-b border-t border-gray-200 text-xs font-semibold text-gray-500 uppercase mt-1">
-                                    Validate
-                                </div>
-                                <button
-                                    onClick={handleSearchAllStopsExistence}
-                                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates || isFetchingDistances || isSearchingAllStops}
-                                    className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Search for existence of all stops in the system by their ID or name"
-                                >
-                                    {isSearchingAllStops ? (
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="animate-spin" size={14} />
-                                            {searchProgress || 'Searching stops...'}
-                                        </div>
-                                    ) : (
-                                        '🔍 Search all stops existence'
-                                    )}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onDragCancel={handleDragCancel}
-            >
-                <div className="space-y-6">
-                    <StopTable stops={startEndStops} title="Start & End Stops" />
-                    <StopTable stops={intermediateStops} title="Intermediate Stops" />
-
-                    <button
+                {/* Add stop button */}
+                <div className="p-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
                         onClick={handleAddIntermediateStop}
-                        className="w-full p-3 text-blue-600 border border-dashed border-blue-600 rounded hover:bg-blue-50"
+                        className="w-full border-dashed text-blue-600 border-blue-300 hover:bg-blue-50 hover:border-blue-400"
                     >
-                        + Add Intermediate Stop
-                    </button>
+                        <Plus className="h-3.5 w-3.5 mr-1.5" />
+                        Add Intermediate Stop
+                    </Button>
                 </div>
 
                 <DragOverlay>
                     {activeId ? (
-                        <div className="bg-white border-2 border-blue-500 rounded shadow-lg opacity-90 p-2">
+                        <div className="bg-white border-2 border-blue-400 rounded-lg shadow-lg opacity-95 px-4 py-2.5">
                             <div className="flex items-center gap-2">
-                                <GripVertical className="text-gray-400" />
-                                <span className="font-semibold">
-                                    {stops.find(s => `stop-${s.orderNumber}` === activeId)?.stop.name || 'Dragging...'}
+                                <GripVertical className="text-slate-400 h-4 w-4" />
+                                <span className="text-sm font-medium">
+                                    {stops.find(s => `stop-${s.orderNumber}` === activeId)?.stop.name || 'Moving...'}
                                 </span>
                             </div>
                         </div>

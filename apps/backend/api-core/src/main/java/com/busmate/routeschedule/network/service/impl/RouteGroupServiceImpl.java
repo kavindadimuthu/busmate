@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.network.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,8 @@ import com.busmate.routeschedule.network.service.RouteGroupService;
 import com.busmate.routeschedule.shared.exception.ConflictException;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -41,6 +44,9 @@ public class RouteGroupServiceImpl implements RouteGroupService {
     private final RouteStopRepository routeStopRepository;
     private final RouteMapper routeMapper;
     private final RouteGroupMapper routeGroupMapper;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     @Transactional
@@ -146,6 +152,11 @@ public class RouteGroupServiceImpl implements RouteGroupService {
     @Override
     @Transactional
     public RouteGroupResponse updateRouteGroup(UUID id, RouteGroupRequest request, String userId) {
+        // Fix null version fields in the database BEFORE Hibernate loads entities.
+        // Hibernate's EntityEntry tracks the DB-loaded version internally; Java setters cannot fix it.
+        // Native SQL ensures Hibernate loads version=0 instead of null, preventing NPE on flush.
+        fixNullVersions(id);
+
         RouteGroup routeGroup = routeGroupRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Route group not found with id: " + id));
 
@@ -242,6 +253,38 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         }
     }
 
+    /**
+     * Fix null version fields in the database using native SQL.
+     * This must run BEFORE Hibernate loads the entities, because Hibernate's EntityEntry
+     * tracks the DB-loaded version internally. Java setters (entity.setVersion(0L)) do NOT
+     * update EntityEntry — so Hibernate still sees null and throws NPE on flush.
+     * By fixing the data via native SQL first, Hibernate will load version=0 and track it correctly.
+     */
+    private void fixNullVersions(UUID routeGroupId) {
+        int rgFixed = entityManager.createNativeQuery(
+                "UPDATE route_group SET version = 0 WHERE id = :id AND version IS NULL")
+                .setParameter("id", routeGroupId)
+                .executeUpdate();
+
+        int routeFixed = entityManager.createNativeQuery(
+                "UPDATE route SET version = 0 WHERE route_group_id = :rgId AND version IS NULL")
+                .setParameter("rgId", routeGroupId)
+                .executeUpdate();
+
+        int stopFixed = entityManager.createNativeQuery(
+                "UPDATE stop SET version = 0 WHERE version IS NULL AND id IN " +
+                "(SELECT DISTINCT rs.stop_id FROM route_stop rs " +
+                "JOIN route r ON rs.route_id = r.id WHERE r.route_group_id = :rgId)")
+                .setParameter("rgId", routeGroupId)
+                .executeUpdate();
+
+        if (rgFixed > 0 || routeFixed > 0 || stopFixed > 0) {
+            // Flush the native SQL and clear the persistence context so findById loads fresh data
+            entityManager.flush();
+            entityManager.clear();
+        }
+    }
+
     private RouteGroupResponse mapToResponse(RouteGroup routeGroup) {
         return routeGroupMapper.toResponse(routeGroup);
     }
@@ -302,6 +345,15 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 .filter(rs -> rs.getId() != null)
                 .collect(Collectors.toMap(RouteStop::getId, rs -> rs));
 
+        // Also create a map by stop ID and stop order for matching route stops without IDs
+        Map<String, RouteStop> existingRouteStopsByStopIdAndOrder = new HashMap<>();
+        for (RouteStop rs : existingRouteStops) {
+            if (rs.getStop() != null && rs.getStop().getId() != null) {
+                String key = rs.getStop().getId() + "_" + rs.getStopOrder();
+                existingRouteStopsByStopIdAndOrder.put(key, rs);
+            }
+        }
+
         Set<UUID> requestRouteStopIds = routeStopRequests.stream()
                 .map(RouteGroupRequest.RouteRequest.RouteStopRequest::getId)
                 .filter(id -> id != null)
@@ -330,17 +382,37 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                     throw new ResourceNotFoundException("Route stop with id " + routeStopRequest.getId() + " not found");
                 }
             } else {
-                Stop stop = stopRepository.findById(routeStopRequest.getStopId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + routeStopRequest.getStopId()));
+                // No ID provided - try to match by stop ID and order to avoid duplicates
+                String matchKey = routeStopRequest.getStopId() + "_" + routeStopRequest.getStopOrder();
+                RouteStop existingByMatch = existingRouteStopsByStopIdAndOrder.get(matchKey);
                 
-                RouteStop newRouteStop = new RouteStop();
-                newRouteStop.setRoute(route);
-                newRouteStop.setStop(stop);
-                newRouteStop.setStopOrder(routeStopRequest.getStopOrder());
-                newRouteStop.setDistanceFromStartKm(routeStopRequest.getDistanceFromStartKm());
-                newRouteStop.setDistanceFromStartKmUnverified(routeStopRequest.getDistanceFromStartKmUnverified());
-                newRouteStop.setDistanceFromStartKmCalculated(routeStopRequest.getDistanceFromStartKmCalculated());
-                updatedRouteStops.add(newRouteStop);
+                if (existingByMatch != null) {
+                    // Found an existing route stop with the same stop and order - reuse it
+                    Stop stop = stopRepository.findById(routeStopRequest.getStopId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + routeStopRequest.getStopId()));
+                    
+                    existingByMatch.setStop(stop);
+                    existingByMatch.setStopOrder(routeStopRequest.getStopOrder());
+                    existingByMatch.setDistanceFromStartKm(routeStopRequest.getDistanceFromStartKm());
+                    existingByMatch.setDistanceFromStartKmUnverified(routeStopRequest.getDistanceFromStartKmUnverified());
+                    existingByMatch.setDistanceFromStartKmCalculated(routeStopRequest.getDistanceFromStartKmCalculated());
+                    updatedRouteStops.add(existingByMatch);
+                    // Add to requestRouteStopIds so it won't be removed
+                    requestRouteStopIds.add(existingByMatch.getId());
+                } else {
+                    // Truly new route stop
+                    Stop stop = stopRepository.findById(routeStopRequest.getStopId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Stop not found with id: " + routeStopRequest.getStopId()));
+                    
+                    RouteStop newRouteStop = new RouteStop();
+                    newRouteStop.setRoute(route);
+                    newRouteStop.setStop(stop);
+                    newRouteStop.setStopOrder(routeStopRequest.getStopOrder());
+                    newRouteStop.setDistanceFromStartKm(routeStopRequest.getDistanceFromStartKm());
+                    newRouteStop.setDistanceFromStartKmUnverified(routeStopRequest.getDistanceFromStartKmUnverified());
+                    newRouteStop.setDistanceFromStartKmCalculated(routeStopRequest.getDistanceFromStartKmCalculated());
+                    updatedRouteStops.add(newRouteStop);
+                }
             }
         }
 
