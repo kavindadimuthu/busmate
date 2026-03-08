@@ -223,3 +223,14 @@ export {
   TooltipContent,
   TooltipProvider,
 } from "./components/tooltip";
+
+// ── Patterns ──────────────────────────────────────────────
+
+// StatusBadge
+export { StatusBadge } from "./patterns/status-badge";
+
+// StatsCard
+export { StatsCard, StatsCardGrid } from "./patterns/stats-card";
+
+// Dialogs
+export { ConfirmDialog, FormDialog, useDialog } from "./patterns/dialogs";
