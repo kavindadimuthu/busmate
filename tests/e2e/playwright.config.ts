@@ -144,10 +144,5 @@ export default defineConfig({
       // API endpoint (Docker: http://localhost:8081, dev: http://localhost:8080).
       NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
     },
-    env: {
-      // Forward the test backend URL so the Next.js dev server uses the correct
-      // API endpoint (Docker: http://localhost:8081, dev: http://localhost:8080).
-      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
-    },
   },
 });
