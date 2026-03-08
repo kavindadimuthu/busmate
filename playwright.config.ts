@@ -31,13 +31,6 @@ const API_URL = process.env.API_URL || 'http://localhost:8080';
 // Set to true when using the Docker e2e environment (pnpm run e2e:docker).
 const isDockerEnv = process.env.E2E_DOCKER === 'true';
 
-// When running against the Docker e2e environment the backend is on port 8081.
-// When running against the local dev environment the backend is on port 8080.
-const API_URL = process.env.API_URL || 'http://localhost:8080';
-
-// Set to true when using the Docker e2e environment (pnpm run e2e:docker).
-const isDockerEnv = process.env.E2E_DOCKER === 'true';
-
 export default defineConfig({
   testDir: path.resolve(e2eDir, 'specs'),
   testMatch: '**/*.spec.ts',
@@ -88,9 +81,6 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI && !isDockerEnv,
     timeout: isDockerEnv ? 90_000 : 120_000,
     cwd: __dirname,
-    env: {
-      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
-    },
     env: {
       NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
     },
