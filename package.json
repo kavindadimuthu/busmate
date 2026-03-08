@@ -23,13 +23,11 @@
     "e2e:debug": "playwright test --debug",
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report tests/e2e/playwright-report",
-
     "e2e:docker": "bash tests/e2e/scripts/check-e2e-env.sh && E2E_DOCKER=true playwright test",
     "e2e:docker:headed": "bash tests/e2e/scripts/check-e2e-env.sh && E2E_DOCKER=true HEADED=true playwright test --headed",
     "e2e:docker:slow": "bash tests/e2e/scripts/check-e2e-env.sh && E2E_DOCKER=true HEADED=true SLOW_MO=500 playwright test --headed",
     "e2e:docker:debug": "bash tests/e2e/scripts/check-e2e-env.sh && E2E_DOCKER=true playwright test --debug",
     "e2e:docker:ui": "bash tests/e2e/scripts/check-e2e-env.sh && E2E_DOCKER=true playwright test --ui",
-
     "e2e:env:start": "bash tests/e2e/scripts/e2e-env.sh start",
     "e2e:env:stop": "bash tests/e2e/scripts/e2e-env.sh stop",
     "e2e:env:status": "bash tests/e2e/scripts/e2e-env.sh status",
@@ -37,7 +35,8 @@
     "e2e:env:check": "bash tests/e2e/scripts/check-e2e-env.sh"
   },
   "devDependencies": {
-    "nx": "^21.0.0"
+    "nx": "^21.0.0",
+    "shadcn": "^4.0.2"
   },
   "pnpm": {
     "overrides": {}
