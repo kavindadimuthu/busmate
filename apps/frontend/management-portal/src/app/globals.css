@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@import "@busmate/ui/styles";
+
+/* ── App-specific overrides ──────────────────────── */
 
 @keyframes fadeIn {
   from {

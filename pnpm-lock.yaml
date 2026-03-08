@@ -17,6 +17,9 @@ importers:
       '@asgardeo/nextjs':
         specifier: ^0.1.81
         version: 0.1.81(next@16.1.6(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@busmate/ui':
+        specifier: workspace:*
+        version: link:../../../libs/ui
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -472,6 +475,15 @@ importers:
       vite:
         specifier: ^5.4.19
         version: 5.4.21(@types/node@22.19.13)(lightningcss@1.31.1)
+
+  libs/ui:
+    dependencies:
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
 
   tests/e2e:
     devDependencies:

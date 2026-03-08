@@ -27,6 +27,8 @@
       "@/*": [
         "./src/*"
       ],
+      "@busmate/ui": ["../../../libs/ui/src/index.ts"],
+      "@busmate/ui/*": ["../../../libs/ui/src/*"],
       "@busmate/api-client-route": ["../../../libs/api-clients/route-management/src/index.ts"],
       "@busmate/api-client-ticketing": ["../../../libs/api-clients/ticketing-management/src/index.ts"],
       "@busmate/api-client-location": ["../../../libs/api-clients/location-tracking/src/index.ts"],

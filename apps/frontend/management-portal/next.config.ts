@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    '@busmate/ui',
     '@busmate/api-client-route',
     '@busmate/api-client-ticketing',
     '@busmate/api-client-location',

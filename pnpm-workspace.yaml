@@ -4,6 +4,7 @@ packages:
   - "apps/frontend/passenger-web"
 
   # Shared libraries
+  - "libs/ui"
   - "libs/api-clients/*"
 
   # E2E tests
