@@ -259,3 +259,28 @@ export type { ActivityItem } from "./patterns/activity-log";
 
 // Dashboard
 export { DashboardGrid } from "./patterns/dashboard";
+
+// ── Layouts ───────────────────────────────────────────────
+
+// App Shell
+export { AppShell } from "./layouts/app-shell";
+export { MobileAppShell } from "./layouts/mobile-app-shell";
+export { ResponsiveShell } from "./layouts/responsive-shell";
+
+// Sidebar
+export { Sidebar } from "./layouts/sidebar";
+export type {
+  SidebarProps,
+  NavItem,
+  NavGroup,
+  NavigationConfig,
+  SidebarNavItem,
+  SidebarNavGroup,
+} from "./layouts/sidebar";
+
+// Header
+export { Header } from "./layouts/header";
+export type { HeaderProps, HeaderBreadcrumb } from "./layouts/header";
+
+// Content
+export { PageContainer, Section } from "./layouts/content";
