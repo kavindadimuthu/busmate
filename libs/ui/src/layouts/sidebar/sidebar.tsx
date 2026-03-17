@@ -21,8 +21,6 @@ export type { NavItem, NavGroup, NavigationConfig, SidebarNavItem, SidebarNavGro
 export interface SidebarProps {
   brand: {
     logo: React.ReactNode;
-    title: string;
-    subtitle?: string;
   };
   navigation: NavGroup[];
   activeItemId: string;
@@ -43,6 +41,8 @@ export function Sidebar({
   userSection,
   className,
 }: SidebarProps) {
+  const [brandHovered, setBrandHovered] = React.useState(false);
+
   return (
     <TooltipProvider delayDuration={0}>
       <aside
@@ -52,18 +52,45 @@ export function Sidebar({
           className
         )}
       >
-        {/* Brand */}
-        <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-muted/20">
-          <div className="flex-shrink-0">{brand.logo}</div>
+        {/* Brand Section with Collapse Toggle */}
+        <div 
+          className="relative flex items-center justify-between px-4 py-4 h-16 border-b border-sidebar-muted/20"
+          onMouseEnter={() => setBrandHovered(true)}
+          onMouseLeave={() => setBrandHovered(false)}
+        >
+          {/* Logo - centered when collapsed, hidden on hover when collapsed */}
+          <div className={cn(
+            "flex-shrink-0",
+            collapsed ? "flex-1 flex justify-center" : "",
+            collapsed && brandHovered && "opacity-0 pointer-events-none"
+          )}>
+            {brand.logo}
+          </div>
+
+          {/* Collapse Toggle - always shown when expanded */}
           {!collapsed && (
-            <div className="overflow-hidden">
-              <div className="font-semibold text-sm truncate">{brand.title}</div>
-              {brand.subtitle && (
-                <div className="text-xs text-sidebar-foreground/60 truncate">
-                  {brand.subtitle}
-                </div>
-              )}
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted/30 ml-1"
+              onClick={() => onCollapse(!collapsed)}
+              aria-label="Collapse sidebar"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Collapse Toggle - shown on hover when collapsed */}
+          {collapsed && brandHovered && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted/30 inset-0 flex items-center justify-center"
+              onClick={() => onCollapse(!collapsed)}
+              aria-label="Expand sidebar"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           )}
         </div>
 
@@ -72,7 +99,7 @@ export function Sidebar({
           {navigation.map((group, gi) => (
             <div key={gi}>
               {group.label && !collapsed && (
-                <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                <div className="mt-4 px-4 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/40">
                   {group.label}
                 </div>
               )}
@@ -91,29 +118,13 @@ export function Sidebar({
           ))}
         </ScrollArea>
 
-        {/* Collapse toggle */}
-        <div className="border-t border-sidebar-muted/20 p-2">
-          <Button
-            variant="ghost"
-            size={collapsed ? "icon" : "default"}
-            className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted/30"
-            onClick={() => onCollapse(!collapsed)}
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                <span className="text-sm">Collapse</span>
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* User section */}
+        {/* User Section - Fixed at Bottom */}
         {userSection && (
-          <div className="border-t border-sidebar-muted/20 p-2">
-            {userSection}
+          <div>
+            <Separator className="bg-sidebar-muted/20" />
+            <div className="p-2">
+              {userSection}
+            </div>
           </div>
         )}
       </aside>
