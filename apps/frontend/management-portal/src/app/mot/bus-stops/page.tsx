@@ -3,40 +3,48 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { BusStopManagementService } from '@busmate/api-client-route';
-import type { StopResponse, PageStopResponse, StopRequest } from '@busmate/api-client-route';
+import type { StopResponse, PageStopResponse } from '@busmate/api-client-route';
+import { useDataTable, useDialog, ConfirmDialog } from '@busmate/ui';
 
-// Components
-import { BusStopStatsCards } from '@/components/mot/bus-stops/BusStopStatsCards';
-import { BusStopAdvancedFilters } from '@/components/mot/bus-stops/BusStopAdvancedFilters';
-import { BusStopActionButtons } from '@/components/mot/bus-stops/BusStopActionButtons';
-import { BusStopsTable } from '@/components/mot/bus-stops/BusStopsTable';
+import { BusStopsStatsCards } from '@/components/mot/bus-stops/bus-stops-stats-cards';
+import { BusStopsFilterBar, type BusStopFilters } from '@/components/mot/bus-stops/bus-stops-filter-bar';
+import { BusStopsTable } from '@/components/mot/bus-stops/bus-stops-table';
 import { BusStopsMapView } from '@/components/mot/bus-stops/BusStopsMapView';
 import { ViewTabs } from '@/components/mot/bus-stops/ViewTabs';
-import { BusStopPagination } from '@/components/mot/bus-stops/BusStopPagination';
-import { DeleteConfirmationModal } from '@/components/mot/confirmation-modals';
+import { BusStopActionButtons } from '@/components/mot/bus-stops/BusStopActionButtons';
 import { useToast } from '@/hooks/use-toast';
 import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
 
-export type ViewType = 'table' | 'map';
-
-interface QueryParams {
-  page: number;
-  size: number;
-  sortBy: string;
-  sortDir: 'asc' | 'desc';
-  search: string;
-  state?: string;
-  isAccessible?: boolean;
-}
-
-interface FilterOptions {
-  states: string[];
-  accessibilityStatuses: boolean[];
-}
+type ViewType = 'table' | 'map';
+const INITIAL_FILTERS: BusStopFilters = { state: '__all__', accessibility: '__all__' };
 
 export default function BusStopsPage() {
   const router = useRouter();
   const { toast } = useToast();
+
+  // ── Table state (pagination, sort, filters) ──────────────────────
+  const { state, setPage, setPageSize, setSort, setSearch, setFilters, clearFilters } =
+    useDataTable<BusStopFilters>({
+      initialPageSize: 10,
+      initialSort: { column: 'name', direction: 'asc' },
+      initialFilters: INITIAL_FILTERS,
+    });
+
+  const deleteDialog = useDialog<StopResponse>();
+  const [currentView, setCurrentView] = useState<ViewType>('table');
+
+  // ── Server data ──────────────────────────────────────────────────
+  const [allBusStops, setAllBusStops] = useState<StopResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [stats, setStats] = useState({
+    totalStops: { count: 0 },
+    accessibleStops: { count: 0 },
+    nonAccessibleStops: { count: 0 },
+    totalStates: { count: 0 },
+    totalCities: { count: 0 },
+  });
+  const [filterOptions, setFilterOptions] = useState<{ states: string[] }>({ states: [] });
 
   useSetPageMetadata({
     title: 'Bus Stops',
@@ -45,510 +53,219 @@ export default function BusStopsPage() {
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Bus Stops' }],
   });
-  
-  // View state
-  const [currentView, setCurrentView] = useState<ViewType>('table');
-  
-  // Data states
-  const [allBusStops, setAllBusStops] = useState<StopResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stateFilter, setStateFilter] = useState('all');
-  const [accessibilityFilter, setAccessibilityFilter] = useState('all');
+  useSetPageActions(
+    <BusStopActionButtons
+      onAddBusStop={() => router.push('/mot/bus-stops/add-new')}
+      onImportBusStops={() => router.push('/mot/bus-stops/import')}
+      isLoading={isLoading}
+    />,
+  );
 
-  // Filter options from API
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    states: [],
-    accessibilityStatuses: []
-  });
-  const [filterOptionsLoading, setFilterOptionsLoading] = useState(true);
+  // ── Initial load: filter options + statistics ────────────────────
+  useEffect(() => {
+    BusStopManagementService.getStopFilterOptions()
+      .then((res) => setFilterOptions({ states: (res.states || []).filter((s) => s && s.trim() !== '') }))
+      .catch(console.error);
 
-  const [queryParams, setQueryParams] = useState<QueryParams>({
-    page: 0,
-    size: 10,
-    sortBy: 'name',
-    sortDir: 'asc',
-    search: '',
-  });
-
-  // Statistics state
-  const [stats, setStats] = useState({
-    totalStops: { count: 0 },
-    accessibleStops: { count: 0 },
-    nonAccessibleStops: { count: 0 },
-    totalStates: { count: 0 },
-    totalCities: { count: 0 }
-  });
-
-  // State for delete modal
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [stopToDelete, setStopToDelete] = useState<StopResponse | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Load filter options
-  const loadFilterOptions = useCallback(async () => {
-    try {
-      setFilterOptionsLoading(true);
-      const response = await BusStopManagementService.getStopFilterOptions();
-
-      setFilterOptions({
-        states: response.states || [],
-        accessibilityStatuses: response.accessibilityStatuses || []
-      });
-    } catch (error) {
-      console.error('Failed to load filter options:', error);
-    } finally {
-      setFilterOptionsLoading(false);
-    }
+    BusStopManagementService.getStopStatistics()
+      .then((res) =>
+        setStats({
+          totalStops: { count: res.totalStops || 0 },
+          accessibleStops: { count: res.accessibleStops || 0 },
+          nonAccessibleStops: { count: res.nonAccessibleStops || 0 },
+          totalStates: { count: Object.keys(res.stopsByState || {}).length },
+          totalCities: { count: Object.keys(res.stopsByCity || {}).length },
+        }),
+      )
+      .catch(console.error);
   }, []);
 
-  // Load statistics
-  const loadStatistics = useCallback(async () => {
-    try {
-      const response = await BusStopManagementService.getStopStatistics();
-      setStats({
-        totalStops: { count: response.totalStops || 0 },
-        accessibleStops: { count: response.accessibleStops || 0 },
-        nonAccessibleStops: { count: response.nonAccessibleStops || 0 },
-        totalStates: { count: Object.keys(response.stopsByState || {}).length },
-        totalCities: { count: Object.keys(response.stopsByCity || {}).length }
-      });
-    } catch (error) {
-      console.error('Failed to load statistics:', error);
-    }
-  }, []);
-
-  // Load bus stops from API - handle both server-side and client-side filtering appropriately
+  // ── Data load: re-runs when state changes ────────────────────────
   const loadBusStops = useCallback(async () => {
+    const { searchQuery, sortColumn, sortDirection, page, pageSize, filters } = state;
+    const hasFilters =
+      searchQuery ||
+      (filters.state && filters.state !== '__all__') ||
+      (filters.accessibility && filters.accessibility !== '__all__');
+
     try {
       setIsLoading(true);
-      setError(null);
-
-      // If we have search, state, or accessibility filters, we need to get all data for client-side filtering
-      // Otherwise, we can use server-side pagination for better performance
-      const needsClientSideFiltering = queryParams.search || stateFilter !== 'all' || accessibilityFilter !== 'all';
-      
-      if (needsClientSideFiltering) {
-        // Get all results for client-side filtering
-        let allResults: StopResponse[] = [];
-        let page = 0;
+      if (hasFilters) {
+        // Client-side filtering: batch-fetch all data
+        let results: StopResponse[] = [];
+        let apiPage = 0;
         let hasMore = true;
-        const pageSize = 500; // Use reasonable page size for batch fetching
-        
         while (hasMore) {
-          const response: PageStopResponse = await BusStopManagementService.getAllStops(
-            page,
-            pageSize,
-            queryParams.sortBy,
-            queryParams.sortDir,
-            queryParams.search
+          const res: PageStopResponse = await BusStopManagementService.getAllStops(
+            apiPage++,
+            500,
+            sortColumn ?? 'name',
+            sortDirection,
+            searchQuery || undefined,
           );
-          
-          if (response.content && response.content.length > 0) {
-            allResults = [...allResults, ...response.content];
-            page++;
-            hasMore = !response.last && response.content.length === pageSize;
-          } else {
-            hasMore = false;
-          }
+          results = [...results, ...(res.content ?? [])];
+          hasMore = !res.last && (res.content?.length ?? 0) === 500;
         }
-        
-        setAllBusStops(allResults);
+        setAllBusStops(results);
       } else {
-        // Use server-side pagination when no filters are applied
-        const response: PageStopResponse = await BusStopManagementService.getAllStops(
-          queryParams.page,
-          queryParams.size,
-          queryParams.sortBy,
-          queryParams.sortDir
+        // Server-side pagination (no filters)
+        const res: PageStopResponse = await BusStopManagementService.getAllStops(
+          page - 1, // useDataTable is 1-based; Spring is 0-based
+          pageSize,
+          sortColumn ?? 'name',
+          sortDirection,
         );
-        
-        setAllBusStops(response.content || []);
+        setAllBusStops(res.content ?? []);
       }
-    } catch (error) {
-      console.error('Failed to load bus stops:', error);
-      setError('Failed to load bus stops. Please try again.');
+    } catch {
+      toast({ title: 'Failed to load bus stops', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
-  }, [queryParams.search, queryParams.sortBy, queryParams.sortDir, queryParams.page, queryParams.size, stateFilter, accessibilityFilter]);
-
-  useEffect(() => {
-    loadFilterOptions();
-    loadStatistics();
-  }, [loadFilterOptions, loadStatistics]);
+  }, [state, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadBusStops();
-  }, [loadBusStops]);
+  }, [
+    state.searchQuery,
+    state.sortColumn,
+    state.sortDirection,
+    state.page,
+    state.pageSize,
+    state.filters.state,
+    state.filters.accessibility,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update query params with filters
-  const updateQueryParams = useCallback((updates: Partial<QueryParams>) => {
-    const filteredUpdates: Partial<QueryParams> = {};
+  // ── Client-side filter + paginate ───────────────────────────────
+  const filteredTableData = useMemo(() => {
+    const { searchQuery, sortColumn, sortDirection, page, pageSize, filters } = state;
+    const hasFilters =
+      searchQuery ||
+      (filters.state && filters.state !== '__all__') ||
+      (filters.accessibility && filters.accessibility !== '__all__');
 
-    // Only include defined values
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        (filteredUpdates as any)[key] = value;
-      }
+    if (!hasFilters) {
+      return { data: allBusStops, totalItems: stats.totalStops.count };
+    }
+
+    let filtered = allBusStops;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (s) =>
+          s.name?.toLowerCase().includes(q) ||
+          s.location?.city?.toLowerCase().includes(q) ||
+          s.location?.state?.toLowerCase().includes(q) ||
+          s.location?.address?.toLowerCase().includes(q),
+      );
+    }
+    if (filters.state && filters.state !== '__all__') {
+      filtered = filtered.filter((s) => s.location?.state === filters.state);
+    }
+    if (filters.accessibility && filters.accessibility !== '__all__') {
+      const want = filters.accessibility === 'accessible';
+      filtered = filtered.filter((s) => s.isAccessible === want);
+    }
+
+    filtered = [...filtered].sort((a, b) => {
+      const dir = sortDirection === 'asc' ? 1 : -1;
+      const key = sortColumn ?? 'name';
+      const av =
+        key === 'createdAt' ? (a.createdAt ?? '') :
+        key === 'isAccessible' ? String(a.isAccessible) : (a.name ?? '');
+      const bv =
+        key === 'createdAt' ? (b.createdAt ?? '') :
+        key === 'isAccessible' ? String(b.isAccessible) : (b.name ?? '');
+      return av.localeCompare(bv) * dir;
     });
 
-    // Add filter-based query params
-    if (stateFilter !== 'all') {
-      filteredUpdates.state = stateFilter;
-    }
+    const total = filtered.length;
+    const start = (page - 1) * pageSize;
+    return { data: filtered.slice(start, start + pageSize), totalItems: total };
+  }, [allBusStops, state, stats.totalStops.count]);
 
-    if (accessibilityFilter !== 'all') {
-      filteredUpdates.isAccessible = accessibilityFilter === 'accessible';
-    }
-
-    setQueryParams(prev => ({
-      ...prev,
-      ...filteredUpdates,
-      // Reset to first page when filters change (except when page is explicitly updated)
-      page: 'page' in filteredUpdates ? filteredUpdates.page! : 0,
-    }));
-  }, [stateFilter, accessibilityFilter]);
-
-  // Remove the automatic filter application useEffect - we'll handle it manually
-
-  const handleSearch = (searchTerm: string) => {
-    setSearchTerm(searchTerm);
-    // Reset to first page when search changes
-    updateQueryParams({ search: searchTerm, page: 0 });
-  };
-
-  const handleSearchTermUpdate = (searchTerm: string) => {
-    setSearchTerm(searchTerm);
-  };
-
-  const handleSort = (sortBy: string, sortDir: 'asc' | 'desc') => {
-    updateQueryParams({ sortBy, sortDir });
-  };
-
-  const handlePageChange = (page: number) => {
-    updateQueryParams({ page });
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    updateQueryParams({ size, page: 0 });
-  };
-
-  const handleViewChange = (view: ViewType) => {
-    setCurrentView(view);
-  };
-
-  const handleStateFilterChange = (value: string) => {
-    setStateFilter(value);
-    // Reset to first page when filter changes
-    setQueryParams(prev => ({ ...prev, page: 0 }));
-  };
-
-  const handleAccessibilityFilterChange = (value: string) => {
-    setAccessibilityFilter(value);
-    // Reset to first page when filter changes
-    setQueryParams(prev => ({ ...prev, page: 0 }));
-  };
-
-  const handleClearAllFilters = useCallback(() => {
-    setSearchTerm('');
-    setStateFilter('all');
-    setAccessibilityFilter('all');
-    setQueryParams({
-      page: 0,
-      size: 10,
-      sortBy: 'name',
-      sortDir: 'asc',
-      search: '',
-    });
-  }, []);
-
-  // Bus stop action handlers
-  const handleAddBusStop = () => {
-    router.push('/mot/bus-stops/add-new');
-  };
-
-  const handleImportBusStops = () => {
-    router.push('/mot/bus-stops/import');
-  };
-
-  const handleView = (stopId: string) => {
-    router.push(`/mot/bus-stops/${stopId}`);
-  };
-
-  const handleEdit = (stopId: string) => {
-    router.push(`/mot/bus-stops/${stopId}/edit`);
-  };
-
-  const handleDeleteClick = (stopId: string, stopName: string) => {
-    const stop = allBusStops.find(s => s.id === stopId);
-    if (stop) {
-      setStopToDelete(stop);
-      setShowDeleteModal(true);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setShowDeleteModal(false);
-    setStopToDelete(null);
-  };
-
+  // ── Delete ───────────────────────────────────────────────────────
   const handleDeleteConfirm = async () => {
-    if (!stopToDelete) return;
-
+    const stop = deleteDialog.data;
+    if (!stop) return;
     try {
       setIsDeleting(true);
-      await BusStopManagementService.deleteStop(stopToDelete.id!);
-      
-      toast({
-        title: "Bus Stop Deleted",
-        description: `${stopToDelete.name} has been deleted successfully.`,
-      });
-
-      setShowDeleteModal(false);
-      setStopToDelete(null);
-      
-      // Reload data
+      await BusStopManagementService.deleteStop(stop.id!);
+      toast({ title: 'Bus Stop Deleted', description: `${stop.name} has been deleted.` });
+      deleteDialog.close();
       loadBusStops();
-      loadStatistics();
-    } catch (error) {
-      toast({
-        title: "Delete Failed",
-        description: "Failed to delete bus stop. Please try again.",
-        variant: "destructive",
-      });
+      BusStopManagementService.getStopStatistics()
+        .then((res) =>
+          setStats({
+            totalStops: { count: res.totalStops || 0 },
+            accessibleStops: { count: res.accessibleStops || 0 },
+            nonAccessibleStops: { count: res.nonAccessibleStops || 0 },
+            totalStates: { count: Object.keys(res.stopsByState || {}).length },
+            totalCities: { count: Object.keys(res.stopsByCity || {}).length },
+          }),
+        )
+        .catch(console.error);
+    } catch {
+      toast({ title: 'Delete Failed', description: 'Failed to delete bus stop.', variant: 'destructive' });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // Get filtered and paginated bus stops — shared between table AND map views
-  const filteredTableData = useMemo(() => {
-    if (!allBusStops.length) return { data: [], totalElements: 0, totalPages: 0 };
-    
-    const needsClientSideFiltering = queryParams.search || stateFilter !== 'all' || accessibilityFilter !== 'all';
-    
-    if (!needsClientSideFiltering) {
-      // When using server-side pagination, return the data as-is
-      return {
-        data: allBusStops,
-        totalElements: stats.totalStops.count, // Use total from statistics
-        totalPages: Math.ceil(stats.totalStops.count / queryParams.size)
-      };
-    }
-    
-    // Client-side filtering when filters are applied
-    let filtered = allBusStops;
-
-    // Apply search filter (note: search is also handled server-side but we keep this for consistency)
-    if (searchTerm) {
-      filtered = filtered.filter(stop =>
-        stop.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stop.location?.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stop.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stop.location?.state?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply state filter
-    if (stateFilter !== 'all') {
-      filtered = filtered.filter(stop => stop.location?.state === stateFilter);
-    }
-
-    // Apply accessibility filter
-    if (accessibilityFilter !== 'all') {
-      const isAccessible = accessibilityFilter === 'accessible';
-      filtered = filtered.filter(stop => stop.isAccessible === isAccessible);
-    }
-
-    // Apply sorting (only for client-side filtering, server-side is already sorted)
-    if (needsClientSideFiltering) {
-      filtered.sort((a, b) => {
-        const field = queryParams.sortBy;
-        const direction = queryParams.sortDir === 'asc' ? 1 : -1;
-        
-        let aVal = '';
-        let bVal = '';
-        
-        switch (field) {
-          case 'name':
-            aVal = a.name || '';
-            bVal = b.name || '';
-            break;
-          case 'createdAt':
-            aVal = a.createdAt || '';
-            bVal = b.createdAt || '';
-            break;
-          case 'updatedAt':
-            aVal = a.updatedAt || '';
-            bVal = b.updatedAt || '';
-            break;
-          case 'city':
-            aVal = a.location?.city || '';
-            bVal = b.location?.city || '';
-            break;
-          case 'state':
-            aVal = a.location?.state || '';
-            bVal = b.location?.state || '';
-            break;
-          default:
-            aVal = a.name || '';
-            bVal = b.name || '';
-        }
-        
-        return aVal.localeCompare(bVal) * direction;
-      });
-    }
-
-    const totalElements = filtered.length;
-    const totalPages = Math.ceil(totalElements / queryParams.size);
-    const startIndex = queryParams.page * queryParams.size;
-    const endIndex = startIndex + queryParams.size;
-    const data = filtered.slice(startIndex, endIndex);
-
-    return {
-      data,
-      totalElements,
-      totalPages
-    };
-  }, [allBusStops, searchTerm, stateFilter, accessibilityFilter, queryParams, stats.totalStops.count]);
-
-  // Both table and map use the same paginated slice
-  const busStops = filteredTableData.data;
-  
-  const pagination = useMemo(() => ({
-    currentPage: queryParams.page,
-    totalPages: filteredTableData.totalPages,
-    totalElements: filteredTableData.totalElements,
-    pageSize: queryParams.size,
-  }), [queryParams.page, queryParams.size, filteredTableData]);
-
-  const currentSort = {
-    field: queryParams.sortBy,
-    direction: queryParams.sortDir
-  };
-
-  const activeFilters = {
-    search: searchTerm,
-    state: stateFilter,
-    accessibility: accessibilityFilter
-  };
-
-  useSetPageActions(
-    <>
-      <BusStopActionButtons
-        onAddBusStop={handleAddBusStop}
-        onImportBusStops={handleImportBusStops}
-        isLoading={isLoading}
-      />
-    </>
-  );
-
-  if (error) {
-    return (
-      <div className="p-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Bus Stops</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => {
-              setError(null);
-              loadBusStops();
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const activeFilterCount =
+    (state.filters.state && state.filters.state !== '__all__' ? 1 : 0) +
+    (state.filters.accessibility && state.filters.accessibility !== '__all__' ? 1 : 0);
 
   return (
     <div className="space-y-6">
-      {/* Statistics Cards */}
-      <BusStopStatsCards stats={stats} />
+      <BusStopsStatsCards stats={stats} />
 
-      {/* Advanced Filters */}
-      <BusStopAdvancedFilters
-        searchTerm={searchTerm}
-        setSearchTerm={handleSearchTermUpdate}
-        stateFilter={stateFilter}
-        setStateFilter={handleStateFilterChange}
-        accessibilityFilter={accessibilityFilter}
-        setAccessibilityFilter={handleAccessibilityFilterChange}
+      <BusStopsFilterBar
+        searchValue={state.searchQuery}
+        onSearchChange={setSearch}
+        filters={state.filters}
+        onFiltersChange={setFilters}
+        onClearAll={clearFilters}
         filterOptions={filterOptions}
-        loading={filterOptionsLoading}
-        totalCount={stats.totalStops.count}
-        filteredCount={pagination.totalElements}
-        loadedCount={busStops.length}
-        onClearAll={handleClearAllFilters}
-        onSearch={handleSearch}
+        activeFilterCount={activeFilterCount}
       />
 
-      {/* View Tabs */}
-      <ViewTabs
-        activeView={currentView}
-        onViewChange={handleViewChange}
-      />
+      <ViewTabs activeView={currentView} onViewChange={setCurrentView} />
 
-      {/* Content based on current view */}
       {currentView === 'table' ? (
-        <div className='bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden'>
-          <BusStopsTable
-            busStops={busStops}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-            onSort={handleSort}
-            activeFilters={activeFilters}
-            loading={isLoading}
-            currentSort={currentSort}
-          />
-
-          <BusStopPagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            totalElements={pagination.totalElements}
-            pageSize={pagination.pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            loading={isLoading}
-          />
-        </div>
+        <BusStopsTable
+          data={filteredTableData.data}
+          totalItems={filteredTableData.totalItems}
+          page={state.page}
+          pageSize={state.pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          sortColumn={state.sortColumn}
+          sortDirection={state.sortDirection}
+          onSort={setSort}
+          loading={isLoading}
+          onView={(stop) => router.push(`/mot/bus-stops/${stop.id}`)}
+          onEdit={(stop) => router.push(`/mot/bus-stops/${stop.id}/edit`)}
+          onDelete={deleteDialog.open}
+        />
       ) : (
-        <div className="space-y-3">
-          <BusStopsMapView
-            busStops={busStops}
-            loading={isLoading}
-            onDelete={(stop: StopResponse) => handleDeleteClick(stop.id!, stop.name || 'Unknown')}
-          />
-          {/* Shared pagination — keeps map and table in sync */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-            <BusStopPagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              totalElements={pagination.totalElements}
-              pageSize={pagination.pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              loading={isLoading}
-            />
-          </div>
-        </div>
+        <BusStopsMapView
+          busStops={filteredTableData.data}
+          loading={isLoading}
+          onDelete={(stop: StopResponse) => deleteDialog.open(stop)}
+        />
       )}
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
+      <ConfirmDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={deleteDialog.setOpen}
         title="Delete Bus Stop"
-        itemName={stopToDelete?.name || 'this bus stop'}
-        isLoading={isDeleting}
+        description={`Are you sure you want to delete "${deleteDialog.data?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        loading={isDeleting}
       />
     </div>
   );
