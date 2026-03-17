@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic';
 import { Toaster } from "@/components/ui/toaster"
-import { LayoutClient } from "@/components/shared/LayoutClient"
+import { RoleLayoutClient } from "@/components/layouts/role-layout-client"
 import { getUserData } from "@/lib/utils/getUserData"
 import { isRoleAllowedForRoute, getRoleRedirectPath } from "@/lib/utils/getRoleRedirectPath"
 
@@ -30,9 +30,9 @@ export default async function OperatorRootLayout({
 
   return (
     <>
-      <LayoutClient role="operator" userData={userData}>
+      <RoleLayoutClient role="operator" userData={userData}>
         {children}
-      </LayoutClient>
+      </RoleLayoutClient>
       <Toaster />
     </>
   )

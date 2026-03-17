@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic';
 import { Toaster } from '@/components/ui/toaster'
-import { LayoutClient } from '@/components/shared/LayoutClient'
+import { RoleLayoutClient } from '@/components/layouts/role-layout-client'
 import { getUserData } from '@/lib/utils/getUserData'
 import { isRoleAllowedForRoute, getRoleRedirectPath } from '@/lib/utils/getRoleRedirectPath'
 
@@ -30,9 +30,9 @@ export default async function TimekeeperRootLayout({
 
   return (
     <>
-      <LayoutClient role="timeKeeper" userData={userData}>
+      <RoleLayoutClient role="timekeeper" userData={userData}>
         {children}
-      </LayoutClient>
+      </RoleLayoutClient>
       <Toaster />
     </>
   )

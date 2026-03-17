@@ -83,8 +83,6 @@ function MotLayoutInner({ children, userData }: MotLayoutInnerProps) {
         <Sidebar
           brand={{
             logo: <BrandLogo collapsed={collapsed} />,
-            title: "BUSMATE LK",
-            subtitle: "MOT Portal",
           }}
           navigation={motNavigation.groups}
           activeItemId={activeItemId}
