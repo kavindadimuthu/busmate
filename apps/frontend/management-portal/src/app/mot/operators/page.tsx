@@ -1,371 +1,52 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { 
-  OperatorAdvancedFilters, 
-  OperatorActionButtons, 
-  OperatorStatsCards, 
-  OperatorsTable 
-} from '@/components/mot/operators';
-import { DataPagination } from '@/components/shared/DataPagination';
-import { OperatorManagementService, OperatorResponse } from '@busmate/api-client-route';
-import DeleteOperatorModal from '@/components/mot/users/operator/DeleteOperatorModal';
+import { OperatorManagementService } from '@busmate/api-client-route';
+import type { OperatorResponse } from '@busmate/api-client-route';
+import { useDataTable, useDialog, ConfirmDialog } from '@busmate/ui';
 
-interface QueryParams {
-  page: number;
-  size: number;
-  sortBy: string;
-  sortDir: 'asc' | 'desc';
-  search: string;
-  operatorType?: 'PRIVATE' | 'CTB';
-  status?: 'pending' | 'active' | 'inactive' | 'cancelled';
-}
+import { OperatorsStatsCards } from '@/components/mot/operators/operators-stats-cards';
+import { OperatorsFilterBar, type OperatorFilters } from '@/components/mot/operators/operators-filter-bar';
+import { OperatorsTable } from '@/components/mot/operators/operators-table';
+import { OperatorActionButtons } from '@/components/mot/operators';
+import { useToast } from '@/hooks/use-toast';
+import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
 
-interface FilterOptions {
-  statuses: Array<'pending' | 'active' | 'inactive' | 'cancelled'>;
-  operatorTypes: Array<'PRIVATE' | 'CTB'>;
-  regions: Array<string>;
-}
+const INITIAL_FILTERS: OperatorFilters = {
+  status: '__all__',
+  operatorType: '__all__',
+  region: '__all__',
+};
 
 export default function OperatorsPage() {
   const router = useRouter();
+  const { toast } = useToast();
+
+  // ── Table state (pagination, sort, filters) ──────────────────────
+  const { state, setPage, setPageSize, setSort, setSearch, setFilters, clearFilters } =
+    useDataTable<OperatorFilters>({
+      initialPageSize: 10,
+      initialSort: { column: 'name', direction: 'asc' },
+      initialFilters: INITIAL_FILTERS,
+    });
+
+  const deleteDialog = useDialog<OperatorResponse>();
+
+  // ── Server data ──────────────────────────────────────────────────
   const [operators, setOperators] = useState<OperatorResponse[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Filter states
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [operatorTypeFilter, setOperatorTypeFilter] = useState('all');
-  const [regionFilter, setRegionFilter] = useState('all');
-
-  // Filter options from API
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    statuses: [],
-    operatorTypes: [],
-    regions: []
-  });
-  const [filterOptionsLoading, setFilterOptionsLoading] = useState(true);
-
-  const [queryParams, setQueryParams] = useState<QueryParams>({
-    page: 0,
-    size: 10,
-    sortBy: 'name',
-    sortDir: 'asc',
-    search: '',
-  });
-
-  // Pagination state
-  const [pagination, setPagination] = useState({
-    currentPage: 0,
-    totalPages: 0,
-    totalElements: 0,
-    pageSize: 10,
-  });
-
-  // Statistics state
+  const [isDeleting, setIsDeleting] = useState(false);
   const [stats, setStats] = useState({
     totalOperators: { count: 0 },
     activeOperators: { count: 0 },
     inactiveOperators: { count: 0 },
     privateOperators: { count: 0 },
     ctbOperators: { count: 0 },
-    totalRegions: { count: 0 }
+    totalRegions: { count: 0 },
   });
-
-  // State for delete modal
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [operatorToDelete, setOperatorToDelete] = useState<OperatorResponse | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Load filter options
-  const loadFilterOptions = useCallback(async () => {
-    try {
-      setFilterOptionsLoading(true);
-      const filterOptionsResponse = await OperatorManagementService.getOperatorFilterOptions();
-
-      setFilterOptions({
-        statuses: ['pending', 'active', 'inactive', 'cancelled'],
-        operatorTypes: ['PRIVATE', 'CTB'],
-        regions: filterOptionsResponse.regions || []
-      });
-    } catch (err) {
-      console.error('Error loading filter options:', err);
-    } finally {
-      setFilterOptionsLoading(false);
-    }
-  }, []);
-
-  // Load statistics
-  const loadStatistics = useCallback(async () => {
-    try {
-      const statsResponse = await OperatorManagementService.getOperatorStatistics();
-
-      setStats({
-        totalOperators: { count: statsResponse.totalOperators || 0 },
-        activeOperators: { count: statsResponse.activeOperators || 0 },
-        inactiveOperators: { count: statsResponse.inactiveOperators || 0 },
-        privateOperators: { count: statsResponse.privateOperators || 0 },
-        ctbOperators: { count: statsResponse.ctbOperators || 0 },
-        totalRegions: { count: statsResponse.operatorsByRegion ? Object.keys(statsResponse.operatorsByRegion).length : 0 }
-      });
-    } catch (err) {
-      console.error('Error loading statistics:', err);
-    }
-  }, []);
-
-  // Load operators from API
-  const loadOperators = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await OperatorManagementService.getAllOperators(
-        queryParams.page,
-        queryParams.size,
-        queryParams.sortBy,
-        queryParams.sortDir,
-        queryParams.search || undefined,
-        queryParams.operatorType,
-        queryParams.status
-      );
-
-      setOperators(response.content || []);
-      setPagination({
-        currentPage: response.number || 0,
-        totalPages: response.totalPages || 0,
-        totalElements: response.totalElements || 0,
-        pageSize: response.size || 10,
-      });
-    } catch (err) {
-      console.error('Error loading operators:', err);
-      setError('Failed to load operators. Please try again.');
-      setOperators([]);
-      setPagination({
-        currentPage: 0,
-        totalPages: 0,
-        totalElements: 0,
-        pageSize: 10,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [queryParams]);
-
-  useEffect(() => {
-    loadFilterOptions();
-    loadStatistics();
-  }, [loadFilterOptions, loadStatistics]);
-
-  useEffect(() => {
-    loadOperators();
-  }, [loadOperators]);
-
-  // Update query params with filters (optimized to prevent unnecessary updates)
-  const updateQueryParams = useCallback((updates: Partial<QueryParams>) => {
-    setQueryParams(prev => {
-      const newParams = { ...prev, ...updates };
-
-      // Handle explicit undefined values (for clearing filters)
-      Object.keys(updates).forEach(key => {
-        if (updates[key as keyof QueryParams] === undefined) {
-          delete newParams[key as keyof QueryParams];
-        }
-      });
-
-      // Convert current filter states to API parameters (only if not explicitly overridden)
-      if (!('status' in updates)) {
-        if (statusFilter !== 'all') {
-          newParams.status = statusFilter as 'pending' | 'active' | 'inactive' | 'cancelled';
-        } else {
-          delete newParams.status;
-        }
-      }
-
-      if (!('operatorType' in updates)) {
-        if (operatorTypeFilter !== 'all') {
-          newParams.operatorType = operatorTypeFilter as 'PRIVATE' | 'CTB';
-        } else {
-          delete newParams.operatorType;
-        }
-      }
-
-      // Only update if something actually changed
-      const hasChanges = Object.keys(newParams).some(key => {
-        const typedKey = key as keyof QueryParams;
-        return newParams[typedKey] !== prev[typedKey];
-      }) || Object.keys(prev).some(key => {
-        const typedKey = key as keyof QueryParams;
-        return prev[typedKey] !== newParams[typedKey];
-      });
-
-      return hasChanges ? newParams : prev;
-    });
-  }, [statusFilter, operatorTypeFilter]);
-
-  // Apply filters when they change (with debounce for better UX)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      updateQueryParams({ page: 0 });
-    }, 300); // Short debounce for filter changes
-
-    return () => clearTimeout(timer);
-  }, [statusFilter, operatorTypeFilter, updateQueryParams]);
-
-  const handleSearch = (searchTerm: string) => {
-    setSearchTerm(searchTerm);
-    updateQueryParams({ search: searchTerm, page: 0 });
-  };
-
-  const handleSort = (sortBy: string, sortDir: 'asc' | 'desc') => {
-    updateQueryParams({ sortBy, sortDir, page: 0 });
-  };
-
-  const handlePageChange = (page: number) => {
-    updateQueryParams({ page });
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    updateQueryParams({ size, page: 0 });
-  };
-
-  const handleClearAllFilters = useCallback(() => {
-    // Clear all filter states
-    setSearchTerm('');
-    setStatusFilter('all');
-    setOperatorTypeFilter('all');
-    setRegionFilter('all');
-    
-    // Immediately update query params to clear all filters and trigger new API call
-    setQueryParams(prev => {
-      const newParams = {
-        ...prev,
-        search: '',
-        page: 0
-      };
-      
-      // Remove all filter-related parameters
-      delete newParams.status;
-      delete newParams.operatorType;
-      
-      return newParams;
-    });
-  }, []);
-
-  const handleAddNewOperator = () => {
-    router.push('/mot/operators/add-new');
-  };
-
-  const handleImportOperators = () => {
-    router.push('/mot/operators/import');
-  };
-
-  const handleExportAll = async () => {
-    try {
-      const dataToExport = operators.map(operator => ({
-        ID: operator.id || '',
-        Name: operator.name || '',
-        'Operator Type': operator.operatorType || '',
-        Region: operator.region || '',
-        Status: operator.status || '',
-        'Created At': operator.createdAt ? new Date(operator.createdAt).toLocaleDateString() : '',
-        'Updated At': operator.updatedAt ? new Date(operator.updatedAt).toLocaleDateString() : '',
-        'Created By': operator.createdBy || '',
-        'Updated By': operator.updatedBy || '',
-      }));
-
-      if (dataToExport.length === 0) {
-        alert('No data to export');
-        return;
-      }
-
-      const headers = Object.keys(dataToExport[0]);
-      const csvContent = [
-        headers.join(','),
-        ...dataToExport.map(row => 
-          headers.map(header => {
-            const value = row[header as keyof typeof row];
-            return typeof value === 'string' && value.includes(',') 
-              ? `"${value.replace(/"/g, '""')}"` 
-              : value;
-          }).join(',')
-        )
-      ].join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `operators-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export data. Please try again.');
-    }
-  };
-
-  const handleView = (operatorId: string) => {
-    router.push(`/mot/operators/${operatorId}`);
-  };
-
-  const handleEdit = (operatorId: string) => {
-    router.push(`/mot/operators/${operatorId}/edit`);
-  };
-
-  const handleDelete = (operatorId: string, operatorName: string) => {
-    const operator = operators.find(o => o.id === operatorId);
-    if (operator) {
-      setOperatorToDelete(operator);
-      setShowDeleteModal(true);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setShowDeleteModal(false);
-    setOperatorToDelete(null);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!operatorToDelete?.id) return;
-
-    try {
-      setIsDeleting(true);
-      await OperatorManagementService.deleteOperator(operatorToDelete.id);
-      await loadOperators(); // Refresh the list
-      await loadStatistics(); // Refresh stats
-      setShowDeleteModal(false);
-      setOperatorToDelete(null);
-    } catch (error) {
-      console.error('Error deleting operator:', error);
-      setError('Failed to delete operator. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Filter operators for region (client-side since API doesn't support region filtering)
-  const filteredOperators = React.useMemo(() => {
-    if (regionFilter === 'all') return operators;
-    return operators.filter(operator => operator.region === regionFilter);
-  }, [operators, regionFilter]);
-
-  // Transform operators for the table
-  const transformedOperators = React.useMemo(() => {
-    return filteredOperators.map(operator => ({
-      id: operator.id || '',
-      name: operator.name || '',
-      operatorType: operator.operatorType,
-      region: operator.region,
-      status: operator.status,
-      createdAt: operator.createdAt,
-      updatedAt: operator.updatedAt,
-    }));
-  }, [filteredOperators]);
+  const [filterOptions, setFilterOptions] = useState<{ regions: string[] }>({ regions: [] });
 
   useSetPageMetadata({
     title: 'Operators',
@@ -377,101 +58,232 @@ export default function OperatorsPage() {
 
   useSetPageActions(
     <OperatorActionButtons
-      onAddOperator={handleAddNewOperator}
-      onImportOperators={handleImportOperators}
+      onAddOperator={() => router.push('/mot/operators/add-new')}
+      onImportOperators={() => router.push('/mot/operators/import')}
       onExportAll={handleExportAll}
       isLoading={isLoading}
-    />
+    />,
   );
 
-  if (isLoading && operators.length === 0) {
-    return (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-    );
+  // ── Initial load: filter options + statistics ────────────────────
+  useEffect(() => {
+    OperatorManagementService.getOperatorFilterOptions()
+      .then((res) =>
+        setFilterOptions({ regions: (res.regions || []).filter((r) => r && r.trim() !== '') }),
+      )
+      .catch(console.error);
+
+    loadStatistics();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadStatistics = useCallback(() => {
+    OperatorManagementService.getOperatorStatistics()
+      .then((res) =>
+        setStats({
+          totalOperators: { count: res.totalOperators || 0 },
+          activeOperators: { count: res.activeOperators || 0 },
+          inactiveOperators: { count: res.inactiveOperators || 0 },
+          privateOperators: { count: res.privateOperators || 0 },
+          ctbOperators: { count: res.ctbOperators || 0 },
+          totalRegions: { count: res.operatorsByRegion ? Object.keys(res.operatorsByRegion).length : 0 },
+        }),
+      )
+      .catch(console.error);
+  }, []);
+
+  // ── Data load: re-runs when state changes ────────────────────────
+  const loadOperators = useCallback(async () => {
+    const { searchQuery, sortColumn, sortDirection, page, pageSize, filters } = state;
+
+    // Region is client-side only; status + operatorType are server-side
+    const apiStatus = filters.status && filters.status !== '__all__' ? filters.status : undefined;
+    const apiOperatorType =
+      filters.operatorType && filters.operatorType !== '__all__' ? filters.operatorType : undefined;
+    const hasRegionFilter = filters.region && filters.region !== '__all__';
+
+    try {
+      setIsLoading(true);
+
+      if (hasRegionFilter) {
+        // Fetch all pages for client-side region filtering
+        let results: OperatorResponse[] = [];
+        let apiPage = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const res = await OperatorManagementService.getAllOperators(
+            apiPage++,
+            100,
+            sortColumn ?? 'name',
+            sortDirection,
+            searchQuery || undefined,
+            apiOperatorType,
+            apiStatus,
+          );
+          results = [...results, ...(res.content ?? [])];
+          hasMore = !res.last && (res.content?.length ?? 0) === 100;
+        }
+        setOperators(results);
+        // totalItems will be computed client-side after region filter; see filteredTableData
+      } else {
+        // Server-side pagination
+        const res = await OperatorManagementService.getAllOperators(
+          page - 1, // useDataTable is 1-based; API is 0-based
+          pageSize,
+          sortColumn ?? 'name',
+          sortDirection,
+          searchQuery || undefined,
+          apiOperatorType,
+          apiStatus,
+        );
+        setOperators(res.content ?? []);
+        setTotalItems(res.totalElements ?? 0);
+      }
+    } catch {
+      toast({ title: 'Failed to load operators', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [state, toast]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    loadOperators();
+  }, [
+    state.searchQuery,
+    state.sortColumn,
+    state.sortDirection,
+    state.page,
+    state.pageSize,
+    state.filters.status,
+    state.filters.operatorType,
+    state.filters.region,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Client-side region filter + paginate ────────────────────────
+  const filteredTableData = useMemo(() => {
+    const { filters, page, pageSize } = state;
+    const hasRegionFilter = filters.region && filters.region !== '__all__';
+
+    if (!hasRegionFilter) {
+      return { data: operators, totalItems };
+    }
+
+    const filtered = operators.filter((op) => op.region === filters.region);
+    const total = filtered.length;
+    const start = (page - 1) * pageSize;
+    return { data: filtered.slice(start, start + pageSize), totalItems: total };
+  }, [operators, state, totalItems]);
+
+  // ── Delete ───────────────────────────────────────────────────────
+  const handleDeleteConfirm = async () => {
+    const operator = deleteDialog.data;
+    if (!operator?.id) return;
+    try {
+      setIsDeleting(true);
+      await OperatorManagementService.deleteOperator(operator.id);
+      toast({ title: 'Operator Deleted', description: `${operator.name} has been deleted.` });
+      deleteDialog.close();
+      loadOperators();
+      loadStatistics();
+    } catch {
+      toast({ title: 'Delete Failed', description: 'Failed to delete operator.', variant: 'destructive' });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // ── Export ───────────────────────────────────────────────────────
+  function handleExportAll() {
+    try {
+      const dataToExport = operators.map((operator) => ({
+        ID: operator.id || '',
+        Name: operator.name || '',
+        'Operator Type': operator.operatorType || '',
+        Region: operator.region || '',
+        Status: operator.status || '',
+        'Created At': operator.createdAt ? new Date(operator.createdAt).toLocaleDateString() : '',
+        'Updated At': operator.updatedAt ? new Date(operator.updatedAt).toLocaleDateString() : '',
+      }));
+
+      if (dataToExport.length === 0) {
+        toast({ title: 'No data to export', variant: 'destructive' });
+        return;
+      }
+
+      const headers = Object.keys(dataToExport[0]);
+      const csvContent = [
+        headers.join(','),
+        ...dataToExport.map((row) =>
+          headers
+            .map((header) => {
+              const value = row[header as keyof typeof row];
+              return typeof value === 'string' && value.includes(',')
+                ? `"${value.replace(/"/g, '""')}"`
+                : value;
+            })
+            .join(','),
+        ),
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `operators-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: 'Export Failed', description: 'Failed to export data.', variant: 'destructive' });
+    }
   }
 
+  const activeFilterCount =
+    (state.filters.status && state.filters.status !== '__all__' ? 1 : 0) +
+    (state.filters.operatorType && state.filters.operatorType !== '__all__' ? 1 : 0) +
+    (state.filters.region && state.filters.region !== '__all__' ? 1 : 0);
+
   return (
-      <div className="space-y-6">
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
-                <button
-                  onClick={() => setError(null)}
-                  className="text-sm text-red-600 hover:text-red-800 underline mt-2"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+    <div className="space-y-6">
+      <OperatorsStatsCards stats={stats} />
 
-        {/* Statistics Cards */}
-        <OperatorStatsCards stats={stats} />
+      <OperatorsFilterBar
+        searchValue={state.searchQuery}
+        onSearchChange={setSearch}
+        filters={state.filters}
+        onFiltersChange={setFilters}
+        onClearAll={clearFilters}
+        filterOptions={filterOptions}
+        activeFilterCount={activeFilterCount}
+      />
 
-        {/* Advanced Filters */}
-        <OperatorAdvancedFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            operatorTypeFilter={operatorTypeFilter}
-            setOperatorTypeFilter={setOperatorTypeFilter}
-            regionFilter={regionFilter}
-            setRegionFilter={setRegionFilter}
-            filterOptions={filterOptions}
-            loading={filterOptionsLoading}
-            totalCount={pagination.totalElements}
-            filteredCount={transformedOperators.length}
-            onSearch={handleSearch}
-            onClearAll={handleClearAllFilters}
-          />
+      <OperatorsTable
+        data={filteredTableData.data}
+        totalItems={filteredTableData.totalItems}
+        page={state.page}
+        pageSize={state.pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        sortColumn={state.sortColumn}
+        sortDirection={state.sortDirection}
+        onSort={setSort}
+        loading={isLoading}
+        onView={(op) => router.push(`/mot/operators/${op.id}`)}
+        onEdit={(op) => router.push(`/mot/operators/${op.id}/edit`)}
+        onDelete={deleteDialog.open}
+      />
 
-        {/* Operators Table */}
-        <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-          <OperatorsTable
-            operators={transformedOperators}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onSort={handleSort}
-            activeFilters={{
-              search: searchTerm,
-              status: statusFilter !== 'all' ? statusFilter : undefined,
-              operatorType: operatorTypeFilter !== 'all' ? operatorTypeFilter : undefined,
-              region: regionFilter !== 'all' ? regionFilter : undefined,
-            }}
-            loading={isLoading}
-            currentSort={{ field: queryParams.sortBy, direction: queryParams.sortDir }}
-          />
-          
-          {/* Pagination */}
-          <DataPagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            totalElements={pagination.totalElements}
-            pageSize={pagination.pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            loading={isLoading}
-          />
-        </div>
-
-        {/* Delete Operator Modal */}
-        <DeleteOperatorModal
-          isOpen={showDeleteModal}
-          onClose={handleDeleteCancel}
-          onConfirm={handleDeleteConfirm}
-          operator={operatorToDelete}
-          isDeleting={isDeleting}
-          busCount={0} // TODO: Calculate bus count if needed
-        />
-      </div>
+      <ConfirmDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={deleteDialog.setOpen}
+        title="Delete Operator"
+        description={`Are you sure you want to delete "${deleteDialog.data?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        loading={isDeleting}
+      />
+    </div>
   );
 }
+

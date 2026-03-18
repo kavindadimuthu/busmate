@@ -20,7 +20,7 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, icon, description, trend, className }: StatsCardProps) {
   return (
-    <Card className={cn("relative overflow-hidden", className)}>
+    <Card className={cn("relative overflow-hidden py-0", className)}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
