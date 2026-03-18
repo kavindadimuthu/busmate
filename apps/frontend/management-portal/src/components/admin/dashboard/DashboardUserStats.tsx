@@ -16,11 +16,11 @@ interface DashboardUserStatsProps {
 export function DashboardUserStats({ userDistribution, loading = false }: DashboardUserStatsProps) {
   if (loading || userDistribution.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-32 mb-6" />
-        <div className="w-32 h-32 bg-gray-100 rounded-full mx-auto mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 bg-muted rounded w-32 mb-6" />
+        <div className="w-32 h-32 bg-muted rounded-full mx-auto mb-4" />
         <div className="space-y-2">
-          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-4 bg-gray-100 rounded" />)}
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-4 bg-muted rounded" />)}
         </div>
       </div>
     );
@@ -61,12 +61,12 @@ export function DashboardUserStats({ userDistribution, loading = false }: Dashbo
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-5">
+    <div className="bg-card rounded-xl border border-border p-6 flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-gray-600" />
-          <h3 className="font-semibold text-gray-900 text-sm">User Distribution</h3>
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground text-sm">User Distribution</h3>
         </div>
         <Link
           href="/admin/users"
@@ -80,8 +80,8 @@ export function DashboardUserStats({ userDistribution, loading = false }: Dashbo
       <div className="relative w-32 h-32 mx-auto">
         <Doughnut data={chartData} options={options} />
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-lg font-bold text-gray-900">{fmt(total)}</span>
-          <span className="text-[10px] text-gray-500">Total</span>
+          <span className="text-lg font-bold text-foreground">{fmt(total)}</span>
+          <span className="text-[10px] text-muted-foreground">Total</span>
         </div>
       </div>
 
@@ -91,11 +91,11 @@ export function DashboardUserStats({ userDistribution, loading = false }: Dashbo
           <div key={u.type} className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: u.color }} />
-              <span className="text-xs text-gray-600 truncate">{u.type}</span>
+              <span className="text-xs text-muted-foreground truncate">{u.type}</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-semibold text-gray-800">{fmt(u.count)}</span>
-              <span className="text-[10px] text-gray-400 w-8 text-right">
+              <span className="text-xs font-semibold text-foreground">{fmt(u.count)}</span>
+              <span className="text-[10px] text-muted-foreground w-8 text-right">
                 {((u.count / total) * 100).toFixed(1)}%
               </span>
             </div>

@@ -21,9 +21,9 @@ interface MOTDashboardRegionalDistributionProps {
 export function MOTDashboardRegionalDistribution({ regions, loading = false }: MOTDashboardRegionalDistributionProps) {
   if (loading || regions.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 w-36 bg-gray-200 rounded mb-4" />
-        <div className="h-56 bg-gray-100 rounded-lg" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 w-36 bg-muted rounded mb-4" />
+        <div className="h-56 bg-muted rounded-lg" />
       </div>
     );
   }
@@ -106,10 +106,10 @@ export function MOTDashboardRegionalDistribution({ regions, loading = false }: M
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Regional Distribution</h3>
-        <div className="flex items-center gap-3 text-[10px] text-gray-500">
+        <h3 className="text-sm font-semibold text-foreground">Regional Distribution</h3>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span>Total: {regions.reduce((s, r) => s + r.buses, 0).toLocaleString()} buses</span>
         </div>
       </div>

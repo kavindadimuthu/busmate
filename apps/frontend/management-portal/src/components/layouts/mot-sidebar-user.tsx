@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { CircleUser, LogOut, Settings } from "lucide-react";
+import { CircleUser, LogOut, Moon, Settings, Sun } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import signOut from "@/lib/utils/signOut";
 import type UserData from "@/types/UserData";
 
@@ -18,6 +19,7 @@ interface MotSidebarUserProps {
 export function MotSidebarUser({ userData, collapsed }: MotSidebarUserProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { setTheme, resolvedTheme } = useTheme();
 
   // Close menu on outside click
   useEffect(() => {
@@ -64,6 +66,19 @@ export function MotSidebarUser({ userData, collapsed }: MotSidebarUserProps) {
             <Settings className="w-4 h-4 text-muted-foreground" />
             Settings
           </Link>
+
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors w-full text-left"
+          >
+            {resolvedTheme === "dark" ? (
+              <Sun className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <Moon className="w-4 h-4 text-muted-foreground" />
+            )}
+            {resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
 
           <div className="border-t border-border my-1" />
 

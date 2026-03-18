@@ -30,7 +30,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 // ── Trend icon ────────────────────────────────────────────────────
 
 function TrendIcon({ trend, positive }: { trend: KPIMetric['trend']; positive: boolean }) {
-  if (trend === 'stable') return <Minus className="h-3 w-3 text-gray-400" />;
+  if (trend === 'stable') return <Minus className="h-3 w-3 text-muted-foreground" />;
   const isGood = (trend === 'up') === positive;
   const cls = isGood ? 'text-green-600' : 'text-red-600';
   return trend === 'up'
@@ -72,7 +72,7 @@ const SPARK_COLOR: Record<KPIMetric['color'], string> = {
 function KPICard({ metric }: { metric: KPIMetric }) {
   const trendColor =
     metric.trend === 'stable'
-      ? 'text-gray-500'
+      ? 'text-muted-foreground'
       : (metric.trend === 'up') === metric.trendPositiveIsGood
       ? 'text-green-600'
       : 'text-red-600';
@@ -83,12 +83,12 @@ function KPICard({ metric }: { metric: KPIMetric }) {
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-600 leading-tight">{metric.label}</p>
+        <p className="text-sm font-medium text-muted-foreground leading-tight">{metric.label}</p>
         <Sparkline data={metric.sparkData} color={SPARK_COLOR[metric.color]} />
       </div>
 
       {/* Value */}
-      <p className="text-2xl font-bold text-gray-900 tracking-tight">{metric.value}</p>
+      <p className="text-2xl font-bold text-foreground tracking-tight">{metric.value}</p>
 
       {/* Trend */}
       <div className={`flex items-center gap-1 text-xs font-medium ${trendColor}`}>
@@ -103,13 +103,13 @@ function KPICard({ metric }: { metric: KPIMetric }) {
 
 function KPICardSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 animate-pulse">
+    <div className="rounded-xl border border-border bg-card p-5 animate-pulse">
       <div className="flex justify-between mb-4">
-        <div className="h-4 bg-gray-200 rounded w-24" />
-        <div className="h-7 bg-gray-100 rounded w-20" />
+        <div className="h-4 bg-muted rounded w-24" />
+        <div className="h-7 bg-muted rounded w-20" />
       </div>
-      <div className="h-7 bg-gray-200 rounded w-32 mb-3" />
-      <div className="h-3 bg-gray-100 rounded w-28" />
+      <div className="h-7 bg-muted rounded w-32 mb-3" />
+      <div className="h-3 bg-muted rounded w-28" />
     </div>
   );
 }

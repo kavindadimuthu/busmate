@@ -41,16 +41,16 @@ export function OperatorDashboardTrendsChart({ trendHistory, loading = false }: 
 
   if (loading || trendHistory.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
         <div className="flex items-center justify-between mb-6">
-          <div className="h-5 w-40 bg-gray-200 rounded" />
+          <div className="h-5 w-40 bg-muted rounded" />
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-8 w-20 bg-gray-100 rounded-lg" />
+              <div key={i} className="h-8 w-20 bg-muted rounded-lg" />
             ))}
           </div>
         </div>
-        <div className="h-72 bg-gray-100 rounded-lg" />
+        <div className="h-72 bg-muted rounded-lg" />
       </div>
     );
   }
@@ -136,10 +136,10 @@ export function OperatorDashboardTrendsChart({ trendHistory, loading = false }: 
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h3 className="text-sm font-semibold text-gray-900">Weekly Performance Trends</h3>
+        <h3 className="text-sm font-semibold text-foreground">Weekly Performance Trends</h3>
         <div className="flex flex-wrap items-center gap-2">
           {/* Compare toggle */}
           <button
@@ -147,7 +147,7 @@ export function OperatorDashboardTrendsChart({ trendHistory, loading = false }: 
             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
               compareMode
                 ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                : 'bg-card text-muted-foreground border-border hover:bg-muted'
             }`}
           >
             Compare
@@ -160,7 +160,7 @@ export function OperatorDashboardTrendsChart({ trendHistory, loading = false }: 
               className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                 active === m.key
                   ? 'text-white border-transparent'
-                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  : 'bg-card text-muted-foreground border-border hover:bg-muted'
               }`}
               style={active === m.key ? { backgroundColor: m.color, borderColor: m.color } : {}}
             >

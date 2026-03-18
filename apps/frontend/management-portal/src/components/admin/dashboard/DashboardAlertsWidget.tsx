@@ -46,22 +46,22 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-28 mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 bg-muted rounded w-28 mb-4" />
         {[0, 1, 2].map((i) => (
-          <div key={i} className="mb-3 h-14 bg-gray-100 rounded-lg" />
+          <div key={i} className="mb-3 h-14 bg-muted rounded-lg" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-4">
+    <div className="bg-card rounded-xl border border-border p-6 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-gray-600" />
-          <h3 className="font-semibold text-gray-900 text-sm">Active Alerts</h3>
+          <Bell className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground text-sm">Active Alerts</h3>
         </div>
         <Link
           href="/admin/monitoring/alerts"
@@ -94,7 +94,7 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
       {alerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-green-400 mb-2" />
-          <p className="text-sm text-gray-500">No active alerts</p>
+          <p className="text-sm text-muted-foreground">No active alerts</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -103,14 +103,14 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
             return (
               <div
                 key={alert.id}
-                className={`flex items-start gap-3 p-3 rounded-lg border-l-2 bg-gray-50 ${style.border}`}
+                className={`flex items-start gap-3 p-3 rounded-lg border-l-2 bg-muted ${style.border}`}
               >
                 <div className="mt-0.5 shrink-0">{style.icon}</div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{alert.title}</p>
-                  <p className="text-[10px] text-gray-500 truncate">{alert.source}</p>
+                  <p className="text-xs font-semibold text-foreground truncate">{alert.title}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{alert.source}</p>
                 </div>
-                <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{timeAgo(alert.createdAt)}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">{timeAgo(alert.createdAt)}</span>
               </div>
             );
           })}

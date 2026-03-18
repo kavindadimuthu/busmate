@@ -49,21 +49,21 @@ export function OperatorDashboardAlertsWidget({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 w-28 bg-gray-200 rounded mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 w-28 bg-muted rounded mb-4" />
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-20 bg-gray-100 rounded-lg mb-3" />
+          <div key={i} className="h-20 bg-muted rounded-lg mb-3" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col h-full">
+    <div className="bg-card rounded-xl border border-border p-6 flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">Operational Alerts</h3>
+          <h3 className="text-sm font-semibold text-foreground">Operational Alerts</h3>
           {(criticalCount > 0 || warningCount > 0) && (
             <div className="flex items-center gap-1.5">
               {criticalCount > 0 && (
@@ -93,8 +93,8 @@ export function OperatorDashboardAlertsWidget({
       {unacknowledged.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
           <CheckCircle2 className="h-10 w-10 text-green-400 mb-2" />
-          <p className="text-sm text-gray-600">All clear</p>
-          <p className="text-xs text-gray-400">No active alerts</p>
+          <p className="text-sm text-muted-foreground">All clear</p>
+          <p className="text-xs text-muted-foreground">No active alerts</p>
         </div>
       ) : (
         <div className="space-y-2 flex-1 overflow-auto">
@@ -103,18 +103,18 @@ export function OperatorDashboardAlertsWidget({
             return (
               <div
                 key={alert.id}
-                className={`p-3 rounded-lg border-l-4 bg-gray-50 ${style.border}`}
+                className={`p-3 rounded-lg border-l-4 bg-muted ${style.border}`}
               >
                 <div className="flex items-start gap-2">
                   {style.icon}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-gray-900 truncate">{alert.title}</span>
-                      <span className="text-[10px] text-gray-400 whitespace-nowrap">{timeAgo(alert.createdAt)}</span>
+                      <span className="text-xs font-semibold text-foreground truncate">{alert.title}</span>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{timeAgo(alert.createdAt)}</span>
                     </div>
-                    <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{alert.message}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{alert.message}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-[10px] text-gray-400">{alert.source}</span>
+                      <span className="text-[10px] text-muted-foreground">{alert.source}</span>
                       {onAcknowledge && (
                         <button
                           onClick={() => onAcknowledge(alert.id)}

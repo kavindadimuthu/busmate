@@ -73,14 +73,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Default minimal fallback (rarely shown — callers should provide one).
       return (
         <div className="flex flex-col items-center justify-center min-h-96 gap-4 p-8 text-center">
-          <AlertTriangle className="h-10 w-10 text-red-500" />
-          <h2 className="text-lg font-semibold text-slate-800">Something went wrong</h2>
-          <p className="text-sm text-slate-500 max-w-md">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+          <h2 className="text-lg font-semibold text-foreground">Something went wrong</h2>
+          <p className="text-sm text-muted-foreground max-w-md">
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </p>
           <button
             onClick={this.reset}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
             Try again
@@ -117,18 +117,18 @@ export function WorkspaceErrorFallback({ error, onReset }: WorkspaceErrorFallbac
   const isDev = process.env.NODE_ENV === 'development';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
-      <div className="w-full max-w-lg bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-8">
+      <div className="w-full max-w-lg bg-card rounded-xl shadow-sm border border-destructive/30 overflow-hidden">
         {/* Header */}
-        <div className="bg-red-50 border-b border-red-200 px-6 py-5 flex items-start gap-4">
+        <div className="bg-destructive/10 border-b border-destructive/30 px-6 py-5 flex items-start gap-4">
           <div className="flex-shrink-0 mt-0.5">
-            <AlertTriangle className="h-6 w-6 text-red-500" />
+            <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-red-800">
+            <h2 className="text-base font-semibold text-foreground">
               Route Workspace encountered an error
             </h2>
-            <p className="mt-1 text-sm text-red-600">
+            <p className="mt-1 text-sm text-destructive">
               An unexpected error prevented the workspace from rendering. Your unsaved changes
               may have been lost. You can try to recover by clicking &ldquo;Try Again&rdquo;
               below.
@@ -140,14 +140,14 @@ export function WorkspaceErrorFallback({ error, onReset }: WorkspaceErrorFallbac
         <div className="px-6 py-5 flex flex-col sm:flex-row gap-3">
           <button
             onClick={onReset}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg transition-colors shadow-sm"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 active:bg-primary/80 rounded-lg transition-colors shadow-sm"
           >
             <RefreshCw className="h-4 w-4" />
             Try Again
           </button>
           <a
             href="/mot/routes"
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-foreground bg-muted hover:bg-accent active:bg-accent/80 rounded-lg transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Routes
@@ -156,11 +156,11 @@ export function WorkspaceErrorFallback({ error, onReset }: WorkspaceErrorFallbac
 
         {/* Developer details (hidden in production) */}
         {isDev && error && (
-          <details className="mx-6 mb-5 rounded-lg border border-slate-200 text-xs overflow-hidden">
-            <summary className="px-4 py-2 bg-slate-50 cursor-pointer font-medium text-slate-700 select-none">
+          <details className="mx-6 mb-5 rounded-lg border border-border text-xs overflow-hidden">
+            <summary className="px-4 py-2 bg-muted cursor-pointer font-medium text-foreground select-none">
               Developer details
             </summary>
-            <pre className="px-4 py-3 overflow-x-auto text-red-700 bg-red-50 leading-relaxed whitespace-pre-wrap break-words">
+            <pre className="px-4 py-3 overflow-x-auto text-destructive bg-destructive/10 leading-relaxed whitespace-pre-wrap break-words">
               {error.name}: {error.message}
               {error.stack ? `\n\n${error.stack}` : ''}
             </pre>

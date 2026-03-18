@@ -63,8 +63,8 @@ export function UpcomingDepartures({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <Bus className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground">
+            <Bus className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
             <p>No upcoming departures</p>
           </div>
         </CardContent>
@@ -85,20 +85,20 @@ export function UpcomingDepartures({
           {departures.map((departure) => (
             <div 
               key={departure.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-white rounded-lg shadow-sm border">
+                <div className="flex items-center justify-center w-10 h-10 bg-card rounded-lg shadow-sm border">
                   {getStatusIcon(departure.status)}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{departure.routeName}</p>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <p className="font-medium text-foreground">{departure.routeName}</p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Bus className="h-3 w-3" />
                     <span>{departure.busNumber}</span>
                     {departure.platform && (
                       <>
-                        <span className="text-gray-300">|</span>
+                        <span className="text-muted-foreground">|</span>
                         <MapPin className="h-3 w-3" />
                         <span>Platform {departure.platform}</span>
                       </>
@@ -108,7 +108,7 @@ export function UpcomingDepartures({
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-2 justify-end mb-1">
-                  <span className="font-semibold text-gray-900">{departure.scheduledTime}</span>
+                  <span className="font-semibold text-foreground">{departure.scheduledTime}</span>
                   {departure.scheduledTime !== departure.estimatedTime && (
                     <span className="text-sm text-yellow-600">
                       → {departure.estimatedTime}

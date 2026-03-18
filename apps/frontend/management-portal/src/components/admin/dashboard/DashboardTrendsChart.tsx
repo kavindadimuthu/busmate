@@ -41,9 +41,9 @@ export function DashboardTrendsChart({ trendHistory, loading = false }: Dashboar
 
   if (loading || trendHistory.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 h-full flex flex-col animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-40 mb-4 shrink-0" />
-        <div className="flex-1 min-h-[250px] bg-gray-100 rounded" />
+      <div className="bg-card rounded-xl border border-border p-6 h-full flex flex-col animate-pulse">
+        <div className="h-5 bg-muted rounded w-40 mb-4 shrink-0" />
+        <div className="flex-1 min-h-[250px] bg-muted rounded" />
       </div>
     );
   }
@@ -113,12 +113,12 @@ export function DashboardTrendsChart({ trendHistory, loading = false }: Dashboar
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 h-full flex flex-col">
+    <div className="bg-card rounded-xl border border-border p-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 shrink-0">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-blue-600" />
-          <h3 className="font-semibold text-gray-900 text-sm">System Trends <span className="font-normal text-gray-400 text-xs ml-1">— last 24 h</span></h3>
+          <h3 className="font-semibold text-foreground text-sm">System Trends <span className="font-normal text-muted-foreground text-xs ml-1">— last 24 h</span></h3>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -126,7 +126,7 @@ export function DashboardTrendsChart({ trendHistory, loading = false }: Dashboar
           <button
             onClick={() => setCompareMode((v) => !v)}
             className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-              compareMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              compareMode ? 'bg-blue-100 text-blue-700' : 'bg-muted text-muted-foreground hover:bg-muted'
             }`}
           >
             Compare all
@@ -140,7 +140,7 @@ export function DashboardTrendsChart({ trendHistory, loading = false }: Dashboar
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                 active === m.key
                   ? 'text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-muted text-muted-foreground hover:bg-muted'
               }`}
               style={active === m.key ? { backgroundColor: m.color } : undefined}
             >

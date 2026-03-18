@@ -25,7 +25,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
       case 'depot':
         return <Badge className="bg-purple-100 text-purple-800">Depot</Badge>;
       case 'intermediate':
-        return <Badge className="bg-gray-100 text-gray-800">Intermediate</Badge>;
+        return <Badge className="bg-muted text-foreground">Intermediate</Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -44,8 +44,8 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
           {/* Stop Name and Type */}
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">{stop.name}</h3>
-              <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+              <h3 className="text-xl font-bold text-foreground">{stop.name}</h3>
+              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                 <Building className="h-3 w-3" />
                 Code: {stop.code}
               </p>
@@ -55,7 +55,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
 
           {/* Address */}
           {stop.address && (
-            <p className="text-sm text-gray-600">{stop.address}</p>
+            <p className="text-sm text-muted-foreground">{stop.address}</p>
           )}
 
           {/* Quick Stats */}
@@ -75,7 +75,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
           {/* Routes */}
           {stop.routes && stop.routes.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Routes Serving This Stop</p>
+              <p className="text-sm font-medium text-foreground mb-2">Routes Serving This Stop</p>
               <div className="flex flex-wrap gap-1">
                 {stop.routes.slice(0, 8).map((route) => (
                   <Badge key={route} variant="outline" className="text-xs">
@@ -83,7 +83,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
                   </Badge>
                 ))}
                 {stop.routes.length > 8 && (
-                  <Badge variant="outline" className="text-xs bg-gray-100">
+                  <Badge variant="outline" className="text-xs bg-muted">
                     +{stop.routes.length - 8} more
                   </Badge>
                 )}
@@ -94,7 +94,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
           {/* Facilities */}
           {stop.facilities && stop.facilities.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Facilities</p>
+              <p className="text-sm font-medium text-foreground mb-2">Facilities</p>
               <div className="flex flex-wrap gap-1">
                 {stop.facilities.map((facility) => (
                   <Badge key={facility} className="text-xs bg-green-100 text-green-800">

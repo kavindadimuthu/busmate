@@ -28,7 +28,7 @@ export function Breadcrumb({ items, showHome = true, className = "" }: Breadcrum
   return (
     <nav 
       aria-label="Breadcrumb" 
-      className={`bg-white border-b border-gray-200 ${className}`}
+      className={`bg-background border-b border-border ${className}`}
     >
       <div className="px-6 py-2">
         <ol className="flex items-center space-x-0 text-sm">
@@ -37,13 +37,13 @@ export function Breadcrumb({ items, showHome = true, className = "" }: Breadcrum
             <li className="flex items-center">
               <Link
                 href="/"
-                className="flex items-center text-gray-500 hover:text-gray-700 transition-colors duration-200 group"
+                className="flex items-center text-muted-foreground hover:text-foreground transition-colors duration-200 group"
                 aria-label="Home"
               >
                 <Home className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
               </Link>
               {validItems.length > 0 && (
-                <ChevronRight className="w-4 h-4 text-gray-400 mx-1 shrink-0" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/40 mx-1 shrink-0" />
               )}
             </li>
           )}
@@ -58,7 +58,7 @@ export function Breadcrumb({ items, showHome = true, className = "" }: Breadcrum
                   {item.href && !isLast ? (
                     <Link
                       href={item.href}
-                      className="flex items-center text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium hover:underline max-w-xs truncate"
+                      className="flex items-center text-muted-foreground hover:text-primary transition-colors duration-200 font-medium hover:underline max-w-xs truncate"
                       aria-current={isLast ? "page" : undefined}
                     >
                       {item.icon && (
@@ -70,8 +70,8 @@ export function Breadcrumb({ items, showHome = true, className = "" }: Breadcrum
                     <span
                       className={`flex items-center max-w-xs truncate ${
                         isLast
-                          ? "text-gray-900 font-semibold"
-                          : "text-gray-600"
+                          ? "text-foreground font-semibold"
+                          : "text-muted-foreground"
                       }`}
                       aria-current={isLast ? "page" : undefined}
                     >
@@ -85,7 +85,7 @@ export function Breadcrumb({ items, showHome = true, className = "" }: Breadcrum
 
                 {/* Separator */}
                 {!isLast && (
-                  <ChevronRight className="w-4 h-4 text-gray-400 mx-2 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/40 mx-2 shrink-0" />
                 )}
               </Fragment>
             )

@@ -31,7 +31,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 // ── Trend icon ────────────────────────────────────────────────────
 
 function TrendIcon({ trend, positive }: { trend: KPIMetric['trend']; positive: boolean }) {
-  if (trend === 'stable') return <Minus className="h-3 w-3 text-gray-400" />;
+  if (trend === 'stable') return <Minus className="h-3 w-3 text-muted-foreground" />;
   const isGood = (trend === 'up') === positive;
   const cls = isGood ? 'text-green-600' : 'text-red-600';
   return trend === 'up'
@@ -86,7 +86,7 @@ function KPICard({ metric }: { metric: KPIMetric }) {
   
   const trendColor =
     metric.trend === 'stable'
-      ? 'text-gray-500'
+      ? 'text-muted-foreground'
       : (metric.trend === 'up') === metric.trendPositiveIsGood
       ? 'text-green-600'
       : 'text-red-600';
@@ -101,13 +101,13 @@ function KPICard({ metric }: { metric: KPIMetric }) {
           <div className={`p-1.5 rounded-lg ${ICON_BG[metric.color]}`}>
             <IconComponent className="h-4 w-4" />
           </div>
-          <p className="text-sm font-medium text-gray-600 leading-tight">{metric.label}</p>
+          <p className="text-sm font-medium text-muted-foreground leading-tight">{metric.label}</p>
         </div>
         <Sparkline data={metric.sparkData} color={SPARK_COLOR[metric.color]} />
       </div>
 
       {/* Value */}
-      <p className="text-2xl font-bold text-gray-900 tracking-tight">{metric.value}</p>
+      <p className="text-2xl font-bold text-foreground tracking-tight">{metric.value}</p>
 
       {/* Trend */}
       <div className={`flex items-center gap-1 text-xs font-medium ${trendColor}`}>
@@ -122,16 +122,16 @@ function KPICard({ metric }: { metric: KPIMetric }) {
 
 function KPICardSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 animate-pulse">
+    <div className="rounded-xl border border-border bg-card p-5 animate-pulse">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gray-200 rounded-lg" />
-          <div className="h-4 w-24 bg-gray-200 rounded" />
+          <div className="w-8 h-8 bg-muted rounded-lg" />
+          <div className="h-4 w-24 bg-muted rounded" />
         </div>
-        <div className="w-20 h-7 bg-gray-200 rounded" />
+        <div className="w-20 h-7 bg-muted rounded" />
       </div>
-      <div className="h-8 w-28 bg-gray-200 rounded mb-3" />
-      <div className="h-3 w-32 bg-gray-200 rounded" />
+      <div className="h-8 w-28 bg-muted rounded mb-3" />
+      <div className="h-3 w-32 bg-muted rounded" />
     </div>
   );
 }

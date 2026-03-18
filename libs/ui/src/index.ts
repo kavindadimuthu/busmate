@@ -224,6 +224,9 @@ export {
   TooltipProvider,
 } from "./components/tooltip";
 
+// Theme Switcher
+export { ThemeSwitcher } from "./components/theme-switcher";
+
 // ── Patterns ──────────────────────────────────────────────
 
 // DataTable
