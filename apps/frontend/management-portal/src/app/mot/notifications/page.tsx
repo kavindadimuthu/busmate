@@ -2,387 +2,242 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-    Bell,
-    Send,
-    Inbox,
-    PenSquare,
-    CheckCircle,
-    Clock3,
-} from 'lucide-react';
+import { PenSquare, Inbox, Send } from 'lucide-react';
 
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsList, TabsTrigger, TabsContent, Button, ConfirmDialog, useDialog } from '@busmate/ui';
 
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import type { TabItem } from '@/components/shared/SwitchableTabs';
-import { SearchFilterBar, SelectFilter } from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
-import { DataPagination } from '@/components/shared/DataPagination';
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
-import { DeleteConfirmationModal } from '@/components/mot/confirmation-modals';
-import { NotificationsTable } from '@/components/mot/notifications';
+import { NotificationsTableNew } from '@/components/mot/notifications/notifications-table';
+import { NotificationsFilterBar, type NotificationFilters } from '@/components/mot/notifications/notifications-filter-bar';
+import { NotificationsStatsCardsNew } from '@/components/mot/notifications/notifications-stats-cards';
 
 import {
-    getReceivedNotifications,
-    getSentNotifications,
-    getNotificationStats,
-    deleteNotification,
+  getReceivedNotifications,
+  getSentNotifications,
+  getNotificationStats,
+  deleteNotification,
 } from '@/data/admin';
 import type { Notification } from '@/data/admin/types';
 
-// ── Tab type ──────────────────────────────────────────────────────
-
-type TabValue = 'received' | 'sent';
-
-const TABS: TabItem<TabValue>[] = [
-    { id: 'received', label: 'Inbox', icon: Inbox },
-    { id: 'sent', label: 'Sent', icon: Send },
-];
-
-// ── Filter options ────────────────────────────────────────────────
-
-const TYPE_OPTIONS = [
-    { value: 'info', label: 'Info' },
-    { value: 'warning', label: 'Warning' },
-    { value: 'critical', label: 'Critical' },
-    { value: 'success', label: 'Success' },
-    { value: 'maintenance', label: 'Maintenance' },
-    { value: 'error', label: 'Error' },
-];
-
-const PRIORITY_OPTIONS = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'critical', label: 'Critical' },
-];
-
-// ── Page component ────────────────────────────────────────────────
-
 export default function NotificationsPage() {
-    const router = useRouter();
-    const { toast } = useToast();
+  const router = useRouter();
+  const { toast } = useToast();
 
-    // ── Metadata & actions ──────────────────────────────────────
+  useSetPageMetadata({
+    title: 'Notification Center',
+    description: 'Manage and track system notifications and communications',
+    activeItem: 'notifications',
+    showBreadcrumbs: true,
+    breadcrumbs: [{ label: 'Notifications' }],
+  });
 
-    useSetPageMetadata({
-        title: 'Notification Center',
-        description: 'Manage and track system notifications and communications',
-        activeItem: 'notifications',
-        showBreadcrumbs: true,
-        breadcrumbs: [{ label: 'Notifications' }],
+  useSetPageActions(
+    <Button onClick={() => router.push('/mot/notifications/compose')}>
+      <PenSquare className="h-4 w-4" />
+      Compose
+    </Button>
+  );
+
+  // ── Data ────────────────────────────────────────────────────
+  const allReceived = useMemo(() => getReceivedNotifications(), []);
+  const allSent = useMemo(() => getSentNotifications(), []);
+  const rawStats = useMemo(() => getNotificationStats(), []);
+
+  const statsData = useMemo(
+    () => ({
+      totalReceived: allReceived.length,
+      totalSent: allSent.length,
+      totalScheduled: rawStats.totalScheduled,
+      averageReadRate: rawStats.averageReadRate,
+    }),
+    [allReceived.length, allSent.length, rawStats]
+  );
+
+  // ── UI state ────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<NotificationFilters>({
+    type: '__all__',
+    priority: '__all__',
+  });
+  const [sortColumn, setSortColumn] = useState<string | null>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // Delete dialog
+  const deleteDialog = useDialog<Notification>();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // ── Source for current tab ──────────────────────────────────
+  const sourceData = activeTab === 'received' ? allReceived : allSent;
+
+  // ── Filtering & sorting ──────────────────────────────────────
+  const processed = useMemo(() => {
+    let data = [...sourceData];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      data = data.filter(
+        (n) =>
+          n.title.toLowerCase().includes(term) ||
+          n.body.toLowerCase().includes(term) ||
+          n.senderName.toLowerCase().includes(term)
+      );
+    }
+
+    if (filters.type !== '__all__') {
+      data = data.filter((n) => n.type === filters.type);
+    }
+
+    if (filters.priority !== '__all__') {
+      data = data.filter((n) => n.priority === filters.priority);
+    }
+
+    if (sortColumn) {
+      data.sort((a, b) => {
+        const aVal = (a as unknown as Record<string, unknown>)[sortColumn];
+        const bVal = (b as unknown as Record<string, unknown>)[sortColumn];
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        return 0;
+      });
+    }
+
+    return data;
+  }, [sourceData, searchTerm, filters, sortColumn, sortDir]);
+
+  const totalElements = processed.length;
+  const paginated = useMemo(
+    () => processed.slice((page - 1) * pageSize, page * pageSize),
+    [processed, page, pageSize]
+  );
+
+  // ── Handlers ──────────────────────────────────────────────
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab as 'received' | 'sent');
+    setPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((term: string) => {
+    setSearchTerm(term);
+    setPage(1);
+  }, []);
+
+  const handleFiltersChange = useCallback((partial: Partial<NotificationFilters>) => {
+    setFilters((prev) => ({ ...prev, ...partial }));
+    setPage(1);
+  }, []);
+
+  const activeFilterCount = [
+    filters.type !== '__all__',
+    filters.priority !== '__all__',
+  ].filter(Boolean).length;
+
+  const handleClearAll = useCallback(() => {
+    setSearchTerm('');
+    setFilters({ type: '__all__', priority: '__all__' });
+    setPage(1);
+  }, []);
+
+  const handleSort = useCallback((column: string) => {
+    setSortColumn((prev) => {
+      if (prev === column) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return column;
+      }
+      setSortDir('asc');
+      return column;
     });
+    setPage(1);
+  }, []);
 
-    useSetPageActions(
-        <button
-            onClick={() => router.push('/mot/notifications/compose')}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
-        >
-            <PenSquare className="h-4 w-4" />
-            Compose
-        </button>
-    );
+  const handleView = useCallback(
+    (notif: any) => router.push(`/mot/notifications/${notif.id}?from=${activeTab}`),
+    [router, activeTab]
+  );
 
-    // ── Data ────────────────────────────────────────────────────
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteDialog.data) return;
+    try {
+      setIsDeleting(true);
+      await deleteNotification(deleteDialog.data.id);
+      toast({
+        title: 'Notification Deleted',
+        description: `"${deleteDialog.data.title}" has been deleted.`,
+      });
+      deleteDialog.close();
+    } catch {
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete notification. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deleteDialog, toast]);
 
-    const allReceived = useMemo(() => getReceivedNotifications(), []);
-    const allSent = useMemo(() => getSentNotifications(), []);
-    const stats = useMemo(() => getNotificationStats(), []);
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <NotificationsStatsCardsNew stats={statsData} />
 
-    // ── UI state ────────────────────────────────────────────────
+      {/* Tab Switcher */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="received">
+            <Inbox className="w-4 h-4 mr-1.5" />
+            Inbox ({allReceived.length})
+          </TabsTrigger>
+          <TabsTrigger value="sent">
+            <Send className="w-4 h-4 mr-1.5" />
+            Sent ({allSent.length})
+          </TabsTrigger>
+        </TabsList>
 
-    const [activeTab, setActiveTab] = useState<TabValue>('received');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [typeFilter, setTypeFilter] = useState('all');
-    const [priorityFilter, setPriorityFilter] = useState('all');
-    const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize] = useState(10);
-    const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
-        field: 'createdAt',
-        direction: 'desc',
-    });
+        <TabsContent value={activeTab} className="space-y-6 mt-6">
+          {/* Search & Filters */}
+          <NotificationsFilterBar
+            searchValue={searchTerm}
+            onSearchChange={handleSearchChange}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onClearAll={handleClearAll}
+            activeFilterCount={activeFilterCount}
+          />
 
-    // Delete modal
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [notifToDelete, setNotifToDelete] = useState<Notification | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
+          {/* Table */}
+          <NotificationsTableNew
+            data={paginated}
+            totalItems={totalElements}
+            mode={activeTab}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={() => {}}
+            sortColumn={sortColumn}
+            sortDirection={sortDir}
+            onSort={handleSort}
+            onView={handleView}
+            onDelete={(notif: any) => deleteDialog.open(notif)}
+          />
+        </TabsContent>
+      </Tabs>
 
-    // ── Tab counts ──────────────────────────────────────────────
-
-    const tabsWithCounts = useMemo<TabItem<TabValue>[]>(() => [
-        { id: 'received', label: 'Inbox', icon: Inbox, count: allReceived.length },
-        { id: 'sent', label: 'Sent', icon: Send, count: allSent.length },
-    ], [allReceived.length, allSent.length]);
-
-    // ── Source for current tab ──────────────────────────────────
-
-    const sourceData = activeTab === 'received' ? allReceived : allSent;
-
-    // ── Filtering & sorting ──────────────────────────────────────
-
-    const processed = useMemo(() => {
-        let data = [...sourceData];
-
-        // Search
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            data = data.filter(
-                (n) =>
-                    n.title.toLowerCase().includes(term) ||
-                    n.body.toLowerCase().includes(term) ||
-                    n.senderName.toLowerCase().includes(term),
-            );
-        }
-
-        // Type filter
-        if (typeFilter !== 'all') {
-            data = data.filter((n) => n.type === typeFilter);
-        }
-
-        // Priority filter
-        if (priorityFilter !== 'all') {
-            data = data.filter((n) => n.priority === priorityFilter);
-        }
-
-        // Sort
-        data.sort((a, b) => {
-            const aVal = (a as unknown as Record<string, unknown>)[sort.field];
-            const bVal = (b as unknown as Record<string, unknown>)[sort.field];
-            if (typeof aVal === 'string' && typeof bVal === 'string') {
-                return sort.direction === 'asc'
-                    ? aVal.localeCompare(bVal)
-                    : bVal.localeCompare(aVal);
-            }
-            return 0;
-        });
-
-        return data;
-    }, [sourceData, searchTerm, typeFilter, priorityFilter, sort]);
-
-    // Paginate
-    const totalElements = processed.length;
-    const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
-    const paginated = useMemo(
-        () => processed.slice(currentPage * pageSize, (currentPage + 1) * pageSize),
-        [processed, currentPage, pageSize],
-    );
-
-    // ── Stats cards ──────────────────────────────────────────────
-
-    const statMetrics = useMemo<StatsCardMetric[]>(() => [
-        {
-            label: 'Total Received',
-            value: String(allReceived.length),
-            icon: Inbox,
-            color: 'blue',
-            trend: 'stable',
-            trendValue: '',
-            trendPositiveIsGood: true,
-            sparkData: [],
-        },
-        {
-            label: 'Total Sent',
-            value: String(allSent.length),
-            icon: Send,
-            color: 'teal',
-            trend: 'stable',
-            trendValue: '',
-            trendPositiveIsGood: true,
-            sparkData: [],
-        },
-        {
-            label: 'Scheduled',
-            value: String(stats.totalScheduled),
-            icon: Clock3,
-            color: 'amber',
-            trend: 'stable',
-            trendValue: '',
-            trendPositiveIsGood: true,
-            sparkData: [],
-        },
-        {
-            label: 'Avg Read Rate',
-            value: `${stats.averageReadRate}%`,
-            icon: CheckCircle,
-            color: 'green',
-            trend: 'stable',
-            trendValue: '',
-            trendPositiveIsGood: true,
-            sparkData: [],
-        },
-    ], [allReceived.length, allSent.length, stats]);
-
-    // ── Filter chips ───────────────────────────────────────────
-
-    const activeChips = useMemo<FilterChipDescriptor[]>(() => {
-        const chips: FilterChipDescriptor[] = [];
-        if (typeFilter !== 'all') {
-            const opt = TYPE_OPTIONS.find((o) => o.value === typeFilter);
-            chips.push({
-                key: 'type',
-                label: `Type: ${opt?.label ?? typeFilter}`,
-                onRemove: () => { setTypeFilter('all'); setCurrentPage(0); },
-            });
-        }
-        if (priorityFilter !== 'all') {
-            const opt = PRIORITY_OPTIONS.find((o) => o.value === priorityFilter);
-            chips.push({
-                key: 'priority',
-                label: `Priority: ${opt?.label ?? priorityFilter}`,
-                onRemove: () => { setPriorityFilter('all'); setCurrentPage(0); },
-            });
-        }
-        return chips;
-    }, [typeFilter, priorityFilter]);
-
-    // ── Handlers ──────────────────────────────────────────────
-
-    const handleTabChange = useCallback((tab: TabValue) => {
-        setActiveTab(tab);
-        setCurrentPage(0);
-    }, []);
-
-    const handleSearch = useCallback((term: string) => {
-        setSearchTerm(term);
-        setCurrentPage(0);
-    }, []);
-
-    const handleTypeFilter = useCallback((val: string) => {
-        setTypeFilter(val);
-        setCurrentPage(0);
-    }, []);
-
-    const handlePriorityFilter = useCallback((val: string) => {
-        setPriorityFilter(val);
-        setCurrentPage(0);
-    }, []);
-
-    const handleSort = useCallback((field: string, direction: 'asc' | 'desc') => {
-        setSort({ field, direction });
-        setCurrentPage(0);
-    }, []);
-
-    const handleClearAll = useCallback(() => {
-        setSearchTerm('');
-        setTypeFilter('all');
-        setPriorityFilter('all');
-        setCurrentPage(0);
-    }, []);
-
-    const handleView = useCallback(
-        (id: string) => router.push(`/mot/notifications/${id}?from=${activeTab}`),
-        [router, activeTab],
-    );
-
-    const handleDeleteClick = useCallback((notif: Notification) => {
-        setNotifToDelete(notif);
-        setShowDeleteModal(true);
-    }, []);
-
-    const handleDeleteCancel = useCallback(() => {
-        setShowDeleteModal(false);
-        setNotifToDelete(null);
-    }, []);
-
-    const handleDeleteConfirm = useCallback(async () => {
-        if (!notifToDelete) return;
-        try {
-            setIsDeleting(true);
-            await deleteNotification(notifToDelete.id);
-            toast({
-                title: 'Notification Deleted',
-                description: `"${notifToDelete.title}" has been deleted.`,
-            });
-            setShowDeleteModal(false);
-            setNotifToDelete(null);
-        } catch {
-            toast({
-                title: 'Delete Failed',
-                description: 'Failed to delete notification. Please try again.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsDeleting(false);
-        }
-    }, [notifToDelete, toast]);
-
-    // ── Render ─────────────────────────────────────────────────
-
-    return (
-        <div className="space-y-6">
-            {/* Stats Cards */}
-            <StatsCardsContainer metrics={statMetrics} columns={4} />
-
-            {/* Tab Switcher */}
-            <SwitchableTabs<TabValue>
-                tabs={tabsWithCounts}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                ariaLabel="Notification type switcher"
-            />
-
-            {/* Search & Filters */}
-            <SearchFilterBar
-                searchValue={searchTerm}
-                onSearchChange={handleSearch}
-                searchPlaceholder="Search notifications by title, content, or sender…"
-                totalCount={sourceData.length}
-                filteredCount={totalElements}
-                resultLabel="notification"
-                activeChips={activeChips}
-                onClearAllFilters={handleClearAll}
-                filters={
-                    <>
-                        <SelectFilter
-                            value={typeFilter}
-                            onChange={handleTypeFilter}
-                            options={TYPE_OPTIONS}
-                            allLabel="All Types"
-                        />
-                        <SelectFilter
-                            value={priorityFilter}
-                            onChange={handlePriorityFilter}
-                            options={PRIORITY_OPTIONS}
-                            allLabel="All Priorities"
-                        />
-                    </>
-                }
-            />
-
-            {/* Table */}
-            <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-                <NotificationsTable
-                    notifications={paginated}
-                    mode={activeTab}
-                    loading={false}
-                    onView={handleView}
-                    onDelete={handleDeleteClick}
-                    currentSort={sort}
-                    onSort={handleSort}
-                />
-
-                <DataPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalElements={totalElements}
-                    pageSize={pageSize}
-                    onPageChange={setCurrentPage}
-                    onPageSizeChange={() => {}}
-                    loading={false}
-                />
-            </div>
-
-            {/* Delete Confirmation */}
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={handleDeleteCancel}
-                onConfirm={handleDeleteConfirm}
-                title="Delete Notification"
-                itemName={notifToDelete?.title ?? 'this notification'}
-                isLoading={isDeleting}
-            />
-        </div>
-    );
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={deleteDialog.setOpen}
+        title="Delete Notification"
+        description={`Are you sure you want to delete "${deleteDialog.data?.title ?? 'this notification'}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        loading={isDeleting}
+      />
+    </div>
+  );
 }

@@ -2,26 +2,42 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Info } from 'lucide-react';
+import { Info, RefreshCw } from 'lucide-react';
+import { useDataTable, Button } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import {
-  FleetStatsCards,
-  FleetFilters,
-  FleetTable,
-} from '@/components/operator/fleet';
-import { DataPagination } from '@/components/shared/DataPagination';
+import { FleetStatsCardsNew } from '@/components/operator/fleet/fleet-stats-cards';
+import { FleetFilterBar, type FleetFilters } from '@/components/operator/fleet/fleet-filter-bar';
+import { FleetTableNew } from '@/components/operator/fleet/fleet-table';
 import {
   getOperatorBuses,
   getFleetStatistics,
   type OperatorBus,
-  type BusStatus,
-  type BusServiceType,
   type FleetStatistics,
-  type PaginatedBuses,
 } from '@/data/operator/buses';
+
+const INITIAL_FILTERS: FleetFilters = { status: '__all__', serviceType: '__all__' };
 
 export default function FleetManagementPage() {
   const router = useRouter();
+
+  // ── Table state (pagination, sort, filters) ──────────────────────
+  const { state, setPage, setPageSize, setSort, setSearch, setFilters, clearFilters } =
+    useDataTable<FleetFilters>({
+      initialPageSize: 10,
+      initialSort: { column: 'plateNumber', direction: 'asc' },
+      initialFilters: INITIAL_FILTERS,
+    });
+
+  // ── Server data ──────────────────────────────────────────────────
+  const [buses,        setBuses]        = useState<OperatorBus[]>([]);
+  const [totalItems,   setTotalItems]   = useState(0);
+  const [stats,        setStats]        = useState<FleetStatistics>({
+    totalBuses: 0, activeBuses: 0, inactiveBuses: 0,
+    maintenanceBuses: 0, totalCapacity: 0, averageCapacity: 0,
+  });
+  const [isLoading,    setIsLoading]    = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [error,        setError]        = useState<string | null>(null);
 
   useSetPageMetadata({
     title: 'Fleet Management',
@@ -31,36 +47,7 @@ export default function FleetManagementPage() {
     breadcrumbs: [{ label: 'Fleet Management' }],
   });
 
-  // ── Data state ────────────────────────────────────────────────────────────
-
-  const [buses,      setBuses]      = useState<OperatorBus[]>([]);
-  const [stats,      setStats]      = useState<FleetStatistics>({
-    totalBuses: 0, activeBuses: 0, inactiveBuses: 0,
-    maintenanceBuses: 0, totalCapacity: 0, averageCapacity: 0,
-  });
-  const [pagination, setPagination] = useState<Omit<PaginatedBuses, 'content'>>({
-    totalElements: 0, totalPages: 0, currentPage: 0, pageSize: 10,
-  });
-
-  // ── UI state ──────────────────────────────────────────────────────────────
-
-  const [isLoading,    setIsLoading]    = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [tableLoading, setTableLoading] = useState(false);
-  const [error,        setError]        = useState<string | null>(null);
-
-  // ── Filter / sort / page state ────────────────────────────────────────────
-
-  const [search,            setSearch]            = useState('');
-  const [statusFilter,      setStatusFilter]      = useState<BusStatus | 'ALL'>('ALL');
-  const [serviceTypeFilter, setServiceTypeFilter] = useState<BusServiceType | 'ALL'>('ALL');
-  const [currentPage,       setCurrentPage]       = useState(0);
-  const [pageSize,          setPageSize]          = useState(10);
-  const [sortField,         setSortField]         = useState('plateNumber');
-  const [sortDir,           setSortDir]           = useState<'asc' | 'desc'>('asc');
-
-  // ── Load statistics (once) ────────────────────────────────────────────────
-
+  // ── Load statistics (once) ────────────────────────────────────────
   const loadStatistics = useCallback(async () => {
     setStatsLoading(true);
     try {
@@ -77,163 +64,104 @@ export default function FleetManagementPage() {
     loadStatistics();
   }, [loadStatistics]);
 
-  // ── Load buses ────────────────────────────────────────────────────────────
-
-  const loadBuses = useCallback(async (showFullLoader = false) => {
-    if (showFullLoader) setIsLoading(true); else setTableLoading(true);
+  // ── Load buses ────────────────────────────────────────────────────
+  const loadBuses = useCallback(async () => {
+    setIsLoading(true);
     setError(null);
-
     try {
       const result = await getOperatorBuses({
-        page: currentPage,
-        size: pageSize,
-        search,
-        status: statusFilter,
-        serviceType: serviceTypeFilter,
+        page: state.page - 1, // useDataTable is 1-based; API is 0-based
+        size: state.pageSize,
+        search: state.searchQuery,
+        status: state.filters.status === '__all__' ? 'ALL' : state.filters.status,
+        serviceType: state.filters.serviceType === '__all__' ? 'ALL' : state.filters.serviceType,
       });
-
       setBuses(result.content);
-      setPagination({
-        totalElements: result.totalElements,
-        totalPages:    result.totalPages,
-        currentPage:   result.currentPage,
-        pageSize:      result.pageSize,
-      });
+      setTotalItems(result.totalElements);
     } catch (err) {
       console.error('Error loading fleet:', err);
       setError('Failed to load fleet data. Please try again.');
     } finally {
       setIsLoading(false);
-      setTableLoading(false);
     }
-  }, [currentPage, pageSize, search, statusFilter, serviceTypeFilter]);
+  }, [state.page, state.pageSize, state.searchQuery, state.filters.status, state.filters.serviceType]);
 
   useEffect(() => {
-    loadBuses(isLoading);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadBuses();
   }, [loadBuses]);
 
-  // ── Page-level actions (header toolbar) ───────────────────────────────────
-
+  // ── Page-level actions ───────────────────────────────────────────
   const handleRefresh = useCallback(async () => {
     await Promise.all([loadStatistics(), loadBuses()]);
   }, [loadStatistics, loadBuses]);
 
   useSetPageActions(
-    <button
+    <Button
+      variant="outline"
+      size="sm"
       onClick={handleRefresh}
-      disabled={isLoading || tableLoading}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      disabled={isLoading}
     >
-      <RefreshCw className={`h-3.5 w-3.5 ${isLoading || tableLoading ? 'animate-spin' : ''}`} />
+      <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
       Refresh
-    </button>
+    </Button>,
   );
 
-  // ── Filter / sort handlers ────────────────────────────────────────────────
-
-  const handleSearchChange = useCallback((v: string) => {
-    setSearch(v);
-    setCurrentPage(0);
-  }, []);
-
-  const handleStatusChange = useCallback((v: BusStatus | 'ALL') => {
-    setStatusFilter(v);
-    setCurrentPage(0);
-  }, []);
-
-  const handleServiceTypeChange = useCallback((v: BusServiceType | 'ALL') => {
-    setServiceTypeFilter(v);
-    setCurrentPage(0);
-  }, []);
-
-  const handleClearAll = useCallback(() => {
-    setSearch('');
-    setStatusFilter('ALL');
-    setServiceTypeFilter('ALL');
-    setCurrentPage(0);
-  }, []);
-
-  const handleView = useCallback((busId: string) => {
-    router.push(`/operator/fleet-management/${busId}`);
+  // ── Handlers ─────────────────────────────────────────────────────
+  const handleView = useCallback((bus: OperatorBus) => {
+    router.push(`/operator/fleet-management/${bus.id}`);
   }, [router]);
 
-  const handleSort = useCallback((field: string, dir: 'asc' | 'desc') => {
-    setSortField(field);
-    setSortDir(dir);
-  }, []);
+  const activeFilterCount =
+    (state.filters.status !== '__all__' ? 1 : 0) +
+    (state.filters.serviceType !== '__all__' ? 1 : 0);
 
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
-
-  const handlePageSizeChange = useCallback((size: number) => {
-    setPageSize(size);
-    setCurrentPage(0);
-  }, []);
-
-  const hasActiveFilters = search !== '' || statusFilter !== 'ALL' || serviceTypeFilter !== 'ALL';
-
-  // ── Render ────────────────────────────────────────────────────────────────
-
+  // ── Render ────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
 
-      {/* Statistics Cards */}
-      <FleetStatsCards stats={stats} loading={statsLoading} />
+      {/* Stats */}
+      <FleetStatsCardsNew stats={stats} loading={statsLoading} />
 
       {/* Search & Filters */}
-      <FleetFilters
-        search={search}
-        onSearchChange={handleSearchChange}
-        statusFilter={statusFilter}
-        onStatusChange={handleStatusChange}
-        serviceTypeFilter={serviceTypeFilter}
-        onServiceTypeChange={handleServiceTypeChange}
-        onClearAll={handleClearAll}
-        totalCount={stats.totalBuses}
-        filteredCount={pagination.totalElements}
-        loading={tableLoading}
+      <FleetFilterBar
+        searchValue={state.searchQuery}
+        onSearchChange={setSearch}
+        filters={state.filters}
+        onFiltersChange={setFilters}
+        onClearAll={clearFilters}
+        activeFilterCount={activeFilterCount}
       />
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-sm text-red-700">
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-start gap-3 text-sm text-destructive">
           <div className="flex-1">
             <span className="font-semibold">Error: </span>{error}
           </div>
           <button
-            onClick={() => loadBuses()}
-            className="shrink-0 text-red-600 underline hover:no-underline text-xs font-medium"
+            onClick={loadBuses}
+            className="shrink-0 underline hover:no-underline text-xs font-medium"
           >
             Retry
           </button>
         </div>
       )}
 
-      {/* Table + Pagination Card */}
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-        <FleetTable
-          buses={buses}
-          onView={handleView}
-          onSort={handleSort}
-          currentSort={{ field: sortField, direction: sortDir }}
-          loading={isLoading || tableLoading}
-          hasActiveFilters={hasActiveFilters}
-        />
-
-        {!error && pagination.totalElements > 0 && (
-          <DataPagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            totalElements={pagination.totalElements}
-            pageSize={pagination.pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            loading={tableLoading}
-          />
-        )}
-      </div>
+      {/* Table */}
+      <FleetTableNew
+        data={buses}
+        totalItems={totalItems}
+        page={state.page}
+        pageSize={state.pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        sortColumn={state.sortColumn}
+        sortDirection={state.sortDirection}
+        onSort={setSort}
+        loading={isLoading}
+        onView={handleView}
+      />
 
       {/* Read-only notice */}
       <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
