@@ -1,0 +1,53 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Design Tokens/Themes" />
+
+# Theme System
+
+BusMate supports **three color personalities**, each with light and dark variants (6 total combinations).
+
+## How It Works
+
+1. **CSS Custom Properties**: All colors are defined as HSL values in CSS variables
+2. **`data-theme` attribute**: Applied on `<html>` to switch personality — `default`, `ocean`, or `slate`
+3. **`.dark` class**: Applied on `<html>` to toggle dark mode
+4. **Cascade order**: `[data-theme="X"].dark` (specificity 0,2,0) > `[data-theme="X"]` (0,1,0) > `.dark` (0,1,0) > `:root` (0,1,0)
+
+## Theme Personalities
+
+### Default — BusMate Blue
+The primary brand theme. Uses blue/indigo tones for primary actions.
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--primary` | `hsl(221 83% 53%)` | `hsl(217 91% 60%)` |
+| `--background` | `hsl(0 0% 98%)` | `hsl(216 13% 15%)` |
+| `--ring` | `hsl(221 83% 53%)` | `hsl(217 91% 60%)` |
+
+### Ocean — Teal / Cyan
+A cool, refreshing palette using teal as the primary color.
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--primary` | `hsl(174 60% 36%)` | `hsl(174 55% 50%)` |
+| `--background` | `hsl(195 30% 98%)` | `hsl(195 20% 13%)` |
+| `--ring` | `hsl(174 60% 36%)` | `hsl(174 55% 50%)` |
+
+### Slate — Violet
+An elegant palette with violet/purple primary tones.
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--primary` | `hsl(257 60% 52%)` | `hsl(260 55% 65%)` |
+| `--background` | `hsl(240 15% 98%)` | `hsl(235 15% 13%)` |
+| `--ring` | `hsl(257 60% 52%)` | `hsl(260 55% 65%)` |
+
+## Adding a New Theme
+
+1. Create `libs/ui/src/styles/themes/<name>.css` following an existing theme's structure
+2. Add the `@import` in `globals.css`
+3. Register the theme in `ThemePersonalityProvider`
+
+## Using in Storybook
+
+Use the **Theme Personality** and **Light/Dark** toolbar controls to preview any component across all 6 combinations.

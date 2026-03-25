@@ -1,0 +1,46 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Design Tokens/Spacing & Radius" />
+
+# Spacing & Border Radius
+
+## Border Radius
+
+The `--radius` token is the base radius (default `0.5rem`). All radius sizes derive from it:
+
+| Token | Value | Tailwind Class |
+|-------|-------|----------------|
+| `--radius` | `0.5rem` | `rounded-lg` |
+| `--radius - 2px` | `calc(0.5rem - 2px)` | `rounded-md` |
+| `--radius - 4px` | `calc(0.5rem - 4px)` | `rounded-sm` |
+
+Components use these consistently:
+- **Buttons**: `rounded-md`
+- **Cards**: `rounded-lg` (via `rounded-xl` in card.tsx)
+- **Inputs**: `rounded-md`
+- **Badges**: `rounded-md`
+- **Dialogs**: `rounded-lg`
+
+## Spacing
+
+BusMate uses Tailwind's default spacing scale (1 unit = 0.25rem):
+
+| Class | Value | Common Usage |
+|-------|-------|--------------|
+| `gap-1` | 0.25rem | Tight icon-to-text spacing |
+| `gap-1.5` | 0.375rem | Button icon gap |
+| `gap-2` | 0.5rem | Form field spacing |
+| `gap-4` | 1rem | Card content padding |
+| `gap-6` | 1.5rem | Section spacing |
+| `p-4` | 1rem | Card content padding |
+| `p-6` | 1.5rem | Card header/footer padding |
+| `px-3 py-2` | 0.75rem × 0.5rem | Input padding |
+| `px-4 py-2` | 1rem × 0.5rem | Button default padding |
+
+## Sidebar Width
+
+| Token | Value |
+|-------|-------|
+| `--width-68` | `17rem` (272px) |
+
+Used for the collapsible sidebar in the app shell layout.

@@ -1,0 +1,63 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Getting Started/Introduction" />
+
+# BusMate UI Library
+
+The `@busmate/ui` shared component library powers both the **Management Portal** and the **Passenger Web** applications. It is built on top of:
+
+- **React 19** with TypeScript
+- **Tailwind CSS v4** with CSS custom properties for theming
+- **shadcn/ui** (new-york style) component primitives
+- **Radix UI** for accessible, unstyled headless components
+- **class-variance-authority (CVA)** for type-safe variant management
+
+## Architecture
+
+```
+libs/ui/src/
+├── components/     # 33 base UI components (Button, Card, Dialog, etc.)
+├── patterns/       # Higher-order patterns (DataTable, FormWrapper, StatsCard, etc.)
+├── layouts/        # App shell, sidebar, header, page containers
+├── context/        # ThemePersonalityProvider
+├── hooks/          # useMediaQuery, useMounted, useThemePersonality
+├── styles/
+│   ├── globals.css       # Entry point — imports Tailwind + all tokens
+│   ├── tokens/base.css   # Non-color tokens (radius, fonts, resets)
+│   └── themes/
+│       ├── default.css   # BusMate Blue (light + dark)
+│       ├── ocean.css     # Ocean Teal (light + dark)
+│       └── slate.css     # Slate Violet (light + dark)
+└── lib/utils.ts          # cn() merge utility
+```
+
+## Theming System
+
+BusMate uses a **two-axis theming** approach:
+
+| Axis | Mechanism | Options |
+|------|-----------|---------|
+| **Light / Dark** | `.dark` class on `<html>` | Light, Dark, System |
+| **Color Personality** | `data-theme` attribute on `<html>` | Default (Blue), Ocean (Teal), Slate (Violet) |
+
+Use the toolbar controls above to switch between themes and see how components adapt.
+
+## Usage
+
+```tsx
+import { Button } from "@busmate/ui/components/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@busmate/ui/components/card";
+
+export function MyFeature() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Bus Routes</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button>View All Routes</Button>
+      </CardContent>
+    </Card>
+  );
+}
+```

@@ -32,7 +32,9 @@
     "e2e:env:stop": "bash tests/e2e/scripts/e2e-env.sh stop",
     "e2e:env:status": "bash tests/e2e/scripts/e2e-env.sh status",
     "e2e:env:logs": "bash tests/e2e/scripts/e2e-env.sh logs",
-    "e2e:env:check": "bash tests/e2e/scripts/check-e2e-env.sh"
+    "e2e:env:check": "bash tests/e2e/scripts/check-e2e-env.sh",
+    "ui:storybook": "nx storybook ui",
+    "ui:storybook:build": "nx build-storybook ui"
   },
   "devDependencies": {
     "nx": "^21.0.0",

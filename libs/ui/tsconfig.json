@@ -13,6 +13,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mdx", ".storybook/**/*.ts", ".storybook/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

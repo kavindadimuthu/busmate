@@ -1,0 +1,68 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Design Tokens/Colors" />
+
+# Color Tokens
+
+All color tokens are defined as **HSL triplets** (without the `hsl()` wrapper) via CSS custom properties. They are consumed through Tailwind utilities that wrap them: `bg-primary`, `text-muted-foreground`, etc.
+
+## Semantic Tokens
+
+| Token | Usage |
+|-------|-------|
+| `--background` / `--foreground` | Page background and default text |
+| `--card` / `--card-foreground` | Card surfaces |
+| `--popover` / `--popover-foreground` | Popovers, dropdowns, dialogs |
+| `--primary` / `--primary-foreground` | Brand color, CTAs |
+| `--secondary` / `--secondary-foreground` | Secondary actions |
+| `--muted` / `--muted-foreground` | Subtle backgrounds, placeholder text |
+| `--accent` / `--accent-foreground` | Hover highlights |
+| `--destructive` / `--destructive-foreground` | Errors, danger actions |
+| `--warning` / `--warning-foreground` | Warnings (shared across themes) |
+| `--success` / `--success-foreground` | Success states (shared across themes) |
+
+## Infrastructure Tokens
+
+| Token | Usage |
+|-------|-------|
+| `--border` | Default border color |
+| `--input` | Input field borders |
+| `--ring` | Focus ring color |
+
+## Sidebar Tokens
+
+| Token | Usage |
+|-------|-------|
+| `--sidebar` | Sidebar background |
+| `--sidebar-foreground` | Sidebar text |
+| `--sidebar-active` | Active nav item background |
+| `--sidebar-active-foreground` | Active nav item text |
+| `--sidebar-muted` | Subtle sidebar surfaces |
+
+## Chart Tokens
+
+| Token | Usage |
+|-------|-------|
+| `--chart-1` through `--chart-5` | Data visualization palette |
+
+## Primitive Palettes (base.css)
+
+These are low-level palette values shared across themes:
+
+- **Gray scale**: `--gray-50` through `--gray-950` (Zinc-based)
+- **Status colors**: `--green-50/500/600/700`, `--amber-50/500/600`, `--red-50/500/600/700`
+
+## Usage Examples
+
+```css
+/* In Tailwind classes */
+<div className="bg-primary text-primary-foreground" />
+<div className="bg-muted text-muted-foreground" />
+<div className="border-destructive text-destructive" />
+
+/* Raw CSS variable access */
+.custom {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+```
