@@ -3,6 +3,7 @@ import "./globals.css";
 import {AsgardeoProvider} from '@asgardeo/nextjs/server';
 import ApiSetup from '@/components/ApiSetup';
 import { ThemeProvider } from "next-themes";
+import { ThemePersonalityProvider } from "@busmate/ui";
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme="default">
       <body className="antialiased font-sans bg-background text-foreground">
         <ThemeProvider
           attribute="class"
@@ -25,6 +26,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <ThemePersonalityProvider>
           <ApiSetup />
           <AsgardeoProvider
             preferences={{
@@ -36,6 +38,7 @@ export default function RootLayout({
           >
             {children as any}
           </AsgardeoProvider>
+          </ThemePersonalityProvider>
         </ThemeProvider>
       </body>
     </html>
