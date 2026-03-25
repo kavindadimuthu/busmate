@@ -9,6 +9,18 @@ export { useMediaQuery, useMobile } from "./hooks";
 
 // ── Base Components (shadcn/ui primitives) ────────────────
 
+// Alert
+export {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertDestructiveIcon,
+  AlertWarningIcon,
+  AlertSuccessIcon,
+  AlertInfoIcon,
+  alertVariants,
+} from "./components/alert";
+
 // Accordion
 export {
   Accordion,
@@ -45,6 +57,17 @@ export {
 
 // Badge
 export { Badge, badgeVariants } from "./components/badge";
+
+// Breadcrumb
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "./components/breadcrumb";
 
 // Button
 export { Button, buttonVariants } from "./components/button";
@@ -86,6 +109,10 @@ export {
   CommandSeparator,
 } from "./components/command";
 
+// DatePicker
+export { DatePicker, DateRangePicker } from "./components/date-picker";
+export type { DatePickerProps, DateRangePickerProps } from "./components/date-picker";
+
 // Dialog
 export {
   Dialog,
@@ -119,11 +146,36 @@ export {
   DropdownMenuSubContent,
 } from "./components/dropdown-menu";
 
+// Form primitives (react-hook-form integration)
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormMessage,
+} from "./components/form";
+
 // Input
 export { Input } from "./components/input";
 
 // Label
 export { Label } from "./components/label";
+
+// Pagination
+export {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationFirst,
+  PaginationLast,
+  PaginationEllipsis,
+} from "./components/pagination";
 
 // Popover
 export {
@@ -258,6 +310,17 @@ export { FilterBar, FilterSelect } from "./patterns/filter-bar";
 
 // Form
 export { FormWrapper, FormSection, FormGrid } from "./patterns/form";
+export {
+  InputField,
+  TextareaField,
+  SelectField,
+  CheckboxField,
+  SwitchField,
+  RadioGroupField,
+  DatePickerField,
+  DateRangePickerField,
+} from "./patterns/form";
+export type { FieldOption } from "./patterns/form";
 
 // EmptyState
 export { EmptyState } from "./patterns/empty-state";
@@ -265,6 +328,37 @@ export { EmptyState } from "./patterns/empty-state";
 // ActivityLog
 export { ActivityLog } from "./patterns/activity-log";
 export type { ActivityItem } from "./patterns/activity-log";
+
+// Chart
+export {
+  ChartContainer,
+  ChartStyle,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  useChart,
+} from "./patterns/chart";
+export type { ChartConfig } from "./patterns/chart";
+
+// Loading & Error
+export {
+  LoadingSpinner,
+  loadingSpinnerVariants,
+  TableSkeleton,
+  CardSkeleton,
+  FormSkeleton,
+  ErrorFallback,
+  ErrorBoundary,
+} from "./patterns/loading";
+export type {
+  LoadingSpinnerProps,
+  TableSkeletonProps,
+  CardSkeletonProps,
+  FormSkeletonProps,
+  ErrorFallbackProps,
+  ErrorBoundaryProps,
+} from "./patterns/loading";
 
 // Dashboard
 export { DashboardGrid } from "./patterns/dashboard";
