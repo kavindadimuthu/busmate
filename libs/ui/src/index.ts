@@ -224,8 +224,14 @@ export {
   TooltipProvider,
 } from "./components/tooltip";
 
-// Theme Switcher
+// Theme Switcher (light / dark mode)
 export { ThemeSwitcher } from "./components/theme-switcher";
+
+// Theme Personality (color scheme switcher)
+export { ThemePersonalityProvider, useThemePersonality } from "./context/theme-personality-provider";
+export { ThemePersonalitySwitcher } from "./components/theme-personality-switcher";
+export { THEMES, DEFAULT_PERSONALITY, PERSONALITY_STORAGE_KEY } from "./context/theme-registry";
+export type { ThemePersonality, ThemeConfig } from "./context/theme-registry";
 
 // ── Patterns ──────────────────────────────────────────────
 

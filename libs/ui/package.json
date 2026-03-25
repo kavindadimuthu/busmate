@@ -6,7 +6,10 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./styles": "./src/styles/globals.css"
+    "./styles": "./src/styles/globals.css",
+    "./themes/default": "./src/styles/themes/default.css",
+    "./themes/ocean": "./src/styles/themes/ocean.css",
+    "./themes/slate": "./src/styles/themes/slate.css"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.0",

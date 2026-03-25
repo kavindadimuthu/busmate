@@ -1,0 +1,127 @@
+/* ── Ocean Theme (Teal / Cyan) ─────────────────────────────
+   Personality : Cool teal, refreshing and modern
+   Applied via : [data-theme="ocean"]
+                 [data-theme="ocean"].dark
+
+   To add this theme to your app: ensure globals.css imports
+   this file (already done via @busmate/ui/styles), then set
+   data-theme="ocean" on <html> using ThemePersonalityProvider.
+────────────────────────────────────────────────────────── */
+
+@layer base {
+  /* ── Ocean Light ─────────────────────────────── */
+  [data-theme="ocean"] {
+    /* Base surfaces — cool tinted whites */
+    --background:         195 30% 98%;
+    --foreground:         195 20% 10%;
+
+    /* Card surfaces */
+    --card:               195 20% 100%;
+    --card-foreground:    195 20% 10%;
+
+    /* Popover / dropdown */
+    --popover:            195 20% 100%;
+    --popover-foreground: 195 20% 10%;
+
+    /* Primary (Teal) */
+    --primary:            174 60% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary:          185 20% 92%;
+    --secondary-foreground: 185 20% 15%;
+
+    /* Muted */
+    --muted:              185 20% 92%;
+    --muted-foreground:   185 12% 40%;
+
+    /* Accent */
+    --accent:             174 25% 90%;
+    --accent-foreground:  174 40% 18%;
+
+    /* Destructive */
+    --destructive:        0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning:            38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Success */
+    --success:            160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border:             185 18% 86%;
+    --input:              185 18% 86%;
+    --ring:               174 60% 36%;
+
+    /* Sidebar — cool tinted surface */
+    --sidebar:                    195 35% 97%;
+    --sidebar-foreground:         185 20% 15%;
+    --sidebar-active:             174 60% 36%;
+    --sidebar-active-foreground:  0 0% 100%;
+    --sidebar-muted:              185 20% 92%;
+
+    /* Charts — teal-led palette */
+    --chart-1: 174 60% 36%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 38  92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  /* ── Ocean Dark ──────────────────────────────── */
+  [data-theme="ocean"].dark {
+    /* Base surfaces — deep teal-tinted slate */
+    --background:         196 20% 12%;
+    --foreground:         185 15% 88%;
+
+    --card:               196 18% 16%;
+    --card-foreground:    185 15% 88%;
+
+    --popover:            196 18% 14%;
+    --popover-foreground: 185 15% 88%;
+
+    /* Primary — brighter teal for dark backgrounds */
+    --primary:            174 55% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:          196 14% 22%;
+    --secondary-foreground: 185 12% 75%;
+
+    --muted:              196 14% 19%;
+    --muted-foreground:   185 10% 55%;
+
+    --accent:             196 14% 22%;
+    --accent-foreground:  185 15% 88%;
+
+    --destructive:        0 80% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning:            38 92% 50%;
+    --warning-foreground: 196 20% 8%;
+
+    --success:            152 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border:             196 14% 26%;
+    --input:              196 14% 22%;
+    --ring:               174 55% 48%;
+
+    /* Sidebar — deeper teal-tinted background */
+    --sidebar:                    196 22% 9%;
+    --sidebar-foreground:         185 12% 80%;
+    --sidebar-active:             174 52% 44%;
+    --sidebar-active-foreground:  0 0% 100%;
+    --sidebar-muted:              196 14% 16%;
+
+    /* Charts */
+    --chart-1: 174 55% 52%;
+    --chart-2: 199 89% 56%;
+    --chart-3: 38  92% 55%;
+    --chart-4: 280 65% 65%;
+    --chart-5: 340 75% 60%;
+  }
+}

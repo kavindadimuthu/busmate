@@ -1,0 +1,153 @@
+/* ── Default Theme (BusMate Blue) ──────────────────────────
+   Personality : Blue / Indigo
+   Applied via : :root (fallback for apps without data-theme)
+                 [data-theme="default"] (explicit selection)
+
+   HOW THEMES WORK
+   ───────────────
+   Each theme file provides two rule-sets:
+     1. Light tokens  → [data-theme="X"]          (specificity 0,1,0)
+     2. Dark tokens   → [data-theme="X"].dark      (specificity 0,2,0)
+
+   The :root / .dark selectors here act as the **global fallback**
+   so apps that don't set a data-theme attribute still get a
+   complete theme (backward-compatible).
+
+   Cascade order (later source wins for equal specificity):
+     :root              → default light  (0,1,0)
+     .dark              → default dark   (0,1,0, later → wins over :root)
+     [data-theme="X"]   → X light        (0,1,0, later → wins over .dark)
+     [data-theme="X"].dark → X dark      (0,2,0, wins over everything)
+────────────────────────────────────────────────────────── */
+
+@layer base {
+  /* ── Light tokens (fallback + explicit) ──────── */
+  :root,
+  [data-theme="default"] {
+    /* Brand Blue primitives */
+    --blue-50:  214 100% 97%;
+    --blue-100: 214 95%  93%;
+    --blue-200: 213 97%  87%;
+    --blue-300: 212 96%  78%;
+    --blue-400: 213 94%  68%;
+    --blue-500: 217 91%  60%;
+    --blue-600: 221 83%  53%;
+    --blue-700: 224 76%  48%;
+    --blue-800: 226 71%  40%;
+    --blue-900: 224 64%  33%;
+
+    /* Base surfaces */
+    --background:         0 0% 98%;
+    --foreground:         220 16% 12%;
+
+    /* Card surfaces */
+    --card:               0 0% 100%;
+    --card-foreground:    220 16% 12%;
+
+    /* Popover / dropdown */
+    --popover:            0 0% 100%;
+    --popover-foreground: 220 16% 12%;
+
+    /* Primary (Brand Blue) */
+    --primary:            221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary:          220 14% 93%;
+    --secondary-foreground: 220 16% 18%;
+
+    /* Muted */
+    --muted:              220 14% 93%;
+    --muted-foreground:   220 9% 42%;
+
+    /* Accent (hover states) */
+    --accent:             220 14% 93%;
+    --accent-foreground:  220 16% 18%;
+
+    /* Destructive */
+    --destructive:        0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning:            38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Success */
+    --success:            160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border:             220 13% 88%;
+    --input:              220 13% 88%;
+    --ring:               221 83% 53%;
+
+    /* Sidebar */
+    --sidebar:                    0 0% 100%;
+    --sidebar-foreground:         220 16% 18%;
+    --sidebar-active:             221 83% 53%;
+    --sidebar-active-foreground:  0 0% 100%;
+    --sidebar-muted:              220 14% 93%;
+
+    /* Charts */
+    --chart-1: 221 83% 53%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38  92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  /* ── Dark tokens (fallback + explicit) ──────── */
+  .dark,
+  [data-theme="default"].dark {
+    /* Base surfaces — layered slate, GitHub Dark Dimmed inspired */
+    --background:         216 13% 15%;
+    --foreground:         214 14% 87%;
+
+    --card:               214 12% 19%;
+    --card-foreground:    214 14% 87%;
+
+    --popover:            214 12% 17%;
+    --popover-foreground: 214 14% 87%;
+
+    /* Primary — vibrant blue, always white text */
+    --primary:            217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:          214 10% 24%;
+    --secondary-foreground: 214 12% 78%;
+
+    --muted:              214 10% 21%;
+    --muted-foreground:   214 8% 58%;
+
+    --accent:             214 10% 24%;
+    --accent-foreground:  214 14% 87%;
+
+    --destructive:        0 80% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning:            38 92% 50%;
+    --warning-foreground: 224 71% 4%;
+
+    --success:            152 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Borders — visibly distinct from card surface */
+    --border:             214 10% 28%;
+    --input:              214 10% 24%;
+    --ring:               217 91% 60%;
+
+    /* Sidebar — distinctly deeper than background */
+    --sidebar:                    216 15% 11%;
+    --sidebar-foreground:         214 12% 83%;
+    --sidebar-active:             217 91% 55%;
+    --sidebar-active-foreground:  0 0% 100%;
+    --sidebar-muted:              214 10% 18%;
+
+    /* Charts */
+    --chart-1: 217 91% 65%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 38  92% 55%;
+    --chart-4: 280 65% 65%;
+    --chart-5: 340 75% 60%;
+  }
+}

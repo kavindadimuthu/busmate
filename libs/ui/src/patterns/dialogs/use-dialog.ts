@@ -1,4 +1,5 @@
 // libs/ui/src/patterns/dialogs/use-dialog.ts
+"use client";
 
 import { useState, useCallback } from "react";
 

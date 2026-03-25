@@ -1,0 +1,59 @@
+/* ── Base (non-color) tokens — shared across all themes ─── */
+/* These tokens do not vary between color personality themes.  */
+/* Individual theme files override only the color variables.   */
+
+@layer base {
+  :root {
+    /* ─── Primitive Colors (HSL values) ─────────── */
+    /* Gray scale (Zinc-based) — palette reference used by default theme */
+    --white:              0 0% 100%;
+    --black:              0 0% 0%;
+
+    --gray-50:            240 5% 96%;
+    --gray-100:           240 5% 92%;
+    --gray-200:           240 6% 85%;
+    --gray-300:           240 5% 74%;
+    --gray-400:           240 4% 58%;
+    --gray-500:           240 4% 46%;
+    --gray-600:           240 5% 34%;
+    --gray-700:           240 5% 26%;
+    --gray-800:           240 4% 16%;
+    --gray-900:           240 6% 10%;
+    --gray-950:           240 10% 4%;
+
+    /* Status palette (shared, themes should not change these) */
+    --green-50:           152 81% 96%;
+    --green-500:          160 84% 39%;
+    --green-600:          161 94% 30%;
+    --green-700:          163 94% 24%;
+
+    --amber-50:           48 100% 96%;
+    --amber-500:          38 92% 50%;
+    --amber-600:          36 77% 49%;
+
+    --red-50:             0 86% 97%;
+    --red-500:            0 84% 60%;
+    --red-600:            0 72% 51%;
+    --red-700:            0 74% 42%;
+
+    /* ─── Layout tokens ────────────────────────── */
+    --radius:             0.5rem;
+
+    /* ─── Typography ───────────────────────────── */
+    --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  }
+
+  /* Default border color to the theme border token so border-* utilities
+     don't fall back to currentColor (which renders as black). */
+  *, ::before, ::after {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

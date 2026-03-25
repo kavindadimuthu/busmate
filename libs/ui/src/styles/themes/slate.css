@@ -1,0 +1,127 @@
+/* ── Slate Theme (Violet / Purple) ────────────────────────
+   Personality : Rich violet, polished and modern
+   Applied via : [data-theme="slate"]
+                 [data-theme="slate"].dark
+
+   To add this theme to your app: ensure globals.css imports
+   this file (already done via @busmate/ui/styles), then set
+   data-theme="slate" on <html> using ThemePersonalityProvider.
+────────────────────────────────────────────────────────── */
+
+@layer base {
+  /* ── Slate Light ─────────────────────────────── */
+  [data-theme="slate"] {
+    /* Base surfaces — very slightly warm neutral */
+    --background:         260 10% 98%;
+    --foreground:         260 14% 11%;
+
+    /* Card surfaces */
+    --card:               0 0% 100%;
+    --card-foreground:    260 14% 11%;
+
+    /* Popover / dropdown */
+    --popover:            0 0% 100%;
+    --popover-foreground: 260 14% 11%;
+
+    /* Primary (Violet) */
+    --primary:            258 84% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary:          260 12% 92%;
+    --secondary-foreground: 260 14% 16%;
+
+    /* Muted */
+    --muted:              260 12% 92%;
+    --muted-foreground:   260 8% 40%;
+
+    /* Accent */
+    --accent:             258 25% 90%;
+    --accent-foreground:  258 40% 20%;
+
+    /* Destructive */
+    --destructive:        0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning:            38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Success */
+    --success:            160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border:             260 10% 88%;
+    --input:              260 10% 88%;
+    --ring:               258 84% 59%;
+
+    /* Sidebar — softly violet-tinted */
+    --sidebar:                    260 14% 97%;
+    --sidebar-foreground:         260 14% 16%;
+    --sidebar-active:             258 84% 59%;
+    --sidebar-active-foreground:  0 0% 100%;
+    --sidebar-muted:              260 12% 92%;
+
+    /* Charts — violet-led palette */
+    --chart-1: 258 84% 59%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38  92% 50%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 340 75% 55%;
+  }
+
+  /* ── Slate Dark ──────────────────────────────── */
+  [data-theme="slate"].dark {
+    /* Base surfaces — deep neutrals with a violet undertone */
+    --background:         258 12% 13%;
+    --foreground:         258 10% 88%;
+
+    --card:               258 10% 17%;
+    --card-foreground:    258 10% 88%;
+
+    --popover:            258 10% 15%;
+    --popover-foreground: 258 10% 88%;
+
+    /* Primary — brighter violet for dark backgrounds */
+    --primary:            259 87% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:          258 8% 22%;
+    --secondary-foreground: 258 8% 76%;
+
+    --muted:              258 8% 19%;
+    --muted-foreground:   258 6% 56%;
+
+    --accent:             258 8% 22%;
+    --accent-foreground:  258 10% 88%;
+
+    --destructive:        0 80% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning:            38 92% 50%;
+    --warning-foreground: 258 12% 8%;
+
+    --success:            152 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border:             258 8% 26%;
+    --input:              258 8% 22%;
+    --ring:               259 87% 67%;
+
+    /* Sidebar — deeper violet-tinted background */
+    --sidebar:                    258 14% 9%;
+    --sidebar-foreground:         258 8% 80%;
+    --sidebar-active:             259 84% 63%;
+    --sidebar-active-foreground:  0 0% 100%;
+    --sidebar-muted:              258 8% 16%;
+
+    /* Charts */
+    --chart-1: 259 87% 69%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 38  92% 55%;
+    --chart-4: 199 89% 56%;
+    --chart-5: 340 75% 60%;
+  }
+}
