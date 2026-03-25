@@ -36,6 +36,79 @@
     --red-600:            0 72% 51%;
     --red-700:            0 74% 42%;
 
+    /* Blue (Brand) */
+    --blue-50:            214 100% 97%;
+    --blue-100:           214 95% 93%;
+    --blue-200:           213 97% 87%;
+    --blue-300:           212 96% 78%;
+    --blue-400:           213 94% 68%;
+    --blue-500:           221 83% 53%;
+    --blue-600:           224 76% 48%;
+    --blue-700:           226 71% 40%;
+    --blue-800:           224 64% 33%;
+    --blue-900:           224 55% 27%;
+    --blue-950:           226 57% 17%;
+
+    /* Cyan (Info) */
+    --cyan-50:            183 100% 96%;
+    --cyan-100:           185 96% 90%;
+    --cyan-200:           186 94% 82%;
+    --cyan-300:           187 92% 69%;
+    --cyan-400:           188 86% 53%;
+    --cyan-500:           189 94% 43%;
+    --cyan-600:           192 91% 36%;
+    --cyan-700:           193 82% 31%;
+    --cyan-800:           194 70% 27%;
+    --cyan-900:           196 64% 24%;
+    --cyan-950:           197 79% 15%;
+
+    /* Purple (Analytics) */
+    --purple-50:          270 100% 98%;
+    --purple-100:         269 100% 95%;
+    --purple-200:         269 100% 92%;
+    --purple-300:         269 97% 85%;
+    --purple-400:         270 95% 75%;
+    --purple-500:         271 91% 65%;
+    --purple-600:         271 81% 56%;
+    --purple-700:         272 72% 47%;
+    --purple-800:         273 67% 39%;
+    --purple-900:         274 66% 32%;
+    --purple-950:         274 87% 21%;
+
+    /* ─── Spacing Scale — 4px baseline grid ────── */
+    --spacing-0:    0;
+    --spacing-0-5:  0.125rem;  /* 2px */
+    --spacing-1:    0.25rem;   /* 4px */
+    --spacing-1-5:  0.375rem;  /* 6px */
+    --spacing-2:    0.5rem;    /* 8px */
+    --spacing-3:    0.75rem;   /* 12px */
+    --spacing-4:    1rem;      /* 16px */
+    --spacing-5:    1.25rem;   /* 20px */
+    --spacing-6:    1.5rem;    /* 24px */
+    --spacing-8:    2rem;      /* 32px */
+    --spacing-10:   2.5rem;    /* 40px */
+    --spacing-12:   3rem;      /* 48px */
+    --spacing-16:   4rem;      /* 64px */
+    --spacing-20:   5rem;      /* 80px */
+    --spacing-24:   6rem;      /* 96px */
+
+    /* ─── Shadow Scale ──────────────────────────── */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* ─── Z-index Scale ─────────────────────────── */
+    --z-dropdown: 50;
+    --z-sticky:   100;
+    --z-fixed:    200;
+    --z-overlay:  300;
+    --z-modal:    400;
+    --z-popover:  500;
+    --z-tooltip:  600;
+    --z-toast:    700;
+
     /* ─── Layout tokens ────────────────────────── */
     --radius:             0.5rem;
 
