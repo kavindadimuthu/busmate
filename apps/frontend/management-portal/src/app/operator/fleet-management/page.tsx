@@ -3,9 +3,9 @@
 import { RefreshCw, Info } from 'lucide-react';
 import { Button } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { FleetStatsCardsNew } from '@/components/operator/fleet/fleet-stats-cards';
-import { FleetFilterBar } from '@/components/operator/fleet/fleet-filter-bar';
-import { FleetTableNew } from '@/components/operator/fleet/fleet-table';
+import { FleetStatsCards } from '@/components/operator/fleet/FleetStatsCards';
+import { FleetFilterBar } from '@/components/operator/fleet/FleetFilterBar';
+import { FleetTable } from '@/components/operator/fleet/FleetTable';
 import { useFleetManagement } from '@/components/operator/fleet/useFleetManagement';
 
 export default function FleetManagementPage() {
@@ -32,7 +32,7 @@ export default function FleetManagementPage() {
 
   return (
     <div className="space-y-6">
-      <FleetStatsCardsNew stats={stats} loading={statsLoading} />
+      <FleetStatsCards stats={stats} loading={statsLoading} />
 
       <FleetFilterBar
         searchValue={state.searchQuery}
@@ -54,7 +54,7 @@ export default function FleetManagementPage() {
         </div>
       )}
 
-      <FleetTableNew
+      <FleetTable
         data={buses} totalItems={totalItems} page={state.page} pageSize={state.pageSize}
         onPageChange={setPage} onPageSizeChange={setPageSize}
         sortColumn={state.sortColumn} sortDirection={state.sortDirection}

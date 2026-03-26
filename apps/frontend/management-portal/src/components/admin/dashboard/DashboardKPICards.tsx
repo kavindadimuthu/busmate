@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
-import { KPIMetric } from '@/data/admin/dashboard-v2';
+import { KPIMetric } from '@/data/admin/dashboardV2';
 
 // ── Mini sparkline ────────────────────────────────────────────────
 

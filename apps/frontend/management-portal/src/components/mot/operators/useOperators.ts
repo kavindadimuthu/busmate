@@ -6,7 +6,7 @@ import { OperatorManagementService } from '@busmate/api-client-route';
 import type { OperatorResponse } from '@busmate/api-client-route';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
-import type { OperatorFilters } from './operators-filter-bar';
+import type { OperatorFilters } from './OperatorsFilterBar';
 
 // ── Initial state ─────────────────────────────────────────────────
 

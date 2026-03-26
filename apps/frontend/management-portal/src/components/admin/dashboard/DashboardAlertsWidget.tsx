@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AlertTriangle, ArrowUpRight, Bell, CheckCircle2, XCircle } from 'lucide-react';
-import { ActiveAlertEntry } from '@/data/admin/dashboard-v2';
+import { ActiveAlertEntry } from '@/data/admin/dashboardV2';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();

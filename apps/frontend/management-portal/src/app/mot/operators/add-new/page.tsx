@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import OperatorForm from '@/components/mot/users/operator/operator-form';
+import OperatorForm from '@/components/mot/users/operator/OperatorForm';
 import { OperatorResponse } from '@busmate/api-client-route';
 
 export default function AddNewOperatorPage() {

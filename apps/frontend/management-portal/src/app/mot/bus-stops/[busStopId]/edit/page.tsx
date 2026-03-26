@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import BusStopForm from '@/components/mot/bus-stops/bus-stop-form';
+import BusStopForm from '@/components/mot/bus-stops/BusStopForm';
 import { useEditBusStop } from '@/components/mot/bus-stops/useEditBusStop';
 
 interface EditBusStopPageProps {

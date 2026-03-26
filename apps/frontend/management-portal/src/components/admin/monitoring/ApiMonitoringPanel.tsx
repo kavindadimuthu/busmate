@@ -26,7 +26,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { ApiEndpointMetric, MicroserviceInfo } from '@/data/admin/system-monitoring';
+import { ApiEndpointMetric, MicroserviceInfo } from '@/data/admin/systemMonitoring';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 

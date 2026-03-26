@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 
-import { OperatorsStatsCards } from '@/components/mot/operators/operators-stats-cards';
-import { OperatorsFilterBar } from '@/components/mot/operators/operators-filter-bar';
-import { OperatorsTable } from '@/components/mot/operators/operators-table';
+import { OperatorsStatsCards } from '@/components/mot/operators/OperatorsStatsCards';
+import { OperatorsFilterBar } from '@/components/mot/operators/OperatorsFilterBar';
+import { OperatorsTable } from '@/components/mot/operators/OperatorsTable';
 import { OperatorActionButtons } from '@/components/mot/operators';
 import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
 import { useOperators } from '@/components/mot/operators/useOperators';

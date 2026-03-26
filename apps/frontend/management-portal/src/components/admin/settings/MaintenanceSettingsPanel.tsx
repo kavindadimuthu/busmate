@@ -43,7 +43,7 @@ import type {
   MaintenanceSettings,
   MaintenanceHistoryEntry,
   SystemStatus,
-} from '@/data/admin/system-settings';
+} from '@/data/admin/systemSettings';
 import {
   getMaintenanceSettings,
   updateMaintenanceSettings,
@@ -51,7 +51,7 @@ import {
   getMaintenanceHistory,
   getSystemStatus,
   performMaintenanceAction,
-} from '@/data/admin/system-settings';
+} from '@/data/admin/systemSettings';
 
 // ── Status badge ─────────────────────────────────────────────────
 

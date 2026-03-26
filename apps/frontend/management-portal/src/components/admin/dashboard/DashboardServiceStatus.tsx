@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowUpRight, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
-import { ServiceSummary } from '@/data/admin/dashboard-v2';
+import { ServiceSummary } from '@/data/admin/dashboardV2';
 
 function StatusBadge({ status }: { status: ServiceSummary['status'] }) {
   const config = {

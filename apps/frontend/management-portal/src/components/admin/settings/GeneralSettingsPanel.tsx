@@ -27,11 +27,11 @@ import {
   CheckCircle,
   Loader2,
 } from 'lucide-react';
-import type { GeneralSettings } from '@/data/admin/system-settings';
+import type { GeneralSettings } from '@/data/admin/systemSettings';
 import {
   getGeneralSettings,
   updateGeneralSettings,
-} from '@/data/admin/system-settings';
+} from '@/data/admin/systemSettings';
 
 // ── Section wrapper ──────────────────────────────────────────────
 

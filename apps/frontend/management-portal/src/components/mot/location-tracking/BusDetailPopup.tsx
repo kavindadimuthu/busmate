@@ -20,7 +20,7 @@ import {
   Timer,
   Compass,
 } from 'lucide-react';
-import type { TrackedBus } from '@/types/location-tracking';
+import type { TrackedBus } from '@/types/LocationTracking';
 
 // ── Props ─────────────────────────────────────────────────────────
 

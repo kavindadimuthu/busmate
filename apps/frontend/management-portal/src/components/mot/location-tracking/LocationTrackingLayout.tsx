@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  LocationTrackingStatsCardsNew,
+  LocationTrackingStatsCards,
   TrackingMap,
   TrackingBusList,
   LocationTrackingFilterBar,
@@ -18,7 +18,7 @@ export function LocationTrackingLayout({ state }: LocationTrackingLayoutProps) {
     <div className="flex flex-col h-[calc(100vh-8rem)] gap-4 overflow-hidden">
       {/* Stats Cards */}
       <div className="flex-none">
-        <LocationTrackingStatsCardsNew
+        <LocationTrackingStatsCards
           metrics={state.statsMetrics}
           loading={state.isLoading && state.statsMetrics.length === 0}
           isCollapsed={state.statsCollapsed}

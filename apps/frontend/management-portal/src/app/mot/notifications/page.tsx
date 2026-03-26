@@ -6,9 +6,9 @@ import { PenSquare, Inbox, Send } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent, Button, ConfirmDialog } from '@busmate/ui';
 
-import { NotificationsTableNew } from '@/components/mot/notifications/notifications-table';
-import { NotificationsFilterBar } from '@/components/mot/notifications/notifications-filter-bar';
-import { NotificationsStatsCardsNew } from '@/components/mot/notifications/notifications-stats-cards';
+import { NotificationsTable } from '@/components/mot/notifications/NotificationsTable';
+import { NotificationsFilterBar } from '@/components/mot/notifications/NotificationsFilterBar';
+import { NotificationsStatsCards } from '@/components/mot/notifications/NotificationsStatsCards';
 import { useNotifications } from '@/components/mot/notifications/useNotifications';
 
 export default function NotificationsPage() {
@@ -38,7 +38,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <NotificationsStatsCardsNew stats={statsData} />
+      <NotificationsStatsCards stats={statsData} />
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
@@ -62,7 +62,7 @@ export default function NotificationsPage() {
             activeFilterCount={activeFilterCount}
           />
 
-          <NotificationsTableNew
+          <NotificationsTable
             data={paginated}
             totalItems={totalElements}
             mode={activeTab}

@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 
-import { TripsStatsCardsNew } from '@/components/mot/trips/trips-stats-cards';
-import { TripsFilterBar } from '@/components/mot/trips/trips-filter-bar';
-import { TripsTableNew } from '@/components/mot/trips/trips-table';
+import { TripsStatsCards } from '@/components/mot/trips/TripsStatsCards';
+import { TripsFilterBar } from '@/components/mot/trips/TripsFilterBar';
+import { TripsTable } from '@/components/mot/trips/TripsTable';
 import { TripActionButtons } from '@/components/mot/trips/TripActionButtons';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { useTrips } from '@/components/mot/trips/useTrips';
@@ -39,7 +39,7 @@ export default function TripsPage() {
 
   return (
     <div className="space-y-6">
-      <TripsStatsCardsNew stats={stats} />
+      <TripsStatsCards stats={stats} />
 
       <TripsFilterBar
         searchValue={searchQuery}
@@ -51,7 +51,7 @@ export default function TripsPage() {
         activeFilterCount={activeFilterCount}
       />
 
-      <TripsTableNew
+      <TripsTable
         data={trips}
         loading={isLoading}
         page={page}

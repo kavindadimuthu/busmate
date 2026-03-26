@@ -23,7 +23,7 @@ import {
   Users,
   AlertTriangle,
 } from 'lucide-react';
-import { PerformanceSnapshot } from '@/data/admin/system-monitoring';
+import { PerformanceSnapshot } from '@/data/admin/systemMonitoring';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 

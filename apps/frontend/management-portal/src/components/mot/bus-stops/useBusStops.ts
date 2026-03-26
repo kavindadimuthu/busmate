@@ -6,7 +6,7 @@ import { BusStopManagementService } from '@busmate/api-client-route';
 import type { StopResponse, PageStopResponse } from '@busmate/api-client-route';
 import { useDataTable, useDialog } from '@busmate/ui';
 
-import type { BusStopFilters } from '@/components/mot/bus-stops/bus-stops-filter-bar';
+import type { BusStopFilters } from '@/components/mot/bus-stops/BusStopsFilterBar';
 import { useToast } from '@/hooks/use-toast';
 
 type ViewType = 'table' | 'map';

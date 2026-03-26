@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 
-import { PermitsStatsCardsNew } from '@/components/mot/permits/permits-stats-cards';
-import { PermitsFilterBar } from '@/components/mot/permits/permits-filter-bar';
-import { PermitsTableNew } from '@/components/mot/permits/permits-table';
+import { PermitsStatsCards } from '@/components/mot/permits/PermitsStatsCards';
+import { PermitsFilterBar } from '@/components/mot/permits/PermitsFilterBar';
+import { PermitsTable } from '@/components/mot/permits/PermitsTable';
 import { PermitActionButtons } from '@/components/mot/permits/PermitActionButtons';
 import { usePermits } from '@/components/mot/permits/usePermits';
 
@@ -56,7 +56,7 @@ export default function PassengerServicePermitsPage() {
 
   return (
     <div className="space-y-6">
-      <PermitsStatsCardsNew stats={statistics} />
+      <PermitsStatsCards stats={statistics} />
 
       <PermitsFilterBar
         searchValue={state.searchQuery}
@@ -68,7 +68,7 @@ export default function PassengerServicePermitsPage() {
         activeFilterCount={activeFilterCount}
       />
 
-      <PermitsTableNew
+      <PermitsTable
         data={permits}
         totalItems={totalElements}
         page={state.page}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useDialog } from '@busmate/ui';
 
-import type { NotificationFilters } from '@/components/mot/notifications/notifications-filter-bar';
+import type { NotificationFilters } from '@/components/mot/notifications/NotificationsFilterBar';
 
 import {
   getReceivedNotifications,

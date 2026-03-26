@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import type { StopResponse } from '@busmate/api-client-route';
 import { ConfirmDialog } from '@busmate/ui';
 
-import { BusStopsStatsCards } from '@/components/mot/bus-stops/bus-stops-stats-cards';
-import { BusStopsFilterBar } from '@/components/mot/bus-stops/bus-stops-filter-bar';
-import { BusStopsTable } from '@/components/mot/bus-stops/bus-stops-table';
+import { BusStopsStatsCards } from '@/components/mot/bus-stops/BusStopsStatsCards';
+import { BusStopsFilterBar } from '@/components/mot/bus-stops/BusStopsFilterBar';
+import { BusStopsTable } from '@/components/mot/bus-stops/BusStopsTable';
 import { BusStopsMapView } from '@/components/mot/bus-stops/BusStopsMapView';
 import { ViewTabs } from '@/components/mot/bus-stops/ViewTabs';
 import { BusStopActionButtons } from '@/components/mot/bus-stops/BusStopActionButtons';

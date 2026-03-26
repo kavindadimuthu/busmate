@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Activity, ArrowUpRight, ShieldAlert, User, DollarSign, Cpu } from 'lucide-react';
-import { ActivityEntry } from '@/data/admin/dashboard-v2';
+import { ActivityEntry } from '@/data/admin/dashboardV2';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();

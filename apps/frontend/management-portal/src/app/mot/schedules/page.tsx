@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 
-import { SchedulesStatsCardsNew } from '@/components/mot/schedules/schedules-stats-cards';
-import { SchedulesFilterBar } from '@/components/mot/schedules/schedules-filter-bar';
-import { SchedulesTableNew } from '@/components/mot/schedules/schedules-table';
+import { SchedulesStatsCards } from '@/components/mot/schedules/SchedulesStatsCards';
+import { SchedulesFilterBar } from '@/components/mot/schedules/SchedulesFilterBar';
+import { SchedulesTable } from '@/components/mot/schedules/SchedulesTable';
 import { ScheduleActionButtons } from '@/components/mot/schedules/ScheduleActionButtons';
 import { useSchedules } from '@/components/mot/schedules/useSchedules';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
@@ -39,7 +39,7 @@ export default function SchedulesPage() {
 
   return (
     <div className="space-y-6">
-      <SchedulesStatsCardsNew stats={stats} />
+      <SchedulesStatsCards stats={stats} />
 
       <SchedulesFilterBar
         searchValue={searchQuery}
@@ -51,7 +51,7 @@ export default function SchedulesPage() {
         activeFilterCount={activeFilterCount}
       />
 
-      <SchedulesTableNew
+      <SchedulesTable
         data={schedules}
         loading={isLoading}
         page={page}

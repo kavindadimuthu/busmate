@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { RoutesStatsCardsNew } from '@/components/mot/routes/routes-stats-cards';
-import { RoutesFilterBar } from '@/components/mot/routes/routes-filter-bar';
-import { RoutesTableNew } from '@/components/mot/routes/routes-table';
+import { RoutesStatsCards } from '@/components/mot/routes/RoutesStatsCards';
+import { RoutesFilterBar } from '@/components/mot/routes/RoutesFilterBar';
+import { RoutesTable } from '@/components/mot/routes/RoutesTable';
 import { RouteActionButtons } from '@/components/mot/routes/RouteActionButtons';
 import { useRoutes } from '@/components/mot/routes/useRoutes';
 
@@ -52,7 +52,7 @@ export default function RoutesPage() {
 
   return (
     <div className="space-y-6">
-      <RoutesStatsCardsNew stats={stats} />
+      <RoutesStatsCards stats={stats} />
 
       <RoutesFilterBar
         searchValue={state.searchQuery}
@@ -64,7 +64,7 @@ export default function RoutesPage() {
         activeFilterCount={activeFilterCount}
       />
 
-      <RoutesTableNew
+      <RoutesTable
         data={routes}
         totalItems={totalElements}
         page={state.page}

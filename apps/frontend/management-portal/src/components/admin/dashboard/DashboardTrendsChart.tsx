@@ -13,7 +13,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
-import { TrendPoint } from '@/data/admin/dashboard-v2';
+import { TrendPoint } from '@/data/admin/dashboardV2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 

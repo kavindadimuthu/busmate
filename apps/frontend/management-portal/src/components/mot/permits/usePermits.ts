@@ -9,7 +9,7 @@ import {
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
 
-import type { PermitFilters } from '@/components/mot/permits/permits-filter-bar';
+import type { PermitFilters } from '@/components/mot/permits/PermitsFilterBar';
 
 const INITIAL_FILTERS: PermitFilters = {
   status: '__all__',

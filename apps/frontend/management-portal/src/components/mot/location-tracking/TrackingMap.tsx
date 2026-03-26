@@ -14,8 +14,8 @@ import {
   Map as MapIcon,
 } from 'lucide-react';
 import { BusDetailPopup } from './BusDetailPopup';
-import type { TrackedBus, MapViewMode, MapCenter } from '@/types/location-tracking';
-import { ROUTE_PATHS, type RoutePathDefinition } from '@/_temp_/data/location-tracking-simulation';
+import type { TrackedBus, MapViewMode, MapCenter } from '@/types/LocationTracking';
+import { ROUTE_PATHS, type RoutePathDefinition } from '@/data/mot/location-tracking-mock/locationTrackingSimulation';
 
 // ── Props ─────────────────────────────────────────────────────────
 

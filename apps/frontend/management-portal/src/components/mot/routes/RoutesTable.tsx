@@ -1,229 +1,101 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { Navigation, Route as RouteIcon, MapPin, Eye, Edit2, Trash2 } from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
-import type { DataTableColumn } from '@/components/shared/DataTable';
-import type { RouteResponse } from '@busmate/api-client-route';
+import * as React from "react";
+import { Eye, Edit2, Trash2, Route as RouteIcon } from "lucide-react";
+import { DataTable, Button, EmptyState } from "@busmate/ui";
+import type { DataTableProps } from "@busmate/ui";
+import { routesColumns } from "./RoutesColumns";
 
-// ── Types ─────────────────────────────────────────────────────────
-
-interface RoutesTableProps {
-  routes: RouteResponse[];
-  onView: (routeId: string) => void;
-  onEdit: (routeId: string) => void;
-  onDelete: (routeId: string, routeName: string) => void;
-  onSort: (sortBy: string, sortDir: 'asc' | 'desc') => void;
-  loading: boolean;
-  currentSort: { field: string; direction: 'asc' | 'desc' };
+interface RoutesTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | "page"
+    | "pageSize"
+    | "onPageChange"
+    | "onPageSizeChange"
+    | "sortColumn"
+    | "sortDirection"
+    | "onSort"
+    | "loading"
+  > {
+  data: any[];
+  totalItems: number;
+  onView: (route: any) => void;
+  onEdit: (route: any) => void;
+  onDelete: (route: any) => void;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
-
-function formatDate(dateString?: string): string {
-  if (!dateString) return '—';
-  try {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return '—';
-  }
-}
-
-// ── Main component ────────────────────────────────────────────────
-
-/**
- * Routes data table.
- *
- * Delegates rendering to the shared `<DataTable>` component with
- * route-specific column definitions and custom cell renderers.
- */
 export function RoutesTable({
-  routes,
+  data,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
+  onSort,
+  loading,
   onView,
   onEdit,
   onDelete,
-  onSort,
-  loading,
-  currentSort,
 }: RoutesTableProps) {
-  const columns: DataTableColumn<RouteResponse>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        header: 'Route Name',
-        sortable: true,
-        minWidth: 'min-w-[180px]',
-        render: (route) => (
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
-              <RouteIcon className="w-4 h-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate leading-tight">
-                {route.name || 'Unnamed Route'}
-              </p>
-              {route.description && (
-                <p
-                  className="text-[11px] text-muted-foreground/70 leading-tight mt-0.5 truncate max-w-[200px]"
-                  title={route.description}
-                >
-                  {route.description}
-                </p>
-              )}
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: 'routeGroupName',
-        header: 'Route Group',
-        minWidth: 'min-w-[120px]',
-        render: (route) =>
-          route.routeGroupName ? (
-            <span className="text-sm text-foreground/80">{route.routeGroupName}</span>
-          ) : (
-            <span className="text-xs text-muted-foreground/50 italic">—</span>
-          ),
-      },
-      {
-        key: 'direction',
-        header: 'Direction',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (route) => {
-          if (route.direction === 'OUTBOUND') {
-            return (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                <Navigation className="w-3.5 h-3.5" />
-                Outbound
-              </span>
-            );
-          }
-          if (route.direction === 'INBOUND') {
-            return (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-teal-700 border border-teal-200">
-                <Navigation className="w-3.5 h-3.5 rotate-180" />
-                Inbound
-              </span>
-            );
-          }
-          return <span className="text-xs text-muted-foreground/50 italic">—</span>;
-        },
-      },
-      {
-        key: 'startStop',
-        header: 'Route',
-        minWidth: 'min-w-[220px]',
-        render: (route) => (
-          <div className="flex items-center gap-1.5 text-sm text-foreground/80">
-            <MapPin className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
-            <span className="truncate max-w-[90px]" title={route.startStopName || undefined}>
-              {route.startStopName || '—'}
-            </span>
-            <span className="text-muted-foreground/50 shrink-0">→</span>
-            <span className="truncate max-w-[90px]" title={route.endStopName || undefined}>
-              {route.endStopName || '—'}
-            </span>
-          </div>
-        ),
-      },
-      {
-        key: 'distanceKm',
-        header: 'Distance',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (route) =>
-          route.distanceKm !== undefined && route.distanceKm !== null ? (
-            <span className="text-sm text-foreground/80 tabular-nums">
-              {route.distanceKm.toFixed(1)}{' '}
-              <span className="text-[11px] text-muted-foreground/70">km</span>
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground/50 italic">—</span>
-          ),
-      },
-      {
-        key: 'estimatedDurationMinutes',
-        header: 'Duration',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (route) =>
-          route.estimatedDurationMinutes !== undefined && route.estimatedDurationMinutes !== null ? (
-            <span className="text-sm text-foreground/80 tabular-nums">
-              {route.estimatedDurationMinutes}{' '}
-              <span className="text-[11px] text-muted-foreground/70">min</span>
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground/50 italic">—</span>
-          ),
-      },
-      {
-        key: 'createdAt',
-        header: 'Created',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (route) => (
-          <span className="text-xs text-muted-foreground tabular-nums">{formatDate(route.createdAt)}</span>
-        ),
-      },
-      {
-        key: 'actions',
-        header: 'Actions',
-        headerClassName: 'text-center',
-        cellClassName: 'text-center whitespace-nowrap',
-        render: (route) => (
-          <div className="inline-flex items-center gap-1">
-            <button
-              onClick={() => onView(route.id!)}
-              title="View route"
-              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => onEdit(route.id!)}
-              title="Edit route"
-              className="p-1.5 rounded-lg text-warning/80 hover:bg-warning/10 transition-colors duration-100"
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => onDelete(route.id!, route.name || 'Unknown Route')}
-              title="Delete route"
-              className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ),
-      },
-    ],
+  const rowActions = React.useCallback(
+    (route: any) => (
+      <div className="flex items-center justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onView(route)}
+          title="View route"
+        >
+          <Eye className="h-3.5 w-3.5 text-primary" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onEdit(route)}
+          title="Edit route"
+        >
+          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive"
+          onClick={() => onDelete(route)}
+          title="Delete route"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ),
     [onView, onEdit, onDelete],
   );
 
   return (
-    <DataTable<RouteResponse>
-      columns={columns}
-      data={routes}
-      loading={loading}
-      currentSort={currentSort}
+    <DataTable<any>
+      columns={routesColumns}
+      data={data}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
-      rowKey={(route) => route.id!}
-      showRefreshing
+      getRowId={(route) => route.id}
+      loading={loading}
+      rowActions={rowActions}
       emptyState={
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <RouteIcon className="w-7 h-7 text-primary/70" />
-          </div>
-          <h3 className="text-base font-semibold text-foreground mb-1">No routes found</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Try adjusting your search or filters to find what you&apos;re looking for.
-          </p>
-        </div>
+        <EmptyState
+          icon={<RouteIcon className="h-8 w-8" />}
+          title="No routes found"
+          description="Try adjusting your search or filters to find what you're looking for."
+        />
       }
     />
   );

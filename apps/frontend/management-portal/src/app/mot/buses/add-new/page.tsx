@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertCircle } from 'lucide-react';
-import { BusForm } from '@/components/mot/buses/bus-form';
+import { BusForm } from '@/components/mot/buses/BusForm';
 import { useAddBus } from '@/components/mot/buses/useAddBus';
 
 export default function AddBusPage() {

@@ -13,8 +13,8 @@ export { LocationTrackingAdvancedFilters } from './LocationTrackingAdvancedFilte
 export { LocationTrackingActionButtons } from './LocationTrackingActionButtons';
 
 // Pattern Components (design-system)
-export { LocationTrackingFilterBar } from './location-tracking-filter-bar';
-export { LocationTrackingStatsCardsNew } from './location-tracking-stats-cards';
+export { LocationTrackingFilterBar } from './LocationTrackingFilterBar';
+export { LocationTrackingStatsCards } from './LocationTrackingStatsCards';
 
 // Page-level Layout Components
 export { LocationTrackingLayout } from './LocationTrackingLayout';

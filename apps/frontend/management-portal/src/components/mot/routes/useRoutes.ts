@@ -9,7 +9,7 @@ import type {
   RouteResponse,
   PageRouteResponse,
 } from "@busmate/api-client-route";
-import type { RouteFilters } from "./routes-filter-bar";
+import type { RouteFilters } from "./RoutesFilterBar";
 
 // ── Initial state ─────────────────────────────────────────────────
 

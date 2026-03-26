@@ -10,7 +10,7 @@ import {
 } from '@busmate/api-client-route';
 import { useDataTable, useDialog } from '@busmate/ui';
 
-import type { ScheduleFilters } from '@/components/mot/schedules/schedules-filter-bar';
+import type { ScheduleFilters } from '@/components/mot/schedules/SchedulesFilterBar';
 
 interface FilterOptions {
   statuses: string[];

@@ -5,9 +5,9 @@ import { Plus, Download, Grid3X3, FileText } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent, Button } from '@busmate/ui';
 import { FareMatrixTabContent } from '@/components/mot/fares/FareMatrixTabContent';
-import { FaresStatsCardsNew } from '@/components/mot/fares/fares-stats-cards';
-import { FaresAmendmentsTableNew } from '@/components/mot/fares/fares-amendments-table';
-import { FaresFilterBar } from '@/components/mot/fares/fares-filter-bar';
+import { FaresStatsCards } from '@/components/mot/fares/FaresStatsCards';
+import { FaresAmendmentsTable } from '@/components/mot/fares/FaresAmendmentsTable';
+import { FaresFilterBar } from '@/components/mot/fares/FaresFilterBar';
 import { useFares } from '@/components/mot/fares/useFares';
 
 export default function FaresPage() {
@@ -47,7 +47,7 @@ export default function FaresPage() {
 
   return (
     <div className="space-y-6">
-      <FaresStatsCardsNew stats={stats} />
+      <FaresStatsCards stats={stats} />
 
       <Tabs value={activeView} onValueChange={setActiveView}>
         <TabsList>
@@ -84,7 +84,7 @@ export default function FaresPage() {
             onClearAll={handleClearAmendmentFilters} statusOptions={statusOptions}
             activeFilterCount={activeAmendmentFilterCount}
           />
-          <FaresAmendmentsTableNew
+          <FaresAmendmentsTable
             data={paginatedAmendments} totalItems={filteredAmendments.length}
             page={amendmentPage} pageSize={amendmentPageSize}
             onPageChange={setAmendmentPage} onPageSizeChange={handleAmendmentPageSizeChange}

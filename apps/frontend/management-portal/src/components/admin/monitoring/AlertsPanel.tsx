@@ -15,7 +15,7 @@ import {
   Smartphone,
   XCircle,
 } from 'lucide-react';
-import { MonitoringAlert, AlertRule } from '@/data/admin/system-monitoring';
+import { MonitoringAlert, AlertRule } from '@/data/admin/systemMonitoring';
 
 // ── Helpers ──────────────────────────────────────────────────────
 

@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { StaffStatsCardsNew } from '@/components/mot/staff/staff-stats-cards';
-import { StaffFilterBar } from '@/components/mot/staff/staff-filter-bar';
-import { StaffTableNew } from '@/components/mot/staff/staff-table';
+import { StaffStatsCards } from '@/components/mot/staff/StaffStatsCards';
+import { StaffFilterBar } from '@/components/mot/staff/StaffFilterBar';
+import { StaffTable } from '@/components/mot/staff/StaffTable';
 import { StaffTypeTabs, StaffActionButtons } from '@/components/mot/staff';
 import { useStaffManagement } from '@/components/mot/staff/useStaffManagement';
 
@@ -52,7 +52,7 @@ export default function StaffManagementPage() {
 
   return (
     <div className="space-y-6">
-      <StaffStatsCardsNew stats={stats} />
+      <StaffStatsCards stats={stats} />
 
       <StaffTypeTabs
         activeTab={activeTab}
@@ -70,7 +70,7 @@ export default function StaffManagementPage() {
         activeFilterCount={activeFilterCount}
       />
 
-      <StaffTableNew
+      <StaffTable
         data={paginatedStaff}
         totalItems={totalItems}
         page={state.page}

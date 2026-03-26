@@ -43,7 +43,7 @@ import type {
   BackupSettings,
   BackupEntry,
   BackupStats,
-} from '@/data/admin/system-settings';
+} from '@/data/admin/systemSettings';
 import {
   getBackupSettings,
   updateBackupSettings,
@@ -53,7 +53,7 @@ import {
   restoreBackup,
   deleteBackup,
   downloadBackup,
-} from '@/data/admin/system-settings';
+} from '@/data/admin/systemSettings';
 
 // ── Status badge ─────────────────────────────────────────────────
 

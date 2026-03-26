@@ -6,9 +6,9 @@ import { Upload, Download } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Button, ConfirmDialog } from '@busmate/ui';
 
-import { PoliciesTableNew } from '@/components/mot/policies/policies-table';
-import { PoliciesFilterBar } from '@/components/mot/policies/policies-filter-bar';
-import { PoliciesStatsCardsNew } from '@/components/mot/policies/policies-stats-cards';
+import { PoliciesTable } from '@/components/mot/policies/PoliciesTable';
+import { PoliciesFilterBar } from '@/components/mot/policies/PoliciesFilterBar';
+import { PoliciesStatsCards } from '@/components/mot/policies/PoliciesStatsCards';
 import { usePolicies } from '@/components/mot/policies/usePolicies';
 
 function PoliciesListContent() {
@@ -44,7 +44,7 @@ function PoliciesListContent() {
 
   return (
     <div className="space-y-6">
-      <PoliciesStatsCardsNew stats={statistics} />
+      <PoliciesStatsCards stats={statistics} />
 
       <PoliciesFilterBar
         searchValue={searchTerm}
@@ -56,7 +56,7 @@ function PoliciesListContent() {
         activeFilterCount={activeFilterCount}
       />
 
-      <PoliciesTableNew
+      <PoliciesTable
         data={paginatedPolicies}
         totalItems={filteredPolicies.length}
         page={page}

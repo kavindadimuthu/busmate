@@ -13,7 +13,7 @@ import {
   Clock,
   ChevronDown,
 } from 'lucide-react';
-import type { TrackingFilterState, TrackingFilterOptions } from '@/types/location-tracking';
+import type { TrackingFilterState, TrackingFilterOptions } from '@/types/LocationTracking';
 
 // ── Props ─────────────────────────────────────────────────────────
 

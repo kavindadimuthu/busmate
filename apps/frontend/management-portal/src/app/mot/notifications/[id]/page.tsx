@@ -7,7 +7,7 @@ import {
   NotificationMetadata,
   NotificationEngagement,
 } from '@/components/mot/notifications/NotificationDetailSections';
-import { DeleteConfirmationModal } from '@/components/mot/confirmation-modals';
+import { DeleteConfirmationModal } from '@/components/mot/ConfirmationModals';
 
 export default function NotificationDetailContent() {
   const {

@@ -4,7 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import Link from 'next/link';
 import { ArrowUpRight, Users } from 'lucide-react';
-import { UserDistribution } from '@/data/admin/dashboard-v2';
+import { UserDistribution } from '@/data/admin/dashboardV2';
 
 ChartJS.register(ArcElement, Tooltip);
 

@@ -26,7 +26,7 @@ import {
   resolveAlert,
   toggleAlertRule,
   restartMicroservice,
-} from '@/data/admin/system-monitoring';
+} from '@/data/admin/systemMonitoring';
 
 // ── Configuration ────────────────────────────────────────────────
 

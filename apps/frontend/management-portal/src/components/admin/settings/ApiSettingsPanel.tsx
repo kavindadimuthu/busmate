@@ -31,12 +31,12 @@ import {
   Plus,
   Database,
 } from 'lucide-react';
-import type { ApiSettings, ApiKey } from '@/data/admin/system-settings';
+import type { ApiSettings, ApiKey } from '@/data/admin/systemSettings';
 import {
   getApiSettings,
   updateApiSettings,
   revokeApiKey,
-} from '@/data/admin/system-settings';
+} from '@/data/admin/systemSettings';
 
 // ── Helpers ──────────────────────────────────────────────────────
 

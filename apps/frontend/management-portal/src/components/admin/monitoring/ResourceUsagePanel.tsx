@@ -24,7 +24,7 @@ import {
   TrendingDown,
   Minus,
 } from 'lucide-react';
-import { ResourceSnapshot } from '@/data/admin/system-monitoring';
+import { ResourceSnapshot } from '@/data/admin/systemMonitoring';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend);
 

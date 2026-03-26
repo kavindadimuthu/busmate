@@ -4,7 +4,7 @@ import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
 import type { StatsCardMetric } from '@/components/shared/StatsCard';
-import type { TrackingStatsCardMetric } from '@/types/location-tracking';
+import type { TrackingStatsCardMetric } from '@/types/LocationTracking';
 
 // ── Props ─────────────────────────────────────────────────────────
 

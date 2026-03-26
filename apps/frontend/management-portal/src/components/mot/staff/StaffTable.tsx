@@ -1,259 +1,101 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import {
-  Eye,
-  Edit2,
-  Trash2,
-  MapPin,
-  Users,
-  Clock,
-  Search,
-  CheckCircle2,
-  XCircle,
-  Phone,
-  Mail,
-} from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
-import type { DataTableColumn } from '@/components/shared/DataTable';
+import * as React from "react";
+import { Eye, Edit2, Trash2, Users } from "lucide-react";
+import { DataTable, Button, EmptyState } from "@busmate/ui";
+import type { DataTableProps } from "@busmate/ui";
+import { staffColumns } from "./StaffColumns";
 
-// ── Types ─────────────────────────────────────────────────────────
-
-interface StaffTableData {
-  id: string;
-  fullName: string;
-  phone?: string;
-  email?: string;
-  assignedLocation?: string;
-  province?: string;
-  staffType?: string;
-  nic?: string;
-  status?: string;
-  createdAt?: string;
+interface StaffTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | "page"
+    | "pageSize"
+    | "onPageChange"
+    | "onPageSizeChange"
+    | "sortColumn"
+    | "sortDirection"
+    | "onSort"
+    | "loading"
+  > {
+  data: any[];
+  totalItems: number;
+  onView: (staff: any) => void;
+  onEdit: (staff: any) => void;
+  onDelete: (staff: any) => void;
 }
 
-interface StaffTableProps {
-  staff: StaffTableData[];
-  onView: (id: string) => void;
-  onEdit: (id: string) => void;
-  onDelete: (id: string, name: string) => void;
-  onSort: (sortBy: string, sortDir: 'asc' | 'desc') => void;
-  activeFilters: Record<string, any>;
-  loading: boolean;
-  currentSort: { field: string; direction: 'asc' | 'desc' };
-}
-
-// ── Helpers ───────────────────────────────────────────────────────
-
-function formatDate(dateString?: string): string {
-  if (!dateString) return '—';
-  try {
-    return new Date(dateString).toLocaleDateString('en-LK', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return '—';
-  }
-}
-
-function getStatusStyle(status?: string): { className: string; Icon: React.ComponentType<{ className?: string }> } {
-  switch (status) {
-    case 'active':
-      return { className: 'bg-success/10 text-success border border-success/20', Icon: CheckCircle2 };
-    case 'inactive':
-      return { className: 'bg-destructive/10 text-destructive border border-destructive/20', Icon: XCircle };
-    default:
-      return { className: 'bg-muted text-muted-foreground border border-border', Icon: Users };
-  }
-}
-
-function getTypeStyle(type?: string): { className: string; Icon: React.ComponentType<{ className?: string }> } {
-  switch (type) {
-    case 'timekeeper':
-      return { className: 'bg-primary/10 text-indigo-700 border border-indigo-200', Icon: Clock };
-    case 'inspector':
-      return { className: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border border-[hsl(var(--purple-200))]', Icon: Search };
-    default:
-      return { className: 'bg-muted text-muted-foreground border border-border', Icon: Users };
-  }
-}
-
-// ── Main component ────────────────────────────────────────────────
-
-/**
- * Staff data table.
- *
- * Delegates rendering to the shared `<DataTable>` component with
- * staff-specific column definitions and custom cell renderers.
- */
 export function StaffTable({
-  staff,
+  data,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
+  onSort,
+  loading,
   onView,
   onEdit,
   onDelete,
-  onSort,
-  loading,
-  currentSort,
 }: StaffTableProps) {
-  const columns: DataTableColumn<StaffTableData>[] = useMemo(
-    () => [
-      {
-        key: 'fullName',
-        header: 'Full Name',
-        sortable: true,
-        minWidth: 'min-w-[180px]',
-        render: (member) => (
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
-              <span className="text-sm font-semibold text-primary">
-                {member.fullName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate leading-tight">
-                {member.fullName}
-              </p>
-              <p className="text-[11px] text-muted-foreground/70 font-mono leading-tight mt-0.5 truncate">
-                {member.nic || '—'}
-              </p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: 'contact',
-        header: 'Contact',
-        minWidth: 'min-w-[160px]',
-        render: (member) => (
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              <Phone className="w-3 h-3 text-muted-foreground/50 shrink-0" />
-              <span className="text-sm text-foreground/80">{member.phone || '—'}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Mail className="w-3 h-3 text-muted-foreground/50 shrink-0" />
-              <span className="text-[11px] text-muted-foreground/70 truncate">{member.email || '—'}</span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: 'staffType',
-        header: 'Type',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (member) => {
-          const { className, Icon } = getTypeStyle(member.staffType);
-          return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize ${className}`}>
-              <Icon className="w-3.5 h-3.5" />
-              {member.staffType || 'Unknown'}
-            </span>
-          );
-        },
-      },
-      {
-        key: 'assignedLocation',
-        header: 'Assignment',
-        minWidth: 'min-w-[140px]',
-        render: (member) => (
-          <div className="flex items-start gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm text-foreground/80 truncate leading-tight">
-                {member.assignedLocation || '—'}
-              </p>
-              {member.province && (
-                <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5">
-                  {member.province}
-                </p>
-              )}
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: 'status',
-        header: 'Status',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (member) => {
-          const { className, Icon } = getStatusStyle(member.status);
-          return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize ${className}`}>
-              <Icon className="w-3.5 h-3.5" />
-              {member.status || 'Unknown'}
-            </span>
-          );
-        },
-      },
-      {
-        key: 'createdAt',
-        header: 'Joined',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (member) => (
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {formatDate(member.createdAt)}
-          </span>
-        ),
-      },
-      {
-        key: 'actions',
-        header: 'Actions',
-        headerClassName: 'text-center',
-        cellClassName: 'text-center whitespace-nowrap',
-        render: (member) => (
-          <div className="inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => onView(member.id)}
-              title="View details"
-              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => onEdit(member.id)}
-              title="Edit staff member"
-              className="p-1.5 rounded-lg text-warning/80 hover:bg-warning/10 transition-colors duration-100"
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => onDelete(member.id, member.fullName)}
-              title="Delete staff member"
-              className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ),
-      },
-    ],
+  const rowActions = React.useCallback(
+    (member: any) => (
+      <div className="flex items-center justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onView(member)}
+          title="View details"
+        >
+          <Eye className="h-3.5 w-3.5 text-primary" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onEdit(member)}
+          title="Edit staff member"
+        >
+          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive"
+          onClick={() => onDelete(member)}
+          title="Delete staff member"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ),
     [onView, onEdit, onDelete],
   );
 
   return (
-    <DataTable<StaffTableData>
-      columns={columns}
-      data={staff}
-      loading={loading}
-      currentSort={currentSort}
+    <DataTable<any>
+      columns={staffColumns}
+      data={data}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
-      rowKey={(member) => member.id}
-      showRefreshing
+      getRowId={(member) => member.id}
+      loading={loading}
+      rowActions={rowActions}
       emptyState={
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Users className="w-7 h-7 text-primary/70" />
-          </div>
-          <h3 className="text-base font-semibold text-foreground mb-1">No staff members found</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Try adjusting your search or filters to find what you&apos;re looking for.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Users className="h-8 w-8" />}
+          title="No staff members found"
+          description="Try adjusting your search or filters to find what you're looking for."
+        />
       }
     />
   );

@@ -17,7 +17,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { SystemHealthSummary, PerformanceSnapshot, ResourceSnapshot, MonitoringAlert } from '@/data/admin/system-monitoring';
+import { SystemHealthSummary, PerformanceSnapshot, ResourceSnapshot, MonitoringAlert } from '@/data/admin/systemMonitoring';
 
 // ── Health Score Ring ─────────────────────────────────────────────
 

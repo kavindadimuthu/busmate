@@ -9,7 +9,7 @@ import {
   getPolicyFilterOptions,
   Policy,
 } from '@/data/mot/policies';
-import type { PolicyFiltersState } from './policies-filter-bar';
+import type { PolicyFiltersState } from './PoliciesFilterBar';
 
 // ── Hook ──────────────────────────────────────────────────────────
 

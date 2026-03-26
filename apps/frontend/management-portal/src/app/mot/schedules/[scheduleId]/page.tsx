@@ -6,7 +6,7 @@ import { ScheduleOverview, ScheduleTabsSection } from '@/components/mot/schedule
 import {
   DeleteConfirmationModal,
   DeactivationConfirmationModal,
-} from '@/components/mot/confirmation-modals';
+} from '@/components/mot/ConfirmationModals';
 
 export default function ScheduleDetailsPage() {
   const {

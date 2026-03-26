@@ -9,7 +9,7 @@ import type {
   TrackingStatsCardMetric,
   MapCenter,
   MapViewMode,
-} from '@/types/location-tracking';
+} from '@/types/LocationTracking';
 import {
   getTrackedBuses,
   getTrackingStats,
@@ -18,7 +18,7 @@ import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   AUTO_REFRESH_INTERVAL,
-} from '@/_temp_/data/location-tracking';
+} from '@/data/mot/location-tracking-mock/locationTracking';
 
 // ── Types ─────────────────────────────────────────────────────────
 

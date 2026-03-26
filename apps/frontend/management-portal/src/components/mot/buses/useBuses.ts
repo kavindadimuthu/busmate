@@ -9,7 +9,7 @@ import {
 } from '@busmate/api-client-route';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
-import type { BusFilters } from './buses-filter-bar';
+import type { BusFilters } from './BusesFilterBar';
 
 // ── Initial state ─────────────────────────────────────────────────
 

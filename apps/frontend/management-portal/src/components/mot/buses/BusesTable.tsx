@@ -1,254 +1,90 @@
-'use client';
+"use client";
 
-import React, { useMemo } from 'react';
-import {
-  Bus,
-  Users,
-  Eye,
-  Edit,
-  Trash2,
-  Settings,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
-} from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
-import type { DataTableColumn, SortState } from '@/components/shared/DataTable';
+import * as React from "react";
+import { Eye, Edit2, Trash2, Settings, Bus } from "lucide-react";
+import { DataTable, Button, EmptyState } from "@busmate/ui";
+import type { DataTableProps } from "@busmate/ui";
+import { busesColumns } from "./BusesColumns";
 
-// ── Types ─────────────────────────────────────────────────────────
-
-interface BusesTableProps {
-  buses: any[];
-  onView: (busId: string) => void;
-  onEdit: (busId: string) => void;
-  onDelete: (busId: string, busRegistration: string) => void;
-  onAssignRoute?: (busId: string, busRegistration: string) => void;
-  onSort: (sortBy: string, sortDir: 'asc' | 'desc') => void;
-  activeFilters: Record<string, any>;
-  loading: boolean;
-  currentSort: { field: string; direction: 'asc' | 'desc' };
+interface BusesTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | "page"
+    | "pageSize"
+    | "onPageChange"
+    | "onPageSizeChange"
+    | "sortColumn"
+    | "sortDirection"
+    | "onSort"
+    | "loading"
+  > {
+  data: any[];
+  totalItems: number;
+  onView: (bus: any) => void;
+  onEdit: (bus: any) => void;
+  onDelete: (bus: any) => void;
+  onAssignRoute?: (bus: any) => void;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────
-
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVE:    'bg-success/10 text-success border-success/20',
-  INACTIVE:  'bg-destructive/10 text-destructive border-destructive/20',
-  PENDING:   'bg-warning/10 text-warning border-warning/20',
-  CANCELLED: 'bg-muted text-muted-foreground border-border',
-};
-
-const STATUS_ICONS: Record<string, React.ReactNode> = {
-  ACTIVE:    <CheckCircle className="w-3.5 h-3.5" />,
-  INACTIVE:  <XCircle className="w-3.5 h-3.5" />,
-  PENDING:   <Clock className="w-3.5 h-3.5" />,
-  CANCELLED: <XCircle className="w-3.5 h-3.5" />,
-};
-
-function formatDate(dateString?: string): string {
-  if (!dateString) return '—';
-  try {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return '—';
-  }
-}
-
-// ── Component ─────────────────────────────────────────────────────
 
 export function BusesTable({
-  buses,
+  data,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
+  onSort,
+  loading,
   onView,
   onEdit,
   onDelete,
   onAssignRoute,
-  onSort,
-  activeFilters,
-  loading,
-  currentSort,
 }: BusesTableProps) {
-  const columns = useMemo<DataTableColumn<any>[]>(
-    () => [
-      {
-        key: 'ntcRegistrationNumber',
-        header: 'Registration',
-        sortable: true,
-        minWidth: 'min-w-[180px]',
-        render: (bus) => (
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
-              <Bus className="w-4 h-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate leading-tight">
-                {bus.ntcRegistrationNumber || bus.ntc_registration_number || 'N/A'}
-              </p>
-              <p className="text-[11px] text-muted-foreground/70 font-mono leading-tight mt-0.5 truncate">
-                #{bus.id?.slice(0, 8)}
-              </p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: 'plateNumber',
-        header: 'Plate Number',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (bus) => (
-          <span className="text-sm text-foreground/80 font-mono">
-            {bus.plateNumber || bus.plate_number || '—'}
-          </span>
-        ),
-      },
-      {
-        key: 'operator.name',
-        header: 'Operator',
-        sortable: true,
-        minWidth: 'min-w-[140px]',
-        render: (bus) => (
-          <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-            <span className="text-sm text-foreground truncate">
-              {bus.operator?.name || bus.operatorName || 'Unknown'}
-            </span>
-          </div>
-        ),
-      },
-      {
-        key: 'model',
-        header: 'Model',
-        sortable: true,
-        render: (bus) => (
-          <span className="text-sm text-foreground/80">{bus.model || '—'}</span>
-        ),
-      },
-      {
-        key: 'capacity',
-        header: 'Capacity',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (bus) => (
-          <span className="text-sm text-foreground/80 tabular-nums">
-            {bus.capacity ?? '—'}
-            {bus.capacity != null && (
-              <span className="text-[11px] text-muted-foreground/70 ml-0.5">seats</span>
-            )}
-          </span>
-        ),
-      },
-      {
-        key: 'status',
-        header: 'Status',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (bus) => {
-          const s = (bus.status ?? '').toUpperCase();
-          return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                STATUS_STYLES[s] ?? 'bg-muted text-muted-foreground border-border'
-              }`}
-            >
-              {STATUS_ICONS[s] ?? <AlertTriangle className="w-3.5 h-3.5" />}
-              {s ? s.charAt(0) + s.slice(1).toLowerCase() : 'Unknown'}
-            </span>
-          );
-        },
-      },
-      {
-        key: 'createdAt',
-        header: 'Created',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (bus) => (
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {formatDate(bus.createdAt || bus.created_at)}
-          </span>
-        ),
-      },
-      {
-        key: 'actions',
-        header: 'Actions',
-        headerClassName: 'text-center',
-        cellClassName: 'text-center whitespace-nowrap',
-        render: (bus) => (
-          <div className="inline-flex items-center gap-1">
-            <button
-              onClick={() => onView(bus.id)}
-              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
-              title="View Details"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => onEdit(bus.id)}
-              className="p-1.5 rounded-lg text-warning/80 hover:bg-warning/10 transition-colors duration-100"
-              title="Edit Bus"
-            >
-              <Edit className="h-3.5 w-3.5" />
-            </button>
-            {onAssignRoute && (
-              <button
-                onClick={() =>
-                  onAssignRoute(
-                    bus.id,
-                    bus.ntcRegistrationNumber || bus.ntc_registration_number || 'Unknown',
-                  )
-                }
-                className="p-1.5 rounded-lg text-success/80 hover:bg-success/10 transition-colors duration-100"
-                title="Assign to Route"
-              >
-                <Settings className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <button
-              onClick={() =>
-                onDelete(
-                  bus.id,
-                  bus.ntcRegistrationNumber || bus.ntc_registration_number || 'Unknown',
-                )
-              }
-              className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
-              title="Delete Bus"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ),
-      },
-    ],
+  const rowActions = React.useCallback(
+    (bus: any) => (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(bus)} title="View details">
+          <Eye className="h-3.5 w-3.5 text-primary" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(bus)} title="Edit">
+          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
+        </Button>
+        {onAssignRoute && (
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAssignRoute(bus)} title="Assign Route">
+            <Settings className="h-3.5 w-3.5 text-success" />
+          </Button>
+        )}
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(bus)} title="Delete">
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ),
     [onView, onEdit, onDelete, onAssignRoute],
   );
 
-  const hasActiveFilters = Object.values(activeFilters).some(Boolean);
-
   return (
-    <DataTable
-      columns={columns}
-      data={buses}
-      loading={loading}
-      currentSort={currentSort as SortState}
+    <DataTable<any>
+      columns={busesColumns}
+      data={data}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
-      rowKey={(bus) => bus.id}
-      showRefreshing={loading && buses.length > 0}
+      getRowId={(bus) => bus.id}
+      loading={loading}
+      rowActions={rowActions}
       emptyState={
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Bus className="w-7 h-7 text-primary/70" />
-          </div>
-          <h3 className="text-base font-semibold text-foreground mb-1">No buses found</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            {hasActiveFilters
-              ? 'No buses match your current filters. Try adjusting your search criteria.'
-              : 'No buses have been registered yet.'}
-          </p>
-        </div>
+        <EmptyState
+          icon={<Bus className="h-8 w-8" />}
+          title="No buses found"
+          description="Try adjusting your search or filters to find what you're looking for."
+        />
       }
     />
   );

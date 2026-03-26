@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
-import type { TrackedBus, MapViewMode } from '@/types/location-tracking';
+import type { TrackedBus, MapViewMode } from '@/types/LocationTracking';
 
 export function useLocationTrackingPage() {
   const router = useRouter();
