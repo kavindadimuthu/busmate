@@ -1,24 +1,26 @@
 'use client';
 
-import { useMemo, useCallback, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { UserDetailPanel, ConfirmDialog } from '@/components/admin/users';
-import {
-  getUserById,
-  getUserDisplayName,
-  updateUserStatus,
-  deleteUserById,
-} from '@/data/admin/users';
-import type { SystemUser } from '@/data/admin/users';
+import { getUserDisplayName } from '@/data/admin/users';
+import { useUserDetail } from '@/components/admin/users/useUserDetail';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function UserDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const userId = params.id as string;
-  const user = useMemo(() => getUserById(userId), [userId]);
+  const {
+    userId,
+    user,
+    confirmDialog,
+    actionLoading,
+    handleBack,
+    handleEdit,
+    handleToggleStatus,
+    handleDelete,
+    handleConfirmAction,
+    closeDialog,
+    getDialogProps,
+  } = useUserDetail();
 
   useSetPageMetadata({
     title: user ? getUserDisplayName(user) : 'User Not Found',
@@ -30,46 +32,6 @@ export default function UserDetailPage() {
       { label: user ? getUserDisplayName(user) : userId },
     ],
   });
-
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    type: 'delete' | 'toggle';
-  }>({ open: false, type: 'delete' });
-  const [actionLoading, setActionLoading] = useState(false);
-
-  const handleBack = useCallback(() => {
-    router.push('/admin/users');
-  }, [router]);
-
-  const handleEdit = useCallback(() => {
-    router.push(`/admin/users/${userId}/edit`);
-  }, [router, userId]);
-
-  const handleToggleStatus = useCallback(() => {
-    setConfirmDialog({ open: true, type: 'toggle' });
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    setConfirmDialog({ open: true, type: 'delete' });
-  }, []);
-
-  const handleConfirmAction = useCallback(async () => {
-    if (!user) return;
-    setActionLoading(true);
-    try {
-      if (confirmDialog.type === 'delete') {
-        await deleteUserById(user.id);
-        router.push('/admin/users');
-      } else {
-        const newStatus = user.status === 'active' ? 'inactive' : 'active';
-        await updateUserStatus(user.id, newStatus);
-        router.refresh();
-      }
-    } finally {
-      setActionLoading(false);
-      setConfirmDialog({ open: false, type: 'delete' });
-    }
-  }, [user, confirmDialog.type, router]);
 
   if (!user) {
     return (
@@ -92,27 +54,6 @@ export default function UserDetailPage() {
     );
   }
 
-  const getDialogProps = () => {
-    const name = getUserDisplayName(user);
-    if (confirmDialog.type === 'delete') {
-      return {
-        title: 'Delete User',
-        message: `Are you sure you want to permanently delete "${name}" (${user.id})? This action cannot be undone.`,
-        confirmLabel: 'Delete',
-        variant: 'danger' as const,
-      };
-    }
-    const willActivate = user.status !== 'active';
-    return {
-      title: willActivate ? 'Activate User' : 'Deactivate User',
-      message: willActivate
-        ? `Activate "${name}"? They will be able to access the platform again.`
-        : `Deactivate "${name}"? They will lose access to the platform until reactivated.`,
-      confirmLabel: willActivate ? 'Activate' : 'Deactivate',
-      variant: (willActivate ? 'info' : 'warning') as 'info' | 'warning',
-    };
-  };
-
   return (
     <div>
       <UserDetailPanel
@@ -122,10 +63,9 @@ export default function UserDetailPage() {
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
       />
-
       <ConfirmDialog
         open={confirmDialog.open}
-        onClose={() => setConfirmDialog({ open: false, type: 'delete' })}
+        onClose={closeDialog}
         onConfirm={handleConfirmAction}
         loading={actionLoading}
         {...getDialogProps()}
@@ -133,3 +73,4 @@ export default function UserDetailPage() {
     </div>
   );
 }
+

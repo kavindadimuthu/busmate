@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useSetPageMetadata } from '@/context/PageContext';
 import {
   LogFilters,
@@ -10,32 +9,27 @@ import {
   ApplicationLogsTable,
 } from '@/components/admin/logs';
 import {
-  filterUserActivityLogs,
-  filterSecurityLogs,
-  filterApplicationLogs,
   getUserActivityLogs,
   getSecurityLogs,
   getApplicationLogs,
-  getUniqueServices,
-  getUniqueUserTypes,
-  getUniqueActions,
 } from '@/data/admin';
-import {
-  Activity,
-  Shield,
-  Terminal,
-  Download,
-} from 'lucide-react';
+import { Activity, Shield, Terminal, Download } from 'lucide-react';
+import { useLogsListing, type TabKey } from '@/components/admin/logs/useLogsListing';
 
-type TabKey = 'user-activity' | 'security' | 'application';
-
-const TABS: { key: TabKey; label: string; icon: React.ReactNode; color: string }[] = [
-  { key: 'user-activity', label: 'User Activity', icon: <Activity className="h-4 w-4" />, color: 'green' },
-  { key: 'security', label: 'Security', icon: <Shield className="h-4 w-4" />, color: 'orange' },
-  { key: 'application', label: 'Application', icon: <Terminal className="h-4 w-4" />, color: 'purple' },
+const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+  { key: 'user-activity', label: 'User Activity', icon: <Activity className="h-4 w-4" /> },
+  { key: 'security', label: 'Security', icon: <Shield className="h-4 w-4" /> },
+  { key: 'application', label: 'Application', icon: <Terminal className="h-4 w-4" /> },
 ];
 
-const ITEMS_PER_PAGE = 15;
+function tabColorClass(tab: TabKey, isActive: boolean): string {
+  if (!isActive) return 'text-muted-foreground hover:text-foreground/80 hover:bg-muted';
+  switch (tab) {
+    case 'user-activity': return 'text-success bg-success/10 border-success';
+    case 'security': return 'text-orange-700 bg-warning/10 border-orange-500';
+    case 'application': return 'text-primary bg-primary/10 border-primary';
+  }
+}
 
 function LogsListingContent() {
   useSetPageMetadata({
@@ -43,205 +37,35 @@ function LogsListingContent() {
     description: 'Browse and filter all system logs',
     activeItem: 'logs',
     showBreadcrumbs: true,
-    breadcrumbs: [
-      { label: 'Logs', href: '/admin/logs' },
-      { label: 'Explorer' },
-    ],
+    breadcrumbs: [{ label: 'Logs', href: '/admin/logs' }, { label: 'Explorer' }],
   });
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialTab = (searchParams.get('tab') as TabKey) || 'user-activity';
-
-  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
-    field: 'timestamp',
-    direction: 'desc',
-  });
-
-  // Reset filters & page when switching tabs
-  const handleTabChange = useCallback((tab: TabKey) => {
-    setActiveTab(tab);
-    setSearchTerm('');
-    setFilters({});
-    setCurrentPage(1);
-    setSort({ field: 'timestamp', direction: 'desc' });
-  }, []);
-
-  const handleSort = useCallback((field: string) => {
-    setSort((prev) => ({
-      field,
-      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  }, []);
-
-  const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  }, []);
-
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  }, []);
-
-  const handleViewDetail = useCallback(
-    (logId: string) => {
-      router.push(`/admin/logs/${logId}`);
-    },
-    [router]
-  );
-
-  // Get filter configs for each tab
-  const filterConfig = useMemo(() => {
-    switch (activeTab) {
-      case 'user-activity':
-        return [
-          {
-            key: 'userType',
-            label: 'User Type',
-            options: [{ value: 'all', label: 'All Types' }, ...getUniqueUserTypes().map((t) => ({ value: t, label: t }))],
-          },
-          {
-            key: 'action',
-            label: 'Action',
-            options: [{ value: 'all', label: 'All Actions' }, ...getUniqueActions().map((a) => ({ value: a, label: a }))],
-          },
-          {
-            key: 'status',
-            label: 'Status',
-            options: [
-              { value: 'all', label: 'All' },
-              { value: 'success', label: 'Success' },
-              { value: 'error', label: 'Error' },
-              { value: 'warning', label: 'Warning' },
-            ],
-          },
-        ];
-      case 'security':
-        return [
-          {
-            key: 'eventType',
-            label: 'Event Type',
-            options: [
-              { value: 'all', label: 'All Events' },
-              { value: 'login', label: 'Login' },
-              { value: 'logout', label: 'Logout' },
-              { value: 'failed_login', label: 'Failed Login' },
-              { value: 'password_change', label: 'Password Change' },
-              { value: 'permission_change', label: 'Permission Change' },
-              { value: 'suspicious_activity', label: 'Suspicious Activity' },
-            ],
-          },
-          {
-            key: 'severity',
-            label: 'Severity',
-            options: [
-              { value: 'all', label: 'All' },
-              { value: 'critical', label: 'Critical' },
-              { value: 'high', label: 'High' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'low', label: 'Low' },
-            ],
-          },
-        ];
-      case 'application':
-        return [
-          {
-            key: 'level',
-            label: 'Level',
-            options: [
-              { value: 'all', label: 'All Levels' },
-              { value: 'ERROR', label: 'ERROR' },
-              { value: 'WARN', label: 'WARN' },
-              { value: 'INFO', label: 'INFO' },
-              { value: 'DEBUG', label: 'DEBUG' },
-            ],
-          },
-          {
-            key: 'service',
-            label: 'Service',
-            options: [{ value: 'all', label: 'All Services' }, ...getUniqueServices().map((s) => ({ value: s, label: s }))],
-          },
-        ];
-    }
-  }, [activeTab]);
-
-  // Get total counts for each tab
-  const totalCounts = useMemo(
-    () => ({
-      'user-activity': getUserActivityLogs().length,
-      security: getSecurityLogs().length,
-      application: getApplicationLogs().length,
-    }),
-    []
-  );
-
-  // Apply filters
-  const filteredLogs = useMemo(() => {
-    switch (activeTab) {
-      case 'user-activity':
-        return filterUserActivityLogs({
-          userType: filters.userType,
-          action: filters.action,
-          status: filters.status,
-          search: searchTerm,
-        });
-      case 'security':
-        return filterSecurityLogs({
-          eventType: filters.eventType,
-          severity: filters.severity,
-          search: searchTerm,
-        });
-      case 'application':
-        return filterApplicationLogs({
-          level: filters.level,
-          service: filters.service,
-          search: searchTerm,
-        });
-    }
-  }, [activeTab, filters, searchTerm]);
-
-  // Sort
-  const sortedLogs = useMemo(() => {
-    const sorted = [...filteredLogs];
-    sorted.sort((a, b) => {
-      const aVal = (a as unknown as Record<string, unknown>)[sort.field];
-      const bVal = (b as unknown as Record<string, unknown>)[sort.field];
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sort.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      return 0;
-    });
-    return sorted;
-  }, [filteredLogs, sort]);
-
-  // Paginate
-  const totalPages = Math.ceil(sortedLogs.length / ITEMS_PER_PAGE);
-  const paginatedLogs = useMemo(
-    () => sortedLogs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
-    [sortedLogs, currentPage]
-  );
-
-  const tabColorClass = (tab: TabKey, isActive: boolean) => {
-    if (!isActive) return 'text-muted-foreground hover:text-foreground/80 hover:bg-muted';
-    switch (tab) {
-      case 'user-activity':
-        return 'text-success bg-success/10 border-success';
-      case 'security':
-        return 'text-orange-700 bg-warning/10 border-orange-500';
-      case 'application':
-        return 'text-[hsl(var(--purple-700))] bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-500))]';
-    }
-  };
+  const {
+    activeTab,
+    searchTerm,
+    filters,
+    currentPage,
+    sort,
+    filterConfig,
+    totalCounts,
+    filteredLogs,
+    sortedLogs,
+    totalPages,
+    paginatedLogs,
+    itemsPerPage,
+    handleTabChange,
+    handleSort,
+    handleFilterChange,
+    handleSearchChange,
+    handleViewDetail,
+    handleClearAll,
+    setCurrentPage,
+  } = useLogsListing();
 
   return (
     <div className="space-y-6">
-      {/* Tab Navigation */}
       <div className="bg-card rounded-xl border border-border">
+        {/* Tab Navigation */}
         <div className="flex items-center justify-between border-b border-border">
           <div className="flex">
             {TABS.map((tab) => (
@@ -258,9 +82,7 @@ function LogsListingContent() {
                 {tab.label}
                 <span
                   className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
-                    activeTab === tab.key
-                      ? 'bg-card/60 font-semibold'
-                      : 'bg-muted text-muted-foreground'
+                    activeTab === tab.key ? 'bg-card/60 font-semibold' : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {totalCounts[tab.key]}
@@ -270,9 +92,7 @@ function LogsListingContent() {
           </div>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-            onClick={() => {
-              /* TODO: export functionality */
-            }}
+            onClick={() => {/* TODO: export */}}
           >
             <Download className="h-4 w-4" />
             Export
@@ -286,7 +106,7 @@ function LogsListingContent() {
             onSearchChange={handleSearchChange}
             filters={filters}
             onFilterChange={handleFilterChange}
-            onClearAll={() => { setSearchTerm(''); setFilters({}); setCurrentPage(1); }}
+            onClearAll={handleClearAll}
             filterConfig={filterConfig}
             totalCount={totalCounts[activeTab]}
             filteredCount={filteredLogs.length}
@@ -325,8 +145,8 @@ function LogsListingContent() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
-              {Math.min(currentPage * ITEMS_PER_PAGE, sortedLogs.length)} of {sortedLogs.length} results
+              Showing {(currentPage - 1) * itemsPerPage + 1}–
+              {Math.min(currentPage * itemsPerPage, sortedLogs.length)} of {sortedLogs.length} results
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -346,9 +166,7 @@ function LogsListingContent() {
                     <button
                       onClick={() => setCurrentPage(p)}
                       className={`w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
-                        currentPage === p
-                          ? 'bg-primary text-white'
-                          : 'text-muted-foreground hover:bg-muted'
+                        currentPage === p ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {p}
@@ -377,3 +195,4 @@ export default function LogsListingPage() {
     </Suspense>
   );
 }
+
