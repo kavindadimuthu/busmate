@@ -18,6 +18,8 @@
     "affected:lint": "nx affected -t lint",
     "graph": "nx graph",
     "nx": "nx",
+    "dev:dev-portal": "nx dev dev-portal",
+    "build:dev-portal": "nx build dev-portal",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
     "e2e:debug": "playwright test --debug",

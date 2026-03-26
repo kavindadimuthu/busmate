@@ -6,5 +6,8 @@ packages:
   # Shared libraries
   - "libs/api-clients/*"
 
+  # Developer tools
+  - "tools/dev-portal"
+
   # E2E tests
   - "tests/e2e"
