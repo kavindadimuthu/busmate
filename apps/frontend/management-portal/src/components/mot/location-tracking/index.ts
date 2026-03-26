@@ -15,3 +15,7 @@ export { LocationTrackingActionButtons } from './LocationTrackingActionButtons';
 // Pattern Components (design-system)
 export { LocationTrackingFilterBar } from './location-tracking-filter-bar';
 export { LocationTrackingStatsCardsNew } from './location-tracking-stats-cards';
+
+// Page-level Layout Components
+export { LocationTrackingLayout } from './LocationTrackingLayout';
+export { LocationTrackingFullscreenView } from './LocationTrackingFullscreenView';

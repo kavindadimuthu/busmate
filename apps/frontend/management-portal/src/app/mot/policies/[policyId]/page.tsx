@@ -1,102 +1,23 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
-import { useState, useCallback } from 'react';
-import {
-    ArrowLeft,
-    Edit,
-    Trash2,
-    AlertCircle,
-} from 'lucide-react';
-import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
+import { AlertCircle } from 'lucide-react';
 import { PolicySummary } from '@/components/mot/policies/PolicySummary';
 import { PolicyTabsSection } from '@/components/mot/policies/PolicyTabsSection';
 import { DeletePolicyModal } from '@/components/mot/policies/DeletePolicyModal';
-import { getPolicyById } from '@/data/mot/policies';
+import { usePolicyDetails } from '@/components/mot/policies/usePolicyDetails';
 
 export default function PolicyDetailsPage() {
-    const router = useRouter();
-    const params = useParams();
-    const policyId = params.policyId as string;
+    const {
+        policy, router,
+        showDeleteModal, setShowDeleteModal, isDeleting, handleDeleteConfirm,
+    } = usePolicyDetails();
 
-    // Load policy from sample data (swap to API call when backend is ready)
-    const policy = getPolicyById(policyId);
-
-    // Delete modal
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    const handleEdit = useCallback(() => {
-        router.push(`/mot/policies/${policyId}/edit`);
-    }, [router, policyId]);
-
-    const handleDelete = useCallback(() => {
-        setShowDeleteModal(true);
-    }, []);
-
-    const handleDeleteConfirm = useCallback(async () => {
-        try {
-            setIsDeleting(true);
-            // TODO: Replace with API call when backend is ready
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            router.push('/mot/policies');
-        } catch {
-            alert('Failed to delete policy. Please try again.');
-        } finally {
-            setIsDeleting(false);
-        }
-    }, [router]);
-
-    const handleBack = useCallback(() => {
-        router.back();
-    }, [router]);
-
-    useSetPageMetadata({
-        title: policy?.title || 'Policy Details',
-        description: 'Detailed view of policy document',
-        activeItem: 'policies',
-        showBreadcrumbs: true,
-        breadcrumbs: [{ label: 'Policies', href: '/mot/policies' }, { label: policy?.title || 'Policy Details' }],
-    });
-
-    useSetPageActions(
-        policy ? (
-            <div className="flex items-center gap-3 flex-wrap">
-                <button
-                    onClick={handleBack}
-                    className="flex items-center gap-2 px-4 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back
-                </button>
-                <button
-                    onClick={handleEdit}
-                    className="flex items-center gap-2 px-4 py-2 text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors"
-                >
-                    <Edit className="w-4 h-4" />
-                    Edit Policy
-                </button>
-                <button
-                    onClick={handleDelete}
-                    className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                </button>
-            </div>
-        ) : null
-    );
-
-    // Not found state
     if (!policy) {
         return (
             <div className="text-center py-12">
                 <AlertCircle className="w-16 h-16 text-destructive/70 mx-auto mb-4" />
                 <div className="text-destructive text-lg mb-4">Policy not found</div>
-                <button
-                    onClick={() => router.push('/mot/policies')}
-                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary"
-                >
+                <button onClick={() => router.push('/mot/policies')} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary">
                     Back to Policies
                 </button>
             </div>
@@ -104,21 +25,13 @@ export default function PolicyDetailsPage() {
     }
 
     return (
-            <div className="space-y-6">
-                {/* Policy Summary Card */}
-                <PolicySummary policy={policy} />
-
-                {/* Tabs Section */}
-                <PolicyTabsSection policy={policy} />
-
-                {/* Delete Modal */}
-                <DeletePolicyModal
-                    isOpen={showDeleteModal}
-                    onClose={() => setShowDeleteModal(false)}
-                    onConfirm={handleDeleteConfirm}
-                    policy={policy}
-                    isDeleting={isDeleting}
-                />
-            </div>
+        <div className="space-y-6">
+            <PolicySummary policy={policy} />
+            <PolicyTabsSection policy={policy} />
+            <DeletePolicyModal
+                isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteConfirm} policy={policy} isDeleting={isDeleting}
+            />
+        </div>
     );
 }

@@ -15,29 +15,10 @@ function PoliciesListContent() {
   const router = useRouter();
 
   const {
-    paginatedPolicies,
-    filteredPolicies,
-    statistics,
-    filterOptions,
-    searchTerm,
-    filters,
-    handleSearchChange,
-    handleFiltersChange,
-    handleClearFilters,
-    activeFilterCount,
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-    sortColumn,
-    sortDir,
-    handleSort,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    handleView,
-    handleEdit,
-    handleExport,
+    paginatedPolicies, filteredPolicies, statistics, filterOptions, searchTerm, filters,
+    handleSearchChange, handleFiltersChange, handleClearFilters, activeFilterCount,
+    page, setPage, pageSize, setPageSize, sortColumn, sortDir, handleSort,
+    deleteDialog, isDeleting, handleDeleteConfirm, handleView, handleEdit, handleExport,
   } = usePolicies();
 
   useSetPageMetadata({
@@ -106,14 +87,12 @@ function PoliciesListContent() {
 
 export default function PoliciesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <span className="ml-2 text-muted-foreground">Loading policies...</span>
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <span className="ml-2 text-muted-foreground">Loading policies...</span>
+      </div>
+    }>
       <PoliciesListContent />
     </Suspense>
   );

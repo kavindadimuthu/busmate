@@ -17,25 +17,9 @@ export default function BusStopsPage() {
   const router = useRouter();
 
   const {
-    currentView,
-    setCurrentView,
-    state,
-    setPage,
-    setPageSize,
-    setSort,
-    setSearch,
-    setFilters,
-    clearFilters,
-    filteredTableData,
-    isLoading,
-    stats,
-    filterOptions,
-    activeFilterCount,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    handleView,
-    handleEdit,
+    currentView, setCurrentView, state, setPage, setPageSize, setSort, setSearch,
+    setFilters, clearFilters, filteredTableData, isLoading, stats, filterOptions,
+    activeFilterCount, deleteDialog, isDeleting, handleDeleteConfirm, handleView, handleEdit,
   } = useBusStops();
 
   useSetPageMetadata({

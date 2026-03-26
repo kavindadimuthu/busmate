@@ -15,29 +15,10 @@ export default function NotificationsPage() {
   const router = useRouter();
 
   const {
-    allReceived,
-    allSent,
-    statsData,
-    paginated,
-    totalElements,
-    activeTab,
-    handleTabChange,
-    searchTerm,
-    handleSearchChange,
-    filters,
-    handleFiltersChange,
-    activeFilterCount,
-    handleClearAll,
-    sortColumn,
-    sortDir,
-    handleSort,
-    page,
-    setPage,
-    pageSize,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    handleView,
+    allReceived, allSent, statsData, paginated, totalElements, activeTab, handleTabChange,
+    searchTerm, handleSearchChange, filters, handleFiltersChange, activeFilterCount, handleClearAll,
+    sortColumn, sortDir, handleSort, page, setPage, pageSize,
+    deleteDialog, isDeleting, handleDeleteConfirm, handleView,
   } = useNotifications();
 
   useSetPageMetadata({

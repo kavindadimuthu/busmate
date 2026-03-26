@@ -14,32 +14,10 @@ export default function TripsPage() {
   const router = useRouter();
 
   const {
-    trips,
-    totalItems,
-    isLoading,
-    searchQuery,
-    sortColumn,
-    sortDirection,
-    page,
-    pageSize,
-    filters,
-    setPage,
-    setPageSize,
-    setSort,
-    setSearch,
-    setFilters,
-    clearFilters,
-    stats,
-    filterOptions,
-    activeFilterCount,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    cancelDialog,
-    isCancelling,
-    handleCancelConfirm,
-    handleView,
-    handleExportAll,
+    trips, totalItems, isLoading, searchQuery, sortColumn, sortDirection, page, pageSize,
+    filters, setPage, setPageSize, setSort, setSearch, setFilters, clearFilters, stats,
+    filterOptions, activeFilterCount, deleteDialog, isDeleting, handleDeleteConfirm,
+    cancelDialog, isCancelling, handleCancelConfirm, handleView, handleExportAll,
   } = useTrips();
 
   useSetPageMetadata({

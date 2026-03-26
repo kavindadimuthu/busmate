@@ -26,22 +26,9 @@ export default function MOTDashboardPage() {
   });
 
   const {
-    kpis,
-    trendHistory,
-    activity,
-    alerts,
-    fleetStatus,
-    routeStatus,
-    permitStatus,
-    operatorPerformance,
-    regionalDistribution,
-    quickActions,
-    loading,
-    lastRefresh,
-    isLive,
-    refresh,
-    toggleLive,
-    onAcknowledgeAlert,
+    kpis, trendHistory, activity, alerts, fleetStatus, routeStatus, permitStatus,
+    operatorPerformance, regionalDistribution, quickActions, loading, lastRefresh,
+    isLive, refresh, toggleLive, onAcknowledgeAlert,
   } = useMOTDashboard({ refreshInterval: 5000 });
 
   useSetPageActions(
@@ -73,11 +60,8 @@ export default function MOTDashboardPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Row 1: KPI Cards ─────────────────────────────────────── */}
       <MOTDashboardKPICards kpis={kpis} loading={loading} />
 
-      {/* ── Row 2: Trends chart + Fleet status ───────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <MOTDashboardTrendsChart trendHistory={trendHistory} loading={loading} />
@@ -87,24 +71,17 @@ export default function MOTDashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 3: Route status + Permit status + Alerts ─────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <MOTDashboardRouteStatus routeStatus={routeStatus} loading={loading} />
         <MOTDashboardPermitStatus permitStatus={permitStatus} loading={loading} />
-        <MOTDashboardAlertsWidget 
-          alerts={alerts} 
-          loading={loading} 
-          onAcknowledge={onAcknowledgeAlert} 
-        />
+        <MOTDashboardAlertsWidget alerts={alerts} loading={loading} onAcknowledge={onAcknowledgeAlert} />
       </div>
 
-      {/* ── Row 4: Regional distribution + Operator performance ──── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <MOTDashboardRegionalDistribution regions={regionalDistribution} loading={loading} />
         <MOTDashboardOperatorPerformance operators={operatorPerformance} loading={loading} />
       </div>
 
-      {/* ── Row 5: Activity feed + Quick actions ─────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <MOTDashboardActivityFeed activity={activity} loading={loading} />

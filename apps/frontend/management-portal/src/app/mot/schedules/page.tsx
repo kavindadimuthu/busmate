@@ -14,31 +14,10 @@ export default function SchedulesPage() {
   const router = useRouter();
 
   const {
-    schedules,
-    totalItems,
-    isLoading,
-    searchQuery,
-    sortColumn,
-    sortDirection,
-    page,
-    pageSize,
-    filters,
-    setPage,
-    setPageSize,
-    setSort,
-    setSearch,
-    setFilters,
-    clearFilters,
-    filterOptions,
-    stats,
-    activeFilterCount,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    handleView,
-    handleEdit,
-    handleAssignBuses,
-    handleExportAll,
+    schedules, totalItems, isLoading, searchQuery, sortColumn, sortDirection, page, pageSize,
+    filters, setPage, setPageSize, setSort, setSearch, setFilters, clearFilters, filterOptions,
+    stats, activeFilterCount, deleteDialog, isDeleting, handleDeleteConfirm,
+    handleView, handleEdit, handleAssignBuses, handleExportAll,
   } = useSchedules();
 
   useSetPageMetadata({

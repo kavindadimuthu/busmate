@@ -1,59 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
-import { useSetPageMetadata } from '@/context/PageContext';
-import { FareAmendmentFormData } from '@/data/mot/fares';
 import { FareAmendmentForm } from '@/components/mot/fares/FareAmendmentForm';
+import { useNewAmendment } from '@/components/mot/fares/useNewAmendment';
 import { AlertCircle } from 'lucide-react';
 
 export default function NewAmendmentPage() {
-  const router = useRouter();
-
-  useSetPageMetadata({
-    title: 'New Fare Amendment',
-    description: 'Create a new fare structure amendment',
-    activeItem: 'fares',
-    showBreadcrumbs: true,
-    breadcrumbs: [
-      { label: 'Fares', href: '/mot/fares' },
-      { label: 'New Amendment' },
-    ],
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = useCallback(
-    async (data: FareAmendmentFormData) => {
-      try {
-        setIsSubmitting(true);
-        setError(null);
-
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        const newId = `FA-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
-        alert(`Fare amendment created successfully! ID: ${newId}`);
-        router.push('/mot/fares');
-      } catch {
-        setError('Failed to create fare amendment. Please try again.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [router]
-  );
-
-  const handleCancel = useCallback(() => {
-    if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      router.push('/mot/fares');
-    }
-  }, [router]);
+  const { isSubmitting, error, clearError, handleSubmit, handleCancel } = useNewAmendment();
 
   return (
     <div className="space-y-6">
-      {/* Error Alert */}
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start">
@@ -61,10 +16,7 @@ export default function NewAmendmentPage() {
             <div className="flex-1">
               <h3 className="text-sm font-medium text-destructive">Error Creating Amendment</h3>
               <p className="text-sm text-destructive mt-1">{error}</p>
-              <button
-                onClick={() => setError(null)}
-                className="text-sm text-destructive hover:text-destructive underline mt-2"
-              >
+              <button onClick={clearError} className="text-sm text-destructive hover:text-destructive underline mt-2">
                 Dismiss
               </button>
             </div>
@@ -72,7 +24,6 @@ export default function NewAmendmentPage() {
         </div>
       )}
 
-      {/* Form */}
       <div className="bg-card rounded-lg border border-border shadow-sm">
         <div className="p-6 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">New Fare Structure Amendment</h2>
@@ -91,7 +42,6 @@ export default function NewAmendmentPage() {
         </div>
       </div>
 
-      {/* Guidelines */}
       <div className="bg-muted rounded-lg border border-border p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">Guidelines</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground">

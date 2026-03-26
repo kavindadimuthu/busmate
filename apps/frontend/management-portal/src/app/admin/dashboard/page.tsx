@@ -66,11 +66,10 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Row 1: KPI Cards ─────────────────────────────────────── */}
+      {/* Row 1: KPI Cards */}
       <DashboardKPICards kpis={kpis} loading={loading} />
 
-      {/* ── Row 2: Trends chart + System health ─────────────────── */}
+      {/* Row 2: Trends + Health */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[400px]">
         <div className="xl:col-span-2">
           <DashboardTrendsChart trendHistory={trendHistory} loading={loading} />
@@ -80,14 +79,14 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 3: Service status + User distribution + Alerts ───── */}
+      {/* Row 3: Service + Users + Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <DashboardServiceStatus services={services} loading={loading} />
         <DashboardUserStats userDistribution={userDistribution} loading={loading} />
         <DashboardAlertsWidget alerts={activeAlerts} loading={loading} />
       </div>
 
-      {/* ── Row 4: Activity feed + Quick actions ─────────────────── */}
+      {/* Row 4: Activity + Actions */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <DashboardActivityFeed activity={activity} loading={loading} />

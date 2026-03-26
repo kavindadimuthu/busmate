@@ -1,66 +1,15 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
+import { Suspense } from 'react';
 import BusStopForm from '@/components/mot/bus-stops/bus-stop-form';
-import { StopResponse } from '@busmate/api-client-route';
+import { useEditBusStop } from '@/components/mot/bus-stops/useEditBusStop';
 
 interface EditBusStopPageProps {
   params: { busStopId: string };
 }
 
 function EditBusStopContent({ params }: EditBusStopPageProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  // State for resolved params
-  const [busStopId, setBusStopId] = useState<string>('');
-  
-  // Resolve params asynchronously
-  useEffect(() => {
-    const resolveParams = async () => {
-      const resolvedParams = await params;
-      const id = resolvedParams.busStopId || searchParams.get('id') || '';
-      setBusStopId(id);
-    };
-    
-    resolveParams();
-  }, [params, searchParams]);
-
-  // Page metadata and actions (must be called unconditionally - React rules of hooks)
-  useSetPageMetadata({
-    title: 'Edit Bus Stop',
-    description: 'Update the bus stop information, location, and accessibility details',
-    activeItem: 'bus-stops',
-    showBreadcrumbs: true,
-    breadcrumbs: [{ label: 'Bus Stops', href: '/mot/bus-stops' }, { label: 'Edit' }],
-  });
-
-  useSetPageActions(
-    <button
-      onClick={() => busStopId ? router.push(`/mot/bus-stops/${busStopId}`) : router.push('/mot/bus-stops')}
-      className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
-    >
-      <ArrowLeft className="w-5 h-5 mr-2" />
-      Back to Details
-    </button>
-  );
-
-  const handleSuccess = (busStop: StopResponse) => {
-    // Redirect to the bus stop details page
-    router.push(`/mot/bus-stops/${busStop.id}`);
-  };
-
-  const handleCancel = () => {
-    // Go back to details page or list page
-    if (busStopId) {
-      router.push(`/mot/bus-stops/${busStopId}`);
-    } else {
-      router.push('/mot/bus-stops');
-    }
-  };
+  const { busStopId, handleSuccess, handleCancel, navigateToList } = useEditBusStop({ params });
 
   if (!busStopId) {
     return (
@@ -72,7 +21,7 @@ function EditBusStopContent({ params }: EditBusStopPageProps) {
               No bus stop ID provided. Please go back and select a bus stop to edit.
             </p>
             <button
-              onClick={() => router.push('/mot/bus-stops')}
+              onClick={navigateToList}
               className="mt-4 px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive transition-colors"
             >
               Back to Bus Stops
@@ -85,12 +34,7 @@ function EditBusStopContent({ params }: EditBusStopPageProps) {
 
   return (
     <div className="mx-auto space-y-6">
-      {/* Form */}
-      <BusStopForm
-        busStopId={busStopId}
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-      />
+      <BusStopForm busStopId={busStopId} onSuccess={handleSuccess} onCancel={handleCancel} />
     </div>
   );
 }

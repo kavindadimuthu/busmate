@@ -1,10 +1,6 @@
 'use client';
 
-import { Download, RefreshCw } from 'lucide-react';
-import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { Tabs, TabsList, TabsTrigger, Button, FilterSelect } from '@busmate/ui';
-
-// Analytics components
+import { Tabs, TabsList, TabsTrigger, FilterSelect } from '@busmate/ui';
 import {
   AnalyticsOverview,
   TripAnalyticsPanel,
@@ -14,59 +10,24 @@ import {
   RevenueAnalyticsPanel,
   PassengerAnalyticsPanel,
 } from '@/components/mot/analytics';
-
-import { useAnalytics } from '@/components/mot/analytics/useAnalytics';
+import { useAnalyticsPage } from '@/components/mot/analytics/useAnalyticsPage';
 import type { AnalyticsCategory, DateRange } from '@/data/mot/analytics';
 
 export default function AnalyticsPage() {
-  useSetPageMetadata({
-    title: 'Analytics Dashboard',
-    description: 'Comprehensive data insights and performance analytics for MOT operations',
-    activeItem: 'analytics',
-    showBreadcrumbs: true,
-    breadcrumbs: [{ label: 'Analytics' }],
-  });
-
   const {
     activeCategory, setActiveCategory,
     dateRange, setDateRange,
     region, setRegion,
     operator, setOperator,
-    loading, isLive, setIsLive, lastRefresh,
+    loading,
     kpis, trendHistory,
     tripAnalytics, routeAnalytics, fleetAnalytics,
     staffAnalytics, revenueAnalytics, passengerAnalytics,
-    loadData, handleExport,
     dateRangeOptions, regionOptions, operatorOptions,
-  } = useAnalytics();
-
-  // Page actions
-  useSetPageActions(
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground/70 hidden sm:inline">
-        Updated {lastRefresh.toLocaleTimeString()}
-      </span>
-      <Button
-        variant={isLive ? 'default' : 'outline'}
-        size="sm"
-        onClick={() => setIsLive((prev: boolean) => !prev)}
-        className={isLive ? 'bg-success/15 text-success hover:bg-success/20 border-success/20' : ''}
-      >
-        {isLive ? '● Live' : '○ Live'}
-      </Button>
-      <Button variant="outline" size="icon" onClick={loadData} disabled={loading} title="Refresh data">
-        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-      </Button>
-      <Button onClick={handleExport}>
-        <Download className="h-4 w-4" />
-        <span className="hidden sm:inline">Export Report</span>
-      </Button>
-    </div>
-  );
+  } = useAnalyticsPage();
 
   return (
     <div className="space-y-6">
-      {/* Filters Bar */}
       <div className="bg-card rounded-xl border border-border p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as AnalyticsCategory)}>
@@ -98,7 +59,6 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Content */}
       {activeCategory === 'overview' && (
         <AnalyticsOverview kpis={kpis} trendHistory={trendHistory} tripStatusDistribution={tripAnalytics?.statusDistribution || []} routeTypeDistribution={routeAnalytics?.routeTypeDistribution || []} loading={loading} />
       )}
