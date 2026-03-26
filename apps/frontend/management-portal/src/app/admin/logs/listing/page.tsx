@@ -227,22 +227,22 @@ function LogsListingContent() {
   );
 
   const tabColorClass = (tab: TabKey, isActive: boolean) => {
-    if (!isActive) return 'text-gray-500 hover:text-gray-700 hover:bg-gray-50';
+    if (!isActive) return 'text-muted-foreground hover:text-foreground/80 hover:bg-muted';
     switch (tab) {
       case 'user-activity':
-        return 'text-green-700 bg-green-50 border-green-500';
+        return 'text-success bg-success/10 border-success';
       case 'security':
-        return 'text-orange-700 bg-orange-50 border-orange-500';
+        return 'text-orange-700 bg-warning/10 border-orange-500';
       case 'application':
-        return 'text-purple-700 bg-purple-50 border-purple-500';
+        return 'text-[hsl(var(--purple-700))] bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-500))]';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="flex items-center justify-between border-b border-gray-200">
+      <div className="bg-card rounded-xl border border-border">
+        <div className="flex items-center justify-between border-b border-border">
           <div className="flex">
             {TABS.map((tab) => (
               <button
@@ -259,8 +259,8 @@ function LogsListingContent() {
                 <span
                   className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
                     activeTab === tab.key
-                      ? 'bg-white/60 font-semibold'
-                      : 'bg-gray-100 text-gray-500'
+                      ? 'bg-card/60 font-semibold'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {totalCounts[tab.key]}
@@ -269,7 +269,7 @@ function LogsListingContent() {
             ))}
           </div>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => {
               /* TODO: export functionality */
             }}
@@ -280,7 +280,7 @@ function LogsListingContent() {
         </div>
 
         {/* Filters */}
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-border/50">
           <LogFilters
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
@@ -323,8 +323,8 @@ function LogsListingContent() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <p className="text-sm text-gray-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <p className="text-sm text-muted-foreground">
               Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
               {Math.min(currentPage * ITEMS_PER_PAGE, sortedLogs.length)} of {sortedLogs.length} results
             </p>
@@ -332,7 +332,7 @@ function LogsListingContent() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
@@ -341,14 +341,14 @@ function LogsListingContent() {
                 .map((p, idx, arr) => (
                   <span key={p} className="flex items-center">
                     {idx > 0 && arr[idx - 1] !== p - 1 && (
-                      <span className="px-1 text-gray-400">…</span>
+                      <span className="px-1 text-muted-foreground/70">…</span>
                     )}
                     <button
                       onClick={() => setCurrentPage(p)}
                       className={`w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
                         currentPage === p
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-600 hover:bg-gray-50'
+                          ? 'bg-primary text-white'
+                          : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {p}
@@ -358,7 +358,7 @@ function LogsListingContent() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

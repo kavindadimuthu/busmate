@@ -178,13 +178,13 @@ export function CSVEditor({
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Upload className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+          <Upload className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-medium text-foreground">{title}</h3>
         </div>
         {description && (
-          <p className="text-sm text-gray-600 mb-4">{description}</p>
+          <p className="text-sm text-muted-foreground mb-4">{description}</p>
         )}
         <CSVUploader
           onDataParsed={handleDataParsed}
@@ -197,12 +197,12 @@ export function CSVEditor({
 
       {/* Error Message */}
       {errorMessage && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
             <div>
-              <h4 className="font-medium text-red-900">Error</h4>
-              <p className="text-red-700 mt-1">{errorMessage}</p>
+              <h4 className="font-medium text-destructive">Error</h4>
+              <p className="text-destructive mt-1">{errorMessage}</p>
             </div>
           </div>
         </div>
@@ -212,30 +212,30 @@ export function CSVEditor({
       {validationResult && csvData && (
         <div className={`rounded-lg border p-4 ${
           validationResult.isValid 
-            ? 'bg-green-50 border-green-200' 
-            : 'bg-red-50 border-red-200'
+            ? 'bg-success/10 border-success/20' 
+            : 'bg-destructive/10 border-destructive/20'
         }`}>
           <div className="flex items-start gap-2">
             {validationResult.isValid ? (
-              <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-success mt-0.5" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
             )}
             <div className="flex-1">
               <h4 className={`font-medium ${
-                validationResult.isValid ? 'text-green-900' : 'text-red-900'
+                validationResult.isValid ? 'text-success' : 'text-destructive'
               }`}>
                 Validation {validationResult.isValid ? 'Passed' : 'Issues Found'}
               </h4>
               <p className={`mt-1 ${
-                validationResult.isValid ? 'text-green-700' : 'text-red-700'
+                validationResult.isValid ? 'text-success' : 'text-destructive'
               }`}>
                 {getValidationSummary(validationResult)}
               </p>
               
               {!validationResult.isValid && (
                 <>
-                  <p className="text-sm text-red-600 mt-2 font-medium">
+                  <p className="text-sm text-destructive mt-2 font-medium">
                     Review the highlighted cells in the table below and fix the errors before importing.
                   </p>
                   
@@ -243,20 +243,20 @@ export function CSVEditor({
                   <div className="mt-4 space-y-3">
                     {validationResult.errors.length > 0 && (
                       <div>
-                        <h5 className="font-medium text-red-800 mb-2 flex items-center gap-1">
+                        <h5 className="font-medium text-destructive mb-2 flex items-center gap-1">
                           <AlertCircle className="w-4 h-4" />
                           Errors ({validationResult.errors.length})
                         </h5>
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                           {validationResult.errors.slice(0, 10).map((error, idx) => (
-                            <div key={idx} className="text-xs p-2 bg-red-100 border border-red-200 rounded flex justify-between items-start">
-                              <span className="text-red-800">
+                            <div key={idx} className="text-xs p-2 bg-destructive/15 border border-destructive/20 rounded flex justify-between items-start">
+                              <span className="text-destructive">
                                 <strong>Row {error.row + 1}, {error.column}:</strong> {error.message}
                               </span>
                             </div>
                           ))}
                           {validationResult.errors.length > 10 && (
-                            <div className="text-xs text-red-600 italic">
+                            <div className="text-xs text-destructive italic">
                               ... and {validationResult.errors.length - 10} more errors
                             </div>
                           )}
@@ -266,20 +266,20 @@ export function CSVEditor({
                     
                     {validationResult.warnings.length > 0 && (
                       <div>
-                        <h5 className="font-medium text-yellow-800 mb-2 flex items-center gap-1">
+                        <h5 className="font-medium text-warning mb-2 flex items-center gap-1">
                           <AlertTriangle className="w-4 h-4" />
                           Warnings ({validationResult.warnings.length})
                         </h5>
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                           {validationResult.warnings.slice(0, 10).map((warning, idx) => (
-                            <div key={idx} className="text-xs p-2 bg-yellow-100 border border-yellow-200 rounded flex justify-between items-start">
-                              <span className="text-yellow-800">
+                            <div key={idx} className="text-xs p-2 bg-warning/15 border border-warning/20 rounded flex justify-between items-start">
+                              <span className="text-warning">
                                 <strong>Row {warning.row + 1}, {warning.column}:</strong> {warning.message}
                               </span>
                             </div>
                           ))}
                           {validationResult.warnings.length > 10 && (
-                            <div className="text-xs text-yellow-600 italic">
+                            <div className="text-xs text-warning italic">
                               ... and {validationResult.warnings.length - 10} more warnings
                             </div>
                           )}
@@ -294,7 +294,7 @@ export function CSVEditor({
             {canImport && (
               <button
                 onClick={handleImport}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium flex items-center gap-2"
               >
                 <Upload className="w-4 h-4" />
                 Import Data
@@ -306,24 +306,24 @@ export function CSVEditor({
 
       {/* Import Progress */}
       {importProgress && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <div className="flex items-start gap-2">
             <div className={`w-5 h-5 mt-0.5 ${
               importProgress.isImporting 
-                ? 'border-2 border-blue-600 border-t-transparent rounded-full animate-spin'
+                ? 'border-2 border-primary border-t-transparent rounded-full animate-spin'
                 : importProgress.failed === 0 
-                  ? 'text-green-600'
-                  : 'text-yellow-600'
+                  ? 'text-success'
+                  : 'text-warning'
             }`}>
               {!importProgress.isImporting && (
                 importProgress.failed === 0 ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />
               )}
             </div>
             <div className="flex-1">
-              <h4 className="font-medium text-blue-900">
+              <h4 className="font-medium text-primary">
                 {importProgress.isImporting ? 'Importing...' : 'Import Complete'}
               </h4>
-              <div className="text-blue-700 mt-1 space-y-1">
+              <div className="text-primary mt-1 space-y-1">
                 <p>
                   {importProgress.successful} successful, {importProgress.failed} failed 
                   {importProgress.isImporting ? ` (${importProgress.processed}/${importProgress.total})` : ''}
@@ -331,8 +331,8 @@ export function CSVEditor({
                 
                 {importProgress.errors && importProgress.errors.length > 0 && (
                   <div className="mt-2">
-                    <p className="font-medium text-red-700">Errors:</p>
-                    <ul className="text-sm text-red-600 list-disc list-inside mt-1">
+                    <p className="font-medium text-destructive">Errors:</p>
+                    <ul className="text-sm text-destructive list-disc list-inside mt-1">
                       {importProgress.errors.slice(0, 5).map((error, index) => (
                         <li key={index}>Row {error.row + 1}: {error.message}</li>
                       ))}
@@ -350,10 +350,10 @@ export function CSVEditor({
 
       {/* Data Table */}
       {csvData && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-card rounded-lg border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
-            <FileText className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-medium text-gray-900">Review & Edit Data</h3>
+            <FileText className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-medium text-foreground">Review & Edit Data</h3>
           </div>
           <CSVDataTable
             data={csvData}

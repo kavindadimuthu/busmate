@@ -61,22 +61,22 @@ function formatDate(dateString?: string): string {
 function getStatusStyle(status?: string): { className: string; Icon: React.ComponentType<{ className?: string }> } {
   switch (status) {
     case 'active':
-      return { className: 'bg-emerald-50 text-emerald-700 border border-emerald-200', Icon: CheckCircle2 };
+      return { className: 'bg-success/10 text-success border border-success/20', Icon: CheckCircle2 };
     case 'inactive':
-      return { className: 'bg-red-50 text-red-600 border border-red-200', Icon: XCircle };
+      return { className: 'bg-destructive/10 text-destructive border border-destructive/20', Icon: XCircle };
     default:
-      return { className: 'bg-gray-50 text-gray-500 border border-gray-200', Icon: Users };
+      return { className: 'bg-muted text-muted-foreground border border-border', Icon: Users };
   }
 }
 
 function getTypeStyle(type?: string): { className: string; Icon: React.ComponentType<{ className?: string }> } {
   switch (type) {
     case 'timekeeper':
-      return { className: 'bg-indigo-50 text-indigo-700 border border-indigo-200', Icon: Clock };
+      return { className: 'bg-primary/10 text-indigo-700 border border-indigo-200', Icon: Clock };
     case 'inspector':
-      return { className: 'bg-purple-50 text-purple-700 border border-purple-200', Icon: Search };
+      return { className: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border border-[hsl(var(--purple-200))]', Icon: Search };
     default:
-      return { className: 'bg-gray-50 text-gray-500 border border-gray-200', Icon: Users };
+      return { className: 'bg-muted text-muted-foreground border border-border', Icon: Users };
   }
 }
 
@@ -106,16 +106,16 @@ export function StaffTable({
         minWidth: 'min-w-[180px]',
         render: (member) => (
           <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center ring-1 ring-blue-200/60">
-              <span className="text-sm font-semibold text-blue-600">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
+              <span className="text-sm font-semibold text-primary">
                 {member.fullName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+              <p className="text-sm font-semibold text-foreground truncate leading-tight">
                 {member.fullName}
               </p>
-              <p className="text-[11px] text-gray-400 font-mono leading-tight mt-0.5 truncate">
+              <p className="text-[11px] text-muted-foreground/70 font-mono leading-tight mt-0.5 truncate">
                 {member.nic || '—'}
               </p>
             </div>
@@ -129,12 +129,12 @@ export function StaffTable({
         render: (member) => (
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
-              <Phone className="w-3 h-3 text-gray-300 shrink-0" />
-              <span className="text-sm text-gray-700">{member.phone || '—'}</span>
+              <Phone className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+              <span className="text-sm text-foreground/80">{member.phone || '—'}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Mail className="w-3 h-3 text-gray-300 shrink-0" />
-              <span className="text-[11px] text-gray-400 truncate">{member.email || '—'}</span>
+              <Mail className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+              <span className="text-[11px] text-muted-foreground/70 truncate">{member.email || '—'}</span>
             </div>
           </div>
         ),
@@ -160,13 +160,13 @@ export function StaffTable({
         minWidth: 'min-w-[140px]',
         render: (member) => (
           <div className="flex items-start gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-gray-300 mt-0.5 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
             <div className="min-w-0">
-              <p className="text-sm text-gray-700 truncate leading-tight">
+              <p className="text-sm text-foreground/80 truncate leading-tight">
                 {member.assignedLocation || '—'}
               </p>
               {member.province && (
-                <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">
+                <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5">
                   {member.province}
                 </p>
               )}
@@ -195,7 +195,7 @@ export function StaffTable({
         sortable: true,
         cellClassName: 'whitespace-nowrap',
         render: (member) => (
-          <span className="text-xs text-gray-500 tabular-nums">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {formatDate(member.createdAt)}
           </span>
         ),
@@ -210,21 +210,21 @@ export function StaffTable({
             <button
               onClick={() => onView(member.id)}
               title="View details"
-              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
             >
               <Eye className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onEdit(member.id)}
               title="Edit staff member"
-              className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-warning/80 hover:bg-warning/10 transition-colors duration-100"
             >
               <Edit2 className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onDelete(member.id, member.fullName)}
               title="Delete staff member"
-              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -246,11 +246,11 @@ export function StaffTable({
       showRefreshing
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <Users className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Users className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No staff members found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No staff members found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             Try adjusting your search or filters to find what you&apos;re looking for.
           </p>
         </div>

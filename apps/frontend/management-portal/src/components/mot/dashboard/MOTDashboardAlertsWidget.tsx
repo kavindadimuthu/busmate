@@ -16,21 +16,21 @@ function timeAgo(iso: string): string {
 
 const SEVERITY_STYLES = {
   critical: {
-    badge: 'bg-red-100 text-red-700 border-red-200',
-    icon: <XCircle className="h-4 w-4 text-red-500" />,
-    dot: 'bg-red-500',
+    badge: 'bg-destructive/15 text-destructive border-destructive/20',
+    icon: <XCircle className="h-4 w-4 text-destructive/80" />,
+    dot: 'bg-destructive',
     border: 'border-l-red-500',
   },
   warning: {
-    badge: 'bg-amber-100 text-amber-700 border-amber-200',
-    icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-    dot: 'bg-amber-500',
+    badge: 'bg-warning/15 text-warning border-warning/20',
+    icon: <AlertTriangle className="h-4 w-4 text-warning/80" />,
+    dot: 'bg-warning',
     border: 'border-l-amber-500',
   },
   info: {
-    badge: 'bg-blue-100 text-blue-700 border-blue-200',
-    icon: <Info className="h-4 w-4 text-blue-500" />,
-    dot: 'bg-blue-400',
+    badge: 'bg-primary/15 text-primary border-primary/20',
+    icon: <Info className="h-4 w-4 text-primary/80" />,
+    dot: 'bg-primary/50',
     border: 'border-l-blue-400',
   },
 };
@@ -66,13 +66,13 @@ export function MOTDashboardAlertsWidget({ alerts, loading = false, onAcknowledg
           {(criticalCount > 0 || warningCount > 0) && (
             <div className="flex items-center gap-1.5">
               {criticalCount > 0 && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
                   {criticalCount}
                 </span>
               )}
               {warningCount > 0 && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-warning/15 text-warning">
                   {warningCount}
                 </span>
               )}
@@ -81,7 +81,7 @@ export function MOTDashboardAlertsWidget({ alerts, loading = false, onAcknowledg
         </div>
         <Link
           href="/mot/notifications"
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           View all
           <ExternalLink className="h-3 w-3" />
@@ -91,7 +91,7 @@ export function MOTDashboardAlertsWidget({ alerts, loading = false, onAcknowledg
       {/* Alert list */}
       {unacknowledgedAlerts.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-          <CheckCircle2 className="h-10 w-10 text-green-400 mb-2" />
+          <CheckCircle2 className="h-10 w-10 text-success/70 mb-2" />
           <p className="text-sm text-muted-foreground">All clear</p>
           <p className="text-xs text-muted-foreground">No active alerts</p>
         </div>
@@ -121,7 +121,7 @@ export function MOTDashboardAlertsWidget({ alerts, loading = false, onAcknowledg
                       {onAcknowledge && (
                         <button
                           onClick={() => onAcknowledge(alert.id)}
-                          className="text-[10px] text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                          className="text-[10px] text-primary hover:text-primary flex items-center gap-1"
                         >
                           <Check className="h-3 w-3" />
                           Acknowledge

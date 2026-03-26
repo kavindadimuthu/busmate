@@ -51,9 +51,9 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
   if (!route) {
     return (
       <div className="text-center py-12">
-        <RouteIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Route Information</h3>
-        <p className="text-gray-500">
+        <RouteIcon className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">No Route Information</h3>
+        <p className="text-muted-foreground">
           Route details are not available for this trip.
         </p>
       </div>
@@ -65,8 +65,8 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
       {/* Header with view toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Route Information</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="text-lg font-medium text-foreground">Route Information</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Detailed route information for {route.name || 'this route'}
           </p>
         </div>
@@ -75,8 +75,8 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
             onClick={() => setViewMode('info')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
               viewMode === 'info'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-primary/15 text-primary'
+                : 'text-muted-foreground hover:text-foreground/80'
             }`}
           >
             Route Info
@@ -85,8 +85,8 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
             onClick={() => setViewMode('map')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
               viewMode === 'map'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-primary/15 text-primary'
+                : 'text-muted-foreground hover:text-foreground/80'
             }`}
           >
             Map View
@@ -97,36 +97,36 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
       {viewMode === 'info' ? (
         <>
           {/* Route Summary */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h4 className="text-md font-medium text-gray-900 mb-4">Route Summary</h4>
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h4 className="text-md font-medium text-foreground mb-4">Route Summary</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center space-x-3">
                 <div className="shrink-0">
-                  <RouteIcon className="h-8 w-8 text-blue-500" />
+                  <RouteIcon className="h-8 w-8 text-primary/80" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Route Name</p>
-                  <p className="text-lg font-semibold text-gray-900">{route.name || 'N/A'}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Route Name</p>
+                  <p className="text-lg font-semibold text-foreground">{route.name || 'N/A'}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
                 <div className="shrink-0">
-                  <Ruler className="h-8 w-8 text-green-500" />
+                  <Ruler className="h-8 w-8 text-success/80" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Distance</p>
-                  <p className="text-lg font-semibold text-gray-900">{formatDistance(route.distanceKm)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Distance</p>
+                  <p className="text-lg font-semibold text-foreground">{formatDistance(route.distanceKm)}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
                 <div className="shrink-0">
-                  <Clock className="h-8 w-8 text-orange-500" />
+                  <Clock className="h-8 w-8 text-warning/80" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Duration</p>
-                  <p className="text-lg font-semibold text-gray-900">{formatDuration(route.estimatedDurationMinutes)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Duration</p>
+                  <p className="text-lg font-semibold text-foreground">{formatDuration(route.estimatedDurationMinutes)}</p>
                 </div>
               </div>
 
@@ -135,16 +135,16 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
                   <Navigation className="h-8 w-8 text-purple-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Direction</p>
-                  <p className="text-lg font-semibold text-gray-900">{route.direction || 'N/A'}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Direction</p>
+                  <p className="text-lg font-semibold text-foreground">{route.direction || 'N/A'}</p>
                 </div>
               </div>
             </div>
 
             {route.description && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-sm font-medium text-gray-500 mb-2">Description</p>
-                <p className="text-gray-700">{route.description}</p>
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Description</p>
+                <p className="text-foreground/80">{route.description}</p>
               </div>
             )}
           </div>
@@ -152,21 +152,21 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
           {/* Start and End Points */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Start Point */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-4">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="shrink-0">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-green-600" />
+                  <div className="w-8 h-8 bg-success/15 rounded-full flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-success" />
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900">Start Point</h4>
+                  <h4 className="text-sm font-medium text-foreground">Start Point</h4>
                 </div>
               </div>
               <div className="ml-11">
-                <p className="text-sm font-medium text-gray-900">{route.startStopName || 'N/A'}</p>
+                <p className="text-sm font-medium text-foreground">{route.startStopName || 'N/A'}</p>
                 {route.startStopLocation && (
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {route.startStopLocation.latitude?.toFixed(6)}, {route.startStopLocation.longitude?.toFixed(6)}
                   </p>
                 )}
@@ -174,21 +174,21 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
             </div>
 
             {/* End Point */}
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="shrink-0">
-                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-red-600" />
+                  <div className="w-8 h-8 bg-destructive/15 rounded-full flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-destructive" />
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900">End Point</h4>
+                  <h4 className="text-sm font-medium text-foreground">End Point</h4>
                 </div>
               </div>
               <div className="ml-11">
-                <p className="text-sm font-medium text-gray-900">{route.endStopName || 'N/A'}</p>
+                <p className="text-sm font-medium text-foreground">{route.endStopName || 'N/A'}</p>
                 {route.endStopLocation && (
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {route.endStopLocation.latitude?.toFixed(6)}, {route.endStopLocation.longitude?.toFixed(6)}
                   </p>
                 )}
@@ -199,20 +199,20 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
           {/* Route Stops */}
           {orderedStops.length > 0 && (
             <div>
-              <h4 className="text-md font-medium text-gray-900 mb-4">Route Stops ({orderedStops.length})</h4>
-              <div className="bg-white border border-gray-200 rounded-lg">
+              <h4 className="text-md font-medium text-foreground mb-4">Route Stops ({orderedStops.length})</h4>
+              <div className="bg-card border border-border rounded-lg">
                 <div className="max-h-96 overflow-y-auto">
                   {orderedStops.map((stop, index) => (
-                    <div key={stop.stopId || index} className="border-b border-gray-200 last:border-b-0">
+                    <div key={stop.stopId || index} className="border-b border-border last:border-b-0">
                       <div className="p-4 flex items-center space-x-4">
                         <div className="shrink-0">
-                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-600">{index + 1}</span>
+                          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-muted-foreground">{index + 1}</span>
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{stop.stopName || 'Unnamed Stop'}</p>
-                          <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                          <p className="text-sm font-medium text-foreground">{stop.stopName || 'Unnamed Stop'}</p>
+                          <div className="flex items-center space-x-4 mt-1 text-xs text-muted-foreground">
                             {stop.distanceFromStartKm !== undefined && (
                               <span>Distance: {stop.distanceFromStartKm.toFixed(1)} km</span>
                             )}
@@ -233,10 +233,10 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
         </>
       ) : (
         /* Map View */
-        <div className="bg-white border border-gray-200 rounded-lg">
+        <div className="bg-card border border-border rounded-lg">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-md font-medium text-gray-900">Route Map</h4>
+              <h4 className="text-md font-medium text-foreground">Route Map</h4>
               <button
                 onClick={() => {
                   // Open in Google Maps
@@ -247,7 +247,7 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
                     window.open(url, '_blank');
                   }
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center px-3 py-1.5 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary transition-colors"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Open in Google Maps
@@ -255,15 +255,15 @@ export function TripRouteTab({ trip, route }: TripRouteTabProps) {
             </div>
             
             {/* Map placeholder - you can integrate with Google Maps or other mapping service */}
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
+            <div className="bg-muted rounded-lg h-96 flex items-center justify-center">
               <div className="text-center">
-                <Map className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Interactive Map</h3>
-                <p className="text-gray-500 mb-4">
+                <Map className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Interactive Map</h3>
+                <p className="text-muted-foreground mb-4">
                   Map integration can be implemented here using Google Maps, OpenStreetMap, or other mapping services.
                 </p>
                 {route.startStopLocation && route.endStopLocation && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Route from {route.startStopName} to {route.endStopName}
                   </p>
                 )}

@@ -9,9 +9,9 @@ interface StaffEmploymentCardProps {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-xs text-gray-500">{label}</span>
-      <span className="text-sm font-medium text-gray-900 text-right max-w-48 truncate">{value}</span>
+    <div className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground text-right max-w-48 truncate">{value}</span>
     </div>
   );
 }
@@ -28,10 +28,10 @@ export function StaffEmploymentCard({ staff }: StaffEmploymentCardProps) {
   const roleLabel = staff.role === 'DRIVER' ? 'Driver' : 'Conductor';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-      <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-        <Briefcase className="w-4 h-4 text-gray-500" />
-        <h2 className="text-sm font-semibold text-gray-900">Employment Details</h2>
+    <div className="bg-card border border-border rounded-lg shadow-sm">
+      <div className="flex items-center gap-2 px-5 py-4 border-b border-border/50">
+        <Briefcase className="w-4 h-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold text-foreground">Employment Details</h2>
       </div>
 
       <div className="px-5 py-4">

@@ -92,7 +92,7 @@ export default function ServicePermitDetailPage() {
     <>
       <button
         onClick={handleRefresh}
-        className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+        className="inline-flex items-center gap-2 px-3 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
       >
         <RefreshCw className="w-4 h-4" />
         <span className="hidden sm:inline">Refresh</span>
@@ -100,7 +100,7 @@ export default function ServicePermitDetailPage() {
 
       <button
         onClick={handleExport}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-primary rounded-lg hover:bg-primary font-semibold shadow-sm transition-colors"
       >
         <Download className="w-4 h-4" />
         <span className="hidden sm:inline">Export</span>
@@ -113,8 +113,8 @@ export default function ServicePermitDetailPage() {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderWidth: 3 }} />
-          <p className="text-gray-500 text-sm">Loading permit details…</p>
+          <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderWidth: 3 }} />
+          <p className="text-muted-foreground text-sm">Loading permit details…</p>
         </div>
       </div>
     );
@@ -125,14 +125,14 @@ export default function ServicePermitDetailPage() {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center max-w-md">
-          <div className="bg-red-100 text-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-destructive/15 text-destructive w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Permit not found</h2>
-          <p className="text-sm text-gray-500 mb-6">{error ?? 'The requested permit could not be found.'}</p>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Permit not found</h2>
+          <p className="text-sm text-muted-foreground mb-6">{error ?? 'The requested permit could not be found.'}</p>
           <button
             onClick={handleBack}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary text-sm font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Permits
@@ -146,7 +146,7 @@ export default function ServicePermitDetailPage() {
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Read-only notice */}
-        <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+        <div className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary">
           <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>
             This permit is issued and managed by the Ministry of Transport. All information is

@@ -70,7 +70,7 @@ export function OperatorsTable({
           onClick={() => onEdit(operator)}
           title="Edit operator"
         >
-          <Edit2 className="h-3.5 w-3.5 text-amber-500" />
+          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
         </Button>
         <Button
           variant="ghost"

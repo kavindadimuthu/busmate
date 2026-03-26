@@ -33,10 +33,10 @@ interface BusesTableProps {
 // ── Helpers ───────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE:    'bg-green-50 text-green-700 border-green-200',
-  INACTIVE:  'bg-red-50 text-red-700 border-red-200',
-  PENDING:   'bg-amber-50 text-amber-700 border-amber-200',
-  CANCELLED: 'bg-gray-100 text-gray-600 border-gray-200',
+  ACTIVE:    'bg-success/10 text-success border-success/20',
+  INACTIVE:  'bg-destructive/10 text-destructive border-destructive/20',
+  PENDING:   'bg-warning/10 text-warning border-warning/20',
+  CANCELLED: 'bg-muted text-muted-foreground border-border',
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -81,14 +81,14 @@ export function BusesTable({
         minWidth: 'min-w-[180px]',
         render: (bus) => (
           <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center ring-1 ring-blue-200/60">
-              <Bus className="w-4 h-4 text-blue-600" />
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
+              <Bus className="w-4 h-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+              <p className="text-sm font-semibold text-foreground truncate leading-tight">
                 {bus.ntcRegistrationNumber || bus.ntc_registration_number || 'N/A'}
               </p>
-              <p className="text-[11px] text-gray-400 font-mono leading-tight mt-0.5 truncate">
+              <p className="text-[11px] text-muted-foreground/70 font-mono leading-tight mt-0.5 truncate">
                 #{bus.id?.slice(0, 8)}
               </p>
             </div>
@@ -101,7 +101,7 @@ export function BusesTable({
         sortable: true,
         cellClassName: 'whitespace-nowrap',
         render: (bus) => (
-          <span className="text-sm text-gray-700 font-mono">
+          <span className="text-sm text-foreground/80 font-mono">
             {bus.plateNumber || bus.plate_number || '—'}
           </span>
         ),
@@ -113,8 +113,8 @@ export function BusesTable({
         minWidth: 'min-w-[140px]',
         render: (bus) => (
           <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-            <span className="text-sm text-gray-900 truncate">
+            <Users className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+            <span className="text-sm text-foreground truncate">
               {bus.operator?.name || bus.operatorName || 'Unknown'}
             </span>
           </div>
@@ -125,7 +125,7 @@ export function BusesTable({
         header: 'Model',
         sortable: true,
         render: (bus) => (
-          <span className="text-sm text-gray-700">{bus.model || '—'}</span>
+          <span className="text-sm text-foreground/80">{bus.model || '—'}</span>
         ),
       },
       {
@@ -134,10 +134,10 @@ export function BusesTable({
         sortable: true,
         cellClassName: 'whitespace-nowrap',
         render: (bus) => (
-          <span className="text-sm text-gray-700 tabular-nums">
+          <span className="text-sm text-foreground/80 tabular-nums">
             {bus.capacity ?? '—'}
             {bus.capacity != null && (
-              <span className="text-[11px] text-gray-400 ml-0.5">seats</span>
+              <span className="text-[11px] text-muted-foreground/70 ml-0.5">seats</span>
             )}
           </span>
         ),
@@ -152,7 +152,7 @@ export function BusesTable({
           return (
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                STATUS_STYLES[s] ?? 'bg-gray-100 text-gray-600 border-gray-200'
+                STATUS_STYLES[s] ?? 'bg-muted text-muted-foreground border-border'
               }`}
             >
               {STATUS_ICONS[s] ?? <AlertTriangle className="w-3.5 h-3.5" />}
@@ -167,7 +167,7 @@ export function BusesTable({
         sortable: true,
         cellClassName: 'whitespace-nowrap',
         render: (bus) => (
-          <span className="text-xs text-gray-500 tabular-nums">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {formatDate(bus.createdAt || bus.created_at)}
           </span>
         ),
@@ -181,14 +181,14 @@ export function BusesTable({
           <div className="inline-flex items-center gap-1">
             <button
               onClick={() => onView(bus.id)}
-              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
               title="View Details"
             >
               <Eye className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onEdit(bus.id)}
-              className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-warning/80 hover:bg-warning/10 transition-colors duration-100"
               title="Edit Bus"
             >
               <Edit className="h-3.5 w-3.5" />
@@ -201,7 +201,7 @@ export function BusesTable({
                     bus.ntcRegistrationNumber || bus.ntc_registration_number || 'Unknown',
                   )
                 }
-                className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors duration-100"
+                className="p-1.5 rounded-lg text-success/80 hover:bg-success/10 transition-colors duration-100"
                 title="Assign to Route"
               >
                 <Settings className="h-3.5 w-3.5" />
@@ -214,7 +214,7 @@ export function BusesTable({
                   bus.ntcRegistrationNumber || bus.ntc_registration_number || 'Unknown',
                 )
               }
-              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
               title="Delete Bus"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -239,11 +239,11 @@ export function BusesTable({
       showRefreshing={loading && buses.length > 0}
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <Bus className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Bus className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No buses found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No buses found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {hasActiveFilters
               ? 'No buses match your current filters. Try adjusting your search criteria.'
               : 'No buses have been registered yet.'}

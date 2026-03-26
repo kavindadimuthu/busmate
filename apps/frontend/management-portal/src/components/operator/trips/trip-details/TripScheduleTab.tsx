@@ -32,12 +32,12 @@ function formatTime(t?: string) {
 
 function StatusBadge({ status }: { status?: string }) {
   const cfgs: Record<string, string> = {
-    ACTIVE:    'bg-green-100 text-green-800',
-    INACTIVE:  'bg-gray-100 text-gray-700',
-    DRAFT:     'bg-yellow-100 text-yellow-800',
-    SUSPENDED: 'bg-red-100 text-red-700',
+    ACTIVE:    'bg-success/15 text-success',
+    INACTIVE:  'bg-muted text-foreground/80',
+    DRAFT:     'bg-warning/15 text-warning',
+    SUSPENDED: 'bg-destructive/15 text-destructive',
   };
-  const cls = cfgs[status ?? ''] ?? 'bg-gray-100 text-gray-700';
+  const cls = cfgs[status ?? ''] ?? 'bg-muted text-foreground/80';
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
       {status ?? 'Unknown'}
@@ -49,9 +49,9 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
   if (!schedule) {
     return (
       <div className="text-center py-12">
-        <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium text-gray-700 mb-1">No Schedule Information</h3>
-        <p className="text-sm text-gray-500">Schedule details are not available for this trip.</p>
+        <Calendar className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-medium text-foreground/80 mb-1">No Schedule Information</h3>
+        <p className="text-sm text-muted-foreground">Schedule details are not available for this trip.</p>
       </div>
     );
   }
@@ -59,9 +59,9 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
   return (
     <div className="space-y-6">
       {/* Schedule overview */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-gray-800">{schedule.name}</h3>
+          <h3 className="text-base font-semibold text-foreground">{schedule.name}</h3>
           <StatusBadge status={schedule.status} />
         </div>
 
@@ -70,8 +70,8 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
           <div className="flex items-start gap-3">
             <Clock className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Scheduled Departure</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Scheduled Departure</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">
                 {formatTime(schedule.scheduledDepartureTime)}
               </p>
             </div>
@@ -79,10 +79,10 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
 
           {/* Arrival time */}
           <div className="flex items-start gap-3">
-            <Clock className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+            <Clock className="w-5 h-5 text-success/80 mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Scheduled Arrival</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Scheduled Arrival</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">
                 {formatTime(schedule.scheduledArrivalTime)}
               </p>
             </div>
@@ -90,10 +90,10 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
 
           {/* Effective dates */}
           <div className="flex items-start gap-3 sm:col-span-2 lg:col-span-1">
-            <Calendar className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
+            <Calendar className="w-5 h-5 text-primary/70 mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Effective Period</p>
-              <p className="text-sm font-semibold text-gray-800 mt-0.5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Effective Period</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">
                 {formatDate(schedule.effectiveFrom)}
                 {schedule.effectiveTo ? ` → ${formatDate(schedule.effectiveTo)}` : ' (ongoing)'}
               </p>
@@ -102,15 +102,15 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
         </div>
 
         {schedule.description && (
-          <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg px-4 py-3">
+          <p className="mt-4 text-sm text-muted-foreground bg-muted rounded-lg px-4 py-3">
             {schedule.description}
           </p>
         )}
       </div>
 
       {/* Operating days */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h3 className="text-base font-semibold text-gray-800 mb-4">Operating Days</h3>
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h3 className="text-base font-semibold text-foreground mb-4">Operating Days</h3>
         <div className="flex gap-2 flex-wrap">
           {DAY_SHORT.map((short, idx) => {
             const active = schedule.operatingDays.includes(idx);
@@ -119,8 +119,8 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
                 key={idx}
                 className={`w-10 h-10 rounded-full flex flex-col items-center justify-center text-xs font-semibold border-2 transition-colors ${
                   active
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-gray-50 border-gray-200 text-gray-400'
+                    ? 'bg-primary border-primary text-white'
+                    : 'bg-muted border-border text-muted-foreground/70'
                 }`}
                 title={DAY_NAMES[idx]}
               >
@@ -129,9 +129,9 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
             );
           })}
         </div>
-        <p className="mt-3 text-sm text-gray-500">
+        <p className="mt-3 text-sm text-muted-foreground">
           Operates on:{' '}
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-foreground/80">
             {schedule.operatingDays
               .sort()
               .map((d) => DAY_NAMES[d])
@@ -141,47 +141,47 @@ export function TripScheduleTab({ trip, schedule }: TripScheduleTabProps) {
       </div>
 
       {/* This trip's actual times */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h3 className="text-base font-semibold text-gray-800 mb-4">
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Actual Times for This Trip
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">Departure</p>
+          <div className="bg-muted rounded-lg p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">Departure</p>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Scheduled</span>
-                <span className="text-xs font-medium text-gray-800">
+                <span className="text-xs text-muted-foreground">Scheduled</span>
+                <span className="text-xs font-medium text-foreground">
                   {formatTime(trip.scheduledDepartureTime)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Actual</span>
-                <span className="text-xs font-medium text-emerald-700">
+                <span className="text-xs text-muted-foreground">Actual</span>
+                <span className="text-xs font-medium text-success">
                   {trip.actualDepartureTime ? formatTime(trip.actualDepartureTime) : 'Not recorded'}
                 </span>
               </div>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">Arrival</p>
+          <div className="bg-muted rounded-lg p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">Arrival</p>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Scheduled</span>
-                <span className="text-xs font-medium text-gray-800">
+                <span className="text-xs text-muted-foreground">Scheduled</span>
+                <span className="text-xs font-medium text-foreground">
                   {formatTime(trip.scheduledArrivalTime)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Actual</span>
-                <span className="text-xs font-medium text-emerald-700">
+                <span className="text-xs text-muted-foreground">Actual</span>
+                <span className="text-xs font-medium text-success">
                   {trip.actualArrivalTime ? formatTime(trip.actualArrivalTime) : 'Not recorded'}
                 </span>
               </div>
             </div>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+        <div className="mt-3 flex items-center gap-2 text-xs text-primary bg-primary/10 rounded-lg px-3 py-2">
           <CheckCircle className="w-4 h-4 shrink-0" />
           <span>Actual times are recorded automatically by the system when drivers depart and arrive.</span>
         </div>

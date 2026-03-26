@@ -163,7 +163,7 @@ function BusMarker({ bus, isSelected, onClick }: BusMarkerProps) {
     >
       {/* Outer ring for selection */}
       {isSelected && (
-        <div className="absolute inset-0 -m-2 rounded-full bg-blue-500/20 animate-ping" />
+        <div className="absolute inset-0 -m-2 rounded-full bg-primary/80/20 animate-ping" />
       )}
 
       {/* Main marker */}
@@ -200,7 +200,7 @@ function BusMarker({ bus, isSelected, onClick }: BusMarkerProps) {
       {/* Speed indicator for moving buses */}
       {isOnline && isMoving && (
         <div
-          className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white px-1.5 py-0.5 rounded text-xs font-medium shadow whitespace-nowrap"
+          className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-card px-1.5 py-0.5 rounded text-xs font-medium shadow whitespace-nowrap"
         >
           {bus.location.speed} km/h
         </div>
@@ -239,62 +239,62 @@ function MapControls({
   return (
     <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
       {/* View Mode Toggle */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 flex flex-col">
+      <div className="bg-card rounded-lg shadow-lg border border-border p-1 flex flex-col">
         <button
           onClick={() => onViewModeChange(viewMode === 'fullscreen' ? 'standard' : 'fullscreen')}
-          className="p-2 hover:bg-gray-100 rounded transition-colors"
+          className="p-2 hover:bg-muted rounded transition-colors"
           title={viewMode === 'fullscreen' ? 'Exit fullscreen' : 'Fullscreen'}
         >
           {viewMode === 'fullscreen' ? (
-            <Minimize2 className="h-4 w-4 text-gray-700" />
+            <Minimize2 className="h-4 w-4 text-foreground/80" />
           ) : (
-            <Maximize2 className="h-4 w-4 text-gray-700" />
+            <Maximize2 className="h-4 w-4 text-foreground/80" />
           )}
         </button>
       </div>
 
       {/* Zoom Controls */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 flex flex-col">
+      <div className="bg-card rounded-lg shadow-lg border border-border p-1 flex flex-col">
         <button
           onClick={onZoomIn}
-          className="p-2 hover:bg-gray-100 rounded-t transition-colors border-b border-gray-100"
+          className="p-2 hover:bg-muted rounded-t transition-colors border-b border-border/50"
           title="Zoom in"
         >
-          <ZoomIn className="h-4 w-4 text-gray-700" />
+          <ZoomIn className="h-4 w-4 text-foreground/80" />
         </button>
         <button
           onClick={onZoomOut}
-          className="p-2 hover:bg-gray-100 rounded-b transition-colors"
+          className="p-2 hover:bg-muted rounded-b transition-colors"
           title="Zoom out"
         >
-          <ZoomOut className="h-4 w-4 text-gray-700" />
+          <ZoomOut className="h-4 w-4 text-foreground/80" />
         </button>
       </div>
 
       {/* Other Controls */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 flex flex-col">
+      <div className="bg-card rounded-lg shadow-lg border border-border p-1 flex flex-col">
         <button
           onClick={onResetView}
-          className="p-2 hover:bg-gray-100 rounded-t transition-colors border-b border-gray-100"
+          className="p-2 hover:bg-muted rounded-t transition-colors border-b border-border/50"
           title="Reset view"
         >
-          <Crosshair className="h-4 w-4 text-gray-700" />
+          <Crosshair className="h-4 w-4 text-foreground/80" />
         </button>
         <button
           onClick={onToggleRoutes}
-          className={`p-2 hover:bg-gray-100 transition-colors border-b border-gray-100 ${showRoutes ? 'bg-blue-50' : ''
+          className={`p-2 hover:bg-muted transition-colors border-b border-border/50 ${showRoutes ? 'bg-primary/10' : ''
             }`}
           title="Toggle route paths"
         >
-          <MapIcon className={`h-4 w-4 ${showRoutes ? 'text-blue-600' : 'text-gray-700'}`} />
+          <MapIcon className={`h-4 w-4 ${showRoutes ? 'text-primary' : 'text-foreground/80'}`} />
         </button>
         <button
           onClick={onToggleTraffic}
-          className={`p-2 hover:bg-gray-100 rounded-b transition-colors ${showTraffic ? 'bg-blue-50' : ''
+          className={`p-2 hover:bg-muted rounded-b transition-colors ${showTraffic ? 'bg-primary/10' : ''
             }`}
           title="Toggle traffic layer"
         >
-          <Layers className={`h-4 w-4 ${showTraffic ? 'text-blue-600' : 'text-gray-700'}`} />
+          <Layers className={`h-4 w-4 ${showTraffic ? 'text-primary' : 'text-foreground/80'}`} />
         </button>
       </div>
     </div>
@@ -523,19 +523,19 @@ export function TrackingMap({
   const containerClass = useMemo(() => {
     switch (viewMode) {
       case 'fullscreen':
-        return 'w-full h-full bg-white relative';
+        return 'w-full h-full bg-card relative';
       case 'split':
       default:
-        return 'w-full h-full bg-white rounded-xl border border-gray-200 shadow-sm relative';
+        return 'w-full h-full bg-card rounded-xl border border-border shadow-sm relative';
     }
   }, [viewMode]);
 
   if (!isLoaded) {
     return (
-      <div className={`${containerClass} flex items-center justify-center bg-gray-100`}>
+      <div className={`${containerClass} flex items-center justify-center bg-muted`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4" />
-          <p className="text-gray-600">Loading map...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading map...</p>
         </div>
       </div>
     );
@@ -545,10 +545,10 @@ export function TrackingMap({
     <div className={`${containerClass} overflow-hidden shadow-sm`}>
       {/* Loading overlay */}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg px-4 py-3 flex items-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent" />
-            <span className="text-sm text-gray-600">Updating locations...</span>
+        <div className="absolute inset-0 bg-card/50 z-20 flex items-center justify-center">
+          <div className="bg-card rounded-lg shadow-lg px-4 py-3 flex items-center gap-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
+            <span className="text-sm text-muted-foreground">Updating locations...</span>
           </div>
         </div>
       )}
@@ -635,34 +635,34 @@ export function TrackingMap({
       />
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-10">
-        <h4 className="text-xs font-semibold text-gray-700 mb-2">Legend</h4>
+      <div className="absolute bottom-4 left-4 bg-card rounded-lg shadow-lg border border-border p-3 z-10">
+        <h4 className="text-xs font-semibold text-foreground/80 mb-2">Legend</h4>
         <div className="space-y-1.5 text-xs">
           {/* Bus Status */}
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-green-600" />
-            <span className="text-gray-600">Moving</span>
+            <div className="w-4 h-4 rounded-full bg-success border-2 border-success" />
+            <span className="text-muted-foreground">Moving</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-gray-500 border-2 border-gray-600" />
-            <span className="text-gray-600">Idle/Stopped</span>
+            <div className="w-4 h-4 rounded-full bg-muted-foreground/20 border-2 border-border" />
+            <span className="text-muted-foreground">Idle/Stopped</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-amber-600" />
-            <span className="text-gray-600">Delayed</span>
+            <div className="w-4 h-4 rounded-full bg-warning border-2 border-warning" />
+            <span className="text-muted-foreground">Delayed</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-red-600" />
-            <span className="text-gray-600">Offline</span>
+            <div className="w-4 h-4 rounded-full bg-destructive border-2 border-destructive" />
+            <span className="text-muted-foreground">Offline</span>
           </div>
 
           {/* Route Paths */}
           {showRoutes && activeRoutes.length > 0 && (
             <>
-              <div className="border-t border-gray-200 my-1.5" />
+              <div className="border-t border-border my-1.5" />
               <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-blue-500" />
-                <span className="text-gray-600">Route Path</span>
+                <div className="w-4 h-0.5 bg-primary/80" />
+                <span className="text-muted-foreground">Route Path</span>
               </div>
             </>
           )}
@@ -670,9 +670,9 @@ export function TrackingMap({
       </div>
 
       {/* Bus Count Badge */}
-      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 z-10 flex items-center gap-2">
-        <Bus className="h-4 w-4 text-blue-600" />
-        <span className="text-sm font-medium text-gray-700">
+      <div className="absolute top-4 left-4 bg-card rounded-lg shadow-lg border border-border px-3 py-2 z-10 flex items-center gap-2">
+        <Bus className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium text-foreground/80">
           {buses.length} {buses.length === 1 ? 'bus' : 'buses'}
         </span>
       </div>
@@ -680,7 +680,7 @@ export function TrackingMap({
       {/* Fullscreen exit hint */}
       {viewMode === 'fullscreen' && (
         <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs px-3 py-1.5 rounded-lg z-10">
-          Press <kbd className="bg-white/20 px-1.5 py-0.5 rounded mx-1">Esc</kbd> or click minimize to exit fullscreen
+          Press <kbd className="bg-card/20 px-1.5 py-0.5 rounded mx-1">Esc</kbd> or click minimize to exit fullscreen
         </div>
       )}
     </div>

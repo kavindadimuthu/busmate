@@ -25,10 +25,10 @@ function formatDate(dateString?: string): string {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  INACTIVE: "bg-red-50 text-red-600 border-red-200",
-  PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  CANCELLED: "bg-gray-100 text-gray-600 border-gray-200",
+  ACTIVE: "bg-success/10 text-success border-success/20",
+  INACTIVE: "bg-destructive/10 text-destructive border-destructive/20",
+  PENDING: "bg-warning/10 text-warning border-warning/20",
+  CANCELLED: "bg-muted text-muted-foreground border-border",
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -112,7 +112,7 @@ export const busesColumns: ColumnDef<any>[] = [
       return (
         <span
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-            STATUS_STYLES[s] ?? "bg-gray-100 text-gray-600 border-gray-200"
+            STATUS_STYLES[s] ?? "bg-muted text-muted-foreground border-border"
           }`}
         >
           {STATUS_ICONS[s] ?? <AlertTriangle className="w-3.5 h-3.5" />}

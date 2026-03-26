@@ -50,7 +50,7 @@ interface FilterChipProps {
   colorClass?: string;
 }
 
-function FilterChip({ label, onRemove, colorClass = 'bg-blue-50 text-blue-700 border-blue-200' }: FilterChipProps) {
+function FilterChip({ label, onRemove, colorClass = 'bg-primary/10 text-primary border-primary/20' }: FilterChipProps) {
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
       {label}
@@ -127,7 +127,7 @@ export function TrackingSearchFilters({
         key: 'route',
         label: `Route: ${route?.name || filters.routeId}`,
         onRemove: () => updateFilter('routeId', 'all'),
-        color: 'bg-purple-50 text-purple-700 border-purple-200',
+        color: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       });
     }
 
@@ -137,7 +137,7 @@ export function TrackingSearchFilters({
         key: 'operator',
         label: `Operator: ${operator?.name || filters.operatorId}`,
         onRemove: () => updateFilter('operatorId', 'all'),
-        color: 'bg-teal-50 text-teal-700 border-teal-200',
+        color: 'bg-primary/10 text-teal-700 border-teal-200',
       });
     }
 
@@ -146,7 +146,7 @@ export function TrackingSearchFilters({
         key: 'tripStatus',
         label: `Status: ${filters.tripStatus.replace('_', ' ')}`,
         onRemove: () => updateFilter('tripStatus', 'all'),
-        color: 'bg-amber-50 text-amber-700 border-amber-200',
+        color: 'bg-warning/10 text-warning border-warning/20',
       });
     }
 
@@ -156,8 +156,8 @@ export function TrackingSearchFilters({
         label: `Device: ${filters.deviceStatus}`,
         onRemove: () => updateFilter('deviceStatus', 'all'),
         color: filters.deviceStatus === 'online' 
-          ? 'bg-green-50 text-green-700 border-green-200'
-          : 'bg-red-50 text-red-700 border-red-200',
+          ? 'bg-success/10 text-success border-success/20'
+          : 'bg-destructive/10 text-destructive border-destructive/20',
       });
     }
 
@@ -166,7 +166,7 @@ export function TrackingSearchFilters({
         key: 'movement',
         label: `Movement: ${filters.movementStatus}`,
         onRemove: () => updateFilter('movementStatus', 'all'),
-        color: 'bg-blue-50 text-blue-700 border-blue-200',
+        color: 'bg-primary/10 text-primary border-primary/20',
       });
     }
 
@@ -175,7 +175,7 @@ export function TrackingSearchFilters({
         key: 'activeOnly',
         label: 'Active buses only',
         onRemove: () => updateFilter('showOnlyActive', false),
-        color: 'bg-green-50 text-green-700 border-green-200',
+        color: 'bg-success/10 text-success border-success/20',
       });
     }
 
@@ -184,7 +184,7 @@ export function TrackingSearchFilters({
         key: 'hideOffline',
         label: 'Hiding offline',
         onRemove: () => updateFilter('showOfflineDevices', true),
-        color: 'bg-gray-50 text-gray-700 border-gray-200',
+        color: 'bg-muted text-foreground/80 border-border',
       });
     }
 
@@ -194,23 +194,23 @@ export function TrackingSearchFilters({
   const activeChips = getActiveChips();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div className="bg-card rounded-xl border border-border shadow-sm">
       {/* Main Search Row */}
       <div className="p-4 flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
           <input
             type="text"
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             placeholder="Search by bus number, route, or operator..."
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
           />
           {filters.search && (
             <button
               onClick={() => updateFilter('search', '')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-muted-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -224,7 +224,7 @@ export function TrackingSearchFilters({
             <select
               value={filters.routeId}
               onChange={(e) => updateFilter('routeId', e.target.value)}
-              className="appearance-none pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer min-w-[180px]"
+              className="appearance-none pl-9 pr-8 py-2.5 border border-border rounded-lg text-sm bg-card focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer min-w-[180px]"
             >
               <option value="all">All Routes</option>
               {filterOptions.routes.map((route) => (
@@ -233,8 +233,8 @@ export function TrackingSearchFilters({
                 </option>
               ))}
             </select>
-            <Route className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <Route className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
           </div>
 
           {/* Status Filter */}
@@ -242,7 +242,7 @@ export function TrackingSearchFilters({
             <select
               value={filters.tripStatus}
               onChange={(e) => updateFilter('tripStatus', e.target.value)}
-              className="appearance-none pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer min-w-[140px]"
+              className="appearance-none pl-9 pr-8 py-2.5 border border-border rounded-lg text-sm bg-card focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer min-w-[140px]"
             >
               <option value="all">All Statuses</option>
               <option value="in_transit">In Transit</option>
@@ -251,8 +251,8 @@ export function TrackingSearchFilters({
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
             </select>
-            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
           </div>
 
           {/* Device Status Filter */}
@@ -260,14 +260,14 @@ export function TrackingSearchFilters({
             <select
               value={filters.deviceStatus}
               onChange={(e) => updateFilter('deviceStatus', e.target.value)}
-              className="appearance-none pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer min-w-[130px]"
+              className="appearance-none pl-9 pr-8 py-2.5 border border-border rounded-lg text-sm bg-card focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer min-w-[130px]"
             >
               <option value="all">All Devices</option>
               <option value="online">Online</option>
               <option value="offline">Offline</option>
             </select>
-            <Wifi className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <Wifi className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
           </div>
 
           {/* Advanced Filters Toggle */}
@@ -275,14 +275,14 @@ export function TrackingSearchFilters({
             onClick={() => setShowAdvanced(!showAdvanced)}
             className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition-colors ${
               showAdvanced || activeFilterCount > 0
-                ? 'border-blue-300 bg-blue-50 text-blue-700'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-border bg-card text-foreground/80 hover:bg-muted'
             }`}
           >
             <Filter className="h-4 w-4" />
             Filters
             {activeFilterCount > 0 && (
-              <span className="bg-blue-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+              <span className="bg-primary text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
                 {activeFilterCount}
               </span>
             )}
@@ -293,7 +293,7 @@ export function TrackingSearchFilters({
             <button
               onClick={onRefresh}
               disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary disabled:opacity-50 transition-colors"
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
@@ -304,17 +304,17 @@ export function TrackingSearchFilters({
 
       {/* Advanced Filters Panel */}
       {showAdvanced && (
-        <div className="px-4 pb-4 pt-0 border-t border-gray-100">
+        <div className="px-4 pb-4 pt-0 border-t border-border/50">
           <div className="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Operator Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 Operator
               </label>
               <select
                 value={filters.operatorId}
                 onChange={(e) => updateFilter('operatorId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Operators</option>
                 {filterOptions.operators.map((op) => (
@@ -327,13 +327,13 @@ export function TrackingSearchFilters({
 
             {/* Movement Status */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 Movement Status
               </label>
               <select
                 value={filters.movementStatus}
                 onChange={(e) => updateFilter('movementStatus', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All</option>
                 <option value="moving">Moving</option>
@@ -344,7 +344,7 @@ export function TrackingSearchFilters({
 
             {/* Auto-refresh Settings */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 Auto-refresh Interval
               </label>
               <div className="flex gap-2">
@@ -352,7 +352,7 @@ export function TrackingSearchFilters({
                   value={refreshInterval}
                   onChange={(e) => onRefreshIntervalChange(Number(e.target.value))}
                   disabled={!autoRefresh}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                  className="flex-1 px-3 py-2 border border-border rounded-lg text-sm bg-card focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                 >
                   <option value={5}>5 seconds</option>
                   <option value={10}>10 seconds</option>
@@ -363,8 +363,8 @@ export function TrackingSearchFilters({
                   onClick={onAutoRefreshToggle}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     autoRefresh
-                      ? 'bg-green-100 text-green-700 border border-green-200'
-                      : 'bg-gray-100 text-gray-600 border border-gray-200'
+                      ? 'bg-success/15 text-success border border-success/20'
+                      : 'bg-muted text-muted-foreground border border-border'
                   }`}
                 >
                   {autoRefresh ? 'On' : 'Off'}
@@ -374,7 +374,7 @@ export function TrackingSearchFilters({
 
             {/* Toggle Options */}
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 Display Options
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -382,18 +382,18 @@ export function TrackingSearchFilters({
                   type="checkbox"
                   checked={filters.showOnlyActive}
                   onChange={(e) => updateFilter('showOnlyActive', e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-border text-primary focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Show only active buses</span>
+                <span className="text-sm text-foreground/80">Show only active buses</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={filters.showOfflineDevices}
                   onChange={(e) => updateFilter('showOfflineDevices', e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-border text-primary focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Show offline devices</span>
+                <span className="text-sm text-foreground/80">Show offline devices</span>
               </label>
             </div>
           </div>
@@ -402,14 +402,14 @@ export function TrackingSearchFilters({
 
       {/* Active Filters Bar */}
       {(activeChips.length > 0 || filters.search) && (
-        <div className="px-4 pb-3 pt-0 flex flex-wrap items-center gap-2 border-t border-gray-100">
-          <span className="text-xs text-gray-500 pt-3">Active filters:</span>
+        <div className="px-4 pb-3 pt-0 flex flex-wrap items-center gap-2 border-t border-border/50">
+          <span className="text-xs text-muted-foreground pt-3">Active filters:</span>
           <div className="flex flex-wrap gap-2 pt-3">
             {filters.search && (
               <FilterChip
                 label={`Search: "${filters.search}"`}
                 onRemove={() => updateFilter('search', '')}
-                colorClass="bg-gray-100 text-gray-700 border-gray-200"
+                colorClass="bg-muted text-foreground/80 border-border"
               />
             )}
             {activeChips.map((chip) => (
@@ -424,7 +424,7 @@ export function TrackingSearchFilters({
           {(activeChips.length > 0 || filters.search) && (
             <button
               onClick={clearAllFilters}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium ml-auto pt-3"
+              className="text-xs text-primary hover:text-primary font-medium ml-auto pt-3"
             >
               Clear all
             </button>
@@ -433,15 +433,15 @@ export function TrackingSearchFilters({
       )}
 
       {/* Results Count */}
-      <div className="px-4 py-2.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">
+      <div className="px-4 py-2.5 bg-muted border-t border-border flex items-center justify-between text-xs text-muted-foreground">
         <span>
           Showing <strong>{filteredCount}</strong> of <strong>{totalCount}</strong> tracked buses
         </span>
         {autoRefresh && (
           <span className="flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success/50 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
             </span>
             Live updates every {refreshInterval}s
           </span>

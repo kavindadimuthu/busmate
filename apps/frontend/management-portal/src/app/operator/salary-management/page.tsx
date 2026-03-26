@@ -228,7 +228,7 @@ export default function SalaryManagementPage() {
         key: 'date',
         label: labels[dateFilter] ?? dateFilter,
         onRemove: () => setDateFilter('all'),
-        colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        colorClass: 'bg-primary/10 text-primary border-primary/20',
       });
     }
 
@@ -238,7 +238,7 @@ export default function SalaryManagementPage() {
         key: 'role',
         label: role?.label ?? roleFilter,
         onRemove: () => setRoleFilter('all'),
-        colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
         icon: <Shield className="h-3 w-3 opacity-70" />,
       });
     }
@@ -249,7 +249,7 @@ export default function SalaryManagementPage() {
         key: 'status',
         label: st?.label ?? statusFilter,
         onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-green-50 text-green-700 border-green-200',
+        colorClass: 'bg-success/10 text-success border-success/20',
       });
     }
 
@@ -259,7 +259,7 @@ export default function SalaryManagementPage() {
         key: 'performance',
         label: perf?.label ?? performanceFilter,
         onRemove: () => setPerformanceFilter('all'),
-        colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        colorClass: 'bg-warning/10 text-warning border-warning/20',
         icon: <Award className="h-3 w-3 opacity-70" />,
       });
     }
@@ -269,7 +269,7 @@ export default function SalaryManagementPage() {
         key: 'bus',
         label: busFilter,
         onRemove: () => setBusFilter('all'),
-        colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+        colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
         icon: <Bus className="h-3 w-3 opacity-70" />,
       });
     }
@@ -279,7 +279,7 @@ export default function SalaryManagementPage() {
         key: 'route',
         label: routeFilter,
         onRemove: () => setRouteFilter('all'),
-        colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
         icon: <MapPin className="h-3 w-3 opacity-70" />,
       });
     }
@@ -334,7 +334,7 @@ export default function SalaryManagementPage() {
                     { value: '30d', label: 'Last 30 Days' },
                   ]}
                   allLabel="All Dates"
-                  activeColorClass="bg-blue-50 border-blue-300 text-blue-800"
+                  activeColorClass="bg-primary/10 border-primary/30 text-primary"
                 />
                 <SelectFilter
                   value={roleFilter}

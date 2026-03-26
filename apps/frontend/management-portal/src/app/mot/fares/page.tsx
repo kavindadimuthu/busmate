@@ -1,24 +1,53 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useMemo, useCallback } from 'react';
 import { Plus, Download, Grid3X3, FileText } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { Tabs, TabsList, TabsTrigger, TabsContent, Button, FilterBar, FilterSelect } from '@busmate/ui';
-import {
-  getActiveAmendment,
-  getFareStatistics,
-  getAmendmentSummaries,
-  getAmendmentStatusOptions,
-  PermitType,
-} from '@/data/mot/fares';
+import { Tabs, TabsList, TabsTrigger, TabsContent, Button } from '@busmate/ui';
 import { FareMatrixTable } from '@/components/mot/fares/FareMatrixTable';
 import { FareMatrixFilters } from '@/components/mot/fares/FareMatrixFilters';
 import { FaresStatsCardsNew } from '@/components/mot/fares/fares-stats-cards';
 import { FaresAmendmentsTableNew } from '@/components/mot/fares/fares-amendments-table';
+import { FaresFilterBar } from '@/components/mot/fares/fares-filter-bar';
+import { useFares } from '@/components/mot/fares/useFares';
 
 export default function FaresPage() {
   const router = useRouter();
+
+  const {
+    activeAmendment,
+    stats,
+    statusOptions,
+    activeView,
+    setActiveView,
+    maxStages,
+    stageFrom,
+    setStageFrom,
+    stageTo,
+    setStageTo,
+    searchFare,
+    setSearchFare,
+    selectedPermitTypes,
+    setSelectedPermitTypes,
+    handleClearMatrixFilters,
+    amendmentSearch,
+    handleAmendmentSearchChange,
+    amendmentStatusFilter,
+    handleAmendmentStatusChange,
+    filteredAmendments,
+    paginatedAmendments,
+    amendmentSortColumn,
+    amendmentSortDir,
+    handleAmendmentSort,
+    amendmentPage,
+    setAmendmentPage,
+    amendmentPageSize,
+    handleAmendmentPageSizeChange,
+    activeAmendmentFilterCount,
+    handleClearAmendmentFilters,
+    handleViewAmendment,
+    handleExport,
+  } = useFares();
 
   useSetPageMetadata({
     title: 'Fare Structures',
@@ -27,99 +56,6 @@ export default function FaresPage() {
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Fares' }],
   });
-
-  // Data
-  const activeAmendment = useMemo(() => getActiveAmendment(), []);
-  const stats = useMemo(() => getFareStatistics(), []);
-  const allSummaries = useMemo(() => getAmendmentSummaries(), []);
-  const statusOptions = useMemo(() => getAmendmentStatusOptions(), []);
-
-  // View toggle
-  const [activeView, setActiveView] = useState('matrix');
-
-  // ── Matrix filters ──────────────────────────────────────────────
-  const maxStages = activeAmendment?.maxStages ?? 350;
-  const [stageFrom, setStageFrom] = useState(1);
-  const [stageTo, setStageTo] = useState(Math.min(50, maxStages));
-  const [searchFare, setSearchFare] = useState('');
-  const [selectedPermitTypes, setSelectedPermitTypes] = useState<PermitType[]>([]);
-
-  const handleClearMatrixFilters = useCallback(() => {
-    setStageFrom(1);
-    setStageTo(Math.min(50, maxStages));
-    setSearchFare('');
-    setSelectedPermitTypes([]);
-  }, [maxStages]);
-
-  // ── Amendments state ──────────────────────────────────────────
-  const [amendmentSearch, setAmendmentSearch] = useState('');
-  const [amendmentStatusFilter, setAmendmentStatusFilter] = useState('__all__');
-  const [amendmentSortColumn, setAmendmentSortColumn] = useState<string | null>('effectiveDate');
-  const [amendmentSortDir, setAmendmentSortDir] = useState<'asc' | 'desc'>('desc');
-  const [amendmentPage, setAmendmentPage] = useState(1);
-  const [amendmentPageSize, setAmendmentPageSize] = useState(10);
-
-  const filteredAmendments = useMemo(() => {
-    let filtered = allSummaries;
-
-    if (amendmentSearch) {
-      const term = amendmentSearch.toLowerCase();
-      filtered = filtered.filter(
-        (a) =>
-          a.referenceNumber.toLowerCase().includes(term) ||
-          a.title.toLowerCase().includes(term) ||
-          a.gazetteNumber.toLowerCase().includes(term)
-      );
-    }
-
-    if (amendmentStatusFilter !== '__all__') {
-      filtered = filtered.filter((a) => a.status === amendmentStatusFilter);
-    }
-
-    if (amendmentSortColumn) {
-      filtered = [...filtered].sort((a, b) => {
-        const aVal = String((a as any)[amendmentSortColumn] ?? '');
-        const bVal = String((b as any)[amendmentSortColumn] ?? '');
-        const comparison = aVal.localeCompare(bVal);
-        return amendmentSortDir === 'asc' ? comparison : -comparison;
-      });
-    }
-
-    return filtered;
-  }, [allSummaries, amendmentSearch, amendmentStatusFilter, amendmentSortColumn, amendmentSortDir]);
-
-  const paginatedAmendments = useMemo(() => {
-    const start = (amendmentPage - 1) * amendmentPageSize;
-    return filteredAmendments.slice(start, start + amendmentPageSize);
-  }, [filteredAmendments, amendmentPage, amendmentPageSize]);
-
-  const handleAmendmentSort = useCallback((column: string) => {
-    setAmendmentSortColumn((prev) => {
-      if (prev === column) {
-        setAmendmentSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-        return column;
-      }
-      setAmendmentSortDir('asc');
-      return column;
-    });
-  }, []);
-
-  const handleViewAmendment = useCallback(
-    (amendment: any) => router.push(`/mot/fares/amendments/${amendment.id}`),
-    [router]
-  );
-
-  const activeAmendmentFilterCount = [amendmentStatusFilter !== '__all__'].filter(Boolean).length;
-
-  const handleClearAmendmentFilters = useCallback(() => {
-    setAmendmentSearch('');
-    setAmendmentStatusFilter('__all__');
-    setAmendmentPage(1);
-  }, []);
-
-  const handleExport = useCallback(() => {
-    alert('Export feature coming soon');
-  }, []);
 
   useSetPageActions(
     <div className="flex items-center gap-2 shrink-0">
@@ -131,15 +67,13 @@ export default function FaresPage() {
         <Download className="w-4 h-4" />
         Export
       </Button>
-    </div>
+    </div>,
   );
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <FaresStatsCardsNew stats={stats} />
 
-      {/* Tabbed Views */}
       <Tabs value={activeView} onValueChange={setActiveView}>
         <TabsList>
           <TabsTrigger value="matrix">
@@ -152,17 +86,15 @@ export default function FaresPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Matrix View */}
         <TabsContent value="matrix" className="space-y-6 mt-6">
           {activeAmendment && (
             <>
-              {/* Active Amendment Info Bar */}
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-success/10 border border-success/20 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-emerald-800">
+                  <p className="text-sm font-semibold text-success">
                     Current Fare Structure: {activeAmendment.referenceNumber}
                   </p>
-                  <p className="text-xs text-emerald-600 mt-0.5">
+                  <p className="text-xs text-success mt-0.5">
                     {activeAmendment.title} — Effective from{' '}
                     {new Date(activeAmendment.effectiveDate).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -173,7 +105,7 @@ export default function FaresPage() {
                 </div>
                 <button
                   onClick={() => handleViewAmendment(activeAmendment)}
-                  className="text-xs font-medium text-emerald-700 hover:text-emerald-900 hover:underline"
+                  className="text-xs font-medium text-success hover:text-success/70 hover:underline"
                 >
                   View full details
                 </button>
@@ -192,7 +124,7 @@ export default function FaresPage() {
                 onClearAll={handleClearMatrixFilters}
               />
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                 <FareMatrixTable
                   matrix={activeAmendment.matrix}
                   stageFrom={stageFrom}
@@ -205,23 +137,16 @@ export default function FaresPage() {
           )}
         </TabsContent>
 
-        {/* Amendments View */}
         <TabsContent value="amendments" className="space-y-6 mt-6">
-          <FilterBar
+          <FaresFilterBar
             searchValue={amendmentSearch}
-            onSearchChange={(v: string) => { setAmendmentSearch(v); setAmendmentPage(1); }}
-            searchPlaceholder="Search by reference, title, or gazette number…"
-            activeFilterCount={activeAmendmentFilterCount}
+            onSearchChange={handleAmendmentSearchChange}
+            filters={{ status: amendmentStatusFilter }}
+            onFiltersChange={handleAmendmentStatusChange}
             onClearAll={handleClearAmendmentFilters}
-          >
-            <FilterSelect
-              label="Status"
-              value={amendmentStatusFilter}
-              onChange={(v: string) => { setAmendmentStatusFilter(v); setAmendmentPage(1); }}
-              options={statusOptions.map((s: string) => ({ value: s, label: s }))}
-              placeholder="All Statuses"
-            />
-          </FilterBar>
+            statusOptions={statusOptions}
+            activeFilterCount={activeAmendmentFilterCount}
+          />
 
           <FaresAmendmentsTableNew
             data={paginatedAmendments}
@@ -229,7 +154,7 @@ export default function FaresPage() {
             page={amendmentPage}
             pageSize={amendmentPageSize}
             onPageChange={setAmendmentPage}
-            onPageSizeChange={(size: number) => { setAmendmentPageSize(size); setAmendmentPage(1); }}
+            onPageSizeChange={handleAmendmentPageSizeChange}
             sortColumn={amendmentSortColumn}
             sortDirection={amendmentSortDir}
             onSort={handleAmendmentSort}

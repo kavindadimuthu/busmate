@@ -40,8 +40,8 @@ function HealthScoreRing({ score, status }: { score: number; status: string }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-gray-900">{score}</span>
-        <span className="text-xs text-gray-500 font-medium">Health Score</span>
+        <span className="text-3xl font-bold text-foreground">{score}</span>
+        <span className="text-xs text-muted-foreground font-medium">Health Score</span>
       </div>
     </div>
   );
@@ -87,16 +87,16 @@ function QuickNavCard({
   return (
     <Link
       href={href}
-      className="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+      className="group bg-card rounded-xl border border-border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="p-2 rounded-lg bg-gray-50 group-hover:bg-blue-50 transition-colors">
+        <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
           {icon}
         </div>
-        <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground/70 group-hover:text-primary transition-colors" />
       </div>
-      <h3 className="font-semibold text-gray-900 mb-0.5">{title}</h3>
-      <p className="text-xs text-gray-500 mb-3">{subtitle}</p>
+      <h3 className="font-semibold text-foreground mb-0.5">{title}</h3>
+      <p className="text-xs text-muted-foreground mb-3">{subtitle}</p>
       <div className={`text-lg font-bold ${statColor}`}>{stat}</div>
     </Link>
   );
@@ -133,9 +133,9 @@ export function MonitoringOverview({
     return (
       <div className="space-y-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4" />
-            <div className="h-32 bg-gray-100 rounded" />
+          <div key={i} className="bg-card rounded-xl border border-border p-6 animate-pulse">
+            <div className="h-6 bg-secondary rounded w-1/3 mb-4" />
+            <div className="h-32 bg-muted rounded" />
           </div>
         ))}
       </div>
@@ -148,14 +148,14 @@ export function MonitoringOverview({
   const rrSparkData = performanceHistory.slice(-20).map((p) => p.requestRate);
 
   const statusColor = (s: string) =>
-    s === 'healthy' ? 'text-green-600' : s === 'degraded' ? 'text-amber-600' : 'text-red-600';
+    s === 'healthy' ? 'text-success' : s === 'degraded' ? 'text-warning' : 'text-destructive';
 
   return (
     <div className="space-y-6">
       {/* Health Score + Summary Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Health Score Card */}
-        <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center justify-center">
+        <div className="lg:col-span-1 bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center">
           <HealthScoreRing score={healthSummary.healthScore} status={healthSummary.overallStatus} />
           <div className={`mt-2 text-sm font-semibold capitalize ${statusColor(healthSummary.overallStatus)}`}>
             {healthSummary.overallStatus === 'healthy'
@@ -164,7 +164,7 @@ export function MonitoringOverview({
               ? 'Degraded Performance'
               : 'Critical Issues Detected'}
           </div>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground/70 mt-1">
             Uptime: {healthSummary.uptimePercentage}%
           </p>
         </div>
@@ -172,42 +172,42 @@ export function MonitoringOverview({
         {/* KPI Cards */}
         <div className="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* CPU */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Cpu className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-medium text-gray-500">CPU Usage</span>
+              <Cpu className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">CPU Usage</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{healthSummary.currentCpu}%</div>
+            <div className="text-2xl font-bold text-foreground">{healthSummary.currentCpu}%</div>
             <Sparkline data={cpuSparkData} color="#3b82f6" />
           </div>
 
           {/* Memory */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-2">
-              <HardDrive className="h-4 w-4 text-green-600" />
-              <span className="text-xs font-medium text-gray-500">Memory</span>
+              <HardDrive className="h-4 w-4 text-success" />
+              <span className="text-xs font-medium text-muted-foreground">Memory</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{healthSummary.currentMemory}%</div>
+            <div className="text-2xl font-bold text-foreground">{healthSummary.currentMemory}%</div>
             <Sparkline data={memSparkData} color="#22c55e" />
           </div>
 
           {/* Avg Response Time */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-medium text-gray-500">Avg Response</span>
+              <Zap className="h-4 w-4 text-warning" />
+              <span className="text-xs font-medium text-muted-foreground">Avg Response</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{healthSummary.avgResponseTime}ms</div>
+            <div className="text-2xl font-bold text-foreground">{healthSummary.avgResponseTime}ms</div>
             <Sparkline data={rtSparkData} color="#f59e0b" />
           </div>
 
           {/* Request Rate */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-purple-600" />
-              <span className="text-xs font-medium text-gray-500">Requests/sec</span>
+              <TrendingUp className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+              <span className="text-xs font-medium text-muted-foreground">Requests/sec</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{healthSummary.requestRate}</div>
+            <div className="text-2xl font-bold text-foreground">{healthSummary.requestRate}</div>
             <Sparkline data={rrSparkData} color="#a855f7" />
           </div>
         </div>
@@ -215,50 +215,50 @@ export function MonitoringOverview({
 
       {/* Quick Navigation */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Navigation</h3>
+        <h3 className="text-sm font-semibold text-foreground/80 mb-3">Quick Navigation</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <QuickNavCard
             href="/admin/monitoring/performance"
-            icon={<Activity className="h-5 w-5 text-blue-600" />}
+            icon={<Activity className="h-5 w-5 text-primary" />}
             title="Performance Metrics"
             subtitle="CPU, memory, response times, request rates"
             stat={`${latestPerformance?.errorRate.toFixed(1)}% error rate`}
             statColor={
               latestPerformance && latestPerformance.errorRate > 2
-                ? 'text-red-600'
-                : 'text-green-600'
+                ? 'text-destructive'
+                : 'text-success'
             }
           />
           <QuickNavCard
             href="/admin/monitoring/resources"
-            icon={<Database className="h-5 w-5 text-purple-600" />}
+            icon={<Database className="h-5 w-5 text-[hsl(var(--purple-600))]" />}
             title="Resource Usage"
             subtitle="Disk, network, database, sessions"
             stat={`${latestResource?.diskUsage}% disk`}
             statColor={
               latestResource && latestResource.diskUsage > 80
-                ? 'text-red-600'
-                : 'text-green-600'
+                ? 'text-destructive'
+                : 'text-success'
             }
           />
           <QuickNavCard
             href="/admin/monitoring/alerts"
-            icon={<Bell className="h-5 w-5 text-amber-600" />}
+            icon={<Bell className="h-5 w-5 text-warning" />}
             title="Alerts & Notifications"
             subtitle="Thresholds, rules, active alerts"
             stat={`${healthSummary.activeAlerts} active`}
             statColor={
-              healthSummary.criticalAlerts > 0 ? 'text-red-600' : 'text-green-600'
+              healthSummary.criticalAlerts > 0 ? 'text-destructive' : 'text-success'
             }
           />
           <QuickNavCard
             href="/admin/monitoring/api"
-            icon={<Globe className="h-5 w-5 text-green-600" />}
+            icon={<Globe className="h-5 w-5 text-success" />}
             title="API Monitoring"
             subtitle="Endpoints, response times, error rates"
             stat={`${healthSummary.healthyApis}/${healthSummary.totalApis} healthy`}
             statColor={
-              healthSummary.downApis > 0 ? 'text-red-600' : 'text-green-600'
+              healthSummary.downApis > 0 ? 'text-destructive' : 'text-success'
             }
           />
         </div>
@@ -266,39 +266,39 @@ export function MonitoringOverview({
 
       {/* Active Alerts List */}
       {activeAlerts.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border/50 bg-muted/50">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-warning/80" />
               Active Alerts ({activeAlerts.length})
             </h3>
             <Link
               href="/admin/monitoring/alerts"
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-primary hover:text-primary font-medium"
             >
               View All →
             </Link>
           </div>
           <div className="divide-y divide-gray-100">
             {activeAlerts.slice(0, 4).map((alert) => (
-              <div key={alert.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/50 transition-colors">
+              <div key={alert.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/50 transition-colors">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                   alert.severity === 'critical'
-                    ? 'bg-red-500'
+                    ? 'bg-destructive'
                     : alert.severity === 'warning'
-                    ? 'bg-amber-500'
-                    : 'bg-blue-500'
+                    ? 'bg-warning'
+                    : 'bg-primary/80'
                 }`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{alert.title}</p>
-                  <p className="text-xs text-gray-500">{alert.source}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{alert.title}</p>
+                  <p className="text-xs text-muted-foreground">{alert.source}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                   alert.severity === 'critical'
-                    ? 'bg-red-100 text-red-700'
+                    ? 'bg-destructive/15 text-destructive'
                     : alert.severity === 'warning'
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-blue-100 text-blue-700'
+                    ? 'bg-warning/15 text-warning'
+                    : 'bg-primary/15 text-primary'
                 }`}>
                   {alert.severity}
                 </span>
@@ -311,88 +311,88 @@ export function MonitoringOverview({
       {/* Status Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* API Status */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Globe className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">API Status</h3>
+            <Globe className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-foreground">API Status</h3>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <div className="flex items-center justify-center gap-1 text-green-600 mb-1">
+              <div className="flex items-center justify-center gap-1 text-success mb-1">
                 <CheckCircle className="h-4 w-4" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{healthSummary.healthyApis}</div>
-              <div className="text-xs text-gray-500">Healthy</div>
+              <div className="text-xl font-bold text-foreground">{healthSummary.healthyApis}</div>
+              <div className="text-xs text-muted-foreground">Healthy</div>
             </div>
             <div>
-              <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-warning/80 mb-1">
                 <AlertTriangle className="h-4 w-4" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{healthSummary.degradedApis}</div>
-              <div className="text-xs text-gray-500">Degraded</div>
+              <div className="text-xl font-bold text-foreground">{healthSummary.degradedApis}</div>
+              <div className="text-xs text-muted-foreground">Degraded</div>
             </div>
             <div>
-              <div className="flex items-center justify-center gap-1 text-red-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-destructive/80 mb-1">
                 <XCircle className="h-4 w-4" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{healthSummary.downApis}</div>
-              <div className="text-xs text-gray-500">Down</div>
+              <div className="text-xl font-bold text-foreground">{healthSummary.downApis}</div>
+              <div className="text-xs text-muted-foreground">Down</div>
             </div>
           </div>
         </div>
 
         {/* Services Status */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Server className="h-5 w-5 text-purple-600" />
-            <h3 className="font-semibold text-gray-900">Services</h3>
+            <Server className="h-5 w-5 text-[hsl(var(--purple-600))]" />
+            <h3 className="font-semibold text-foreground">Services</h3>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <div className="flex items-center justify-center gap-1 text-green-600 mb-1">
+              <div className="flex items-center justify-center gap-1 text-success mb-1">
                 <CheckCircle className="h-4 w-4" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{healthSummary.healthyServices}</div>
-              <div className="text-xs text-gray-500">Running</div>
+              <div className="text-xl font-bold text-foreground">{healthSummary.healthyServices}</div>
+              <div className="text-xs text-muted-foreground">Running</div>
             </div>
             <div>
-              <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-warning/80 mb-1">
                 <AlertTriangle className="h-4 w-4" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{healthSummary.degradedServices}</div>
-              <div className="text-xs text-gray-500">Degraded</div>
+              <div className="text-xl font-bold text-foreground">{healthSummary.degradedServices}</div>
+              <div className="text-xs text-muted-foreground">Degraded</div>
             </div>
             <div>
-              <div className="flex items-center justify-center gap-1 text-red-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-destructive/80 mb-1">
                 <XCircle className="h-4 w-4" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{healthSummary.downServices}</div>
-              <div className="text-xs text-gray-500">Down</div>
+              <div className="text-xl font-bold text-foreground">{healthSummary.downServices}</div>
+              <div className="text-xs text-muted-foreground">Down</div>
             </div>
           </div>
         </div>
 
         {/* Active Alerts */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Bell className="h-5 w-5 text-red-600" />
-            <h3 className="font-semibold text-gray-900">Active Alerts</h3>
+            <Bell className="h-5 w-5 text-destructive" />
+            <h3 className="font-semibold text-foreground">Active Alerts</h3>
           </div>
           <div className="grid grid-cols-2 gap-3 text-center">
             <div>
-              <div className="text-2xl font-bold text-red-600">{healthSummary.criticalAlerts}</div>
-              <div className="text-xs text-gray-500">Critical</div>
+              <div className="text-2xl font-bold text-destructive">{healthSummary.criticalAlerts}</div>
+              <div className="text-xs text-muted-foreground">Critical</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-500">{healthSummary.activeAlerts - healthSummary.criticalAlerts}</div>
-              <div className="text-xs text-gray-500">Warning</div>
+              <div className="text-2xl font-bold text-warning/80">{healthSummary.activeAlerts - healthSummary.criticalAlerts}</div>
+              <div className="text-xs text-muted-foreground">Warning</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-gray-400">
+      <div className="text-center text-xs text-muted-foreground/70">
         Last updated: {lastRefresh.toLocaleTimeString()} {isLive && '• Auto-refreshing every 5s'}
       </div>
     </div>

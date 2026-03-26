@@ -236,7 +236,7 @@ export default function OperatorTripsPage() {
         loadTrips();
         loadStatistics();
       }}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
     >
       <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
       Refresh
@@ -248,7 +248,7 @@ export default function OperatorTripsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="text-red-600 mb-4">
+          <div className="text-destructive mb-4">
             <svg
               className="w-12 h-12 mx-auto"
               fill="none"
@@ -263,11 +263,11 @@ export default function OperatorTripsPage() {
               />
             </svg>
           </div>
-          <p className="text-gray-900 font-medium mb-2">Failed to load trips</p>
-          <p className="text-gray-500 mb-4">{error}</p>
+          <p className="text-foreground font-medium mb-2">Failed to load trips</p>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={loadTrips}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
           >
             Try Again
           </button>
@@ -316,7 +316,7 @@ export default function OperatorTripsPage() {
       />
 
       {/* Table + Pagination */}
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-card shadow-sm rounded-xl border border-border overflow-hidden">
         <OperatorTripsTable
           trips={trips}
           onView={handleView}

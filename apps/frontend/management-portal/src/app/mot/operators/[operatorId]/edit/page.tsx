@@ -34,7 +34,7 @@ export default function EditOperatorPage() {
   useSetPageActions(
     <button
       onClick={() => router.push(`/mot/operators/${operatorId}`)}
-      className="flex items-center gap-2 px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+      className="flex items-center gap-2 px-3 py-1.5 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium"
     >
       <ArrowLeft className="w-4 h-4" />
       Back

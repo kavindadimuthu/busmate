@@ -42,15 +42,15 @@ function getDaysOfWeek(scheduleCalendars?: any[]): string {
 function getStatusMeta(status?: string) {
   switch (status) {
     case "ACTIVE":
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Active", cls: "bg-green-50 text-green-700 border-green-200" };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Active", cls: "bg-success/10 text-success border-success/20" };
     case "INACTIVE":
-      return { icon: <XCircle className="w-3.5 h-3.5" />, label: "Inactive", cls: "bg-red-50 text-red-700 border-red-200" };
+      return { icon: <XCircle className="w-3.5 h-3.5" />, label: "Inactive", cls: "bg-destructive/10 text-destructive border-destructive/20" };
     case "PENDING":
-      return { icon: <Clock className="w-3.5 h-3.5" />, label: "Pending", cls: "bg-amber-50 text-amber-700 border-amber-200" };
+      return { icon: <Clock className="w-3.5 h-3.5" />, label: "Pending", cls: "bg-warning/10 text-warning border-warning/20" };
     case "CANCELLED":
-      return { icon: <XCircle className="w-3.5 h-3.5" />, label: "Cancelled", cls: "bg-gray-100 text-gray-600 border-gray-200" };
+      return { icon: <XCircle className="w-3.5 h-3.5" />, label: "Cancelled", cls: "bg-muted text-muted-foreground border-border" };
     default:
-      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: status ?? "Unknown", cls: "bg-gray-100 text-gray-500 border-gray-200" };
+      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: status ?? "Unknown", cls: "bg-muted text-muted-foreground border-border" };
   }
 }
 
@@ -91,7 +91,7 @@ export const schedulesColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       if (row.scheduleType === "REGULAR") {
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
             <Calendar className="w-3 h-3" />
             Regular
           </span>
@@ -99,7 +99,7 @@ export const schedulesColumns: ColumnDef<any>[] = [
       }
       if (row.scheduleType === "SPECIAL") {
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border border-[hsl(var(--purple-200))]">
             <Users className="w-3 h-3" />
             Special
           </span>

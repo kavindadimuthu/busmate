@@ -135,7 +135,7 @@ export function OperatorTripsFilters({
       key: 'status',
       label: STATUS_LABELS[statusFilter as TripStatus] || statusFilter,
       onRemove: () => setStatusFilter('all'),
-      colorClass: 'bg-green-50 text-green-700 border-green-200',
+      colorClass: 'bg-success/10 text-success border-success/20',
       icon: <CheckCircle className="h-3 w-3 opacity-70" />,
     });
   }
@@ -146,7 +146,7 @@ export function OperatorTripsFilters({
       key: 'route',
       label: `Route: ${route ? `${route.routeNumber} – ${route.name}` : routeFilter}`,
       onRemove: () => setRouteFilter('all'),
-      colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       icon: <MapPin className="h-3 w-3 opacity-70" />,
     });
   }
@@ -157,7 +157,7 @@ export function OperatorTripsFilters({
       key: 'schedule',
       label: `Schedule: ${schedule?.name || scheduleFilter}`,
       onRemove: () => setScheduleFilter('all'),
-      colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      colorClass: 'bg-primary/10 text-primary border-primary/20',
       icon: <Clock className="h-3 w-3 opacity-70" />,
     });
   }
@@ -168,7 +168,7 @@ export function OperatorTripsFilters({
       key: 'bus',
       label: `Bus: ${bus?.registrationNumber || busFilter}`,
       onRemove: () => setBusFilter('all'),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       icon: <Bus className="h-3 w-3 opacity-70" />,
     });
   }
@@ -179,7 +179,7 @@ export function OperatorTripsFilters({
       key: 'permit',
       label: `PSP: ${permit?.permitNumber || permitFilter}`,
       onRemove: () => setPermitFilter('all'),
-      colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
       icon: <FileText className="h-3 w-3 opacity-70" />,
     });
   }
@@ -189,7 +189,7 @@ export function OperatorTripsFilters({
       key: 'from-date',
       label: `From: ${fromDate}`,
       onRemove: () => setFromDate(''),
-      colorClass: 'bg-orange-50 text-orange-700 border-orange-200',
+      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
       icon: <Calendar className="h-3 w-3 opacity-70" />,
     });
   }
@@ -199,7 +199,7 @@ export function OperatorTripsFilters({
       key: 'to-date',
       label: `To: ${toDate}`,
       onRemove: () => setToDate(''),
-      colorClass: 'bg-orange-50 text-orange-700 border-orange-200',
+      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
       icon: <Calendar className="h-3 w-3 opacity-70" />,
     });
   }
@@ -269,14 +269,14 @@ export function OperatorTripsFilters({
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
             title="From Date"
           />
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
             title="To Date"
           />
         </>

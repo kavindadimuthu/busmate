@@ -100,17 +100,17 @@ export function DeletePermitModal({
   const getStatusInfo = (status?: string) => {
     switch (status) {
       case 'active':
-        return { label: 'Active', color: 'text-green-600 bg-green-50 border-green-200' };
+        return { label: 'Active', color: 'text-success bg-success/10 border-success/20' };
       case 'pending':
-        return { label: 'Pending', color: 'text-yellow-600 bg-yellow-50 border-yellow-200' };
+        return { label: 'Pending', color: 'text-warning bg-warning/10 border-warning/20' };
       case 'expired':
-        return { label: 'Expired', color: 'text-red-600 bg-red-50 border-red-200' };
+        return { label: 'Expired', color: 'text-destructive bg-destructive/10 border-destructive/20' };
       case 'suspended':
-        return { label: 'Suspended', color: 'text-orange-600 bg-orange-50 border-orange-200' };
+        return { label: 'Suspended', color: 'text-warning bg-warning/10 border-orange-200' };
       case 'cancelled':
-        return { label: 'Cancelled', color: 'text-gray-600 bg-gray-50 border-gray-200' };
+        return { label: 'Cancelled', color: 'text-muted-foreground bg-muted border-border' };
       default:
-        return { label: status || 'Unknown', color: 'text-gray-600 bg-gray-50 border-gray-200' };
+        return { label: status || 'Unknown', color: 'text-muted-foreground bg-muted border-border' };
     }
   };
 
@@ -152,16 +152,16 @@ export function DeletePermitModal({
             isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          <div className="flex h-full flex-col bg-white shadow-xl">
+          <div className="flex h-full flex-col bg-card shadow-xl">
             {/* Header */}
-            <div className="bg-white px-8 py-6 border-b border-gray-200">
+            <div className="bg-card px-8 py-6 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="shrink-0">
-                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-foreground">
                       Delete Passenger Service Permit
                     </h3>
                   </div>
@@ -169,7 +169,7 @@ export function DeletePermitModal({
                 <button
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="rounded-md text-gray-800 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+                  className="rounded-md text-foreground hover:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -180,13 +180,13 @@ export function DeletePermitModal({
             <div className="flex-1 overflow-y-auto px-8 py-8">
               <div className="space-y-6">
                 {/* Critical Warning Message */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
                   <div className="flex">
                     <div className="ml-3">
-                      <h4 className="text-sm font-medium text-red-800">
+                      <h4 className="text-sm font-medium text-destructive">
                         ⚠️ Critical Action - Cannot be undone
                       </h4>
-                      <p className="text-sm text-red-700 mt-1">
+                      <p className="text-sm text-destructive mt-1">
                         This will permanently delete the passenger service permit and remove all associated operational data from the system.
                       </p>
                     </div>
@@ -195,68 +195,68 @@ export function DeletePermitModal({
 
                 {/* Permit Details */}
                 {permit && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                  <div className="bg-muted rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-foreground mb-3 flex items-center">
                       <FileText className="w-4 h-4 mr-2" />
                       Permit to be deleted:
                     </h4>
                     <div className="space-y-3">
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Permit Number:</span>
-                        <span className="ml-2 text-sm text-gray-900 font-medium">
+                        <span className="text-sm font-medium text-foreground/80">Permit Number:</span>
+                        <span className="ml-2 text-sm text-foreground font-medium">
                           {permit.permitNumber || 'Not assigned'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Permit ID:</span>
-                        <span className="ml-2 text-sm font-mono text-gray-600">{permit.id}</span>
+                        <span className="text-sm font-medium text-foreground/80">Permit ID:</span>
+                        <span className="ml-2 text-sm font-mono text-muted-foreground">{permit.id}</span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Permit Type:</span>
-                        <span className="ml-2 text-sm text-gray-900">
+                        <span className="text-sm font-medium text-foreground/80">Permit Type:</span>
+                        <span className="ml-2 text-sm text-foreground">
                           {permit.permitType || 'Not specified'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Operator:</span>
-                        <span className="ml-2 text-sm text-gray-900">
+                        <span className="text-sm font-medium text-foreground/80">Operator:</span>
+                        <span className="ml-2 text-sm text-foreground">
                           {permit.operatorName || operator?.name || 'Not assigned'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Route Group:</span>
-                        <span className="ml-2 text-sm text-gray-900">
+                        <span className="text-sm font-medium text-foreground/80">Route Group:</span>
+                        <span className="ml-2 text-sm text-foreground">
                           {permit.routeGroupName || routeGroup?.name || 'Not assigned'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Maximum Buses:</span>
-                        <span className="ml-2 text-sm text-gray-900">
+                        <span className="text-sm font-medium text-foreground/80">Maximum Buses:</span>
+                        <span className="ml-2 text-sm text-foreground">
                           {permit.maximumBusAssigned || 'Not specified'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">Status:</span>
+                        <span className="text-sm font-medium text-foreground/80">Status:</span>
                         <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
                           {statusInfo.label}
                         </div>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Validity Period:</span>
-                        <div className="ml-2 text-sm text-gray-900">
+                        <span className="text-sm font-medium text-foreground/80">Validity Period:</span>
+                        <div className="ml-2 text-sm text-foreground">
                           {formatDate(permit.issueDate)} → {formatDate(permit.expiryDate)}
                           {isExpired(permit.expiryDate) && (
-                            <span className="ml-2 text-red-600 font-medium">(EXPIRED)</span>
+                            <span className="ml-2 text-destructive font-medium">(EXPIRED)</span>
                           )}
                         </div>
                       </div>
                       {permit.createdAt && (
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Created:</span>
-                          <span className="ml-2 text-sm text-gray-900">
+                          <span className="text-sm font-medium text-foreground/80">Created:</span>
+                          <span className="ml-2 text-sm text-foreground">
                             {formatDate(permit.createdAt)}
                             {permit.createdBy && (
-                              <span className="text-gray-500"> by {permit.createdBy}</span>
+                              <span className="text-muted-foreground"> by {permit.createdBy}</span>
                             )}
                           </span>
                         </div>
@@ -267,12 +267,12 @@ export function DeletePermitModal({
 
                 {/* Operator Information */}
                 {operator && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center">
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-primary mb-2 flex items-center">
                       <Building2 className="w-4 h-4 mr-2" />
                       Associated Operator
                     </h4>
-                    <div className="text-sm text-blue-700 space-y-1">
+                    <div className="text-sm text-primary space-y-1">
                       <div>
                         <strong>Name:</strong> {operator.name}
                       </div>
@@ -288,12 +288,12 @@ export function DeletePermitModal({
 
                 {/* Route Group Information */}
                 {routeGroup && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-purple-800 mb-2 flex items-center">
+                  <div className="bg-[hsl(var(--purple-50))] border border-[hsl(var(--purple-200))] rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-[hsl(var(--purple-800))] mb-2 flex items-center">
                       <RouteIcon className="w-4 h-4 mr-2" />
                       Associated Route Group
                     </h4>
-                    <div className="text-sm text-purple-700 space-y-1">
+                    <div className="text-sm text-[hsl(var(--purple-700))] space-y-1">
                       <div>
                         <strong>Name:</strong> {routeGroup.name}
                       </div>
@@ -311,8 +311,8 @@ export function DeletePermitModal({
 
                 {/* Assigned Buses Warning */}
                 {assignedBuses.length > 0 && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-orange-800 mb-2 flex items-center">
+                  <div className="bg-warning/10 border border-orange-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-warning mb-2 flex items-center">
                       <Bus className="w-4 h-4 mr-2" />
                       Associated Buses Warning
                     </h4>
@@ -326,7 +326,7 @@ export function DeletePermitModal({
                       <div>
                         • <strong>{assignedBuses.length - activeBusesCount}</strong> inactive/pending buses
                       </div>
-                      <div className="mt-2 text-orange-800 font-medium">
+                      <div className="mt-2 text-warning font-medium">
                         Deleting this permit may affect bus operations and schedules.
                       </div>
                     </div>
@@ -334,12 +334,12 @@ export function DeletePermitModal({
                 )}
 
                 {/* System Impact Warning */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-amber-800 mb-2 flex items-center">
+                <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-warning mb-2 flex items-center">
                     <Settings className="w-4 h-4 mr-2" />
                     System Impact
                   </h4>
-                  <ul className="text-sm text-amber-700 space-y-1">
+                  <ul className="text-sm text-warning space-y-1">
                     <li>• All bus-permit assignments will be removed</li>
                     <li>• Service schedules and timetables will be affected</li>
                     <li>• Route operational permissions will be revoked</li>
@@ -351,14 +351,14 @@ export function DeletePermitModal({
                 </div>
 
                 {/* Alternative Actions Suggestion */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-primary mb-2">
                     Consider Alternative Actions
                   </h4>
-                  <p className="text-sm text-blue-700 mb-2">
+                  <p className="text-sm text-primary mb-2">
                     Instead of deleting, you might want to:
                   </p>
-                  <ul className="text-sm text-blue-700 space-y-1">
+                  <ul className="text-sm text-primary space-y-1">
                     <li>• Change status to "Suspended" to temporarily halt operations</li>
                     <li>• Update permit validity period for renewal</li>
                     <li>• Transfer permit to another operator</li>
@@ -370,8 +370,8 @@ export function DeletePermitModal({
 
                 {/* Confirmation Input */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type <span className="font-mono bg-gray-100 px-1 rounded">{requiredText}</span> to confirm deletion:
+                  <label className="block text-sm font-medium text-foreground/80 mb-2">
+                    Type <span className="font-mono bg-muted px-1 rounded">{requiredText}</span> to confirm deletion:
                   </label>
                   <input
                     type="text"
@@ -379,11 +379,11 @@ export function DeletePermitModal({
                     onChange={(e) => setConfirmText(e.target.value)}
                     placeholder={`Type "${requiredText}" to confirm`}
                     disabled={isDeleting}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-50 disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-destructive disabled:bg-muted disabled:opacity-50"
                     autoComplete="off"
                   />
                   {confirmText && !isConfirmValid && (
-                    <p className="mt-1 text-sm text-red-600">
+                    <p className="mt-1 text-sm text-destructive">
                       Please type exactly "{requiredText}" to confirm
                     </p>
                   )}
@@ -391,8 +391,8 @@ export function DeletePermitModal({
 
                 {/* Final Warning */}
                 {isConfirmValid && (
-                  <div className="bg-red-100 border border-red-300 rounded-lg p-3">
-                    <p className="text-sm text-red-800 text-center font-medium">
+                  <div className="bg-destructive/15 border border-destructive/30 rounded-lg p-3">
+                    <p className="text-sm text-destructive text-center font-medium">
                       ⚠️ You are about to permanently delete this passenger service permit and all associated data.
                       This action cannot be reversed.
                     </p>
@@ -402,12 +402,12 @@ export function DeletePermitModal({
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 border-t border-gray-200 px-6 py-4">
+            <div className="shrink-0 border-t border-border px-6 py-4">
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-foreground/80 bg-card hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Cancel
@@ -415,7 +415,7 @@ export function DeletePermitModal({
                 <button
                   onClick={handleConfirm}
                   disabled={!isConfirmValid || isDeleting}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-destructive hover:bg-destructive focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? (
                     <>

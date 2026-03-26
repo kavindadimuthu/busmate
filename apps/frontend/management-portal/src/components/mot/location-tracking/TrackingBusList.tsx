@@ -61,17 +61,17 @@ function getStatusBadge(bus: TrackedBus) {
   switch (status) {
     case 'on_time':
     case 'in_transit':
-      return { label: 'On Time', color: 'bg-green-100 text-green-700', icon: CheckCircle };
+      return { label: 'On Time', color: 'bg-success/15 text-success', icon: CheckCircle };
     case 'delayed':
-      return { label: 'Delayed', color: 'bg-red-100 text-red-700', icon: AlertTriangle };
+      return { label: 'Delayed', color: 'bg-destructive/15 text-destructive', icon: AlertTriangle };
     case 'scheduled':
-      return { label: 'Scheduled', color: 'bg-blue-100 text-blue-700', icon: Clock };
+      return { label: 'Scheduled', color: 'bg-primary/15 text-primary', icon: Clock };
     case 'completed':
-      return { label: 'Completed', color: 'bg-gray-100 text-gray-700', icon: CheckCircle };
+      return { label: 'Completed', color: 'bg-muted text-foreground/80', icon: CheckCircle };
     case 'cancelled':
-      return { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: XCircle };
+      return { label: 'Cancelled', color: 'bg-destructive/15 text-destructive', icon: XCircle };
     default:
-      return { label: 'Unknown', color: 'bg-gray-100 text-gray-600', icon: Clock };
+      return { label: 'Unknown', color: 'bg-muted text-muted-foreground', icon: Clock };
   }
 }
 
@@ -94,8 +94,8 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
     <div
       onClick={onSelect}
       className={`group p-3 rounded-lg border cursor-pointer transition-all duration-200 ${isSelected
-        ? 'bg-blue-50 border-blue-300 shadow-sm'
-        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+        ? 'bg-primary/10 border-primary/30 shadow-sm'
+        : 'bg-card border-border hover:border-border hover:bg-muted'
         }`}
     >
       {/* Header Row */}
@@ -106,29 +106,29 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
             <div
               className={`p-1.5 rounded-lg ${isOnline
                 ? isMoving
-                  ? 'bg-green-100'
-                  : 'bg-gray-100'
-                : 'bg-red-100'
+                  ? 'bg-success/15'
+                  : 'bg-muted'
+                : 'bg-destructive/15'
                 }`}
             >
               {isMoving ? (
-                <Navigation className={`h-4 w-4 ${isOnline ? 'text-green-600' : 'text-gray-400'}`} />
+                <Navigation className={`h-4 w-4 ${isOnline ? 'text-success' : 'text-muted-foreground/70'}`} />
               ) : (
-                <Bus className={`h-4 w-4 ${isOnline ? 'text-gray-600' : 'text-red-500'}`} />
+                <Bus className={`h-4 w-4 ${isOnline ? 'text-muted-foreground' : 'text-destructive/80'}`} />
               )}
             </div>
             {/* Online/Offline indicator dot */}
             <div
-              className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-red-500'
+              className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${isOnline ? 'bg-success' : 'bg-destructive'
                 }`}
             />
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-gray-900">
+            <h4 className="text-sm font-semibold text-foreground">
               {bus.bus.registrationNumber}
             </h4>
-            <p className="text-xs text-gray-500">{bus.bus.operatorName}</p>
+            <p className="text-xs text-muted-foreground">{bus.bus.operatorName}</p>
           </div>
         </div>
 
@@ -138,17 +138,17 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
             e.stopPropagation();
             onFocus();
           }}
-          className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-blue-100 transition-all"
+          className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/15 transition-all"
           title="Center on map"
         >
-          <MapPin className="h-4 w-4 text-blue-600" />
+          <MapPin className="h-4 w-4 text-primary" />
         </button>
       </div>
 
       {/* Route Info */}
       {bus.route && (
         <div className="mb-2">
-          <p className="text-xs text-gray-600 truncate">{bus.route.name}</p>
+          <p className="text-xs text-muted-foreground truncate">{bus.route.name}</p>
         </div>
       )}
 
@@ -156,7 +156,7 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
       <div className="flex flex-wrap gap-1.5 mb-2">
         {/* Device Status */}
         <span
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isOnline ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
             }`}
         >
           {isOnline ? <Wifi className="h-2.5 w-2.5" /> : <WifiOff className="h-2.5 w-2.5" />}
@@ -173,7 +173,7 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
       </div>
 
       {/* Quick Stats */}
-      <div className="flex items-center gap-3 text-xs text-gray-500">
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
         {/* Speed */}
         {isOnline && (
           <div className="flex items-center gap-1">
@@ -185,9 +185,9 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
         {/* Progress */}
         {bus.trip?.progress !== undefined && (
           <div className="flex items-center gap-1">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-12 h-1.5 bg-secondary rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-600 rounded-full"
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${bus.trip.progress}%` }}
               />
             </div>
@@ -212,9 +212,9 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
 
       {/* Next Stop (if available) */}
       {bus.nextStop && (
-        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
-          <span className="text-gray-500">Next: {bus.nextStop.name}</span>
-          <span className="text-gray-600 font-medium">
+        <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Next: {bus.nextStop.name}</span>
+          <span className="text-muted-foreground font-medium">
             ETA {formatTime(bus.nextStop.estimatedArrival)}
           </span>
         </div>
@@ -222,8 +222,8 @@ function BusListItem({ bus, isSelected, onSelect, onFocus }: BusListItemProps) {
 
       {/* Alerts indicator */}
       {bus.alerts && bus.alerts.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-1.5 text-amber-600">
+        <div className="mt-2 pt-2 border-t border-border/50">
+          <div className="flex items-center gap-1.5 text-warning">
             <AlertTriangle className="h-3.5 w-3.5" />
             <span className="text-xs font-medium">
               {bus.alerts.length} active {bus.alerts.length === 1 ? 'alert' : 'alerts'}
@@ -264,16 +264,16 @@ export function TrackingBusList({
 
   if (error && !isCollapsed) {
     return (
-      <div className="flex flex-col h-full bg-white relative">
-        <div className="flex justify-end p-2 border-b border-gray-100">
-          <button onClick={onToggleCollapse} className="p-1.5 hover:bg-gray-100 rounded text-gray-500">
+      <div className="flex flex-col h-full bg-card relative">
+        <div className="flex justify-end p-2 border-b border-border/50">
+          <button onClick={onToggleCollapse} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Buses</h3>
-          <p className="text-gray-600 text-sm">{error}</p>
+          <AlertTriangle className="h-12 w-12 text-destructive/80 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Error Loading Buses</h3>
+          <p className="text-muted-foreground text-sm">{error}</p>
         </div>
       </div>
     );
@@ -281,16 +281,16 @@ export function TrackingBusList({
 
   if (isCollapsed) {
     return (
-      <div className="flex lg:flex-col items-center justify-between lg:justify-start h-full w-full bg-gray-50 p-2 lg:py-4 border-t lg:border-t-0 lg:border-l border-gray-200">
+      <div className="flex lg:flex-col items-center justify-between lg:justify-start h-full w-full bg-muted p-2 lg:py-4 border-t lg:border-t-0 lg:border-l border-border">
         <button
           onClick={onToggleCollapse}
-          className="p-2 bg-white hover:bg-gray-100 rounded-lg shadow-sm border border-gray-200 text-gray-600 transition-colors"
+          className="p-2 bg-card hover:bg-muted rounded-lg shadow-sm border border-border text-muted-foreground transition-colors"
           title="Expand Bus List"
         >
           <ChevronLeft className="h-5 w-5 hidden lg:block" />
           <ChevronUp className="h-5 w-5 block lg:hidden" />
         </button>
-        <div className="flex lg:flex-col items-center gap-2 lg:gap-4 text-gray-400 lg:mt-6">
+        <div className="flex lg:flex-col items-center gap-2 lg:gap-4 text-muted-foreground/70 lg:mt-6">
           <Bus className="h-5 w-5" />
           <div className="text-xs font-medium lg:rotate-90 whitespace-nowrap lg:mt-8 tracking-widest uppercase hidden lg:block">
             Tracked Buses
@@ -306,15 +306,15 @@ export function TrackingBusList({
 
   if (isLoading && buses.length === 0) {
     return (
-      <div className="flex flex-col h-full bg-white relative">
-        <div className="flex justify-end p-2 border-b border-gray-100">
-          <button onClick={onToggleCollapse} className="p-1.5 hover:bg-gray-100 rounded text-gray-500">
+      <div className="flex flex-col h-full bg-card relative">
+        <div className="flex justify-end p-2 border-b border-border/50">
+          <button onClick={onToggleCollapse} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto mb-3" />
-          <p className="text-gray-600 text-sm">Loading buses...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">Loading buses...</p>
         </div>
       </div>
     );
@@ -322,16 +322,16 @@ export function TrackingBusList({
 
   if (buses.length === 0) {
     return (
-      <div className="flex flex-col h-full bg-white relative">
-        <div className="flex justify-end p-2 border-b border-gray-100">
-          <button onClick={onToggleCollapse} className="p-1.5 hover:bg-gray-100 rounded text-gray-500">
+      <div className="flex flex-col h-full bg-card relative">
+        <div className="flex justify-end p-2 border-b border-border/50">
+          <button onClick={onToggleCollapse} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 text-center">
-          <Bus className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Buses Found</h3>
-          <p className="text-gray-600 text-sm">
+          <Bus className="h-12 w-12 text-muted-foreground/70 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Buses Found</h3>
+          <p className="text-muted-foreground text-sm">
             No buses match your current filters. Try adjusting your search criteria.
           </p>
         </div>
@@ -342,13 +342,13 @@ export function TrackingBusList({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+      <div className="px-4 py-3 border-b border-border bg-muted">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-gray-900">Tracked Buses</h3>
-            <span className="text-sm text-gray-500">({buses.length})</span>
+            <h3 className="font-semibold text-foreground">Tracked Buses</h3>
+            <span className="text-sm text-muted-foreground">({buses.length})</span>
           </div>
-          <button onClick={onToggleCollapse} className="p-1 hover:bg-gray-200 rounded text-gray-500 transition-colors">
+          <button onClick={onToggleCollapse} className="p-1 hover:bg-secondary rounded text-muted-foreground transition-colors">
             <ChevronRight className="h-5 w-5 hidden lg:block" />
             <ChevronDown className="h-5 w-5 block lg:hidden" />
           </button>
@@ -356,20 +356,20 @@ export function TrackingBusList({
 
         {/* Quick Stats */}
         <div className="flex items-center gap-3 mt-2 text-xs">
-          <span className="flex items-center gap-1 text-green-600">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="flex items-center gap-1 text-success">
+            <div className="w-2 h-2 rounded-full bg-success" />
             {groupedBuses.moving.length} moving
           </span>
-          <span className="flex items-center gap-1 text-gray-500">
-            <div className="w-2 h-2 rounded-full bg-gray-400" />
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-secondary" />
             {groupedBuses.idle.length} idle
           </span>
-          <span className="flex items-center gap-1 text-red-500">
-            <div className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="flex items-center gap-1 text-destructive/80">
+            <div className="w-2 h-2 rounded-full bg-destructive" />
             {groupedBuses.offline.length} offline
           </span>
           {groupedBuses.delayed.length > 0 && (
-            <span className="flex items-center gap-1 text-amber-600">
+            <span className="flex items-center gap-1 text-warning">
               <AlertTriangle className="h-3 w-3" />
               {groupedBuses.delayed.length} delayed
             </span>

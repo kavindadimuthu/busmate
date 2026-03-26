@@ -64,12 +64,12 @@ function SortIcon({
   currentSort: SortState;
 }) {
   if (currentSort.field !== field) {
-    return <ChevronsUpDown className="w-3.5 h-3.5 text-gray-300 shrink-0" />;
+    return <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />;
   }
   return currentSort.direction === 'asc' ? (
-    <ChevronUp className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+    <ChevronUp className="w-3.5 h-3.5 text-primary/80 shrink-0" />
   ) : (
-    <ChevronDown className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+    <ChevronDown className="w-3.5 h-3.5 text-primary/80 shrink-0" />
   );
 }
 
@@ -83,11 +83,11 @@ function SkeletonRow({
   index: number;
 }) {
   return (
-    <tr className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+    <tr className={index % 2 === 0 ? 'bg-card' : 'bg-muted/50'}>
       {Array.from({ length: colCount }).map((_, ci) => (
         <td key={ci} className="px-4 py-3">
           <div
-            className="h-3.5 bg-gray-200 rounded animate-pulse"
+            className="h-3.5 bg-secondary rounded animate-pulse"
             style={{ width: `${50 + ((index * 7 + ci * 11) % 40)}%` }}
           />
         </td>
@@ -194,7 +194,7 @@ export function DataTable<T extends Record<string, any>>({
 
   const renderHeader = () => (
     <thead>
-      <tr className="bg-gray-50 border-b border-gray-200">
+      <tr className="bg-muted border-b border-border">
         {columns.map((col) => {
           const sortable = !!col.sortable;
           const isActive = sortable && currentSort.field === col.key;
@@ -207,9 +207,9 @@ export function DataTable<T extends Record<string, any>>({
               className={[
                 'px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider select-none',
                 sortable
-                  ? 'cursor-pointer hover:bg-gray-100/80 transition-colors duration-100'
+                  ? 'cursor-pointer hover:bg-muted/80 transition-colors duration-100'
                   : '',
-                isActive ? 'text-blue-600' : 'text-gray-500',
+                isActive ? 'text-primary' : 'text-muted-foreground',
                 col.minWidth ?? '',
                 col.headerClassName ?? '',
               ].join(' ')}
@@ -258,10 +258,10 @@ export function DataTable<T extends Record<string, any>>({
 
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h3 className="text-base font-semibold text-gray-900 mb-1">
+        <h3 className="text-base font-semibold text-foreground mb-1">
           No data found
         </h3>
-        <p className="text-sm text-gray-500 max-w-xs">
+        <p className="text-sm text-muted-foreground max-w-xs">
           Try adjusting your search or filters to find what you&apos;re
           looking for.
         </p>
@@ -285,8 +285,8 @@ export function DataTable<T extends Record<string, any>>({
                 key={key}
                 className={[
                   'transition-colors duration-100',
-                  idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40',
-                  'hover:bg-blue-50/40',
+                  idx % 2 === 0 ? 'bg-card' : 'bg-muted/40',
+                  'hover:bg-primary/10/40',
                   extraCls,
                 ].join(' ')}
               >
@@ -312,9 +312,9 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Inline refreshing indicator */}
       {showRefreshing && loading && data.length > 0 && (
-        <div className="px-4 py-2.5 bg-blue-50/60 border-t border-blue-100 flex items-center justify-center gap-2">
-          <span className="inline-block w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-blue-600 font-medium">
+        <div className="px-4 py-2.5 bg-primary/10/60 border-t border-primary/10 flex items-center justify-center gap-2">
+          <span className="inline-block w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-primary font-medium">
             Refreshing…
           </span>
         </div>

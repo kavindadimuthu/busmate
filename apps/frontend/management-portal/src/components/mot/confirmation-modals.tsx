@@ -22,21 +22,21 @@ export function DeleteConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-black/5 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-gray-200">
+      <div className="bg-card/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-border">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-linear-to-br from-red-100 to-red-50 rounded-full flex items-center justify-center shadow-sm">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+              <p className="text-sm text-muted-foreground">
                 This action cannot be undone
               </p>
             </div>
           </div>
 
-          <p className="text-gray-700 mb-6">
+          <p className="text-foreground/80 mb-6">
             Are you sure you want to permanently delete{" "}
             <span className="font-medium">{itemName}</span>? This will remove
             all associated data and cannot be recovered.
@@ -46,7 +46,7 @@ export function DeleteConfirmationModal({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card/80 backdrop-blur-sm border border-border rounded-lg hover:bg-card hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Cancel
             </button>
@@ -86,21 +86,21 @@ export function SendConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-black/5 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-gray-200">
+      <div className="bg-card/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-border">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-linear-to-br from-green-100 to-emerald-50 rounded-full flex items-center justify-center shadow-sm">
-              <Send className="h-5 w-5 text-green-600" />
+              <Send className="h-5 w-5 text-success" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+              <p className="text-sm text-muted-foreground">
                 This will send the message immediately
               </p>
             </div>
           </div>
 
-          <p className="text-gray-700 mb-6">
+          <p className="text-foreground/80 mb-6">
             Are you sure you want to send{" "}
             <span className="font-medium">{itemName}</span> now? This will deliver
             the message immediately to all recipients.
@@ -110,7 +110,7 @@ export function SendConfirmationModal({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card/80 backdrop-blur-sm border border-border rounded-lg hover:bg-card hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Cancel
             </button>
@@ -150,21 +150,21 @@ export function DeactivationConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-black/5 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-gray-200">
+      <div className="bg-card/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-border">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-linear-to-br from-yellow-100 to-amber-50 rounded-full flex items-center justify-center shadow-sm">
-              <Power className="h-5 w-5 text-yellow-600" />
+              <Power className="h-5 w-5 text-warning" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+              <p className="text-sm text-muted-foreground">
                 This will suspend operations
               </p>
             </div>
           </div>
 
-          <p className="text-gray-700 mb-6">
+          <p className="text-foreground/80 mb-6">
             Are you sure you want to deactivate{" "}
             <span className="font-medium">{itemName}</span>? This will suspend
             all operations for this item. You can reactivate it later if needed.
@@ -174,7 +174,7 @@ export function DeactivationConfirmationModal({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card/80 backdrop-blur-sm border border-border rounded-lg hover:bg-card hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Cancel
             </button>

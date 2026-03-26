@@ -70,7 +70,7 @@ export function DashboardUserStats({ userDistribution, loading = false }: Dashbo
         </div>
         <Link
           href="/admin/users"
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           Manage <ArrowUpRight className="h-3 w-3" />
         </Link>

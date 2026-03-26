@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import signOut from "@/lib/utils/signOut";
 import type UserData from "@/types/UserData";
+import { ThemePersonalitySwitcher } from "@busmate/ui";
 
 interface PortalSidebarUserProps {
   userData: UserData;
@@ -109,6 +110,8 @@ export function PortalSidebarUser({
           </div>
         )}
       </button>
+
+      <ThemePersonalitySwitcher />
     </div>
   );
 }

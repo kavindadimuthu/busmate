@@ -33,7 +33,7 @@ function formatDate(dateString?: string): string {
 
 export function RouteGroupDetailsSection({ routeGroup }: RouteGroupDetailsSectionProps) {
   return (
-    <div className="bg-white rounded-lg border-l-3 border-blue-600 shadow-sm overflow-hidden">
+    <div className="bg-card rounded-lg border-l-3 border-primary shadow-sm overflow-hidden">
       {/* Gradient header bar */}
       {/* <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600" /> */}
       
@@ -47,20 +47,20 @@ export function RouteGroupDetailsSection({ routeGroup }: RouteGroupDetailsSectio
             
             {/* Title and ID */}
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">
+              <h1 className="text-lg font-bold text-foreground leading-tight">
                 {routeGroup.name || 'Unnamed Route Group'}
               </h1>
               
               {/* Multi-language names and ID on same line */}
               <div className="flex items-center flex-wrap gap-2 mt-1">
                 {(routeGroup.nameSinhala || routeGroup.nameTamil) && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <Globe className="w-3 h-3 text-gray-400" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Globe className="w-3 h-3 text-muted-foreground/70" />
                     {routeGroup.nameSinhala && (
                       <span className="font-medium">{routeGroup.nameSinhala}</span>
                     )}
                     {routeGroup.nameSinhala && routeGroup.nameTamil && (
-                      <span className="text-gray-300 mx-0.5">·</span>
+                      <span className="text-muted-foreground/50 mx-0.5">·</span>
                     )}
                     {routeGroup.nameTamil && (
                       <span className="font-medium">{routeGroup.nameTamil}</span>
@@ -68,7 +68,7 @@ export function RouteGroupDetailsSection({ routeGroup }: RouteGroupDetailsSectio
                   </div>
                 )}
                 
-                <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-mono text-gray-500 bg-gray-100 rounded">
+                <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-mono text-muted-foreground bg-muted rounded">
                   ID: {routeGroup.id}
                 </span>
               </div>
@@ -79,7 +79,7 @@ export function RouteGroupDetailsSection({ routeGroup }: RouteGroupDetailsSectio
         <div className="mt-3 space-y-3">
           {/* Description */}
           {routeGroup.description && (
-            <p className="text-gray-600 text-xs leading-relaxed">
+            <p className="text-muted-foreground text-xs leading-relaxed">
               {routeGroup.description}
             </p>
           )}
@@ -87,23 +87,23 @@ export function RouteGroupDetailsSection({ routeGroup }: RouteGroupDetailsSectio
         </div>
         
         {/* Inline metadata footer */}
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             {routeGroup.createdAt && (
               <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-gray-400" />
+                <Calendar className="w-3 h-3 text-muted-foreground/70" />
                 <span>Created {formatDate(routeGroup.createdAt)}</span>
               </div>
             )}
             {routeGroup.createdBy && (
               <div className="flex items-center gap-1">
-                <User className="w-3 h-3 text-gray-400" />
+                <User className="w-3 h-3 text-muted-foreground/70" />
                 <span>{routeGroup.createdBy}</span>
               </div>
             )}
             {routeGroup.updatedAt && routeGroup.updatedAt !== routeGroup.createdAt && (
               <div className="flex items-center gap-1">
-                <span className="text-gray-300">·</span>
+                <span className="text-muted-foreground/50">·</span>
                 <span>Updated {formatDate(routeGroup.updatedAt)}</span>
               </div>
             )}

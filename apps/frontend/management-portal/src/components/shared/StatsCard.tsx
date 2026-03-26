@@ -70,10 +70,10 @@ export function TrendIcon({
   trend: TrendDirection;
   positive: boolean;
 }) {
-  if (trend === 'stable') return <Minus className="h-3 w-3 text-gray-400" />;
+  if (trend === 'stable') return <Minus className="h-3 w-3 text-muted-foreground/70" />;
 
   const isGood = (trend === 'up') === positive;
-  const cls = isGood ? 'text-green-600' : 'text-red-600';
+  const cls = isGood ? 'text-success' : 'text-destructive';
 
   return trend === 'up' ? (
     <ArrowUp className={`h-3 w-3 ${cls}`} />
@@ -94,21 +94,21 @@ export type StatsCardColor =
   | 'amber';
 
 const BG: Record<StatsCardColor, string> = {
-  blue:   'bg-blue-50   border-blue-200',
-  teal:   'bg-teal-50   border-teal-200',
-  green:  'bg-green-50  border-green-200',
-  red:    'bg-red-50    border-red-200',
-  purple: 'bg-purple-50 border-purple-200',
-  amber:  'bg-amber-50  border-amber-200',
+  blue:   'bg-primary/10   border-primary/20',
+  teal:   'bg-primary/10   border-teal-200',
+  green:  'bg-success/10  border-success/20',
+  red:    'bg-destructive/10    border-destructive/20',
+  purple: 'bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-200))]',
+  amber:  'bg-warning/10  border-warning/20',
 };
 
 const ICON_BG: Record<StatsCardColor, string> = {
-  blue:   'bg-blue-100   text-blue-600',
+  blue:   'bg-primary/15   text-primary',
   teal:   'bg-teal-100   text-teal-600',
-  green:  'bg-green-100  text-green-600',
-  red:    'bg-red-100    text-red-600',
-  purple: 'bg-purple-100 text-purple-600',
-  amber:  'bg-amber-100  text-amber-600',
+  green:  'bg-success/15  text-success',
+  red:    'bg-destructive/15    text-destructive',
+  purple: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]',
+  amber:  'bg-warning/15  text-warning',
 };
 
 const SPARK_COLOR: Record<StatsCardColor, string> = {
@@ -184,10 +184,10 @@ export function StatsCard({
 }: StatsCardMetric) {
   const trendColor =
     trend === 'stable'
-      ? 'text-gray-500'
+      ? 'text-muted-foreground'
       : (trend === 'up') === trendPositiveIsGood
-      ? 'text-green-600'
-      : 'text-red-600';
+      ? 'text-success'
+      : 'text-destructive';
 
   return (
     <div
@@ -203,7 +203,7 @@ export function StatsCard({
               <Icon className="h-4 w-4" />
             </span>
           )}
-          <p className="text-sm font-medium text-gray-600 leading-tight">
+          <p className="text-sm font-medium text-muted-foreground leading-tight">
             {label}
           </p>
         </div>
@@ -211,7 +211,7 @@ export function StatsCard({
       </div>
 
       {/* Value */}
-      <p className="text-2xl font-bold text-gray-900 tracking-tight">
+      <p className="text-2xl font-bold text-foreground tracking-tight">
         {value}
       </p>
 
@@ -237,16 +237,16 @@ export function StatsCard({
  */
 export function StatsCardSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 animate-pulse">
+    <div className="rounded-xl border border-border bg-card p-5 animate-pulse">
       <div className="flex justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 bg-gray-200 rounded-lg" />
-          <div className="h-4 bg-gray-200 rounded w-20" />
+          <div className="h-8 w-8 bg-secondary rounded-lg" />
+          <div className="h-4 bg-secondary rounded w-20" />
         </div>
-        <div className="h-7 bg-gray-100 rounded w-20" />
+        <div className="h-7 bg-muted rounded w-20" />
       </div>
-      <div className="h-7 bg-gray-200 rounded w-32 mb-3" />
-      <div className="h-3 bg-gray-100 rounded w-28" />
+      <div className="h-7 bg-secondary rounded w-32 mb-3" />
+      <div className="h-3 bg-muted rounded w-28" />
     </div>
   );
 }

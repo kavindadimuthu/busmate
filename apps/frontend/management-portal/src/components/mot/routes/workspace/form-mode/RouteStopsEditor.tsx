@@ -13,10 +13,10 @@ export default function RouteStopsEditor({ routeIndex }: RouteStopsEditorProps) 
     const [routeStopsMapCollapsed, setRouteStopsMapCollapsed] = useState(false);
 
     return (
-        <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex flex-col rounded-lg bg-card border border-border shadow-sm overflow-hidden">
             {/* Section Header */}
-            <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Route Stops Editor</h3>
+            <div className="px-5 py-3 bg-muted border-b border-border">
+                <h3 className="text-sm font-semibold text-muted-foreground">Route Stops Editor</h3>
             </div>
 
             {/* Two-column layout: stops list + map */}

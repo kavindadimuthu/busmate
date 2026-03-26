@@ -22,17 +22,17 @@ export default function MonitoringPage() {
         onClick={monitoring.toggleLive}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
           monitoring.isLive
-            ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100'
-            : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-100'
+            ? 'bg-success/15 text-success border-success/20 hover:bg-success/15'
+            : 'bg-muted text-muted-foreground border-border hover:bg-muted'
         }`}
       >
-        {/* <span className={`w-2 h-2 rounded-full ${monitoring.isLive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} /> */}
+        {/* <span className={`w-2 h-2 rounded-full ${monitoring.isLive ? 'bg-success animate-pulse' : 'bg-secondary'}`} /> */}
         <Radio className={`h-3.5 w-3.5 ${monitoring.isLive ? 'animate-pulse' : ''}`} />
         {monitoring.isLive ? 'Live' : 'Paused'}
       </button>
       <button
         onClick={monitoring.refresh}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
       >
         <RefreshCw className={`h-3.5 w-3.5 ${monitoring.loading ? 'animate-spin' : ''}`} />
         Refresh

@@ -56,8 +56,8 @@ function NavBtn({
       title={title}
       className="
         inline-flex items-center justify-center w-8 h-8 rounded-lg
-        text-gray-500 hover:text-gray-900 hover:bg-gray-100
-        disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-500
+        text-muted-foreground hover:text-foreground hover:bg-muted
+        disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground
         transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
       "
     >
@@ -150,35 +150,35 @@ export function DataPagination({
   const pageList = buildPageList(currentPage, totalPages);
 
   return (
-    <div className={`border-t border-gray-200 bg-white rounded-b-xl ${className}`}>
+    <div className={`border-t border-border bg-card rounded-b-xl ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4 px-4 py-3">
 
         {/* ── Left: record count + page-size selector ─────────── */}
-        <div className="flex items-center gap-3 text-sm text-gray-500">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="whitespace-nowrap">
             {totalElements === 0 ? (
               'No results'
             ) : (
               <>
                 Showing{' '}
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-foreground/80">
                   {startRecord.toLocaleString()}–
                   {endRecord.toLocaleString()}
                 </span>{' '}
                 of{' '}
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-foreground/80">
                   {totalElements.toLocaleString()}
                 </span>
               </>
             )}
           </span>
 
-          <span className="text-gray-200 select-none">|</span>
+          <span className="text-muted-foreground/30 select-none">|</span>
 
           <div className="flex items-center gap-1.5">
             <label
               htmlFor="dataPaginationPageSize"
-              className="text-xs text-gray-400 whitespace-nowrap"
+              className="text-xs text-muted-foreground/70 whitespace-nowrap"
             >
               Rows
             </label>
@@ -190,8 +190,8 @@ export function DataPagination({
               }}
               disabled={loading}
               className="
-                h-7 px-2 pr-6 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 bg-white
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400
+                h-7 px-2 pr-6 rounded-lg border border-border text-xs font-medium text-foreground/80 bg-card
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary/40
                 disabled:opacity-50 disabled:cursor-not-allowed
                 appearance-none cursor-pointer
                 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iNiIgdmlld0JveD0iMCAwIDEwIDYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMUw1IDVMOSAxIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=')]
@@ -225,7 +225,7 @@ export function DataPagination({
               disabled={currentPage === 0 || loading}
               className="
                 inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-medium
-                text-gray-600 hover:text-gray-900 hover:bg-gray-100
+                text-muted-foreground hover:text-foreground hover:bg-muted
                 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent
                 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
               "
@@ -240,7 +240,7 @@ export function DataPagination({
                 item === '…' ? (
                   <span
                     key={`ellipsis-${i}`}
-                    className="w-8 text-center text-xs text-gray-400 select-none"
+                    className="w-8 text-center text-xs text-muted-foreground/70 select-none"
                   >
                     …
                   </span>
@@ -253,8 +253,8 @@ export function DataPagination({
                       'inline-flex items-center justify-center w-8 h-8 rounded-lg text-xs font-medium transition-all duration-100',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
                       item === currentPage
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
-                        : 'text-gray-700 hover:bg-gray-100',
+                        ? 'bg-primary text-white shadow-sm shadow-blue-200'
+                        : 'text-foreground/80 hover:bg-muted',
                       'disabled:cursor-not-allowed',
                     ].join(' ')}
                   >
@@ -270,7 +270,7 @@ export function DataPagination({
               disabled={currentPage === totalPages - 1 || loading}
               className="
                 inline-flex items-center gap-1 px-2.5 h-8 rounded-lg text-xs font-medium
-                text-gray-600 hover:text-gray-900 hover:bg-gray-100
+                text-muted-foreground hover:text-foreground hover:bg-muted
                 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent
                 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
               "
@@ -295,7 +295,7 @@ export function DataPagination({
       {showLoadingBar && loading && (
         <div className="h-0.5 w-full overflow-hidden rounded-b-xl">
           <div
-            className="h-full bg-blue-500 animate-[progress_1.2s_ease-in-out_infinite]"
+            className="h-full bg-primary/80 animate-[progress_1.2s_ease-in-out_infinite]"
             style={{ width: '40%' }}
           />
         </div>

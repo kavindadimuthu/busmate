@@ -161,7 +161,7 @@ export function LocationTrackingAdvancedFilters({
       key: 'route',
       label: route?.name || filters.routeId,
       onRemove: () => updateFilter('routeId', 'all'),
-      colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      colorClass: 'bg-primary/10 text-primary border-primary/20',
       icon: <MapPin className="h-3 w-3 opacity-70" />,
     });
   }
@@ -172,7 +172,7 @@ export function LocationTrackingAdvancedFilters({
       key: 'operator',
       label: operator?.name || filters.operatorId,
       onRemove: () => updateFilter('operatorId', 'all'),
-      colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       icon: <Building2 className="h-3 w-3 opacity-70" />,
     });
   }
@@ -186,7 +186,7 @@ export function LocationTrackingAdvancedFilters({
       key: 'tripStatus',
       label: statusLabel,
       onRemove: () => updateFilter('tripStatus', 'all'),
-      colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      colorClass: 'bg-warning/10 text-warning border-warning/20',
       icon: <Clock className="h-3 w-3 opacity-70" />,
     });
   }
@@ -198,8 +198,8 @@ export function LocationTrackingAdvancedFilters({
       onRemove: () => updateFilter('deviceStatus', 'all'),
       colorClass:
         filters.deviceStatus === 'online'
-          ? 'bg-green-50 text-green-700 border-green-200'
-          : 'bg-red-50 text-red-700 border-red-200',
+          ? 'bg-success/10 text-success border-success/20'
+          : 'bg-destructive/10 text-destructive border-destructive/20',
       icon: filters.deviceStatus === 'online' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />,
     });
   }
@@ -211,7 +211,7 @@ export function LocationTrackingAdvancedFilters({
       key: 'movementStatus',
       label: statusLabel,
       onRemove: () => updateFilter('movementStatus', 'all'),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       icon: <Navigation className="h-3 w-3 opacity-70" />,
     });
   }
@@ -221,7 +221,7 @@ export function LocationTrackingAdvancedFilters({
       key: 'showOnlyActive',
       label: 'Active Only',
       onRemove: () => updateFilter('showOnlyActive', false),
-      colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
       icon: <CheckCircle2 className="h-3 w-3" />,
     });
   }
@@ -231,7 +231,7 @@ export function LocationTrackingAdvancedFilters({
       key: 'showOfflineDevices',
       label: 'Hide Offline',
       onRemove: () => updateFilter('showOfflineDevices', true),
-      colorClass: 'bg-gray-50 text-gray-700 border-gray-200',
+      colorClass: 'bg-muted text-foreground/80 border-border',
       icon: <WifiOff className="h-3 w-3" />,
     });
   }

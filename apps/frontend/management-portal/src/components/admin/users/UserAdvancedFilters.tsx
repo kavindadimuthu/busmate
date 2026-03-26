@@ -156,7 +156,7 @@ export function UserAdvancedFilters({
             options={userTypeOptions}
             allLabel="All Types"
             icon={<Users className="h-3.5 w-3.5" />}
-            activeColorClass="bg-blue-50 border-blue-300 text-blue-800"
+            activeColorClass="bg-primary/10 border-primary/30 text-primary"
           />
           <SelectFilter
             value={statusFilter}
@@ -164,7 +164,7 @@ export function UserAdvancedFilters({
             options={statusOptions}
             allLabel="All Statuses"
             icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-green-50 border-green-300 text-green-800"
+            activeColorClass="bg-success/10 border-success/30 text-success"
           />
         </>
       }

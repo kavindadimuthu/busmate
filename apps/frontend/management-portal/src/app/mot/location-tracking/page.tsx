@@ -14,10 +14,10 @@ import { useLocationTracking } from '@/hooks/useLocationTracking';
 
 // Components
 import {
-  TrackingStatsCards,
+  LocationTrackingStatsCardsNew,
   TrackingMap,
   TrackingBusList,
-  LocationTrackingAdvancedFilters,
+  LocationTrackingFilterBar,
   LocationTrackingActionButtons,
 } from '@/components/mot/location-tracking';
 
@@ -152,17 +152,17 @@ export default function LocationTrackingPage() {
   if (viewMode === 'fullscreen') {
     if (!isLoaded) {
       return (
-        <div className="flex items-center justify-center h-[calc(100vh-4rem)] bg-gray-50">
+        <div className="flex items-center justify-center h-[calc(100vh-4rem)] bg-muted">
           <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Loading map...</p>
+            <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Loading map...</p>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="fixed inset-0 z-50 bg-white">
+      <div className="fixed inset-0 z-50 bg-card">
         <TrackingMap
           buses={filteredBuses}
           selectedBus={selectedBus}
@@ -186,7 +186,7 @@ export default function LocationTrackingPage() {
     <div className="flex flex-col h-[calc(100vh-8rem)] gap-4 overflow-hidden">
       {/* Stats Cards - Collapsible */}
       <div className="flex-none">
-        <TrackingStatsCards
+        <LocationTrackingStatsCardsNew
           metrics={statsMetrics}
           loading={isLoading && statsMetrics.length === 0}
           isCollapsed={statsCollapsed}
@@ -197,18 +197,17 @@ export default function LocationTrackingPage() {
 
       {/* Search & Filters */}
       <div className="flex-none">
-        <LocationTrackingAdvancedFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+        <LocationTrackingFilterBar
+          searchValue={searchTerm}
+          onSearchChange={handleSearchChange}
           filters={filters}
           onFiltersChange={setFilters}
           filterOptions={filterOptions}
-          loading={isLoading}
-          totalCount={buses.length}
-          filteredCount={filteredBuses.length}
-          loadedCount={filteredBuses.length}
+          activeFilterCount={
+            [filters.routeId, filters.operatorId, filters.tripStatus, filters.deviceStatus, filters.movementStatus]
+              .filter((v) => v !== 'all').length
+          }
           onClearAll={handleClearAllFilters}
-          onSearch={handleSearchChange}
         />
       </div>
 
@@ -236,7 +235,7 @@ export default function LocationTrackingPage() {
         {/* Bus List Sidebar - Collapsible to the right */}
         <div
           className={`transition-all duration-300 ease-in-out shrink-0 ${busListCollapsed ? 'w-full lg:w-16' : 'w-full lg:w-96'
-            } flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full`}
+            } flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-full`}
         >
           <TrackingBusList
             buses={filteredBuses}

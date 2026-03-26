@@ -70,7 +70,7 @@ export function SwitchableTabs<T extends string = string>({
   return (
     <div className={`flex items-center ${className}`}>
       <div
-        className="inline-flex items-center gap-1 p-1 bg-gray-100 rounded-xl"
+        className="inline-flex items-center gap-1 p-1 bg-muted rounded-xl"
         role="tablist"
         aria-label={ariaLabel}
       >
@@ -87,15 +87,15 @@ export function SwitchableTabs<T extends string = string>({
                 'relative inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium',
                 'transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
                 isActive
-                  ? 'bg-white text-blue-700 shadow-sm ring-1 ring-black/[0.06]'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-white/60',
+                  ? 'bg-card text-primary shadow-sm ring-1 ring-black/[0.06]'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-card/60',
               ].join(' ')}
             >
               {Icon && (
                 <Icon
                   className={[
                     'h-4 w-4 shrink-0 transition-colors duration-200',
-                    isActive ? 'text-blue-600' : 'text-gray-400',
+                    isActive ? 'text-primary' : 'text-muted-foreground/70',
                   ].join(' ')}
                   aria-hidden="true"
                 />
@@ -106,8 +106,8 @@ export function SwitchableTabs<T extends string = string>({
                   className={[
                     'inline-flex items-center justify-center min-w-[1.4rem] h-5 px-1.5 rounded-full text-[11px] font-semibold transition-colors duration-200',
                     isActive
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-200 text-gray-500',
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-secondary text-muted-foreground',
                   ].join(' ')}
                 >
                   {count.toLocaleString()}

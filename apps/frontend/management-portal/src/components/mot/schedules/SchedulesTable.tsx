@@ -62,12 +62,12 @@ function getDaysOfWeek(scheduleCalendars?: any[]): string {
 
 function StatusBadge({ status }: { status?: string }) {
   const config: Record<string, { color: string; icon: React.ReactNode }> = {
-    ACTIVE:    { color: 'bg-green-50 text-green-700 border-green-200',  icon: <CheckCircle className="w-3.5 h-3.5" /> },
-    INACTIVE:  { color: 'bg-red-50 text-red-700 border-red-200',        icon: <XCircle className="w-3.5 h-3.5" /> },
-    PENDING:   { color: 'bg-amber-50 text-amber-700 border-amber-200',  icon: <Clock className="w-3.5 h-3.5" /> },
-    CANCELLED: { color: 'bg-gray-100 text-gray-600 border-gray-200',    icon: <XCircle className="w-3.5 h-3.5" /> },
+    ACTIVE:    { color: 'bg-success/10 text-success border-success/20',  icon: <CheckCircle className="w-3.5 h-3.5" /> },
+    INACTIVE:  { color: 'bg-destructive/10 text-destructive border-destructive/20',        icon: <XCircle className="w-3.5 h-3.5" /> },
+    PENDING:   { color: 'bg-warning/10 text-warning border-warning/20',  icon: <Clock className="w-3.5 h-3.5" /> },
+    CANCELLED: { color: 'bg-muted text-muted-foreground border-border',    icon: <XCircle className="w-3.5 h-3.5" /> },
   };
-  const c = config[status ?? ''] ?? { color: 'bg-gray-100 text-gray-500 border-gray-200', icon: <AlertCircle className="w-3.5 h-3.5" /> };
+  const c = config[status ?? ''] ?? { color: 'bg-muted text-muted-foreground border-border', icon: <AlertCircle className="w-3.5 h-3.5" /> };
   const label = status ? status.charAt(0) + status.slice(1).toLowerCase() : 'Unknown';
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${c.color}`}>
@@ -80,7 +80,7 @@ function StatusBadge({ status }: { status?: string }) {
 function TypeBadge({ type }: { type?: string }) {
   if (type === 'REGULAR') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
         <Calendar className="w-3 h-3" />
         Regular
       </span>
@@ -88,13 +88,13 @@ function TypeBadge({ type }: { type?: string }) {
   }
   if (type === 'SPECIAL') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border border-[hsl(var(--purple-200))]">
         <Users className="w-3 h-3" />
         Special
       </span>
     );
   }
-  return <span className="text-xs text-gray-300 italic">—</span>;
+  return <span className="text-xs text-muted-foreground/50 italic">—</span>;
 }
 
 // ── Main component ────────────────────────────────────────────────
@@ -131,15 +131,15 @@ export function SchedulesTable({
         minWidth: 'min-w-[180px]',
         render: (s) => (
           <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center ring-1 ring-blue-200/60">
-              <Calendar className="w-4 h-4 text-blue-600" />
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
+              <Calendar className="w-4 h-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+              <p className="text-sm font-semibold text-foreground truncate leading-tight">
                 {s.name || 'Unnamed Schedule'}
               </p>
               {s.description && (
-                <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5" title={s.description}>
+                <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5" title={s.description}>
                   {s.description}
                 </p>
               )}
@@ -153,8 +153,8 @@ export function SchedulesTable({
         minWidth: 'min-w-[140px]',
         render: (s) => (
           <div className="flex items-start gap-1.5">
-            <RouteIcon className="w-3.5 h-3.5 text-gray-300 mt-0.5 shrink-0" />
-            <span className="text-sm text-gray-700 truncate">
+            <RouteIcon className="w-3.5 h-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
+            <span className="text-sm text-foreground/80 truncate">
               {s.routeName || '—'}
             </span>
           </div>
@@ -177,7 +177,7 @@ export function SchedulesTable({
         header: 'Operating Days',
         cellClassName: 'whitespace-nowrap',
         render: (s) => (
-          <span className="text-[11px] text-gray-400">{getDaysOfWeek(s.scheduleCalendars)}</span>
+          <span className="text-[11px] text-muted-foreground/70">{getDaysOfWeek(s.scheduleCalendars)}</span>
         ),
       },
       {
@@ -187,10 +187,10 @@ export function SchedulesTable({
         cellClassName: 'whitespace-nowrap',
         render: (s) => (
           <div className="space-y-0.5">
-            <p className="text-xs text-gray-700 tabular-nums">
+            <p className="text-xs text-foreground/80 tabular-nums">
               {formatDate(s.effectiveStartDate)}
             </p>
-            <p className="text-[11px] text-gray-400 tabular-nums">
+            <p className="text-[11px] text-muted-foreground/70 tabular-nums">
               to {formatDate(s.effectiveEndDate)}
             </p>
           </div>
@@ -202,7 +202,7 @@ export function SchedulesTable({
         sortable: true,
         cellClassName: 'whitespace-nowrap',
         render: (s) => (
-          <span className="text-xs text-gray-500 tabular-nums">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {formatDate(s.createdAt)}
           </span>
         ),
@@ -217,28 +217,28 @@ export function SchedulesTable({
             <button
               onClick={() => onView(s.id!)}
               title="View details"
-              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
             >
               <Eye className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onEdit(s.id!)}
               title="Edit schedule"
-              className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-warning/80 hover:bg-warning/10 transition-colors duration-100"
             >
               <Edit2 className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onAssignBuses(s.id!, s.routeName || '')}
               title="Assign buses"
-              className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-success/80 hover:bg-success/10 transition-colors duration-100"
             >
               <Users className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onDelete(s.id!, s.name || 'Unnamed Schedule')}
               title="Delete schedule"
-              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -260,11 +260,11 @@ export function SchedulesTable({
       showRefreshing
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <Calendar className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Calendar className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No schedules found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No schedules found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {Object.values(activeFilters).some(Boolean)
               ? 'Try adjusting your search or filters to find what you\'re looking for.'
               : 'No schedules have been created yet. Click "Add Schedule" to get started.'}

@@ -174,7 +174,7 @@ export default function TripAdvancedFilters({
       key: 'status',
       label: STATUS_LABELS[statusFilter] || statusFilter,
       onRemove: () => setStatusFilter('all'),
-      colorClass: 'bg-green-50 text-green-700 border-green-200',
+      colorClass: 'bg-success/10 text-success border-success/20',
       icon: <CheckCircle className="h-3 w-3 opacity-70" />,
     });
   }
@@ -185,7 +185,7 @@ export default function TripAdvancedFilters({
       key: 'route',
       label: `Route: ${routeName || routeFilter}`,
       onRemove: () => setRouteFilter('all'),
-      colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       icon: <Route className="h-3 w-3 opacity-70" />,
     });
   }
@@ -196,7 +196,7 @@ export default function TripAdvancedFilters({
       key: 'operator',
       label: `Operator: ${opName || operatorFilter}`,
       onRemove: () => setOperatorFilter('all'),
-      colorClass: 'bg-orange-50 text-orange-700 border-orange-200',
+      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
       icon: <User className="h-3 w-3 opacity-70" />,
     });
   }
@@ -207,7 +207,7 @@ export default function TripAdvancedFilters({
       key: 'schedule',
       label: `Schedule: ${schName || scheduleFilter}`,
       onRemove: () => setScheduleFilter('all'),
-      colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      colorClass: 'bg-primary/10 text-primary border-primary/20',
       icon: <Clock className="h-3 w-3 opacity-70" />,
     });
   }
@@ -218,7 +218,7 @@ export default function TripAdvancedFilters({
       key: 'bus',
       label: `Bus: ${busReg || busFilter}`,
       onRemove: () => setBusFilter('all'),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       icon: <Bus className="h-3 w-3 opacity-70" />,
     });
   }
@@ -229,7 +229,7 @@ export default function TripAdvancedFilters({
       key: 'psp',
       label: `PSP: ${pspNum || pspFilter}`,
       onRemove: () => setPspFilter('all'),
-      colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       icon: <Users className="h-3 w-3 opacity-70" />,
     });
   }
@@ -239,7 +239,7 @@ export default function TripAdvancedFilters({
       key: 'from-date',
       label: `From: ${fromDate}`,
       onRemove: () => setFromDate(''),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       icon: <Calendar className="h-3 w-3 opacity-70" />,
     });
   }
@@ -249,7 +249,7 @@ export default function TripAdvancedFilters({
       key: 'to-date',
       label: `To: ${toDate}`,
       onRemove: () => setToDate(''),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       icon: <Calendar className="h-3 w-3 opacity-70" />,
     });
   }
@@ -259,7 +259,7 @@ export default function TripAdvancedFilters({
       key: 'has-psp',
       label: 'Has PSP',
       onRemove: () => setHasPsp(false),
-      colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       icon: <Users className="h-3 w-3 opacity-70" />,
     });
   }
@@ -269,7 +269,7 @@ export default function TripAdvancedFilters({
       key: 'has-bus',
       label: 'Has Bus',
       onRemove: () => setHasBus(false),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       icon: <Bus className="h-3 w-3 opacity-70" />,
     });
   }
@@ -279,7 +279,7 @@ export default function TripAdvancedFilters({
       key: 'has-driver',
       label: 'Has Driver',
       onRemove: () => setHasDriver(false),
-      colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      colorClass: 'bg-primary/10 text-primary border-primary/20',
       icon: <User className="h-3 w-3 opacity-70" />,
     });
   }
@@ -289,7 +289,7 @@ export default function TripAdvancedFilters({
       key: 'has-conductor',
       label: 'Has Conductor',
       onRemove: () => setHasConductor(false),
-      colorClass: 'bg-orange-50 text-orange-700 border-orange-200',
+      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
       icon: <User className="h-3 w-3 opacity-70" />,
     });
   }
@@ -384,7 +384,7 @@ export default function TripAdvancedFilters({
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
             placeholder="From Date"
             title="From Date"
           />
@@ -392,7 +392,7 @@ export default function TripAdvancedFilters({
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
             placeholder="To Date"
             title="To Date"
           />
@@ -403,8 +403,8 @@ export default function TripAdvancedFilters({
             onClick={() => setHasPsp(!hasPsp)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
               hasPsp
-                ? 'bg-purple-50 border-purple-300 text-purple-800'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-white'
+                ? 'bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]'
+                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
             }`}
           >
             <Users className="h-3 w-3" />
@@ -415,8 +415,8 @@ export default function TripAdvancedFilters({
             onClick={() => setHasBus(!hasBus)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
               hasBus
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-800'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-white'
+                ? 'bg-primary/10 border-indigo-300 text-indigo-800'
+                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
             }`}
           >
             <Bus className="h-3 w-3" />
@@ -427,8 +427,8 @@ export default function TripAdvancedFilters({
             onClick={() => setHasDriver(!hasDriver)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
               hasDriver
-                ? 'bg-blue-50 border-blue-300 text-blue-800'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-white'
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
             }`}
           >
             <User className="h-3 w-3" />
@@ -439,8 +439,8 @@ export default function TripAdvancedFilters({
             onClick={() => setHasConductor(!hasConductor)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
               hasConductor
-                ? 'bg-orange-50 border-orange-300 text-orange-800'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-white'
+                ? 'bg-warning/10 border-orange-300 text-warning'
+                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
             }`}
           >
             <User className="h-3 w-3" />

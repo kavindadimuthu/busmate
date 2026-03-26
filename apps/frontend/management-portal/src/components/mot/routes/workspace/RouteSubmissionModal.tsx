@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@busmate/ui';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { 
   searchAllStopsExistence, 
@@ -30,8 +29,7 @@ import {
   ExternalLink,
   SkipForward
 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { Progress, Badge } from '@busmate/ui';
 
 interface RouteSubmissionModalProps {
   isOpen: boolean;
@@ -763,24 +761,24 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     const getIcon = () => {
       switch (step.status) {
         case 'completed':
-          return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
+          return <CheckCircle2 className="w-5 h-5 text-success" />;
         case 'failed':
-          return <X className="w-5 h-5 text-red-600" />;
+          return <X className="w-5 h-5 text-destructive" />;
         case 'in-progress':
-          return <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />;
+          return <Loader2 className="w-5 h-5 text-primary animate-spin" />;
         case 'skipped':
-          return <SkipForward className="w-5 h-5 text-slate-400" />;
+          return <SkipForward className="w-5 h-5 text-muted-foreground/70" />;
         default:
-          return <CircleDot className="w-5 h-5 text-slate-300" />;
+          return <CircleDot className="w-5 h-5 text-muted-foreground/50" />;
       }
     };
 
     const statusBg = {
-      completed: 'bg-emerald-50 border-emerald-200',
-      failed: 'bg-red-50 border-red-200',
-      'in-progress': 'bg-blue-50 border-blue-200',
-      skipped: 'bg-slate-50 border-slate-200',
-      pending: 'bg-white border-slate-100',
+      completed: 'bg-success/10 border-success/20',
+      failed: 'bg-destructive/10 border-destructive/20',
+      'in-progress': 'bg-primary/10 border-primary/20',
+      skipped: 'bg-muted border-border',
+      pending: 'bg-card border-border/50',
     }[step.status];
 
     return (
@@ -789,15 +787,15 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
           {getIcon()}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-800">{label}</span>
+              <span className="text-sm font-medium text-foreground">{label}</span>
               {step.status !== 'pending' && (
                 <Badge
                   variant="outline"
                   className={`text-[10px] px-1.5 py-0 capitalize ${
-                    step.status === 'completed' ? 'text-emerald-700 border-emerald-300' :
-                    step.status === 'failed' ? 'text-red-700 border-red-300' :
-                    step.status === 'in-progress' ? 'text-blue-700 border-blue-300' :
-                    'text-slate-500 border-slate-300'
+                    step.status === 'completed' ? 'text-success border-emerald-300' :
+                    step.status === 'failed' ? 'text-destructive border-destructive/30' :
+                    step.status === 'in-progress' ? 'text-primary border-primary/30' :
+                    'text-muted-foreground border-border'
                   }`}
                 >
                   {step.status === 'in-progress' ? 'running' : step.status}
@@ -805,14 +803,14 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
               )}
             </div>
             {step.message && (
-              <p className="text-xs text-slate-500 mt-0.5 truncate">{step.message}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{step.message}</p>
             )}
           </div>
         </div>
         {step.details && step.details.length > 0 && (
           <div className="mt-2 ml-7 space-y-0.5 max-h-24 overflow-y-auto">
             {step.details.map((detail, idx) => (
-              <p key={idx} className="text-xs text-slate-500">{detail}</p>
+              <p key={idx} className="text-xs text-muted-foreground">{detail}</p>
             ))}
           </div>
         )}
@@ -828,7 +826,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
     return (
       <div className="mt-3 px-1">
-        <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
           <span className="truncate mr-2">{progress.label}</span>
           <span className="shrink-0 tabular-nums">{progress.current}/{progress.total}</span>
         </div>
@@ -860,33 +858,33 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         </DialogHeader>
 
         <div className="py-4">
-          <div className={`p-4 rounded-lg space-y-2 ${mode === 'edit' ? 'bg-yellow-50' : 'bg-gray-50'}`}>
-            <p className="font-medium text-gray-900">{data.routeGroup.name || 'Unnamed Route Group'}</p>
+          <div className={`p-4 rounded-lg space-y-2 ${mode === 'edit' ? 'bg-warning/10' : 'bg-muted'}`}>
+            <p className="font-medium text-foreground">{data.routeGroup.name || 'Unnamed Route Group'}</p>
             {mode === 'edit' && routeGroupId && (
-              <p className="text-xs text-gray-500">ID: {routeGroupId}</p>
+              <p className="text-xs text-muted-foreground">ID: {routeGroupId}</p>
             )}
-            <div className="text-sm text-gray-600 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <p>Routes: {validRoutes.length}{emptyRoutes.length > 0 ? ` (${emptyRoutes.length} empty, will be skipped)` : ''}</p>
               <p>Total Stops: {validRoutes.reduce((acc, r) => acc + r.routeStops.length, 0)}</p>
             </div>
           </div>
 
           {emptyRoutes.length > 0 && (
-            <div className="mt-3 p-4 border border-amber-300 bg-amber-50 rounded-lg">
+            <div className="mt-3 p-4 border border-warning/30 bg-warning/10 rounded-lg">
               <div className="flex gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-800">
+                <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                <div className="text-sm text-warning">
                   <p className="font-medium mb-1">
                     {emptyRoutes.length === 1 ? '1 route has no stops and will be skipped:' : `${emptyRoutes.length} routes have no stops and will be skipped:`}
                   </p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {emptyRoutes.map((r, i) => (
-                      <li key={i} className="text-amber-700">
+                      <li key={i} className="text-warning">
                         {r.name?.trim() ? `"${r.name}"` : '(unnamed route)'}
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-2 text-amber-600 text-xs">
+                  <p className="mt-2 text-warning text-xs">
                     Only routes with at least one stop will be submitted.
                   </p>
                 </div>
@@ -894,10 +892,10 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
             </div>
           )}
 
-          <div className={`mt-4 p-4 border rounded-lg ${mode === 'edit' ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
+          <div className={`mt-4 p-4 border rounded-lg ${mode === 'edit' ? 'bg-warning/10 border-warning/20' : 'bg-primary/10 border-primary/20'}`}>
             <div className="flex gap-3">
-              <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${mode === 'edit' ? 'text-yellow-600' : 'text-blue-600'}`} />
-              <div className={`text-sm ${mode === 'edit' ? 'text-yellow-800' : 'text-blue-800'}`}>
+              <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${mode === 'edit' ? 'text-warning' : 'text-primary'}`} />
+              <div className={`text-sm ${mode === 'edit' ? 'text-warning' : 'text-primary'}`}>
                 <p className="font-medium mb-1">{mode === 'edit' ? 'Update Process:' : 'Submission Process:'}</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Validate all stop existence in the system</li>
@@ -915,7 +913,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
           </Button>
           <Button
             onClick={handleProceed}
-            className={mode === 'edit' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+            className={mode === 'edit' ? 'bg-warning hover:bg-warning/90' : ''}
             disabled={validRoutes.length === 0 || isSubmitting}
           >
             {isSubmitting ? (
@@ -940,7 +938,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+          <Loader2 className="w-5 h-5 text-primary animate-spin" />
           {mode === 'edit' ? 'Updating Route Group' : 'Submitting Route Group'}
         </DialogTitle>
         <DialogDescription>
@@ -963,7 +961,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   const renderCompleted = () => (
     <>
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2 text-emerald-700">
+        <DialogTitle className="flex items-center gap-2 text-success">
           <CheckCircle2 className="w-5 h-5" />
           {mode === 'edit' ? 'Update Complete' : 'Submission Complete'}
         </DialogTitle>
@@ -976,24 +974,24 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
       <div className="py-3">
         {/* Summary card */}
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+        <div className="bg-success/10 border border-success/20 rounded-lg p-3 mb-3">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <div className="text-slate-600">Route Group</div>
-            <div className="font-medium text-slate-800 truncate">{data.routeGroup.name}</div>
+            <div className="text-muted-foreground">Route Group</div>
+            <div className="font-medium text-foreground truncate">{data.routeGroup.name}</div>
             {state.createdRouteGroupId && (
               <>
-                <div className="text-slate-600">ID</div>
-                <div className="font-mono text-xs text-slate-700 truncate">{state.createdRouteGroupId}</div>
+                <div className="text-muted-foreground">ID</div>
+                <div className="font-mono text-xs text-muted-foreground truncate">{state.createdRouteGroupId}</div>
               </>
             )}
-            <div className="text-slate-600">Routes</div>
-            <div className="font-medium text-slate-800">{data.routeGroup.routes.length}</div>
-            <div className="text-slate-600">Total Stops</div>
-            <div className="font-medium text-slate-800">{data.routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}</div>
+            <div className="text-muted-foreground">Routes</div>
+            <div className="font-medium text-foreground">{data.routeGroup.routes.length}</div>
+            <div className="text-muted-foreground">Total Stops</div>
+            <div className="font-medium text-foreground">{data.routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}</div>
             {state.createdStops.length > 0 && (
               <>
-                <div className="text-slate-600">New Stops Created</div>
-                <div className="font-medium text-emerald-700">{state.createdStops.length}</div>
+                <div className="text-muted-foreground">New Stops Created</div>
+                <div className="font-medium text-success">{state.createdStops.length}</div>
               </>
             )}
           </div>
@@ -1001,7 +999,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
         {/* Step results (collapsed by default) */}
         <details className="group">
-          <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 mb-2">
+          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-muted-foreground mb-2">
             Show step details
           </summary>
           <div className="space-y-2">
@@ -1032,7 +1030,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   const renderFailed = () => (
     <>
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2 text-red-700">
+        <DialogTitle className="flex items-center gap-2 text-destructive">
           <AlertCircle className="w-5 h-5" />
           Submission Failed
         </DialogTitle>
@@ -1043,8 +1041,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
       <div className="py-3">
         {state.error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 mb-3">
-            <p className="text-sm text-red-800">{state.error}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5 mb-3">
+            <p className="text-sm text-destructive">{state.error}</p>
           </div>
         )}
 

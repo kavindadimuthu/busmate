@@ -96,37 +96,37 @@ export function RouteAdvancedFilters({
       key: 'routeGroup',
       label: filterOptions.routeGroups.find((rg) => rg.id === routeGroupFilter)?.name ?? routeGroupFilter,
       onRemove: () => setRouteGroupFilter('all'),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
     },
     directionFilter !== 'all' && {
       key: 'direction',
       label: directionFilter === 'OUTBOUND' ? 'Outbound' : 'Inbound',
       onRemove: () => setDirectionFilter('all'),
-      colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      colorClass: 'bg-primary/10 text-primary border-primary/20',
     },
     minDistance && {
       key: 'minDistance',
       label: `Min ${minDistance} km`,
       onRemove: () => setMinDistance(''),
-      colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      colorClass: 'bg-warning/10 text-warning border-warning/20',
     },
     maxDistance && {
       key: 'maxDistance',
       label: `Max ${maxDistance} km`,
       onRemove: () => setMaxDistance(''),
-      colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      colorClass: 'bg-warning/10 text-warning border-warning/20',
     },
     minDuration && {
       key: 'minDuration',
       label: `Min ${minDuration} min`,
       onRemove: () => setMinDuration(''),
-      colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
     },
     maxDuration && {
       key: 'maxDuration',
       label: `Max ${maxDuration} min`,
       onRemove: () => setMaxDuration(''),
-      colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
     },
   ].filter(Boolean) as FilterChipDescriptor[];
 
@@ -151,7 +151,7 @@ export function RouteAdvancedFilters({
             options={routeGroupOptions}
             allLabel="All Groups"
             icon={<RouteIcon className="h-3.5 w-3.5" />}
-            activeColorClass="bg-indigo-50 border-indigo-300 text-indigo-800"
+            activeColorClass="bg-primary/10 border-indigo-300 text-indigo-800"
           />
 
           {/* Direction segmented control */}
@@ -163,41 +163,41 @@ export function RouteAdvancedFilters({
 
           {/* Distance range */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500 shrink-0">Dist (km):</span>
+            <span className="text-xs text-muted-foreground shrink-0">Dist (km):</span>
             <input
               type="number"
               placeholder="Min"
               value={minDistance}
               onChange={(e) => setMinDistance(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-amber-400 focus:bg-white transition-all"
+              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-warning/40 focus:bg-card transition-all"
             />
-            <span className="text-gray-400 text-xs">–</span>
+            <span className="text-muted-foreground/70 text-xs">–</span>
             <input
               type="number"
               placeholder="Max"
               value={maxDistance}
               onChange={(e) => setMaxDistance(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-amber-400 focus:bg-white transition-all"
+              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-warning/40 focus:bg-card transition-all"
             />
           </div>
 
           {/* Duration range */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500 shrink-0">Dur (min):</span>
+            <span className="text-xs text-muted-foreground shrink-0">Dur (min):</span>
             <input
               type="number"
               placeholder="Min"
               value={minDuration}
               onChange={(e) => setMinDuration(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-400 focus:bg-white transition-all"
+              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-primary/40 focus:bg-card transition-all"
             />
-            <span className="text-gray-400 text-xs">–</span>
+            <span className="text-muted-foreground/70 text-xs">–</span>
             <input
               type="number"
               placeholder="Max"
               value={maxDuration}
               onChange={(e) => setMaxDuration(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-400 focus:bg-white transition-all"
+              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-primary/40 focus:bg-card transition-all"
             />
           </div>
         </>

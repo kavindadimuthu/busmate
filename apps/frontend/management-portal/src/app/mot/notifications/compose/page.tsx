@@ -34,10 +34,10 @@ const TYPE_OPTIONS: { value: Notification['type']; label: string; icon: React.Co
 ];
 
 const PRIORITY_OPTIONS: { value: Notification['priority']; label: string; cls: string }[] = [
-    { value: 'low', label: 'Low', cls: 'border-gray-300 text-gray-600' },
-    { value: 'medium', label: 'Medium', cls: 'border-blue-300 text-blue-600' },
-    { value: 'high', label: 'High', cls: 'border-orange-300 text-orange-600' },
-    { value: 'critical', label: 'Critical', cls: 'border-red-300 text-red-600' },
+    { value: 'low', label: 'Low', cls: 'border-border text-muted-foreground' },
+    { value: 'medium', label: 'Medium', cls: 'border-primary/30 text-primary' },
+    { value: 'high', label: 'High', cls: 'border-orange-300 text-warning' },
+    { value: 'critical', label: 'Critical', cls: 'border-destructive/30 text-destructive' },
 ];
 
 const AUDIENCE_OPTIONS: { value: Notification['targetAudience']; label: string }[] = [
@@ -81,12 +81,12 @@ const DEFAULT_FORM: FormState = {
 function Field({ label, required, children, hint }: { label: string; required?: boolean; children: React.ReactNode; hint?: string }) {
     return (
         <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground/80">
                 {label}
-                {required && <span className="text-red-500 ml-0.5">*</span>}
+                {required && <span className="text-destructive/80 ml-0.5">*</span>}
             </label>
             {children}
-            {hint && <p className="text-xs text-gray-400">{hint}</p>}
+            {hint && <p className="text-xs text-muted-foreground/70">{hint}</p>}
         </div>
     );
 }
@@ -164,14 +164,14 @@ export default function ComposeNotificationPage() {
     return (
         <div className="space-y-6">
             {/* Compose form card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
-                        <Send className="h-5 w-5 text-blue-600" />
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-border/50 flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/10">
+                        <Send className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h2 className="text-base font-semibold text-gray-900">New Notification</h2>
-                        <p className="text-sm text-gray-500">Fill in the details below to compose and send your notification.</p>
+                        <h2 className="text-base font-semibold text-foreground">New Notification</h2>
+                        <p className="text-sm text-muted-foreground">Fill in the details below to compose and send your notification.</p>
                     </div>
                 </div>
 
@@ -184,9 +184,9 @@ export default function ComposeNotificationPage() {
                             onChange={(e) => set('title', e.target.value)}
                             maxLength={120}
                             placeholder="Enter a clear, descriptive title…"
-                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-blue-400 focus:bg-white transition-all ${errors.title ? 'border-red-300' : 'border-gray-200'}`}
+                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-primary/40 focus:bg-card transition-all ${errors.title ? 'border-destructive/30' : 'border-border'}`}
                         />
-                        {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+                        {errors.title && <p className="text-xs text-destructive/80 mt-1">{errors.title}</p>}
                     </Field>
 
                     {/* Body */}
@@ -197,9 +197,9 @@ export default function ComposeNotificationPage() {
                             maxLength={2000}
                             rows={5}
                             placeholder="Write the full notification message here…"
-                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-blue-400 focus:bg-white transition-all resize-none ${errors.body ? 'border-red-300' : 'border-gray-200'}`}
+                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-primary/40 focus:bg-card transition-all resize-none ${errors.body ? 'border-destructive/30' : 'border-border'}`}
                         />
-                        {errors.body && <p className="text-xs text-red-500 mt-1">{errors.body}</p>}
+                        {errors.body && <p className="text-xs text-destructive/80 mt-1">{errors.body}</p>}
                     </Field>
 
                     {/* Type */}
@@ -214,11 +214,11 @@ export default function ComposeNotificationPage() {
                                         onClick={() => set('type', value)}
                                         className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all ${
                                             active
-                                                ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
-                                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white'
+                                                ? 'bg-primary/10 border-primary/30 text-primary shadow-sm'
+                                                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
                                         }`}
                                     >
-                                        <Icon className={`h-4 w-4 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
+                                        <Icon className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground/70'}`} />
                                         <span className="text-xs font-medium">{label}</span>
                                     </button>
                                 );
@@ -238,8 +238,8 @@ export default function ComposeNotificationPage() {
                                         onClick={() => set('priority', value)}
                                         className={`px-4 py-1.5 text-sm font-medium rounded-lg border transition-all ${
                                             active
-                                                ? `${cls} bg-white shadow-sm`
-                                                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-white'
+                                                ? `${cls} bg-card shadow-sm`
+                                                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
                                         }`}
                                     >
                                         {label}
@@ -252,11 +252,11 @@ export default function ComposeNotificationPage() {
                     {/* Target Audience */}
                     <Field label="Target Audience" required>
                         <div className="relative">
-                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
                             <select
                                 value={form.targetAudience}
                                 onChange={(e) => set('targetAudience', e.target.value as Notification['targetAudience'])}
-                                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-blue-400 focus:bg-white transition-all appearance-none"
+                                className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-primary/40 focus:bg-card transition-all appearance-none"
                             >
                                 {AUDIENCE_OPTIONS.map(({ value, label }) => (
                                     <option key={value} value={value}>{label}</option>
@@ -277,11 +277,11 @@ export default function ComposeNotificationPage() {
                                         onClick={() => set('channel', value)}
                                         className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${
                                             active
-                                                ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
-                                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white'
+                                                ? 'bg-primary/10 border-primary/30 text-primary shadow-sm'
+                                                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
                                         }`}
                                     >
-                                        <Icon className={`h-4 w-4 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
+                                        <Icon className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground/70'}`} />
                                         {label}
                                     </button>
                                 );
@@ -291,8 +291,8 @@ export default function ComposeNotificationPage() {
                 </div>
 
                 {/* Footer actions */}
-                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-xs text-gray-400">
+                <div className="px-6 py-4 border-t border-border/50 bg-muted flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground/70">
                         Once sent, notifications cannot be edited. You can delete them from the notifications list.
                     </p>
                     <div className="flex items-center gap-3 shrink-0">
@@ -300,7 +300,7 @@ export default function ComposeNotificationPage() {
                             type="button"
                             onClick={() => router.push('/mot/notifications')}
                             disabled={isSending}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
                         >
                             Cancel
                         </button>
@@ -308,7 +308,7 @@ export default function ComposeNotificationPage() {
                             type="button"
                             onClick={handleSend}
                             disabled={isSending}
-                            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSending ? (
                                 <>

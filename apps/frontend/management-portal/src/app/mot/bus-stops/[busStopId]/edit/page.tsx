@@ -41,7 +41,7 @@ function EditBusStopContent({ params }: EditBusStopPageProps) {
   useSetPageActions(
     <button
       onClick={() => busStopId ? router.push(`/mot/bus-stops/${busStopId}`) : router.push('/mot/bus-stops')}
-      className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+      className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
     >
       <ArrowLeft className="w-5 h-5 mr-2" />
       Back to Details
@@ -65,15 +65,15 @@ function EditBusStopContent({ params }: EditBusStopPageProps) {
   if (!busStopId) {
     return (
       <div className="mx-auto">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
           <div className="text-center">
-            <h3 className="text-lg font-medium text-red-800">Invalid Bus Stop ID</h3>
-            <p className="text-red-700 mt-1">
+            <h3 className="text-lg font-medium text-destructive">Invalid Bus Stop ID</h3>
+            <p className="text-destructive mt-1">
               No bus stop ID provided. Please go back and select a bus stop to edit.
             </p>
             <button
               onClick={() => router.push('/mot/bus-stops')}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="mt-4 px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive transition-colors"
             >
               Back to Bus Stops
             </button>

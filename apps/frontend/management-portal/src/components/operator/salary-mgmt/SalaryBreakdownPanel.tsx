@@ -23,14 +23,14 @@ export function SalaryBreakdownPanel({ records, loading }: SalaryBreakdownPanelP
   // ── Loading skeleton ──────────────────────────────────────────
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-48 mb-6" />
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 animate-pulse">
+        <div className="h-5 bg-secondary rounded w-48 mb-6" />
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4">
-              <div className="w-32 h-3.5 bg-gray-200 rounded" />
-              <div className="flex-1 h-3 bg-gray-100 rounded-full" />
-              <div className="w-24 h-3.5 bg-gray-200 rounded" />
+              <div className="w-32 h-3.5 bg-secondary rounded" />
+              <div className="flex-1 h-3 bg-muted rounded-full" />
+              <div className="w-24 h-3.5 bg-secondary rounded" />
             </div>
           ))}
         </div>
@@ -59,11 +59,11 @@ export function SalaryBreakdownPanel({ records, loading }: SalaryBreakdownPanelP
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-base font-semibold text-gray-900 mb-5">Salary by Staff Member</h3>
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-base font-semibold text-foreground mb-5">Salary by Staff Member</h3>
 
       {staffList.length === 0 ? (
-        <div className="text-center py-8 text-sm text-gray-500">
+        <div className="text-center py-8 text-sm text-muted-foreground">
           No salary data available for current filters
         </div>
       ) : (
@@ -72,14 +72,14 @@ export function SalaryBreakdownPanel({ records, loading }: SalaryBreakdownPanelP
             <div key={staff.name} className="flex items-center gap-3">
               {/* Name & role */}
               <div className="w-36 min-w-[9rem] shrink-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{staff.name}</p>
-                <p className="text-[10px] text-gray-400">
+                <p className="text-sm font-medium text-foreground truncate">{staff.name}</p>
+                <p className="text-[10px] text-muted-foreground/70">
                   {staff.role === 'DRIVER' ? 'Driver' : 'Conductor'} · {staff.count} days
                 </p>
               </div>
 
               {/* Bar */}
-              <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -91,7 +91,7 @@ export function SalaryBreakdownPanel({ records, loading }: SalaryBreakdownPanelP
 
               {/* Value */}
               <div className="w-28 text-right shrink-0">
-                <p className="text-sm font-semibold text-gray-900 tabular-nums">
+                <p className="text-sm font-semibold text-foreground tabular-nums">
                   Rs {staff.total.toLocaleString()}
                 </p>
               </div>

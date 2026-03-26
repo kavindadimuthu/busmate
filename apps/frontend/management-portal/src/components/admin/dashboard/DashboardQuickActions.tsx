@@ -59,11 +59,11 @@ const ACTIONS = [
 ] as const;
 
 const ICON_STYLES: Record<string, string> = {
-  blue:   'bg-blue-100 text-blue-600',
-  green:  'bg-green-100 text-green-600',
+  blue:   'bg-primary/15 text-primary',
+  green:  'bg-success/15 text-success',
   teal:   'bg-teal-100 text-teal-600',
-  purple: 'bg-purple-100 text-purple-600',
-  orange: 'bg-orange-100 text-orange-600',
+  purple: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]',
+  orange: 'bg-warning/15 text-warning',
   gray:   'bg-muted text-muted-foreground',
 };
 

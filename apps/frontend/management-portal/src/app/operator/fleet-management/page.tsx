@@ -164,8 +164,8 @@ export default function FleetManagementPage() {
       />
 
       {/* Read-only notice */}
-      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
-        <Info className="h-4 w-4 shrink-0 mt-0.5 text-blue-500" />
+      <div className="flex items-start gap-2.5 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
+        <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary/80" />
         <p>
           <span className="font-semibold">Read-only view:</span>{' '}
           Fleet registration and modifications are managed by the National Transport Commission (NTC).

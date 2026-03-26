@@ -32,8 +32,8 @@ export function FareAmendmentsTable({
       minWidth: 'min-w-[170px]',
       render: (row) => (
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">{row.referenceNumber}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5 truncate">{row.id}</p>
+          <p className="text-sm font-semibold text-foreground truncate">{row.referenceNumber}</p>
+          <p className="text-[11px] text-muted-foreground/70 mt-0.5 truncate">{row.id}</p>
         </div>
       ),
     },
@@ -43,7 +43,7 @@ export function FareAmendmentsTable({
       sortable: true,
       minWidth: 'min-w-[200px]',
       render: (row) => (
-        <span className="text-sm text-gray-900 line-clamp-1">{row.title}</span>
+        <span className="text-sm text-foreground line-clamp-1">{row.title}</span>
       ),
     },
     {
@@ -52,8 +52,8 @@ export function FareAmendmentsTable({
       sortable: true,
       cellClassName: 'whitespace-nowrap',
       render: (row) => (
-        <div className="flex items-center gap-1.5 text-sm text-gray-700">
-          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+        <div className="flex items-center gap-1.5 text-sm text-foreground/80">
+          <Calendar className="w-3.5 h-3.5 text-muted-foreground/70" />
           {new Date(row.effectiveDate).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -67,7 +67,7 @@ export function FareAmendmentsTable({
       header: 'Gazette No.',
       cellClassName: 'whitespace-nowrap',
       render: (row) => (
-        <span className="text-xs text-gray-500 font-mono">
+        <span className="text-xs text-muted-foreground font-mono">
           {row.gazetteNumber || '—'}
         </span>
       ),
@@ -77,8 +77,8 @@ export function FareAmendmentsTable({
       header: 'Stages',
       cellClassName: 'whitespace-nowrap',
       render: (row) => (
-        <div className="flex items-center gap-1.5 text-sm text-gray-700">
-          <Hash className="w-3.5 h-3.5 text-gray-400" />
+        <div className="flex items-center gap-1.5 text-sm text-foreground/80">
+          <Hash className="w-3.5 h-3.5 text-muted-foreground/70" />
           {row.maxStages}
         </div>
       ),
@@ -91,7 +91,7 @@ export function FareAmendmentsTable({
       render: (row) => (
         <span
           className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-            AMENDMENT_STATUS_COLORS[row.status] || 'bg-gray-100 text-gray-600 border-gray-200'
+            AMENDMENT_STATUS_COLORS[row.status] || 'bg-muted text-muted-foreground border-border'
           }`}
         >
           {row.status}
@@ -107,7 +107,7 @@ export function FareAmendmentsTable({
         <div className="inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onView(row.id)}
-            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+            className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
             title="View fare matrix"
           >
             <Eye className="w-3.5 h-3.5" />
@@ -128,11 +128,11 @@ export function FareAmendmentsTable({
       showRefreshing
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <FileText className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <FileText className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No amendments found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No amendments found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             No fare amendments match your search criteria. Try adjusting your filters.
           </p>
         </div>

@@ -160,11 +160,11 @@ export function PermitForm({
 
   // Form field options
   const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'text-yellow-600' },
-    { value: 'active', label: 'Active', color: 'text-green-600' },
-    { value: 'suspended', label: 'Suspended', color: 'text-orange-600' },
-    { value: 'expired', label: 'Expired', color: 'text-red-600' },
-    { value: 'cancelled', label: 'Cancelled', color: 'text-red-600' },
+    { value: 'pending', label: 'Pending', color: 'text-warning' },
+    { value: 'active', label: 'Active', color: 'text-success' },
+    { value: 'suspended', label: 'Suspended', color: 'text-warning' },
+    { value: 'expired', label: 'Expired', color: 'text-destructive' },
+    { value: 'cancelled', label: 'Cancelled', color: 'text-destructive' },
   ];
 
   const permitTypeOptions = [
@@ -191,12 +191,12 @@ export function PermitForm({
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Submit Error Alert */}
       {submitError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-red-800">Submission Error</h3>
-              <p className="text-sm text-red-700 mt-1">{submitError}</p>
+              <h3 className="text-sm font-medium text-destructive">Submission Error</h3>
+              <p className="text-sm text-destructive mt-1">{submitError}</p>
             </div>
           </div>
         </div>
@@ -205,16 +205,16 @@ export function PermitForm({
       {/* Basic Information Section */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <FileText className="w-5 h-5 text-blue-600" />
+          <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center">
+            <FileText className="w-5 h-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+          <h3 className="text-lg font-semibold text-foreground">Basic Information</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Permit Number */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Permit Number *
             </label>
             <input
@@ -223,25 +223,25 @@ export function PermitForm({
               onChange={(e) => handleInputChange('permitNumber', e.target.value)}
               placeholder="e.g., PSP-2024-001"
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                errors.permitNumber ? 'border-red-300' : 'border-gray-300'
+                errors.permitNumber ? 'border-destructive/30' : 'border-border'
               }`}
             />
             {errors.permitNumber && (
-              <p className="text-red-600 text-sm mt-1">{errors.permitNumber}</p>
+              <p className="text-destructive text-sm mt-1">{errors.permitNumber}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">Unique identifier for this permit</p>
+            <p className="text-muted-foreground text-sm mt-1">Unique identifier for this permit</p>
           </div>
 
           {/* Permit Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Permit Type *
             </label>
             <select
               value={formData.permitType}
               onChange={(e) => handleInputChange('permitType', e.target.value)}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                errors.permitType ? 'border-red-300' : 'border-gray-300'
+                errors.permitType ? 'border-destructive/30' : 'border-border'
               }`}
             >
               <option value="">Select permit type</option>
@@ -252,10 +252,10 @@ export function PermitForm({
               ))}
             </select>
             {errors.permitType && (
-              <p className="text-red-600 text-sm mt-1">{errors.permitType}</p>
+              <p className="text-destructive text-sm mt-1">{errors.permitType}</p>
             )}
             {formData.permitType && (
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 {permitTypeOptions.find(opt => opt.value === formData.permitType)?.description}
               </p>
             )}
@@ -265,14 +265,14 @@ export function PermitForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Status *
             </label>
             <select
               value={formData.status}
               onChange={(e) => handleInputChange('status', e.target.value)}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                errors.status ? 'border-red-300' : 'border-gray-300'
+                errors.status ? 'border-destructive/30' : 'border-border'
               }`}
             >
               {statusOptions.map((option) => (
@@ -282,17 +282,17 @@ export function PermitForm({
               ))}
             </select>
             {errors.status && (
-              <p className="text-red-600 text-sm mt-1">{errors.status}</p>
+              <p className="text-destructive text-sm mt-1">{errors.status}</p>
             )}
           </div>
 
           {/* Maximum Bus Assigned */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Maximum Buses Allowed
             </label>
             <div className="relative">
-              <Bus className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Bus className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 w-4 h-4" />
               <input
                 type="number"
                 value={formData.maximumBusAssigned || ''}
@@ -301,14 +301,14 @@ export function PermitForm({
                 min="1"
                 max="1000"
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  errors.maximumBusAssigned ? 'border-red-300' : 'border-gray-300'
+                  errors.maximumBusAssigned ? 'border-destructive/30' : 'border-border'
                 }`}
               />
             </div>
             {errors.maximumBusAssigned && (
-              <p className="text-red-600 text-sm mt-1">{errors.maximumBusAssigned}</p>
+              <p className="text-destructive text-sm mt-1">{errors.maximumBusAssigned}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">Maximum number of buses that can operate under this permit</p>
+            <p className="text-muted-foreground text-sm mt-1">Maximum number of buses that can operate under this permit</p>
           </div>
         </div>
       </div>
@@ -316,26 +316,26 @@ export function PermitForm({
       {/* Operator & Route Assignment Section */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-green-600" />
+          <div className="w-8 h-8 bg-success/15 rounded-lg flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-success" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Operator & Route Assignment</h3>
+          <h3 className="text-lg font-semibold text-foreground">Operator & Route Assignment</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Operator Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Operator *
             </label>
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 w-4 h-4" />
               <select
                 value={formData.operatorId}
                 onChange={(e) => handleInputChange('operatorId', e.target.value)}
                 disabled={operatorsLoading}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  errors.operatorId ? 'border-red-300' : 'border-gray-300'
+                  errors.operatorId ? 'border-destructive/30' : 'border-border'
                 }`}
               >
                 <option value="">
@@ -349,24 +349,24 @@ export function PermitForm({
               </select>
             </div>
             {errors.operatorId && (
-              <p className="text-red-600 text-sm mt-1">{errors.operatorId}</p>
+              <p className="text-destructive text-sm mt-1">{errors.operatorId}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">The operator who will hold this permit</p>
+            <p className="text-muted-foreground text-sm mt-1">The operator who will hold this permit</p>
           </div>
 
           {/* Route Group Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Route Group *
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 w-4 h-4" />
               <select
                 value={formData.routeGroupId}
                 onChange={(e) => handleInputChange('routeGroupId', e.target.value)}
                 disabled={routeGroupsLoading}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  errors.routeGroupId ? 'border-red-300' : 'border-gray-300'
+                  errors.routeGroupId ? 'border-destructive/30' : 'border-border'
                 }`}
               >
                 <option value="">
@@ -380,9 +380,9 @@ export function PermitForm({
               </select>
             </div>
             {errors.routeGroupId && (
-              <p className="text-red-600 text-sm mt-1">{errors.routeGroupId}</p>
+              <p className="text-destructive text-sm mt-1">{errors.routeGroupId}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">The route group covered by this permit</p>
+            <p className="text-muted-foreground text-sm mt-1">The route group covered by this permit</p>
           </div>
         </div>
 
@@ -391,9 +391,9 @@ export function PermitForm({
           (() => {
             const selectedGroup = routeGroups.find(rg => rg.id === formData.routeGroupId);
             return selectedGroup && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">Selected Route Group Details</h4>
-                <div className="text-sm text-blue-800">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                <h4 className="font-medium text-primary mb-2">Selected Route Group Details</h4>
+                <div className="text-sm text-primary">
                   <p><strong>Name:</strong> {selectedGroup.name}</p>
                   {selectedGroup.description && (
                     <p><strong>Description:</strong> {selectedGroup.description}</p>
@@ -409,7 +409,7 @@ export function PermitForm({
                           </li>
                         ))}
                         {selectedGroup.routes.length > 3 && (
-                          <li className="list-disc text-blue-600">
+                          <li className="list-disc text-primary">
                             ... and {selectedGroup.routes.length - 3} more routes
                           </li>
                         )}
@@ -426,16 +426,16 @@ export function PermitForm({
       {/* Validity Period Section */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-purple-600" />
+          <div className="w-8 h-8 bg-[hsl(var(--purple-100))] rounded-lg flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-[hsl(var(--purple-600))]" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Validity Period</h3>
+          <h3 className="text-lg font-semibold text-foreground">Validity Period</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Issue Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Issue Date *
             </label>
             <input
@@ -444,18 +444,18 @@ export function PermitForm({
               onChange={(e) => handleInputChange('issueDate', e.target.value)}
               max={today}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                errors.issueDate ? 'border-red-300' : 'border-gray-300'
+                errors.issueDate ? 'border-destructive/30' : 'border-border'
               }`}
             />
             {errors.issueDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.issueDate}</p>
+              <p className="text-destructive text-sm mt-1">{errors.issueDate}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">Date when the permit was issued</p>
+            <p className="text-muted-foreground text-sm mt-1">Date when the permit was issued</p>
           </div>
 
           {/* Expiry Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Expiry Date
             </label>
             <div className="flex gap-2">
@@ -465,7 +465,7 @@ export function PermitForm({
                 onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                 min={formData.issueDate || today}
                 className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  errors.expiryDate ? 'border-red-300' : 'border-gray-300'
+                  errors.expiryDate ? 'border-destructive/30' : 'border-border'
                 }`}
               />
               <button
@@ -477,25 +477,25 @@ export function PermitForm({
                   }
                 }}
                 disabled={!formData.issueDate}
-                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 text-sm bg-muted text-foreground/80 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 title="Set to 1 year from issue date"
               >
                 +1Y
               </button>
             </div>
             {errors.expiryDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.expiryDate}</p>
+              <p className="text-destructive text-sm mt-1">{errors.expiryDate}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">Leave empty for permanent permit</p>
+            <p className="text-muted-foreground text-sm mt-1">Leave empty for permanent permit</p>
           </div>
         </div>
 
         {/* Validity Information */}
         {formData.issueDate && formData.expiryDate && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-success/10 border border-success/20 rounded-lg p-4">
             <div className="flex items-start">
-              <Info className="w-5 h-5 text-green-400 mt-0.5 mr-3 shrink-0" />
-              <div className="text-sm text-green-700">
+              <Info className="w-5 h-5 text-success/70 mt-0.5 mr-3 shrink-0" />
+              <div className="text-sm text-success">
                 <p className="font-medium mb-1">Permit Validity Period</p>
                 <p>
                   This permit will be valid from {new Date(formData.issueDate).toLocaleDateString()} 
@@ -511,12 +511,12 @@ export function PermitForm({
       </div>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-end gap-4 pt-6 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 text-foreground/80 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
         >
           <X className="w-4 h-4" />
           Cancel
@@ -525,7 +525,7 @@ export function PermitForm({
         <button
           type="submit"
           disabled={!isFormValid || isSubmitting}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>
@@ -543,14 +543,14 @@ export function PermitForm({
 
       {/* Form Validation Summary */}
       {!isFormValid && Object.keys(errors).length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5 mr-3 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-warning/70 mt-0.5 mr-3 shrink-0" />
             <div>
-              <h3 className="text-sm font-medium text-yellow-800 mb-2">
+              <h3 className="text-sm font-medium text-warning mb-2">
                 Please fix the following errors:
               </h3>
-              <ul className="text-sm text-yellow-700 space-y-1">
+              <ul className="text-sm text-warning space-y-1">
                 {Object.entries(errors).map(([field, error]) => (
                   <li key={field}>• {error}</li>
                 ))}
@@ -561,10 +561,10 @@ export function PermitForm({
       )}
 
       {/* Info Alert */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start">
-          <Info className="w-5 h-5 text-blue-400 mt-0.5 mr-3 shrink-0" />
-          <div className="text-sm text-blue-700">
+          <Info className="w-5 h-5 text-primary/70 mt-0.5 mr-3 shrink-0" />
+          <div className="text-sm text-primary">
             <p className="font-medium mb-1">About Passenger Service Permits</p>
             <p>
               Passenger service permits authorize operators to provide public transportation services 

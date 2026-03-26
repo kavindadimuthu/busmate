@@ -65,22 +65,22 @@ export function FareMatrixTable({
       <div className="overflow-x-auto rounded-t-xl">
         <table className="min-w-full">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50 z-10">Stage</th>
+            <tr className="bg-muted border-b border-border">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sticky left-0 bg-muted z-10">Stage</th>
               {PERMIT_TYPES.map((pt) => (
-                <th key={pt} className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-500">{PERMIT_TYPE_LABELS[pt]}</th>
+                <th key={pt} className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{PERMIT_TYPE_LABELS[pt]}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: 10 }).map((_, i) => (
-              <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
+              <tr key={i} className={i % 2 === 0 ? 'bg-card' : 'bg-muted/40'}>
                 <td className="px-4 py-2.5 sticky left-0 bg-inherit z-10">
-                  <div className="h-3.5 bg-gray-200 rounded animate-pulse w-12" />
+                  <div className="h-3.5 bg-secondary rounded animate-pulse w-12" />
                 </td>
                 {PERMIT_TYPES.map((pt) => (
                   <td key={pt} className="px-4 py-2.5 text-right">
-                    <div className="h-3.5 bg-gray-200 rounded animate-pulse w-16 ml-auto" />
+                    <div className="h-3.5 bg-secondary rounded animate-pulse w-16 ml-auto" />
                   </td>
                 ))}
               </tr>
@@ -94,11 +94,11 @@ export function FareMatrixTable({
   if (filteredMatrix.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
           <span className="text-3xl">📊</span>
         </div>
-        <h3 className="text-base font-semibold text-gray-900 mb-1">No stages in range</h3>
-        <p className="text-sm text-gray-500 max-w-xs">
+        <h3 className="text-base font-semibold text-foreground mb-1">No stages in range</h3>
+        <p className="text-sm text-muted-foreground max-w-xs">
           Adjust the stage range filters to view fare data.
         </p>
       </div>
@@ -109,8 +109,8 @@ export function FareMatrixTable({
     <div ref={tableRef} className="overflow-x-auto rounded-t-xl max-h-[600px] overflow-y-auto">
       <table className="min-w-full">
         <thead className="sticky top-0 z-20">
-          <tr className="bg-gray-50 border-b border-gray-200">
-            <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 sticky left-0 bg-gray-50 z-30 min-w-[80px]">
+          <tr className="bg-muted border-b border-border">
+            <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sticky left-0 bg-muted z-30 min-w-[80px]">
               Stage
             </th>
             {visiblePermitTypes.map((pt) => (
@@ -118,11 +118,11 @@ export function FareMatrixTable({
                 key={pt}
                 className={[
                   'px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider min-w-[120px]',
-                  isHighlighted(pt) ? 'text-gray-700' : 'text-gray-400',
+                  isHighlighted(pt) ? 'text-foreground/80' : 'text-muted-foreground/70',
                 ].join(' ')}
               >
                 {PERMIT_TYPE_LABELS[pt]}
-                <span className="block text-[9px] font-normal normal-case tracking-normal text-gray-400 mt-0.5">
+                <span className="block text-[9px] font-normal normal-case tracking-normal text-muted-foreground/70 mt-0.5">
                   (Rs.)
                 </span>
               </th>
@@ -135,11 +135,11 @@ export function FareMatrixTable({
               key={entry.stage}
               className={[
                 'transition-colors duration-75',
-                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40',
-                'hover:bg-blue-50/40',
+                idx % 2 === 0 ? 'bg-card' : 'bg-muted/40',
+                'hover:bg-primary/10/40',
               ].join(' ')}
             >
-              <td className="px-4 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-inherit z-10 border-r border-gray-100">
+              <td className="px-4 py-2 text-sm font-semibold text-foreground sticky left-0 bg-inherit z-10 border-r border-border/50">
                 {entry.stage}
               </td>
               {visiblePermitTypes.map((pt) => {
@@ -153,8 +153,8 @@ export function FareMatrixTable({
                     data-fare-match={isMatch ? 'true' : undefined}
                     className={[
                       'px-4 py-2 text-sm text-right tabular-nums',
-                      dimmed ? 'text-gray-300' : 'text-gray-700',
-                      isMatch ? 'bg-yellow-100 font-semibold text-yellow-800 ring-1 ring-inset ring-yellow-300' : '',
+                      dimmed ? 'text-muted-foreground/50' : 'text-foreground/80',
+                      isMatch ? 'bg-warning/15 font-semibold text-warning ring-1 ring-inset ring-yellow-300' : '',
                     ].join(' ')}
                   >
                     {formatFare(fare)}

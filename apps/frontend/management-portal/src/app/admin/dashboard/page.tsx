@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
         onClick={toggleLive}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
           isLive
-            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+            ? 'bg-success/15 text-success hover:bg-success/20'
             : 'bg-muted text-muted-foreground hover:bg-muted'
         }`}
       >

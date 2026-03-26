@@ -215,14 +215,14 @@ export default function ScheduleDetailsPage() {
     <div className="flex flex-wrap gap-2">
       <button
         onClick={handleRefresh}
-        className="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm"
+        className="inline-flex items-center px-3 py-2 border border-border text-foreground/80 rounded-md hover:bg-muted text-sm"
       >
         <RefreshCw className="w-4 h-4 mr-2" />
         Refresh
       </button>
       <button
         onClick={handleClone}
-        className="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm"
+        className="inline-flex items-center px-3 py-2 border border-border text-foreground/80 rounded-md hover:bg-muted text-sm"
       >
         <Copy className="w-4 h-4 mr-2" />
         Clone
@@ -230,7 +230,7 @@ export default function ScheduleDetailsPage() {
       {schedule?.status === 'ACTIVE' ? (
         <button
           onClick={handleDeactivate}
-          className="inline-flex items-center px-3 py-2 border border-orange-300 text-orange-700 rounded-md hover:bg-orange-50 text-sm"
+          className="inline-flex items-center px-3 py-2 border border-orange-300 text-orange-700 rounded-md hover:bg-warning/10 text-sm"
         >
           <Power className="w-4 h-4 mr-2" />
           Deactivate
@@ -238,7 +238,7 @@ export default function ScheduleDetailsPage() {
       ) : (
         <button
           onClick={handleActivate}
-          className="inline-flex items-center px-3 py-2 border border-green-300 text-green-700 rounded-md hover:bg-green-50 text-sm"
+          className="inline-flex items-center px-3 py-2 border border-success/30 text-success rounded-md hover:bg-success/10 text-sm"
         >
           <Power className="w-4 h-4 mr-2" />
           Activate
@@ -246,14 +246,14 @@ export default function ScheduleDetailsPage() {
       )}
       <button
         onClick={handleEdit}
-        className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+        className="inline-flex items-center px-3 py-2 bg-primary text-white rounded-md hover:bg-primary text-sm"
       >
         <Edit className="w-4 h-4 mr-2" />
         Edit
       </button>
       <button
         onClick={handleDelete}
-        className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+        className="inline-flex items-center px-3 py-2 bg-destructive text-white rounded-md hover:bg-destructive text-sm"
       >
         <Trash2 className="w-4 h-4 mr-2" />
         Delete
@@ -265,7 +265,7 @@ export default function ScheduleDetailsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -274,12 +274,12 @@ export default function ScheduleDetailsPage() {
   if (error || !schedule) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Schedule Not Found</h3>
-        <p className="text-gray-500 mb-6">{error || 'The requested schedule could not be found.'}</p>
+        <AlertCircle className="mx-auto h-12 w-12 text-destructive/80 mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">Schedule Not Found</h3>
+        <p className="text-muted-foreground mb-6">{error || 'The requested schedule could not be found.'}</p>
         <button
           onClick={handleBack}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Schedules

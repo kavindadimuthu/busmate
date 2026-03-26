@@ -34,10 +34,10 @@ interface PermitsTableProps {
 // ── Helpers ───────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-800 border-green-200',
-  INACTIVE: 'bg-red-100 text-red-800 border-red-200',
-  PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  EXPIRED: 'bg-gray-100 text-gray-800 border-gray-200',
+  ACTIVE: 'bg-success/15 text-success border-success/20',
+  INACTIVE: 'bg-destructive/15 text-destructive border-destructive/20',
+  PENDING: 'bg-warning/15 text-warning border-warning/20',
+  EXPIRED: 'bg-muted text-foreground border-border',
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -74,9 +74,9 @@ function isExpired(expiryDate?: string): boolean {
 }
 
 function getExpiryClassName(expiryDate?: string): string {
-  if (isExpired(expiryDate)) return 'text-red-600';
-  if (isExpiringSoon(expiryDate)) return 'text-orange-600';
-  return 'text-gray-900';
+  if (isExpired(expiryDate)) return 'text-destructive';
+  if (isExpiringSoon(expiryDate)) return 'text-warning';
+  return 'text-foreground';
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -101,10 +101,10 @@ export function PermitsTable({
         minWidth: 'min-w-[160px]',
         render: (row) => (
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-              <FileText className="h-4 w-4 text-blue-600" />
+            <div className="h-8 w-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <FileText className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-foreground">
               {row.permitNumber || 'N/A'}
             </span>
           </div>
@@ -117,8 +117,8 @@ export function PermitsTable({
         minWidth: 'min-w-[140px]',
         render: (row) => (
           <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-            <span className="text-sm text-gray-900">{row.operatorName || 'Unknown'}</span>
+            <Users className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+            <span className="text-sm text-foreground">{row.operatorName || 'Unknown'}</span>
           </div>
         ),
       },
@@ -129,8 +129,8 @@ export function PermitsTable({
         minWidth: 'min-w-[140px]',
         render: (row) => (
           <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-            <span className="text-sm text-gray-900">{row.routeGroupName || 'N/A'}</span>
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+            <span className="text-sm text-foreground">{row.routeGroupName || 'N/A'}</span>
           </div>
         ),
       },
@@ -139,7 +139,7 @@ export function PermitsTable({
         header: 'Type',
         sortable: true,
         render: (row) => (
-          <span className="text-sm text-gray-900">{row.permitType || 'N/A'}</span>
+          <span className="text-sm text-foreground">{row.permitType || 'N/A'}</span>
         ),
       },
       {
@@ -147,7 +147,7 @@ export function PermitsTable({
         header: 'Max Buses',
         sortable: true,
         render: (row) => (
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm font-semibold text-foreground">
             {row.maximumBusAssigned || 0}
           </span>
         ),
@@ -161,7 +161,7 @@ export function PermitsTable({
           return (
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                STATUS_STYLES[s] ?? 'bg-gray-100 text-gray-600 border-gray-200'
+                STATUS_STYLES[s] ?? 'bg-muted text-muted-foreground border-border'
               }`}
             >
               {STATUS_ICONS[s] ?? <AlertTriangle className="w-3.5 h-3.5" />}
@@ -180,13 +180,13 @@ export function PermitsTable({
               {formatDate(row.expiryDate)}
             </span>
             {isExpiringSoon(row.expiryDate) && !isExpired(row.expiryDate) && (
-              <div className="flex items-center gap-0.5 text-xs text-orange-600 mt-0.5">
+              <div className="flex items-center gap-0.5 text-xs text-warning mt-0.5">
                 <AlertTriangle className="h-3 w-3" />
                 Expiring Soon
               </div>
             )}
             {isExpired(row.expiryDate) && (
-              <div className="flex items-center gap-0.5 text-xs text-red-600 mt-0.5">
+              <div className="flex items-center gap-0.5 text-xs text-destructive mt-0.5">
                 <XCircle className="h-3 w-3" />
                 Expired
               </div>
@@ -203,14 +203,14 @@ export function PermitsTable({
           <div className="inline-flex items-center gap-1">
             <button
               onClick={() => onView(row.id)}
-              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+              className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
               title="View Details"
             >
               <Eye className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onEdit(row.id)}
-              className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
               title="Edit"
             >
               <Edit className="h-3.5 w-3.5" />
@@ -218,7 +218,7 @@ export function PermitsTable({
             {onAssignBus && (
               <button
                 onClick={() => onAssignBus(row.id, row.permitNumber || 'Unknown')}
-                className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                className="p-1.5 rounded-lg text-success hover:bg-success/10 transition-colors"
                 title="Assign Bus"
               >
                 <Settings className="h-3.5 w-3.5" />
@@ -226,7 +226,7 @@ export function PermitsTable({
             )}
             <button
               onClick={() => onDelete(row.id, row.permitNumber || 'Unknown')}
-              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+              className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -251,11 +251,11 @@ export function PermitsTable({
       showRefreshing={loading && permits.length > 0}
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <FileText className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <FileText className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No permits found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No permits found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {hasActiveFilters
               ? 'No permits match your current filters. Try adjusting your search criteria.'
               : 'No permits have been issued yet.'}

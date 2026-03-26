@@ -194,7 +194,7 @@ function ServicePermitsContent() {
     <button
       onClick={handleRefresh}
       disabled={loading}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50 transition-colors"
     >
       <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
       Refresh
@@ -207,15 +207,15 @@ function ServicePermitsContent() {
     <div className="space-y-6">
       {/* Error alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-800">Failed to load permits</p>
-              <p className="text-sm text-red-700 mt-0.5">{error}</p>
+              <p className="text-sm font-medium text-destructive">Failed to load permits</p>
+              <p className="text-sm text-destructive mt-0.5">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="text-sm text-red-600 hover:text-red-800 underline mt-1"
+                className="text-sm text-destructive hover:text-destructive underline mt-1"
               >
                 Dismiss
               </button>
@@ -243,7 +243,7 @@ function ServicePermitsContent() {
       />
 
       {/* Table + Pagination card */}
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-card shadow-sm rounded-xl border border-border overflow-hidden">
         <PermitsTable
           permits={permits}
           loading={loading}
@@ -265,7 +265,7 @@ function ServicePermitsContent() {
       </div>
 
       {/* Read-only info notice */}
-      <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+      <div className="flex items-start gap-2.5 p-3.5 bg-primary/10 border border-primary/20 rounded-xl text-sm text-primary">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <span>
           Service permits are issued and managed by the Ministry of Transport. This view is
@@ -283,7 +283,7 @@ export default function ServicePermitsPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <RefreshCw className="w-5 h-5 animate-spin" />
             <span>Loading…</span>
           </div>

@@ -205,28 +205,28 @@ export default function PermitDetailsPage() {
     <div className="flex items-center gap-3 flex-wrap">
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
       </button>
       <button
         onClick={handleRefresh}
-        className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
       >
         <RefreshCw className="w-4 h-4" />
         Refresh
       </button>
       <button
         onClick={handleEdit}
-        className="flex items-center gap-2 px-4 py-2 text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors"
       >
         <Edit className="w-4 h-4" />
         Edit Permit
       </button>
       <button
         onClick={handleDelete}
-        className="flex items-center gap-2 px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors"
       >
         <Trash2 className="w-4 h-4" />
         Delete
@@ -239,8 +239,8 @@ export default function PermitDetailsPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading permit details...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading permit details...</p>
         </div>
       </div>
     );
@@ -250,13 +250,13 @@ export default function PermitDetailsPage() {
   if (error || !permit) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <div className="text-red-600 text-lg mb-4">
+        <AlertCircle className="w-16 h-16 text-destructive/70 mx-auto mb-4" />
+        <div className="text-destructive text-lg mb-4">
           {error || 'Permit not found'}
         </div>
         <button
           onClick={handleBack}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary"
         >
           Go Back
         </button>
@@ -268,15 +268,15 @@ export default function PermitDetailsPage() {
     <div className="space-y-6">
       {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
             <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 shrink-0" />
+              <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <h3 className="text-sm font-medium text-destructive">Error</h3>
+                <p className="text-sm text-destructive mt-1">{error}</p>
                 <button
                   onClick={() => setError(null)}
-                  className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+                  className="text-sm text-destructive hover:text-destructive underline mt-2"
                 >
                   Dismiss
                 </button>

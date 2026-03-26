@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
 import { cn } from '@/lib/utils';
 import { Plus, Copy, Trash2, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@busmate/ui';
 
 // Helper to get start time from schedule (first stop departure time)
 const getScheduleStartTime = (schedule: { scheduleStops: { departureTime?: string }[] }): string => {
@@ -59,20 +59,20 @@ export function ScheduleTabs() {
 
     if (!selectedRouteId) {
         return (
-            <div className="flex items-center justify-center p-4 text-sm text-slate-500 bg-white rounded-lg border border-slate-200">
+            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground bg-card rounded-lg border border-border">
                 Select a route to view schedules
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
             {/* Delete Confirmation Modal */}
             {confirmDeleteIndex !== null && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl p-6 max-w-md shadow-2xl border border-slate-200">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">Remove Schedule</h3>
-                        <p className="text-slate-600 mb-4">
+                    <div className="bg-card rounded-xl p-6 max-w-md shadow-2xl border border-border">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">Remove Schedule</h3>
+                        <p className="text-muted-foreground mb-4">
                             Are you sure you want to remove &quot;{schedules[confirmDeleteIndex]?.name || `Schedule ${confirmDeleteIndex + 1}`}&quot;?
                             This action cannot be undone.
                         </p>
@@ -82,7 +82,7 @@ export function ScheduleTabs() {
                             </Button>
                             <Button
                                 onClick={handleConfirmRemove}
-                                className="bg-rose-600 hover:bg-rose-700 text-white"
+                                className="bg-destructive hover:bg-destructive/90 text-white"
                             >
                                 Remove
                             </Button>
@@ -92,10 +92,10 @@ export function ScheduleTabs() {
             )}
 
             {/* Schedule Tabs Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
-                <div className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted">
+                <div className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                     Schedules
-                    <span className='bg-blue-700 w-6 h-6 text-xs rounded-full flex items-center justify-center text-white font-medium'>
+                    <span className='bg-primary w-6 h-6 text-xs rounded-full flex items-center justify-center text-white font-medium'>
                         {schedules.length}
                     </span>
                 </div>
@@ -103,7 +103,7 @@ export function ScheduleTabs() {
                     variant="outline"
                     size="sm"
                     onClick={handleAddSchedule}
-                    className="h-8 gap-1.5 text-blue-700 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                    className="h-8 gap-1.5 text-primary border-primary/20 hover:bg-primary/10 hover:border-primary/30"
                     title="Add a new schedule for this route"
                 >
                     <Plus className="h-3.5 w-3.5" />
@@ -112,9 +112,9 @@ export function ScheduleTabs() {
             </div>
 
             {/* Tabs Container with Horizontal Scroll */}
-            <div className="flex gap-2 p-3 overflow-x-auto bg-white">
+            <div className="flex gap-2 p-3 overflow-x-auto bg-card">
                 {schedules.length === 0 ? (
-                    <div className="flex items-center justify-center w-full py-4 text-sm text-slate-500">
+                    <div className="flex items-center justify-center w-full py-4 text-sm text-muted-foreground">
                         No schedules. Click &quot;Add Schedule&quot; to create one.
                     </div>
                 ) : (
@@ -126,8 +126,8 @@ export function ScheduleTabs() {
                                 'group relative flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 min-w-[170px]',
                                 'border hover:shadow-sm',
                                 activeScheduleIndex === index
-                                    ? 'text-blue-700 border-3 border-blue-700 shadow-sm'
-                                    : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                    ? 'text-primary border-3 border-primary shadow-sm'
+                                    : 'bg-card border-border hover:border-border hover:bg-muted'
                             )}
                         >
                             {/* Schedule Time Badge */}
@@ -135,8 +135,8 @@ export function ScheduleTabs() {
                                 className={cn(
                                     'flex items-center gap-1 text-xs font-medium',
                                     activeScheduleIndex === index
-                                        ? 'text-blue-700'
-                                        : 'text-slate-500'
+                                        ? 'text-primary'
+                                        : 'text-muted-foreground'
                                 )}
                             >
                                 <Clock className="h-3 w-3" />
@@ -161,8 +161,8 @@ export function ScheduleTabs() {
                                     className={cn(
                                         'p-1 rounded transition-colors',
                                         activeScheduleIndex === index
-                                            ? 'text-blue-700 hover:text-blue-900 hover:bg-blue-200'
-                                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                                            ? 'text-primary hover:text-primary hover:bg-primary/20'
+                                            : 'text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted'
                                     )}
                                 >
                                     <Copy className="h-3.5 w-3.5" />
@@ -175,8 +175,8 @@ export function ScheduleTabs() {
                                         className={cn(
                                             'p-1 rounded transition-colors',
                                             activeScheduleIndex === index
-                                                ? 'text-blue-700 hover:text-rose-600 hover:bg-rose-100'
-                                                : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                                                ? 'text-primary hover:text-destructive hover:bg-destructive/15'
+                                                : 'text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10'
                                         )}
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />

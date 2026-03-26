@@ -15,10 +15,10 @@ export const PERMIT_TYPE_LABELS: Record<PermitType, string> = {
 };
 
 export const PERMIT_TYPE_COLORS: Record<PermitType, string> = {
-  NORMAL: 'bg-blue-50 text-blue-700 border-blue-200',
-  SEMILUXURY: 'bg-amber-50 text-amber-700 border-amber-200',
-  LUXURY: 'bg-purple-50 text-purple-700 border-purple-200',
-  EXTRALUXURY: 'bg-rose-50 text-rose-700 border-rose-200',
+  NORMAL: 'bg-primary/10 text-primary border-primary/20',
+  SEMILUXURY: 'bg-warning/10 text-warning border-warning/20',
+  LUXURY: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
+  EXTRALUXURY: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
 export interface FareMatrixEntry {
@@ -28,11 +28,13 @@ export interface FareMatrixEntry {
 
 export type AmendmentStatus = 'ACTIVE' | 'SUPERSEDED' | 'DRAFT' | 'PENDING';
 
+// Prefer <StatusBadge status="active|draft|pending" /> for inline status display.
+// These classes are retained for cases where a CSS class string is required (e.g., table cell classNames).
 export const AMENDMENT_STATUS_COLORS: Record<AmendmentStatus, string> = {
-  ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  SUPERSEDED: 'bg-gray-100 text-gray-600 border-gray-200',
-  DRAFT: 'bg-amber-50 text-amber-700 border-amber-200',
-  PENDING: 'bg-blue-50 text-blue-700 border-blue-200',
+  ACTIVE: 'bg-success/10 text-success border-success/20',
+  SUPERSEDED: 'bg-muted text-muted-foreground border-border',
+  DRAFT: 'bg-warning/10 text-warning border-warning/20',
+  PENDING: 'bg-primary/10 text-primary border-primary/20',
 };
 
 export interface FareAmendment {

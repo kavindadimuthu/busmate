@@ -1,13 +1,12 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsBarChart } from './charts/AnalyticsBarChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import { AnalyticsLineChart } from './charts/AnalyticsLineChart';
 import { AnalyticsDataTable, ProgressBar } from './charts/AnalyticsDataTable';
 import { DollarSign, TrendingUp, Ticket, FileText } from 'lucide-react';
 import type { RevenueAnalyticsData } from '@/data/mot/analytics';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -27,50 +26,6 @@ function formatCurrency(value: number): string {
 // ── Component ────────────────────────────────────────────────────
 
 export function RevenueAnalyticsPanel({ data, loading = false }: RevenueAnalyticsPanelProps) {
-  // KPI metrics
-  const kpiMetrics: StatsCardMetric[] = [
-    {
-      label: 'Total Revenue',
-      value: formatCurrency(data.totalRevenue),
-      trend: 'up',
-      trendValue: `+${data.growthRate}% vs last month`,
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [25500000, 26200000, 26800000, 27400000, 27900000, 28400000],
-      icon: DollarSign,
-    },
-    {
-      label: 'Ticket Revenue',
-      value: formatCurrency(data.ticketRevenue),
-      trend: 'up',
-      trendValue: '+6.2% increase',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [22000000, 22800000, 23400000, 23900000, 24200000, 24500000],
-      icon: Ticket,
-    },
-    {
-      label: 'Permit Revenue',
-      value: formatCurrency(data.permitRevenue),
-      trend: 'up',
-      trendValue: '+4.5% increase',
-      trendPositiveIsGood: true,
-      color: 'purple',
-      sparkData: [2400000, 2500000, 2580000, 2650000, 2720000, 2800000],
-      icon: FileText,
-    },
-    {
-      label: 'Growth Rate',
-      value: `${data.growthRate}%`,
-      trend: 'up',
-      trendValue: '+1.2% vs last period',
-      trendPositiveIsGood: true,
-      color: 'teal',
-      sparkData: [6.5, 7.0, 7.4, 7.8, 8.2, 8.7],
-      icon: TrendingUp,
-    },
-  ];
-
   // Top routes columns
   const topRoutesColumns = [
     { key: 'routeName', label: 'Route' },
@@ -92,11 +47,36 @@ export function RevenueAnalyticsPanel({ data, loading = false }: RevenueAnalytic
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={kpiMetrics}
-        loading={loading}
-        columns={4}
-      />
+      <StatsCardGrid className="lg:grid-cols-4">
+        <StatsCard
+          title="Total Revenue"
+          value={formatCurrency(data.totalRevenue)}
+          icon={<DollarSign className="h-5 w-5" />}
+          description={`+${data.growthRate}% vs last month`}
+          trend={{ value: data.growthRate, direction: 'up' }}
+        />
+        <StatsCard
+          title="Ticket Revenue"
+          value={formatCurrency(data.ticketRevenue)}
+          icon={<Ticket className="h-5 w-5" />}
+          description="+6.2% increase"
+          trend={{ value: 6.2, direction: 'up' }}
+        />
+        <StatsCard
+          title="Permit Revenue"
+          value={formatCurrency(data.permitRevenue)}
+          icon={<FileText className="h-5 w-5" />}
+          description="+4.5% increase"
+          trend={{ value: 4.5, direction: 'up' }}
+        />
+        <StatsCard
+          title="Growth Rate"
+          value={`${data.growthRate}%`}
+          icon={<TrendingUp className="h-5 w-5" />}
+          description="+1.2% vs last period"
+          trend={{ value: 1.2, direction: 'up' }}
+        />
+      </StatsCardGrid>
 
       {/* Revenue Trend */}
       <AnalyticsLineChart

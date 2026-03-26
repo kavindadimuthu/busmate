@@ -49,29 +49,29 @@ function trend(data: number[]): 'up' | 'down' | 'stable' {
 function TrendIcon({ dir, positive }: { dir: 'up' | 'down' | 'stable'; positive?: boolean }) {
   if (dir === 'up') {
     return (
-      <span className={`flex items-center gap-0.5 text-xs font-medium ${positive ? 'text-green-600' : 'text-red-600'}`}>
+      <span className={`flex items-center gap-0.5 text-xs font-medium ${positive ? 'text-success' : 'text-destructive'}`}>
         <TrendingUp className="h-3.5 w-3.5" /> Rising
       </span>
     );
   }
   if (dir === 'down') {
     return (
-      <span className={`flex items-center gap-0.5 text-xs font-medium ${positive ? 'text-red-600' : 'text-green-600'}`}>
+      <span className={`flex items-center gap-0.5 text-xs font-medium ${positive ? 'text-destructive' : 'text-success'}`}>
         <TrendingDown className="h-3.5 w-3.5" /> Falling
       </span>
     );
   }
   return (
-    <span className="flex items-center gap-0.5 text-xs font-medium text-gray-500">
+    <span className="flex items-center gap-0.5 text-xs font-medium text-muted-foreground">
       <Minus className="h-3.5 w-3.5" /> Stable
     </span>
   );
 }
 
 function usageBadgeColor(value: number, thresholds = { warn: 70, danger: 85 }): string {
-  if (value >= thresholds.danger) return 'text-red-600 bg-red-50';
-  if (value >= thresholds.warn) return 'text-amber-600 bg-amber-50';
-  return 'text-green-600 bg-green-50';
+  if (value >= thresholds.danger) return 'text-destructive bg-destructive/10';
+  if (value >= thresholds.warn) return 'text-warning bg-warning/10';
+  return 'text-success bg-success/10';
 }
 
 // ── KPI Card ─────────────────────────────────────────────────────
@@ -107,17 +107,17 @@ function KpiCard({
   }).join(' ');
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           {icon}
-          <span className="text-xs font-medium text-gray-500">{label}</span>
+          <span className="text-xs font-medium text-muted-foreground">{label}</span>
         </div>
         <TrendIcon dir={trendDir} positive={trendPositiveIsGood} />
       </div>
       <div className="flex items-baseline gap-1 mb-2">
-        <span className="text-2xl font-bold text-gray-900">{value}</span>
-        <span className="text-xs text-gray-400">{unit}</span>
+        <span className="text-2xl font-bold text-foreground">{value}</span>
+        <span className="text-xs text-muted-foreground/70">{unit}</span>
       </div>
       <svg width={w} height={h} className="w-full overflow-visible">
         <polyline
@@ -261,9 +261,9 @@ export function PerformanceMetrics({
     return (
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
-            <div className="h-48 bg-gray-100 rounded" />
+          <div key={i} className="bg-card rounded-xl border border-border p-6 animate-pulse">
+            <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
+            <div className="h-48 bg-muted rounded" />
           </div>
         ))}
       </div>
@@ -282,24 +282,24 @@ export function PerformanceMetrics({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Performance Metrics</h2>
-          <p className="text-sm text-gray-500">Real-time CPU, memory, response times, and request rates</p>
+          <h2 className="text-lg font-semibold text-foreground">Performance Metrics</h2>
+          <p className="text-sm text-muted-foreground">Real-time CPU, memory, response times, and request rates</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={onToggleLive}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               isLive
-                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                ? 'bg-success/10 text-success border-success/20 hover:bg-success/15'
+                : 'bg-muted text-muted-foreground border-border hover:bg-muted'
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+            <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-success animate-pulse' : 'bg-secondary'}`} />
             {isLive ? 'Live' : 'Paused'}
           </button>
           <button
             onClick={onRefresh}
-            className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
           >
             Refresh
           </button>
@@ -309,33 +309,33 @@ export function PerformanceMetrics({
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard
-          icon={<Cpu className="h-4 w-4 text-blue-600" />}
+          icon={<Cpu className="h-4 w-4 text-primary" />}
           label="CPU" value={latest.cpuUsage} unit="%"
           trend={trend(cpuData)} sparkData={cpuData.slice(-20)} sparkColor="#3b82f6"
         />
         <KpiCard
-          icon={<HardDrive className="h-4 w-4 text-green-600" />}
+          icon={<HardDrive className="h-4 w-4 text-success" />}
           label="Memory" value={latest.memoryUsage} unit="%"
           trend={trend(memData)} sparkData={memData.slice(-20)} sparkColor="#22c55e"
         />
         <KpiCard
-          icon={<Zap className="h-4 w-4 text-amber-600" />}
+          icon={<Zap className="h-4 w-4 text-warning" />}
           label="Response Time" value={Math.round(latest.avgResponseTime)} unit="ms"
           trend={trend(rtData)} sparkData={rtData.slice(-20)} sparkColor="#f59e0b"
         />
         <KpiCard
-          icon={<Activity className="h-4 w-4 text-purple-600" />}
+          icon={<Activity className="h-4 w-4 text-[hsl(var(--purple-600))]" />}
           label="Requests/sec" value={Math.round(latest.requestRate)} unit="rps"
           trend={trend(rrData)} sparkData={rrData.slice(-20)} sparkColor="#a855f7"
           trendPositiveIsGood
         />
         <KpiCard
-          icon={<AlertTriangle className="h-4 w-4 text-red-600" />}
+          icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
           label="Error Rate" value={latest.errorRate.toFixed(1)} unit="%"
           trend={trend(erData)} sparkData={erData.slice(-20)} sparkColor="#ef4444"
         />
         <KpiCard
-          icon={<Users className="h-4 w-4 text-cyan-600" />}
+          icon={<Users className="h-4 w-4 text-primary/90" />}
           label="Connections" value={latest.activeConnections} unit=""
           trend={trend(acData)} sparkData={acData.slice(-20)} sparkColor="#06b6d4"
           trendPositiveIsGood
@@ -345,9 +345,9 @@ export function PerformanceMetrics({
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CPU & Memory Chart */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-blue-600" />
+        <div className="bg-card rounded-xl border border-border p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-primary" />
             CPU & Memory Usage
           </h3>
           <div className="h-64">
@@ -356,9 +356,9 @@ export function PerformanceMetrics({
         </div>
 
         {/* Response Time Chart */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-amber-600" />
+        <div className="bg-card rounded-xl border border-border p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-warning" />
             Average Response Time
           </h3>
           <div className="h-64">
@@ -368,9 +368,9 @@ export function PerformanceMetrics({
       </div>
 
       {/* Request Rate + Error Rate (dual axis) */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-purple-600" />
+      <div className="bg-card rounded-xl border border-border p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-[hsl(var(--purple-600))]" />
           Request Rate & Error Rate
         </h3>
         <div className="h-72">
@@ -379,7 +379,7 @@ export function PerformanceMetrics({
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-gray-400">
+      <div className="text-center text-xs text-muted-foreground/70">
         Last updated: {lastRefresh.toLocaleTimeString()} {isLive && '• Auto-refreshing every 5s'}
       </div>
     </div>

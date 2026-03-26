@@ -28,7 +28,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@busmate/ui';
 
 export default function TripDetailsPage() {
   const router = useRouter();
@@ -252,8 +252,8 @@ export default function TripDetailsPage() {
   if (isLoading) {
     return (
           <div className="flex items-center justify-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-lg text-gray-600">Loading trip details...</span>
+            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg text-muted-foreground">Loading trip details...</span>
           </div>
     );
   }
@@ -262,11 +262,11 @@ export default function TripDetailsPage() {
   if (error || !trip) {
     return (
           <div className="text-center py-12">
-            <XCircle className="mx-auto h-12 w-12 text-red-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <XCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               {error || 'Trip not found'}
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               The requested trip could not be loaded. Please check the trip ID and try again.
             </p>
             <div className="flex justify-center space-x-4">
@@ -309,12 +309,12 @@ export default function TripDetailsPage() {
           <>
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={handleDeleteCancel} />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="bg-card rounded-lg shadow-xl max-w-md w-full p-6">
                 <div className="flex items-center mb-4">
-                  <XCircle className="h-6 w-6 text-red-600 mr-3" />
-                  <h3 className="text-lg font-medium text-gray-900">Confirm Delete</h3>
+                  <XCircle className="h-6 w-6 text-destructive mr-3" />
+                  <h3 className="text-lg font-medium text-foreground">Confirm Delete</h3>
                 </div>
-                <p className="text-gray-600 mb-6">
+                <p className="text-muted-foreground mb-6">
                   Are you sure you want to delete this trip? This action cannot be undone.
                 </p>
                 <div className="flex justify-end space-x-3">
@@ -346,20 +346,20 @@ export default function TripDetailsPage() {
           <>
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowCancelModal(false)} />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="bg-card rounded-lg shadow-xl max-w-md w-full p-6">
                 <div className="flex items-center mb-4">
-                  <AlertCircle className="h-6 w-6 text-yellow-600 mr-3" />
-                  <h3 className="text-lg font-medium text-gray-900">Cancel Trip</h3>
+                  <AlertCircle className="h-6 w-6 text-warning mr-3" />
+                  <h3 className="text-lg font-medium text-foreground">Cancel Trip</h3>
                 </div>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Are you sure you want to cancel this trip?
                 </p>
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground/80 mb-2">
                     Cancellation Reason (Optional)
                   </label>
                   <textarea 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     placeholder="Enter reason for cancellation..."
                   />

@@ -117,7 +117,7 @@ export function DashboardTrendsChart({ trendHistory, loading = false }: Dashboar
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 shrink-0">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-blue-600" />
+          <TrendingUp className="h-4 w-4 text-primary" />
           <h3 className="font-semibold text-foreground text-sm">System Trends <span className="font-normal text-muted-foreground text-xs ml-1">— last 24 h</span></h3>
         </div>
 
@@ -126,7 +126,7 @@ export function DashboardTrendsChart({ trendHistory, loading = false }: Dashboar
           <button
             onClick={() => setCompareMode((v) => !v)}
             className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-              compareMode ? 'bg-blue-100 text-blue-700' : 'bg-muted text-muted-foreground hover:bg-muted'
+              compareMode ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground hover:bg-muted'
             }`}
           >
             Compare all

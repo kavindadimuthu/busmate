@@ -277,7 +277,7 @@ export function TripAssignmentWorkspace() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] bg-gray-50 ">
+    <div className="flex h-[calc(100vh-5rem)] bg-muted ">
       {/* Workspace Sidebar */}
       <WorkspaceSidebar
         workspace={workspace}

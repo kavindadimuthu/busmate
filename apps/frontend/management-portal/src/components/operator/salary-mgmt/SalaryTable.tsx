@@ -23,22 +23,22 @@ interface SalaryTableProps {
 // ── Badge helpers ─────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  PAID: 'bg-green-50 text-green-700 border-green-200',
-  PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
-  PROCESSING: 'bg-blue-50 text-blue-700 border-blue-200',
-  FAILED: 'bg-red-50 text-red-700 border-red-200',
+  PAID: 'bg-success/10 text-success border-success/20',
+  PENDING: 'bg-warning/10 text-warning border-warning/20',
+  PROCESSING: 'bg-primary/10 text-primary border-primary/20',
+  FAILED: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
 const ROLE_STYLES: Record<string, string> = {
-  DRIVER: 'bg-blue-50 text-blue-700',
-  CONDUCTOR: 'bg-purple-50 text-purple-700',
+  DRIVER: 'bg-primary/10 text-primary',
+  CONDUCTOR: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))]',
 };
 
 const PERF_STYLES: Record<string, string> = {
-  EXCELLENT: 'bg-green-50 text-green-700',
-  GOOD: 'bg-teal-50 text-teal-700',
-  AVERAGE: 'bg-gray-100 text-gray-600',
-  BELOW_AVERAGE: 'bg-red-50 text-red-600',
+  EXCELLENT: 'bg-success/10 text-success',
+  GOOD: 'bg-primary/10 text-teal-700',
+  AVERAGE: 'bg-muted text-muted-foreground',
+  BELOW_AVERAGE: 'bg-destructive/10 text-destructive',
 };
 
 const PERF_LABELS: Record<string, string> = {
@@ -52,7 +52,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-        STATUS_STYLES[status] ?? 'bg-gray-50 text-gray-600 border-gray-200'
+        STATUS_STYLES[status] ?? 'bg-muted text-muted-foreground border-border'
       }`}
     >
       {status.charAt(0) + status.slice(1).toLowerCase()}
@@ -75,7 +75,7 @@ function useSalaryColumns(
         render: (row) => {
           const dt = new Date(row.periodStart);
           return (
-            <span className="text-xs font-medium text-gray-800">
+            <span className="text-xs font-medium text-foreground">
               {dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
             </span>
           );
@@ -88,8 +88,8 @@ function useSalaryColumns(
         minWidth: 'min-w-[160px]',
         render: (row) => (
           <div>
-            <p className="text-xs font-medium text-gray-800">{row.staffName}</p>
-            <p className="text-[10px] text-gray-400">{row.staffId}</p>
+            <p className="text-xs font-medium text-foreground">{row.staffName}</p>
+            <p className="text-[10px] text-muted-foreground/70">{row.staffId}</p>
           </div>
         ),
       },
@@ -112,7 +112,7 @@ function useSalaryColumns(
         header: 'Bus',
         sortable: true,
         render: (row) => (
-          <span className="text-xs text-gray-600">{row.busAssigned}</span>
+          <span className="text-xs text-muted-foreground">{row.busAssigned}</span>
         ),
       },
       {
@@ -123,9 +123,9 @@ function useSalaryColumns(
         headerClassName: 'text-right',
         render: (row) => (
           <div className="text-right">
-            <span className="text-xs tabular-nums text-gray-700">{row.totalHours.toFixed(1)}h</span>
+            <span className="text-xs tabular-nums text-foreground/80">{row.totalHours.toFixed(1)}h</span>
             {row.overtimeHours > 0 && (
-              <span className="text-[10px] text-amber-600 ml-1">
+              <span className="text-[10px] text-warning ml-1">
                 (+{row.overtimeHours}h OT)
               </span>
             )}
@@ -139,7 +139,7 @@ function useSalaryColumns(
         cellClassName: 'text-center',
         headerClassName: 'text-center',
         render: (row) => (
-          <span className="text-xs tabular-nums text-gray-700">{row.tripsCompleted}</span>
+          <span className="text-xs tabular-nums text-foreground/80">{row.tripsCompleted}</span>
         ),
       },
       {
@@ -163,7 +163,7 @@ function useSalaryColumns(
         cellClassName: 'text-right',
         headerClassName: 'text-right',
         render: (row) => (
-          <span className="text-xs tabular-nums text-gray-600">
+          <span className="text-xs tabular-nums text-muted-foreground">
             Rs {row.baseSalary.toLocaleString()}
           </span>
         ),
@@ -175,7 +175,7 @@ function useSalaryColumns(
         cellClassName: 'text-right',
         headerClassName: 'text-right',
         render: (row) => (
-          <span className="text-xs tabular-nums text-green-600">
+          <span className="text-xs tabular-nums text-success">
             +Rs {row.totalBonuses.toLocaleString()}
           </span>
         ),
@@ -187,7 +187,7 @@ function useSalaryColumns(
         cellClassName: 'text-right',
         headerClassName: 'text-right',
         render: (row) => (
-          <span className="text-xs tabular-nums text-red-600">
+          <span className="text-xs tabular-nums text-destructive">
             {row.totalDeductions > 0 ? `-Rs ${row.totalDeductions.toLocaleString()}` : '—'}
           </span>
         ),
@@ -199,7 +199,7 @@ function useSalaryColumns(
         cellClassName: 'text-right',
         headerClassName: 'text-right',
         render: (row) => (
-          <span className="text-xs font-semibold tabular-nums text-gray-900">
+          <span className="text-xs font-semibold tabular-nums text-foreground">
             Rs {row.netSalary.toLocaleString()}
           </span>
         ),
@@ -217,7 +217,7 @@ function useSalaryColumns(
         render: (row) => (
           <button
             onClick={() => onViewDetail?.(row)}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors"
             title="View details"
           >
             <Eye className="h-3.5 w-3.5" />
@@ -247,10 +247,10 @@ export function SalaryTable({
   const columns = useSalaryColumns(onViewDetail);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100">
-        <h3 className="text-base font-semibold text-gray-900">Salary Records</h3>
-        <p className="text-xs text-gray-400 mt-0.5">Daily salary details for all staff members</p>
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-border/50">
+        <h3 className="text-base font-semibold text-foreground">Salary Records</h3>
+        <p className="text-xs text-muted-foreground/70 mt-0.5">Daily salary details for all staff members</p>
       </div>
 
       <DataTable<SalaryRecord>

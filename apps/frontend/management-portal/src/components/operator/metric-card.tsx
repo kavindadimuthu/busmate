@@ -25,13 +25,13 @@ export function MetricCard({
   const getTrendColor = (type: string) => {
     switch (type) {
       case "positive":
-        return "text-green-600"
+        return "text-success"
       case "negative":
-        return "text-red-600"
+        return "text-destructive"
       case "warning":
-        return "text-orange-600"
+        return "text-warning"
       default:
-        return "text-gray-600"
+        return "text-muted-foreground"
     }
   }
 
@@ -45,15 +45,15 @@ export function MetricCard({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <div className="p-2 bg-gray-50 rounded-lg">{icon}</div>
+          <div className="p-2 bg-muted rounded-lg">{icon}</div>
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <h3 className="text-2xl font-bold text-foreground">{value}</h3>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
 
           {trend && (
             <div className={`flex items-center gap-1 text-xs ${getTrendColor(trend.type)}`}>

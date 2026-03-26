@@ -49,11 +49,11 @@ export function BusesTableNew({
           <Eye className="h-3.5 w-3.5 text-primary" />
         </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(bus)} title="Edit">
-          <Edit2 className="h-3.5 w-3.5 text-amber-500" />
+          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
         </Button>
         {onAssignRoute && (
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAssignRoute(bus)} title="Assign Route">
-            <Settings className="h-3.5 w-3.5 text-emerald-500" />
+            <Settings className="h-3.5 w-3.5 text-success" />
           </Button>
         )}
         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(bus)} title="Delete">

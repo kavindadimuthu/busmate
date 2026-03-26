@@ -114,16 +114,16 @@ export function ScheduleAdvancedFilters({
   if (statusFilter !== 'all') {
     const label = statusFilter.charAt(0) + statusFilter.slice(1).toLowerCase();
     const colorMap: Record<string, string> = {
-      ACTIVE:    'bg-green-50 text-green-700 border-green-200',
-      INACTIVE:  'bg-red-50 text-red-700 border-red-200',
-      PENDING:   'bg-amber-50 text-amber-700 border-amber-200',
-      CANCELLED: 'bg-gray-100 text-gray-700 border-gray-200',
+      ACTIVE:    'bg-success/10 text-success border-success/20',
+      INACTIVE:  'bg-destructive/10 text-destructive border-destructive/20',
+      PENDING:   'bg-warning/10 text-warning border-warning/20',
+      CANCELLED: 'bg-muted text-foreground/80 border-border',
     };
     chips.push({
       key: 'status',
       label,
       onRemove: () => setStatusFilter('all'),
-      colorClass: colorMap[statusFilter] ?? 'bg-gray-100 text-gray-700 border-gray-200',
+      colorClass: colorMap[statusFilter] ?? 'bg-muted text-foreground/80 border-border',
       icon: statusFilter === 'ACTIVE'
         ? <CheckCircle className="h-3 w-3 opacity-70" />
         : <XCircle className="h-3 w-3 opacity-70" />,
@@ -136,8 +136,8 @@ export function ScheduleAdvancedFilters({
       label: scheduleTypeFilter === 'REGULAR' ? 'Regular' : 'Special',
       onRemove: () => setScheduleTypeFilter('all'),
       colorClass: scheduleTypeFilter === 'REGULAR'
-        ? 'bg-blue-50 text-blue-700 border-blue-200'
-        : 'bg-purple-50 text-purple-700 border-purple-200',
+        ? 'bg-primary/10 text-primary border-primary/20'
+        : 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
       icon: <Calendar className="h-3 w-3 opacity-70" />,
     });
   }
@@ -148,7 +148,7 @@ export function ScheduleAdvancedFilters({
       key: 'route',
       label: routeName,
       onRemove: () => setRouteFilter('all'),
-      colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
       icon: <Route className="h-3 w-3 opacity-70" />,
     });
   }
@@ -158,7 +158,7 @@ export function ScheduleAdvancedFilters({
       key: 'startDate',
       label: 'From: ' + effectiveStartDate,
       onRemove: () => setEffectiveStartDate(''),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
     });
   }
 
@@ -167,7 +167,7 @@ export function ScheduleAdvancedFilters({
       key: 'endDate',
       label: 'To: ' + effectiveEndDate,
       onRemove: () => setEffectiveEndDate(''),
-      colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
     });
   }
 
@@ -201,20 +201,20 @@ export function ScheduleAdvancedFilters({
             icon={<Route className="h-3.5 w-3.5" />}
           />
           <div className="flex items-center gap-1.5 shrink-0">
-            <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
             <input
               type="date"
               value={effectiveStartDate}
               onChange={(e) => setEffectiveStartDate(e.target.value)}
-              className="border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+              className="border border-border rounded-md px-2 py-1.5 text-xs text-foreground/80 bg-card focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-primary/40"
               title="Effective from"
             />
-            <span className="text-xs text-gray-400">to</span>
+            <span className="text-xs text-muted-foreground/70">to</span>
             <input
               type="date"
               value={effectiveEndDate}
               onChange={(e) => setEffectiveEndDate(e.target.value)}
-              className="border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+              className="border border-border rounded-md px-2 py-1.5 text-xs text-foreground/80 bg-card focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-primary/40"
               title="Effective to"
             />
           </div>

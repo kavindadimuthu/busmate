@@ -33,7 +33,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 function TrendIcon({ trend, positive }: { trend: KPIMetric['trend']; positive: boolean }) {
   if (trend === 'stable') return <Minus className="h-3 w-3 text-muted-foreground" />;
   const isGood = (trend === 'up') === positive;
-  const cls = isGood ? 'text-green-600' : 'text-red-600';
+  const cls = isGood ? 'text-success' : 'text-destructive';
   return trend === 'up'
     ? <ArrowUp className={`h-3 w-3 ${cls}`} />
     : <ArrowDown className={`h-3 w-3 ${cls}`} />;
@@ -53,21 +53,21 @@ const ICON_MAP: Record<string, LucideIcon> = {
 // ── Color maps ────────────────────────────────────────────────────
 
 const BG: Record<KPIMetric['color'], string> = {
-  blue:   'bg-blue-50   border-blue-200',
-  teal:   'bg-teal-50   border-teal-200',
-  green:  'bg-green-50  border-green-200',
-  red:    'bg-red-50    border-red-200',
-  purple: 'bg-purple-50 border-purple-200',
-  amber:  'bg-amber-50  border-amber-200',
+  blue:   'bg-primary/10   border-primary/20',
+  teal:   'bg-primary/10   border-teal-200',
+  green:  'bg-success/10  border-success/20',
+  red:    'bg-destructive/10    border-destructive/20',
+  purple: 'bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-200))]',
+  amber:  'bg-warning/10  border-warning/20',
 };
 
 const ICON_BG: Record<KPIMetric['color'], string> = {
-  blue:   'bg-blue-100   text-blue-600',
+  blue:   'bg-primary/15   text-primary',
   teal:   'bg-teal-100   text-teal-600',
-  green:  'bg-green-100  text-green-600',
-  red:    'bg-red-100    text-red-600',
-  purple: 'bg-purple-100 text-purple-600',
-  amber:  'bg-amber-100  text-amber-600',
+  green:  'bg-success/15  text-success',
+  red:    'bg-destructive/15    text-destructive',
+  purple: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]',
+  amber:  'bg-warning/15  text-warning',
 };
 
 const SPARK_COLOR: Record<KPIMetric['color'], string> = {
@@ -86,7 +86,7 @@ function KPICard({ kpi }: { kpi: KPIMetric }) {
   const trendColor = (() => {
     if (kpi.trend === 'stable') return 'text-muted-foreground';
     const isGood = (kpi.trend === 'up') === kpi.trendPositiveIsGood;
-    return isGood ? 'text-green-600' : 'text-red-600';
+    return isGood ? 'text-success' : 'text-destructive';
   })();
 
   return (

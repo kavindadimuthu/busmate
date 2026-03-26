@@ -24,13 +24,13 @@ export function LogStatsCards({ stats, loading = false }: LogStatsCardsProps) {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 animate-pulse"
+            className="bg-card rounded-xl shadow-sm border border-border p-5 animate-pulse"
           >
             <div className="flex items-center">
-              <div className="w-11 h-11 bg-gray-200 rounded-lg" />
+              <div className="w-11 h-11 bg-secondary rounded-lg" />
               <div className="ml-3 flex-1">
-                <div className="h-6 bg-gray-200 rounded w-12 mb-1.5" />
-                <div className="h-3.5 bg-gray-100 rounded w-20" />
+                <div className="h-6 bg-secondary rounded w-12 mb-1.5" />
+                <div className="h-3.5 bg-muted rounded w-20" />
               </div>
             </div>
           </div>
@@ -44,57 +44,57 @@ export function LogStatsCards({ stats, loading = false }: LogStatsCardsProps) {
       label: 'Total Logs',
       value: stats.totalLogs,
       icon: FileText,
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-      textColor: 'text-blue-600',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+      iconBg: 'bg-primary/15',
+      iconColor: 'text-primary',
+      textColor: 'text-primary',
     },
     {
       label: 'User Activities',
       value: stats.totalUserActivities,
       icon: Users,
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
-      textColor: 'text-green-600',
+      bgColor: 'bg-success/10',
+      borderColor: 'border-success/20',
+      iconBg: 'bg-success/15',
+      iconColor: 'text-success',
+      textColor: 'text-success',
     },
     {
       label: 'Security Events',
       value: stats.totalSecurityEvents,
       icon: Shield,
-      bgColor: 'bg-orange-50',
+      bgColor: 'bg-warning/10',
       borderColor: 'border-orange-200',
-      iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-600',
-      textColor: 'text-orange-600',
+      iconBg: 'bg-warning/15',
+      iconColor: 'text-warning',
+      textColor: 'text-warning',
     },
     {
       label: 'Application Logs',
       value: stats.totalApplicationLogs,
       icon: Code,
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600',
-      textColor: 'text-purple-600',
+      bgColor: 'bg-[hsl(var(--purple-50))]',
+      borderColor: 'border-[hsl(var(--purple-200))]',
+      iconBg: 'bg-[hsl(var(--purple-100))]',
+      iconColor: 'text-[hsl(var(--purple-600))]',
+      textColor: 'text-[hsl(var(--purple-600))]',
     },
     {
       label: 'Errors',
       value: stats.errorLogs + stats.failedActions,
       icon: XCircle,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
-      textColor: 'text-red-600',
+      bgColor: 'bg-destructive/10',
+      borderColor: 'border-destructive/20',
+      iconBg: 'bg-destructive/15',
+      iconColor: 'text-destructive',
+      textColor: 'text-destructive',
     },
     {
       label: 'Blocked Threats',
       value: stats.blockedThreats,
       icon: AlertTriangle,
-      bgColor: 'bg-teal-50',
+      bgColor: 'bg-primary/10',
       borderColor: 'border-teal-200',
       iconBg: 'bg-teal-100',
       iconColor: 'text-teal-600',
@@ -116,8 +116,8 @@ export function LogStatsCards({ stats, loading = false }: LogStatsCardsProps) {
               <card.icon className="w-5 h-5" />
             </div>
             <div className="ml-3 flex-1">
-              <p className="text-2xl font-bold text-gray-900">{card.value.toLocaleString()}</p>
-              <p className="text-xs font-medium text-gray-500">{card.label}</p>
+              <p className="text-2xl font-bold text-foreground">{card.value.toLocaleString()}</p>
+              <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
             </div>
           </div>
         </div>

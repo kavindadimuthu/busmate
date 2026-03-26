@@ -15,11 +15,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const ICON_STYLES: Record<QuickAction['color'], string> = {
-  blue:   'bg-blue-100 text-blue-600',
-  green:  'bg-green-100 text-green-600',
-  purple: 'bg-purple-100 text-purple-600',
-  orange: 'bg-orange-100 text-orange-600',
-  red:    'bg-red-100 text-red-600',
+  blue:   'bg-primary/15 text-primary',
+  green:  'bg-success/15 text-success',
+  purple: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]',
+  orange: 'bg-warning/15 text-warning',
+  red:    'bg-destructive/15 text-destructive',
   teal:   'bg-teal-100 text-teal-600',
 };
 

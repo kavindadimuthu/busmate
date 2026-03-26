@@ -60,37 +60,37 @@ function getStatusConfig(status?: string) {
     case 'ACTIVE':
       return {
         icon: CheckCircle,
-        bg: 'bg-emerald-50',
-        text: 'text-emerald-700',
-        border: 'border-emerald-200',
+        bg: 'bg-success/10',
+        text: 'text-success',
+        border: 'border-success/20',
       };
     case 'INACTIVE':
       return {
         icon: XCircle,
-        bg: 'bg-gray-50',
-        text: 'text-gray-600',
-        border: 'border-gray-200',
+        bg: 'bg-muted',
+        text: 'text-muted-foreground',
+        border: 'border-border',
       };
     case 'PENDING':
       return {
         icon: Clock,
-        bg: 'bg-amber-50',
-        text: 'text-amber-700',
-        border: 'border-amber-200',
+        bg: 'bg-warning/10',
+        text: 'text-warning',
+        border: 'border-warning/20',
       };
     case 'CANCELLED':
       return {
         icon: XCircle,
-        bg: 'bg-red-50',
-        text: 'text-red-700',
-        border: 'border-red-200',
+        bg: 'bg-destructive/10',
+        text: 'text-destructive',
+        border: 'border-destructive/20',
       };
     default:
       return {
         icon: AlertCircle,
-        bg: 'bg-gray-50',
-        text: 'text-gray-500',
-        border: 'border-gray-200',
+        bg: 'bg-muted',
+        text: 'text-muted-foreground',
+        border: 'border-border',
       };
   }
 }
@@ -163,12 +163,12 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
+          <div key={i} className="bg-muted rounded-xl p-4 animate-pulse">
             <div className="flex items-center gap-4">
-              <div className="w-32 h-12 bg-gray-200 rounded" />
+              <div className="w-32 h-12 bg-secondary rounded" />
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-40 mb-2" />
-                <div className="h-3 bg-gray-100 rounded w-24" />
+                <div className="h-4 bg-secondary rounded w-40 mb-2" />
+                <div className="h-3 bg-muted rounded w-24" />
               </div>
             </div>
           </div>
@@ -181,14 +181,14 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-8 h-8 text-red-500" />
+        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8 text-destructive/80" />
         </div>
-        <h3 className="font-semibold text-gray-900 mb-2">Failed to Load Schedules</h3>
-        <p className="text-gray-500 text-sm mb-6">{error}</p>
+        <h3 className="font-semibold text-foreground mb-2">Failed to Load Schedules</h3>
+        <p className="text-muted-foreground text-sm mb-6">{error}</p>
         <button
           onClick={loadSchedules}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors text-sm font-medium"
         >
           <RefreshCw className="w-4 h-4" />
           Try Again
@@ -201,16 +201,16 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
   if (schedules.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Calendar className="w-8 h-8 text-gray-400" />
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <Calendar className="w-8 h-8 text-muted-foreground/70" />
         </div>
-        <h3 className="font-semibold text-gray-900 mb-2">No Schedules</h3>
-        <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">
+        <h3 className="font-semibold text-foreground mb-2">No Schedules</h3>
+        <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
           Create schedules to define when buses operate on this route.
         </p>
         <button
           onClick={() => router.push(`/mot/schedules/add-new?routeId=${route.id}`)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           Create Schedule
@@ -228,19 +228,19 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Schedules</h3>
-          <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+          <h3 className="text-lg font-semibold text-foreground">Schedules</h3>
+          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
             <span>{schedules.length} total</span>
-            <span className="text-gray-300">|</span>
+            <span className="text-muted-foreground/50">|</span>
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle className="w-3.5 h-3.5 text-success" />
               {activeCount} active
             </span>
             {inactiveCount > 0 && (
               <>
-                <span className="text-gray-300">|</span>
+                <span className="text-muted-foreground/50">|</span>
                 <span className="flex items-center gap-1">
-                  <XCircle className="w-3.5 h-3.5 text-gray-400" />
+                  <XCircle className="w-3.5 h-3.5 text-muted-foreground/70" />
                   {inactiveCount} inactive
                 </span>
               </>
@@ -250,7 +250,7 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
 
         <button
           onClick={() => router.push(`/mot/schedules/add-new?routeId=${route.id}`)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           Add Schedule
@@ -269,29 +269,29 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
           return (
             <div
               key={schedule.id}
-              className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+              className="group bg-card border border-border rounded-xl p-5 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer"
               onClick={() => router.push(`/mot/schedules/${schedule.id}`)}
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Time display */}
                 <div className="flex items-center gap-3 min-w-[200px]">
-                  <div className="text-center px-3 py-2 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-bold text-gray-900">{departTime}</div>
-                    <div className="text-xs text-gray-500">Depart</div>
+                  <div className="text-center px-3 py-2 bg-muted rounded-lg">
+                    <div className="text-lg font-bold text-foreground">{departTime}</div>
+                    <div className="text-xs text-muted-foreground">Depart</div>
                   </div>
                   <div className="flex flex-col items-center">
-                    <ArrowRight className="w-4 h-4 text-gray-300" />
+                    <ArrowRight className="w-4 h-4 text-muted-foreground/50" />
                   </div>
-                  <div className="text-center px-3 py-2 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-bold text-gray-900">{arriveTime}</div>
-                    <div className="text-xs text-gray-500">Arrive</div>
+                  <div className="text-center px-3 py-2 bg-muted rounded-lg">
+                    <div className="text-lg font-bold text-foreground">{arriveTime}</div>
+                    <div className="text-xs text-muted-foreground">Arrive</div>
                   </div>
                 </div>
 
                 {/* Schedule info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <h4 className="font-semibold text-gray-900 truncate">
+                    <h4 className="font-semibold text-foreground truncate">
                       {schedule.name || 'Unnamed Schedule'}
                     </h4>
                     <span
@@ -304,8 +304,8 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                           schedule.scheduleType === 'SPECIAL'
-                            ? 'bg-purple-50 text-purple-700'
-                            : 'bg-blue-50 text-blue-700'
+                            ? 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))]'
+                            : 'bg-primary/10 text-primary'
                         }`}
                       >
                         {schedule.scheduleType}
@@ -320,8 +320,8 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
                         key={i}
                         className={`w-6 h-6 flex items-center justify-center text-xs font-medium rounded ${
                           days[i]
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-gray-400'
+                            ? 'bg-primary/15 text-primary'
+                            : 'bg-muted text-muted-foreground/70'
                         }`}
                       >
                         {day}
@@ -337,7 +337,7 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
                       e.stopPropagation();
                       router.push(`/mot/schedules/${schedule.id}`);
                     }}
-                    className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     title="View"
                   >
                     <Eye className="w-4 h-4" />
@@ -347,7 +347,7 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
                       e.stopPropagation();
                       router.push(`/mot/schedules/${schedule.id}/edit`);
                     }}
-                    className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Edit className="w-4 h-4" />

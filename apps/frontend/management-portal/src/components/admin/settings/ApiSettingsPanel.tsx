@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
+  Input,
+  Label,
+  Switch,
+  Button,
+  Badge,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@busmate/ui';
 import {
   Zap,
   Shield,
@@ -52,13 +52,13 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="px-6 py-6 border-b border-gray-100">
+    <div className="px-6 py-6 border-b border-border/50">
       <div className="flex items-center gap-2 mb-1">
         {icon}
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h3>
       </div>
       {description && (
-        <p className="text-sm text-gray-500 mb-5">{description}</p>
+        <p className="text-sm text-muted-foreground mb-5">{description}</p>
       )}
       <div className="mt-4">{children}</div>
     </div>
@@ -84,7 +84,7 @@ function ToggleRow({
         <Label htmlFor={id} className="text-base font-medium">
           {label}
         </Label>
-        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onChange} />
     </div>
@@ -93,9 +93,9 @@ function ToggleRow({
 
 function KeyStatusBadge({ status }: { status: ApiKey['status'] }) {
   const styles = {
-    active: 'bg-green-100 text-green-700',
-    revoked: 'bg-red-100 text-red-700',
-    expired: 'bg-gray-100 text-gray-600',
+    active: 'bg-success/15 text-success',
+    revoked: 'bg-destructive/15 text-destructive',
+    expired: 'bg-muted text-muted-foreground',
   };
   return (
     <Badge className={`${styles[status]} capitalize`}>{status}</Badge>
@@ -116,21 +116,21 @@ function MaskedKey({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <code className="text-xs bg-gray-50 rounded px-1.5 py-0.5 font-mono">
+      <code className="text-xs bg-muted rounded px-1.5 py-0.5 font-mono">
         {display}
       </code>
       <button
         onClick={() => setVisible(!visible)}
-        className="text-gray-400 hover:text-gray-600"
+        className="text-muted-foreground/70 hover:text-muted-foreground"
       >
         {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
       </button>
       <button
         onClick={copy}
-        className="text-gray-400 hover:text-gray-600"
+        className="text-muted-foreground/70 hover:text-muted-foreground"
       >
         {copied ? (
-          <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+          <CheckCircle className="h-3.5 w-3.5 text-success/80" />
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}
@@ -226,7 +226,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
   if (!settings) {
     return (
       <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
       </div>
     );
   }
@@ -234,7 +234,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
   return (
     <div>
           <Section
-            icon={<Zap className="h-5 w-5 text-amber-600" />}
+            icon={<Zap className="h-5 w-5 text-warning" />}
             title="Rate Limiting & Timeouts"
             description="Control request throughput and response timeouts"
           >
@@ -292,7 +292,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
 
           {/* ── Performance ───────────────────────────── */}
           <Section
-            icon={<Server className="h-5 w-5 text-blue-600" />}
+            icon={<Server className="h-5 w-5 text-primary" />}
             title="Performance"
             description="Caching, compression & database connection settings"
           >
@@ -349,7 +349,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
 
           {/* ── CORS ──────────────────────────────────── */}
           <Section
-            icon={<Globe className="h-5 w-5 text-green-600" />}
+            icon={<Globe className="h-5 w-5 text-success" />}
             title="CORS Configuration"
             description="Cross-Origin Resource Sharing allowed origins"
           >
@@ -367,12 +367,12 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
                   {settings.corsAllowedOrigins.map((origin) => (
                     <span
                       key={origin}
-                      className="inline-flex items-center gap-1.5 bg-gray-100 text-sm px-3 py-1 rounded-full"
+                      className="inline-flex items-center gap-1.5 bg-muted text-sm px-3 py-1 rounded-full"
                     >
                       {origin}
                       <button
                         onClick={() => removeOrigin(origin)}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-muted-foreground/70 hover:text-destructive/80"
                       >
                         ×
                       </button>
@@ -397,7 +397,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
 
           {/* ── Webhook ───────────────────────────────── */}
           <Section
-            icon={<Database className="h-5 w-5 text-purple-600" />}
+            icon={<Database className="h-5 w-5 text-[hsl(var(--purple-600))]" />}
             title="Webhook"
             description="Forward events to an external endpoint"
           >
@@ -422,16 +422,16 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
           </Section>
 
           {/* ── Action Bar ──────────────────────────── */}
-          <div className="px-6 py-4 flex items-center justify-between bg-gray-50/50 border-t border-gray-100">
+          <div className="px-6 py-4 flex items-center justify-between bg-muted/50 border-t border-border/50">
             <div className="flex items-center gap-2 text-sm">
               {saved && (
-                <span className="flex items-center gap-1 text-green-600">
+                <span className="flex items-center gap-1 text-success">
                   <CheckCircle className="h-4 w-4" />
                   Settings saved
                 </span>
               )}
               {isDirty && !saved && (
-                <span className="text-amber-600">You have unsaved changes</span>
+                <span className="text-warning">You have unsaved changes</span>
               )}
             </div>
             <div className="flex gap-3">
@@ -446,7 +446,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
               <Button
                 onClick={handleSave}
                 disabled={!isDirty || saving}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-primary hover:bg-primary text-white"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -459,18 +459,18 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
           </div>
 
       {/* ── API Keys ──────────────────────────────────── */}
-      <div className="px-6 py-6 border-t border-gray-200">
+      <div className="px-6 py-6 border-t border-border">
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Key className="h-4 w-4 text-amber-600" />
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">API Keys</h3>
+              <Key className="h-4 w-4 text-warning" />
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">API Keys</h3>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">Manage API keys used by external integrations</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Manage API keys used by external integrations</p>
           </div>
           <Button
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-primary text-white"
             onClick={() => {
               alert('TODO: Show API key creation dialog');
             }}
@@ -502,10 +502,10 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
                     <TableCell>
                       <KeyStatusBadge status={key.status} />
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(key.createdAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {key.lastUsed
                         ? new Date(key.lastUsed).toLocaleDateString()
                         : '—'}
@@ -524,7 +524,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
                         {key.permissions.length > 2 && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] px-1.5 py-0 text-gray-400"
+                            className="text-[10px] px-1.5 py-0 text-muted-foreground/70"
                           >
                             +{key.permissions.length - 2}
                           </Badge>
@@ -536,7 +536,7 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="text-destructive/80 hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleRevokeKey(key.id)}
                         >
                           <Trash2 className="h-4 w-4" />

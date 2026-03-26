@@ -34,7 +34,7 @@ function HealthRing({ score }: { score: number }) {
 // ── Progress bar ──────────────────────────────────────────────────
 
 function ResourceBar({ label, value, unit = '%' }: { label: string; value: number; unit?: string }) {
-  const color = value >= 85 ? 'bg-red-500' : value >= 70 ? 'bg-amber-500' : 'bg-blue-500';
+  const color = value >= 85 ? 'bg-destructive' : value >= 70 ? 'bg-warning' : 'bg-primary/80';
   return (
     <div>
       <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -54,9 +54,9 @@ function ResourceBar({ label, value, unit = '%' }: { label: string; value: numbe
 // ── Service status icon ───────────────────────────────────────────
 
 function StatusIcon({ status }: { status: ServiceSummary['status'] }) {
-  if (status === 'healthy')  return <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />;
-  if (status === 'degraded') return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />;
-  return <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />;
+  if (status === 'healthy')  return <CheckCircle2 className="h-3.5 w-3.5 text-success/80 shrink-0" />;
+  if (status === 'degraded') return <AlertTriangle className="h-3.5 w-3.5 text-warning/80 shrink-0" />;
+  return <XCircle className="h-3.5 w-3.5 text-destructive/80 shrink-0" />;
 }
 
 // ── Main component ────────────────────────────────────────────────
@@ -100,7 +100,7 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
         <h3 className="font-semibold text-foreground text-sm">System Health</h3>
         <Link
           href="/admin/monitoring"
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           Details <ArrowUpRight className="h-3 w-3" />
         </Link>
@@ -111,17 +111,17 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
 
       {/* Status badges */}
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-green-50 rounded-lg p-2">
-          <p className="text-lg font-bold text-green-700">{healthySvc}</p>
-          <p className="text-[10px] text-green-600">Healthy</p>
+        <div className="bg-success/10 rounded-lg p-2">
+          <p className="text-lg font-bold text-success">{healthySvc}</p>
+          <p className="text-[10px] text-success">Healthy</p>
         </div>
-        <div className="bg-amber-50 rounded-lg p-2">
-          <p className="text-lg font-bold text-amber-700">{degradedSvc}</p>
-          <p className="text-[10px] text-amber-600">Degraded</p>
+        <div className="bg-warning/10 rounded-lg p-2">
+          <p className="text-lg font-bold text-warning">{degradedSvc}</p>
+          <p className="text-[10px] text-warning">Degraded</p>
         </div>
-        <div className="bg-red-50 rounded-lg p-2">
-          <p className="text-lg font-bold text-red-700">{downSvc}</p>
-          <p className="text-[10px] text-red-600">Down</p>
+        <div className="bg-destructive/10 rounded-lg p-2">
+          <p className="text-lg font-bold text-destructive">{downSvc}</p>
+          <p className="text-[10px] text-destructive">Down</p>
         </div>
       </div>
 
@@ -146,7 +146,7 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
           </div>
         ))}
         {services.length > 5 && (
-          <Link href="/admin/monitoring/api" className="text-xs text-blue-600 hover:underline">
+          <Link href="/admin/monitoring/api" className="text-xs text-primary hover:underline">
             +{services.length - 5} more services
           </Link>
         )}

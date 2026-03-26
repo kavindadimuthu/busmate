@@ -1,12 +1,11 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsBarChart } from './charts/AnalyticsBarChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import { AnalyticsDataTable } from './charts/AnalyticsDataTable';
 import { Bus, Wrench, AlertCircle, Gauge } from 'lucide-react';
 import type { FleetAnalyticsData } from '@/data/mot/analytics';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -18,50 +17,6 @@ interface FleetAnalyticsPanelProps {
 // ── Component ────────────────────────────────────────────────────
 
 export function FleetAnalyticsPanel({ data, loading = false }: FleetAnalyticsPanelProps) {
-  // KPI metrics
-  const kpiMetrics: StatsCardMetric[] = [
-    {
-      label: 'Total Fleet',
-      value: data.totalBuses.toLocaleString(),
-      trend: 'up',
-      trendValue: '+12 new buses this month',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [1480, 1495, 1505, 1512, 1518, 1523],
-      icon: Bus,
-    },
-    {
-      label: 'Active Buses',
-      value: data.activeBuses.toLocaleString(),
-      trend: 'stable',
-      trendValue: `${((data.activeBuses / data.totalBuses) * 100).toFixed(1)}% of fleet`,
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [1235, 1240, 1242, 1245, 1246, 1247],
-      icon: Gauge,
-    },
-    {
-      label: 'In Maintenance',
-      value: data.inMaintenanceBuses.toLocaleString(),
-      trend: 'down',
-      trendValue: '-8 vs last week',
-      trendPositiveIsGood: false,
-      color: 'amber',
-      sparkData: [180, 175, 170, 165, 160, 156],
-      icon: Wrench,
-    },
-    {
-      label: 'Out of Service',
-      value: data.outOfServiceBuses.toLocaleString(),
-      trend: 'down',
-      trendValue: '-5 this week',
-      trendPositiveIsGood: false,
-      color: 'red',
-      sparkData: [140, 135, 130, 128, 125, 120],
-      icon: AlertCircle,
-    },
-  ];
-
   // Maintenance schedule columns
   const maintenanceColumns = [
     { key: 'registrationNumber', label: 'Bus Reg.' },
@@ -93,7 +48,7 @@ export function FleetAnalyticsPanel({ data, loading = false }: FleetAnalyticsPan
       label: 'Fuel Eff. (km/L)',
       align: 'right' as const,
       render: (v: number) => (
-        <span className={v >= 8 ? 'text-green-600' : v >= 7.5 ? 'text-amber-600' : 'text-red-600'}>
+        <span className={v >= 8 ? 'text-success' : v >= 7.5 ? 'text-warning' : 'text-destructive'}>
           {v.toFixed(1)}
         </span>
       ),
@@ -103,11 +58,36 @@ export function FleetAnalyticsPanel({ data, loading = false }: FleetAnalyticsPan
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={kpiMetrics}
-        loading={loading}
-        columns={4}
-      />
+      <StatsCardGrid className="lg:grid-cols-4">
+        <StatsCard
+          title="Total Fleet"
+          value={data.totalBuses.toLocaleString()}
+          icon={<Bus className="h-5 w-5" />}
+          description="+12 new buses this month"
+          trend={{ value: 12, direction: 'up' }}
+        />
+        <StatsCard
+          title="Active Buses"
+          value={data.activeBuses.toLocaleString()}
+          icon={<Gauge className="h-5 w-5" />}
+          description={`${((data.activeBuses / data.totalBuses) * 100).toFixed(1)}% of fleet`}
+          trend={{ value: 0, direction: 'neutral' }}
+        />
+        <StatsCard
+          title="In Maintenance"
+          value={data.inMaintenanceBuses.toLocaleString()}
+          icon={<Wrench className="h-5 w-5" />}
+          description="-8 vs last week"
+          trend={{ value: -8, direction: 'down' }}
+        />
+        <StatsCard
+          title="Out of Service"
+          value={data.outOfServiceBuses.toLocaleString()}
+          icon={<AlertCircle className="h-5 w-5" />}
+          description="-5 this week"
+          trend={{ value: -5, direction: 'down' }}
+        />
+      </StatsCardGrid>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

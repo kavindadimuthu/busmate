@@ -62,21 +62,21 @@ export default function StaffDetailsPage() {
         <div className="flex items-center gap-3 flex-wrap">
             <button
                 onClick={handleBack}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
             >
                 <ArrowLeft className="w-4 h-4" />
                 Back
             </button>
             <button
                 onClick={handleEdit}
-                className="flex items-center gap-2 px-4 py-2 text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors"
             >
                 <Edit className="w-4 h-4" />
                 Edit Staff Member
             </button>
             <button
                 onClick={handleDelete}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors"
             >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -88,13 +88,13 @@ export default function StaffDetailsPage() {
     if (!staff) {
         return (
                 <div className="text-center py-12">
-                    <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-                    <div className="text-red-600 text-lg mb-4">
+                    <AlertCircle className="w-16 h-16 text-destructive/70 mx-auto mb-4" />
+                    <div className="text-destructive text-lg mb-4">
                         Staff member not found
                     </div>
                     <button
                         onClick={handleBack}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                        className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary"
                     >
                         Go Back
                     </button>

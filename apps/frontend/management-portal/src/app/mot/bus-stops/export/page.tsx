@@ -3,13 +3,22 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Checkbox,
+  Badge,
+} from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
 import { BusStopManagementService } from '@busmate/api-client-route';
 import type { StopFilterOptionsResponse } from '@busmate/api-client-route';
@@ -306,7 +315,7 @@ function BusStopsExportPage() {
                 
                 {!exportFilters.exportAll && (
                   <div className="space-y-3 pt-2 border-t">
-                    <Label className="text-sm font-medium text-gray-600">
+                    <Label className="text-sm font-medium text-muted-foreground">
                       Apply filters to limit export:
                     </Label>
                     
@@ -356,7 +365,7 @@ function BusStopsExportPage() {
                 <CardContent className="space-y-4">
                   {filterOptionsLoading ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       <span className="ml-2">Loading filter options...</span>
                     </div>
                   ) : (
@@ -460,7 +469,7 @@ function BusStopsExportPage() {
 
                 {/* Include Options */}
                 <div className="space-y-3 pt-2 border-t">
-                  <Label className="text-sm font-medium text-gray-600">Include in Export:</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Include in Export:</Label>
                   
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
@@ -503,7 +512,7 @@ function BusStopsExportPage() {
 
                 {/* Custom Fields */}
                 <div className="space-y-2 pt-2 border-t">
-                  <Label className="text-sm font-medium text-gray-600">Custom Fields (optional):</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Custom Fields (optional):</Label>
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {availableCustomFields.map((field) => (
                       <div key={field} className="flex items-center space-x-2">
@@ -576,7 +585,7 @@ function BusStopsExportPage() {
             <Button 
               onClick={handleExport} 
               disabled={isExporting}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-primary hover:bg-primary text-white"
               size="lg"
             >
               {isExporting ? (

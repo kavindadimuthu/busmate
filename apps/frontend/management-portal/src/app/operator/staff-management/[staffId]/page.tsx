@@ -68,8 +68,8 @@ export default function StaffDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <span className="ml-3 text-gray-500">Loading staff profile…</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <span className="ml-3 text-muted-foreground">Loading staff profile…</span>
       </div>
     );
   }
@@ -77,14 +77,14 @@ export default function StaffDetailPage() {
   if (notFound || !staff) {
     return (
       <div className="p-6 max-w-md mx-auto text-center mt-12">
-        <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Staff Member Not Found</h2>
-        <p className="text-gray-500 mb-6">
+        <AlertTriangle className="w-12 h-12 text-warning/70 mx-auto mb-4" />
+        <h2 className="text-lg font-semibold text-foreground mb-2">Staff Member Not Found</h2>
+        <p className="text-muted-foreground mb-6">
           The staff member you&apos;re looking for could not be found.
         </p>
         <Link
           href="/operator/staff-management"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors text-sm font-medium"
         >
           Back to Staff Management
         </Link>
@@ -119,7 +119,7 @@ export default function StaffDetailPage() {
         </div>
 
         {/* Read-only notice */}
-        <p className="text-xs text-gray-400 text-center">
+        <p className="text-xs text-muted-foreground/70 text-center">
           This profile is read-only. Staff records are managed by BusMate administration.
         </p>
     </div>

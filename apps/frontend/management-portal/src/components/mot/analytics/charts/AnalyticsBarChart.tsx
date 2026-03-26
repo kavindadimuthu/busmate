@@ -43,9 +43,9 @@ export function AnalyticsBarChart({
 }: AnalyticsBarChartProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        {title && <div className="h-5 bg-gray-200 rounded w-40 mb-4" />}
-        <div className="h-64 bg-gray-100 rounded" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        {title && <div className="h-5 bg-secondary rounded w-40 mb-4" />}
+        <div className="h-64 bg-muted rounded" />
       </div>
     );
   }
@@ -96,11 +96,11 @@ export function AnalyticsBarChart({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       {(title || subtitle) && (
         <div className="mb-4">
-          {title && <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>}
-          {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+          {title && <h3 className="font-semibold text-foreground text-sm">{title}</h3>}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
         </div>
       )}
       <div style={{ height }}>

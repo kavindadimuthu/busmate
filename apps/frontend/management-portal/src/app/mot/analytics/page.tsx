@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { Download, RefreshCw } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { Tabs, TabsList, TabsTrigger, TabsContent, Button, FilterSelect } from '@busmate/ui';
+import { Tabs, TabsList, TabsTrigger, Button, FilterSelect } from '@busmate/ui';
 
 // Analytics components
 import {
@@ -16,30 +15,8 @@ import {
   PassengerAnalyticsPanel,
 } from '@/components/mot/analytics';
 
-// Data
-import {
-  getAnalyticsKPIs,
-  getAnalyticsTrends,
-  getTripAnalytics,
-  getRouteAnalytics,
-  getFleetAnalytics,
-  getStaffAnalytics,
-  getRevenueAnalytics,
-  getPassengerAnalytics,
-  getAnalyticsFilterOptions,
-  simulateAnalyticsTick,
-  type AnalyticsKPIMetric,
-  type TrendPoint,
-  type TripAnalyticsData,
-  type RouteAnalyticsData,
-  type FleetAnalyticsData,
-  type StaffAnalyticsData,
-  type RevenueAnalyticsData,
-  type PassengerAnalyticsData,
-  type AnalyticsFilterOptions,
-  type DateRange,
-  type AnalyticsCategory,
-} from '@/data/mot/analytics';
+import { useAnalytics } from '@/components/mot/analytics/useAnalytics';
+import type { AnalyticsCategory, DateRange } from '@/data/mot/analytics';
 
 export default function AnalyticsPage() {
   useSetPageMetadata({
@@ -50,93 +27,36 @@ export default function AnalyticsPage() {
     breadcrumbs: [{ label: 'Analytics' }],
   });
 
-  // State
-  const [activeCategory, setActiveCategory] = useState<AnalyticsCategory>('overview');
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
-  const [region, setRegion] = useState<string>('All Regions');
-  const [operator, setOperator] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
-  const [isLive, setIsLive] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-
-  // Data states
-  const [kpis, setKpis] = useState<AnalyticsKPIMetric[]>([]);
-  const [trendHistory, setTrendHistory] = useState<TrendPoint[]>([]);
-  const [tripAnalytics, setTripAnalytics] = useState<TripAnalyticsData | null>(null);
-  const [routeAnalytics, setRouteAnalytics] = useState<RouteAnalyticsData | null>(null);
-  const [fleetAnalytics, setFleetAnalytics] = useState<FleetAnalyticsData | null>(null);
-  const [staffAnalytics, setStaffAnalytics] = useState<StaffAnalyticsData | null>(null);
-  const [revenueAnalytics, setRevenueAnalytics] = useState<RevenueAnalyticsData | null>(null);
-  const [passengerAnalytics, setPassengerAnalytics] = useState<PassengerAnalyticsData | null>(null);
-  const [filterOptions, setFilterOptions] = useState<AnalyticsFilterOptions | null>(null);
-
-  // Load data
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setKpis(getAnalyticsKPIs());
-      setTrendHistory(getAnalyticsTrends());
-      setTripAnalytics(getTripAnalytics());
-      setRouteAnalytics(getRouteAnalytics());
-      setFleetAnalytics(getFleetAnalytics());
-      setStaffAnalytics(getStaffAnalytics());
-      setRevenueAnalytics(getRevenueAnalytics());
-      setPassengerAnalytics(getPassengerAnalytics());
-      setFilterOptions(getAnalyticsFilterOptions());
-      setLastRefresh(new Date());
-    } catch (error) {
-      console.error('Failed to load analytics data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // Live updates
-  useEffect(() => {
-    if (!isLive) return;
-    const interval = setInterval(() => {
-      simulateAnalyticsTick();
-      setKpis(getAnalyticsKPIs());
-      setLastRefresh(new Date());
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isLive]);
-
-  const handleExport = () => {
-    alert('Generating analytics report...');
-  };
+  const {
+    activeCategory, setActiveCategory,
+    dateRange, setDateRange,
+    region, setRegion,
+    operator, setOperator,
+    loading, isLive, setIsLive, lastRefresh,
+    kpis, trendHistory,
+    tripAnalytics, routeAnalytics, fleetAnalytics,
+    staffAnalytics, revenueAnalytics, passengerAnalytics,
+    loadData, handleExport,
+    dateRangeOptions, regionOptions, operatorOptions,
+  } = useAnalytics();
 
   // Page actions
   useSetPageActions(
     <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-400 hidden sm:inline">
+      <span className="text-xs text-muted-foreground/70 hidden sm:inline">
         Updated {lastRefresh.toLocaleTimeString()}
       </span>
-
       <Button
         variant={isLive ? 'default' : 'outline'}
         size="sm"
-        onClick={() => setIsLive((prev) => !prev)}
-        className={isLive ? 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200' : ''}
+        onClick={() => setIsLive((prev: boolean) => !prev)}
+        className={isLive ? 'bg-success/15 text-success hover:bg-success/20 border-success/20' : ''}
       >
         {isLive ? '● Live' : '○ Live'}
       </Button>
-
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={loadData}
-        disabled={loading}
-        title="Refresh data"
-      >
+      <Button variant="outline" size="icon" onClick={loadData} disabled={loading} title="Refresh data">
         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
       </Button>
-
       <Button onClick={handleExport}>
         <Download className="h-4 w-4" />
         <span className="hidden sm:inline">Export Report</span>
@@ -144,28 +64,11 @@ export default function AnalyticsPage() {
     </div>
   );
 
-  // Date range options for FilterSelect
-  const dateRangeOptions = (filterOptions?.dateRanges ?? []).map((o) => ({
-    value: o.value,
-    label: o.label,
-  }));
-
-  const regionOptions = (filterOptions?.regions ?? []).map((r) => ({
-    value: r,
-    label: r,
-  }));
-
-  const operatorOptions = (filterOptions?.operators ?? []).map((op) => ({
-    value: op.id,
-    label: op.name,
-  }));
-
   return (
     <div className="space-y-6">
       {/* Filters Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-card rounded-xl border border-border p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Category Tabs */}
           <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as AnalyticsCategory)}>
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -177,38 +80,18 @@ export default function AnalyticsPage() {
               <TabsTrigger value="passengers">Passengers</TabsTrigger>
             </TabsList>
           </Tabs>
-
-          {/* Filters */}
           <div className="flex items-center gap-3">
             {dateRangeOptions.length > 0 && (
-              <FilterSelect
-                label="Period"
-                value={dateRange}
-                onChange={(v: string) => setDateRange(v as DateRange)}
-                options={dateRangeOptions}
-                placeholder="Date Range"
-              />
+              <FilterSelect label="Period" value={dateRange} onChange={(v: string) => setDateRange(v as DateRange)} options={dateRangeOptions} placeholder="Date Range" />
             )}
             {regionOptions.length > 0 && (
               <div className="hidden md:block">
-                <FilterSelect
-                  label="Region"
-                  value={region}
-                  onChange={setRegion}
-                  options={regionOptions}
-                  placeholder="All Regions"
-                />
+                <FilterSelect label="Region" value={region} onChange={setRegion} options={regionOptions} placeholder="All Regions" />
               </div>
             )}
             {operatorOptions.length > 0 && (
               <div className="hidden lg:block">
-                <FilterSelect
-                  label="Operator"
-                  value={operator}
-                  onChange={setOperator}
-                  options={operatorOptions}
-                  placeholder="All Operators"
-                />
+                <FilterSelect label="Operator" value={operator} onChange={setOperator} options={operatorOptions} placeholder="All Operators" />
               </div>
             )}
           </div>
@@ -217,32 +100,14 @@ export default function AnalyticsPage() {
 
       {/* Content */}
       {activeCategory === 'overview' && (
-        <AnalyticsOverview
-          kpis={kpis}
-          trendHistory={trendHistory}
-          tripStatusDistribution={tripAnalytics?.statusDistribution || []}
-          routeTypeDistribution={routeAnalytics?.routeTypeDistribution || []}
-          loading={loading}
-        />
+        <AnalyticsOverview kpis={kpis} trendHistory={trendHistory} tripStatusDistribution={tripAnalytics?.statusDistribution || []} routeTypeDistribution={routeAnalytics?.routeTypeDistribution || []} loading={loading} />
       )}
-      {activeCategory === 'trips' && tripAnalytics && (
-        <TripAnalyticsPanel data={tripAnalytics} loading={loading} />
-      )}
-      {activeCategory === 'routes' && routeAnalytics && (
-        <RouteAnalyticsPanel data={routeAnalytics} loading={loading} />
-      )}
-      {activeCategory === 'fleet' && fleetAnalytics && (
-        <FleetAnalyticsPanel data={fleetAnalytics} loading={loading} />
-      )}
-      {activeCategory === 'staff' && staffAnalytics && (
-        <StaffAnalyticsPanel data={staffAnalytics} loading={loading} />
-      )}
-      {activeCategory === 'revenue' && revenueAnalytics && (
-        <RevenueAnalyticsPanel data={revenueAnalytics} loading={loading} />
-      )}
-      {activeCategory === 'passengers' && passengerAnalytics && (
-        <PassengerAnalyticsPanel data={passengerAnalytics} loading={loading} />
-      )}
+      {activeCategory === 'trips' && tripAnalytics && <TripAnalyticsPanel data={tripAnalytics} loading={loading} />}
+      {activeCategory === 'routes' && routeAnalytics && <RouteAnalyticsPanel data={routeAnalytics} loading={loading} />}
+      {activeCategory === 'fleet' && fleetAnalytics && <FleetAnalyticsPanel data={fleetAnalytics} loading={loading} />}
+      {activeCategory === 'staff' && staffAnalytics && <StaffAnalyticsPanel data={staffAnalytics} loading={loading} />}
+      {activeCategory === 'revenue' && revenueAnalytics && <RevenueAnalyticsPanel data={revenueAnalytics} loading={loading} />}
+      {activeCategory === 'passengers' && passengerAnalytics && <PassengerAnalyticsPanel data={passengerAnalytics} loading={loading} />}
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function AddNewBusStopPage() {
   useSetPageActions(
     <button
       onClick={() => router.push('/mot/bus-stops')}
-      className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+      className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
     >
       <ArrowLeft className="w-5 h-5 mr-2" />
       Back to Bus Stops

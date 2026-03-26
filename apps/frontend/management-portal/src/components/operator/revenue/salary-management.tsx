@@ -153,20 +153,20 @@ export function SalaryManagement() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Paid":
-        return "bg-green-100 text-green-800"
+        return "bg-success/15 text-success"
       case "Processing":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-warning/15 text-warning"
       case "Pending":
-        return "bg-red-100 text-red-800"
+        return "bg-destructive/15 text-destructive"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
   const getProfileIconColor = (role: "Driver" | "Conductor") => {
     return role === "Driver" 
-      ? "bg-green-100 text-green-600" 
-      : "bg-purple-100 text-purple-600"
+      ? "bg-success/15 text-success" 
+      : "bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]"
   }
 
   return (
@@ -176,7 +176,7 @@ export function SalaryManagement() {
         <MetricCard
           title="Total Paid"
           value={`Rs ${totalSalaryPaid.toLocaleString()}.00`}
-          icon={<DollarSign className="w-6 h-6 text-green-600" />}
+          icon={<DollarSign className="w-6 h-6 text-success" />}
           trend={{
             value: "+5.2%",
             type: "positive",
@@ -187,7 +187,7 @@ export function SalaryManagement() {
         <MetricCard
           title="Pending Payments"
           value={`Rs ${totalPending.toLocaleString()}.00`}
-          icon={<Clock className="w-6 h-6 text-red-600" />}
+          icon={<Clock className="w-6 h-6 text-destructive" />}
           trend={{
             value: "-12.3%",
             type: "positive",
@@ -198,7 +198,7 @@ export function SalaryManagement() {
         <MetricCard
           title="Total Bonuses"
           value={`Rs ${totalBonuses.toLocaleString()}.00`}
-          icon={<TrendingUp className="w-6 h-6 text-blue-600" />}
+          icon={<TrendingUp className="w-6 h-6 text-primary" />}
           trend={{
             value: "+8.1%",
             type: "positive",
@@ -209,7 +209,7 @@ export function SalaryManagement() {
         <MetricCard
           title="Avg Salary"
           value={`Rs ${averageSalary.toFixed(0)}`}
-          icon={<Users className="w-6 h-6 text-purple-600" />}
+          icon={<Users className="w-6 h-6 text-[hsl(var(--purple-600))]" />}
           trend={{
             value: "+3.5%",
             type: "positive",
@@ -220,17 +220,17 @@ export function SalaryManagement() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+      <div className="bg-card rounded-lg border border-border shadow-sm p-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search by name, staff ID, or bus..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
               />
             </div>
           </div>
@@ -239,7 +239,7 @@ export function SalaryManagement() {
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             >
               <option value="all">All Roles</option>
               <option value="Driver">Drivers</option>
@@ -250,20 +250,20 @@ export function SalaryManagement() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             />
 
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             />
 
             <select
               value={paymentStatus}
               onChange={(e) => setPaymentStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             >
               <option value="all">All Status</option>
               <option value="Paid">Paid</option>
@@ -271,7 +271,7 @@ export function SalaryManagement() {
               <option value="Pending">Pending</option>
             </select>
 
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary transition-colors">
               <Download className="w-4 h-4" />
               Export
             </button>
@@ -280,64 +280,64 @@ export function SalaryManagement() {
       </div>
 
       {/* Salary Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Daily Salary Details - {selectedDate}</h3>
-          <span className="text-sm text-gray-500">Showing {filteredData.length} {filteredData.length === 1 ? 'record' : 'records'}</span>
+      <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-foreground">Daily Salary Details - {selectedDate}</h3>
+          <span className="text-sm text-muted-foreground">Showing {filteredData.length} {filteredData.length === 1 ? 'record' : 'records'}</span>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Work Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Daily Salary</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bonuses</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductions</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Staff</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Assignment</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Work Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Daily Salary</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Bonuses</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Deductions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-gray-200">
               {filteredData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-muted">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getProfileIconColor(item.role)}`}>
                         <Users className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                        <div className="text-sm text-gray-500">{item.staffId} • {item.role}</div>
+                        <div className="text-sm font-medium text-foreground">{item.name}</div>
+                        <div className="text-sm text-muted-foreground">{item.staffId} • {item.role}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{item.busAssigned}</div>
-                    <div className="text-sm text-gray-500">{item.route}</div>
+                    <div className="text-sm text-foreground">{item.busAssigned}</div>
+                    <div className="text-sm text-muted-foreground">{item.route}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{item.workDate}</div>
+                    <div className="text-sm text-foreground">{item.workDate}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">Rs {item.baseSalary.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">Rs {item.baseSalary.toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-green-600">Rs {item.bonuses.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-success">Rs {item.bonuses.toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-red-600">Rs {item.deductions.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-destructive">Rs {item.deductions.toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-gray-900">Rs {item.totalSalary.toLocaleString()}</div>
+                    <div className="text-sm font-bold text-foreground">Rs {item.totalSalary.toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(item.paymentStatus)}`}>
                       {item.paymentStatus}
                     </span>
-                    <div className="text-xs text-gray-500 mt-1">{item.paymentDate}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{item.paymentDate}</div>
                   </td>
                 </tr>
               ))}

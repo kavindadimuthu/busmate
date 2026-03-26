@@ -17,16 +17,16 @@ interface PermitSummaryCardProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; style: string; Icon: typeof CheckCircle }> = {
-  ACTIVE: { label: 'Active', style: 'bg-green-100 text-green-800', Icon: CheckCircle },
-  INACTIVE: { label: 'Inactive', style: 'bg-gray-100 text-gray-700', Icon: XCircle },
-  PENDING: { label: 'Pending Review', style: 'bg-yellow-100 text-yellow-800', Icon: Clock },
-  EXPIRED: { label: 'Expired', style: 'bg-red-100 text-red-800', Icon: XCircle },
+  ACTIVE: { label: 'Active', style: 'bg-success/15 text-success', Icon: CheckCircle },
+  INACTIVE: { label: 'Inactive', style: 'bg-muted text-foreground/80', Icon: XCircle },
+  PENDING: { label: 'Pending Review', style: 'bg-warning/15 text-warning', Icon: Clock },
+  EXPIRED: { label: 'Expired', style: 'bg-destructive/15 text-destructive', Icon: XCircle },
 };
 
 const PERMIT_TYPE_CONFIG: Record<string, { label: string; style: string }> = {
-  REGULAR: { label: 'Regular Service', style: 'bg-blue-100 text-blue-800' },
-  SPECIAL: { label: 'Special Service', style: 'bg-purple-100 text-purple-800' },
-  TEMPORARY: { label: 'Temporary Permit', style: 'bg-orange-100 text-orange-800' },
+  REGULAR: { label: 'Regular Service', style: 'bg-primary/15 text-primary' },
+  SPECIAL: { label: 'Special Service', style: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-800))]' },
+  TEMPORARY: { label: 'Temporary Permit', style: 'bg-warning/15 text-warning' },
 };
 
 function formatDate(dateStr?: string) {
@@ -63,24 +63,24 @@ function getDaysUntilExpiry(dateStr?: string) {
 }
 
 export function PermitSummaryCard({ permit }: PermitSummaryCardProps) {
-  const statusCfg = STATUS_CONFIG[permit.status] ?? { label: permit.status, style: 'bg-gray-100 text-gray-700', Icon: FileText };
-  const typeCfg = PERMIT_TYPE_CONFIG[permit.permitType] ?? { label: permit.permitType, style: 'bg-gray-100 text-gray-700' };
+  const statusCfg = STATUS_CONFIG[permit.status] ?? { label: permit.status, style: 'bg-muted text-foreground/80', Icon: FileText };
+  const typeCfg = PERMIT_TYPE_CONFIG[permit.permitType] ?? { label: permit.permitType, style: 'bg-muted text-foreground/80' };
   const StatusIcon = statusCfg.Icon;
   const expired = isExpired(permit.expiryDate);
   const expiringSoon = !expired && isExpiringSoon(permit.expiryDate);
   const daysLeft = getDaysUntilExpiry(permit.expiryDate);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="px-6 py-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-100 text-blue-700 p-2.5 rounded-lg">
+          <div className="bg-primary/15 text-primary p-2.5 rounded-lg">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900 font-mono">{permit.permitNumber}</h2>
-            <p className="text-sm text-gray-500">{permit.routeGroupName}</p>
+            <h2 className="text-lg font-bold text-foreground font-mono">{permit.permitNumber}</h2>
+            <p className="text-sm text-muted-foreground">{permit.routeGroupName}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -97,7 +97,7 @@ export function PermitSummaryCard({ permit }: PermitSummaryCardProps) {
       {/* Expiry warning banner */}
       {(expired || expiringSoon) && (
         <div className={`px-6 py-3 flex items-center gap-2 text-sm font-medium ${
-          expired ? 'bg-red-50 text-red-800 border-b border-red-100' : 'bg-orange-50 text-orange-800 border-b border-orange-100'
+          expired ? 'bg-destructive/10 text-destructive border-b border-destructive/10' : 'bg-warning/10 text-warning border-b border-warning/10'
         }`}>
           <AlertTriangle className="w-4 h-4 shrink-0" />
           {expired
@@ -109,35 +109,35 @@ export function PermitSummaryCard({ permit }: PermitSummaryCardProps) {
       {/* Core info grid */}
       <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         <InfoItem
-          icon={<Calendar className="w-4 h-4 text-gray-400" />}
+          icon={<Calendar className="w-4 h-4 text-muted-foreground/70" />}
           label="Issue Date"
           value={formatDate(permit.issueDate)}
         />
         <InfoItem
-          icon={<Calendar className="w-4 h-4 text-gray-400" />}
+          icon={<Calendar className="w-4 h-4 text-muted-foreground/70" />}
           label="Expiry Date"
           value={formatDate(permit.expiryDate)}
-          valueClass={expired ? 'text-red-600 font-semibold' : expiringSoon ? 'text-orange-600 font-semibold' : ''}
+          valueClass={expired ? 'text-destructive font-semibold' : expiringSoon ? 'text-warning font-semibold' : ''}
         />
         <InfoItem
-          icon={<RouteIcon className="w-4 h-4 text-gray-400" />}
+          icon={<RouteIcon className="w-4 h-4 text-muted-foreground/70" />}
           label="Route Group Code"
           value={permit.routeGroupCode}
         />
         <InfoItem
-          icon={<Bus className="w-4 h-4 text-gray-400" />}
+          icon={<Bus className="w-4 h-4 text-muted-foreground/70" />}
           label="Max Buses Allowed"
           value={String(permit.maximumBusAssigned)}
         />
         <InfoItem
-          icon={<FileText className="w-4 h-4 text-gray-400" />}
+          icon={<FileText className="w-4 h-4 text-muted-foreground/70" />}
           label="Issued By"
           value={permit.issuedBy}
           span={2}
         />
         {permit.notes && (
           <InfoItem
-            icon={<FileText className="w-4 h-4 text-gray-400" />}
+            icon={<FileText className="w-4 h-4 text-muted-foreground/70" />}
             label="Notes"
             value={permit.notes}
             span={2}
@@ -161,9 +161,9 @@ function InfoItem({ icon, label, value, valueClass, span }: InfoItemProps) {
     <div className={span ? `col-span-${span}` : ''}>
       <div className="flex items-center gap-1.5 mb-1">
         {icon}
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
       </div>
-      <p className={`text-sm font-medium text-gray-900 ${valueClass ?? ''}`}>{value}</p>
+      <p className={`text-sm font-medium text-foreground ${valueClass ?? ''}`}>{value}</p>
     </div>
   );
 }

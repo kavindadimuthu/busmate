@@ -92,12 +92,12 @@ export const busStopsColumns: ColumnDef<StopResponse>[] = [
     sortable: true,
     cell: ({ row }) =>
       row.isAccessible ? (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-success/10 text-success border border-success/20">
           <CheckCircle2 className="w-3.5 h-3.5" />
           Accessible
         </span>
       ) : (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 border border-red-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
           <XCircle className="w-3.5 h-3.5" />
           Not Accessible
         </span>

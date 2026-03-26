@@ -6,15 +6,15 @@ import { RoutePerformanceItem } from '@/data/operator/dashboard';
 
 function TrendIcon({ trend }: { trend: RoutePerformanceItem['trend'] }) {
   if (trend === 'stable') return <Minus className="h-3 w-3 text-muted-foreground" />;
-  if (trend === 'up') return <ArrowUp className="h-3 w-3 text-green-500" />;
-  return <ArrowDown className="h-3 w-3 text-red-500" />;
+  if (trend === 'up') return <ArrowUp className="h-3 w-3 text-success/80" />;
+  return <ArrowDown className="h-3 w-3 text-destructive/80" />;
 }
 
 function OnTimeRateBadge({ rate }: { rate: number }) {
   const color =
-    rate >= 90 ? 'bg-green-100 text-green-700' :
-    rate >= 80 ? 'bg-amber-100 text-amber-700' :
-    'bg-red-100 text-red-700';
+    rate >= 90 ? 'bg-success/15 text-success' :
+    rate >= 80 ? 'bg-warning/15 text-warning' :
+    'bg-destructive/15 text-destructive';
 
   return (
     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${color}`}>
@@ -49,7 +49,7 @@ export function OperatorDashboardRoutePerformance({ routes, loading = false }: O
         <h3 className="text-sm font-semibold text-foreground">Route Performance</h3>
         <Link
           href="/operator/routes"
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           View all
           <ExternalLink className="h-3 w-3" />
@@ -75,7 +75,7 @@ export function OperatorDashboardRoutePerformance({ routes, loading = false }: O
                 <td className="py-2.5">
                   <div>
                     <p className="text-xs font-semibold text-foreground">
-                      <span className="text-blue-600 mr-1">#{route.routeNumber}</span>
+                      <span className="text-primary mr-1">#{route.routeNumber}</span>
                     </p>
                     <p className="text-[10px] text-muted-foreground truncate max-w-[130px]">{route.routeName}</p>
                   </div>

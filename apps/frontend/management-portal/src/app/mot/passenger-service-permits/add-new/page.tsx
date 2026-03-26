@@ -92,7 +92,7 @@ export default function AddPermitPage() {
   useSetPageActions(
     <button
       onClick={handleCancel}
-      className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-2 px-4 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
     >
       <X className="w-4 h-4" />
       Cancel
@@ -104,15 +104,15 @@ export default function AddPermitPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
             <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 shrink-0" />
+              <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800">Error Creating Permit</h3>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <h3 className="text-sm font-medium text-destructive">Error Creating Permit</h3>
+                <p className="text-sm text-destructive mt-1">{error}</p>
                 <button
                   onClick={() => setError(null)}
-                  className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+                  className="text-sm text-destructive hover:text-destructive underline mt-2"
                 >
                   Dismiss
                 </button>
@@ -123,19 +123,19 @@ export default function AddPermitPage() {
 
         {/* Loading State */}
         {(operatorsLoading || routeGroupsLoading) && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
-              <span className="text-blue-700">Loading form data...</span>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mr-3"></div>
+              <span className="text-primary">Loading form data...</span>
             </div>
           </div>
         )}
 
         {/* Form Container */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Permit Information</h2>
-            <p className="text-sm text-gray-600 mt-1">
+        <div className="bg-card rounded-lg border border-border shadow-sm">
+          <div className="p-6 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground">Permit Information</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Enter the passenger service permit details
             </p>
           </div>
@@ -160,8 +160,8 @@ export default function AddPermitPage() {
               <div className="space-y-6">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div key={index} className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                    <div className="h-12 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-secondary rounded w-1/4 mb-2"></div>
+                    <div className="h-12 bg-secondary rounded"></div>
                   </div>
                 ))}
               </div>
@@ -170,11 +170,11 @@ export default function AddPermitPage() {
         </div>
 
         {/* Helper Information */}
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Before Creating a Permit</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+        <div className="bg-muted rounded-lg border border-border p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Before Creating a Permit</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground">
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Requirements</h4>
+              <h4 className="font-medium text-foreground mb-2">Requirements</h4>
               <ul className="space-y-1">
                 <li>• Operator must be registered and active</li>
                 <li>• Route group must be defined with routes</li>
@@ -183,7 +183,7 @@ export default function AddPermitPage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Next Steps</h4>
+              <h4 className="font-medium text-foreground mb-2">Next Steps</h4>
               <ul className="space-y-1">
                 <li>• Assign buses to the permit</li>
                 <li>• Create service schedules</li>

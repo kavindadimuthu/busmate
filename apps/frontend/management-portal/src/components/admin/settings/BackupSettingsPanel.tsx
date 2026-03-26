@@ -1,26 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
+  Input,
+  Label,
+  Switch,
+  Button,
+  Badge,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@busmate/ui';
 import {
   Database,
   HardDrive,
@@ -61,9 +59,9 @@ import {
 
 function BackupStatusBadge({ status }: { status: BackupEntry['status'] }) {
   const map = {
-    completed: { cls: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3 w-3" /> },
-    failed: { cls: 'bg-red-100 text-red-700', icon: <XCircle className="h-3 w-3" /> },
-    'in-progress': { cls: 'bg-blue-100 text-blue-700', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
+    completed: { cls: 'bg-success/15 text-success', icon: <CheckCircle className="h-3 w-3" /> },
+    failed: { cls: 'bg-destructive/15 text-destructive', icon: <XCircle className="h-3 w-3" /> },
+    'in-progress': { cls: 'bg-primary/15 text-primary', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
   };
   const { cls, icon } = map[status];
   return (
@@ -79,26 +77,26 @@ function BackupStatusBadge({ status }: { status: BackupEntry['status'] }) {
 function BackupStatsCards({ stats }: { stats: BackupStats }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+      <div className="rounded-xl border border-success/20 bg-success/10 p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+          <div className="p-2 bg-success/15 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-success" />
           </div>
           <div>
-            <p className="text-xs text-green-600 uppercase tracking-wide font-medium">Last Backup</p>
-            <p className="font-semibold text-green-900">{stats.lastBackupTime}</p>
+            <p className="text-xs text-success uppercase tracking-wide font-medium">Last Backup</p>
+            <p className="font-semibold text-success">{stats.lastBackupTime}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+      <div className="rounded-xl border border-primary/20 bg-primary/10 p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Database className="h-5 w-5 text-blue-600" />
+          <div className="p-2 bg-primary/15 rounded-lg">
+            <Database className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">Last Size</p>
-            <p className="font-semibold text-blue-900">{stats.lastBackupSize}</p>
+            <p className="text-xs text-primary uppercase tracking-wide font-medium">Last Size</p>
+            <p className="font-semibold text-primary">{stats.lastBackupSize}</p>
           </div>
         </div>
       </div>
@@ -118,14 +116,14 @@ function BackupStatsCards({ stats }: { stats: BackupStats }) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-xl border border-warning/20 bg-warning/10 p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-100 rounded-lg">
-            <Shield className="h-5 w-5 text-amber-600" />
+          <div className="p-2 bg-warning/15 rounded-lg">
+            <Shield className="h-5 w-5 text-warning" />
           </div>
           <div>
-            <p className="text-xs text-amber-600 uppercase tracking-wide font-medium">Success Rate</p>
-            <p className="font-semibold text-amber-900">{stats.successRate}%</p>
+            <p className="text-xs text-warning uppercase tracking-wide font-medium">Success Rate</p>
+            <p className="font-semibold text-warning">{stats.successRate}%</p>
           </div>
         </div>
       </div>
@@ -223,7 +221,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
   if (!settings || !stats) {
     return (
       <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
       </div>
     );
   }
@@ -231,7 +229,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
   return (
     <div>
       {/* ── Stats ──────────────────────────────────── */}
-      <div className="px-6 py-6 border-b border-gray-100">
+      <div className="px-6 py-6 border-b border-border/50">
         <BackupStatsCards stats={stats} />
       </div>
 
@@ -239,11 +237,11 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Configuration + Quick Actions ─────────── */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl border border-gray-200">
-              <div className="px-5 py-4 border-b border-gray-100">
+            <div className="rounded-xl border border-border">
+              <div className="px-5 py-4 border-b border-border/50">
                 <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4 text-blue-600" />
-                  <h3 className="text-sm font-semibold text-gray-900">Backup Configuration</h3>
+                  <Settings className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Backup Configuration</h3>
                 </div>
               </div>
               <div className="p-5 space-y-5">
@@ -253,7 +251,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                   <Label htmlFor="autoBackupEnabled" className="text-base font-medium">
                     Automatic Backup
                   </Label>
-                  <p className="text-sm text-gray-500">Enable scheduled backups</p>
+                  <p className="text-sm text-muted-foreground">Enable scheduled backups</p>
                 </div>
                 <Switch
                   id="autoBackupEnabled"
@@ -292,7 +290,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                         value={settings.backupTime}
                         onChange={(e) => update('backupTime', e.target.value)}
                       />
-                      <Clock className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                      <Clock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
                     </div>
                   </div>
                 </>
@@ -331,7 +329,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
               </div>
 
               {/* Toggles */}
-              <div className="space-y-3 pt-3 border-t border-gray-100">
+              <div className="space-y-3 pt-3 border-t border-border/50">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="encryptBackups" className="flex items-center gap-1.5">
                     <Lock className="h-3.5 w-3.5" /> Encrypt Backups
@@ -375,7 +373,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
               </div>
 
               {/* Notifications */}
-              <div className="space-y-3 pt-3 border-t border-gray-100">
+              <div className="space-y-3 pt-3 border-t border-border/50">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="notifyOnComplete">Notify on Complete</Label>
                   <Switch
@@ -395,15 +393,15 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
               </div>
 
               {/* Save/Reset */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between pt-4 border-t border-border/50">
                 <div className="text-sm">
                   {saved && (
-                    <span className="flex items-center gap-1 text-green-600">
+                    <span className="flex items-center gap-1 text-success">
                       <CheckCircle className="h-4 w-4" /> Saved
                     </span>
                   )}
                   {isDirty && !saved && (
-                    <span className="text-amber-600 text-xs">Unsaved</span>
+                    <span className="text-warning text-xs">Unsaved</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -414,7 +412,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                     size="sm"
                     onClick={handleSave}
                     disabled={!isDirty || saving}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-primary hover:bg-primary text-white"
                   >
                     {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
                     Save
@@ -424,9 +422,9 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900">Quick Backup</h3>
+          <div className="rounded-xl border border-border">
+            <div className="px-5 py-4 border-b border-border/50">
+              <h3 className="text-sm font-semibold text-foreground">Quick Backup</h3>
             </div>
             <div className="p-5 space-y-3">
               {(
@@ -453,10 +451,10 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                 </Button>
               ))}
 
-              <div className="pt-3 border-t border-gray-100">
+              <div className="pt-3 border-t border-border/50">
                 <Button
                   variant="outline"
-                  className="w-full justify-start bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 shadow-sm"
+                  className="w-full justify-start bg-warning/10 text-warning border-orange-200 hover:bg-warning/15 shadow-sm"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
@@ -475,17 +473,17 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
 
         {/* ── History & Recovery ───────────────────────── */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100">
+          <div className="rounded-xl border border-border">
+            <div className="px-5 py-4 border-b border-border/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Backup History</h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h3 className="text-sm font-semibold text-foreground">Backup History</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Recent backup operations and their status
                   </p>
                 </div>
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-primary hover:bg-primary text-white"
                   onClick={() => handleCreateBackup('Full System')}
                   disabled={backupLoading !== null}
                 >
@@ -514,7 +512,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                     {history.map((backup) => (
                       <TableRow key={backup.id}>
                         <TableCell className="font-medium">{backup.type}</TableCell>
-                        <TableCell className="text-sm text-gray-500">
+                        <TableCell className="text-sm text-muted-foreground">
                           {new Date(backup.date).toLocaleString()}
                         </TableCell>
                         <TableCell>{backup.size}</TableCell>
@@ -532,7 +530,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                                   title="Download"
                                   onClick={() => handleDownload(backup.id)}
                                 >
-                                  <Download className="h-4 w-4 text-blue-600" />
+                                  <Download className="h-4 w-4 text-primary" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -540,7 +538,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                                   title="Restore"
                                   onClick={() => handleRestore(backup.id)}
                                 >
-                                  <Upload className="h-4 w-4 text-green-600" />
+                                  <Upload className="h-4 w-4 text-success" />
                                 </Button>
                               </>
                             )}
@@ -551,7 +549,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                                 title="Retry"
                                 onClick={() => handleCreateBackup(backup.type)}
                               >
-                                <RefreshCw className="h-4 w-4 text-orange-600" />
+                                <RefreshCw className="h-4 w-4 text-warning" />
                               </Button>
                             )}
                             <Button
@@ -560,7 +558,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                               title="Delete"
                               onClick={() => handleDelete(backup.id)}
                             >
-                              <Trash2 className="h-4 w-4 text-red-400" />
+                              <Trash2 className="h-4 w-4 text-destructive/70" />
                             </Button>
                           </div>
                         </TableCell>
@@ -568,7 +566,7 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                     ))}
                     {history.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground/70">
                           No backup history available
                         </TableCell>
                       </TableRow>
@@ -580,56 +578,56 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
           </div>
 
           {/* Recovery Options */}
-          <div className="rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100">
+          <div className="rounded-xl border border-border">
+            <div className="px-5 py-4 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <h3 className="text-sm font-semibold text-gray-900">Recovery Options</h3>
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <h3 className="text-sm font-semibold text-foreground">Recovery Options</h3>
               </div>
-              <p className="text-sm text-gray-500 mt-0.5">System recovery and disaster management</p>
+              <p className="text-sm text-muted-foreground mt-0.5">System recovery and disaster management</p>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Point-in-Time Recovery</h4>
-                  <p className="text-sm text-blue-700 mb-3">Restore system to a specific date and time</p>
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <h4 className="font-medium text-primary mb-2">Point-in-Time Recovery</h4>
+                  <p className="text-sm text-primary mb-3">Restore system to a specific date and time</p>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-blue-100 text-blue-600 border-blue-200 hover:bg-blue-200"
+                    className="bg-primary/15 text-primary border-primary/20 hover:bg-primary/20"
                   >
                     Configure Recovery Point
                   </Button>
                 </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-medium text-green-900 mb-2">Disaster Recovery</h4>
-                  <p className="text-sm text-green-700 mb-3">Full system recovery procedures</p>
+                <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+                  <h4 className="font-medium text-success mb-2">Disaster Recovery</h4>
+                  <p className="text-sm text-success mb-3">Full system recovery procedures</p>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-green-100 text-green-600 border-green-200 hover:bg-green-200"
+                    className="bg-success/15 text-success border-success/20 hover:bg-success/20"
                   >
                     View Recovery Plan
                   </Button>
                 </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="font-medium text-amber-900 mb-2">Selective Restore</h4>
-                  <p className="text-sm text-amber-700 mb-3">Restore specific components or data</p>
+                <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                  <h4 className="font-medium text-warning mb-2">Selective Restore</h4>
+                  <p className="text-sm text-warning mb-3">Restore specific components or data</p>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-amber-100 text-amber-600 border-amber-200 hover:bg-amber-200"
+                    className="bg-warning/15 text-warning border-warning/20 hover:bg-warning/20"
                   >
                     Select Components
                   </Button>
                 </div>
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="font-medium text-purple-900 mb-2">Test Recovery</h4>
-                  <p className="text-sm text-purple-700 mb-3">Test backup integrity and recovery process</p>
+                <div className="bg-[hsl(var(--purple-50))] border border-[hsl(var(--purple-200))] rounded-lg p-4">
+                  <h4 className="font-medium text-[hsl(var(--purple-900))] mb-2">Test Recovery</h4>
+                  <p className="text-sm text-[hsl(var(--purple-700))] mb-3">Test backup integrity and recovery process</p>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-purple-100 text-purple-600 border-purple-200 hover:bg-purple-200"
+                    className="bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))] border-[hsl(var(--purple-200))] hover:bg-[hsl(var(--purple-200))]"
                   >
                     Run Test Recovery
                   </Button>

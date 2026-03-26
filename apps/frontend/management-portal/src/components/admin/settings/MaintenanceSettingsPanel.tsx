@@ -1,27 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import {
+  Input,
+  Label,
+  Switch,
+  Button,
+  Badge,
+  Textarea,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@busmate/ui';
 import {
   Wrench,
   AlertTriangle,
@@ -59,10 +57,10 @@ import {
 
 function StatusBadge({ status }: { status: MaintenanceHistoryEntry['status'] }) {
   const map = {
-    completed: { cls: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3 w-3" /> },
-    failed: { cls: 'bg-red-100 text-red-700', icon: <XCircle className="h-3 w-3" /> },
-    warning: { cls: 'bg-amber-100 text-amber-700', icon: <AlertTriangle className="h-3 w-3" /> },
-    'in-progress': { cls: 'bg-blue-100 text-blue-700', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
+    completed: { cls: 'bg-success/15 text-success', icon: <CheckCircle className="h-3 w-3" /> },
+    failed: { cls: 'bg-destructive/15 text-destructive', icon: <XCircle className="h-3 w-3" /> },
+    warning: { cls: 'bg-warning/15 text-warning', icon: <AlertTriangle className="h-3 w-3" /> },
+    'in-progress': { cls: 'bg-primary/15 text-primary', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
   };
   const { cls, icon } = map[status];
   return (
@@ -78,18 +76,18 @@ function StatusBadge({ status }: { status: MaintenanceHistoryEntry['status'] }) 
 function SystemStatusCards({ status }: { status: SystemStatus }) {
   const healthColor =
     status.health === 'operational'
-      ? 'bg-green-50 border-green-200 text-green-700'
+      ? 'bg-success/10 border-success/20 text-success'
       : status.health === 'degraded'
-      ? 'bg-amber-50 border-amber-200 text-amber-700'
-      : 'bg-red-50 border-red-200 text-red-700';
+      ? 'bg-warning/10 border-warning/20 text-warning'
+      : 'bg-destructive/10 border-destructive/20 text-destructive';
 
   const healthIcon =
     status.health === 'operational' ? (
-      <CheckCircle className="h-7 w-7 text-green-600" />
+      <CheckCircle className="h-7 w-7 text-success" />
     ) : status.health === 'degraded' ? (
-      <AlertTriangle className="h-7 w-7 text-amber-600" />
+      <AlertTriangle className="h-7 w-7 text-warning" />
     ) : (
-      <XCircle className="h-7 w-7 text-red-600" />
+      <XCircle className="h-7 w-7 text-destructive" />
     );
 
   return (
@@ -104,13 +102,13 @@ function SystemStatusCards({ status }: { status: SystemStatus }) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+      <div className="rounded-xl border border-primary/20 bg-primary/10 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Active Sessions</p>
-            <p className="text-lg font-semibold text-blue-900 mt-0.5">{status.activeSessions}</p>
+            <p className="text-xs font-medium text-primary uppercase tracking-wide">Active Sessions</p>
+            <p className="text-lg font-semibold text-primary mt-0.5">{status.activeSessions}</p>
           </div>
-          <Users className="h-7 w-7 text-blue-500" />
+          <Users className="h-7 w-7 text-primary/80" />
         </div>
       </div>
 
@@ -124,13 +122,13 @@ function SystemStatusCards({ status }: { status: SystemStatus }) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div className="rounded-xl border border-border bg-muted p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Running Since</p>
-            <p className="text-lg font-semibold text-gray-900 mt-0.5">{status.uptime}</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Running Since</p>
+            <p className="text-lg font-semibold text-foreground mt-0.5">{status.uptime}</p>
           </div>
-          <Server className="h-7 w-7 text-gray-400" />
+          <Server className="h-7 w-7 text-muted-foreground/70" />
         </div>
       </div>
     </div>
@@ -217,7 +215,7 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
   if (!settings || !status) {
     return (
       <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
       </div>
     );
   }
@@ -225,21 +223,21 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
   return (
     <div>
       {/* ── System Status ─────────────────────────────── */}
-      <div className="px-6 py-6 border-b border-gray-100">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">System Status</p>
+      <div className="px-6 py-6 border-b border-border/50">
+        <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide mb-4">System Status</p>
         <SystemStatusCards status={status} />
       </div>
 
       {/* ── Maintenance Mode Toggle ──────────────────── */}
-      <div className={`px-6 py-6 border-b border-gray-100 ${settings.maintenanceMode ? 'bg-orange-50/40' : ''}`}>
+      <div className={`px-6 py-6 border-b border-border/50 ${settings.maintenanceMode ? 'bg-warning/10/40' : ''}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${settings.maintenanceMode ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                <Power className={`h-6 w-6 ${settings.maintenanceMode ? 'text-orange-600' : 'text-gray-500'}`} />
+              <div className={`p-3 rounded-lg ${settings.maintenanceMode ? 'bg-warning/15' : 'bg-muted'}`}>
+                <Power className={`h-6 w-6 ${settings.maintenanceMode ? 'text-warning' : 'text-muted-foreground'}`} />
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Maintenance Mode</h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {settings.maintenanceMode
                     ? 'System is currently in maintenance mode. Users will see a maintenance page.'
                     : 'Enable maintenance mode to take the system offline for updates.'}
@@ -249,7 +247,7 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
             <Button
               className={
                 settings.maintenanceMode
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  ? 'bg-success hover:bg-success text-white'
                   : 'bg-orange-600 hover:bg-orange-700 text-white'
               }
               onClick={handleToggleMaintenance}
@@ -299,16 +297,16 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
           )}
       </div>
 
-      <div className="px-6 py-6 border-b border-gray-100">
+      <div className="px-6 py-6 border-b border-border/50">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Scheduled Maintenance */}
-        <div className="rounded-xl border border-gray-200">
-          <div className="px-5 py-4 border-b border-gray-100">
+        <div className="rounded-xl border border-border">
+          <div className="px-5 py-4 border-b border-border/50">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600" />
-              <h3 className="text-sm font-semibold text-gray-900">Scheduled Maintenance</h3>
+              <Clock className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Scheduled Maintenance</h3>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">Configure automatic maintenance windows</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Configure automatic maintenance windows</p>
           </div>
           <div className="p-5 space-y-5">
             <div className="flex items-center justify-between">
@@ -316,7 +314,7 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
                 <Label htmlFor="autoMaintenanceEnabled" className="text-base font-medium">
                   Automatic Maintenance
                 </Label>
-                <p className="text-sm text-gray-500">Run scheduled maintenance tasks</p>
+                <p className="text-sm text-muted-foreground">Run scheduled maintenance tasks</p>
               </div>
               <Switch
                 id="autoMaintenanceEnabled"
@@ -376,7 +374,7 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
                         <Bell className="h-3.5 w-3.5" /> Notify Users
                       </span>
                     </Label>
-                    <p className="text-sm text-gray-500">Send notifications before maintenance</p>
+                    <p className="text-sm text-muted-foreground">Send notifications before maintenance</p>
                   </div>
                   <Switch
                     id="notifyUsersBeforeMaintenance"
@@ -403,16 +401,16 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
             )}
 
             {/* Save / Reset */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between pt-4 border-t border-border/50">
               <div className="flex items-center gap-2 text-sm">
                 {saved && (
-                  <span className="flex items-center gap-1 text-green-600">
+                  <span className="flex items-center gap-1 text-success">
                     <CheckCircle className="h-4 w-4" />
                     Saved
                   </span>
                 )}
                 {isDirty && !saved && (
-                  <span className="text-amber-600 text-xs">Unsaved changes</span>
+                  <span className="text-warning text-xs">Unsaved changes</span>
                 )}
               </div>
               <div className="flex gap-2">
@@ -423,7 +421,7 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
                   size="sm"
                   onClick={handleSave}
                   disabled={!isDirty || saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-primary hover:bg-primary text-white"
                 >
                   {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
                   Save
@@ -433,13 +431,13 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
         </div>
 
         {/* Quick Actions */}
-        <div className="rounded-xl border border-gray-200">
-          <div className="px-5 py-4 border-b border-gray-100">
+        <div className="rounded-xl border border-border">
+          <div className="px-5 py-4 border-b border-border/50">
             <div className="flex items-center gap-2">
               <Wrench className="h-4 w-4 text-violet-600" />
-              <h3 className="text-sm font-semibold text-gray-900">Maintenance Actions</h3>
+              <h3 className="text-sm font-semibold text-foreground">Maintenance Actions</h3>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">Run on-demand maintenance tasks</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Run on-demand maintenance tasks</p>
           </div>
           <div className="p-5 space-y-3">
             {(
@@ -467,10 +465,10 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
             ))}
 
             <div className="border-t pt-4 mt-4">
-              <h4 className="font-medium text-gray-700 mb-3">Emergency Actions</h4>
+              <h4 className="font-medium text-foreground/80 mb-3">Emergency Actions</h4>
               <Button
                 variant="outline"
-                className="w-full justify-start bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm"
+                className="w-full justify-start bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15 shadow-sm"
                 onClick={() => {
                   if (window.confirm('Are you sure you want to initiate an emergency shutdown?')) {
                     alert('Emergency shutdown initiated (mock).');
@@ -489,9 +487,9 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
       {/* ── Maintenance History ─────────────────────── */}
       <div className="px-6 py-6">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Maintenance History</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Maintenance History</h3>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Record of past maintenance tasks and their outcomes</p>
+        <p className="text-sm text-muted-foreground mb-4">Record of past maintenance tasks and their outcomes</p>
         <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -508,24 +506,24 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
                 {history.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium">{entry.task}</TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(entry.startTime).toLocaleString()}
                     </TableCell>
                     <TableCell>{entry.duration}</TableCell>
                     <TableCell>
                       <StatusBadge status={entry.status} />
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600 max-w-xs truncate">
+                    <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                       {entry.details}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {entry.performedBy}
                     </TableCell>
                   </TableRow>
                 ))}
                 {history.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground/70">
                       No maintenance history available
                     </TableCell>
                   </TableRow>

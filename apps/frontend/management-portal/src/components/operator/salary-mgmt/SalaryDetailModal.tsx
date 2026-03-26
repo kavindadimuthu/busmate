@@ -16,10 +16,10 @@ interface SalaryDetailModalProps {
 // ── Status colours ────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  PAID: 'bg-green-100 text-green-800',
-  PENDING: 'bg-amber-100 text-amber-800',
-  PROCESSING: 'bg-blue-100 text-blue-800',
-  FAILED: 'bg-red-100 text-red-800',
+  PAID: 'bg-success/15 text-success',
+  PENDING: 'bg-warning/15 text-warning',
+  PROCESSING: 'bg-primary/15 text-primary',
+  FAILED: 'bg-destructive/15 text-destructive',
 };
 
 // ── Component ─────────────────────────────────────────────────────
@@ -43,18 +43,18 @@ export function SalaryDetailModal({ record, onClose }: SalaryDetailModalProps) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+        <div className="sticky top-0 bg-card border-b border-border/50 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">{record.staffName}</h2>
-            <p className="text-xs text-gray-500">
+            <h2 className="text-lg font-bold text-foreground">{record.staffName}</h2>
+            <p className="text-xs text-muted-foreground">
               {roleLabel} · {dateStr}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -69,31 +69,31 @@ export function SalaryDetailModal({ record, onClose }: SalaryDetailModalProps) {
           </div>
 
           {/* ── Assignment ───────────────────────────────────────── */}
-          <div className="rounded-lg bg-gray-50 p-3 space-y-1.5 text-xs">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Bus className="h-3.5 w-3.5 text-gray-400" />
-              Bus: <span className="font-medium text-gray-800">{record.busAssigned}</span>
+          <div className="rounded-lg bg-muted p-3 space-y-1.5 text-xs">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Bus className="h-3.5 w-3.5 text-muted-foreground/70" />
+              Bus: <span className="font-medium text-foreground">{record.busAssigned}</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <MapPin className="h-3.5 w-3.5 text-gray-400" />
-              Route: <span className="font-medium text-gray-800">{record.routeAssigned}</span>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground/70" />
+              Route: <span className="font-medium text-foreground">{record.routeAssigned}</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Award className="h-3.5 w-3.5 text-gray-400" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Award className="h-3.5 w-3.5 text-muted-foreground/70" />
               Performance:{' '}
-              <span className="font-medium text-gray-800">
+              <span className="font-medium text-foreground">
                 {record.performanceRating === 'BELOW_AVERAGE'
                   ? 'Below Average'
                   : record.performanceRating.charAt(0) + record.performanceRating.slice(1).toLowerCase()}
               </span>
-              <span className="text-gray-400">· On-time: {record.onTimePercentage.toFixed(1)}%</span>
+              <span className="text-muted-foreground/70">· On-time: {record.onTimePercentage.toFixed(1)}%</span>
             </div>
           </div>
 
           {/* ── Salary breakdown ─────────────────────────────────── */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-gray-400" />
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-muted-foreground/70" />
               Salary Breakdown
             </h3>
 
@@ -104,7 +104,7 @@ export function SalaryDetailModal({ record, onClose }: SalaryDetailModalProps) {
               {/* Bonuses */}
               {record.bonuses.length > 0 && (
                 <div className="pt-1">
-                  <p className="text-[10px] font-medium text-green-600 uppercase tracking-wider mb-1">Bonuses</p>
+                  <p className="text-[10px] font-medium text-success uppercase tracking-wider mb-1">Bonuses</p>
                   {record.bonuses.map((b, i) => (
                     <LineItem key={i} label={b.label} amount={b.amount} type="bonus" />
                   ))}
@@ -114,7 +114,7 @@ export function SalaryDetailModal({ record, onClose }: SalaryDetailModalProps) {
               {/* Deductions */}
               {record.deductions.length > 0 && (
                 <div className="pt-1">
-                  <p className="text-[10px] font-medium text-red-600 uppercase tracking-wider mb-1">Deductions</p>
+                  <p className="text-[10px] font-medium text-destructive uppercase tracking-wider mb-1">Deductions</p>
                   {record.deductions.map((d, i) => (
                     <LineItem key={i} label={d.label} amount={d.amount} type="deduction" />
                   ))}
@@ -122,28 +122,28 @@ export function SalaryDetailModal({ record, onClose }: SalaryDetailModalProps) {
               )}
 
               {/* Totals */}
-              <div className="border-t border-gray-200 pt-2 mt-2 space-y-1">
+              <div className="border-t border-border pt-2 mt-2 space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">Gross Salary</span>
-                  <span className="font-medium text-gray-700">Rs {record.grossSalary.toLocaleString()}</span>
+                  <span className="text-muted-foreground">Gross Salary</span>
+                  <span className="font-medium text-foreground/80">Rs {record.grossSalary.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold">
-                  <span className="text-gray-900">Net Pay</span>
-                  <span className="text-gray-900">Rs {record.netSalary.toLocaleString()}</span>
+                  <span className="text-foreground">Net Pay</span>
+                  <span className="text-foreground">Rs {record.netSalary.toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* ── Payment info ─────────────────────────────────────── */}
-          <div className="rounded-lg border border-gray-200 p-3 flex items-center justify-between">
-            <div className="text-xs text-gray-500">
-              <p>Payment Method: <span className="font-medium text-gray-700">{record.paymentMethod.replace('_', ' ')}</span></p>
+          <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              <p>Payment Method: <span className="font-medium text-foreground/80">{record.paymentMethod.replace('_', ' ')}</span></p>
               {record.bankAccount && <p className="mt-0.5">Account: {record.bankAccount}</p>}
             </div>
             <span
               className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                STATUS_STYLES[record.paymentStatus] ?? 'bg-gray-100 text-gray-600'
+                STATUS_STYLES[record.paymentStatus] ?? 'bg-muted text-muted-foreground'
               }`}
             >
               {record.paymentStatus.charAt(0) + record.paymentStatus.slice(1).toLowerCase()}
@@ -167,10 +167,10 @@ function QuickStat({
   value: string;
 }) {
   return (
-    <div className="rounded-lg bg-gray-50 p-3 text-center">
-      <Icon className="h-4 w-4 mx-auto text-gray-400 mb-1" />
-      <p className="text-base font-bold text-gray-900">{value}</p>
-      <p className="text-[10px] text-gray-400">{label}</p>
+    <div className="rounded-lg bg-muted p-3 text-center">
+      <Icon className="h-4 w-4 mx-auto text-muted-foreground/70 mb-1" />
+      <p className="text-base font-bold text-foreground">{value}</p>
+      <p className="text-[10px] text-muted-foreground/70">{label}</p>
     </div>
   );
 }
@@ -186,14 +186,14 @@ function LineItem({
 }) {
   return (
     <div className="flex items-center justify-between text-xs py-0.5">
-      <span className="text-gray-600">{label}</span>
+      <span className="text-muted-foreground">{label}</span>
       <span
         className={`font-medium tabular-nums ${
           type === 'bonus'
-            ? 'text-green-600'
+            ? 'text-success'
             : type === 'deduction'
-            ? 'text-red-600'
-            : 'text-gray-800'
+            ? 'text-destructive'
+            : 'text-foreground'
         }`}
       >
         {type === 'bonus' && '+'}

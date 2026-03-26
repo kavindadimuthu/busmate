@@ -13,8 +13,7 @@ import {
   ArrowRight,
   XCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button, Badge } from '@busmate/ui';
 import { Trip, TripStatus } from '@/data/timekeeper/types';
 
 interface TripDetailModalProps {
@@ -29,19 +28,19 @@ interface TripDetailModalProps {
 function getStatusBadge(status: TripStatus) {
   switch (status) {
     case 'scheduled':
-      return <Badge className="bg-gray-100 text-gray-800">Scheduled</Badge>;
+      return <Badge className="bg-muted text-foreground">Scheduled</Badge>;
     case 'boarding':
-      return <Badge className="bg-green-100 text-green-800">Boarding</Badge>;
+      return <Badge className="bg-success/15 text-success">Boarding</Badge>;
     case 'departed':
-      return <Badge className="bg-purple-100 text-purple-800">Departed</Badge>;
+      return <Badge className="bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-800))]">Departed</Badge>;
     case 'in_transit':
-      return <Badge className="bg-blue-100 text-blue-800">In Transit</Badge>;
+      return <Badge className="bg-primary/15 text-primary">In Transit</Badge>;
     case 'completed':
-      return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
+      return <Badge className="bg-success/15 text-success">Completed</Badge>;
     case 'delayed':
-      return <Badge className="bg-yellow-100 text-yellow-800">Delayed</Badge>;
+      return <Badge className="bg-warning/15 text-warning">Delayed</Badge>;
     case 'cancelled':
-      return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
+      return <Badge className="bg-destructive/15 text-destructive">Cancelled</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -70,15 +69,15 @@ export function TripDetailModal({
       
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <Bus className="h-5 w-5 text-blue-600" />
+                <Bus className="h-5 w-5 text-primary" />
                 Trip Details
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {trip.tripNumber}
               </p>
             </div>
@@ -93,11 +92,11 @@ export function TripDetailModal({
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Route className="h-4 w-4 text-gray-500" />
-                  {trip.routeNumber && <span className="text-blue-600">{trip.routeNumber}</span>}
+                  <Route className="h-4 w-4 text-muted-foreground" />
+                  {trip.routeNumber && <span className="text-primary">{trip.routeNumber}</span>}
                   {trip.routeName}
                 </h3>
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   <span>{trip.departureStopName}</span>
                   <ArrowRight className="h-4 w-4" />
@@ -109,21 +108,21 @@ export function TripDetailModal({
 
             {/* Date and Time */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+              <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Calendar className="h-4 w-4" />
                   Date
                 </div>
                 <p className="font-semibold">{trip.date}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+              <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Clock className="h-4 w-4" />
                   Scheduled Departure
                 </div>
                 <p className="font-semibold">{trip.scheduledDepartureTime}</p>
                 {trip.actualDepartureTime && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Actual: {trip.actualDepartureTime}
                   </p>
                 )}
@@ -132,21 +131,21 @@ export function TripDetailModal({
 
             {/* Bus and Staff */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-blue-600 mb-1">
+              <div className="bg-primary/10 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-primary mb-1">
                   <Bus className="h-4 w-4" />
                   Bus
                 </div>
                 <p className="font-semibold">{trip.busNumber}</p>
               </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-purple-600 mb-1">
+              <div className="bg-[hsl(var(--purple-50))] rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-[hsl(var(--purple-600))] mb-1">
                   <User className="h-4 w-4" />
                   Driver
                 </div>
                 <p className="font-semibold">{trip.driverName || 'Not assigned'}</p>
                 {trip.conductorName && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Conductor: {trip.conductorName}
                   </p>
                 )}
@@ -155,8 +154,8 @@ export function TripDetailModal({
 
             {/* Passenger Count */}
             {trip.passengerCount !== undefined && (
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-green-600 mb-1">
+              <div className="bg-success/10 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-success mb-1">
                   <User className="h-4 w-4" />
                   Passengers
                 </div>
@@ -166,8 +165,8 @@ export function TripDetailModal({
 
             {/* Notes */}
             {trip.notes && (
-              <div className="bg-yellow-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-yellow-700 mb-1">
+              <div className="bg-warning/10 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-warning mb-1">
                   <AlertCircle className="h-4 w-4" />
                   Notes
                 </div>
@@ -177,8 +176,8 @@ export function TripDetailModal({
 
             {/* Delay Reason */}
             {trip.delayReason && (
-              <div className="bg-red-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-sm text-red-600 mb-1">
+              <div className="bg-destructive/10 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm text-destructive mb-1">
                   <AlertCircle className="h-4 w-4" />
                   Delay Reason
                 </div>
@@ -188,11 +187,11 @@ export function TripDetailModal({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 p-6 border-t bg-gray-50">
+          <div className="flex items-center justify-end gap-2 p-6 border-t bg-muted">
             {onStartBoarding && canStartBoarding && (
               <Button 
                 onClick={() => onStartBoarding(trip.id)}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-success hover:bg-success"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Start Boarding
@@ -201,7 +200,7 @@ export function TripDetailModal({
             {onRecordDeparture && canDepart && (
               <Button 
                 onClick={() => onRecordDeparture(trip.id)}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-[hsl(var(--purple-600))] hover:bg-[hsl(var(--purple-700))]"
               >
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Record Departure
@@ -212,7 +211,7 @@ export function TripDetailModal({
                 <Button 
                   variant="outline"
                   onClick={() => onUpdateStatus(trip.id, 'delayed')}
-                  className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+                  className="text-warning border-warning/30 hover:bg-warning/10"
                 >
                   <AlertCircle className="h-4 w-4 mr-2" />
                   Mark Delayed
@@ -220,7 +219,7 @@ export function TripDetailModal({
                 <Button 
                   variant="outline"
                   onClick={() => onUpdateStatus(trip.id, 'cancelled')}
-                  className="text-red-600 border-red-300 hover:bg-red-50"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Cancel

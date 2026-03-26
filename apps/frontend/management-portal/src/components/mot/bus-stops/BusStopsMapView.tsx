@@ -361,15 +361,15 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
   /* ── error state ─────────────────────────────────────────────────────────── */
   if (mapError) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center shadow-sm">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-50 mb-4">
-          <AlertTriangle className="w-7 h-7 text-red-400" />
+      <div className="bg-card rounded-2xl border border-border p-16 text-center shadow-sm">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-destructive/10 mb-4">
+          <AlertTriangle className="w-7 h-7 text-destructive/70" />
         </div>
-        <h3 className="text-base font-semibold text-gray-900 mb-1">Map Unavailable</h3>
-        <p className="text-sm text-gray-500 mb-5 max-w-sm mx-auto">{mapError}</p>
+        <h3 className="text-base font-semibold text-foreground mb-1">Map Unavailable</h3>
+        <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">{mapError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+          className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary transition-colors"
         >
           Retry
         </button>
@@ -379,7 +379,7 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
 
   /* ── main render ─────────────────────────────────────────────────────────── */
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
 
       {/* ── Map canvas ─────────────────────────────────────────────────── */}
       <div
@@ -392,10 +392,10 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
         {/* ── Top-left: live stop count badge ──────────────────────── */}
         {isMapInitialized && !loading && (
           <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5
-                          bg-white/90 backdrop-blur-sm border border-gray-100
+                          bg-card/90 backdrop-blur-sm border border-border/50
                           rounded-xl shadow-md px-3 py-1.5 pointer-events-none">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-xs font-semibold text-gray-700">
+            <span className="w-2 h-2 rounded-full bg-primary/80 animate-pulse" />
+            <span className="text-xs font-semibold text-foreground/80">
               {validBusStops.length} {validBusStops.length === 1 ? 'stop' : 'stops'}
             </span>
           </div>
@@ -408,9 +408,9 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
               key={title}
               onClick={onClick}
               title={title}
-              className="w-9 h-9 bg-white rounded-xl shadow-md border border-gray-100
-                         flex items-center justify-center text-gray-500
-                         hover:text-gray-900 hover:bg-gray-50 hover:shadow-lg
+              className="w-9 h-9 bg-card rounded-xl shadow-md border border-border/50
+                         flex items-center justify-center text-muted-foreground
+                         hover:text-foreground hover:bg-muted hover:shadow-lg
                          active:scale-95 transition-all duration-150
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
@@ -421,9 +421,9 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
 
         {/* ── Bottom-left: colour legend ────────────────────────────── */}
         <div className="absolute bottom-4 left-4 z-10
-                        bg-white/90 backdrop-blur-sm border border-gray-100
+                        bg-card/90 backdrop-blur-sm border border-border/50
                         rounded-xl shadow-md px-3 py-2.5 pointer-events-none">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5">
             Accessibility
           </p>
           <div className="flex flex-col gap-1.5">
@@ -433,7 +433,7 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-xs text-gray-600 font-medium">{label}</span>
+                <span className="text-xs text-muted-foreground font-medium">{label}</span>
               </div>
             ))}
           </div>
@@ -441,10 +441,10 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
 
         {/* ── Loading / initialising overlay ────────────────────────── */}
         {(loading || !isMapInitialized) && (
-          <div className="absolute inset-0 z-20 bg-white/80 backdrop-blur-[2px]
+          <div className="absolute inset-0 z-20 bg-card/80 backdrop-blur-[2px]
                           flex flex-col items-center justify-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-blue-100 border-t-blue-600 animate-spin" />
-            <p className="text-sm font-medium text-gray-500">
+            <div className="w-10 h-10 rounded-full border-2 border-primary/10 border-t-blue-600 animate-spin" />
+            <p className="text-sm font-medium text-muted-foreground">
               {!isMapInitialized ? 'Loading map…' : 'Updating stops…'}
             </p>
           </div>
@@ -453,10 +453,10 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
         {/* ── Empty state: stops exist but none have coords ─────────── */}
         {isMapInitialized && !loading && busStops.length > 0 && validBusStops.length === 0 && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-lg px-8 py-6 text-center">
-              <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-gray-700">No map coordinates</p>
-              <p className="text-xs text-gray-400 mt-1">None of these stops have valid location data.</p>
+            <div className="bg-card/90 backdrop-blur-sm border border-border/50 rounded-2xl shadow-lg px-8 py-6 text-center">
+              <AlertTriangle className="w-8 h-8 text-warning/70 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-foreground/80">No map coordinates</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">None of these stops have valid location data.</p>
             </div>
           </div>
         )}
@@ -464,9 +464,9 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
         {/* ── Empty state: no stops on this page ───────────────────── */}
         {isMapInitialized && !loading && busStops.length === 0 && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-lg px-8 py-6 text-center">
-              <p className="text-sm font-semibold text-gray-700">No stops on this page</p>
-              <p className="text-xs text-gray-400 mt-1">Try a different page or adjust your filters.</p>
+            <div className="bg-card/90 backdrop-blur-sm border border-border/50 rounded-2xl shadow-lg px-8 py-6 text-center">
+              <p className="text-sm font-semibold text-foreground/80">No stops on this page</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Try a different page or adjust your filters.</p>
             </div>
           </div>
         )}
@@ -474,9 +474,9 @@ export function BusStopsMapView({ busStops, loading, onDelete }: BusStopsMapView
 
       {/* ── Warning: stops with missing coordinates ─────────────────────── */}
       {invalidCount > 0 && (
-        <div className="flex items-center gap-2.5 px-5 py-3 bg-amber-50 border-t border-amber-100">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <p className="text-xs text-amber-700">
+        <div className="flex items-center gap-2.5 px-5 py-3 bg-warning/10 border-t border-warning/10">
+          <AlertTriangle className="w-3.5 h-3.5 text-warning/80 shrink-0" />
+          <p className="text-xs text-warning">
             {invalidCount} {invalidCount === 1 ? 'stop has' : 'stops have'} missing or invalid
             coordinates and {invalidCount === 1 ? 'is' : 'are'} not shown on the map.
           </p>

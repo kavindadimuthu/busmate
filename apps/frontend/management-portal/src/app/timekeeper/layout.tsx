@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic';
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster } from '@busmate/ui'
 import { RoleLayoutClient } from '@/components/layouts/role-layout-client'
 import { getUserData } from '@/lib/utils/getUserData'
 import { isRoleAllowedForRoute, getRoleRedirectPath } from '@/lib/utils/getRoleRedirectPath'

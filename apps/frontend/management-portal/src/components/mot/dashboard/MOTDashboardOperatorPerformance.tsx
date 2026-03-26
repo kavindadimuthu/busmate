@@ -6,15 +6,15 @@ import { OperatorPerformanceItem } from '@/data/mot/dashboard';
 
 function TrendIcon({ trend }: { trend: OperatorPerformanceItem['trend'] }) {
   if (trend === 'stable') return <Minus className="h-3 w-3 text-muted-foreground" />;
-  if (trend === 'up') return <ArrowUp className="h-3 w-3 text-green-500" />;
-  return <ArrowDown className="h-3 w-3 text-red-500" />;
+  if (trend === 'up') return <ArrowUp className="h-3 w-3 text-success/80" />;
+  return <ArrowDown className="h-3 w-3 text-destructive/80" />;
 }
 
 function OnTimeRateBadge({ rate }: { rate: number }) {
   const color =
-    rate >= 90 ? 'bg-green-100 text-green-700' :
-    rate >= 80 ? 'bg-amber-100 text-amber-700' :
-    'bg-red-100 text-red-700';
+    rate >= 90 ? 'bg-success/15 text-success' :
+    rate >= 80 ? 'bg-warning/15 text-warning' :
+    'bg-destructive/15 text-destructive';
 
   return (
     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${color}`}>
@@ -31,10 +31,10 @@ function SatisfactionStars({ rating }: { rating: number }) {
           key={star}
           className={`h-3 w-3 ${
             star <= Math.floor(rating)
-              ? 'text-amber-400 fill-amber-400'
+              ? 'text-warning/70 fill-amber-400'
               : star <= rating
-              ? 'text-amber-400 fill-amber-200'
-              : 'text-gray-200 fill-gray-200'
+              ? 'text-warning/70 fill-amber-200'
+              : 'text-muted-foreground/30 fill-gray-200'
           }`}
         />
       ))}
@@ -69,7 +69,7 @@ export function MOTDashboardOperatorPerformance({ operators, loading = false }: 
         <h3 className="text-sm font-semibold text-foreground">Top Operators</h3>
         <Link
           href="/mot/users?type=operators"
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           View all
           <ExternalLink className="h-3 w-3" />

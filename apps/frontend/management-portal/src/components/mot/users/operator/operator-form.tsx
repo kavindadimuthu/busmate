@@ -42,10 +42,10 @@ const OPERATOR_TYPES = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending', color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
-  { value: 'active', label: 'Active', color: 'text-green-600 bg-green-50 border-green-200' },
-  { value: 'inactive', label: 'Inactive', color: 'text-red-600 bg-red-50 border-red-200' },
-  { value: 'cancelled', label: 'Cancelled', color: 'text-gray-600 bg-gray-50 border-gray-200' },
+  { value: 'pending', label: 'Pending', color: 'text-warning bg-warning/10 border-warning/20' },
+  { value: 'active', label: 'Active', color: 'text-success bg-success/10 border-success/20' },
+  { value: 'inactive', label: 'Inactive', color: 'text-destructive bg-destructive/10 border-destructive/20' },
+  { value: 'cancelled', label: 'Cancelled', color: 'text-muted-foreground bg-muted border-border' },
 ];
 
 const SRI_LANKAN_PROVINCES = [
@@ -220,8 +220,8 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading operator data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading operator data...</p>
         </div>
       </div>
     );
@@ -243,55 +243,55 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Error Alert */}
       {errors.general && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{errors.general}</p>
+              <h3 className="text-sm font-medium text-destructive">Error</h3>
+              <p className="text-sm text-destructive mt-1">{errors.general}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Basic Information */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-card rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <Building className="w-5 h-5 mr-2" />
           Basic Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Operator Name <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Operator Name <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.name ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.name ? 'border-destructive/30' : 'border-border'
               }`}
               placeholder="Enter operator name"
               maxLength={100}
             />
             {errors.name && (
-              <p className="text-red-600 text-sm mt-1">{errors.name}</p>
+              <p className="text-destructive text-sm mt-1">{errors.name}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               {formData.name.length}/100 characters
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Operator Type <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Operator Type <span className="text-destructive/80">*</span>
             </label>
             <select
               value={formData.operatorType}
               onChange={(e) => handleInputChange('operatorType', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.operatorType ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.operatorType ? 'border-destructive/30' : 'border-border'
               }`}
             >
               {OPERATOR_TYPES.map((type) => (
@@ -301,19 +301,19 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
               ))}
             </select>
             {errors.operatorType && (
-              <p className="text-red-600 text-sm mt-1">{errors.operatorType}</p>
+              <p className="text-destructive text-sm mt-1">{errors.operatorType}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Status <span className="text-destructive/80">*</span>
             </label>
             <select
               value={formData.status}
               onChange={(e) => handleInputChange('status', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.status ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.status ? 'border-destructive/30' : 'border-border'
               }`}
             >
               {STATUS_OPTIONS.map((status) => (
@@ -323,7 +323,7 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
               ))}
             </select>
             {errors.status && (
-              <p className="text-red-600 text-sm mt-1">{errors.status}</p>
+              <p className="text-destructive text-sm mt-1">{errors.status}</p>
             )}
             <div className="mt-2">
               <StatusBadge status={formData.status} />
@@ -333,21 +333,21 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
       </div>
 
       {/* Location Information */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-card rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <MapPin className="w-5 h-5 mr-2" />
           Location Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Operating Region <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Operating Region <span className="text-destructive/80">*</span>
             </label>
             <select
               value={formData.region}
               onChange={(e) => handleInputChange('region', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.region ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.region ? 'border-destructive/30' : 'border-border'
               }`}
             >
               <option value="">Select a province</option>
@@ -358,9 +358,9 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
               ))}
             </select>
             {errors.region && (
-              <p className="text-red-600 text-sm mt-1">{errors.region}</p>
+              <p className="text-destructive text-sm mt-1">{errors.region}</p>
             )}
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               Select the primary province where this operator conducts business
             </p>
           </div>
@@ -369,13 +369,13 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
 
       {/* Preview Card */}
       {isDirty && formData.name && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
-          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div className="bg-card rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Preview</h3>
+          <div className="border border-border rounded-lg p-4 bg-muted">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h4 className="text-lg font-semibold text-gray-900">{formData.name}</h4>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                <h4 className="text-lg font-semibold text-foreground">{formData.name}</h4>
+                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                   <span className="flex items-center">
                     <Building className="w-4 h-4 mr-1" />
                     {OPERATOR_TYPES.find(t => t.value === formData.operatorType)?.label}
@@ -395,18 +395,18 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
       )}
 
       {/* Form Actions */}
-      <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-end gap-4 pt-6 border-t border-border">
         <button
           type="button"
           onClick={handleCancel}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-border text-foreground/80 rounded-lg hover:bg-muted transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading || !isDirty}
-          className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

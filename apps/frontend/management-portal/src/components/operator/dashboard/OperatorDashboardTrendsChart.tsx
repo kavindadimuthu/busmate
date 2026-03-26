@@ -146,7 +146,7 @@ export function OperatorDashboardTrendsChart({ trendHistory, loading = false }: 
             onClick={() => setCompareMode((v) => !v)}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
               compareMode
-                ? 'bg-gray-900 text-white border-gray-900'
+                ? 'bg-foreground text-white border-foreground'
                 : 'bg-card text-muted-foreground border-border hover:bg-muted'
             }`}
           >

@@ -50,22 +50,22 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
 
   const isOutbound = route.direction === 'OUTBOUND';
   const directionColor = isOutbound
-    ? { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' }
-    : { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' };
+    ? { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' }
+    : { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' };
 
   return (
     <div className="space-y-6">
       {/* Quick stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Direction */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+        <div className="bg-muted rounded-lg p-4 border border-border/50">
           <div className="flex items-center gap-2 mb-2">
             <Navigation
               className={`w-4 h-4 ${isOutbound ? 'rotate-45' : '-rotate-[135deg]'} ${
-                isOutbound ? 'text-emerald-600' : 'text-cyan-600'
+                isOutbound ? 'text-success' : 'text-primary/90'
               }`}
             />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Direction
             </span>
           </div>
@@ -77,60 +77,60 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
         </div>
 
         {/* Distance */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+        <div className="bg-muted rounded-lg p-4 border border-border/50">
           <div className="flex items-center gap-2 mb-2">
-            <Ruler className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <Ruler className="w-4 h-4 text-primary" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Distance
             </span>
           </div>
-          <div className="text-xl font-bold text-gray-900">
+          <div className="text-xl font-bold text-foreground">
             {route.distanceKm?.toFixed(1) || '0'}{' '}
-            <span className="text-sm font-normal text-gray-500">km</span>
+            <span className="text-sm font-normal text-muted-foreground">km</span>
           </div>
         </div>
 
         {/* Duration */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+        <div className="bg-muted rounded-lg p-4 border border-border/50">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-amber-600" />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <Clock className="w-4 h-4 text-warning" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Est. Duration
             </span>
           </div>
-          <div className="text-xl font-bold text-gray-900">
+          <div className="text-xl font-bold text-foreground">
             {formatDuration(route.estimatedDurationMinutes)}
           </div>
         </div>
 
         {/* Stops */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+        <div className="bg-muted rounded-lg p-4 border border-border/50">
           <div className="flex items-center gap-2 mb-2">
             <MapPin className="w-4 h-4 text-violet-600" />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Total Stops
             </span>
           </div>
-          <div className="text-xl font-bold text-gray-900">
+          <div className="text-xl font-bold text-foreground">
             {totalStops}{' '}
-            <span className="text-sm font-normal text-gray-500">stops</span>
+            <span className="text-sm font-normal text-muted-foreground">stops</span>
           </div>
         </div>
       </div>
 
       {/* Route details grid */}
-      <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-        {/* <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+      <div className="bg-muted rounded-xl p-6 border border-border/50">
+        {/* <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide mb-4">
           Route Details
         </h4> */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-x-8">
           {/* Route ID */}
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Route ID</span>
+              <Hash className="w-4 h-4 text-muted-foreground/70" />
+              <span className="text-sm text-muted-foreground">Route ID</span>
             </div>
-            <span className="font-mono text-xs bg-gray-200 px-2 py-1 rounded text-gray-700">
+            <span className="font-mono text-xs bg-secondary px-2 py-1 rounded text-foreground/80">
               {route.id?.slice(0, 12)}...
             </span>
           </div>
@@ -139,10 +139,10 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
           {route.routeNumber && (
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-2">
-                <RouteIcon className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">Route Number</span>
+                <RouteIcon className="w-4 h-4 text-muted-foreground/70" />
+                <span className="text-sm text-muted-foreground">Route Number</span>
               </div>
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-foreground">
                 {route.routeNumber}
               </span>
             </div>
@@ -151,14 +151,14 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
           {/* Road Type */}
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Road Type</span>
+              <FileText className="w-4 h-4 text-muted-foreground/70" />
+              <span className="text-sm text-muted-foreground">Road Type</span>
             </div>
             <span
               className={`px-2 py-0.5 text-xs font-semibold rounded ${
                 route.roadType === 'EXPRESSWAY'
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-gray-200 text-gray-700'
+                  ? 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))]'
+                  : 'bg-secondary text-foreground/80'
               }`}
             >
               {route.roadType || 'Normal'}
@@ -169,51 +169,51 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
           {route.routeThrough && (
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-2">
-                <Navigation2 className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">Route Through</span>
+                <Navigation2 className="w-4 h-4 text-muted-foreground/70" />
+                <span className="text-sm text-muted-foreground">Route Through</span>
               </div>
-              <span className="text-sm font-semibold text-gray-900">{route.routeThrough}</span>
+              <span className="text-sm font-semibold text-foreground">{route.routeThrough}</span>
             </div>
           )}
 
           {/* Created */}
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Created</span>
-            <span className="text-sm text-gray-900">{formatDate(route.createdAt)}</span>
+            <span className="text-sm text-muted-foreground">Created</span>
+            <span className="text-sm text-foreground">{formatDate(route.createdAt)}</span>
           </div>
 
           {/* Updated */}
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Last Updated</span>
-            <span className="text-sm text-gray-900">{formatDate(route.updatedAt)}</span>
+            <span className="text-sm text-muted-foreground">Last Updated</span>
+            <span className="text-sm text-foreground">{formatDate(route.updatedAt)}</span>
           </div>
 
           {/* Created By */}
           {route.createdBy && (
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-gray-600">Created By</span>
-              <span className="text-sm text-gray-900">{route.createdBy}</span>
+              <span className="text-sm text-muted-foreground">Created By</span>
+              <span className="text-sm text-foreground">{route.createdBy}</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Journey path visual */}
-      <div className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border border-gray-100">
-        <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+      <div className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border border-border/50">
+        <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide mb-4">
           Journey Path
         </h4>
         <div className="flex items-center gap-4">
           {/* Start */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-success rounded-full flex items-center justify-center shadow-md">
               <span className="text-white text-sm font-bold">A</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-sm font-semibold text-foreground">
                 {route.startStopName || 'Start'}
               </div>
-              <div className="text-xs text-gray-500">Origin</div>
+              <div className="text-xs text-muted-foreground">Origin</div>
             </div>
           </div>
 
@@ -222,7 +222,7 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
             <div className="h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-red-400 rounded-full" />
             {intermediateStops > 0 && (
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 shadow-sm">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-card border border-border rounded-full text-xs font-medium text-muted-foreground shadow-sm">
                   <MapPin className="w-3 h-3" />
                   {intermediateStops} stops
                 </span>
@@ -233,12 +233,12 @@ export function RouteOverviewTab({ route }: RouteOverviewTabProps) {
           {/* End */}
           <div className="flex items-center gap-3">
             <div>
-              <div className="text-sm font-semibold text-gray-900 text-right">
+              <div className="text-sm font-semibold text-foreground text-right">
                 {route.endStopName || 'End'}
               </div>
-              <div className="text-xs text-gray-500 text-right">Destination</div>
+              <div className="text-xs text-muted-foreground text-right">Destination</div>
             </div>
-            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-destructive rounded-full flex items-center justify-center shadow-md">
               <span className="text-white text-sm font-bold">B</span>
             </div>
           </div>

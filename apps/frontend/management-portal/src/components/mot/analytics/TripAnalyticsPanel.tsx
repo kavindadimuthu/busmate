@@ -1,12 +1,11 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsBarChart } from './charts/AnalyticsBarChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import { AnalyticsLineChart } from './charts/AnalyticsLineChart';
 import { Route, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import type { TripAnalyticsData } from '@/data/mot/analytics';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -18,58 +17,39 @@ interface TripAnalyticsPanelProps {
 // ── Component ────────────────────────────────────────────────────
 
 export function TripAnalyticsPanel({ data, loading = false }: TripAnalyticsPanelProps) {
-  // KPI metrics
-  const kpiMetrics: StatsCardMetric[] = [
-    {
-      label: 'Total Trips',
-      value: data.totalTrips.toLocaleString(),
-      trend: 'up',
-      trendValue: '+342 this week',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [12200, 12350, 12500, 12600, 12750, 12847],
-      icon: Route,
-    },
-    {
-      label: 'Completed Trips',
-      value: data.completedTrips.toLocaleString(),
-      trend: 'up',
-      trendValue: '+5.2% completion rate',
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [10800, 10950, 11050, 11150, 11200, 11234],
-      icon: CheckCircle,
-    },
-    {
-      label: 'On-Time Rate',
-      value: `${data.onTimePercentage}%`,
-      trend: 'up',
-      trendValue: '+2.1% vs last week',
-      trendPositiveIsGood: true,
-      color: 'purple',
-      sparkData: [84, 85, 85.5, 86, 86.8, 87.3],
-      icon: Clock,
-    },
-    {
-      label: 'Avg. Delay',
-      value: `${data.averageDelay} min`,
-      trend: 'down',
-      trendValue: '-0.8 min improvement',
-      trendPositiveIsGood: false,
-      color: 'amber',
-      sparkData: [5.5, 5.2, 5.0, 4.8, 4.5, 4.2],
-      icon: AlertTriangle,
-    },
-  ];
-
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={kpiMetrics}
-        loading={loading}
-        columns={4}
-      />
+      <StatsCardGrid className="lg:grid-cols-4">
+        <StatsCard
+          title="Total Trips"
+          value={data.totalTrips.toLocaleString()}
+          icon={<Route className="h-5 w-5" />}
+          description="+342 this week"
+          trend={{ value: 342, direction: 'up' }}
+        />
+        <StatsCard
+          title="Completed Trips"
+          value={data.completedTrips.toLocaleString()}
+          icon={<CheckCircle className="h-5 w-5" />}
+          description="+5.2% completion rate"
+          trend={{ value: 5.2, direction: 'up' }}
+        />
+        <StatsCard
+          title="On-Time Rate"
+          value={`${data.onTimePercentage}%`}
+          icon={<Clock className="h-5 w-5" />}
+          description="+2.1% vs last week"
+          trend={{ value: 2.1, direction: 'up' }}
+        />
+        <StatsCard
+          title="Avg. Delay"
+          value={`${data.averageDelay} min`}
+          icon={<AlertTriangle className="h-5 w-5" />}
+          description="-0.8 min improvement"
+          trend={{ value: -0.8, direction: 'down' }}
+        />
+      </StatsCardGrid>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

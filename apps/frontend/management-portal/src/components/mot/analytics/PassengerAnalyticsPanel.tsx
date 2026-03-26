@@ -1,13 +1,12 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsBarChart } from './charts/AnalyticsBarChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import { AnalyticsLineChart } from './charts/AnalyticsLineChart';
 import { AnalyticsDataTable, ProgressBar } from './charts/AnalyticsDataTable';
 import { Users, UserPlus, Clock, TrendingUp } from 'lucide-react';
 import type { PassengerAnalyticsData } from '@/data/mot/analytics';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -19,50 +18,6 @@ interface PassengerAnalyticsPanelProps {
 // ── Component ────────────────────────────────────────────────────
 
 export function PassengerAnalyticsPanel({ data, loading = false }: PassengerAnalyticsPanelProps) {
-  // KPI metrics
-  const kpiMetrics: StatsCardMetric[] = [
-    {
-      label: 'Total Passengers',
-      value: data.totalPassengers.toLocaleString(),
-      trend: 'up',
-      trendValue: `+${data.weeklyGrowth}% this week`,
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [430000, 438000, 445000, 450000, 455000, 458231],
-      icon: Users,
-    },
-    {
-      label: 'Daily Average',
-      value: data.dailyAverage.toLocaleString(),
-      trend: 'up',
-      trendValue: '+4.8% vs last week',
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [14200, 14500, 14800, 15000, 15150, 15274],
-      icon: UserPlus,
-    },
-    {
-      label: 'Peak Hour Volume',
-      value: data.peakHourPassengers.toLocaleString(),
-      trend: 'up',
-      trendValue: '8:00 AM - 9:00 AM',
-      trendPositiveIsGood: true,
-      color: 'purple',
-      sparkData: [2600, 2700, 2750, 2800, 2830, 2847],
-      icon: Clock,
-    },
-    {
-      label: 'Weekly Growth',
-      value: `${data.weeklyGrowth}%`,
-      trend: 'up',
-      trendValue: '+0.8% vs last week',
-      trendPositiveIsGood: true,
-      color: 'teal',
-      sparkData: [3.8, 4.2, 4.5, 4.8, 5.0, 5.2],
-      icon: TrendingUp,
-    },
-  ];
-
   // Top routes columns
   const topRoutesColumns = [
     { key: 'routeName', label: 'Route' },
@@ -84,11 +39,35 @@ export function PassengerAnalyticsPanel({ data, loading = false }: PassengerAnal
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={kpiMetrics}
-        loading={loading}
-        columns={4}
-      />
+      <StatsCardGrid className="lg:grid-cols-4">
+        <StatsCard
+          title="Total Passengers"
+          value={data.totalPassengers.toLocaleString()}
+          icon={<Users className="h-5 w-5" />}
+          description={`+${data.weeklyGrowth}% this week`}
+          trend={{ value: data.weeklyGrowth, direction: 'up' }}
+        />
+        <StatsCard
+          title="Daily Average"
+          value={data.dailyAverage.toLocaleString()}
+          icon={<UserPlus className="h-5 w-5" />}
+          description="+4.8% vs last week"
+          trend={{ value: 4.8, direction: 'up' }}
+        />
+        <StatsCard
+          title="Peak Hour Volume"
+          value={data.peakHourPassengers.toLocaleString()}
+          icon={<Clock className="h-5 w-5" />}
+          description="8:00 AM - 9:00 AM"
+        />
+        <StatsCard
+          title="Weekly Growth"
+          value={`${data.weeklyGrowth}%`}
+          icon={<TrendingUp className="h-5 w-5" />}
+          description="+0.8% vs last week"
+          trend={{ value: 0.8, direction: 'up' }}
+        />
+      </StatsCardGrid>
 
       {/* Passenger Trend */}
       <AnalyticsLineChart

@@ -42,23 +42,23 @@ function getStatusMeta(status?: string) {
   const s = status?.toLowerCase();
   switch (s) {
     case "active":
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Active", cls: "bg-green-50 text-green-700 border-green-200" };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Active", cls: "bg-success/10 text-success border-success/20" };
     case "completed":
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Completed", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Completed", cls: "bg-success/10 text-success border-success/20" };
     case "pending":
-      return { icon: <Clock className="w-3.5 h-3.5" />, label: "Pending", cls: "bg-yellow-50 text-yellow-700 border-yellow-200" };
+      return { icon: <Clock className="w-3.5 h-3.5" />, label: "Pending", cls: "bg-warning/10 text-warning border-warning/20" };
     case "cancelled":
-      return { icon: <XCircle className="w-3.5 h-3.5" />, label: "Cancelled", cls: "bg-red-50 text-red-600 border-red-200" };
+      return { icon: <XCircle className="w-3.5 h-3.5" />, label: "Cancelled", cls: "bg-destructive/10 text-destructive border-destructive/20" };
     case "delayed":
-      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: "Delayed", cls: "bg-orange-50 text-orange-700 border-orange-200" };
+      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: "Delayed", cls: "bg-warning/10 text-orange-700 border-orange-200" };
     case "in_transit":
-      return { icon: <Navigation2 className="w-3.5 h-3.5" />, label: "In Transit", cls: "bg-blue-50 text-blue-700 border-blue-200" };
+      return { icon: <Navigation2 className="w-3.5 h-3.5" />, label: "In Transit", cls: "bg-primary/10 text-primary border-primary/20" };
     case "boarding":
-      return { icon: <Users className="w-3.5 h-3.5" />, label: "Boarding", cls: "bg-purple-50 text-purple-700 border-purple-200" };
+      return { icon: <Users className="w-3.5 h-3.5" />, label: "Boarding", cls: "bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]" };
     case "departed":
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Departed", cls: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: "Departed", cls: "bg-primary/10 text-indigo-700 border-indigo-200" };
     default:
-      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: status ?? "Unknown", cls: "bg-gray-100 text-gray-600 border-gray-200" };
+      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: status ?? "Unknown", cls: "bg-muted text-muted-foreground border-border" };
   }
 }
 
@@ -123,8 +123,8 @@ export const tripsColumns: ColumnDef<any>[] = [
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
             row.passengerServicePermitId
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-gray-50 text-gray-400 border-gray-200"
+              ? "bg-success/10 text-success border-success/20"
+              : "bg-muted text-muted-foreground/70 border-border"
           }`}
         >
           <FileText className="w-3 h-3 shrink-0" />
@@ -133,8 +133,8 @@ export const tripsColumns: ColumnDef<any>[] = [
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
             row.busId
-              ? "bg-blue-50 text-blue-700 border-blue-200"
-              : "bg-gray-50 text-gray-400 border-gray-200"
+              ? "bg-primary/10 text-primary border-primary/20"
+              : "bg-muted text-muted-foreground/70 border-border"
           }`}
         >
           <Bus className="w-3 h-3 shrink-0" />

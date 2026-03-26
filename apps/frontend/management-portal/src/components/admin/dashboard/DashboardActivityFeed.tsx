@@ -22,16 +22,16 @@ const ACTOR_ICON: Record<ActivityEntry['actorType'], React.ReactNode> = {
 };
 
 const ACTOR_STYLE: Record<ActivityEntry['actorType'], string> = {
-  user:        'bg-blue-100 text-blue-600',
+  user:        'bg-primary/15 text-primary',
   system:      'bg-muted text-muted-foreground',
-  security:    'bg-orange-100 text-orange-600',
-  transaction: 'bg-purple-100 text-purple-600',
+  security:    'bg-warning/15 text-warning',
+  transaction: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]',
 };
 
 const SEVERITY_STYLE: Record<ActivityEntry['severity'], string> = {
   normal:   '',
-  warning:  'bg-amber-50 border-l-2 border-l-amber-400',
-  critical: 'bg-red-50 border-l-2 border-l-red-500',
+  warning:  'bg-warning/10 border-l-2 border-l-amber-400',
+  critical: 'bg-destructive/10 border-l-2 border-l-red-500',
 };
 
 interface DashboardActivityFeedProps {
@@ -67,7 +67,7 @@ export function DashboardActivityFeed({ activity, loading = false }: DashboardAc
         </div>
         <Link
           href="/admin/logs"
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           View logs <ArrowUpRight className="h-3 w-3" />
         </Link>

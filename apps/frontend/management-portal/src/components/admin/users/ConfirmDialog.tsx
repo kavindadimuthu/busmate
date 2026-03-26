@@ -30,21 +30,21 @@ export function ConfirmDialog({
 
   const variantStyles = {
     danger: {
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
-      buttonBg: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+      iconBg: 'bg-destructive/15',
+      iconColor: 'text-destructive',
+      buttonBg: 'bg-destructive hover:bg-destructive focus:ring-red-500',
       Icon: XCircle,
     },
     warning: {
-      iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-600',
+      iconBg: 'bg-warning/15',
+      iconColor: 'text-warning',
       buttonBg: 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500',
       Icon: AlertTriangle,
     },
     info: {
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-      buttonBg: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+      iconBg: 'bg-primary/15',
+      iconColor: 'text-primary',
+      buttonBg: 'bg-primary hover:bg-primary focus:ring-blue-500',
       Icon: AlertTriangle,
     },
   };
@@ -60,14 +60,14 @@ export function ConfirmDialog({
       />
 
       {/* Dialog */}
-      <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-card rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-start gap-4">
           <div className={`p-3 rounded-full ${styles.iconBg} shrink-0`}>
             <styles.Icon className={`h-6 w-6 ${styles.iconColor}`} />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <p className="mt-2 text-sm text-gray-600 leading-relaxed">{message}</p>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{message}</p>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export function ConfirmDialog({
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card border border-border rounded-lg hover:bg-muted focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50 transition-colors"
           >
             {cancelLabel}
           </button>

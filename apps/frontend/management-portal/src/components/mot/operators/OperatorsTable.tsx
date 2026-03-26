@@ -42,10 +42,10 @@ interface OperatorsTableProps {
 // ── Helpers ───────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-100 text-green-800 border-green-200',
-  inactive: 'bg-red-100 text-red-800 border-red-200',
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
+  active: 'bg-success/15 text-success border-success/20',
+  inactive: 'bg-destructive/15 text-destructive border-destructive/20',
+  pending: 'bg-warning/15 text-warning border-warning/20',
+  cancelled: 'bg-muted text-foreground border-border',
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -56,8 +56,8 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 };
 
 const TYPE_STYLES: Record<string, string> = {
-  PRIVATE: 'bg-blue-100 text-blue-800 border-blue-200',
-  CTB: 'bg-green-100 text-green-800 border-green-200',
+  PRIVATE: 'bg-primary/15 text-primary border-primary/20',
+  CTB: 'bg-success/15 text-success border-success/20',
 };
 
 function formatDate(dateString?: string): string {
@@ -106,14 +106,14 @@ export function OperatorsTable({
         minWidth: 'min-w-[200px]',
         render: (row) => (
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-              <Building className="h-4.5 w-4.5 text-blue-600" />
+            <div className="h-9 w-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <Building className="h-4.5 w-4.5 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <p className="text-sm font-semibold text-foreground truncate">
                 {row.name || 'Unnamed Operator'}
               </p>
-              <p className="text-[11px] text-gray-400 truncate">ID: {row.id}</p>
+              <p className="text-[11px] text-muted-foreground/70 truncate">ID: {row.id}</p>
             </div>
           </div>
         ),
@@ -125,7 +125,7 @@ export function OperatorsTable({
         render: (row) => (
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-              TYPE_STYLES[row.operatorType ?? ''] ?? 'bg-gray-100 text-gray-600 border-gray-200'
+              TYPE_STYLES[row.operatorType ?? ''] ?? 'bg-muted text-muted-foreground border-border'
             }`}
           >
             {row.operatorType === 'CTB' ? (
@@ -148,11 +148,11 @@ export function OperatorsTable({
         render: (row) =>
           row.region ? (
             <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="text-sm text-gray-700 truncate">{row.region}</span>
+              <MapPin className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
+              <span className="text-sm text-foreground/80 truncate">{row.region}</span>
             </div>
           ) : (
-            <span className="text-xs text-gray-300 italic">—</span>
+            <span className="text-xs text-muted-foreground/50 italic">—</span>
           ),
       },
       {
@@ -163,7 +163,7 @@ export function OperatorsTable({
           return (
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                STATUS_STYLES[s] ?? 'bg-gray-100 text-gray-600 border-gray-200'
+                STATUS_STYLES[s] ?? 'bg-muted text-muted-foreground border-border'
               }`}
             >
               {STATUS_ICONS[s] ?? <AlertCircle className="w-3.5 h-3.5" />}
@@ -179,8 +179,8 @@ export function OperatorsTable({
         minWidth: 'min-w-[120px]',
         render: (row) => (
           <div>
-            <p className="text-xs text-gray-500">{formatDate(row.createdAt)}</p>
-            <p className="text-[11px] text-gray-400">{formatTime(row.createdAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatDate(row.createdAt)}</p>
+            <p className="text-[11px] text-muted-foreground/70">{formatTime(row.createdAt)}</p>
           </div>
         ),
       },
@@ -191,8 +191,8 @@ export function OperatorsTable({
         minWidth: 'min-w-[120px]',
         render: (row) => (
           <div>
-            <p className="text-xs text-gray-500">{formatDate(row.updatedAt)}</p>
-            <p className="text-[11px] text-gray-400">{formatTime(row.updatedAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatDate(row.updatedAt)}</p>
+            <p className="text-[11px] text-muted-foreground/70">{formatTime(row.updatedAt)}</p>
           </div>
         ),
       },
@@ -205,21 +205,21 @@ export function OperatorsTable({
           <div className="inline-flex items-center gap-1">
             <button
               onClick={() => onView(row.id)}
-              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+              className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
               title="View details"
             >
               <Eye className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onEdit(row.id)}
-              className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
+              className="p-1.5 rounded-lg text-indigo-600 hover:bg-primary/10 transition-colors"
               title="Edit"
             >
               <Edit className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onDelete(row.id, row.name || 'Unknown Operator')}
-              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+              className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -244,11 +244,11 @@ export function OperatorsTable({
       showRefreshing={loading && operators.length > 0}
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <Building className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Building className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No operators found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No operators found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {hasActiveFilters
               ? 'No operators match your current filters. Try adjusting your search criteria.'
               : 'No operators have been created yet.'}

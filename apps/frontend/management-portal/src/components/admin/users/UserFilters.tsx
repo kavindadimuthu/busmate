@@ -90,25 +90,25 @@ export function UserFilters({
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div className="bg-card rounded-xl border border-border shadow-sm">
       {/* Search bar + toggle */}
       <div className="p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
             <input
               type="text"
               placeholder="Search by name, email, phone, NIC, or ID..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              className="w-full pl-10 pr-10 py-2.5 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-muted"
               disabled={loading}
             />
             {localSearch && (
               <button
                 onClick={() => { setLocalSearch(''); onSearchChange(''); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 rounded"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground/70 hover:text-muted-foreground rounded"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -120,14 +120,14 @@ export function UserFilters({
             onClick={() => setIsExpanded(!isExpanded)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors ${
               hasActiveFilters
-                ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
-                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'
+                : 'bg-card text-foreground/80 border-border hover:bg-muted'
             }`}
           >
             <Filter className="h-4 w-4" />
             Filters
             {activeFilterCount > 0 && (
-              <span className="bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+              <span className="bg-primary text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                 {activeFilterCount}
               </span>
             )}
@@ -141,7 +141,7 @@ export function UserFilters({
 
         {/* Results count */}
         {(hasActiveFilters || totalCount > 0) && (
-          <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
             <span>
               {hasActiveFilters
                 ? `Showing ${filteredCount} of ${totalCount} users`
@@ -150,7 +150,7 @@ export function UserFilters({
             {hasActiveFilters && (
               <button
                 onClick={handleClearAll}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-primary hover:text-primary font-medium"
               >
                 Clear all filters
               </button>
@@ -161,15 +161,15 @@ export function UserFilters({
 
       {/* Expandable Filter Dropdowns */}
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 pt-3">
+        <div className="px-4 pb-4 border-t border-border/50 pt-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* User Type */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">User Type</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">User Type</label>
               <select
                 value={userTypeFilter}
                 onChange={(e) => onUserTypeChange(e.target.value as UserType | 'all')}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-card"
                 disabled={loading}
               >
                 {userTypeOptions.map((opt) => (
@@ -182,11 +182,11 @@ export function UserFilters({
 
             {/* Status */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => onStatusChange(e.target.value as UserStatus | 'all')}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-card"
                 disabled={loading}
               >
                 {statusOptions.map((opt) => (
@@ -204,18 +204,18 @@ export function UserFilters({
       {hasActiveFilters && !isExpanded && (
         <div className="px-4 pb-3 flex flex-wrap gap-2">
           {searchTerm && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full border border-primary/20">
               Search: &quot;{searchTerm}&quot;
               <button
                 onClick={() => { setLocalSearch(''); onSearchChange(''); }}
-                className="p-0.5 hover:bg-blue-100 rounded-full"
+                className="p-0.5 hover:bg-primary/15 rounded-full"
               >
                 <X className="h-3 w-3" />
               </button>
             </span>
           )}
           {userTypeFilter !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-primary/10 text-indigo-700 rounded-full border border-indigo-200">
               Type: {USER_TYPE_CONFIG[userTypeFilter as UserType]?.label || userTypeFilter}
               <button
                 onClick={() => onUserTypeChange('all')}
@@ -226,11 +226,11 @@ export function UserFilters({
             </span>
           )}
           {statusFilter !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-success/10 text-success rounded-full border border-success/20">
               Status: {USER_STATUS_CONFIG[statusFilter as UserStatus]?.label || statusFilter}
               <button
                 onClick={() => onStatusChange('all')}
-                className="p-0.5 hover:bg-green-100 rounded-full"
+                className="p-0.5 hover:bg-success/15 rounded-full"
               >
                 <X className="h-3 w-3" />
               </button>

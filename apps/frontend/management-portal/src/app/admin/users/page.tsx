@@ -224,7 +224,7 @@ export default function UsersPage() {
       />
 
       {/* Users Table with Pagination */}
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-card shadow-sm rounded-xl border border-border overflow-hidden">
         <UsersTable
           users={paginatedUsers}
           loading={isLoading}

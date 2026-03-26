@@ -173,34 +173,34 @@ export function CSVUploader({
   const getStatusIcon = () => {
     switch (uploadStatus) {
       case 'uploading':
-        return <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />;
+        return <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle className="w-5 h-5 text-success" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
+        return <AlertCircle className="w-5 h-5 text-destructive" />;
       default:
         return null;
     }
   };
 
   const getStatusColor = () => {
-    if (isDragOver && !disabled) return 'border-blue-500 bg-blue-50';
-    if (uploadStatus === 'success') return 'border-green-300 bg-green-50';
-    if (uploadStatus === 'error') return 'border-red-300 bg-red-50';
-    if (disabled) return 'border-gray-200 bg-gray-50';
-    return 'border-gray-300 hover:border-gray-400';
+    if (isDragOver && !disabled) return 'border-primary bg-primary/10';
+    if (uploadStatus === 'success') return 'border-success/30 bg-success/10';
+    if (uploadStatus === 'error') return 'border-destructive/30 bg-destructive/10';
+    if (disabled) return 'border-border bg-muted';
+    return 'border-border hover:border-border';
   };
 
   return (
     <div className="space-y-4">
       {/* Template Download Section */}
       {/* {onDownloadTemplate && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <Download className="w-5 h-5 text-blue-600 mt-0.5" />
+            <Download className="w-5 h-5 text-primary mt-0.5" />
             <div className="flex-1">
-              <h3 className="font-medium text-blue-900 mb-1">Need a template?</h3>
-              <p className="text-sm text-blue-700 mb-3">
+              <h3 className="font-medium text-primary mb-1">Need a template?</h3>
+              <p className="text-sm text-primary mb-3">
                 Download a CSV template to see the expected format and column names.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -208,7 +208,7 @@ export function CSVUploader({
                   <button
                     key={format}
                     onClick={() => handleDownloadTemplate(format)}
-                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors capitalize"
+                    className="px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary transition-colors capitalize"
                   >
                     {format} Template
                   </button>
@@ -220,13 +220,13 @@ export function CSVUploader({
       )} */}
 
       {/* Upload Methods Tabs */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-border">
         <button
           onClick={() => setShowTextArea(false)}
           className={`px-4 py-2 font-medium text-sm ${
             !showTextArea 
-              ? 'border-b-2 border-blue-500 text-blue-600' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-primary text-primary' 
+              : 'text-muted-foreground hover:text-foreground/80'
           }`}
         >
           Upload File
@@ -235,8 +235,8 @@ export function CSVUploader({
           onClick={() => setShowTextArea(true)}
           className={`px-4 py-2 font-medium text-sm ${
             showTextArea 
-              ? 'border-b-2 border-blue-500 text-blue-600' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-primary text-primary' 
+              : 'text-muted-foreground hover:text-foreground/80'
           }`}
         >
           Paste CSV
@@ -262,11 +262,11 @@ export function CSVUploader({
           
           <div className="space-y-4">
             <div className="flex justify-center">
-              {getStatusIcon() || <Upload className="w-12 h-12 text-gray-400" />}
+              {getStatusIcon() || <Upload className="w-12 h-12 text-muted-foreground/70" />}
             </div>
             
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 {uploadStatus === 'uploading' ? 'Processing...' :
                  uploadStatus === 'success' ? 'File uploaded successfully!' :
                  uploadStatus === 'error' ? 'Upload failed' :
@@ -275,17 +275,17 @@ export function CSVUploader({
               
               {uploadStatus === 'idle' && (
                 <div className="space-y-2">
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Drag and drop your CSV file here, or{' '}
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-primary hover:text-primary font-medium"
                       disabled={disabled}
                     >
                       browse to upload
                     </button>
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Supported formats: {acceptedFileTypes.join(', ')} • Max size: {(maxFileSize / 1024 / 1024).toFixed(0)}MB
                   </p>
                 </div>
@@ -302,18 +302,18 @@ export function CSVUploader({
             value={csvText}
             onChange={(e) => setCsvText(e.target.value)}
             placeholder="Paste your CSV content here...&#10;Example:&#10;name,latitude,longitude,city,state,isAccessible&#10;Central Bus Station,6.9271,79.8612,Colombo,Western Province,true&#10;Kandy Bus Stand,7.2906,80.6337,Kandy,Central Province,false"
-            className="w-full h-48 p-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full h-48 p-3 border border-border rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary"
             disabled={disabled}
           />
           <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Paste your CSV content including headers in the first row
             </p>
             <div className="flex gap-2">
               {csvText && (
                 <button
                   onClick={() => setCsvText('')}
-                  className="px-3 py-1 text-gray-600 hover:text-gray-800 border border-gray-300 rounded text-sm"
+                  className="px-3 py-1 text-muted-foreground hover:text-foreground border border-border rounded text-sm"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -321,7 +321,7 @@ export function CSVUploader({
               <button
                 onClick={handleTextSubmit}
                 disabled={!csvText.trim() || disabled}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               >
                 Parse CSV
               </button>

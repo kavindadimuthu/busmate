@@ -75,8 +75,8 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
       {/* Header with stats */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Route Stops</h3>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h3 className="text-lg font-semibold text-foreground">Route Stops</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {stops.length} stops along {route.distanceKm?.toFixed(1) || 0} km route
           </p>
         </div>
@@ -85,8 +85,8 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
         <div
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
             isOutbound
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-cyan-50 text-cyan-700 border border-cyan-200'
+              ? 'bg-success/10 text-success border border-success/20'
+              : 'bg-primary/10 text-primary border border-primary/20'
           }`}
         >
           <Navigation
@@ -109,17 +109,17 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
 
             // Node styling based on type
             const nodeStyles = isFirst
-              ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+              ? 'bg-success text-white shadow-emerald-500/30'
               : isLast
-              ? 'bg-red-500 text-white shadow-red-500/30'
-              : 'bg-white border-2 border-gray-300 text-gray-600 group-hover:border-blue-400 group-hover:text-blue-600';
+              ? 'bg-destructive text-white shadow-red-500/30'
+              : 'bg-card border-2 border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary';
 
             // Card styling on hover
             const cardStyles = isFirst
-              ? 'border-emerald-200 bg-emerald-50/30'
+              ? 'border-success/20 bg-success/10/30'
               : isLast
-              ? 'border-red-200 bg-red-50/30'
-              : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/30';
+              ? 'border-destructive/20 bg-destructive/10/30'
+              : 'border-border/50 hover:border-primary/20 hover:bg-primary/10/30';
 
             return (
               <div key={stop.stopId || index} className="relative flex items-start gap-4 py-3 group">
@@ -138,36 +138,36 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
 
                 {/* Stop card */}
                 <div
-                  className={`flex-1 bg-white rounded-xl border p-4 transition-all cursor-pointer ${cardStyles}`}
+                  className={`flex-1 bg-card rounded-xl border p-4 transition-all cursor-pointer ${cardStyles}`}
                   onClick={() => stop.stopId && router.push(`/mot/bus-stops/${stop.stopId}`)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       {/* Stop name */}
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-gray-900 truncate">
+                        <h4 className="font-semibold text-foreground truncate">
                           {stop.stopName || 'Unknown Stop'}
                         </h4>
                         {isFirst && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-success/15 text-success">
                             Origin
                           </span>
                         )}
                         {isLast && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-destructive/15 text-destructive">
                             Destination
                           </span>
                         )}
                       </div>
 
                       {/* Stop details */}
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground/70" />
                           <span>{stop.distance.toFixed(1)} km from start</span>
                         </div>
                         {stop.stopId && (
-                          <div className="hidden sm:block font-mono text-xs text-gray-400">
+                          <div className="hidden sm:block font-mono text-xs text-muted-foreground/70">
                             ID: {stop.stopId.slice(0, 8)}...
                           </div>
                         )}
@@ -181,7 +181,7 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
                           e.stopPropagation();
                           router.push(`/mot/bus-stops/${stop.stopId}`);
                         }}
-                        className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-2.5 text-muted-foreground/70 hover:text-primary hover:bg-primary/15 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                         title="View stop details"
                       >
                         <ExternalLink className="w-4 h-4" />
@@ -196,34 +196,34 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
       </div>
 
       {/* Journey summary */}
-      <div className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-5 border border-gray-100">
+      <div className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-5 border border-border/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stops.length}</div>
-              <div className="text-xs text-gray-500">Total Stops</div>
+              <div className="text-2xl font-bold text-foreground">{stops.length}</div>
+              <div className="text-xs text-muted-foreground">Total Stops</div>
             </div>
-            <div className="w-px h-10 bg-gray-200" />
+            <div className="w-px h-10 bg-secondary" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {route.distanceKm?.toFixed(1) || 0}
               </div>
-              <div className="text-xs text-gray-500">Kilometers</div>
+              <div className="text-xs text-muted-foreground">Kilometers</div>
             </div>
-            <div className="w-px h-10 bg-gray-200" />
+            <div className="w-px h-10 bg-secondary" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {stops.length > 1
                   ? (route.distanceKm! / (stops.length - 1)).toFixed(1)
                   : '0'}
               </div>
-              <div className="text-xs text-gray-500">Avg km/stop</div>
+              <div className="text-xs text-muted-foreground">Avg km/stop</div>
             </div>
           </div>
 
           <button
             onClick={() => router.push('/mot/bus-stops')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
           >
             View All Stops
             <ChevronRight className="w-4 h-4" />

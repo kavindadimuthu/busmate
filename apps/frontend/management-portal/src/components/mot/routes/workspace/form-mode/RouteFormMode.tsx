@@ -18,15 +18,28 @@ import {
 } from "lucide-react";
 import { canGenerateRouteFromCorresponding, findRouteByDirection } from "@/services/routeAutoGeneration";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+    Input,
+    Label,
+    Textarea,
+    Badge,
+    Button,
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@busmate/ui';
 
 // ─── Collapsible Form Section ───────────────────────────────────────────────
 
@@ -48,11 +61,11 @@ function FormSection({
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border-b border-slate-200 transition-colors group">
-                    <Icon className="h-4 w-4 text-slate-500" />
-                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">{title}</span>
+                <button className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted border-b border-border transition-colors group">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</span>
                     {badge}
-                    <ChevronDown className={`h-3.5 w-3.5 text-slate-400 ml-auto transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`} />
+                    <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground/70 ml-auto transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`} />
                 </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -82,14 +95,14 @@ function FormField({
     return (
         <div className={`flex flex-col gap-1.5 ${className}`}>
             <div className="flex items-center gap-1">
-                <Label className="text-xs font-medium text-slate-600">
+                <Label className="text-xs font-medium text-muted-foreground">
                     {label}
-                    {required && <span className="text-rose-500 ml-0.5">*</span>}
+                    {required && <span className="text-destructive ml-0.5">*</span>}
                 </Label>
                 {hint && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-slate-400 cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top">
                             <p className="text-xs max-w-[200px]">{hint}</p>
@@ -181,7 +194,7 @@ export default function RouteFormMode() {
 
             {/* Direction Tabs — underline style to distinguish from outer pill tabs */}
             <Card className="overflow-hidden">
-                <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4">
+                <div className="flex items-center justify-between border-b border-border bg-card px-4">
                     <div className="flex items-center" role="tablist">
                         <button
                             role="tab"
@@ -189,8 +202,8 @@ export default function RouteFormMode() {
                             onClick={() => handleTabSwitch('outbound')}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200 -mb-px ${
                                 activeTab === 'outbound'
-                                    ? 'border-emerald-600 text-emerald-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                    ? 'border-emerald-600 text-success'
+                                    : 'border-transparent text-muted-foreground hover:text-muted-foreground hover:border-border'
                             }`}
                         >
                             <ArrowUpFromLine className="h-4 w-4" />
@@ -207,8 +220,8 @@ export default function RouteFormMode() {
                             onClick={() => handleTabSwitch('inbound')}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200 -mb-px ${
                                 activeTab === 'inbound'
-                                    ? 'border-blue-600 text-blue-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-muted-foreground hover:text-muted-foreground hover:border-border'
                             }`}
                         >
                             <ArrowDownToLine className="h-4 w-4" />
@@ -315,7 +328,7 @@ function RouteInfo({ routeIndex }: { routeIndex: number }) {
     if (!route) {
         return (
             <div className="p-8 text-center">
-                <p className="text-sm text-slate-500">No route data available. Paste YAML in Textual Mode to load route data.</p>
+                <p className="text-sm text-muted-foreground">No route data available. Paste YAML in Textual Mode to load route data.</p>
             </div>
         );
     }
@@ -392,7 +405,7 @@ function RouteInfo({ routeIndex }: { routeIndex: number }) {
                                 placeholder="0"
                                 className="pr-12"
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">min</span>
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/70">min</span>
                         </div>
                     </FormField>
                     <FormField label="Route Through (English)" hint="Places the route passes through">

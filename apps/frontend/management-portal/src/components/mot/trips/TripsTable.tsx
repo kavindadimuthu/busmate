@@ -68,23 +68,23 @@ function getStatusMeta(status?: string): {
   const s = status?.toLowerCase();
   switch (s) {
     case 'active':
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Active',     colorClass: 'bg-green-50 text-green-700 border-green-200' };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Active',     colorClass: 'bg-success/10 text-success border-success/20' };
     case 'completed':
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Completed',  colorClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Completed',  colorClass: 'bg-success/10 text-success border-success/20' };
     case 'pending':
-      return { icon: <Clock className="w-3.5 h-3.5" />,       label: 'Pending',    colorClass: 'bg-yellow-50 text-yellow-700 border-yellow-200' };
+      return { icon: <Clock className="w-3.5 h-3.5" />,       label: 'Pending',    colorClass: 'bg-warning/10 text-warning border-warning/20' };
     case 'cancelled':
-      return { icon: <XCircle className="w-3.5 h-3.5" />,     label: 'Cancelled',  colorClass: 'bg-red-50 text-red-600 border-red-200' };
+      return { icon: <XCircle className="w-3.5 h-3.5" />,     label: 'Cancelled',  colorClass: 'bg-destructive/10 text-destructive border-destructive/20' };
     case 'delayed':
-      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: 'Delayed',    colorClass: 'bg-orange-50 text-orange-700 border-orange-200' };
+      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: 'Delayed',    colorClass: 'bg-warning/10 text-orange-700 border-orange-200' };
     case 'in_transit':
-      return { icon: <Navigation2 className="w-3.5 h-3.5" />, label: 'In Transit', colorClass: 'bg-blue-50 text-blue-700 border-blue-200' };
+      return { icon: <Navigation2 className="w-3.5 h-3.5" />, label: 'In Transit', colorClass: 'bg-primary/10 text-primary border-primary/20' };
     case 'boarding':
-      return { icon: <Users className="w-3.5 h-3.5" />,       label: 'Boarding',   colorClass: 'bg-purple-50 text-purple-700 border-purple-200' };
+      return { icon: <Users className="w-3.5 h-3.5" />,       label: 'Boarding',   colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]' };
     case 'departed':
-      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Departed',   colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
+      return { icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Departed',   colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200' };
     default:
-      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: status ?? 'Unknown', colorClass: 'bg-gray-100 text-gray-600 border-gray-200' };
+      return { icon: <AlertCircle className="w-3.5 h-3.5" />, label: status ?? 'Unknown', colorClass: 'bg-muted text-muted-foreground border-border' };
   }
 }
 
@@ -115,14 +115,14 @@ export function TripsTable({
         minWidth: 'min-w-[160px]',
         render: (trip) => (
           <div className="flex items-center gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center ring-1 ring-blue-200/60">
-              <Calendar className="w-4 h-4 text-blue-600" />
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
+              <Calendar className="w-4 h-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+              <p className="text-sm font-semibold text-foreground truncate leading-tight">
                 {formatDate(trip.tripDate)}
               </p>
-              <p className="text-[11px] text-gray-400 font-mono leading-tight mt-0.5 truncate">
+              <p className="text-[11px] text-muted-foreground/70 font-mono leading-tight mt-0.5 truncate">
                 #{trip.id?.slice(-8)}
               </p>
             </div>
@@ -138,11 +138,11 @@ export function TripsTable({
         minWidth: 'min-w-[160px]',
         render: (trip) => (
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+            <p className="text-sm font-semibold text-foreground truncate leading-tight">
               {trip.routeName || '—'}
             </p>
             {trip.routeGroupName && (
-              <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">
+              <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5">
                 {trip.routeGroupName}
               </p>
             )}
@@ -157,7 +157,7 @@ export function TripsTable({
         sortable: true,
         minWidth: 'min-w-[120px]',
         render: (trip) => (
-          <span className="text-sm text-gray-700">{trip.scheduleName || '—'}</span>
+          <span className="text-sm text-foreground/80">{trip.scheduleName || '—'}</span>
         ),
       },
 
@@ -167,7 +167,7 @@ export function TripsTable({
         header: 'Operator',
         minWidth: 'min-w-[120px]',
         render: (trip) => (
-          <span className="text-sm text-gray-700">{trip.operatorName || '—'}</span>
+          <span className="text-sm text-foreground/80">{trip.operatorName || '—'}</span>
         ),
       },
 
@@ -179,11 +179,11 @@ export function TripsTable({
         minWidth: 'min-w-[100px]',
         render: (trip) => (
           <div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-foreground">
               {formatTime(trip.scheduledDepartureTime)}
             </p>
             {trip.actualDepartureTime && (
-              <p className="text-[11px] text-gray-400 mt-0.5">
+              <p className="text-[11px] text-muted-foreground/70 mt-0.5">
                 Actual: {formatTime(trip.actualDepartureTime)}
               </p>
             )}
@@ -201,8 +201,8 @@ export function TripsTable({
             <span
               className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                 trip.passengerServicePermitId
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-gray-50 text-gray-400 border-gray-200'
+                  ? 'bg-success/10 text-success border-success/20'
+                  : 'bg-muted text-muted-foreground/70 border-border'
               }`}
             >
               <FileText className="w-3 h-3 shrink-0" />
@@ -213,8 +213,8 @@ export function TripsTable({
             <span
               className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                 trip.busId
-                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-gray-50 text-gray-400 border-gray-200'
+                  ? 'bg-primary/10 text-primary border-primary/20'
+                  : 'bg-muted text-muted-foreground/70 border-border'
               }`}
             >
               <Bus className="w-3 h-3 shrink-0" />
@@ -254,7 +254,7 @@ export function TripsTable({
             <button
               onClick={() => onView(trip.id ?? '')}
               title="View details"
-              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+              className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
             >
               <Eye className="h-3.5 w-3.5" />
             </button>
@@ -267,7 +267,7 @@ export function TripsTable({
                   )
                 }
                 title="Delete trip"
-                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-100"
+                className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -290,11 +290,11 @@ export function TripsTable({
       showRefreshing
       emptyState={
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-            <Calendar className="w-7 h-7 text-blue-400" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Calendar className="w-7 h-7 text-primary/70" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No trips found</h3>
-          <p className="text-sm text-gray-500 max-w-xs">
+          <h3 className="text-base font-semibold text-foreground mb-1">No trips found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {Object.keys(activeFilters).length > 0
               ? 'No trips match your current filters. Try adjusting your search criteria.'
               : 'No trips have been created yet. Generate trips to get started.'}

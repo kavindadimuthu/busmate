@@ -119,7 +119,7 @@ export function PermitAdvancedFilters({
         key: 'status',
         label: STATUS_LABELS[statusFilter] ?? statusFilter,
         onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-green-50 text-green-700 border-green-200',
+        colorClass: 'bg-success/10 text-success border-success/20',
         icon: icons[statusFilter],
       });
     }
@@ -130,7 +130,7 @@ export function PermitAdvancedFilters({
         key: 'operator',
         label: opName,
         onRemove: () => setOperatorFilter('all'),
-        colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        colorClass: 'bg-primary/10 text-primary border-primary/20',
         icon: <Users className="h-3 w-3 opacity-70" />,
       });
     }
@@ -141,7 +141,7 @@ export function PermitAdvancedFilters({
         key: 'routeGroup',
         label: rgName,
         onRemove: () => setRouteGroupFilter('all'),
-        colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
         icon: <MapPin className="h-3 w-3 opacity-70" />,
       });
     }
@@ -151,7 +151,7 @@ export function PermitAdvancedFilters({
         key: 'permitType',
         label: permitTypeFilter,
         onRemove: () => setPermitTypeFilter('all'),
-        colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        colorClass: 'bg-warning/10 text-warning border-warning/20',
         icon: <FileText className="h-3 w-3 opacity-70" />,
       });
     }
@@ -178,7 +178,7 @@ export function PermitAdvancedFilters({
             options={statusOptions}
             allLabel="All Statuses"
             icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-green-50 border-green-300 text-green-800"
+            activeColorClass="bg-success/10 border-success/30 text-success"
           />
           <SelectFilter
             value={operatorFilter}
@@ -186,7 +186,7 @@ export function PermitAdvancedFilters({
             options={operatorOptions}
             allLabel="All Operators"
             icon={<Users className="h-3.5 w-3.5" />}
-            activeColorClass="bg-blue-50 border-blue-300 text-blue-800"
+            activeColorClass="bg-primary/10 border-primary/30 text-primary"
           />
           <SelectFilter
             value={routeGroupFilter}
@@ -194,7 +194,7 @@ export function PermitAdvancedFilters({
             options={routeGroupOptions}
             allLabel="All Route Groups"
             icon={<MapPin className="h-3.5 w-3.5" />}
-            activeColorClass="bg-purple-50 border-purple-300 text-purple-800"
+            activeColorClass="bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]"
           />
           <SelectFilter
             value={permitTypeFilter}
@@ -202,7 +202,7 @@ export function PermitAdvancedFilters({
             options={permitTypeOptions}
             allLabel="All Types"
             icon={<FileText className="h-3.5 w-3.5" />}
-            activeColorClass="bg-amber-50 border-amber-300 text-amber-800"
+            activeColorClass="bg-warning/10 border-warning/30 text-warning"
           />
         </>
       }

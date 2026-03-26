@@ -70,13 +70,13 @@ const columns: ColumnDef<MockRoute>[] = [
     cell: ({ value }) => {
       const status = String(value);
       const colorMap: Record<string, string> = {
-        active: "bg-emerald-100 text-emerald-700",
-        inactive: "bg-gray-100 text-gray-600",
-        pending: "bg-amber-100 text-amber-700",
+        active: "bg-success/15 text-success",
+        inactive: "bg-muted text-muted-foreground",
+        pending: "bg-warning/15 text-warning",
       };
       return (
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${colorMap[status] ?? "bg-gray-100 text-gray-600"}`}
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${colorMap[status] ?? "bg-muted text-muted-foreground"}`}
         >
           {status}
         </span>

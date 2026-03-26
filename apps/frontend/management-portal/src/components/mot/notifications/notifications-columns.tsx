@@ -21,26 +21,26 @@ const typeStyles: Record<
   string,
   { bg: string; text: string; border: string; label: string; Icon: React.ComponentType<{ className?: string }> }
 > = {
-  info: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Info', Icon: Info },
-  warning: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Warning', Icon: AlertTriangle },
-  critical: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', label: 'Critical', Icon: XCircle },
-  success: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Success', Icon: CheckCircle },
-  maintenance: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', label: 'Maintenance', Icon: Wrench },
-  error: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', label: 'Error', Icon: XCircle },
+  info: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20', label: 'Info', Icon: Info },
+  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/20', label: 'Warning', Icon: AlertTriangle },
+  critical: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20', label: 'Critical', Icon: XCircle },
+  success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20', label: 'Success', Icon: CheckCircle },
+  maintenance: { bg: 'bg-[hsl(var(--purple-50))]', text: 'text-[hsl(var(--purple-700))]', border: 'border-[hsl(var(--purple-200))]', label: 'Maintenance', Icon: Wrench },
+  error: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20', label: 'Error', Icon: XCircle },
 };
 
 const priorityStyles: Record<string, { bg: string; text: string; border: string }> = {
-  low: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' },
-  medium: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-  high: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-  critical: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
+  low: { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' },
+  medium: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
+  high: { bg: 'bg-warning/10', text: 'text-orange-700', border: 'border-orange-200' },
+  critical: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20' },
 };
 
 const statusMeta: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  sent: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Sent' },
-  scheduled: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Scheduled' },
-  draft: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200', label: 'Draft' },
-  failed: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', label: 'Failed' },
+  sent: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20', label: 'Sent' },
+  scheduled: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20', label: 'Scheduled' },
+  draft: { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border', label: 'Draft' },
+  failed: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20', label: 'Failed' },
 };
 
 const channelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -88,8 +88,8 @@ const titleColumn: ColumnDef<any> = {
           <typeSt.Icon className={`w-4 h-4 ${typeSt.text}`} />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{row.title}</p>
-          <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">{row.body}</p>
+          <p className="text-sm font-semibold text-foreground truncate leading-tight">{row.title}</p>
+          <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5">{row.body}</p>
         </div>
       </div>
     );
@@ -138,17 +138,17 @@ export const receivedNotificationColumns: ColumnDef<any>[] = [
     id: 'senderName',
     header: 'Sender',
     cell: ({ row }) => (
-      <span className="text-sm text-gray-700 whitespace-nowrap">{row.senderName || '—'}</span>
+      <span className="text-sm text-foreground/80 whitespace-nowrap">{row.senderName || '—'}</span>
     ),
   },
   {
     id: 'channel',
     header: 'Channel',
     cell: ({ row }) => {
-      if (!row.channel) return <span className="text-[11px] text-gray-300 italic">—</span>;
+      if (!row.channel) return <span className="text-[11px] text-muted-foreground/50 italic">—</span>;
       const ChannelIcon = channelIcons[row.channel] ?? Bell;
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-200 capitalize whitespace-nowrap">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border capitalize whitespace-nowrap">
           <ChannelIcon className="h-3.5 w-3.5" />
           {row.channel}
         </span>
@@ -160,7 +160,7 @@ export const receivedNotificationColumns: ColumnDef<any>[] = [
     header: 'Received',
     sortable: true,
     cell: ({ row }) => (
-      <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">
+      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
         {formatDate(row.sentAt ?? row.createdAt)}
       </span>
     ),
@@ -177,7 +177,7 @@ export const sentNotificationColumns: ColumnDef<any>[] = [
     id: 'targetAudience',
     header: 'Audience',
     cell: ({ row }) => (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-200 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border whitespace-nowrap">
         <Users className="h-3.5 w-3.5" />
         {audienceLabels[row.targetAudience] ?? row.targetAudience}
       </span>
@@ -203,7 +203,7 @@ export const sentNotificationColumns: ColumnDef<any>[] = [
     header: 'Sent',
     sortable: true,
     cell: ({ row }) => (
-      <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">
+      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
         {formatDate(row.sentAt)}
       </span>
     ),
@@ -218,8 +218,8 @@ export const sentNotificationColumns: ColumnDef<any>[] = [
           : `${Math.round((row.readCount / row.totalRecipients) * 100)}%`;
       return (
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-gray-900">{rate}</span>
-          <span className="text-[11px] text-gray-400 tabular-nums">
+          <span className="text-sm font-semibold text-foreground">{rate}</span>
+          <span className="text-[11px] text-muted-foreground/70 tabular-nums">
             {row.readCount?.toLocaleString()} / {row.totalRecipients?.toLocaleString()}
           </span>
         </div>

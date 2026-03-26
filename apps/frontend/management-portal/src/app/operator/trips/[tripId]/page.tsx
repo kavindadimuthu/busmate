@@ -81,8 +81,8 @@ export default function OperatorTripDetailPage() {
   if (isLoading) {
     return (
       <main className="flex-1 flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-4 text-gray-500">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+        <div className="flex flex-col items-center gap-4 text-muted-foreground">
+          <Loader2 className="w-10 h-10 animate-spin text-primary/80" />
           <p className="font-medium">Loading trip details…</p>
         </div>
       </main>
@@ -95,23 +95,23 @@ export default function OperatorTripDetailPage() {
       <main className="flex-1 p-6">
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Trips
         </button>
 
-        <div className="bg-white rounded-xl border border-red-200 shadow-sm p-10 flex flex-col items-center text-center gap-4 max-w-lg mx-auto mt-12">
-          <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center">
-            <AlertCircle className="w-7 h-7 text-red-500" />
+        <div className="bg-card rounded-xl border border-destructive/20 shadow-sm p-10 flex flex-col items-center text-center gap-4 max-w-lg mx-auto mt-12">
+          <div className="w-14 h-14 bg-destructive/10 rounded-full flex items-center justify-center">
+            <AlertCircle className="w-7 h-7 text-destructive/80" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Trip Not Found</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-foreground">Trip Not Found</h2>
+          <p className="text-sm text-muted-foreground">
             {error ?? 'The requested trip could not be loaded. It may have been removed or the ID is incorrect.'}
           </p>
           <button
             onClick={handleBack}
-            className="mt-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="mt-2 px-5 py-2 bg-primary hover:bg-primary text-white text-sm font-medium rounded-lg transition-colors"
           >
             Back to Trips
           </button>
@@ -124,7 +124,7 @@ export default function OperatorTripDetailPage() {
   return (
     <main className="flex-1 p-6 space-y-6">
         {/* Read-only notice */}
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+        <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-sm text-primary">
           <svg
             className="w-4 h-4 flex-shrink-0"
             fill="none"

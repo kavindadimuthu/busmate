@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSetPageMetadata, useSetPageActions, usePageContext } from '@/context/PageContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Input } from '@busmate/ui';
 import { Calendar, RefreshCw, Users, Bus } from 'lucide-react';
 import {
   AttendanceStatsCards,
@@ -145,7 +143,7 @@ export default function TimeKeeperAttendancePage() {
   if (isLoading && !staffStats && !busStats) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -155,7 +153,7 @@ export default function TimeKeeperAttendancePage() {
       {/* Date Selector */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-gray-500" />
+          <Calendar className="h-5 w-5 text-muted-foreground" />
           <Input
             type="date"
             value={selectedDate}

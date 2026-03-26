@@ -63,7 +63,7 @@ export function FleetFilters({
         key:        'status',
         label:      `Status: ${STATUS_OPTIONS.find(o => o.value === statusFilter)?.label ?? statusFilter}`,
         onRemove:   () => onStatusChange('ALL'),
-        colorClass: 'bg-green-50 text-green-700 border-green-200',
+        colorClass: 'bg-success/10 text-success border-success/20',
       });
     }
 
@@ -72,7 +72,7 @@ export function FleetFilters({
         key:        'serviceType',
         label:      `Type: ${SERVICE_TYPE_OPTIONS.find(o => o.value === serviceTypeFilter)?.label ?? serviceTypeFilter}`,
         onRemove:   () => onServiceTypeChange('ALL'),
-        colorClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
       });
     }
 
@@ -100,7 +100,7 @@ export function FleetFilters({
             options={STATUS_OPTIONS}
             allLabel="All Statuses"
             icon={<Activity className="h-3.5 w-3.5" />}
-            activeColorClass="bg-green-50 border-green-300 text-green-800"
+            activeColorClass="bg-success/10 border-success/30 text-success"
           />
           <SelectFilter
             value={serviceTypeFilter === 'ALL' ? 'all' : serviceTypeFilter}
@@ -108,7 +108,7 @@ export function FleetFilters({
             options={SERVICE_TYPE_OPTIONS}
             allLabel="All Service Types"
             icon={<Bus className="h-3.5 w-3.5" />}
-            activeColorClass="bg-indigo-50 border-indigo-300 text-indigo-800"
+            activeColorClass="bg-primary/10 border-indigo-300 text-indigo-800"
           />
         </>
       }

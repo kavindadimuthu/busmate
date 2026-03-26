@@ -13,7 +13,7 @@ export interface FilterChipProps {
   /**
    * Tailwind colour classes applied to the chip.
    *
-   * @example "bg-purple-50 text-purple-700 border-purple-200"
+   * @example "bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]"
    */
   colorClass?: string;
   /** Optional icon rendered before the label. */
@@ -28,7 +28,7 @@ export interface FilterChipProps {
  * <FilterChip
  *   label="Colombo"
  *   onRemove={() => setCity('all')}
- *   colorClass="bg-purple-50 text-purple-700 border-purple-200"
+ *   colorClass="bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]"
  *   icon={<MapPin className="h-3 w-3 opacity-70" />}
  * />
  * ```
@@ -36,7 +36,7 @@ export interface FilterChipProps {
 export function FilterChip({
   label,
   onRemove,
-  colorClass = 'bg-gray-100 text-gray-700 border-gray-200',
+  colorClass = 'bg-muted text-foreground/80 border-border',
   icon,
 }: FilterChipProps) {
   return (
@@ -115,7 +115,7 @@ export function FilterChipsBar({
 
   return (
     <div
-      className={`flex items-center gap-2 px-4 pb-3.5 border-t border-gray-100 pt-3 ${className}`}
+      className={`flex items-center gap-2 px-4 pb-3.5 border-t border-border/50 pt-3 ${className}`}
     >
       <div className="flex-1 flex flex-wrap gap-1.5">
         {chips.map((chip) => (
@@ -135,7 +135,7 @@ export function FilterChipsBar({
           onClick={onClearAll}
           className="
             shrink-0 inline-flex items-center gap-1
-            text-xs font-medium text-gray-400 hover:text-red-500
+            text-xs font-medium text-muted-foreground/70 hover:text-destructive/80
             transition-colors duration-150
           "
         >
@@ -205,7 +205,7 @@ export function SearchInput({
       <Search
         className="
           absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4
-          text-gray-400 group-focus-within:text-blue-500
+          text-muted-foreground/70 group-focus-within:text-primary/80
           transition-colors duration-150 pointer-events-none
         "
       />
@@ -216,9 +216,9 @@ export function SearchInput({
         placeholder={placeholder}
         className="
           w-full pl-9 pr-8 py-2
-          bg-gray-50 border border-gray-200 rounded-xl
-          text-sm text-gray-800 placeholder-gray-400
-          focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-blue-400 focus:bg-white
+          bg-muted border border-border rounded-xl
+          text-sm text-foreground placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-500/25 focus:border-primary/40 focus:bg-card
           transition-all duration-150
         "
       />
@@ -229,8 +229,8 @@ export function SearchInput({
           className="
             absolute right-2.5 top-1/2 -translate-y-1/2
             inline-flex items-center justify-center w-4 h-4
-            rounded-full bg-gray-300 hover:bg-gray-400
-            text-gray-600 hover:text-gray-800
+            rounded-full bg-secondary hover:bg-secondary
+            text-muted-foreground hover:text-foreground
             transition-colors duration-100
           "
           aria-label="Clear search"
@@ -311,14 +311,14 @@ export function ResultCount({
   return (
     <div className={`shrink-0 flex items-center gap-2 ${className}`}>
       {loading && (
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary/80" />
       )}
-      <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">
-        <span className="font-semibold text-gray-800">
+      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+        <span className="font-semibold text-foreground">
           {primary.toLocaleString()}
         </span>
         {' / '}
-        <span className="font-semibold text-gray-800">
+        <span className="font-semibold text-foreground">
           {secondary.toLocaleString()}
         </span>
         {` ${noun}`}
@@ -351,7 +351,7 @@ export interface SelectFilterProps {
    * Tailwind colour classes applied when an option other than "all" is
    * selected, giving visual feedback that a filter is active.
    *
-   * @default "bg-purple-50 border-purple-300 text-purple-800"
+   * @default "bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]"
    */
   activeColorClass?: string;
   /** Extra class names. */
@@ -378,7 +378,7 @@ export function SelectFilter({
   options,
   allLabel = 'All',
   icon,
-  activeColorClass = 'bg-purple-50 border-purple-300 text-purple-800',
+  activeColorClass = 'bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]',
   className = '',
 }: SelectFilterProps) {
   const isActive = value !== 'all';
@@ -386,7 +386,7 @@ export function SelectFilter({
   return (
     <div className={`relative ${className}`}>
       {icon && (
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 pointer-events-none">
           {icon}
         </span>
       )}
@@ -401,7 +401,7 @@ export function SelectFilter({
           ${
             isActive
               ? activeColorClass
-              : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-white'
+              : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
           }
         `}
       >
@@ -415,7 +415,7 @@ export function SelectFilter({
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/70 pointer-events-none" />
     </div>
   );
 }
@@ -467,7 +467,7 @@ export function SegmentedControl({
 }: SegmentedControlProps) {
   return (
     <div
-      className={`flex items-center bg-gray-100 rounded-lg p-0.5 gap-0 ${className}`}
+      className={`flex items-center bg-muted rounded-lg p-0.5 gap-0 ${className}`}
     >
       {options.map((opt) => {
         const active = value === opt.value;
@@ -481,8 +481,8 @@ export function SegmentedControl({
               transition-all duration-150 whitespace-nowrap
               ${
                 active
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground/80'
               }
             `}
           >
@@ -588,7 +588,7 @@ export function SearchFilterBar({
 
   return (
     <div
-      className={`bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden ${className}`}
+      className={`bg-card border border-border rounded-2xl shadow-sm overflow-hidden ${className}`}
     >
       {/* Row 1: Search + result count */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-0">

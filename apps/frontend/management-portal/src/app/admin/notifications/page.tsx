@@ -48,13 +48,13 @@ export default function NotificationsOverviewPage() {
     <>
       <button
         onClick={() => router.push('/admin/notifications/listing')}
-        className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+        className="px-4 py-2 text-sm text-muted-foreground border border-border rounded-lg hover:bg-muted font-medium transition-colors"
       >
         View All Notifications
       </button>
       <button
         onClick={() => router.push('/admin/notifications/compose')}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-primary rounded-lg hover:bg-primary font-semibold shadow-sm transition-colors"
       >
         <Plus className="h-4 w-4" />
         Compose
@@ -74,17 +74,17 @@ export default function NotificationsOverviewPage() {
       {/* Quick Access Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Critical & High Priority */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border/50">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-red-50 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+              <div className="p-1.5 bg-destructive/10 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">High Priority</h3>
+              <h3 className="text-sm font-semibold text-foreground">High Priority</h3>
             </div>
             <button
               onClick={() => router.push('/admin/notifications/listing?tab=sent')}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              className="text-xs text-primary hover:text-primary font-medium flex items-center gap-1"
             >
               View All <ArrowRight className="h-3 w-3" />
             </button>
@@ -94,24 +94,24 @@ export default function NotificationsOverviewPage() {
               {recentCritical.map((n) => (
                 <div
                   key={n.id}
-                  className="p-3 hover:bg-red-50/30 cursor-pointer transition-colors"
+                  className="p-3 hover:bg-destructive/10/30 cursor-pointer transition-colors"
                   onClick={() => router.push(`/admin/notifications/${n.id}`)}
                 >
                   <div className="flex items-start gap-2">
                     <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
-                      n.priority === 'critical' ? 'bg-red-500' : 'bg-orange-500'
+                      n.priority === 'critical' ? 'bg-destructive' : 'bg-warning'
                     }`} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-800 truncate">{n.title}</p>
+                      <p className="text-sm text-foreground truncate">{n.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded uppercase ${
                           n.priority === 'critical'
-                            ? 'bg-red-600 text-white'
-                            : 'bg-orange-100 text-orange-700'
+                            ? 'bg-destructive text-white'
+                            : 'bg-warning/15 text-orange-700'
                         }`}>
                           {n.priority}
                         </span>
-                        <span className="text-[10px] text-gray-400 font-mono">
+                        <span className="text-[10px] text-muted-foreground/70 font-mono">
                           {new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                         </span>
                       </div>
@@ -121,24 +121,24 @@ export default function NotificationsOverviewPage() {
               ))}
             </div>
           ) : (
-            <div className="p-6 text-center text-sm text-gray-500">
+            <div className="p-6 text-center text-sm text-muted-foreground">
               No high-priority notifications
             </div>
           )}
         </div>
 
         {/* Scheduled */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border/50">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-amber-50 rounded-lg">
-                <Clock className="h-4 w-4 text-amber-600" />
+              <div className="p-1.5 bg-warning/10 rounded-lg">
+                <Clock className="h-4 w-4 text-warning" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Scheduled</h3>
+              <h3 className="text-sm font-semibold text-foreground">Scheduled</h3>
             </div>
             <button
               onClick={() => router.push('/admin/notifications/listing?tab=scheduled')}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              className="text-xs text-primary hover:text-primary font-medium flex items-center gap-1"
             >
               View All <ArrowRight className="h-3 w-3" />
             </button>
@@ -148,13 +148,13 @@ export default function NotificationsOverviewPage() {
               {upcoming.map((n) => (
                 <div
                   key={n.id}
-                  className="p-3 hover:bg-amber-50/30 cursor-pointer transition-colors"
+                  className="p-3 hover:bg-warning/10/30 cursor-pointer transition-colors"
                   onClick={() => router.push(`/admin/notifications/${n.id}`)}
                 >
                   <div className="min-w-0">
-                    <p className="text-sm text-gray-800 truncate">{n.title}</p>
+                    <p className="text-sm text-foreground truncate">{n.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-warning/15 text-warning">
                         {n.scheduledFor
                           ? new Date(n.scheduledFor).toLocaleDateString('en-GB', {
                               day: '2-digit',
@@ -164,31 +164,31 @@ export default function NotificationsOverviewPage() {
                             })
                           : 'TBD'}
                       </span>
-                      <span className="text-[10px] text-gray-400">{n.targetAudience}</span>
+                      <span className="text-[10px] text-muted-foreground/70">{n.targetAudience}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-6 text-center text-sm text-gray-500">
+            <div className="p-6 text-center text-sm text-muted-foreground">
               No scheduled notifications
             </div>
           )}
         </div>
 
         {/* Drafts */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border/50">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-purple-50 rounded-lg">
-                <FileText className="h-4 w-4 text-purple-600" />
+              <div className="p-1.5 bg-[hsl(var(--purple-50))] rounded-lg">
+                <FileText className="h-4 w-4 text-[hsl(var(--purple-600))]" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Drafts</h3>
+              <h3 className="text-sm font-semibold text-foreground">Drafts</h3>
             </div>
             <button
               onClick={() => router.push('/admin/notifications/listing?tab=drafts')}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              className="text-xs text-primary hover:text-primary font-medium flex items-center gap-1"
             >
               View All <ArrowRight className="h-3 w-3" />
             </button>
@@ -198,16 +198,16 @@ export default function NotificationsOverviewPage() {
               {drafts.map((n) => (
                 <div
                   key={n.id}
-                  className="p-3 hover:bg-purple-50/30 cursor-pointer transition-colors"
+                  className="p-3 hover:bg-[hsl(var(--purple-50))]/30 cursor-pointer transition-colors"
                   onClick={() => router.push(`/admin/notifications/${n.id}`)}
                 >
                   <div className="min-w-0">
-                    <p className="text-sm text-gray-800 truncate">{n.title}</p>
+                    <p className="text-sm text-foreground truncate">{n.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))]">
                         Draft
                       </span>
-                      <span className="text-[10px] text-gray-400 font-mono">
+                      <span className="text-[10px] text-muted-foreground/70 font-mono">
                         {new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                       </span>
                     </div>
@@ -216,7 +216,7 @@ export default function NotificationsOverviewPage() {
               ))}
             </div>
           ) : (
-            <div className="p-6 text-center text-sm text-gray-500">No drafts</div>
+            <div className="p-6 text-center text-sm text-muted-foreground">No drafts</div>
           )}
         </div>
       </div>
@@ -224,8 +224,8 @@ export default function NotificationsOverviewPage() {
       {/* Audience & Channel Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Audience Breakdown */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+        <div className="bg-card rounded-xl border border-border p-6">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
             Audience Breakdown
           </h3>
           <div className="space-y-3">
@@ -235,12 +235,12 @@ export default function NotificationsOverviewPage() {
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700 capitalize">{item.audience.replace('_', ' ')}</span>
-                    <span className="text-sm font-semibold text-gray-900">{item.count}</span>
+                    <span className="text-sm text-foreground/80 capitalize">{item.audience.replace('_', ' ')}</span>
+                    <span className="text-sm font-semibold text-foreground">{item.count}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 rounded-full transition-all"
+                      className="h-full bg-primary/80 rounded-full transition-all"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -251,8 +251,8 @@ export default function NotificationsOverviewPage() {
         </div>
 
         {/* Channel Distribution */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+        <div className="bg-card rounded-xl border border-border p-6">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
             Channel Distribution
           </h3>
           <div className="space-y-3">
@@ -260,20 +260,20 @@ export default function NotificationsOverviewPage() {
               const maxCount = stats.channelBreakdown[0]?.count || 1;
               const pct = (item.count / maxCount) * 100;
               const colors: Record<string, string> = {
-                push: 'bg-green-500',
-                email: 'bg-blue-500',
-                sms: 'bg-amber-500',
-                'in-app': 'bg-purple-500',
+                push: 'bg-success',
+                email: 'bg-primary/80',
+                sms: 'bg-warning',
+                'in-app': 'bg-[hsl(var(--purple-500))]',
               };
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700 capitalize">{item.channel}</span>
-                    <span className="text-sm font-semibold text-gray-900">{item.count}</span>
+                    <span className="text-sm text-foreground/80 capitalize">{item.channel}</span>
+                    <span className="text-sm font-semibold text-foreground">{item.count}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${colors[item.channel] || 'bg-gray-400'}`}
+                      className={`h-full rounded-full transition-all ${colors[item.channel] || 'bg-secondary'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

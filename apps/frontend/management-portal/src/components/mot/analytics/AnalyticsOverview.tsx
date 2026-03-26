@@ -1,6 +1,6 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsTrendsChart } from './AnalyticsTrendsChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import {
@@ -12,7 +12,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { AnalyticsKPIMetric, TrendPoint, DistributionItem } from '@/data/mot/analytics';
-import type { StatsCardMetric, StatsCardColor } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -43,26 +42,27 @@ export function AnalyticsOverview({
   routeTypeDistribution,
   loading = false,
 }: AnalyticsOverviewProps) {
-  // Map KPIs to StatsCard format
-  const statsMetrics: StatsCardMetric[] = kpis.map((kpi) => ({
-    label: kpi.label,
-    value: kpi.value,
-    trend: kpi.trend,
-    trendValue: kpi.trendValue,
-    trendPositiveIsGood: kpi.trendPositiveIsGood,
-    color: kpi.color as StatsCardColor,
-    sparkData: kpi.sparkData,
-    icon: ICONS[kpi.id],
-  }));
-
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={statsMetrics}
-        loading={loading}
-        columns={5}
-      />
+      <StatsCardGrid className="lg:grid-cols-5">
+        {kpis.map((kpi) => {
+          const Icon = ICONS[kpi.id];
+          return (
+            <StatsCard
+              key={kpi.id}
+              title={kpi.label}
+              value={kpi.value}
+              icon={Icon ? <Icon className="h-5 w-5" /> : undefined}
+              description={kpi.trendValue}
+              trend={{
+                value: parseFloat(kpi.trendValue) || 0,
+                direction: kpi.trend === 'up' ? 'up' : kpi.trend === 'down' ? 'down' : 'neutral',
+              }}
+            />
+          );
+        })}
+      </StatsCardGrid>
 
       {/* Trends Chart */}
       <AnalyticsTrendsChart

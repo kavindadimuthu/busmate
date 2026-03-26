@@ -65,7 +65,7 @@ export function PermitsTableNew({
           onClick={() => onEdit(permit)}
           title="Edit"
         >
-          <Edit2 className="h-3.5 w-3.5 text-amber-500" />
+          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
         </Button>
         {onAssignBus && (
           <Button
@@ -75,7 +75,7 @@ export function PermitsTableNew({
             onClick={() => onAssignBus(permit)}
             title="Assign Bus"
           >
-            <Settings className="h-3.5 w-3.5 text-emerald-500" />
+            <Settings className="h-3.5 w-3.5 text-success" />
           </Button>
         )}
         <Button

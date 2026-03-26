@@ -79,7 +79,7 @@ export default function BusAdvancedFilters({
         key: 'status',
         label: `Status: ${statusFilter.charAt(0) + statusFilter.slice(1).toLowerCase()}`,
         onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-green-100 text-green-800',
+        colorClass: 'bg-success/15 text-success',
       });
     }
     if (operatorFilter !== 'all') {
@@ -88,7 +88,7 @@ export default function BusAdvancedFilters({
         key: 'operator',
         label: `Operator: ${opName}`,
         onRemove: () => setOperatorFilter('all'),
-        colorClass: 'bg-blue-100 text-blue-800',
+        colorClass: 'bg-primary/15 text-primary',
         icon: <Users className="h-4 w-4" />,
       });
     }
@@ -97,7 +97,7 @@ export default function BusAdvancedFilters({
         key: 'model',
         label: `Model: ${modelFilter}`,
         onRemove: () => setModelFilter('all'),
-        colorClass: 'bg-purple-100 text-purple-800',
+        colorClass: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-800))]',
         icon: <Bus className="h-4 w-4" />,
       });
     }
@@ -109,7 +109,7 @@ export default function BusAdvancedFilters({
           setMinCapacity('');
           setMaxCapacity('');
         },
-        colorClass: 'bg-amber-100 text-amber-800',
+        colorClass: 'bg-warning/15 text-warning',
       });
     }
     return chips;
@@ -143,7 +143,7 @@ export default function BusAdvancedFilters({
             onChange={setStatusFilter}
             options={statusOptions}
             allLabel="All Statuses"
-            activeColorClass="ring-green-500 border-green-500"
+            activeColorClass="ring-green-500 border-success"
           />
           <SelectFilter
             value={operatorFilter}
@@ -151,7 +151,7 @@ export default function BusAdvancedFilters({
             options={operatorOptions}
             allLabel="All Operators"
             icon={<Users className="h-3.5 w-3.5" />}
-            activeColorClass="ring-blue-500 border-blue-500"
+            activeColorClass="ring-blue-500 border-primary"
           />
           <SelectFilter
             value={modelFilter}
@@ -159,7 +159,7 @@ export default function BusAdvancedFilters({
             options={modelOptions}
             allLabel="All Models"
             icon={<Bus className="h-3.5 w-3.5" />}
-            activeColorClass="ring-purple-500 border-purple-500"
+            activeColorClass="ring-purple-500 border-[hsl(var(--purple-500))]"
           />
           {/* Capacity range inputs */}
           <div className="flex items-center gap-1.5">
@@ -168,16 +168,16 @@ export default function BusAdvancedFilters({
               placeholder="Min"
               value={minCapacity}
               onChange={(e) => setMinCapacity(e.target.value)}
-              className="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               min="0"
             />
-            <span className="text-gray-400 text-xs">–</span>
+            <span className="text-muted-foreground/70 text-xs">–</span>
             <input
               type="number"
               placeholder="Max"
               value={maxCapacity}
               onChange={(e) => setMaxCapacity(e.target.value)}
-              className="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               min="0"
             />
           </div>

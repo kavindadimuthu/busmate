@@ -114,14 +114,22 @@ export const USER_TYPE_CONFIG: Record<UserType, {
   borderColor: string;
   icon: string;
 }> = {
-  mot: { label: 'MOT Officer', color: 'text-indigo-700', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', icon: 'Shield' },
-  timekeeper: { label: 'Timekeeper', color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200', icon: 'Clock' },
-  operator: { label: 'Operator', color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', icon: 'Truck' },
-  conductor: { label: 'Conductor', color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-200', icon: 'CircleDot' },
-  driver: { label: 'Driver', color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', icon: 'Car' },
-  passenger: { label: 'Passenger', color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', icon: 'Users' },
+  // indigo ≈ primary (brand blue)
+  mot: { label: 'MOT Officer', color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/20', icon: 'Shield' },
+  // teal → cyan CSS vars (no dedicated semantic token yet)
+  timekeeper: { label: 'Timekeeper', color: 'text-[hsl(var(--cyan-700))]', bgColor: 'bg-[hsl(var(--cyan-50))]', borderColor: 'border-[hsl(var(--cyan-200))]', icon: 'Clock' },
+  // orange → warning
+  operator: { label: 'Operator', color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/20', icon: 'Truck' },
+  // green → success
+  conductor: { label: 'Conductor', color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20', icon: 'CircleDot' },
+  // blue → primary
+  driver: { label: 'Driver', color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/20', icon: 'Car' },
+  // purple → purple CSS vars (analytics/secondary color)
+  passenger: { label: 'Passenger', color: 'text-[hsl(var(--purple-700))]', bgColor: 'bg-[hsl(var(--purple-50))]', borderColor: 'border-[hsl(var(--purple-200))]', icon: 'Users' },
 };
 
+// Prefer <StatusBadge status="active|inactive|pending" /> for inline status display.
+// "suspended" is not in StatusBadge; use destructive tokens manually for that status.
 export const USER_STATUS_CONFIG: Record<UserStatus, {
   label: string;
   color: string;
@@ -129,10 +137,10 @@ export const USER_STATUS_CONFIG: Record<UserStatus, {
   borderColor: string;
   dotColor: string;
 }> = {
-  active: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', dotColor: 'bg-emerald-500' },
-  inactive: { label: 'Inactive', color: 'text-gray-600', bgColor: 'bg-gray-50', borderColor: 'border-gray-200', dotColor: 'bg-gray-400' },
-  suspended: { label: 'Suspended', color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200', dotColor: 'bg-red-500' },
-  pending: { label: 'Pending', color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', dotColor: 'bg-amber-500' },
+  active:    { label: 'Active',    color: 'text-success',           bgColor: 'bg-success/10',      borderColor: 'border-success/20',      dotColor: 'bg-success' },
+  inactive:  { label: 'Inactive',  color: 'text-muted-foreground',  bgColor: 'bg-muted',           borderColor: 'border-border',          dotColor: 'bg-muted-foreground' },
+  suspended: { label: 'Suspended', color: 'text-destructive',       bgColor: 'bg-destructive/10',  borderColor: 'border-destructive/20',  dotColor: 'bg-destructive' },
+  pending:   { label: 'Pending',   color: 'text-warning',           bgColor: 'bg-warning/10',      borderColor: 'border-warning/20',      dotColor: 'bg-warning' },
 };
 
 // --- Mock Data ---

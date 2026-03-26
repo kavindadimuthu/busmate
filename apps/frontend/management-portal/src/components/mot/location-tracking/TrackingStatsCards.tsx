@@ -48,28 +48,28 @@ export function TrackingStatsCards({
   }));
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden transition-all duration-300">
       {/* Header - Always visible */}
       <button
         onClick={onToggleCollapse}
-        className="w-full flex items-center justify-between px-5 py-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-200"
+        className="w-full flex items-center justify-between px-5 py-3 bg-muted hover:bg-muted transition-colors border-b border-border"
       >
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-gray-700">Fleet Overview</h3>
+          <h3 className="text-sm font-semibold text-foreground/80">Fleet Overview</h3>
           {lastUpdate && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               Updated {lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted-foreground">
             {isCollapsed ? 'Show stats' : 'Hide stats'}
           </span>
           {isCollapsed ? (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronUp className="h-4 w-4 text-gray-500" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
       </button>

@@ -22,22 +22,22 @@ const STATUS_META: Record<
   ACTIVE: {
     label: "Active",
     icon: <CheckCircle className="w-3.5 h-3.5" />,
-    classes: "bg-green-100 text-green-800 border-green-200",
+    classes: "bg-success/15 text-success border-success/20",
   },
   INACTIVE: {
     label: "Inactive",
     icon: <XCircle className="w-3.5 h-3.5" />,
-    classes: "bg-orange-100 text-orange-800 border-orange-200",
+    classes: "bg-warning/15 text-warning border-orange-200",
   },
   MAINTENANCE: {
     label: "Maintenance",
     icon: <Wrench className="w-3.5 h-3.5" />,
-    classes: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    classes: "bg-warning/15 text-warning border-warning/20",
   },
   RETIRED: {
     label: "Retired",
     icon: <AlertCircle className="w-3.5 h-3.5" />,
-    classes: "bg-gray-100 text-gray-600 border-gray-200",
+    classes: "bg-muted text-muted-foreground border-border",
   },
 };
 
@@ -88,7 +88,7 @@ export const fleetColumns: ColumnDef<OperatorBus>[] = [
     header: "Service Type",
     sortable: true,
     cell: ({ row }) => (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-indigo-700 border border-indigo-200">
         {SERVICE_TYPE_LABELS[row.serviceType] ?? row.serviceType}
       </span>
     ),

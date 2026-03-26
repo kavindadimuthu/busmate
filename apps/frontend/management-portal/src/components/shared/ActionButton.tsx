@@ -27,17 +27,17 @@ export type ActionButtonVariant =
 
 const VARIANT_CLS: Record<ActionButtonVariant, string> = {
   primary:
-    'bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 focus-visible:ring-blue-500',
+    'bg-primary text-white shadow-sm hover:bg-primary active:bg-primary focus-visible:ring-blue-500',
   secondary:
-    'border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 active:bg-gray-100 focus-visible:ring-gray-400',
+    'border border-border bg-card text-foreground/80 shadow-sm hover:bg-muted hover:border-border active:bg-muted focus-visible:ring-gray-400',
   ghost:
-    'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 active:bg-blue-200 focus-visible:ring-blue-400',
+    'border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/30 active:bg-primary/20 focus-visible:ring-blue-400',
   warning:
-    'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:border-orange-300 active:bg-orange-200 focus-visible:ring-orange-400',
+    'border border-orange-200 bg-warning/10 text-orange-700 hover:bg-warning/15 hover:border-orange-300 active:bg-orange-200 focus-visible:ring-orange-400',
   danger:
-    'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 focus-visible:ring-red-400',
+    'border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:border-destructive/30 active:bg-destructive/20 focus-visible:ring-red-400',
   success:
-    'border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-300 active:bg-green-200 focus-visible:ring-green-400',
+    'border border-success/20 bg-success/10 text-success hover:bg-success/15 hover:border-success/30 active:bg-success/20 focus-visible:ring-green-400',
 };
 
 // ── ActionButton ──────────────────────────────────────────────────
@@ -93,7 +93,7 @@ export function ActionButton({
       {icon && <span className="shrink-0">{icon}</span>}
       <span>{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="ml-0.5 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] rounded-full bg-white/30 text-[10px] font-bold px-1">
+        <span className="ml-0.5 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] rounded-full bg-card/30 text-[10px] font-bold px-1">
           {badge}
         </span>
       )}
@@ -155,9 +155,9 @@ export function OverflowMenu({ items, className = '' }: OverflowMenuProps) {
   }, [open]);
 
   const variantStyles: Record<string, string> = {
-    default: 'text-gray-700 hover:bg-gray-50',
-    warning: 'text-orange-700 hover:bg-orange-50',
-    danger:  'text-red-700 hover:bg-red-50',
+    default: 'text-foreground/80 hover:bg-muted',
+    warning: 'text-orange-700 hover:bg-warning/10',
+    danger:  'text-destructive hover:bg-destructive/10',
   };
 
   return (
@@ -167,13 +167,13 @@ export function OverflowMenu({ items, className = '' }: OverflowMenuProps) {
         onClick={() => setOpen((v) => !v)}
         aria-label="More actions"
         aria-expanded={open}
-        className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400"
+        className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-card text-muted-foreground shadow-sm hover:bg-muted hover:border-border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-400"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-50 min-w-[168px] rounded-xl border border-gray-100 bg-white shadow-lg py-1.5 ring-1 ring-black/5">
+        <div className="absolute right-0 top-full mt-1.5 z-50 min-w-[168px] rounded-xl border border-border/50 bg-card shadow-lg py-1.5 ring-1 ring-black/5">
           {items.map((item, i) => (
             <button
               key={i}

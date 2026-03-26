@@ -90,7 +90,7 @@ export function PermitFilters({
         key: 'status',
         label: STATUS_LABELS[statusFilter] ?? statusFilter,
         onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-green-50 text-green-700 border-green-200',
+        colorClass: 'bg-success/10 text-success border-success/20',
         icon: statusIcons[statusFilter],
       });
     }
@@ -100,7 +100,7 @@ export function PermitFilters({
         key: 'permitType',
         label: PERMIT_TYPE_LABELS[permitTypeFilter] ?? permitTypeFilter,
         onRemove: () => setPermitTypeFilter('all'),
-        colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        colorClass: 'bg-warning/10 text-warning border-warning/20',
         icon: <FileText className="h-3 w-3 opacity-70" />,
       });
     }
@@ -127,7 +127,7 @@ export function PermitFilters({
             options={statusOptions}
             allLabel="All Statuses"
             icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-green-50 border-green-300 text-green-800"
+            activeColorClass="bg-success/10 border-success/30 text-success"
           />
           <SelectFilter
             value={permitTypeFilter}
@@ -135,7 +135,7 @@ export function PermitFilters({
             options={permitTypeOptions}
             allLabel="All Types"
             icon={<FileText className="h-3.5 w-3.5" />}
-            activeColorClass="bg-amber-50 border-amber-300 text-amber-800"
+            activeColorClass="bg-warning/10 border-warning/30 text-warning"
           />
         </>
       }

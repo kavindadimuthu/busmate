@@ -50,7 +50,7 @@ export default function ScheduleFormMode() {
         <div className="space-y-5">
             {/* Route selector */}
             <div className='flex items-center gap-4  '>
-                <label htmlFor="route" className="pl-2 text-sm font-medium text-slate-700 whitespace-nowrap">
+                <label htmlFor="route" className="pl-2 text-sm font-medium text-muted-foreground whitespace-nowrap">
                     Select Route:
                 </label>
                 <select
@@ -59,7 +59,7 @@ export default function ScheduleFormMode() {
                     value={selectedRouteId || ''}
                     onChange={handleRouteChange}
                     disabled={isLoading && mounted}
-                    className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-400"
+                    className="block w-full border border-border rounded-lg shadow-sm py-2.5 px-3 bg-card focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary text-sm transition-all duration-200 disabled:bg-muted disabled:text-muted-foreground/70"
                 >
                     <option value="">-- Select a Route --</option>
                     {availableRoutes.map(route => (
@@ -87,15 +87,15 @@ export default function ScheduleFormMode() {
                 <>
                     {/* View mode toggle */}
                     <div className="flex items-center justify-end gap-3">
-                        <span className="text-sm text-slate-500 mr-1">View:</span>
-                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                        <span className="text-sm text-muted-foreground mr-1">View:</span>
+                        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={cn(
                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
                                     viewMode === 'grid'
-                                        ? "bg-blue-700 text-white shadow-sm"
-                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                        ? "bg-primary text-white shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 )}
                                 title="Grid View"
                             >
@@ -107,8 +107,8 @@ export default function ScheduleFormMode() {
                                 className={cn(
                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
                                     viewMode === 'graph'
-                                        ? "bg-blue-700 text-white shadow-sm"
-                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                        ? "bg-primary text-white shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 )}
                                 title="Time-Stop Graph"
                             >

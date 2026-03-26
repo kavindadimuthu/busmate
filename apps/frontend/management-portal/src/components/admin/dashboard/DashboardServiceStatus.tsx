@@ -6,9 +6,9 @@ import { ServiceSummary } from '@/data/admin/dashboard-v2';
 
 function StatusBadge({ status }: { status: ServiceSummary['status'] }) {
   const config = {
-    healthy:  { cls: 'bg-green-100 text-green-700',  icon: <CheckCircle2 className="h-3 w-3" />,  label: 'Healthy' },
-    degraded: { cls: 'bg-amber-100 text-amber-700',  icon: <AlertTriangle className="h-3 w-3" />, label: 'Degraded' },
-    down:     { cls: 'bg-red-100 text-red-700',      icon: <XCircle className="h-3 w-3" />,       label: 'Down' },
+    healthy:  { cls: 'bg-success/15 text-success',  icon: <CheckCircle2 className="h-3 w-3" />,  label: 'Healthy' },
+    degraded: { cls: 'bg-warning/15 text-warning',  icon: <AlertTriangle className="h-3 w-3" />, label: 'Degraded' },
+    down:     { cls: 'bg-destructive/15 text-destructive',      icon: <XCircle className="h-3 w-3" />,       label: 'Down' },
   }[status];
 
   return (
@@ -42,7 +42,7 @@ export function DashboardServiceStatus({ services, loading = false }: DashboardS
         <h3 className="font-semibold text-foreground text-sm">Service Status</h3>
         <Link
           href="/admin/monitoring/api"
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           Details <ArrowUpRight className="h-3 w-3" />
         </Link>
@@ -70,7 +70,7 @@ export function DashboardServiceStatus({ services, loading = false }: DashboardS
                   {svc.responseTime > 0 ? `${svc.responseTime}ms` : '—'}
                 </td>
                 <td className={`px-3 py-2 text-right hidden md:table-cell font-medium ${
-                  svc.errorRate >= 5 ? 'text-red-600' : svc.errorRate >= 1 ? 'text-amber-600' : 'text-muted-foreground'
+                  svc.errorRate >= 5 ? 'text-destructive' : svc.errorRate >= 1 ? 'text-warning' : 'text-muted-foreground'
                 }`}>
                   {svc.status === 'down' ? '—' : `${svc.errorRate.toFixed(2)}%`}
                 </td>

@@ -165,10 +165,10 @@ export function RevenueAnalytics() {
     <div className="space-y-6">
       {/* Loading State */}
       {loading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <div className="flex items-center space-x-3">
-            <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
-            <span className="text-blue-800">Loading revenue data...</span>
+            <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+            <span className="text-primary">Loading revenue data...</span>
           </div>
         </div>
       )}
@@ -178,7 +178,7 @@ export function RevenueAnalytics() {
         <MetricCard
           title="Total Revenue"
           value={`Rs ${totalRevenue.toLocaleString()}.00`}
-          icon={<DollarSign className="w-6 h-6 text-green-600" />}
+          icon={<DollarSign className="w-6 h-6 text-success" />}
           trend={{
             value: "+12.5%",
             type: "positive",
@@ -189,7 +189,7 @@ export function RevenueAnalytics() {
         <MetricCard
           title="Tickets Issued"
           value={totalTickets.toLocaleString()}
-          icon={<Users className="w-6 h-6 text-blue-600" />}
+          icon={<Users className="w-6 h-6 text-primary" />}
           trend={{
             value: "+8.3%",
             type: "positive",
@@ -200,7 +200,7 @@ export function RevenueAnalytics() {
         <MetricCard
           title="Total Trips"
           value={totalTrips}
-          icon={<Bus className="w-6 h-6 text-purple-600" />}
+          icon={<Bus className="w-6 h-6 text-[hsl(var(--purple-600))]" />}
           trend={{
             value: "+5.2%",
             type: "positive",
@@ -211,7 +211,7 @@ export function RevenueAnalytics() {
         <MetricCard
           title="Avg Revenue/Bus"
           value={`Rs ${averageRevenue.toFixed(0)}`}
-          icon={<TrendingUp className="w-6 h-6 text-orange-600" />}
+          icon={<TrendingUp className="w-6 h-6 text-warning" />}
           trend={{
             value: "+3.1%",
             type: "positive",
@@ -222,17 +222,17 @@ export function RevenueAnalytics() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+      <div className="bg-card rounded-lg border border-border shadow-sm p-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search by bus number, name, or route..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
               />
             </div>
           </div>
@@ -241,7 +241,7 @@ export function RevenueAnalytics() {
             <select
               value={selectedBus}
               onChange={(e) => setSelectedBus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             >
               <option value="all">All Buses</option>
               {uniqueBuses.map(bus => (
@@ -252,7 +252,7 @@ export function RevenueAnalytics() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             >
               <option value="today">Today</option>
               <option value="yesterday">Yesterday</option>
@@ -264,7 +264,7 @@ export function RevenueAnalytics() {
             <select
               value={viewType}
               onChange={(e) => setViewType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-primary"
             >
               <option value="bus">Bus Wise</option>
               <option value="day">Day Wise</option>
@@ -307,52 +307,52 @@ export function RevenueAnalytics() {
       </div>
 
       {/* Revenue Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Revenue Details - {viewType.charAt(0).toUpperCase() + viewType.slice(1)} View</h3>
-          <span className="text-sm text-gray-500">Showing {filteredData.length} {filteredData.length === 1 ? 'result' : 'results'}</span>
+      <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-foreground">Revenue Details - {viewType.charAt(0).toUpperCase() + viewType.slice(1)} View</h3>
+          <span className="text-sm text-muted-foreground">Showing {filteredData.length} {filteredData.length === 1 ? 'result' : 'results'}</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bus Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trips</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tickets</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Bus Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Route</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Staff</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Trips</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tickets</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Avg Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Revenue</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-gray-200">
               {filteredData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-muted">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{item.busNumber}</div>
-                      <div className="text-sm text-gray-500">{item.busName}</div>
+                      <div className="text-sm font-medium text-foreground">{item.busNumber}</div>
+                      <div className="text-sm text-muted-foreground">{item.busName}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{item.route}</div>
+                    <div className="text-sm text-foreground">{item.route}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">Driver: {item.driver}</div>
-                    <div className="text-sm text-gray-500">Conductor: {item.conductor}</div>
+                    <div className="text-sm text-foreground">Driver: {item.driver}</div>
+                    <div className="text-sm text-muted-foreground">Conductor: {item.conductor}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{item.totalTrips}</div>
+                    <div className="text-sm font-medium text-foreground">{item.totalTrips}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{item.ticketsIssued}</div>
+                    <div className="text-sm font-medium text-foreground">{item.ticketsIssued}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">Rs {item.averageTicketPrice.toFixed(2)}</div>
+                    <div className="text-sm text-foreground">Rs {item.averageTicketPrice.toFixed(2)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-green-600">Rs {item.revenue.toLocaleString()}.00</div>
+                    <div className="text-sm font-medium text-success">Rs {item.revenue.toLocaleString()}.00</div>
                   </td>
                 </tr>
               ))}

@@ -265,9 +265,9 @@ const AddressPicker = ({
 
   if (loadError) {
     return (
-      <div className="bg-gray-50 rounded-lg p-6 text-center">
-        <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-sm text-gray-600">{loadError.message || 'Failed to load map'}</p>
+      <div className="bg-muted rounded-lg p-6 text-center">
+        <MapPin className="w-8 h-8 text-muted-foreground/70 mx-auto mb-2" />
+        <p className="text-sm text-muted-foreground">{loadError.message || 'Failed to load map'}</p>
       </div>
     );
   }
@@ -276,12 +276,12 @@ const AddressPicker = ({
     <div className="space-y-4">
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 h-4 w-4" />
         <input
           ref={searchInputRef}
           type="text"
           placeholder="Search for an address or place..."
-          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
         />
       </div>
 
@@ -289,15 +289,15 @@ const AddressPicker = ({
       <div className="relative">
         <div 
           ref={mapRef} 
-          className="w-full h-64 rounded-lg bg-gray-200"
+          className="w-full h-64 rounded-lg bg-secondary"
           style={{ minHeight: '256px' }}
         />
         
         {!isLoaded && (
-          <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="absolute inset-0 bg-muted rounded-lg flex items-center justify-center">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-sm text-gray-600">Loading map...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">Loading map...</p>
             </div>
           </div>
         )}
@@ -307,16 +307,16 @@ const AddressPicker = ({
           <div className="absolute top-2 right-2">
             <button
               onClick={resetMapView}
-              className="bg-white hover:bg-gray-50 p-2 rounded-md shadow-md border border-gray-200 transition-colors"
+              className="bg-card hover:bg-muted p-2 rounded-md shadow-md border border-border transition-colors"
               title="Reset view"
             >
-              <RotateCcw className="w-4 h-4 text-gray-600" />
+              <RotateCcw className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
         )}
       </div>
 
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted-foreground">
         Click on the map or drag the marker to set the bus stop location. You can also search for an address above.
       </p>
     </div>
@@ -575,7 +575,7 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
   if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -584,48 +584,48 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Error Alert */}
       {errors.general && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{errors.general}</p>
+              <h3 className="text-sm font-medium text-destructive">Error</h3>
+              <p className="text-sm text-destructive mt-1">{errors.general}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Basic Information */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+      <div className="bg-card rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bus Stop Name <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Bus Stop Name <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.name ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.name ? 'border-destructive/30' : 'border-border'
               }`}
               placeholder="Enter bus stop name"
             />
             {errors.name && (
-              <p className="text-red-600 text-sm mt-1">{errors.name}</p>
+              <p className="text-destructive text-sm mt-1">{errors.name}</p>
             )}
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="Enter bus stop description (optional)"
             />
           </div>
@@ -636,25 +636,25 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
                 type="checkbox"
                 checked={formData.isAccessible}
                 onChange={(e) => handleInputChange('isAccessible', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-blue-500 border-border rounded"
               />
-              <span className="ml-2 text-sm text-gray-700">This bus stop is wheelchair accessible</span>
+              <span className="ml-2 text-sm text-foreground/80">This bus stop is wheelchair accessible</span>
             </label>
           </div>
         </div>
       </div>
 
       {/* Location Information */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-card rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <MapPin className="w-5 h-5 mr-2" />
           Location Information
         </h3>
 
         {/* Address Picker Map */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Location on Map <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-foreground/80 mb-2">
+            Select Location on Map <span className="text-destructive/80">*</span>
           </label>
           <AddressPicker
             onLocationSelect={handleLocationSelect}
@@ -669,168 +669,168 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
             }
           />
           {errors.coordinates && (
-            <p className="text-red-600 text-sm mt-1">{errors.coordinates}</p>
+            <p className="text-destructive text-sm mt-1">{errors.coordinates}</p>
           )}
         </div>
 
         {/* Address Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Address <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
               value={formData.location.address}
               onChange={(e) => handleInputChange('location.address', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.address ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.address ? 'border-destructive/30' : 'border-border'
               }`}
               placeholder="Enter street address"
             />
             {errors.address && (
-              <p className="text-red-600 text-sm mt-1">{errors.address}</p>
+              <p className="text-destructive text-sm mt-1">{errors.address}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              City <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              City <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
               value={formData.location.city}
               onChange={(e) => handleInputChange('location.city', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.city ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.city ? 'border-destructive/30' : 'border-border'
               }`}
               placeholder="Enter city"
             />
             {errors.city && (
-              <p className="text-red-600 text-sm mt-1">{errors.city}</p>
+              <p className="text-destructive text-sm mt-1">{errors.city}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              State/Province <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              State/Province <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
               value={formData.location.state}
               onChange={(e) => handleInputChange('location.state', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.state ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.state ? 'border-destructive/30' : 'border-border'
               }`}
               placeholder="Enter state or province"
             />
             {errors.state && (
-              <p className="text-red-600 text-sm mt-1">{errors.state}</p>
+              <p className="text-destructive text-sm mt-1">{errors.state}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               ZIP/Postal Code
             </label>
             <input
               type="text"
               value={formData.location.zipCode}
               onChange={(e) => handleInputChange('location.zipCode', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="Enter ZIP or postal code"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Country <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
+              Country <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
               value={formData.location.country}
               onChange={(e) => handleInputChange('location.country', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.country ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary ${
+                errors.country ? 'border-destructive/30' : 'border-border'
               }`}
               placeholder="Enter country"
             />
             {errors.country && (
-              <p className="text-red-600 text-sm mt-1">{errors.country}</p>
+              <p className="text-destructive text-sm mt-1">{errors.country}</p>
             )}
           </div>
         </div>
 
         {/* Coordinates Display */}
         {formData.location.latitude && formData.location.longitude && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-4 bg-muted rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-medium text-gray-700">Coordinates</h4>
-                <p className="text-sm text-gray-600 font-mono">
+                <h4 className="text-sm font-medium text-foreground/80">Coordinates</h4>
+                <p className="text-sm text-muted-foreground font-mono">
                   {formData.location.latitude.toFixed(6)}, {formData.location.longitude.toFixed(6)}
                 </p>
               </div>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-success/80" />
             </div>
           </div>
         )}
       </div>
 
       {/* Multi-Language Location Information - Sinhala */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">සිංහල ස්ථාන තොරතුරු (Sinhala Location Information)</h3>
-        <p className="text-sm text-gray-600 mb-4">Optional: Provide location information in Sinhala</p>
+      <div className="bg-card rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">සිංහල ස්ථාන තොරතුරු (Sinhala Location Information)</h3>
+        <p className="text-sm text-muted-foreground mb-4">Optional: Provide location information in Sinhala</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               ලිපිනය (Address in Sinhala)
             </label>
             <input
               type="text"
               value={formData.location.addressSinhala || ''}
               onChange={(e) => handleInputChange('location.addressSinhala', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="සිංහලෙන් ලිපිනය ඇතුළත් කරන්න"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               නගරය (City in Sinhala)
             </label>
             <input
               type="text"
               value={formData.location.citySinhala || ''}
               onChange={(e) => handleInputChange('location.citySinhala', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="සිංහලෙන් නගරය ඇතුළත් කරන්න"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               පළාත (State/Province in Sinhala)
             </label>
             <input
               type="text"
               value={formData.location.stateSinhala || ''}
               onChange={(e) => handleInputChange('location.stateSinhala', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="සිංහලෙන් පළාත ඇතුළත් කරන්න"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               රට (Country in Sinhala)
             </label>
             <input
               type="text"
               value={formData.location.countrySinhala || ''}
               onChange={(e) => handleInputChange('location.countrySinhala', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="සිංහලෙන් රට ඇතුළත් කරන්න"
             />
           </div>
@@ -838,59 +838,59 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
       </div>
 
       {/* Multi-Language Location Information - Tamil */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">தமிழ் இடம் தகவல் (Tamil Location Information)</h3>
-        <p className="text-sm text-gray-600 mb-4">Optional: Provide location information in Tamil</p>
+      <div className="bg-card rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">தமிழ் இடம் தகவல் (Tamil Location Information)</h3>
+        <p className="text-sm text-muted-foreground mb-4">Optional: Provide location information in Tamil</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               முகவரி (Address in Tamil)
             </label>
             <input
               type="text"
               value={formData.location.addressTamil || ''}
               onChange={(e) => handleInputChange('location.addressTamil', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="தமிழில் முகவரியை உள்ளிடவும்"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               நகரம் (City in Tamil)
             </label>
             <input
               type="text"
               value={formData.location.cityTamil || ''}
               onChange={(e) => handleInputChange('location.cityTamil', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="தமிழில் நகரத்தை உள்ளிடவும்"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               மாநிலம் (State/Province in Tamil)
             </label>
             <input
               type="text"
               value={formData.location.stateTamil || ''}
               onChange={(e) => handleInputChange('location.stateTamil', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="தமிழில் மாநிலத்தை உள்ளிடவும்"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               நாடு (Country in Tamil)
             </label>
             <input
               type="text"
               value={formData.location.countryTamil || ''}
               onChange={(e) => handleInputChange('location.countryTamil', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
               placeholder="தமிழில் நாட்டை உள்ளிடவும்"
             />
           </div>
@@ -898,18 +898,18 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
       </div>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-end gap-4 pt-6 border-t border-border">
         <button
           type="button"
           onClick={handleCancel}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-border text-foreground/80 rounded-lg hover:bg-muted transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading || !isDirty}
-          className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

@@ -255,7 +255,7 @@ export default function StaffManagementPage() {
       />
 
       {/* Staff Table + Pagination */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <StaffTable
           staff={paginatedStaff}
           mode={activeTab}
@@ -275,7 +275,7 @@ export default function StaffManagementPage() {
       </div>
 
       {/* Read-only notice */}
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-xs text-muted-foreground/70 text-center">
         Staff records are managed by BusMate administration. This view is read-only.{' '}
         Contact support if you need to update staff information.
       </p>

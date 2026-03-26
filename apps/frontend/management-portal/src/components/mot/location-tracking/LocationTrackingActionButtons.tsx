@@ -77,7 +77,7 @@ export function LocationTrackingActionButtons({
     <ActionButtonsContainer>
       {/* Last Update Indicator (text only, not a button) */}
       {lastUpdate && (
-        <div className="flex items-center px-3 py-2 text-xs text-gray-500">
+        <div className="flex items-center px-3 py-2 text-xs text-muted-foreground">
           Updated{' '}
           {lastUpdate.toLocaleTimeString([], {
             hour: '2-digit',

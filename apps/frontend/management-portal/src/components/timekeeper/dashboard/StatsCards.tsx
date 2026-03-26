@@ -9,7 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@busmate/ui';
 import { DashboardStats } from '@/data/timekeeper/types';
 
 interface StatsCardsProps {
@@ -28,21 +28,21 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, description, trend, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
-    red: 'bg-red-50 text-red-600 border-red-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200',
+    blue: 'bg-primary/10 text-primary border-primary/20',
+    green: 'bg-success/10 text-success border-success/20',
+    yellow: 'bg-warning/10 text-warning border-warning/20',
+    red: 'bg-destructive/10 text-destructive border-destructive/20',
+    purple: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-600))] border-[hsl(var(--purple-200))]',
+    orange: 'bg-warning/10 text-warning border-orange-200',
   };
 
   const iconBgClasses = {
-    blue: 'bg-blue-100',
-    green: 'bg-green-100',
-    yellow: 'bg-yellow-100',
-    red: 'bg-red-100',
-    purple: 'bg-purple-100',
-    orange: 'bg-orange-100',
+    blue: 'bg-primary/15',
+    green: 'bg-success/15',
+    yellow: 'bg-warning/15',
+    red: 'bg-destructive/15',
+    purple: 'bg-[hsl(var(--purple-100))]',
+    orange: 'bg-warning/15',
   };
 
   return (
@@ -56,7 +56,7 @@ function StatCard({ title, value, icon, description, trend, color }: StatCardPro
               <p className="text-xs text-muted-foreground mt-1">{description}</p>
             )}
             {trend !== undefined && (
-              <div className={`flex items-center text-xs mt-1 ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`flex items-center text-xs mt-1 ${trend >= 0 ? 'text-success' : 'text-destructive'}`}>
                 {trend >= 0 ? (
                   <TrendingUp className="h-3 w-3 mr-1" />
                 ) : (

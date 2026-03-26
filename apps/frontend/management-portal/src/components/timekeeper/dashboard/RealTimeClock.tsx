@@ -41,7 +41,7 @@ export function RealTimeClock({ className = '' }: RealTimeClockProps) {
         <div className="text-5xl font-bold tracking-wider mb-2">
           {formatTime(currentTime)}
         </div>
-        <div className="text-blue-100 text-sm">
+        <div className="text-primary/20 text-sm">
           {formatDate(currentTime)}
         </div>
       </div>

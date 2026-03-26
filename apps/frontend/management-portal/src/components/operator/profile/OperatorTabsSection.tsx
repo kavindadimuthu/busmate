@@ -102,15 +102,15 @@ export function OperatorTabsSection({
     const baseClasses = 'px-2 py-1 rounded-full text-xs font-medium';
     switch (status.toLowerCase()) {
       case 'active':
-        return `${baseClasses} bg-green-100 text-green-800`;
+        return `${baseClasses} bg-success/15 text-success`;
       case 'inactive':
-        return `${baseClasses} bg-gray-100 text-gray-800`;
+        return `${baseClasses} bg-muted text-foreground`;
       case 'pending':
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
+        return `${baseClasses} bg-warning/15 text-warning`;
       case 'cancelled':
-        return `${baseClasses} bg-red-100 text-red-800`;
+        return `${baseClasses} bg-destructive/15 text-destructive`;
       default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
+        return `${baseClasses} bg-muted text-foreground`;
     }
   };
 
@@ -119,8 +119,8 @@ export function OperatorTabsSection({
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Fleet Management</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="text-lg font-semibold text-foreground">Fleet Management</h3>
+          <p className="text-sm text-muted-foreground">
             Manage all buses owned by {operator.name}
           </p>
         </div>
@@ -128,14 +128,14 @@ export function OperatorTabsSection({
           <button
             onClick={handleRefresh}
             disabled={isRefreshing || busesLoading}
-            className="flex items-center gap-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <Link
             href={`/mot/buses/add-new?operatorId=${operator.id}`}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary"
           >
             <Plus className="w-4 h-4" />
             Add New Bus
@@ -146,76 +146,76 @@ export function OperatorTabsSection({
       {/* Buses List */}
       {busesLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-500">Loading buses...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2 text-muted-foreground">Loading buses...</span>
         </div>
       ) : buses.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <Bus className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Buses Found</h3>
-          <p className="text-gray-600 mb-6">
+        <div className="text-center py-12 bg-muted rounded-lg border-2 border-dashed border-border">
+          <Bus className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Buses Found</h3>
+          <p className="text-muted-foreground mb-6">
             This operator doesn't have any buses registered yet.
           </p>
           <Link
             href={`/mot/buses/add-new?operatorId=${operator.id}`}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+            className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary"
           >
             <Plus className="w-5 h-5" />
             Register First Bus
           </Link>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Bus Details
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Registration
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Capacity & Model
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-gray-200">
                 {buses.map((bus) => (
-                  <tr key={bus.id} className="hover:bg-gray-50">
+                  <tr key={bus.id} className="hover:bg-muted">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {bus.plateNumber || 'Unknown Plate'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           ID: {bus.id?.slice(-8) || 'N/A'}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-foreground">
                           {bus.ntcRegistrationNumber || 'Not registered'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           NTC Registration
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-foreground">
                           {bus.capacity || 0} seats
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           {bus.model || 'Model not specified'}
                         </div>
                       </div>
@@ -229,20 +229,20 @@ export function OperatorTabsSection({
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/mot/buses/${bus.id}`}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                          className="text-primary hover:text-primary p-1 rounded hover:bg-primary/10"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <Link
                           href={`/mot/buses/${bus.id}/edit`}
-                          className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                          className="text-success hover:text-success p-1 rounded hover:bg-success/10"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </Link>
                         <button
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                          className="text-destructive hover:text-destructive p-1 rounded hover:bg-destructive/10"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -266,13 +266,13 @@ export function OperatorTabsSection({
     features: string[]
   ) => (
     <div className="space-y-4">
-      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <div className="w-16 h-16 text-gray-300 mx-auto mb-4">
+      <div className="text-center py-12 bg-muted rounded-lg border-2 border-dashed border-border">
+        <div className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4">
           {icon}
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600 mb-4">{description}</p>
-        <div className="text-sm text-gray-500 space-y-1 max-w-md mx-auto">
+        <h3 className="text-lg font-medium text-foreground mb-2">{title}</h3>
+        <p className="text-muted-foreground mb-4">{description}</p>
+        <div className="text-sm text-muted-foreground space-y-1 max-w-md mx-auto">
           {features.map((feature, index) => (
             <p key={index}>• {feature}</p>
           ))}
@@ -282,9 +282,9 @@ export function OperatorTabsSection({
   );
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="bg-card rounded-lg border border-border shadow-sm">
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <div className="flex flex-wrap gap-1 p-1">
           {tabs.map((tab) => (
             <button
@@ -292,8 +292,8 @@ export function OperatorTabsSection({
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
                 activeTab === tab.id
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-primary/15 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
               {tab.icon}
@@ -301,8 +301,8 @@ export function OperatorTabsSection({
               {tab.count !== undefined && (
                 <span className={`px-2 py-1 text-xs rounded-full ${
                   activeTab === tab.id
-                    ? 'bg-blue-200 text-blue-800'
-                    : 'bg-gray-200 text-gray-600'
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-secondary text-muted-foreground'
                 }`}>
                   {tab.count}
                 </span>

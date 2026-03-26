@@ -7,8 +7,7 @@ import {
   Building,
   Users,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, Badge } from '@busmate/ui';
 import { AssignedStop } from '@/data/timekeeper/types';
 
 interface AssignedStopInfoProps {
@@ -21,9 +20,9 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
   const getStopTypeBadge = (type: AssignedStop['type']) => {
     switch (type) {
       case 'terminal':
-        return <Badge className="bg-blue-100 text-blue-800">Terminal</Badge>;
+        return <Badge className="bg-primary/15 text-primary">Terminal</Badge>;
       case 'depot':
-        return <Badge className="bg-purple-100 text-purple-800">Depot</Badge>;
+        return <Badge className="bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-800))]">Depot</Badge>;
       case 'intermediate':
         return <Badge className="bg-muted text-foreground">Intermediate</Badge>;
       default:
@@ -35,7 +34,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
     <Card className={className}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-blue-600" />
+          <MapPin className="h-5 w-5 text-primary" />
           Assigned Bus Stop
         </CardTitle>
       </CardHeader>
@@ -60,15 +59,15 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-blue-50 rounded-lg p-3 text-center">
-              <Bus className="h-5 w-5 mx-auto text-blue-600 mb-1" />
-              <p className="text-2xl font-bold text-blue-900">{busesAtStop}</p>
-              <p className="text-xs text-blue-700">Buses at Stop</p>
+            <div className="bg-primary/10 rounded-lg p-3 text-center">
+              <Bus className="h-5 w-5 mx-auto text-primary mb-1" />
+              <p className="text-2xl font-bold text-primary">{busesAtStop}</p>
+              <p className="text-xs text-primary">Buses at Stop</p>
             </div>
-            <div className="bg-purple-50 rounded-lg p-3 text-center">
-              <Route className="h-5 w-5 mx-auto text-purple-600 mb-1" />
-              <p className="text-2xl font-bold text-purple-900">{stop.routes?.length || 0}</p>
-              <p className="text-xs text-purple-700">Active Routes</p>
+            <div className="bg-[hsl(var(--purple-50))] rounded-lg p-3 text-center">
+              <Route className="h-5 w-5 mx-auto text-[hsl(var(--purple-600))] mb-1" />
+              <p className="text-2xl font-bold text-[hsl(var(--purple-900))]">{stop.routes?.length || 0}</p>
+              <p className="text-xs text-[hsl(var(--purple-700))]">Active Routes</p>
             </div>
           </div>
 
@@ -97,7 +96,7 @@ export function AssignedStopInfo({ stop, busesAtStop = 0, className = '' }: Assi
               <p className="text-sm font-medium text-foreground mb-2">Facilities</p>
               <div className="flex flex-wrap gap-1">
                 {stop.facilities.map((facility) => (
-                  <Badge key={facility} className="text-xs bg-green-100 text-green-800">
+                  <Badge key={facility} className="text-xs bg-success/15 text-success">
                     {facility}
                   </Badge>
                 ))}

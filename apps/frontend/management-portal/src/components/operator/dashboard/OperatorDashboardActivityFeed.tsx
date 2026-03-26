@@ -22,16 +22,16 @@ const ACTOR_ICON: Record<ActivityEntry['actorType'], React.ReactNode> = {
 };
 
 const ACTOR_STYLE: Record<ActivityEntry['actorType'], string> = {
-  driver:    'bg-blue-100 text-blue-600',
-  conductor: 'bg-purple-100 text-purple-600',
+  driver:    'bg-primary/15 text-primary',
+  conductor: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-600))]',
   system:    'bg-muted text-muted-foreground',
   staff:     'bg-teal-100 text-teal-600',
 };
 
 const SEVERITY_STYLE: Record<ActivityEntry['severity'], string> = {
   normal:   '',
-  warning:  'bg-amber-50 border-l-2 border-l-amber-400',
-  critical: 'bg-red-50 border-l-2 border-l-red-500',
+  warning:  'bg-warning/10 border-l-2 border-l-amber-400',
+  critical: 'bg-destructive/10 border-l-2 border-l-red-500',
 };
 
 interface OperatorDashboardActivityFeedProps {
@@ -69,7 +69,7 @@ export function OperatorDashboardActivityFeed({ activity, loading = false }: Ope
         <h3 className="text-sm font-semibold text-foreground">Recent Activity</h3>
         <Link
           href="/operator/activity"
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           View all
           <ExternalLink className="h-3 w-3" />

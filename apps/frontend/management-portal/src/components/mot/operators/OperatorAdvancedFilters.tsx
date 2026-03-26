@@ -125,7 +125,7 @@ export default function OperatorAdvancedFilters({
         key: 'status',
         label: STATUS_LABELS[statusFilter] ?? statusFilter,
         onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-green-50 text-green-700 border-green-200',
+        colorClass: 'bg-success/10 text-success border-success/20',
         icon: icons[statusFilter],
       });
     }
@@ -135,7 +135,7 @@ export default function OperatorAdvancedFilters({
         key: 'operatorType',
         label: TYPE_LABELS[operatorTypeFilter] ?? operatorTypeFilter,
         onRemove: () => setOperatorTypeFilter('all'),
-        colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        colorClass: 'bg-primary/10 text-primary border-primary/20',
         icon: <Building className="h-3 w-3 opacity-70" />,
       });
     }
@@ -145,7 +145,7 @@ export default function OperatorAdvancedFilters({
         key: 'region',
         label: regionFilter,
         onRemove: () => setRegionFilter('all'),
-        colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
         icon: <MapPin className="h-3 w-3 opacity-70" />,
       });
     }
@@ -172,7 +172,7 @@ export default function OperatorAdvancedFilters({
             options={statusOptions}
             allLabel="All Statuses"
             icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-green-50 border-green-300 text-green-800"
+            activeColorClass="bg-success/10 border-success/30 text-success"
           />
           <SelectFilter
             value={operatorTypeFilter}
@@ -180,7 +180,7 @@ export default function OperatorAdvancedFilters({
             options={typeOptions}
             allLabel="All Types"
             icon={<Building className="h-3.5 w-3.5" />}
-            activeColorClass="bg-blue-50 border-blue-300 text-blue-800"
+            activeColorClass="bg-primary/10 border-primary/30 text-primary"
           />
           <SelectFilter
             value={regionFilter}
@@ -188,7 +188,7 @@ export default function OperatorAdvancedFilters({
             options={regionOptions}
             allLabel="All Regions"
             icon={<MapPin className="h-3.5 w-3.5" />}
-            activeColorClass="bg-purple-50 border-purple-300 text-purple-800"
+            activeColorClass="bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]"
           />
         </>
       }

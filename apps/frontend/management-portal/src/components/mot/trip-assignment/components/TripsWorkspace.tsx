@@ -120,17 +120,17 @@ export function TripsWorkspace({
   const getTripStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning/15 text-warning border-warning/20';
       case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success/15 text-success border-success/20';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary/15 text-primary border-primary/20';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/15 text-destructive border-destructive/20';
       case 'delayed':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-warning/15 text-warning border-orange-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -180,11 +180,11 @@ export function TripsWorkspace({
 
   if (!workspace.selectedRoute) {
     return (
-      <div className="flex-1 bg-gray-50 flex items-center justify-center">
+      <div className="flex-1 bg-muted flex items-center justify-center">
         <div className="text-center">
-          <Bus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No Route Selected</h3>
-          <p className="text-gray-500 max-w-md">
+          <Bus className="h-16 w-16 text-muted-foreground/70 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-foreground mb-2">No Route Selected</h3>
+          <p className="text-muted-foreground max-w-md">
             Select a route from the sidebar to view and manage trips for that route
           </p>
         </div>
@@ -193,20 +193,20 @@ export function TripsWorkspace({
   }
 
   return (
-    <div className="flex-1 bg-gray-50 flex flex-col overflow-hidden">
+    <div className="flex-1 bg-muted flex flex-col overflow-hidden">
       {/* Trips Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Trips for {workspace.routeGroups
                 .find(rg => rg.id === workspace.selectedRouteGroup)
                 ?.routes?.find(r => r.id === workspace.selectedRoute)?.name}
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {filteredTrips.length} trip{filteredTrips.length !== 1 ? 's' : ''} 
               {workspace.selectedTrips.length > 0 && (
-                <span className="font-medium text-blue-600">
+                <span className="font-medium text-primary">
                   {' '}• {workspace.selectedTrips.length} selected
                 </span>
               )}
@@ -216,13 +216,13 @@ export function TripsWorkspace({
           <div className="flex items-center space-x-4">
             {/* Filters */}
             <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
+              <Filter className="h-4 w-4 text-muted-foreground" />
               
               {/* Status Filter */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                className="px-3 py-1 border border-border rounded-lg text-sm"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -236,7 +236,7 @@ export function TripsWorkspace({
               <select
                 value={assignmentFilter}
                 onChange={(e) => setAssignmentFilter(e.target.value as 'all' | 'assigned' | 'unassigned')}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                className="px-3 py-1 border border-border rounded-lg text-sm"
               >
                 <option value="all">All Trips</option>
                 <option value="assigned">Assigned</option>
@@ -245,13 +245,13 @@ export function TripsWorkspace({
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center bg-muted rounded-lg p-1">
               <button
                 onClick={() => setViewMode('all-list')}
                 className={`px-3 py-2 rounded-md transition-colors flex items-center space-x-2 text-sm ${
                   viewMode === 'all-list'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-card text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="All Route Trips List"
               >
@@ -262,8 +262,8 @@ export function TripsWorkspace({
                 onClick={() => setViewMode('daily')}
                 className={`px-3 py-2 rounded-md transition-colors flex items-center space-x-2 text-sm ${
                   viewMode === 'daily'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-card text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="Daily Trips View"
               >
@@ -274,8 +274,8 @@ export function TripsWorkspace({
                 onClick={() => setViewMode('weekly')}
                 className={`px-3 py-2 rounded-md transition-colors flex items-center space-x-2 text-sm ${
                   viewMode === 'weekly'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-card text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="Weekly Trips Grid"
               >
@@ -288,7 +288,7 @@ export function TripsWorkspace({
             {workspace.selectedTrips.length > 0 && (
               <button
                 onClick={onClearSelection}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg"
+                className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg"
               >
                 Clear Selection
               </button>
@@ -298,19 +298,19 @@ export function TripsWorkspace({
 
         {/* Date/Week Navigation Bar */}
         {(viewMode === 'daily' || viewMode === 'weekly') && (
-          <div className="bg-white border-b border-gray-200 px-6 py-3">
+          <div className="bg-card border-b border-border px-6 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => viewMode === 'daily' ? navigateDay('prev') : navigateWeek('prev')}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
                 >
-                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </button>
                 
                 <div className="flex items-center space-x-2">
-                  <CalendarDays className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-900">
+                  <CalendarDays className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">
                     {viewMode === 'daily' 
                       ? selectedDate.toLocaleDateString('en-US', { 
                           weekday: 'long', 
@@ -332,9 +332,9 @@ export function TripsWorkspace({
 
                 <button
                   onClick={() => viewMode === 'daily' ? navigateDay('next') : navigateWeek('next')}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
                 >
-                  <ChevronRight className="h-4 w-4 text-gray-600" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
 
@@ -346,11 +346,11 @@ export function TripsWorkspace({
                     startOfWeek.setDate(today.getDate() - today.getDay());
                     return startOfWeek;
                   })}
-                  className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg border border-blue-200"
+                  className="px-3 py-1 text-sm text-primary hover:text-primary hover:bg-primary/10 rounded-lg border border-primary/20"
                 >
                   Today
                 </button>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {filteredTrips.length} trip{filteredTrips.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -363,20 +363,20 @@ export function TripsWorkspace({
       <div className="flex-1 overflow-y-auto p-6">
         {workspace.isLoadingTrips ? (
           <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto mb-4"></div>
-            <div className="text-gray-600">Loading trips...</div>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+            <div className="text-muted-foreground">Loading trips...</div>
           </div>
         ) : workspace.tripsError ? (
           <div className="text-center py-16">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <div className="text-red-600 mb-2">Error Loading Trips</div>
-            <div className="text-gray-600">{workspace.tripsError}</div>
+            <AlertCircle className="h-12 w-12 text-destructive/80 mx-auto mb-4" />
+            <div className="text-destructive mb-2">Error Loading Trips</div>
+            <div className="text-muted-foreground">{workspace.tripsError}</div>
           </div>
         ) : filteredTrips.length === 0 ? (
           <div className="text-center py-16">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <div className="text-gray-600 mb-2">No trips found</div>
-            <div className="text-gray-500">
+            <Calendar className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
+            <div className="text-muted-foreground mb-2">No trips found</div>
+            <div className="text-muted-foreground">
               {workspace.trips.length === 0 
                 ? "No trips have been generated for this route yet"
                 : "No trips match the current filters"
@@ -492,12 +492,12 @@ function DailyTripsView({
         if (periodTrips.length === 0) return null;
 
         return (
-          <div key={period} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center space-x-2">
+          <div key={period} className="bg-card rounded-lg border border-border overflow-hidden">
+            <div className="bg-muted px-4 py-3 border-b border-border">
+              <h3 className="text-sm font-semibold text-foreground flex items-center space-x-2">
                 <span>{periodIcons[period as keyof typeof periodIcons]}</span>
                 <span>{period}</span>
-                <span className="text-gray-500">({periodTrips.length} trips)</span>
+                <span className="text-muted-foreground">({periodTrips.length} trips)</span>
               </h3>
             </div>
             <div className="p-4">
@@ -573,16 +573,16 @@ function WeeklyTripsGrid({
         const isToday = new Date().toDateString() === currentDate.toDateString();
 
         return (
-          <div key={day} className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
-            <div className={`px-3 py-2 border-b border-gray-200 ${isToday ? 'bg-blue-50' : 'bg-gray-50'}`}>
+          <div key={day} className="bg-card rounded-lg border border-border overflow-hidden flex flex-col">
+            <div className={`px-3 py-2 border-b border-border ${isToday ? 'bg-primary/10' : 'bg-muted'}`}>
               <div className="text-center">
-                <div className={`text-xs font-semibold ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
+                <div className={`text-xs font-semibold ${isToday ? 'text-primary' : 'text-foreground'}`}>
                   {dayAbbreviations[index]}
                 </div>
-                <div className={`text-sm ${isToday ? 'text-blue-700' : 'text-gray-600'}`}>
+                <div className={`text-sm ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
                   {currentDate.getDate()}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {dayTrips.length} trip{dayTrips.length !== 1 ? 's' : ''}
                 </div>
               </div>
@@ -594,13 +594,13 @@ function WeeklyTripsGrid({
                   onClick={(e) => onTripSelect(trip.id || '', e.ctrlKey || e.metaKey)}
                   className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
                     isSelected(trip.id || '') 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:border-border'
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {trip.scheduledDepartureTime ? new Date(`2000-01-01T${trip.scheduledDepartureTime}`).toLocaleTimeString([], { 
                           hour: '2-digit', 
                           minute: '2-digit' 
@@ -616,14 +616,14 @@ function WeeklyTripsGrid({
                     </div>
                     
                     <div className="space-y-1">
-                      <div className="text-xs text-gray-600 truncate">
+                      <div className="text-xs text-muted-foreground truncate">
                         {trip.routeName || 'Unknown Route'}
                       </div>
                       
                       <div className={`inline-block px-2 py-1 rounded-full text-xs ${
                         trip.passengerServicePermitId 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-orange-100 text-orange-800'
+                          ? 'bg-success/15 text-success' 
+                          : 'bg-warning/15 text-warning'
                       }`}>
                         {trip.passengerServicePermitId ? 'Assigned' : 'Pending'}
                       </div>
@@ -633,7 +633,7 @@ function WeeklyTripsGrid({
               ))}
               
               {dayTrips.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-muted-foreground/70">
                   <Calendar className="h-6 w-6 mx-auto mb-2" />
                   <div className="text-xs">No trips</div>
                 </div>
@@ -662,17 +662,17 @@ function TripCard({ trip, isSelected, onSelect, viewMode, activeSection, permits
   const getTripStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning/15 text-warning border-warning/20';
       case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success/15 text-success border-success/20';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary/15 text-primary border-primary/20';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/15 text-destructive border-destructive/20';
       case 'delayed':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-warning/15 text-warning border-orange-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -692,21 +692,21 @@ function TripCard({ trip, isSelected, onSelect, viewMode, activeSection, permits
   if (viewMode === 'grid') {
     return (
       <div
-        className={`bg-white border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
+        className={`bg-card border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
           isSelected 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-gray-200 hover:border-gray-300'
+            ? 'border-primary bg-primary/10' 
+            : 'border-border hover:border-border'
         }`}
         onClick={(e) => onSelect(trip.id || '', e.ctrlKey || e.metaKey)}
       >
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-2">
             {isSelected ? (
-              <CheckSquare className="h-4 w-4 text-blue-600" />
+              <CheckSquare className="h-4 w-4 text-primary" />
             ) : (
-              <Square className="h-4 w-4 text-gray-400" />
+              <Square className="h-4 w-4 text-muted-foreground/70" />
             )}
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-sm font-medium text-foreground">
               Trip #{trip.id?.slice(-8)}
             </div>
           </div>
@@ -726,21 +726,21 @@ function TripCard({ trip, isSelected, onSelect, viewMode, activeSection, permits
 
         <div className="space-y-2">
           <div className="flex items-center space-x-2 text-sm">
-            <Calendar className="h-3 w-3 text-gray-400" />
-            <span className="text-gray-600">{formatDate(trip.tripDate)}</span>
+            <Calendar className="h-3 w-3 text-muted-foreground/70" />
+            <span className="text-muted-foreground">{formatDate(trip.tripDate)}</span>
           </div>
           
           <div className="flex items-center space-x-2 text-sm">
-            <Clock className="h-3 w-3 text-gray-400" />
-            <span className="text-gray-600">
+            <Clock className="h-3 w-3 text-muted-foreground/70" />
+            <span className="text-muted-foreground">
               {formatTime(trip.scheduledDepartureTime)} - {formatTime(trip.scheduledArrivalTime)}
             </span>
           </div>
 
           {trip.passengerServicePermitNumber && (
             <div className="flex items-center space-x-2 text-sm">
-              <CheckCircle className="h-3 w-3 text-green-500" />
-              <span className="text-green-600 font-medium">
+              <CheckCircle className="h-3 w-3 text-success/80" />
+              <span className="text-success font-medium">
                 PSP: {trip.passengerServicePermitNumber}
               </span>
             </div>
@@ -748,8 +748,8 @@ function TripCard({ trip, isSelected, onSelect, viewMode, activeSection, permits
 
           {trip.busPlateNumber && (
             <div className="flex items-center space-x-2 text-sm">
-              <Bus className="h-3 w-3 text-gray-400" />
-              <span className="text-gray-600">{trip.busPlateNumber}</span>
+              <Bus className="h-3 w-3 text-muted-foreground/70" />
+              <span className="text-muted-foreground">{trip.busPlateNumber}</span>
             </div>
           )}
         </div>
@@ -759,55 +759,55 @@ function TripCard({ trip, isSelected, onSelect, viewMode, activeSection, permits
 
   return (
     <div
-      className={`bg-white border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm ${
+      className={`bg-card border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm ${
         isSelected 
-          ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-200 hover:border-gray-300'
+          ? 'border-primary bg-primary/10' 
+          : 'border-border hover:border-border'
       }`}
       onClick={(e) => onSelect(trip.id || '', e.ctrlKey || e.metaKey)}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 flex-1">
           {isSelected ? (
-            <CheckSquare className="h-4 w-4 text-blue-600" />
+            <CheckSquare className="h-4 w-4 text-primary" />
           ) : (
-            <Square className="h-4 w-4 text-gray-400" />
+            <Square className="h-4 w-4 text-muted-foreground/70" />
           )}
           
           <div className="flex-1 grid grid-cols-5 gap-4 items-center">
             <div>
-              <div className="text-sm font-medium text-gray-900">
+              <div className="text-sm font-medium text-foreground">
                 #{trip.id?.slice(-8)}
               </div>
-              <div className="text-xs text-gray-500">{formatDate(trip.tripDate)}</div>
+              <div className="text-xs text-muted-foreground">{formatDate(trip.tripDate)}</div>
             </div>
             
             <div>
-              <div className="text-sm text-gray-900">
+              <div className="text-sm text-foreground">
                 {formatTime(trip.scheduledDepartureTime)}
               </div>
-              <div className="text-xs text-gray-500">Departure</div>
+              <div className="text-xs text-muted-foreground">Departure</div>
             </div>
             
             <div>
-              <div className="text-sm text-gray-900">
+              <div className="text-sm text-foreground">
                 {formatTime(trip.scheduledArrivalTime)}
               </div>
-              <div className="text-xs text-gray-500">Arrival</div>
+              <div className="text-xs text-muted-foreground">Arrival</div>
             </div>
             
             <div>
               {trip.passengerServicePermitNumber ? (
                 <div>
-                  <div className="text-sm text-green-600 font-medium">
+                  <div className="text-sm text-success font-medium">
                     {trip.passengerServicePermitNumber}
                   </div>
-                  <div className="text-xs text-gray-500">Assigned PSP</div>
+                  <div className="text-xs text-muted-foreground">Assigned PSP</div>
                 </div>
               ) : (
                 <div>
-                  <div className="text-sm text-gray-400">Unassigned</div>
-                  <div className="text-xs text-gray-400">No PSP</div>
+                  <div className="text-sm text-muted-foreground/70">Unassigned</div>
+                  <div className="text-xs text-muted-foreground/70">No PSP</div>
                 </div>
               )}
             </div>

@@ -12,10 +12,10 @@ const ICON_MAP: Record<StaffStatusItem['icon'], React.ReactNode> = {
 };
 
 const BG: Record<string, string> = {
-  '#3b82f6': 'bg-blue-50 text-blue-600 border-blue-100',
-  '#14b8a6': 'bg-teal-50 text-teal-600 border-teal-100',
-  '#a855f7': 'bg-purple-50 text-purple-600 border-purple-100',
-  '#f59e0b': 'bg-amber-50 text-amber-600 border-amber-100',
+  '#3b82f6': 'bg-primary/10 text-primary border-primary/10',
+  '#14b8a6': 'bg-primary/10 text-teal-600 border-teal-100',
+  '#a855f7': 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-600))] border-purple-100',
+  '#f59e0b': 'bg-warning/10 text-warning border-warning/10',
 };
 
 interface OperatorDashboardStaffStatusProps {
@@ -51,7 +51,7 @@ export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: O
         <h3 className="text-sm font-semibold text-foreground">Staff Status</h3>
         <Link
           href="/operator/staff-management"
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           Manage
           <ExternalLink className="h-3 w-3" />
@@ -67,7 +67,7 @@ export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: O
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full bg-green-500 transition-all duration-500"
+              className="h-full rounded-full bg-success transition-all duration-500"
               style={{ width: `${onDutyPct}%` }}
             />
           </div>

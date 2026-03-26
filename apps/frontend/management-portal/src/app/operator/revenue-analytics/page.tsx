@@ -239,7 +239,7 @@ export default function RevenueAnalyticsPage() {
         key: 'date',
         label: labels[dateFilter] ?? dateFilter,
         onRemove: () => setDateFilter('all'),
-        colorClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        colorClass: 'bg-primary/10 text-primary border-primary/20',
       });
     }
 
@@ -249,7 +249,7 @@ export default function RevenueAnalyticsPage() {
         key: 'bus',
         label: bus?.label ?? busFilter,
         onRemove: () => setBusFilter('all'),
-        colorClass: 'bg-purple-50 text-purple-700 border-purple-200',
+        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
         icon: <Bus className="h-3 w-3 opacity-70" />,
       });
     }
@@ -260,7 +260,7 @@ export default function RevenueAnalyticsPage() {
         key: 'route',
         label: route?.label ?? routeFilter,
         onRemove: () => setRouteFilter('all'),
-        colorClass: 'bg-teal-50 text-teal-700 border-teal-200',
+        colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
         icon: <MapPin className="h-3 w-3 opacity-70" />,
       });
     }
@@ -271,7 +271,7 @@ export default function RevenueAnalyticsPage() {
         key: 'conductor',
         label: cond?.label ?? conductorFilter,
         onRemove: () => setConductorFilter('all'),
-        colorClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        colorClass: 'bg-warning/10 text-warning border-warning/20',
         icon: <Users className="h-3 w-3 opacity-70" />,
       });
     }
@@ -282,7 +282,7 @@ export default function RevenueAnalyticsPage() {
         key: 'payment',
         label: pm?.label ?? paymentFilter,
         onRemove: () => setPaymentFilter('all'),
-        colorClass: 'bg-green-50 text-green-700 border-green-200',
+        colorClass: 'bg-success/10 text-success border-success/20',
         icon: <CreditCard className="h-3 w-3 opacity-70" />,
       });
     }
@@ -293,7 +293,7 @@ export default function RevenueAnalyticsPage() {
         key: 'status',
         label: st?.label ?? statusFilter,
         onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-red-50 text-red-700 border-red-200',
+        colorClass: 'bg-destructive/10 text-destructive border-destructive/20',
       });
     }
 
@@ -344,7 +344,7 @@ export default function RevenueAnalyticsPage() {
                   { value: '30d', label: 'Last 30 Days' },
                 ]}
                 allLabel="All Dates"
-                activeColorClass="bg-blue-50 border-blue-300 text-blue-800"
+                activeColorClass="bg-primary/10 border-primary/30 text-primary"
               />
               <SelectFilter
                 value={busFilter}

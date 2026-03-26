@@ -323,9 +323,9 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
             content: `
               <div class="p-2">
                 <h4 class="font-semibold text-sm">${stop.stopName || 'Unknown Stop'}</h4>
-                <p class="text-xs text-gray-600">Stop ${index + 1} of ${stops.length}</p>
-                <p class="text-xs text-gray-600">Distance: ${(stop.distanceFromStartKm || 0).toFixed(1)} km</p>
-                <p class="text-xs text-gray-600">Coordinates: ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}</p>
+                <p class="text-xs text-muted-foreground">Stop ${index + 1} of ${stops.length}</p>
+                <p class="text-xs text-muted-foreground">Distance: ${(stop.distanceFromStartKm || 0).toFixed(1)} km</p>
+                <p class="text-xs text-muted-foreground">Coordinates: ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}</p>
               </div>
             `
           });
@@ -451,13 +451,13 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
 
   if (mapError) {
     return (
-      <div className={`bg-gray-50 rounded-lg p-8 text-center ${className}`}>
-        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Map Error</h3>
-        <p className="text-gray-600 mb-4">{mapError}</p>
+      <div className={`bg-muted rounded-lg p-8 text-center ${className}`}>
+        <AlertCircle className="w-12 h-12 text-destructive/70 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">Map Error</h3>
+        <p className="text-muted-foreground mb-4">{mapError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary transition-colors"
         >
           <RotateCcw className="w-4 h-4" />
           Retry
@@ -475,15 +475,15 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
       <div className="relative">
         <div 
           ref={mapRef} 
-          className="w-full h-96 rounded-lg bg-gray-200 border border-gray-300"
+          className="w-full h-96 rounded-lg bg-secondary border border-border"
           style={{ minHeight: '720px' }}
         />
         
         {(isLoading || !isMapInitialized) && (
-          <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="absolute inset-0 bg-muted rounded-lg flex items-center justify-center">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading route map...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading route map...</p>
             </div>
           </div>
         )}
@@ -493,24 +493,24 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
           <div className="absolute top-2 right-2 flex flex-col gap-1">
             <button
               onClick={resetMapView}
-              className="bg-white shadow-md rounded p-2 hover:bg-gray-50 transition-colors"
+              className="bg-card shadow-md rounded p-2 hover:bg-muted transition-colors"
               title="Reset view"
             >
-              <RotateCcw className="w-4 h-4 text-gray-600" />
+              <RotateCcw className="w-4 h-4 text-muted-foreground" />
             </button>
             <button
               onClick={() => setIsFullscreenOpen(true)}
-              className="bg-white shadow-md rounded p-2 hover:bg-gray-50 transition-colors"
+              className="bg-card shadow-md rounded p-2 hover:bg-muted transition-colors"
               title="View fullscreen"
             >
-              <Maximize className="w-4 h-4 text-gray-600" />
+              <Maximize className="w-4 h-4 text-muted-foreground" />
             </button>
             <button
               onClick={openInFullMaps}
-              className="bg-white shadow-md rounded p-2 hover:bg-gray-50 transition-colors"
+              className="bg-card shadow-md rounded p-2 hover:bg-muted transition-colors"
               title="Open in Google Maps"
             >
-              <ExternalLink className="w-4 h-4 text-gray-600" />
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
         )}
@@ -537,21 +537,21 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
       </div>
 
       {/* Legend */}
-      <div className={`${route.direction === 'INBOUND' ? 'bg-purple-50' : 'bg-blue-50'} rounded-lg p-4`}>
+      <div className={`${route.direction === 'INBOUND' ? 'bg-[hsl(var(--purple-50))]' : 'bg-primary/10'} rounded-lg p-4`}>
         <div className="flex items-center justify-between">
           <div className="font-medium text-sm">Legend</div>
           
-          <div className={`flex items-center gap-2 text-sm ${route.direction === 'INBOUND' ? 'text-purple-700' : 'text-blue-700'}`}>
+          <div className={`flex items-center gap-2 text-sm ${route.direction === 'INBOUND' ? 'text-[hsl(var(--purple-700))]' : 'text-primary'}`}>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <div className="w-3 h-3 rounded-full bg-success"></div>
               Start
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="w-3 h-3 rounded-full bg-primary/80"></div>
               Stop
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-destructive"></div>
               End
             </div>
           </div>

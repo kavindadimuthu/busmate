@@ -16,32 +16,33 @@ import {
   Eye,
   MoreHorizontal,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Badge,
+  Button,
+  Input,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@busmate/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@busmate/ui';
 import { Trip, TripStatus } from '@/data/timekeeper/types';
 
 interface TripsTableProps {
@@ -58,28 +59,28 @@ function getStatusBadge(status: TripStatus) {
   switch (status) {
     case 'scheduled':
       return (
-        <Badge className="bg-gray-100 text-gray-800 border-gray-300">
+        <Badge className="bg-muted text-foreground border-border">
           <Clock className="h-3 w-3 mr-1" />
           Scheduled
         </Badge>
       );
     case 'boarding':
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-300">
+        <Badge className="bg-success/15 text-success border-success/30">
           <CheckCircle className="h-3 w-3 mr-1" />
           Boarding
         </Badge>
       );
     case 'departed':
       return (
-        <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+        <Badge className="bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-800))] border-purple-300">
           <ArrowRight className="h-3 w-3 mr-1" />
           Departed
         </Badge>
       );
     case 'in_transit':
       return (
-        <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+        <Badge className="bg-primary/15 text-primary border-primary/30">
           <Bus className="h-3 w-3 mr-1" />
           In Transit
         </Badge>
@@ -93,21 +94,21 @@ function getStatusBadge(status: TripStatus) {
       );
     case 'completed':
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-300">
+        <Badge className="bg-success/15 text-success border-success/30">
           <CheckCircle className="h-3 w-3 mr-1" />
           Completed
         </Badge>
       );
     case 'delayed':
       return (
-        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+        <Badge className="bg-warning/15 text-warning border-warning/30">
           <AlertCircle className="h-3 w-3 mr-1" />
           Delayed
         </Badge>
       );
     case 'cancelled':
       return (
-        <Badge className="bg-red-100 text-red-800 border-red-300">
+        <Badge className="bg-destructive/15 text-destructive border-destructive/30">
           <XCircle className="h-3 w-3 mr-1" />
           Cancelled
         </Badge>
@@ -153,14 +154,14 @@ export function TripsTable({
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Bus className="h-5 w-5 text-blue-600" />
+            <Bus className="h-5 w-5 text-primary" />
             Trip Schedule
           </CardTitle>
           
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
               <Input
                 placeholder="Search trips..."
                 value={searchTerm}
@@ -223,7 +224,7 @@ export function TripsTable({
             <TableBody>
               {filteredTrips.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No trips found
                   </TableCell>
                 </TableRow>
@@ -235,16 +236,16 @@ export function TripsTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Route className="h-3 w-3 text-gray-500" />
+                        <Route className="h-3 w-3 text-muted-foreground" />
                         <span className="font-medium">{trip.routeNumber || ''}</span>
-                        <span className="text-gray-500 text-sm max-w-[120px] truncate">
+                        <span className="text-muted-foreground text-sm max-w-[120px] truncate">
                           {trip.routeName}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Bus className="h-3 w-3 text-gray-500" />
+                        <Bus className="h-3 w-3 text-muted-foreground" />
                         <span>{trip.busNumber}</span>
                       </div>
                     </TableCell>
@@ -252,11 +253,11 @@ export function TripsTable({
                       <div className="text-sm">
                         {trip.driverName ? (
                           <div className="flex items-center gap-1">
-                            <User className="h-3 w-3 text-gray-400" />
+                            <User className="h-3 w-3 text-muted-foreground/70" />
                             <span>{trip.driverName}</span>
                           </div>
                         ) : (
-                          <span className="text-gray-400">Not assigned</span>
+                          <span className="text-muted-foreground/70">Not assigned</span>
                         )}
                       </div>
                     </TableCell>
@@ -267,7 +268,7 @@ export function TripsTable({
                       {trip.actualDepartureTime ? (
                         <span className="font-mono text-sm">{trip.actualDepartureTime}</span>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-muted-foreground/70">-</span>
                       )}
                     </TableCell>
                     <TableCell>{getStatusBadge(trip.status)}</TableCell>
@@ -302,14 +303,14 @@ export function TripsTable({
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => onUpdateStatus(trip.id, 'delayed')}
-                                className="text-yellow-600"
+                                className="text-warning"
                               >
                                 <AlertCircle className="h-4 w-4 mr-2" />
                                 Mark as Delayed
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => onUpdateStatus(trip.id, 'cancelled')}
-                                className="text-red-600"
+                                className="text-destructive"
                               >
                                 <XCircle className="h-4 w-4 mr-2" />
                                 Cancel Trip

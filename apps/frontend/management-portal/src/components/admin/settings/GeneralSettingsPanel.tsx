@@ -1,18 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
+  Input,
+  Label,
+  Switch,
+  Button,
+  Textarea,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@busmate/ui';
 import {
   Settings,
   Globe,
@@ -47,13 +47,13 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="px-6 py-6 border-b border-gray-100 last:border-0">
+    <div className="px-6 py-6 border-b border-border/50 last:border-0">
       <div className="flex items-center gap-2 mb-1">
         {icon}
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h3>
       </div>
       {description && (
-        <p className="text-sm text-gray-500 mb-5">{description}</p>
+        <p className="text-sm text-muted-foreground mb-5">{description}</p>
       )}
       <div className="mt-4">{children}</div>
     </div>
@@ -81,7 +81,7 @@ function ToggleRow({
         <Label htmlFor={id} className="text-base font-medium">
           {label}
         </Label>
-        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onChange} />
     </div>
@@ -144,7 +144,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
   if (!settings) {
     return (
       <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
       </div>
     );
   }
@@ -153,7 +153,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
     <div>
       {/* ── Site Information ─────────────────────────── */}
         <Section
-          icon={<Globe className="h-5 w-5 text-blue-600" />}
+          icon={<Globe className="h-5 w-5 text-primary" />}
           title="Site Information"
           description="Basic details about your BusMate instance"
         >
@@ -195,7 +195,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
 
         {/* ── Contact Information ─────────────────────── */}
         <Section
-          icon={<Mail className="h-5 w-5 text-green-600" />}
+          icon={<Mail className="h-5 w-5 text-success" />}
           title="Contact Information"
           description="Primary contact details displayed on the platform"
         >
@@ -256,7 +256,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
 
         {/* ── Regional Settings ───────────────────────── */}
         <Section
-          icon={<Clock className="h-5 w-5 text-purple-600" />}
+          icon={<Clock className="h-5 w-5 text-[hsl(var(--purple-600))]" />}
           title="Regional Settings"
           description="Configure locale and timezone preferences"
         >
@@ -330,7 +330,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
 
         {/* ── Security Settings ───────────────────────── */}
         <Section
-          icon={<Shield className="h-5 w-5 text-red-600" />}
+          icon={<Shield className="h-5 w-5 text-destructive" />}
           title="Security Settings"
           description="Authentication and access control preferences"
         >
@@ -392,7 +392,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
 
         {/* ── Notification Preferences ────────────────── */}
         <Section
-          icon={<Lock className="h-5 w-5 text-amber-600" />}
+          icon={<Lock className="h-5 w-5 text-warning" />}
           title="Notification Preferences"
           description="Choose how system alerts are delivered"
         >
@@ -415,16 +415,16 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
         </Section>
 
       {/* ── Action Bar ──────────────────────────────── */}
-      <div className="px-6 py-4 flex items-center justify-between bg-gray-50/50 rounded-b-xl border-t border-gray-100">
+      <div className="px-6 py-4 flex items-center justify-between bg-muted/50 rounded-b-xl border-t border-border/50">
         <div className="flex items-center gap-2 text-sm">
           {saved && (
-            <span className="flex items-center gap-1 text-green-600">
+            <span className="flex items-center gap-1 text-success">
               <CheckCircle className="h-4 w-4" />
               Settings saved
             </span>
           )}
           {isDirty && !saved && (
-            <span className="text-amber-600">You have unsaved changes</span>
+            <span className="text-warning">You have unsaved changes</span>
           )}
         </div>
         <div className="flex gap-3">
@@ -439,7 +439,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
           <Button
             onClick={handleSave}
             disabled={!isDirty || saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-primary text-white"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -35,26 +35,26 @@ interface NotificationsTableProps {
 // ── Style helpers ─────────────────────────────────────────────────
 
 const typeStyles: Record<string, { bg: string; text: string; border: string; label: string; Icon: React.ComponentType<{ className?: string }> }> = {
-    info:        { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    label: 'Info',        Icon: Info },
-    warning:     { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   label: 'Warning',     Icon: AlertTriangle },
-    critical:    { bg: 'bg-red-50',     text: 'text-red-600',     border: 'border-red-200',     label: 'Critical',    Icon: XCircle },
-    success:     { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Success',     Icon: CheckCircle },
-    maintenance: { bg: 'bg-purple-50',  text: 'text-purple-700',  border: 'border-purple-200',  label: 'Maintenance', Icon: Wrench },
-    error:       { bg: 'bg-red-50',     text: 'text-red-600',     border: 'border-red-200',     label: 'Error',       Icon: XCircle },
+    info:        { bg: 'bg-primary/10',    text: 'text-primary',    border: 'border-primary/20',    label: 'Info',        Icon: Info },
+    warning:     { bg: 'bg-warning/10',   text: 'text-warning',   border: 'border-warning/20',   label: 'Warning',     Icon: AlertTriangle },
+    critical:    { bg: 'bg-destructive/10',     text: 'text-destructive',     border: 'border-destructive/20',     label: 'Critical',    Icon: XCircle },
+    success:     { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20', label: 'Success',     Icon: CheckCircle },
+    maintenance: { bg: 'bg-[hsl(var(--purple-50))]',  text: 'text-[hsl(var(--purple-700))]',  border: 'border-[hsl(var(--purple-200))]',  label: 'Maintenance', Icon: Wrench },
+    error:       { bg: 'bg-destructive/10',     text: 'text-destructive',     border: 'border-destructive/20',     label: 'Error',       Icon: XCircle },
 };
 
 const priorityStyles: Record<string, { bg: string; text: string; border: string }> = {
-    low:      { bg: 'bg-gray-100',    text: 'text-gray-600',    border: 'border-gray-200' },
-    medium:   { bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-200' },
-    high:     { bg: 'bg-orange-50',   text: 'text-orange-700',  border: 'border-orange-200' },
-    critical: { bg: 'bg-red-50',      text: 'text-red-600',     border: 'border-red-200' },
+    low:      { bg: 'bg-muted',    text: 'text-muted-foreground',    border: 'border-border' },
+    medium:   { bg: 'bg-primary/10',     text: 'text-primary',    border: 'border-primary/20' },
+    high:     { bg: 'bg-warning/10',   text: 'text-orange-700',  border: 'border-orange-200' },
+    critical: { bg: 'bg-destructive/10',      text: 'text-destructive',     border: 'border-destructive/20' },
 };
 
 const statusMeta: Record<string, { bg: string; text: string; border: string; label: string }> = {
-    sent:      { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Sent' },
-    scheduled: { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    label: 'Scheduled' },
-    draft:     { bg: 'bg-gray-100',   text: 'text-gray-600',    border: 'border-gray-200',    label: 'Draft' },
-    failed:    { bg: 'bg-red-50',     text: 'text-red-600',     border: 'border-red-200',     label: 'Failed' },
+    sent:      { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20', label: 'Sent' },
+    scheduled: { bg: 'bg-primary/10',    text: 'text-primary',    border: 'border-primary/20',    label: 'Scheduled' },
+    draft:     { bg: 'bg-muted',   text: 'text-muted-foreground',    border: 'border-border',    label: 'Draft' },
+    failed:    { bg: 'bg-destructive/10',     text: 'text-destructive',     border: 'border-destructive/20',     label: 'Failed' },
 };
 
 const channelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -127,10 +127,10 @@ export function NotificationsTable({
                             <typeSt.Icon className={`w-4 h-4 ${typeSt.text}`} />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate leading-tight">
+                            <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate leading-tight">
                                 {n.title}
                             </p>
-                            <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">{n.body}</p>
+                            <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5">{n.body}</p>
                         </div>
                     </button>
                 );
@@ -177,14 +177,14 @@ export function NotificationsTable({
                     <button
                         onClick={() => onView(n.id)}
                         title="View details"
-                        className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+                        className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
                     >
                         <Eye className="h-3.5 w-3.5" />
                     </button>
                     <button
                         onClick={() => onDelete(n)}
                         title="Delete"
-                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-100"
+                        className="p-1.5 rounded-lg text-destructive/80 hover:bg-destructive/10 transition-colors duration-100"
                     >
                         <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -202,7 +202,7 @@ export function NotificationsTable({
                     header: 'Sender',
                     cellClassName: 'whitespace-nowrap',
                     render: (n) => (
-                        <span className="text-sm text-gray-700">{n.senderName || '—'}</span>
+                        <span className="text-sm text-foreground/80">{n.senderName || '—'}</span>
                     ),
                 },
                 {
@@ -210,10 +210,10 @@ export function NotificationsTable({
                     header: 'Channel',
                     cellClassName: 'whitespace-nowrap',
                     render: (n) => {
-                        if (!n.channel) return <span className="text-[11px] text-gray-300 italic">—</span>;
+                        if (!n.channel) return <span className="text-[11px] text-muted-foreground/50 italic">—</span>;
                         const ChannelIcon = channelIcons[n.channel] ?? Bell;
                         return (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-200 capitalize">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border capitalize">
                                 <ChannelIcon className="h-3.5 w-3.5" />
                                 {n.channel}
                             </span>
@@ -226,7 +226,7 @@ export function NotificationsTable({
                     sortable: true,
                     cellClassName: 'whitespace-nowrap',
                     render: (n) => (
-                        <span className="text-xs text-gray-500 tabular-nums">
+                        <span className="text-xs text-muted-foreground tabular-nums">
                             {formatDate(n.sentAt ?? n.createdAt)}
                         </span>
                     ),
@@ -245,7 +245,7 @@ export function NotificationsTable({
                 header: 'Audience',
                 cellClassName: 'whitespace-nowrap',
                 render: (n) => (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border">
                         <Users className="h-3.5 w-3.5" />
                         {audienceLabels[n.targetAudience] ?? n.targetAudience}
                     </span>
@@ -271,7 +271,7 @@ export function NotificationsTable({
                 sortable: true,
                 cellClassName: 'whitespace-nowrap',
                 render: (n) => (
-                    <span className="text-xs text-gray-500 tabular-nums">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                         {formatDate(n.sentAt)}
                     </span>
                 ),
@@ -282,8 +282,8 @@ export function NotificationsTable({
                 cellClassName: 'whitespace-nowrap',
                 render: (n) => (
                     <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-semibold text-gray-900">{readRatePercent(n)}</span>
-                        <span className="text-[11px] text-gray-400 tabular-nums">{n.readCount.toLocaleString()} / {n.totalRecipients.toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-foreground">{readRatePercent(n)}</span>
+                        <span className="text-[11px] text-muted-foreground/70 tabular-nums">{n.readCount.toLocaleString()} / {n.totalRecipients.toLocaleString()}</span>
                     </div>
                 ),
             },
@@ -302,11 +302,11 @@ export function NotificationsTable({
             showRefreshing
             emptyState={
                 <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-                        <Bell className="w-7 h-7 text-blue-400" />
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                        <Bell className="w-7 h-7 text-primary/70" />
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">No notifications found</h3>
-                    <p className="text-sm text-gray-500 max-w-xs">
+                    <h3 className="text-base font-semibold text-foreground mb-1">No notifications found</h3>
+                    <p className="text-sm text-muted-foreground max-w-xs">
                         Try adjusting your search or filters to find what you&apos;re looking for.
                     </p>
                 </div>

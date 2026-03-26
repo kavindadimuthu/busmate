@@ -55,15 +55,15 @@ export default function NewAmendmentPage() {
     <div className="space-y-6">
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-red-800">Error Creating Amendment</h3>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <h3 className="text-sm font-medium text-destructive">Error Creating Amendment</h3>
+              <p className="text-sm text-destructive mt-1">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+                className="text-sm text-destructive hover:text-destructive underline mt-2"
               >
                 Dismiss
               </button>
@@ -73,10 +73,10 @@ export default function NewAmendmentPage() {
       )}
 
       {/* Form */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">New Fare Structure Amendment</h2>
-          <p className="text-sm text-gray-600 mt-1">
+      <div className="bg-card rounded-lg border border-border shadow-sm">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">New Fare Structure Amendment</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Define a new fare structure by specifying the base rates and per-stage increments for each permit type.
             The system will generate the complete fare matrix automatically.
           </p>
@@ -92,11 +92,11 @@ export default function NewAmendmentPage() {
       </div>
 
       {/* Guidelines */}
-      <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Guidelines</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+      <div className="bg-muted rounded-lg border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Guidelines</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground">
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Fare Calculation</h4>
+            <h4 className="font-medium text-foreground mb-2">Fare Calculation</h4>
             <ul className="space-y-1">
               <li>• Fare = Base Rate + (Stage - 1) × Increment Rate</li>
               <li>• All fares are rounded to the nearest Rs. 0.50</li>
@@ -105,7 +105,7 @@ export default function NewAmendmentPage() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Permit Types</h4>
+            <h4 className="font-medium text-foreground mb-2">Permit Types</h4>
             <ul className="space-y-1">
               <li>• <strong>Normal</strong> — Standard bus service</li>
               <li>• <strong>Semi Luxury</strong> — Enhanced comfort service</li>
@@ -114,7 +114,7 @@ export default function NewAmendmentPage() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Amendment Process</h4>
+            <h4 className="font-medium text-foreground mb-2">Amendment Process</h4>
             <ul className="space-y-1">
               <li>• New amendments are created as drafts</li>
               <li>• Require gazette notification before activation</li>
@@ -123,7 +123,7 @@ export default function NewAmendmentPage() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Reference Format</h4>
+            <h4 className="font-medium text-foreground mb-2">Reference Format</h4>
             <ul className="space-y-1">
               <li>• Use format: NTC/FARE/YYYY/NNN</li>
               <li>• YYYY = Year, NNN = Sequential number</li>

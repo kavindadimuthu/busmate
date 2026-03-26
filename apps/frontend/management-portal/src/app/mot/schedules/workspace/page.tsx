@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSetPageMetadata } from '@/context/PageContext';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
 import ScheduleFormMode from '@/components/mot/schedules/workspace/form-mode/ScheduleFormMode';
 import ScheduleTextualMode from '@/components/mot/schedules/workspace/textual-mode/ScheduleTextualMode';
@@ -106,15 +106,15 @@ function ScheduleWorkspaceContent() {
     };
 
     return (
-            <div className="min-h-screen bg-slate-50">
+            <div className="min-h-screen bg-muted">
                 {/* Tab Bar */}
-                <div className="flex bg-white border-b border-slate-200 px-4 py-2 z-10 justify-between items-center shadow-sm">
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                <div className="flex bg-card border-b border-border px-4 py-2 z-10 justify-between items-center shadow-sm">
+                    <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('form')}
                             className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'form'
-                                ? 'bg-blue-700 text-white shadow-sm'
-                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                                 }`}
                         >
                             Form Mode
@@ -122,8 +122,8 @@ function ScheduleWorkspaceContent() {
                         <button
                             onClick={() => setActiveTab('textual')}
                             className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'textual'
-                                ? 'bg-blue-700 text-white shadow-sm'
-                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                                 }`}
                         >
                             Textual Mode
@@ -142,13 +142,13 @@ function ScheduleWorkspaceContent() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleReset}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 rounded-lg border border-slate-200"
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted rounded-lg border border-border"
                         >
                             Reset
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="px-5 py-2 text-sm font-medium text-white transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm"
+                            className="px-5 py-2 text-sm font-medium text-white transition-all duration-200 bg-success hover:bg-success rounded-lg shadow-sm"
                         >
                             Submit
                         </button>
@@ -166,7 +166,7 @@ function ScheduleWorkspaceContent() {
 export default function ScheduleWorkspacePage() {
     return (
         <ScheduleWorkspaceProvider>
-            <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>}>
+            <Suspense fallback={<div className="min-h-screen bg-muted flex items-center justify-center">Loading...</div>}>
                 <ScheduleWorkspaceContent />
             </Suspense>
             <Toaster />

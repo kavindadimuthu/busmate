@@ -160,27 +160,27 @@ export function CSVDataTable({
 
   const getCellClassName = useCallback((rowIndex: number, column: string) => {
     const severity = getCellErrorSeverity(rowIndex, column);
-    const baseClasses = 'px-3 py-2 text-sm border-r border-gray-200 last:border-r-0 relative';
+    const baseClasses = 'px-3 py-2 text-sm border-r border-border last:border-r-0 relative';
     
     if (severity === 'error') {
-      return `${baseClasses} bg-red-50 border-red-300 border-2 text-red-900`;
+      return `${baseClasses} bg-destructive/10 border-destructive/30 border-2 text-destructive`;
     } else if (severity === 'warning') {
-      return `${baseClasses} bg-yellow-50 border-yellow-300 border-2 text-yellow-900`;
+      return `${baseClasses} bg-warning/10 border-warning/30 border-2 text-warning`;
     }
     
-    return `${baseClasses} hover:bg-gray-50`;
+    return `${baseClasses} hover:bg-muted`;
   }, [getCellErrorSeverity]);
 
   if (data.rows.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+      <div className="text-center py-12 bg-muted rounded-lg border-2 border-dashed border-border">
         <div className="space-y-3">
-          <div className="w-12 h-12 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
-            <Edit3 className="w-6 h-6 text-gray-500" />
+          <div className="w-12 h-12 mx-auto bg-secondary rounded-lg flex items-center justify-center">
+            <Edit3 className="w-6 h-6 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-gray-900">No data to display</h3>
-            <p className="text-gray-600">Upload a CSV file or paste CSV content to get started.</p>
+            <h3 className="text-lg font-medium text-foreground">No data to display</h3>
+            <p className="text-muted-foreground">Upload a CSV file or paste CSV content to get started.</p>
           </div>
         </div>
       </div>
@@ -190,13 +190,13 @@ export function CSVDataTable({
   return (
     <div className="space-y-4">
       {/* Data Info */}
-      <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-4">
           <span>{data.rows.length} rows × {data.headers.length} columns</span>
           {validationErrors.length > 0 && (
             <div className="flex items-center gap-1">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <span className="text-red-600">{validationErrors.length} validation issues</span>
+              <AlertTriangle className="w-4 h-4 text-destructive/80" />
+              <span className="text-destructive">{validationErrors.length} validation issues</span>
             </div>
           )}
         </div>
@@ -204,7 +204,7 @@ export function CSVDataTable({
         {!readOnly && allowAddRows && data.rows.length < maxRows && (
           <button
             onClick={addRow}
-            className="flex items-center gap-1 px-3 py-1 text-blue-600 hover:bg-blue-50 rounded border border-blue-300 hover:border-blue-400 transition-colors"
+            className="flex items-center gap-1 px-3 py-1 text-primary hover:bg-primary/10 rounded border border-primary/30 hover:border-primary/40 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Row
@@ -213,26 +213,26 @@ export function CSVDataTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
+      <div className="overflow-auto max-h-96 border border-border rounded-lg">
         <table className="min-w-full">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+          <thead className="bg-muted sticky top-0 z-10">
             <tr>
               {!readOnly && allowDeleteRows && (
-                <th className="w-8 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                <th className="w-8 px-2 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
                   #
                 </th>
               )}
               {data.headers.map((header, index) => (
                 <th
                   key={header}
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 last:border-r-0 min-w-32"
+                  className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border last:border-r-0 min-w-32"
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate">{header}</span>
                     {!readOnly && allowEditHeaders && (
                       <button
                         onClick={() => deleteColumn(header)}
-                        className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="ml-2 text-muted-foreground/70 hover:text-destructive/80 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Delete column"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -243,14 +243,14 @@ export function CSVDataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody className="bg-card divide-y divide-gray-100">
             {data.rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="group hover:bg-gray-25">
+              <tr key={rowIndex} className="group hover:bg-muted/50">
                 {!readOnly && allowDeleteRows && (
-                  <td className="w-8 px-2 py-2 text-center border-r border-gray-200">
+                  <td className="w-8 px-2 py-2 text-center border-r border-border">
                     <button
                       onClick={() => deleteRow(rowIndex)}
-                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-muted-foreground/70 hover:text-destructive/80 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Delete row"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -270,7 +270,7 @@ export function CSVDataTable({
                             type="text"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            className="flex-1 px-1 py-1 text-sm border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="flex-1 px-1 py-1 text-sm border border-primary/30 rounded focus:ring-1 focus:ring-blue-500 focus:border-primary"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') saveEdit();
                               if (e.key === 'Escape') cancelEditing();
@@ -279,13 +279,13 @@ export function CSVDataTable({
                           />
                           <button
                             onClick={saveEdit}
-                            className="text-green-600 hover:text-green-800"
+                            className="text-success hover:text-success"
                           >
                             <Check className="w-3 h-3" />
                           </button>
                           <button
                             onClick={cancelEditing}
-                            className="text-red-600 hover:text-red-800"
+                            className="text-destructive hover:text-destructive"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -293,38 +293,38 @@ export function CSVDataTable({
                       ) : (
                         <div className="group relative">
                           <div
-                            className={`cursor-text min-h-5 ${!readOnly ? 'hover:bg-gray-100 rounded px-1 py-1' : ''} ${cellErrors.length > 0 ? 'pr-6' : ''}`}
+                            className={`cursor-text min-h-5 ${!readOnly ? 'hover:bg-muted rounded px-1 py-1' : ''} ${cellErrors.length > 0 ? 'pr-6' : ''}`}
                             onClick={() => startEditing(rowIndex, header, cellValue)}
                           >
                             <span className="truncate block">
-                              {formatCellValue(cellValue) || <span className="text-gray-400 italic">empty</span>}
+                              {formatCellValue(cellValue) || <span className="text-muted-foreground/70 italic">empty</span>}
                             </span>
                           </div>
                           
                           {cellErrors.length > 0 && (
                             <div className="absolute right-1 top-0 bottom-0 flex items-center group/tooltip">
                               <div className="flex items-center gap-1">
-                                <AlertTriangle className={`w-4 h-4 ${cellErrors.some(e => e.severity === 'error') ? 'text-red-600' : 'text-yellow-600'}`} />
-                                <span className={`text-xs font-bold ${cellErrors.some(e => e.severity === 'error') ? 'text-red-600' : 'text-yellow-600'}`}>
+                                <AlertTriangle className={`w-4 h-4 ${cellErrors.some(e => e.severity === 'error') ? 'text-destructive' : 'text-warning'}`} />
+                                <span className={`text-xs font-bold ${cellErrors.some(e => e.severity === 'error') ? 'text-destructive' : 'text-warning'}`}>
                                   {cellErrors.length}
                                 </span>
                               </div>
-                              <div className="absolute right-0 top-0 bg-white border-2 border-gray-300 shadow-lg text-xs p-3 rounded-lg z-30 w-80 max-w-80 hidden group-hover/tooltip:block">
+                              <div className="absolute right-0 top-0 bg-card border-2 border-border shadow-lg text-xs p-3 rounded-lg z-30 w-80 max-w-80 hidden group-hover/tooltip:block">
                                 <div className="space-y-2">
-                                  <div className="font-semibold text-gray-900 border-b border-gray-200 pb-1">
+                                  <div className="font-semibold text-foreground border-b border-border pb-1">
                                     Cell Issues ({cellErrors.length})
                                   </div>
                                   {cellErrors.map((error, idx) => (
                                     <div key={idx} className={`p-2 rounded border-l-4 ${
                                       error.severity === 'error' 
-                                        ? 'bg-red-50 border-red-400 text-red-800' 
-                                        : 'bg-yellow-50 border-yellow-400 text-yellow-800'
+                                        ? 'bg-destructive/10 border-destructive/40 text-destructive' 
+                                        : 'bg-warning/10 border-warning text-warning'
                                     }`}>
                                       <div className="flex items-start gap-2">
                                         <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                                           error.severity === 'error'
-                                            ? 'bg-red-200 text-red-800'
-                                            : 'bg-yellow-200 text-yellow-800'
+                                            ? 'bg-destructive/20 text-destructive'
+                                            : 'bg-warning/20 text-warning'
                                         }`}>
                                           {error.severity.toUpperCase()}
                                         </span>
@@ -354,17 +354,17 @@ export function CSVDataTable({
 
       {/* Legend */}
       {validationErrors.length > 0 && (
-        <div className="flex items-start gap-4 text-xs text-gray-600 bg-gray-50 p-3 rounded">
+        <div className="flex items-start gap-4 text-xs text-muted-foreground bg-muted p-3 rounded">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+            <div className="w-3 h-3 bg-destructive/15 border border-destructive/20 rounded"></div>
             <span>Error</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded"></div>
+            <div className="w-3 h-3 bg-warning/15 border border-warning/20 rounded"></div>
             <span>Warning</span>
           </div>
           <div className="flex items-center gap-1">
-            <Info className="w-3 h-3 text-blue-500" />
+            <Info className="w-3 h-3 text-primary/80" />
             <span>Hover over error icons to see details</span>
           </div>
         </div>

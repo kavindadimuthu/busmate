@@ -53,16 +53,16 @@ export default function EditUserPage() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-          <AlertTriangle className="h-8 w-8 text-amber-600" />
+        <div className="w-16 h-16 rounded-full bg-warning/15 flex items-center justify-center mb-4">
+          <AlertTriangle className="h-8 w-8 text-warning" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">User Not Found</h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <h2 className="text-lg font-semibold text-foreground mb-2">User Not Found</h2>
+        <p className="text-sm text-muted-foreground mb-6">
           No user found with ID &quot;{userId}&quot;.
         </p>
         <Link
           href="/admin/users"
-          className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Users

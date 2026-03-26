@@ -50,14 +50,14 @@ export default function AmendmentDetailPage() {
       <>
         <button
           onClick={() => router.push('/mot/fares')}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium text-foreground/80 hover:bg-muted transition-colors"
         >
           <Download className="w-4 h-4" />
           Export
@@ -69,13 +69,13 @@ export default function AmendmentDetailPage() {
   if (!amendment) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Amendment Not Found</h2>
-        <p className="text-gray-600 mb-6">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Amendment Not Found</h2>
+        <p className="text-muted-foreground mb-6">
           The fare amendment with ID &quot;{amendmentId}&quot; could not be found.
         </p>
         <button
           onClick={() => router.push('/mot/fares')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
         >
           Back to Fares
         </button>
@@ -90,7 +90,7 @@ export default function AmendmentDetailPage() {
 
       {/* Matrix Section */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Fare Matrix</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Fare Matrix</h2>
 
         <FareMatrixFilters
           stageFrom={stageFrom}
@@ -106,7 +106,7 @@ export default function AmendmentDetailPage() {
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <FareMatrixTable
           matrix={amendment.matrix}
           stageFrom={stageFrom}
