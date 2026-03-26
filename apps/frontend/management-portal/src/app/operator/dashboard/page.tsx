@@ -40,27 +40,17 @@ export default function OperatorDashboardPage() {
     onAcknowledgeAlert,
   } = useOperatorDashboard({ refreshInterval: 5000 });
 
+  const timeStr = lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const liveCls = isLive ? 'bg-success/15 text-success hover:bg-success/20' : 'bg-muted text-muted-foreground hover:bg-muted';
+
   useSetPageActions(
     <>
-      <span className="text-xs text-muted-foreground hidden sm:inline">
-        Updated {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-      </span>
-      <button
-        onClick={toggleLive}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-          isLive
-            ? 'bg-success/15 text-success hover:bg-success/20'
-            : 'bg-muted text-muted-foreground hover:bg-muted'
-        }`}
-      >
+      <span className="text-xs text-muted-foreground hidden sm:inline">Updated {timeStr}</span>
+      <button onClick={toggleLive} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${liveCls}`}>
         <Radio className={`h-3.5 w-3.5 ${isLive ? 'animate-pulse' : ''}`} />
         {isLive ? 'Live' : 'Paused'}
       </button>
-      <button
-        onClick={refresh}
-        disabled={loading}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-background border border-border text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors"
-      >
+      <button onClick={refresh} disabled={loading} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-background border border-border text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors">
         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
         Refresh
       </button>
@@ -69,41 +59,27 @@ export default function OperatorDashboardPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Row 1: KPI Cards ─────────────────────────────────────── */}
       <OperatorDashboardKPICards kpis={kpis} loading={loading} />
 
-      {/* ── Row 2: Trends chart + Fleet status ───────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <OperatorDashboardTrendsChart trendHistory={trendHistory} loading={loading} />
         </div>
-        <div className="xl:col-span-1">
-          <OperatorDashboardFleetStatus fleetStatus={fleetStatus} loading={loading} />
-        </div>
+        <OperatorDashboardFleetStatus fleetStatus={fleetStatus} loading={loading} />
       </div>
 
-      {/* ── Row 3: Route performance ──────────────────────────────── */}
       <OperatorDashboardRoutePerformance routes={routePerformance} loading={loading} />
 
-      {/* ── Row 4: Staff status + Alerts ─────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <OperatorDashboardStaffStatus staffStatus={staffStatus} loading={loading} />
-        <OperatorDashboardAlertsWidget
-          alerts={alerts}
-          loading={loading}
-          onAcknowledge={onAcknowledgeAlert}
-        />
+        <OperatorDashboardAlertsWidget alerts={alerts} loading={loading} onAcknowledge={onAcknowledgeAlert} />
       </div>
 
-      {/* ── Row 5: Activity feed + Quick actions ─────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <OperatorDashboardActivityFeed activity={activity} loading={loading} />
         </div>
-        <div className="xl:col-span-1">
-          <OperatorDashboardQuickActions actions={quickActions} loading={loading} />
-        </div>
+        <OperatorDashboardQuickActions actions={quickActions} loading={loading} />
       </div>
     </div>
   );

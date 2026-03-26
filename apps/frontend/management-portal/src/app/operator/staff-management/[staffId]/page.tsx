@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { useSetPageMetadata, usePageContext } from '@/context/PageContext';
-import { StaffDetailHeader }      from '@/components/operator/staff/StaffDetailHeader';
-import { StaffContactCard }       from '@/components/operator/staff/StaffContactCard';
-import { StaffCredentialsCard }   from '@/components/operator/staff/StaffCredentialsCard';
-import { StaffAssignedTripsCard } from '@/components/operator/staff/StaffAssignedTripsCard';
-import { StaffScheduleCard }      from '@/components/operator/staff/StaffScheduleCard';
-import { StaffPerformanceCard }   from '@/components/operator/staff/StaffPerformanceCard';
-import { StaffEmploymentCard }    from '@/components/operator/staff/StaffEmploymentCard';
-import { getStaffById, type StaffMember } from '@/data/operator/staff';
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
+import { useSetPageMetadata } from '@/context/PageContext';
+import { StaffDetailHeader } from '@/components/operator/staff/StaffDetailHeader';
+import { StaffContactCard } from '@/components/operator/staff/StaffContactCard';
+import { StaffCredentialsCard } from '@/components/operator/staff/StaffCredentialsCard';
+import { StaffAssignedTripsCard } from '@/components/operator/staff/StaffAssignedTripsCard';
+import { StaffScheduleCard } from '@/components/operator/staff/StaffScheduleCard';
+import { StaffPerformanceCard } from '@/components/operator/staff/StaffPerformanceCard';
+import { StaffEmploymentCard } from '@/components/operator/staff/StaffEmploymentCard';
+import { useStaffDetail } from '@/components/operator/staff/useStaffDetail';
 
 export default function StaffDetailPage() {
   useSetPageMetadata({
@@ -27,43 +25,7 @@ export default function StaffDetailPage() {
     padding: 0,
   });
 
-  const { setMetadata } = usePageContext();
-  const params  = useParams();
-  const staffId = params?.staffId as string;
-
-  const [staff,   setStaff]   = useState<StaffMember | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-
-  useEffect(() => {
-    if (!staffId) return;
-    let mounted = true;
-    (async () => {
-      const data = await getStaffById(staffId);
-      if (mounted) {
-        if (!data) setNotFound(true);
-        else setStaff(data);
-        setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [staffId]);
-
-  // Update header when staff data is loaded
-  useEffect(() => {
-    if (staff) {
-      const isDriver = staff.role === 'DRIVER';
-      setMetadata({
-        // title: staff.fullName,
-        title: 'Staff Profile Details',
-        description: `${isDriver ? 'Driver' : 'Conductor'} Profile`,
-        breadcrumbs: [
-          { label: 'Staff Management', href: '/operator/staff-management' },
-          { label: staff.fullName },
-        ],
-      });
-    }
-  }, [staff, setMetadata]);
+  const { staff, loading, notFound } = useStaffDetail();
 
   if (loading) {
     return (
@@ -92,36 +54,26 @@ export default function StaffDetailPage() {
     );
   }
 
-  const isDriver = staff.role === 'DRIVER';
-
   return (
     <div className="p-6 space-y-6 mx-auto">
-        {/* Profile header */}
-        <StaffDetailHeader staff={staff} />
-
-        {/* Main content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column (narrower) */}
-          <div className="space-y-6">
-            <StaffContactCard    staff={staff} />
-            <StaffEmploymentCard staff={staff} />
-            <StaffCredentialsCard staff={staff} />
-          </div>
-
-          {/* Right column (wider) */}
-          <div className="lg:col-span-2 space-y-6">
-            <StaffAssignedTripsCard trips={staff.recentTrips} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <StaffScheduleCard   schedule={staff.weeklySchedule} />
-              <StaffPerformanceCard performance={staff.performance} />
-            </div>
+      <StaffDetailHeader staff={staff} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          <StaffContactCard staff={staff} />
+          <StaffEmploymentCard staff={staff} />
+          <StaffCredentialsCard staff={staff} />
+        </div>
+        <div className="lg:col-span-2 space-y-6">
+          <StaffAssignedTripsCard trips={staff.recentTrips} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StaffScheduleCard schedule={staff.weeklySchedule} />
+            <StaffPerformanceCard performance={staff.performance} />
           </div>
         </div>
-
-        {/* Read-only notice */}
-        <p className="text-xs text-muted-foreground/70 text-center">
-          This profile is read-only. Staff records are managed by BusMate administration.
-        </p>
+      </div>
+      <p className="text-xs text-muted-foreground/70 text-center">
+        This profile is read-only. Staff records are managed by BusMate administration.
+      </p>
     </div>
   );
 }

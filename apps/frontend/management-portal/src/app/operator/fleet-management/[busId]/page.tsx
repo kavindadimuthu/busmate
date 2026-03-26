@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, AlertCircle, ChevronRight, Download } from 'lucide-react';
-import { useSetPageMetadata, usePageContext, useSetPageActions } from '@/context/PageContext';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { BusDetailsTabs } from '@/components/operator/fleet';
-import { getOperatorBusById, type OperatorBus } from '@/data/operator/buses';
+import { useBusDetail } from '@/components/operator/fleet/useBusDetail';
 
 export default function OperatorBusDetailsPage() {
   useSetPageMetadata({
@@ -21,69 +19,18 @@ export default function OperatorBusDetailsPage() {
     padding: 0,
   });
 
-  const { setMetadata } = usePageContext();
-
-  const router = useRouter();
-  const params = useParams();
-  const busId = params.busId as string;
-
-  // ── State ─────────────────────────────────────────────────────────────────
-  const [bus,       setBus]       = useState<OperatorBus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error,     setError]     = useState<string | null>(null);
-
-  // ── Load bus ──────────────────────────────────────────────────────────────
-  const loadBus = useCallback(async () => {
-    if (!busId) return;
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await getOperatorBusById(busId);
-      setBus(data);
-    } catch (err) {
-      console.error('Error loading bus:', err);
-      setError('Bus not found or failed to load. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [busId]);
-
-  useEffect(() => { loadBus(); }, [loadBus]);
-
-  // Update header title when bus data is loaded
-  useEffect(() => {
-    if (bus) {
-      setMetadata({
-        title: bus.plateNumber,
-        description: `${bus.manufacturer} ${bus.model} · Bus details – read-only view`,
-        breadcrumbs: [
-          { label: 'Fleet Management', href: '/operator/fleet-management' },
-          { label: bus.plateNumber },
-        ],
-      });
-    }
-  }, [bus, setMetadata]);
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleRefresh = useCallback(async () => {
-    await loadBus();
-  }, [loadBus]);
+  const { bus, isLoading, error, handleRefresh } = useBusDetail();
 
   useSetPageActions(
-    <>
-      <button
-        onClick={handleRefresh}
-        className="inline-flex items-center gap-2 px-3 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
-      >
-        <RefreshCw className="w-4 h-4" />
-        <span className="hidden sm:inline">Refresh</span>
-      </button>
-    </>
+    <button
+      onClick={handleRefresh}
+      className="inline-flex items-center gap-2 px-3 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
+    >
+      <RefreshCw className="w-4 h-4" />
+      <span className="hidden sm:inline">Refresh</span>
+    </button>,
   );
 
-
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="p-6 space-y-4 animate-pulse">
@@ -94,7 +41,6 @@ export default function OperatorBusDetailsPage() {
     );
   }
 
-  // ── Error ─────────────────────────────────────────────────────────────────
   if (error || !bus) {
     return (
       <div className="p-6">
@@ -103,17 +49,17 @@ export default function OperatorBusDetailsPage() {
           <h2 className="text-lg font-semibold text-foreground mb-2">Bus Not Found</h2>
           <p className="text-sm text-muted-foreground mb-5">{error ?? 'The requested bus could not be found.'}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={handleRefresh}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" /> Retry
-              </button>
-              <Link
-                href="/operator/fleet-management"
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
-              >
-                Back to Fleet
+            <button
+              onClick={handleRefresh}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" /> Retry
+            </button>
+            <Link
+              href="/operator/fleet-management"
+              className="flex items-center justify-center gap-2 px-4 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
+            >
+              Back to Fleet
             </Link>
           </div>
         </div>
@@ -121,16 +67,12 @@ export default function OperatorBusDetailsPage() {
     );
   }
 
-  // ── Main view ─────────────────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-6">
-        {/* Read-only notice */}
-        <div className="bg-warning/10 border border-warning/20 rounded-lg px-4 py-2.5 text-sm text-warning">
-          <strong>Read-only view.</strong> Bus registration details are managed by the National Transport Commission (NTC).
-        </div>
-
-        {/* Main content with tabs */}
-        <BusDetailsTabs bus={bus} onRefresh={handleRefresh} />
+      <div className="bg-warning/10 border border-warning/20 rounded-lg px-4 py-2.5 text-sm text-warning">
+        <strong>Read-only view.</strong> Bus registration details are managed by the National Transport Commission (NTC).
+      </div>
+      <BusDetailsTabs bus={bus} onRefresh={handleRefresh} />
     </div>
   );
 }
