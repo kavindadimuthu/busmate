@@ -4,7 +4,7 @@ import { AlertCircle } from 'lucide-react';
 import { OperatorSummary } from '@/components/operator/profile/OperatorSummary';
 import { OperatorTabsSection } from '@/components/operator/profile/OperatorTabsSection';
 import DeleteOperatorModal from '@/components/mot/users/operator/DeleteOperatorModal';
-import { useOperatorDetails } from '@/components/mot/operators/useOperatorDetails';
+import { useOperatorDetails } from '@/hooks/mot/operators/useOperatorDetails';
 
 export default function OperatorDetailsPage() {
   const {

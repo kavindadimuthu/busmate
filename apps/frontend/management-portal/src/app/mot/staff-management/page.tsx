@@ -7,7 +7,7 @@ import { StaffStatsCards } from '@/components/mot/staff/StaffStatsCards';
 import { StaffFilterBar } from '@/components/mot/staff/StaffFilterBar';
 import { StaffTable } from '@/components/mot/staff/StaffTable';
 import { StaffTypeTabs, StaffActionButtons } from '@/components/mot/staff';
-import { useStaffManagement } from '@/components/mot/staff/useStaffManagement';
+import { useStaffManagement } from '@/hooks/mot/staff/useStaffManagement';
 
 export default function StaffManagementPage() {
   const router = useRouter();

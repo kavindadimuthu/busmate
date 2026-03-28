@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@busmate/ui';
 import { CheckSquare } from 'lucide-react';
-import type { ExportFilters } from './useBusStopsExport';
+import type { ExportFilters } from '../../../hooks/mot/bus-stops/useBusStopsExport';
 
 interface ExportScopeCardProps {
   exportFilters: ExportFilters;

@@ -9,7 +9,7 @@ import { Button, ConfirmDialog } from '@busmate/ui';
 import { PoliciesTable } from '@/components/mot/policies/PoliciesTable';
 import { PoliciesFilterBar } from '@/components/mot/policies/PoliciesFilterBar';
 import { PoliciesStatsCards } from '@/components/mot/policies/PoliciesStatsCards';
-import { usePolicies } from '@/components/mot/policies/usePolicies';
+import { usePolicies } from '@/hooks/mot/policies/usePolicies';
 
 function PoliciesListContent() {
   const router = useRouter();

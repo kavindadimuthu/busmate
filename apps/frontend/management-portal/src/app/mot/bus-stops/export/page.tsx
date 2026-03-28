@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Badge, Button } from '@busmate/ui';
 import { ArrowLeft, FileText, Filter } from 'lucide-react';
-import { useBusStopsExport } from '@/components/mot/bus-stops/useBusStopsExport';
+import { useBusStopsExport } from '@/hooks/mot/bus-stops/useBusStopsExport';
 import { ExportScopeCard } from '@/components/mot/bus-stops/ExportScopeCard';
 import { LocationFiltersCard } from '@/components/mot/bus-stops/LocationFiltersCard';
 import { ExportOptionsPanel } from '@/components/mot/bus-stops/ExportOptionsPanel';

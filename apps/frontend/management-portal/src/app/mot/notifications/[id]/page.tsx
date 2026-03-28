@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
-import { useNotificationDetail } from '@/components/mot/notifications/useNotificationDetail';
+import { useNotificationDetail } from '@/hooks/mot/notifications/useNotificationDetail';
 import {
   NotificationHeader,
   NotificationMetadata,

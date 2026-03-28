@@ -8,7 +8,7 @@ import { OperatorsFilterBar } from '@/components/mot/operators/OperatorsFilterBa
 import { OperatorsTable } from '@/components/mot/operators/OperatorsTable';
 import { OperatorActionButtons } from '@/components/mot/operators';
 import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
-import { useOperators } from '@/components/mot/operators/useOperators';
+import { useOperators } from '@/hooks/mot/operators/useOperators';
 
 export default function OperatorsPage() {
   const router = useRouter();

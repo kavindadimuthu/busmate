@@ -10,7 +10,7 @@ import {
   type StaffMember,
   type StaffType,
 } from "@/data/mot/staff";
-import type { StaffFilters } from "./StaffFilterBar";
+import type { StaffFilters } from "@/components/mot/staff/StaffFilterBar";
 
 // ── Types ─────────────────────────────────────────────────────────
 

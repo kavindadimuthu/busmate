@@ -8,7 +8,7 @@ import { TripsFilterBar } from '@/components/mot/trips/TripsFilterBar';
 import { TripsTable } from '@/components/mot/trips/TripsTable';
 import { TripActionButtons } from '@/components/mot/trips/TripActionButtons';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { useTrips } from '@/components/mot/trips/useTrips';
+import { useTrips } from '@/hooks/mot/trips/useTrips';
 
 export default function TripsPage() {
   const router = useRouter();

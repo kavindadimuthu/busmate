@@ -1,7 +1,7 @@
 'use client';
 
 import { CSVEditor, ROUTE_VALIDATION_RULES } from '@/components/tools/csv-editor';
-import { useRoutesImport } from '@/components/mot/routes/useRoutesImport';
+import { useRoutesImport } from '@/hooks/mot/routes/useRoutesImport';
 
 function RoutesImportPage() {
     const {

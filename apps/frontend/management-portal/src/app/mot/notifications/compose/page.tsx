@@ -1,6 +1,6 @@
 'use client';
 
-import { useNotificationComposer } from '@/components/mot/notifications/useNotificationComposer';
+import { useNotificationComposer } from '@/hooks/mot/notifications/useNotificationComposer';
 import { ComposeNotificationForm } from '@/components/mot/notifications/ComposeNotificationForm';
 
 export default function ComposeNotificationPage() {

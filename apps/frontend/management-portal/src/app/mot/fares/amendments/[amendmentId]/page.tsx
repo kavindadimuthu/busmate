@@ -3,7 +3,7 @@
 import { FareAmendmentSummaryCard } from '@/components/mot/fares/FareAmendmentSummaryCard';
 import { FareMatrixTable } from '@/components/mot/fares/FareMatrixTable';
 import { FareMatrixFilters } from '@/components/mot/fares/FareMatrixFilters';
-import { useAmendmentDetail } from '@/components/mot/fares/useAmendmentDetail';
+import { useAmendmentDetail } from '@/hooks/mot/fares/useAmendmentDetail';
 
 export default function AmendmentDetailPage() {
   const {

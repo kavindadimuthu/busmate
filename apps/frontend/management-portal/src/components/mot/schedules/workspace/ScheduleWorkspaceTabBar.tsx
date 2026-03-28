@@ -1,7 +1,7 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
-import type { WorkspaceTab } from './useScheduleWorkspacePage';
+import type { WorkspaceTab } from '../../../../hooks/mot/schedules/workspace/useScheduleWorkspacePage';
 
 interface ScheduleWorkspaceTabBarProps {
     activeTab: WorkspaceTab;

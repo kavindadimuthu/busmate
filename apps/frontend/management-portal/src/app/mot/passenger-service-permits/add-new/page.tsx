@@ -3,7 +3,7 @@
 import { X, AlertCircle } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { PermitForm } from '@/components/mot/passenger-service-permits/PermitForm';
-import { useAddPermit, PermitHelperInfo } from '@/components/mot/passenger-service-permits/useAddPermit';
+import { useAddPermit, PermitHelperInfo } from '@/hooks/mot/passenger-service-permits/useAddPermit';
 
 export default function AddPermitPage() {
   const {

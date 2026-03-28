@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import BusStopForm from '@/components/mot/bus-stops/BusStopForm';
-import { useEditBusStop } from '@/components/mot/bus-stops/useEditBusStop';
+import { useEditBusStop } from '@/hooks/mot/bus-stops/useEditBusStop';
 
 interface EditBusStopPageProps {
   params: { busStopId: string };

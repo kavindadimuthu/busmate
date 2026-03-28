@@ -8,7 +8,7 @@ import { FareMatrixTabContent } from '@/components/mot/fares/FareMatrixTabConten
 import { FaresStatsCards } from '@/components/mot/fares/FaresStatsCards';
 import { FaresAmendmentsTable } from '@/components/mot/fares/FaresAmendmentsTable';
 import { FaresFilterBar } from '@/components/mot/fares/FaresFilterBar';
-import { useFares } from '@/components/mot/fares/useFares';
+import { useFares } from '@/hooks/mot/fares/useFares';
 
 export default function FaresPage() {
   const router = useRouter();

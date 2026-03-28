@@ -7,7 +7,7 @@ import { RoutesStatsCards } from '@/components/mot/routes/RoutesStatsCards';
 import { RoutesFilterBar } from '@/components/mot/routes/RoutesFilterBar';
 import { RoutesTable } from '@/components/mot/routes/RoutesTable';
 import { RouteActionButtons } from '@/components/mot/routes/RouteActionButtons';
-import { useRoutes } from '@/components/mot/routes/useRoutes';
+import { useRoutes } from '@/hooks/mot/routes/useRoutes';
 
 export default function RoutesPage() {
   const router = useRouter();

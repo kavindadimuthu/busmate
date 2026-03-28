@@ -10,7 +10,7 @@ import {
   RevenueAnalyticsPanel,
   PassengerAnalyticsPanel,
 } from '@/components/mot/analytics';
-import { useAnalyticsPage } from '@/components/mot/analytics/useAnalyticsPage';
+import { useAnalyticsPage } from '@/hooks/mot/analytics/useAnalyticsPage';
 import type { AnalyticsCategory, DateRange } from '@/data/mot/analytics';
 
 export default function AnalyticsPage() {

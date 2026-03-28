@@ -7,7 +7,7 @@ import ScheduleTextualMode from '@/components/mot/schedules/workspace/textual-mo
 import { ScheduleAIStudio } from '@/components/mot/schedules/workspace/ai-studio';
 import { ScheduleWorkspaceProvider } from '@/context/ScheduleWorkspace';
 import ScheduleWorkspaceTabBar from '@/components/mot/schedules/workspace/ScheduleWorkspaceTabBar';
-import { useScheduleWorkspacePage } from '@/components/mot/schedules/workspace/useScheduleWorkspacePage';
+import { useScheduleWorkspacePage } from '@/hooks/mot/schedules/workspace/useScheduleWorkspacePage';
 
 function ScheduleWorkspaceContent() {
     const { activeTab, setActiveTab, handleSubmit, handleReset } = useScheduleWorkspacePage();

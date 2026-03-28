@@ -1,7 +1,7 @@
 'use client';
 
 import { FareAmendmentForm } from '@/components/mot/fares/FareAmendmentForm';
-import { useNewAmendment } from '@/components/mot/fares/useNewAmendment';
+import { useNewAmendment } from '@/hooks/mot/fares/useNewAmendment';
 import { AlertCircle } from 'lucide-react';
 
 export default function NewAmendmentPage() {

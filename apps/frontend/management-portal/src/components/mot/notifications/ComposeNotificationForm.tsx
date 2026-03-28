@@ -23,7 +23,7 @@ import {
   AUDIENCE_OPTIONS,
   CHANNEL_OPTIONS,
   type FormState,
-} from './useNotificationComposer';
+} from '../../../hooks/mot/notifications/useNotificationComposer';
 
 // ── Icon map (avoids passing component refs from .ts hook) ────────
 

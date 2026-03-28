@@ -10,7 +10,7 @@ import { BusStopsTable } from '@/components/mot/bus-stops/BusStopsTable';
 import { BusStopsMapView } from '@/components/mot/bus-stops/BusStopsMapView';
 import { ViewTabs } from '@/components/mot/bus-stops/ViewTabs';
 import { BusStopActionButtons } from '@/components/mot/bus-stops/BusStopActionButtons';
-import { useBusStops } from '@/components/mot/bus-stops/useBusStops';
+import { useBusStops } from '@/hooks/mot/bus-stops/useBusStops';
 import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
 
 export default function BusStopsPage() {

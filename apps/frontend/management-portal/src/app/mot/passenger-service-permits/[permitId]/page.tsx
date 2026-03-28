@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertCircle } from 'lucide-react';
-import { usePermitDetails } from '@/components/mot/passenger-service-permits/usePermitDetails';
+import { usePermitDetails } from '@/hooks/mot/passenger-service-permits/usePermitDetails';
 import { PermitSummary } from '@/components/mot/passenger-service-permits/PermitSummary';
 import { PermitTabsSection } from '@/components/mot/passenger-service-permits/PermitTabsSection';
 import { DeletePermitModal } from '@/components/mot/passenger-service-permits/DeletePermitModal';

@@ -17,8 +17,8 @@ import {
   SelectValue,
 } from '@busmate/ui';
 import { Download, List, Loader2, Settings } from 'lucide-react';
-import type { ExportFilters, ExportOptions } from './useBusStopsExport';
-import { AVAILABLE_CUSTOM_FIELDS } from './useBusStopsExport';
+import type { ExportFilters, ExportOptions } from '../../../hooks/mot/bus-stops/useBusStopsExport';
+import { AVAILABLE_CUSTOM_FIELDS } from '../../../hooks/mot/bus-stops/useBusStopsExport';
 
 interface ExportOptionsPanelProps {
   exportFilters: ExportFilters;

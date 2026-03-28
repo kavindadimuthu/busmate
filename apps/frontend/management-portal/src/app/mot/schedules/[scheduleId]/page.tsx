@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { useScheduleDetails } from '@/components/mot/schedules/useScheduleDetails';
+import { useScheduleDetails } from '@/hooks/mot/schedules/useScheduleDetails';
 import { ScheduleOverview, ScheduleTabsSection } from '@/components/mot/schedule-details';
 import {
   DeleteConfirmationModal,

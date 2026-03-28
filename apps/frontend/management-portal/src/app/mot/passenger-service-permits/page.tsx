@@ -8,7 +8,7 @@ import { PermitsStatsCards } from '@/components/mot/permits/PermitsStatsCards';
 import { PermitsFilterBar } from '@/components/mot/permits/PermitsFilterBar';
 import { PermitsTable } from '@/components/mot/permits/PermitsTable';
 import { PermitActionButtons } from '@/components/mot/permits/PermitActionButtons';
-import { usePermits } from '@/components/mot/permits/usePermits';
+import { usePermits } from '@/hooks/mot/permits/usePermits';
 
 export default function PassengerServicePermitsPage() {
   const router = useRouter();

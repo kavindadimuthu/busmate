@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
-import { useBusStopDetails } from '@/components/mot/bus-stops/useBusStopDetails';
+import { useBusStopDetails } from '@/hooks/mot/bus-stops/useBusStopDetails';
 import BusStopBasicInfo from '@/components/mot/bus-stops/BusStopBasicInfo';
 import BusStopLocationDetails from '@/components/mot/bus-stops/BusStopLocationDetails';
 import BusStopMapSection from '@/components/mot/bus-stops/BusStopMapSection';

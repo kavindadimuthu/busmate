@@ -29,7 +29,7 @@ import {
   audienceLabels,
   formatDate,
   readRatePercent,
-} from '@/components/mot/notifications/useNotificationDetail';
+} from '@/hooks/mot/notifications/useNotificationDetail';
 
 // ── Icon lookup ───────────────────────────────────────────────────
 

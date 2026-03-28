@@ -3,7 +3,7 @@
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { TripOverview } from '@/components/mot/trip-details/TripOverview';
 import { TripTabsSection } from '@/components/mot/trip-details/TripTabsSection';
-import { useTripDetails } from '@/components/mot/trip-details/useTripDetails';
+import { useTripDetails } from '@/hooks/mot/trip-details/useTripDetails';
 import { TripDetailsActions } from '@/components/mot/trip-details/TripDetailsActions';
 import { TripDetailsModals } from '@/components/mot/trip-details/TripDetailsModals';
 import { RefreshCw, XCircle, ArrowLeft } from 'lucide-react';

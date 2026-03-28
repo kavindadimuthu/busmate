@@ -10,7 +10,7 @@ import {
   Label,
 } from '@busmate/ui';
 import { MapPin, Loader2 } from 'lucide-react';
-import type { ExportFilters, FilterOptions } from './useBusStopsExport';
+import type { ExportFilters, FilterOptions } from '../../../hooks/mot/bus-stops/useBusStopsExport';
 
 interface LocationFiltersCardProps {
   filterOptions: FilterOptions;

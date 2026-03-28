@@ -11,7 +11,7 @@ import {
   RouteGroupEmptyRoutes,
 } from '@/components/mot/routes/route-group-view';
 import DeleteRouteConfirmation from '@/components/mot/routes/DeleteRouteConfirmation';
-import { useRouteGroupDetails } from '@/components/mot/routes/useRouteGroupDetails';
+import { useRouteGroupDetails } from '@/hooks/mot/routes/useRouteGroupDetails';
 
 export default function RouteGroupViewPage() {
   const {

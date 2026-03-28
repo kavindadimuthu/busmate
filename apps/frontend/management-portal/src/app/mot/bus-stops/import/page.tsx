@@ -1,7 +1,7 @@
 'use client';
 
 import { CSVEditor, BUS_STOP_VALIDATION_RULES } from '@/components/tools/csv-editor';
-import { useBusStopsImport } from '@/components/mot/bus-stops/useBusStopsImport';
+import { useBusStopsImport } from '@/hooks/mot/bus-stops/useBusStopsImport';
 
 function BusStopsImportPage() {
     const { handleImport, handleImportComplete, handleImportError, handleTemplateDownload } = useBusStopsImport();

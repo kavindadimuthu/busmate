@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { PermitForm } from '@/components/mot/passenger-service-permits/PermitForm';
-import { useEditPermit } from '@/components/mot/passenger-service-permits/useEditPermit';
+import { useEditPermit } from '@/hooks/mot/passenger-service-permits/useEditPermit';
 import { EditPermitInfoBanner, EditPermitWarningNotes } from '@/components/mot/passenger-service-permits/EditPermitInfoBanner';
 
 export default function EditPermitPage() {

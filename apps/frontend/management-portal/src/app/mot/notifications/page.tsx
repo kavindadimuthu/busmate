@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent, Button, ConfirmDialog } from 
 import { NotificationsTable } from '@/components/mot/notifications/NotificationsTable';
 import { NotificationsFilterBar } from '@/components/mot/notifications/NotificationsFilterBar';
 import { NotificationsStatsCards } from '@/components/mot/notifications/NotificationsStatsCards';
-import { useNotifications } from '@/components/mot/notifications/useNotifications';
+import { useNotifications } from '@/hooks/mot/notifications/useNotifications';
 
 export default function NotificationsPage() {
   const router = useRouter();

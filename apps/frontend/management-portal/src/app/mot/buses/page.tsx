@@ -8,7 +8,7 @@ import { BusesStatsCards } from '@/components/mot/buses/BusesStatsCards';
 import { BusesFilterBar } from '@/components/mot/buses/BusesFilterBar';
 import { BusesTable } from '@/components/mot/buses/BusesTable';
 import { BusActionButtons } from '@/components/mot/buses/BusActionButtons';
-import { useBuses } from '@/components/mot/buses/useBuses';
+import { useBuses } from '@/hooks/mot/buses/useBuses';
 
 export default function BusesPage() {
   const router = useRouter();

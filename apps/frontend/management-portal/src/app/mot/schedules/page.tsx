@@ -7,7 +7,7 @@ import { SchedulesStatsCards } from '@/components/mot/schedules/SchedulesStatsCa
 import { SchedulesFilterBar } from '@/components/mot/schedules/SchedulesFilterBar';
 import { SchedulesTable } from '@/components/mot/schedules/SchedulesTable';
 import { ScheduleActionButtons } from '@/components/mot/schedules/ScheduleActionButtons';
-import { useSchedules } from '@/components/mot/schedules/useSchedules';
+import { useSchedules } from '@/hooks/mot/schedules/useSchedules';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 
 export default function SchedulesPage() {
