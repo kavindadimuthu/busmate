@@ -2,7 +2,7 @@
 
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { BusForm } from '@/components/mot/buses/BusForm';
-import { useEditBus } from '@/components/mot/buses/useEditBus';
+import { useEditBus } from '@/hooks/mot/buses/useEditBus';
 
 export default function EditBusPage() {
   const {

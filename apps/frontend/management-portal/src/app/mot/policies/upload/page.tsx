@@ -2,7 +2,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import { PolicyForm } from '@/components/mot/policies/PolicyForm';
-import { useUploadPolicy } from '@/components/mot/policies/useUploadPolicy';
+import { useUploadPolicy } from '@/hooks/mot/policies/useUploadPolicy';
 
 export default function UploadPolicyPage() {
     const { isSubmitting, error, handleSubmit, handleCancel, clearError } = useUploadPolicy();

@@ -7,7 +7,7 @@ import {
 } from '@/components/admin/notifications';
 import { NotificationQuickPanels } from '@/components/admin/notifications/NotificationQuickPanels';
 import { NotificationBreakdownPanels } from '@/components/admin/notifications/NotificationBreakdownPanels';
-import { useNotificationsOverview } from '@/components/admin/notifications/useNotificationsOverview';
+import { useNotificationsOverview } from '@/hooks/admin/notifications/useNotificationsOverview';
 import { Plus } from 'lucide-react';
 
 export default function NotificationsOverviewPage() {

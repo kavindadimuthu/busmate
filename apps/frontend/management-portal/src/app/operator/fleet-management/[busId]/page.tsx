@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { BusDetailsTabs } from '@/components/operator/fleet';
-import { useBusDetail } from '@/components/operator/fleet/useBusDetail';
+import { useBusDetail } from '@/hooks/operator/fleet/useBusDetail';
 
 export default function OperatorBusDetailsPage() {
   useSetPageMetadata({

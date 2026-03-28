@@ -8,7 +8,7 @@ import {
   OperatorTripsFilters,
   OperatorTripsTable,
 } from '@/components/operator/trips';
-import { useOperatorTripsListing } from '@/components/operator/trips/useOperatorTripsListing';
+import { useOperatorTripsListing } from '@/hooks/operator/trips/useOperatorTripsListing';
 
 export default function OperatorTripsPage() {
   useSetPageMetadata({

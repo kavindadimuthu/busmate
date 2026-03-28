@@ -5,7 +5,7 @@ import { useSetPageMetadata } from '@/context/PageContext';
 import { LogFilters, UserActivityTable, SecurityLogsTable, ApplicationLogsTable } from '@/components/admin/logs';
 import { getUserActivityLogs, getSecurityLogs, getApplicationLogs } from '@/data/admin';
 import { Activity, Shield, Terminal, Download } from 'lucide-react';
-import { useLogsListing, type TabKey } from '@/components/admin/logs/useLogsListing';
+import { useLogsListing, type TabKey } from '@/hooks/admin/logs/useLogsListing';
 import { ColoredTabBar, type ColoredTab } from '@/components/shared/ColoredTabBar';
 import { SimplePagination } from '@/components/shared/SimplePagination';
 

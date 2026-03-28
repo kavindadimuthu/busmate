@@ -4,7 +4,7 @@ import { ArrowLeft, RefreshCw, AlertCircle, Download } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { PermitSummaryCard } from '@/components/operator/permits/PermitSummaryCard';
 import { PermitInfoPanel } from '@/components/operator/permits/PermitInfoPanel';
-import { usePermitDetail } from '@/components/operator/permits/usePermitDetail';
+import { usePermitDetail } from '@/hooks/operator/permits/usePermitDetail';
 
 export default function ServicePermitDetailPage() {
   useSetPageMetadata({

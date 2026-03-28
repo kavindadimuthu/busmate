@@ -7,7 +7,7 @@ import {
   AttendanceStatsCards, BusAttendanceStatsCards,
   StaffAttendanceTable, BusAttendanceTable,
 } from '@/components/timekeeper/attendance';
-import { useTimeKeeperAttendance } from '@/components/timekeeper/attendance/useTimeKeeperAttendance';
+import { useTimeKeeperAttendance } from '@/hooks/timekeeper/attendance/useTimeKeeperAttendance';
 
 export default function TimeKeeperAttendancePage() {
   const {

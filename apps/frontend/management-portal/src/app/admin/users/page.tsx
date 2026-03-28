@@ -7,7 +7,7 @@ import { UserAdvancedFilters } from '@/components/admin/users/UserAdvancedFilter
 import { UsersTable } from '@/components/admin/users/UsersTable';
 import { ConfirmDialog } from '@/components/admin/users/ConfirmDialog';
 import { DataPagination } from '@/components/shared/DataPagination';
-import { useUsers } from '@/components/admin/users/useUsers';
+import { useUsers } from '@/hooks/admin/users/useUsers';
 
 export default function UsersPage() {
   const {

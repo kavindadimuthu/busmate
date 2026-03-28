@@ -3,7 +3,7 @@
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { TripOverviewCard, TripTabsSection } from '@/components/operator/trips/trip-details';
-import { useTripDetail } from '@/components/operator/trips/useTripDetail';
+import { useTripDetail } from '@/hooks/operator/trips/useTripDetail';
 
 export default function OperatorTripDetailPage() {
   useSetPageMetadata({

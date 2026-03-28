@@ -6,7 +6,7 @@ import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { FleetStatsCards } from '@/components/operator/fleet/FleetStatsCards';
 import { FleetFilterBar } from '@/components/operator/fleet/FleetFilterBar';
 import { FleetTable } from '@/components/operator/fleet/FleetTable';
-import { useFleetManagement } from '@/components/operator/fleet/useFleetManagement';
+import { useFleetManagement } from '@/hooks/operator/fleet/useFleetManagement';
 
 export default function FleetManagementPage() {
   useSetPageMetadata({

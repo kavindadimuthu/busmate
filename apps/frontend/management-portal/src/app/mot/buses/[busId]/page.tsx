@@ -5,7 +5,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { BusSummary } from '@/components/mot/buses/BusSummary';
 import { BusTabsSection } from '@/components/mot/buses/BusTabsSection';
 import DeleteBusModal from '@/components/mot/buses/DeleteBusModal';
-import { useBusDetails } from '@/components/mot/buses/useBusDetails';
+import { useBusDetails } from '@/hooks/mot/buses/useBusDetails';
 
 export default function BusDetailsPage() {
   const router = useRouter();

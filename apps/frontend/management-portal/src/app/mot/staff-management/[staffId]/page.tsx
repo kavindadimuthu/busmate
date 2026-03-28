@@ -2,7 +2,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import { StaffSummary, DeleteStaffModal } from '@/components/mot/staff';
-import { useStaffDetails } from '@/components/mot/staff/useStaffDetails';
+import { useStaffDetails } from '@/hooks/mot/staff/useStaffDetails';
 
 export default function StaffDetailsPage() {
   const { staff, showDeleteModal, isDeleting, handleBack, handleDeleteCancel, handleDeleteConfirm } = useStaffDetails();

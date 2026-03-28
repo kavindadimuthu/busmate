@@ -4,7 +4,7 @@ import { useSetPageMetadata } from '@/context/PageContext';
 import { LogStatsCards, LogTrendChart } from '@/components/admin/logs';
 import { LogQuickAccessPanels } from '@/components/admin/logs/LogQuickAccessPanels';
 import { LogStatsSummary } from '@/components/admin/logs/LogStatsSummary';
-import { useLogsOverview } from '@/components/admin/logs/useLogsOverview';
+import { useLogsOverview } from '@/hooks/admin/logs/useLogsOverview';
 
 export default function LogsOverviewPage() {
   useSetPageMetadata({

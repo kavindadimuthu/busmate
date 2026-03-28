@@ -10,7 +10,7 @@ import { StaffAssignedTripsCard } from '@/components/operator/staff/StaffAssigne
 import { StaffScheduleCard } from '@/components/operator/staff/StaffScheduleCard';
 import { StaffPerformanceCard } from '@/components/operator/staff/StaffPerformanceCard';
 import { StaffEmploymentCard } from '@/components/operator/staff/StaffEmploymentCard';
-import { useStaffDetail } from '@/components/operator/staff/useStaffDetail';
+import { useStaffDetail } from '@/hooks/operator/staff/useStaffDetail';
 
 export default function StaffDetailPage() {
   useSetPageMetadata({

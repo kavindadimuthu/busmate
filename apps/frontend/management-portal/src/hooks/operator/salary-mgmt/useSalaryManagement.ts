@@ -13,7 +13,7 @@ import {
 import type { SortState } from '@/components/shared/DataTable';
 import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
 import type { TabItem } from '@/components/shared/SwitchableTabs';
-import type { FilterSelectConfig } from '@/components/operator/revenue-analytics/useRevenueAnalytics';
+import type { FilterSelectConfig } from '@/hooks/operator/revenue-analytics/useRevenueAnalytics';
 import { Award, BarChart3, BookOpen, Bus, MapPin, Shield, TableProperties } from 'lucide-react';
 
 // ── Tab configuration ─────────────────────────────────────────────

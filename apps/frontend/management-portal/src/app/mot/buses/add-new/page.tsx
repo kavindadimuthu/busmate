@@ -2,7 +2,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import { BusForm } from '@/components/mot/buses/BusForm';
-import { useAddBus } from '@/components/mot/buses/useAddBus';
+import { useAddBus } from '@/hooks/mot/buses/useAddBus';
 
 export default function AddBusPage() {
   const { operators, operatorsLoading, isSubmitting, error, clearError, handleSubmit, handleCancel } = useAddBus();

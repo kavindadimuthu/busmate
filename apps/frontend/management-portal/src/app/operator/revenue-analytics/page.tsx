@@ -14,7 +14,7 @@ import {
 import {
   useRevenueAnalytics,
   REVENUE_TABS,
-} from '@/components/operator/revenue-analytics/useRevenueAnalytics';
+} from '@/hooks/operator/revenue-analytics/useRevenueAnalytics';
 
 export default function RevenueAnalyticsPage() {
   useSetPageMetadata({

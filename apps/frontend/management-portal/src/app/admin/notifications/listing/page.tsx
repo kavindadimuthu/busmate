@@ -5,7 +5,7 @@ import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { useRouter } from 'next/navigation';
 import { NotificationFilters, NotificationTable } from '@/components/admin/notifications';
 import { Bell, Send, Clock, FileText, Download, Plus } from 'lucide-react';
-import { useNotificationsListing, type TabKey } from '@/components/admin/notifications/useNotificationsListing';
+import { useNotificationsListing, type TabKey } from '@/hooks/admin/notifications/useNotificationsListing';
 import { ColoredTabBar, type ColoredTab } from '@/components/shared/ColoredTabBar';
 import { SimplePagination } from '@/components/shared/SimplePagination';
 

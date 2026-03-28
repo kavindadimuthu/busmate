@@ -4,7 +4,7 @@ import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Button, Input } from '@busmate/ui';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { TripStatsCards, TripsTable, TripDetailModal } from '@/components/timekeeper/trips';
-import { useTimeKeeperTrips } from '@/components/timekeeper/trips/useTimeKeeperTrips';
+import { useTimeKeeperTrips } from '@/hooks/timekeeper/trips/useTimeKeeperTrips';
 import { availableRoutes } from '@/data/timekeeper';
 
 export default function TimeKeeperTripsPage() {

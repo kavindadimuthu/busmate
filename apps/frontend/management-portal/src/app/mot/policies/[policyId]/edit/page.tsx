@@ -2,7 +2,7 @@
 
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { PolicyForm } from '@/components/mot/policies/PolicyForm';
-import { useEditPolicy } from '@/components/mot/policies/useEditPolicy';
+import { useEditPolicy } from '@/hooks/mot/policies/useEditPolicy';
 
 export default function EditPolicyPage() {
     const {

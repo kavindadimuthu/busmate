@@ -4,7 +4,7 @@ import { AlertCircle } from 'lucide-react';
 import { PolicySummary } from '@/components/mot/policies/PolicySummary';
 import { PolicyTabsSection } from '@/components/mot/policies/PolicyTabsSection';
 import { DeletePolicyModal } from '@/components/mot/policies/DeletePolicyModal';
-import { usePolicyDetails } from '@/components/mot/policies/usePolicyDetails';
+import { usePolicyDetails } from '@/hooks/mot/policies/usePolicyDetails';
 
 export default function PolicyDetailsPage() {
     const {

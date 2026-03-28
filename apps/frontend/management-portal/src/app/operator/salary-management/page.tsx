@@ -16,7 +16,7 @@ import {
 import {
   useSalaryManagement,
   SALARY_TABS,
-} from '@/components/operator/salary-mgmt/useSalaryManagement';
+} from '@/hooks/operator/salary-mgmt/useSalaryManagement';
 
 export default function SalaryManagementPage() {
   useSetPageMetadata({

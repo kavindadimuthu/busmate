@@ -6,7 +6,7 @@ import {
   UpcomingDepartures,
   AssignedStopInfo,
 } from '@/components/timekeeper/dashboard';
-import { useTKDashboard } from '@/components/timekeeper/dashboard/useTKDashboard';
+import { useTKDashboard } from '@/hooks/timekeeper/dashboard/useTKDashboard';
 
 export default function TimeKeeperDashboardPage() {
   const { stats, departures, assignedStop, isLoading } = useTKDashboard();

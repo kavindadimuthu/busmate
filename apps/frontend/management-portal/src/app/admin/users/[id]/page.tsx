@@ -3,7 +3,7 @@
 import { useSetPageMetadata } from '@/context/PageContext';
 import { UserDetailPanel, ConfirmDialog } from '@/components/admin/users';
 import { getUserDisplayName } from '@/data/admin/users';
-import { useUserDetail } from '@/components/admin/users/useUserDetail';
+import { useUserDetail } from '@/hooks/admin/users/useUserDetail';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
