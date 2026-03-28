@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic';
 import { Toaster } from "@busmate/ui"
-import { MotLayoutClient } from "@/components/layouts/mot-layout-client"
+import { RoleLayoutClient } from "@/components/layouts/role-layout-client"
 import { getUserData } from "@/lib/utils/getUserData"
 import { isRoleAllowedForRoute, getRoleRedirectPath } from "@/lib/utils/getRoleRedirectPath"
 
@@ -30,9 +30,9 @@ export default async function MotRootLayout({
 
   return (
     <>
-      <MotLayoutClient userData={userData}>
+      <RoleLayoutClient role="mot" userData={userData}>
         {children}
-      </MotLayoutClient>
+      </RoleLayoutClient>
       <Toaster />
     </>
   )

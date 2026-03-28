@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleUser, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { Check, ChevronRight, CircleUser, LogOut, Moon, Palette, Settings, Sun } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { useThemePersonality, THEMES } from "@busmate/ui";
 import signOut from "@/lib/utils/signOut";
 import type UserData from "@/types/UserData";
-import { ThemePersonalitySwitcher } from "@busmate/ui";
 
 interface PortalSidebarUserProps {
   userData: UserData;
@@ -20,8 +20,14 @@ export function PortalSidebarUser({
   rolePath,
 }: PortalSidebarUserProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [colorSubmenuOpen, setColorSubmenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { setTheme, resolvedTheme } = useTheme();
+  const { personality, setPersonality } = useThemePersonality();
+
+  useEffect(() => {
+    if (!menuOpen) setColorSubmenuOpen(false);
+  }, [menuOpen]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -77,6 +83,56 @@ export function PortalSidebarUser({
             {resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
 
+          {/* Color Theme — submenu trigger */}
+          <div className="relative">
+            <button
+              onClick={() => setColorSubmenuOpen((o) => !o)}
+              className={`flex items-center gap-3 px-4 py-2.5 text-sm w-full text-left transition-colors ${
+                colorSubmenuOpen ? "bg-muted text-foreground" : "text-foreground hover:bg-muted"
+              }`}
+            >
+              <Palette className="w-4 h-4 text-muted-foreground" />
+              Color Theme
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </button>
+
+            {/* Flyout submenu */}
+            {colorSubmenuOpen && (
+              <div className="absolute left-full -top-12 ml-1.5 bg-background rounded-xl shadow-xl border border-border py-1 z-[60] min-w-[190px]">
+                {/* <div className="px-3 py-2 border-b border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Color Theme</p>
+                </div> */}
+                {THEMES.map((theme) => {
+                  const isActive = personality === theme.id;
+                  return (
+                    <button
+                      key={theme.id}
+                      onClick={() => { setPersonality(theme.id); setColorSubmenuOpen(false); }}
+                      className={`flex items-center gap-3 px-3 py-2.5 w-full text-left transition-colors ${
+                        isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {isActive ? (
+                        <Check className="w-4 h-4 flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      <span className="flex-1 text-sm">{theme.label}</span>
+                      <span
+                        className="w-9 h-6 rounded-md flex-shrink-0 border border-border/60"
+                        style={{
+                          background: theme.previewColorDark
+                            ? `linear-gradient(135deg, ${theme.previewColor} 50%, ${theme.previewColorDark} 50%)`
+                            : theme.previewColor,
+                        }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="border-t border-border my-1" />
 
           <button
@@ -110,8 +166,6 @@ export function PortalSidebarUser({
           </div>
         )}
       </button>
-
-      <ThemePersonalitySwitcher />
     </div>
   );
 }
