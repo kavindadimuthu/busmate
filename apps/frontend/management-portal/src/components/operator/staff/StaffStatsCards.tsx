@@ -1,18 +1,13 @@
 'use client';
 
 import { Users, Car, UserCheck, CheckCircle, Clock, Calendar } from 'lucide-react';
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import type { StaffStats } from '@/data/operator/staff';
-
-// ── Types ─────────────────────────────────────────────────────────
 
 interface StaffStatsCardsProps {
   stats?: StaffStats | null;
   loading?: boolean;
 }
-
-// ── Default stats ─────────────────────────────────────────────────
 
 const EMPTY_STATS: StaffStats = {
   totalStaff: 0,
@@ -24,80 +19,51 @@ const EMPTY_STATS: StaffStats = {
   onLeave: 0,
 };
 
-// ── Component ─────────────────────────────────────────────────────
-
 export function StaffStatsCards({ stats, loading = false }: StaffStatsCardsProps) {
   const s = stats ?? EMPTY_STATS;
 
-  const metrics: StatsCardMetric[] = [
-    {
-      label: 'Total Staff',
-      value: s.totalStaff.toLocaleString(),
-      trend: 'stable' as const,
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'blue' as const,
-      sparkData: [],
-      icon: Users,
-    },
-    {
-      label: 'Drivers',
-      value: s.totalDrivers.toLocaleString(),
-      trend: 'stable' as const,
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'green' as const,
-      sparkData: [],
-      icon: Car,
-    },
-    {
-      label: 'Conductors',
-      value: s.totalConductors.toLocaleString(),
-      trend: 'stable' as const,
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'purple' as const,
-      sparkData: [],
-      icon: UserCheck,
-    },
-    {
-      label: 'Active',
-      value: s.activeStaff.toLocaleString(),
-      trend: 'stable' as const,
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'teal' as const,
-      sparkData: [],
-      icon: CheckCircle,
-    },
-    {
-      label: 'Assigned Now',
-      value: s.assignedNow.toLocaleString(),
-      trend: 'stable' as const,
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'amber' as const,
-      sparkData: [],
-      icon: Clock,
-    },
-    {
-      label: 'On Leave',
-      value: s.onLeave.toLocaleString(),
-      trend: 'stable' as const,
-      trendValue: '',
-      trendPositiveIsGood: false,
-      color: 'red' as const,
-      sparkData: [],
-      icon: Calendar,
-    },
-  ];
+  if (loading) {
+    return (
+      <StatsCardGrid className="lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-28 rounded-xl border bg-card animate-pulse" />
+        ))}
+      </StatsCardGrid>
+    );
+  }
 
   return (
-    <StatsCardsContainer
-      metrics={metrics}
-      columns={6}
-      loading={loading}
-      skeletonCount={6}
-    />
+    <StatsCardGrid className="lg:grid-cols-6">
+      <StatsCard
+        title="Total Staff"
+        value={s.totalStaff.toLocaleString()}
+        icon={<Users className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Drivers"
+        value={s.totalDrivers.toLocaleString()}
+        icon={<Car className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Conductors"
+        value={s.totalConductors.toLocaleString()}
+        icon={<UserCheck className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Active"
+        value={s.activeStaff.toLocaleString()}
+        icon={<CheckCircle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Assigned Now"
+        value={s.assignedNow.toLocaleString()}
+        icon={<Clock className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="On Leave"
+        value={s.onLeave.toLocaleString()}
+        icon={<Calendar className="h-5 w-5" />}
+      />
+    </StatsCardGrid>
   );
 }

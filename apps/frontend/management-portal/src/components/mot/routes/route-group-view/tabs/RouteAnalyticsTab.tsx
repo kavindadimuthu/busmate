@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import {
-  BarChart3,
   TrendingUp,
   Users,
   Clock,
@@ -12,6 +11,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import type { RouteResponse } from '@busmate/api-client-route';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -44,44 +44,6 @@ function generateMockAnalytics(route: RouteResponse): RouteAnalytics {
     activeSchedules: Math.floor(Math.random() * 5) + 2,
     avgTripDuration: route.estimatedDurationMinutes || Math.floor(Math.random() * 60) + 30,
   };
-}
-
-// ── Stat Card Component ───────────────────────────────────────────
-
-interface StatCardProps {
-  icon: typeof BarChart3;
-  label: string;
-  value: string | number;
-  subValue?: string;
-  color: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'cyan';
-}
-
-const COLORS = {
-  blue: { bg: 'bg-primary/10', iconBg: 'bg-primary/15', text: 'text-primary' },
-  emerald: { bg: 'bg-success/10', iconBg: 'bg-success/15', text: 'text-success' },
-  amber: { bg: 'bg-warning/10', iconBg: 'bg-warning/15', text: 'text-warning' },
-  violet: { bg: 'bg-violet-50', iconBg: 'bg-violet-100', text: 'text-violet-600' },
-  rose: { bg: 'bg-destructive/10', iconBg: 'bg-destructive/15', text: 'text-destructive' },
-  cyan: { bg: 'bg-primary/10', iconBg: 'bg-primary/15', text: 'text-primary/90' },
-};
-
-function StatCard({ icon: Icon, label, value, subValue, color }: StatCardProps) {
-  const colorStyles = COLORS[color];
-  
-  return (
-    <div className={`rounded-xl p-5 border border-border/50 ${colorStyles.bg}`}>
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-lg ${colorStyles.iconBg} flex items-center justify-center`}>
-          <Icon className={`w-5 h-5 ${colorStyles.text}`} />
-        </div>
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-      </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-      {subValue && (
-        <div className="text-xs text-muted-foreground mt-1">{subValue}</div>
-      )}
-    </div>
-  );
 }
 
 // ── Performance Bar ───────────────────────────────────────────────
@@ -130,18 +92,11 @@ export function RouteAnalyticsTab({ route }: RouteAnalyticsTabProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatsCardGrid className="lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-muted rounded-xl p-5 animate-pulse">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-secondary rounded-lg" />
-                <div className="h-4 w-20 bg-secondary rounded" />
-              </div>
-              <div className="h-7 w-24 bg-secondary rounded mb-2" />
-              <div className="h-3 w-32 bg-muted rounded" />
-            </div>
+            <div key={i} className="h-28 rounded-xl border bg-card animate-pulse" />
           ))}
-        </div>
+        </StatsCardGrid>
       </div>
     );
   }
@@ -178,50 +133,44 @@ export function RouteAnalyticsTab({ route }: RouteAnalyticsTabProps) {
         <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide mb-4">
           Key Metrics (Last 30 Days)
         </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard
-            icon={Bus}
-            label="Total Trips"
+        <StatsCardGrid className="lg:grid-cols-3">
+          <StatsCard
+            title="Total Trips"
             value={formatNumber(analytics.totalTrips)}
-            subValue="Completed trips"
-            color="blue"
+            icon={<Bus className="h-5 w-5" />}
+            description="Completed trips"
           />
-          <StatCard
-            icon={Users}
-            label="Passengers"
+          <StatsCard
+            title="Passengers"
             value={formatNumber(analytics.totalPassengers)}
-            subValue={`~${Math.round(analytics.totalPassengers / analytics.totalTrips)} avg per trip`}
-            color="emerald"
+            icon={<Users className="h-5 w-5" />}
+            description={`~${Math.round(analytics.totalPassengers / analytics.totalTrips)} avg per trip`}
           />
-          <StatCard
-            icon={Clock}
-            label="Avg Duration"
+          <StatsCard
+            title="Avg Duration"
             value={`${analytics.avgTripDuration}m`}
-            subValue="Per trip"
-            color="amber"
+            icon={<Clock className="h-5 w-5" />}
+            description="Per trip"
           />
-          <StatCard
-            icon={CheckCircle}
-            label="On-Time Rate"
+          <StatsCard
+            title="On-Time Rate"
             value={`${analytics.avgOnTimePercentage}%`}
-            subValue="Arrival accuracy"
-            color="violet"
+            icon={<CheckCircle className="h-5 w-5" />}
+            description="Arrival accuracy"
           />
-          <StatCard
-            icon={DollarSign}
-            label="Revenue"
+          <StatsCard
+            title="Revenue"
             value={formatCurrency(analytics.totalRevenue)}
-            subValue="Total collections"
-            color="rose"
+            icon={<DollarSign className="h-5 w-5" />}
+            description="Total collections"
           />
-          <StatCard
-            icon={Calendar}
-            label="Active Schedules"
+          <StatsCard
+            title="Active Schedules"
             value={analytics.activeSchedules}
-            subValue="Currently running"
-            color="cyan"
+            icon={<Calendar className="h-5 w-5" />}
+            description="Currently running"
           />
-        </div>
+        </StatsCardGrid>
       </div>
 
       {/* Performance metrics */}

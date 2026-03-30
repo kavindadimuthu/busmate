@@ -1,19 +1,13 @@
 'use client';
 
-import React from 'react';
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import type { OperatorPermitStatistics } from '@/data/operator/permits';
-
-// ── Types ─────────────────────────────────────────────────────────
 
 interface PermitStatsCardsProps {
   stats: OperatorPermitStatistics | null;
   loading?: boolean;
 }
-
-// ── Component ─────────────────────────────────────────────────────
 
 export function PermitStatsCards({ stats, loading = false }: PermitStatsCardsProps) {
   const safeStats: OperatorPermitStatistics = stats ?? {
@@ -25,75 +19,48 @@ export function PermitStatsCards({ stats, loading = false }: PermitStatsCardsPro
     expiringSoonPermits: 0,
   };
 
-  const metrics: StatsCardMetric[] = [
-    {
-      label: 'Total Permits',
-      value: (safeStats.totalPermits ?? 0).toLocaleString(),
-      trend: 'stable',
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [],
-      icon: FileText,
-    },
-    {
-      label: 'Active',
-      value: (safeStats.activePermits ?? 0).toLocaleString(),
-      trend: 'stable',
-      trendValue: '',
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [],
-      icon: CheckCircle,
-    },
-    {
-      label: 'Inactive',
-      value: (safeStats.inactivePermits ?? 0).toLocaleString(),
-      trend: 'stable',
-      trendValue: '',
-      trendPositiveIsGood: false,
-      color: 'amber',
-      sparkData: [],
-      icon: XCircle,
-    },
-    {
-      label: 'Pending',
-      value: (safeStats.pendingPermits ?? 0).toLocaleString(),
-      trend: 'stable',
-      trendValue: '',
-      trendPositiveIsGood: false,
-      color: 'amber',
-      sparkData: [],
-      icon: Clock,
-    },
-    {
-      label: 'Expired',
-      value: (safeStats.expiredPermits ?? 0).toLocaleString(),
-      trend: 'stable',
-      trendValue: '',
-      trendPositiveIsGood: false,
-      color: 'red',
-      sparkData: [],
-      icon: XCircle,
-    },
-    {
-      label: 'Expiring Soon',
-      value: (safeStats.expiringSoonPermits ?? 0).toLocaleString(),
-      trend: 'stable',
-      trendValue: '',
-      trendPositiveIsGood: false,
-      color: 'amber',
-      sparkData: [],
-      icon: AlertTriangle,
-    },
-  ];
+  if (loading) {
+    return (
+      <StatsCardGrid className="lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-28 rounded-xl border bg-card animate-pulse" />
+        ))}
+      </StatsCardGrid>
+    );
+  }
 
   return (
-    <StatsCardsContainer
-      metrics={metrics}
-      loading={loading}
-      columns={6}
-      skeletonCount={6}
-    />
+    <StatsCardGrid className="lg:grid-cols-6">
+      <StatsCard
+        title="Total Permits"
+        value={(safeStats.totalPermits ?? 0).toLocaleString()}
+        icon={<FileText className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Active"
+        value={(safeStats.activePermits ?? 0).toLocaleString()}
+        icon={<CheckCircle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Inactive"
+        value={(safeStats.inactivePermits ?? 0).toLocaleString()}
+        icon={<XCircle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Pending"
+        value={(safeStats.pendingPermits ?? 0).toLocaleString()}
+        icon={<Clock className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Expired"
+        value={(safeStats.expiredPermits ?? 0).toLocaleString()}
+        icon={<XCircle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Expiring Soon"
+        value={(safeStats.expiringSoonPermits ?? 0).toLocaleString()}
+        icon={<AlertTriangle className="h-5 w-5" />}
+      />
+    </StatsCardGrid>
   );
 }
