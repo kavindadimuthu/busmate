@@ -16,7 +16,7 @@ import Link from 'next/link';
 export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
-  const userId = params.id as string;
+  const userId = params.userId as string;
   const user = useMemo(() => getUserById(userId), [userId]);
 
   useSetPageMetadata({

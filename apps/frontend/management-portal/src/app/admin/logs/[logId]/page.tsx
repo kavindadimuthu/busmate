@@ -10,7 +10,7 @@ import { FileWarning } from 'lucide-react';
 export default function LogDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const logId = params.id as string;
+  const logId = params.logId as string;
 
   useSetPageMetadata({
     title: 'Log Detail',

@@ -10,7 +10,7 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react';
 export default function NotificationDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const notificationId = params.id as string;
+  const notificationId = params.notificationId as string;
 
   const notification = useMemo(() => getNotificationById(notificationId), [notificationId]);
 

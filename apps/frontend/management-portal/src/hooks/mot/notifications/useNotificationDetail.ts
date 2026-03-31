@@ -76,7 +76,7 @@ export function useNotificationDetail() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const notificationId = params.id as string;
+  const notificationId = params.notificationId as string;
   const fromTab = searchParams.get('from') ?? 'received';
   const isReceived = fromTab === 'received';
 
