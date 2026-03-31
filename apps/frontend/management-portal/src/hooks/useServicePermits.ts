@@ -48,8 +48,8 @@ export function useServicePermits() {
 
   const [filters, setFiltersState] = useState<PermitFilters>({
     search: '',
-    status: 'all',
-    permitType: 'all',
+    status: '__all__',
+    permitType: '__all__',
   });
 
   const [pagination, setPagination] = useState<PermitPagination>({
@@ -108,8 +108,8 @@ export function useServicePermits() {
   // ── Handlers ────────────────────────────────────────────────────
 
   const handleView = useCallback(
-    (permit: OperatorPermit) => {
-      router.push(`/operator/passenger-service-permits/${permit.id}`);
+    (permitId: string) => {
+      router.push(`/operator/passenger-service-permits/${permitId}`);
     },
     [router],
   );
@@ -127,7 +127,7 @@ export function useServicePermits() {
   }, []);
 
   const handleClearFilters = useCallback(() => {
-    setFiltersState({ search: '', status: 'all', permitType: 'all' });
+    setFiltersState({ search: '', status: '__all__', permitType: '__all__' });
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   }, []);
 

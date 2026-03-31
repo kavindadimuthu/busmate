@@ -11,18 +11,23 @@ import {
 } from '@/data/admin/users';
 import type { SystemUser, UserType, UserStatus, UserFiltersState } from '@/data/admin/users';
 
-export function useUsers() {
+interface UseUsersOptions {
+  /** The active user type tab — forces filtering by this type. */
+  activeUserType: UserType;
+}
+
+export function useUsers({ activeUserType }: UseUsersOptions) {
   const router = useRouter();
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState<UserType | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
+  const userTypeFilter: UserType = activeUserType;
+  const [statusFilter, setStatusFilter] = useState<UserStatus | '__all__'>('__all__');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   const [isLoading] = useState(false);
@@ -35,7 +40,7 @@ export function useUsers() {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Data computation
-  const stats = useMemo(() => getUserStatsData(), []);
+  const stats = useMemo(() => getUserStatsData(activeUserType), [activeUserType]);
 
   const filters: UserFiltersState = useMemo(
     () => ({
@@ -54,16 +59,16 @@ export function useUsers() {
     () =>
       getFilteredUsers({
         search: '',
-        userType: 'all',
-        status: 'all',
+        userType: activeUserType,
+        status: '__all__',
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }),
-    []
+    [activeUserType]
   );
 
   const totalPages = Math.ceil(allFilteredUsers.length / pageSize);
-  const startIndex = currentPage * pageSize;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedUsers = allFilteredUsers.slice(startIndex, startIndex + pageSize);
 
   // Handlers
@@ -76,7 +81,7 @@ export function useUsers() {
       setSortOrder('asc');
       return column;
     });
-    setCurrentPage(0);
+    setCurrentPage(1);
   }, []);
 
   const handleView = useCallback(
@@ -99,31 +104,25 @@ export function useUsers() {
 
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setUserTypeFilter('all');
-    setStatusFilter('all');
-    setCurrentPage(0);
+    setStatusFilter('__all__');
+    setCurrentPage(1);
   }, []);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
-    setCurrentPage(0);
+    setCurrentPage(1);
   }, []);
 
-  const handleUserTypeChange = useCallback((value: UserType | 'all') => {
-    setUserTypeFilter(value);
-    setCurrentPage(0);
-  }, []);
-
-  const handleStatusChange = useCallback((value: UserStatus | 'all') => {
+  const handleStatusChange = useCallback((value: UserStatus | '__all__') => {
     setStatusFilter(value);
-    setCurrentPage(0);
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((page: number) => setCurrentPage(page), []);
 
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
-    setCurrentPage(0);
+    setCurrentPage(1);
   }, []);
 
   const handleConfirmAction = useCallback(async () => {
@@ -195,7 +194,6 @@ export function useUsers() {
     handleDelete,
     handleClearAll,
     handleSearchChange,
-    handleUserTypeChange,
     handleStatusChange,
     handlePageChange,
     handlePageSizeChange,

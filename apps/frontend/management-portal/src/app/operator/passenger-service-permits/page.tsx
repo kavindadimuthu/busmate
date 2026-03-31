@@ -7,7 +7,6 @@ import { useServicePermits } from '@/hooks/useServicePermits';
 import { PermitStatsCards } from '@/components/operator/permits/PermitStatsCards';
 import { PermitFilters } from '@/components/operator/permits/PermitFilters';
 import { PermitsTable } from '@/components/operator/permits/PermitsTable';
-import { DataPagination } from '@/components/shared/DataPagination';
 
 function ServicePermitsContent() {
   useSetPageMetadata({
@@ -23,6 +22,8 @@ function ServicePermitsContent() {
     filters, pagination, sort, handleView, handleSort, handleFilterChange,
     handleClearFilters, handleRefresh, onPageChange, onPageSizeChange,
   } = useServicePermits();
+
+  const handleTableSort = (column: string) => handleSort(column);
 
   useSetPageActions(
     <button onClick={handleRefresh} disabled={loading} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50 transition-colors">
@@ -60,14 +61,19 @@ function ServicePermitsContent() {
         onClearAll={handleClearFilters}
       />
 
-      <div className="bg-card shadow-sm rounded-xl border border-border overflow-hidden">
-        <PermitsTable permits={permits} loading={loading} currentSort={sort} onSort={handleSort} onView={handleView} />
-        <DataPagination
-          currentPage={pagination.currentPage} totalPages={pagination.totalPages}
-          totalElements={pagination.totalElements} pageSize={pagination.pageSize}
-          onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} loading={loading}
+      <PermitsTable
+          permits={permits}
+          loading={loading}
+          sortColumn={sort.column}
+          sortDirection={sort.direction}
+          onSort={handleTableSort}
+          onView={handleView}
+          totalItems={pagination.totalElements}
+          page={pagination.currentPage}
+          pageSize={pagination.pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
-      </div>
 
       <div className="flex items-start gap-2.5 p-3.5 bg-primary/10 border border-primary/20 rounded-xl text-sm text-primary">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />

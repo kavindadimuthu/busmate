@@ -146,7 +146,7 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
           </div>
         ))}
         {services.length > 5 && (
-          <Link href="/admin/monitoring/api" className="text-xs text-primary hover:underline">
+          <Link href="/admin/monitoring?tab=api" className="text-xs text-primary hover:underline">
             +{services.length - 5} more services
           </Link>
         )}

@@ -7,10 +7,11 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
+  Users,
 } from 'lucide-react';
-import { DataTable, type DataTableColumn, type SortState } from '@/components/shared/DataTable';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import {
-  USER_TYPE_CONFIG,
   USER_STATUS_CONFIG,
   getUserDisplayName,
   timeAgo,
@@ -19,11 +20,20 @@ import type { SystemUser } from '@/data/admin/users';
 
 // ── Types ─────────────────────────────────────────────────────────
 
-interface UsersTableProps {
+interface UsersTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   users: SystemUser[];
-  loading?: boolean;
-  currentSort: { sortBy: string; sortOrder: 'asc' | 'desc' };
-  onSort: (field: string) => void;
+  totalItems: number;
   onView: (user: SystemUser) => void;
   onEdit: (user: SystemUser) => void;
   onToggleStatus: (user: SystemUser) => void;
@@ -35,23 +45,29 @@ interface UsersTableProps {
 
 export function UsersTable({
   users,
-  loading = false,
-  currentSort,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
+  loading,
   onView,
   onEdit,
   onToggleStatus,
   onDelete,
   activeFilters = {},
 }: UsersTableProps) {
-  const columns = useMemo<DataTableColumn<SystemUser>[]>(
+  const columns = useMemo<ColumnDef<SystemUser>[]>(
     () => [
       {
-        key: 'name',
+        id: 'name',
         header: 'Name',
         sortable: true,
-        minWidth: 'min-w-[220px]',
-        render: (user) => {
+        width: 'min-w-[220px]',
+        cell: ({ row: user }) => {
           const displayName = getUserDisplayName(user);
           return (
             <div className="flex items-center gap-3">
@@ -69,38 +85,21 @@ export function UsersTable({
         },
       },
       {
-        key: 'email',
+        id: 'email',
         header: 'Email',
         sortable: true,
-        minWidth: 'min-w-[200px]',
-        render: (user) => (
+        width: 'min-w-[200px]',
+        cell: ({ row: user }) => (
           <span className="text-muted-foreground truncate block">
             {user.email}
           </span>
         ),
       },
       {
-        key: 'userType',
-        header: 'Type',
-        sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (user) => {
-          const typeConfig = USER_TYPE_CONFIG[user.userType];
-          return (
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${typeConfig.bgColor} ${typeConfig.color} ${typeConfig.borderColor}`}
-            >
-              {typeConfig.label}
-            </span>
-          );
-        },
-      },
-      {
-        key: 'status',
+        id: 'status',
         header: 'Status',
         sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (user) => {
+        cell: ({ row: user }) => {
           const statusConfig = USER_STATUS_CONFIG[user.status];
           return (
             <span
@@ -113,33 +112,32 @@ export function UsersTable({
         },
       },
       {
-        key: 'lastLogin',
+        id: 'lastLogin',
         header: 'Last Login',
         sortable: true,
-        minWidth: 'min-w-[110px]',
-        render: (user) => (
+        width: 'min-w-[110px]',
+        cell: ({ row: user }) => (
           <span className="text-muted-foreground text-xs whitespace-nowrap">
             {timeAgo(user.lastLogin)}
           </span>
         ),
       },
       {
-        key: 'createdAt',
+        id: 'createdAt',
         header: 'Created',
         sortable: true,
-        minWidth: 'min-w-[110px]',
-        render: (user) => (
+        width: 'min-w-[110px]',
+        cell: ({ row: user }) => (
           <span className="text-muted-foreground text-xs whitespace-nowrap">
             {timeAgo(user.createdAt)}
           </span>
         ),
       },
       {
-        key: 'actions',
+        id: 'actions',
         header: 'Actions',
-        headerClassName: 'text-right',
-        cellClassName: 'text-right',
-        render: (user) => {
+        align: 'right',
+        cell: ({ row: user }) => {
           const isActive = user.status === 'active';
           return (
             <div className="flex items-center justify-end gap-1">
@@ -199,35 +197,28 @@ export function UsersTable({
     [onView, onEdit, onToggleStatus, onDelete],
   );
 
-  const handleSort = (sortBy: string, sortDir: 'asc' | 'desc') => {
-    onSort(sortBy);
-  };
-
   const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
   return (
     <DataTable<SystemUser>
       columns={columns}
       data={users}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
+      onSort={onSort}
+      getRowId={(user) => user.id}
       loading={loading}
-      currentSort={{ field: currentSort.sortBy, direction: currentSort.sortOrder }}
-      onSort={handleSort}
-      rowKey={(user) => user.id}
-      showRefreshing={loading && users.length > 0}
-      rowClassName={() => 'hover:bg-primary/10/30 cursor-pointer'}
       emptyState={
-        <div className="text-center py-16 px-4">
-          <p className="text-muted-foreground text-sm">
-            {hasActiveFilters
-              ? 'No users found matching your criteria.'
-              : 'No users found.'}
-          </p>
-          <p className="text-muted-foreground/70 text-xs mt-1">
-            {hasActiveFilters
-              ? 'Try adjusting your filters or search term.'
-              : 'Add a new user to get started.'}
-          </p>
-        </div>
+        <EmptyState
+          icon={<Users className="h-8 w-8" />}
+          title={hasActiveFilters ? 'No users found matching your criteria' : 'No users found'}
+          description={hasActiveFilters ? 'Try adjusting your filters or search term.' : 'Add a new user to get started.'}
+        />
       }
     />
   );

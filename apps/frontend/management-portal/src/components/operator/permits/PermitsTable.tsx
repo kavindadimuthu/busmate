@@ -2,17 +2,26 @@
 
 import React from 'react';
 import { Eye, FileText, AlertTriangle, MapPin } from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
-import type { DataTableColumn, SortState } from '@/components/shared/DataTable';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { OperatorPermit } from '@/data/operator/permits';
 
 // ── Types ─────────────────────────────────────────────────────────
 
-interface PermitsTableProps {
+interface PermitsTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   permits: OperatorPermit[];
-  loading: boolean;
-  currentSort: SortState;
-  onSort: (field: string, direction: 'asc' | 'desc') => void;
+  totalItems: number;
   onView: (permitId: string) => void;
 }
 
@@ -59,27 +68,15 @@ function isExpiringSoon(dateStr?: string): boolean {
   return diffDays <= 30 && diffDays >= 0;
 }
 
-// ── Empty state ───────────────────────────────────────────────────
-
-function EmptyPermits() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <FileText className="w-12 h-12 text-muted-foreground/50 mb-3" />
-      <h3 className="text-base font-semibold text-foreground mb-1">No permits found</h3>
-      <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-    </div>
-  );
-}
-
 // ── Component ─────────────────────────────────────────────────────
 
-export function PermitsTable({ permits, loading, currentSort, onSort, onView }: PermitsTableProps) {
-  const columns: DataTableColumn<OperatorPermit>[] = [
+export function PermitsTable({ permits, totalItems, page, pageSize, onPageChange, onPageSizeChange, sortColumn, sortDirection, onSort, loading, onView }: PermitsTableProps) {
+  const columns: ColumnDef<OperatorPermit>[] = [
     {
-      key: 'permitNumber',
+      id: 'permitNumber',
       header: 'Permit Number',
       sortable: true,
-      render: (row) => (
+      cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
             <FileText className="w-4 h-4 text-primary" />
@@ -93,10 +90,10 @@ export function PermitsTable({ permits, loading, currentSort, onSort, onView }: 
       ),
     },
     {
-      key: 'routeGroupName',
+      id: 'routeGroupName',
       header: 'Route Group',
       sortable: true,
-      render: (row) => (
+      cell: ({ row }) => (
         <div className="flex items-center gap-1.5 min-w-0">
           <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
           <div className="min-w-0">
@@ -113,10 +110,10 @@ export function PermitsTable({ permits, loading, currentSort, onSort, onView }: 
       ),
     },
     {
-      key: 'permitType',
+      id: 'permitType',
       header: 'Type',
       sortable: true,
-      render: (row) => (
+      cell: ({ row }) => (
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
           PERMIT_TYPE_STYLES[row.permitType] ?? 'bg-muted text-foreground/80 border-border'
         }`}>
@@ -125,10 +122,10 @@ export function PermitsTable({ permits, loading, currentSort, onSort, onView }: 
       ),
     },
     {
-      key: 'status',
+      id: 'status',
       header: 'Status',
       sortable: true,
-      render: (row) => (
+      cell: ({ row }) => (
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
           STATUS_STYLES[row.status] ?? 'bg-muted text-foreground/80 border-border'
         }`}>
@@ -137,18 +134,18 @@ export function PermitsTable({ permits, loading, currentSort, onSort, onView }: 
       ),
     },
     {
-      key: 'issueDate',
+      id: 'issueDate',
       header: 'Issue Date',
       sortable: true,
-      render: (row) => (
+      cell: ({ row }) => (
         <span className="text-sm text-muted-foreground whitespace-nowrap">{formatDate(row.issueDate)}</span>
       ),
     },
     {
-      key: 'expiryDate',
+      id: 'expiryDate',
       header: 'Expiry Date',
       sortable: true,
-      render: (row) => {
+      cell: ({ row }) => {
         const expired = isExpired(row.expiryDate);
         const expiringSoon = !expired && isExpiringSoon(row.expiryDate);
         return (
@@ -173,20 +170,18 @@ export function PermitsTable({ permits, loading, currentSort, onSort, onView }: 
       },
     },
     {
-      key: 'maximumBusAssigned',
+      id: 'maximumBusAssigned',
       header: 'Max Buses',
-      cellClassName: 'text-center',
-      headerClassName: 'text-center',
-      render: (row) => (
+      align: 'center',
+      cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{row.maximumBusAssigned}</span>
       ),
     },
     {
-      key: 'actions',
+      id: 'actions',
       header: 'Actions',
-      headerClassName: 'text-center',
-      cellClassName: 'text-center whitespace-nowrap',
-      render: (row) => (
+      align: 'center',
+      cell: ({ row }) => (
         <button
           onClick={() => onView(row.id)}
           title="View permit details"
@@ -199,15 +194,26 @@ export function PermitsTable({ permits, loading, currentSort, onSort, onView }: 
   ];
 
   return (
-    <DataTable
+    <DataTable<OperatorPermit>
       columns={columns}
       data={permits}
-      loading={loading}
-      currentSort={currentSort}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
-      rowKey={(row) => row.id}
-      emptyState={<EmptyPermits />}
-      showRefreshing
+      getRowId={(row) => row.id}
+      loading={loading}
+      emptyState={
+        <EmptyState
+          icon={<FileText className="h-8 w-8" />}
+          title="No permits found"
+          description="Try adjusting your search or filters."
+        />
+      }
     />
   );
 }

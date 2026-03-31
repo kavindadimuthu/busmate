@@ -110,7 +110,7 @@ export function NotificationDetailPanel({ notification, onBack }: NotificationDe
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto space-y-6">
       {/* Back button */}
       {onBack && (
         <button
@@ -124,17 +124,6 @@ export function NotificationDetailPanel({ notification, onBack }: NotificationDe
 
       {/* Header card */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        {/* Colour accent bar */}
-        <div
-          className={`h-1.5 ${
-            n.type === 'critical' ? 'bg-destructive' :
-            n.type === 'warning' ? 'bg-warning' :
-            n.type === 'success' ? 'bg-success' :
-            n.type === 'maintenance' ? 'bg-[hsl(var(--purple-500))]' :
-            'bg-primary/80'
-          }`}
-        />
-
         <div className="p-6">
           {/* Title row */}
           <div className="flex items-start gap-4">

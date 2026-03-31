@@ -1,22 +1,27 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Eye } from 'lucide-react';
-import { DataTable, type DataTableColumn, type SortState } from '@/components/shared/DataTable';
+import { Banknote, Eye } from 'lucide-react';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { SalaryRecord } from '@/data/operator/salary';
 
 // ── Props ─────────────────────────────────────────────────────────
 
-interface SalaryTableProps {
-  /** Paginated salary records for the current page. */
+interface SalaryTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   data: SalaryRecord[];
-  /** Show skeleton loading state. */
-  loading: boolean;
-  /** Current sort state. */
-  currentSort: SortState;
-  /** Callback when a sortable column header is clicked. */
-  onSort: (field: string, direction: 'asc' | 'desc') => void;
-  /** Callback to view details of a salary record. */
+  totalItems: number;
   onViewDetail?: (record: SalaryRecord) => void;
 }
 
@@ -64,15 +69,15 @@ function StatusBadge({ status }: { status: string }) {
 
 function useSalaryColumns(
   onViewDetail?: (record: SalaryRecord) => void,
-): DataTableColumn<SalaryRecord>[] {
+): ColumnDef<SalaryRecord>[] {
   return useMemo(
     () => [
       {
-        key: 'periodStart',
+        id: 'periodStart',
         header: 'Date',
         sortable: true,
-        minWidth: 'min-w-[100px]',
-        render: (row) => {
+        width: 'min-w-[100px]',
+        cell: ({ row }) => {
           const dt = new Date(row.periodStart);
           return (
             <span className="text-xs font-medium text-foreground">
@@ -82,11 +87,11 @@ function useSalaryColumns(
         },
       },
       {
-        key: 'staffName',
+        id: 'staffName',
         header: 'Staff Member',
         sortable: true,
-        minWidth: 'min-w-[160px]',
-        render: (row) => (
+        width: 'min-w-[160px]',
+        cell: ({ row }) => (
           <div>
             <p className="text-xs font-medium text-foreground">{row.staffName}</p>
             <p className="text-[10px] text-muted-foreground/70">{row.staffId}</p>
@@ -94,10 +99,10 @@ function useSalaryColumns(
         ),
       },
       {
-        key: 'role',
+        id: 'role',
         header: 'Role',
         sortable: true,
-        render: (row) => (
+        cell: ({ row }) => (
           <span
             className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
               ROLE_STYLES[row.role] ?? ''
@@ -108,20 +113,19 @@ function useSalaryColumns(
         ),
       },
       {
-        key: 'busAssigned',
+        id: 'busAssigned',
         header: 'Bus',
         sortable: true,
-        render: (row) => (
+        cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">{row.busAssigned}</span>
         ),
       },
       {
-        key: 'totalHours',
+        id: 'totalHours',
         header: 'Hours',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <div className="text-right">
             <span className="text-xs tabular-nums text-foreground/80">{row.totalHours.toFixed(1)}h</span>
             {row.overtimeHours > 0 && (
@@ -133,20 +137,19 @@ function useSalaryColumns(
         ),
       },
       {
-        key: 'tripsCompleted',
+        id: 'tripsCompleted',
         header: 'Trips',
         sortable: true,
-        cellClassName: 'text-center',
-        headerClassName: 'text-center',
-        render: (row) => (
+        align: 'center',
+        cell: ({ row }) => (
           <span className="text-xs tabular-nums text-foreground/80">{row.tripsCompleted}</span>
         ),
       },
       {
-        key: 'performanceRating',
+        id: 'performanceRating',
         header: 'Performance',
         sortable: true,
-        render: (row) => (
+        cell: ({ row }) => (
           <span
             className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
               PERF_STYLES[row.performanceRating] ?? ''
@@ -157,64 +160,60 @@ function useSalaryColumns(
         ),
       },
       {
-        key: 'baseSalary',
+        id: 'baseSalary',
         header: 'Base',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <span className="text-xs tabular-nums text-muted-foreground">
             Rs {row.baseSalary.toLocaleString()}
           </span>
         ),
       },
       {
-        key: 'totalBonuses',
+        id: 'totalBonuses',
         header: 'Bonuses',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <span className="text-xs tabular-nums text-success">
             +Rs {row.totalBonuses.toLocaleString()}
           </span>
         ),
       },
       {
-        key: 'totalDeductions',
+        id: 'totalDeductions',
         header: 'Deductions',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <span className="text-xs tabular-nums text-destructive">
             {row.totalDeductions > 0 ? `-Rs ${row.totalDeductions.toLocaleString()}` : '—'}
           </span>
         ),
       },
       {
-        key: 'netSalary',
+        id: 'netSalary',
         header: 'Net Pay',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <span className="text-xs font-semibold tabular-nums text-foreground">
             Rs {row.netSalary.toLocaleString()}
           </span>
         ),
       },
       {
-        key: 'paymentStatus',
+        id: 'paymentStatus',
         header: 'Status',
         sortable: true,
-        render: (row) => <StatusBadge status={row.paymentStatus} />,
+        cell: ({ row }) => <StatusBadge status={row.paymentStatus} />,
       },
       {
-        key: 'actions',
+        id: 'actions',
         header: '',
-        headerClassName: 'w-10',
-        render: (row) => (
+        width: 'w-10',
+        cell: ({ row }) => (
           <button
             onClick={() => onViewDetail?.(row)}
             className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors"
@@ -240,7 +239,13 @@ function useSalaryColumns(
 export function SalaryTable({
   data,
   loading,
-  currentSort,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
   onViewDetail,
 }: SalaryTableProps) {
@@ -256,11 +261,23 @@ export function SalaryTable({
       <DataTable<SalaryRecord>
         columns={columns}
         data={data}
-        loading={loading}
-        currentSort={currentSort}
+        totalItems={totalItems}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
         onSort={onSort}
-        rowKey={(row) => row.id}
-        skeletonRowCount={10}
+        getRowId={(row) => row.id}
+        loading={loading}
+        emptyState={
+          <EmptyState
+            icon={<Banknote className="h-8 w-8" />}
+            title="No salary records found"
+            description="Try adjusting your search or filters."
+          />
+        }
       />
     </div>
   );

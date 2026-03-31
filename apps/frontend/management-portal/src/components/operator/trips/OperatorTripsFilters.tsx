@@ -1,22 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import {
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-  MapPin,
-  Bus,
-  Calendar,
-  FileText,
-  Navigation2,
-} from 'lucide-react';
-import {
-  SearchFilterBar,
-  SelectFilter,
-} from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 import type { OperatorTripFilterOptions, TripStatus } from '@/data/operator/trips';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -113,11 +98,11 @@ export function OperatorTripsFilters({
 
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setRouteFilter('all');
-    setScheduleFilter('all');
-    setBusFilter('all');
-    setPermitFilter('all');
+    setStatusFilter('__all__');
+    setRouteFilter('__all__');
+    setScheduleFilter('__all__');
+    setBusFilter('__all__');
+    setPermitFilter('__all__');
     setFromDate('');
     setToDate('');
     onClearAll?.();
@@ -126,163 +111,77 @@ export function OperatorTripsFilters({
     setBusFilter, setPermitFilter, setFromDate, setToDate, onClearAll,
   ]);
 
-  // ── Active filter chips ─────────────────────────────────────────
+  // ── Active filter count ─────────────────────────────────────────
 
-  const chips: FilterChipDescriptor[] = [];
-
-  if (statusFilter !== 'all') {
-    chips.push({
-      key: 'status',
-      label: STATUS_LABELS[statusFilter as TripStatus] || statusFilter,
-      onRemove: () => setStatusFilter('all'),
-      colorClass: 'bg-success/10 text-success border-success/20',
-      icon: <CheckCircle className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (routeFilter !== 'all') {
-    const route = filterOptions.routes.find((r) => r.id === routeFilter);
-    chips.push({
-      key: 'route',
-      label: `Route: ${route ? `${route.routeNumber} – ${route.name}` : routeFilter}`,
-      onRemove: () => setRouteFilter('all'),
-      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-      icon: <MapPin className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (scheduleFilter !== 'all') {
-    const schedule = filterOptions.schedules.find((s) => s.id === scheduleFilter);
-    chips.push({
-      key: 'schedule',
-      label: `Schedule: ${schedule?.name || scheduleFilter}`,
-      onRemove: () => setScheduleFilter('all'),
-      colorClass: 'bg-primary/10 text-primary border-primary/20',
-      icon: <Clock className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (busFilter !== 'all') {
-    const bus = filterOptions.buses.find((b) => b.id === busFilter);
-    chips.push({
-      key: 'bus',
-      label: `Bus: ${bus?.registrationNumber || busFilter}`,
-      onRemove: () => setBusFilter('all'),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-      icon: <Bus className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (permitFilter !== 'all') {
-    const permit = filterOptions.permits.find((p) => p.id === permitFilter);
-    chips.push({
-      key: 'permit',
-      label: `PSP: ${permit?.permitNumber || permitFilter}`,
-      onRemove: () => setPermitFilter('all'),
-      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
-      icon: <FileText className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (fromDate) {
-    chips.push({
-      key: 'from-date',
-      label: `From: ${fromDate}`,
-      onRemove: () => setFromDate(''),
-      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
-      icon: <Calendar className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (toDate) {
-    chips.push({
-      key: 'to-date',
-      label: `To: ${toDate}`,
-      onRemove: () => setToDate(''),
-      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
-      icon: <Calendar className="h-3 w-3 opacity-70" />,
-    });
-  }
+  const activeFilterCount = [statusFilter, routeFilter, scheduleFilter, busFilter, permitFilter].filter(v => v !== '__all__').length + (fromDate ? 1 : 0) + (toDate ? 1 : 0);
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
       searchPlaceholder="Search trips by route, bus, permit, driver…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="trip"
-      loading={loading}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={filterOptions.statuses.map((s) => ({
-              value: s,
-              label: STATUS_LABELS[s] ?? s,
-            }))}
-            allLabel="All Statuses"
-            icon={<AlertCircle className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={routeFilter}
-            onChange={setRouteFilter}
-            options={filterOptions.routes.map((r) => ({
-              value: r.id,
-              label: `${r.routeNumber} – ${r.name}`,
-            }))}
-            allLabel="All Routes"
-            icon={<MapPin className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={scheduleFilter}
-            onChange={setScheduleFilter}
-            options={filterOptions.schedules.map((s) => ({
-              value: s.id,
-              label: s.name,
-            }))}
-            allLabel="All Schedules"
-            icon={<Clock className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={busFilter}
-            onChange={setBusFilter}
-            options={filterOptions.buses.map((b) => ({
-              value: b.id,
-              label: b.registrationNumber,
-            }))}
-            allLabel="All Buses"
-            icon={<Bus className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={permitFilter}
-            onChange={setPermitFilter}
-            options={filterOptions.permits.map((p) => ({
-              value: p.id,
-              label: p.permitNumber,
-            }))}
-            allLabel="All Permits"
-            icon={<FileText className="h-3.5 w-3.5" />}
-          />
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
-            title="From Date"
-          />
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
-            title="To Date"
-          />
-        </>
-      }
-      activeChips={chips}
-      onClearAllFilters={handleClearAll}
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={filterOptions.statuses.map((s) => ({
+          value: s,
+          label: STATUS_LABELS[s] ?? s,
+        }))}
+      />
+      <FilterSelect
+        label="Routes"
+        value={routeFilter}
+        onChange={setRouteFilter}
+        options={filterOptions.routes.map((r) => ({
+          value: r.id,
+          label: `${r.routeNumber} – ${r.name}`,
+        }))}
+      />
+      <FilterSelect
+        label="Schedules"
+        value={scheduleFilter}
+        onChange={setScheduleFilter}
+        options={filterOptions.schedules.map((s) => ({
+          value: s.id,
+          label: s.name,
+        }))}
+      />
+      <FilterSelect
+        label="Buses"
+        value={busFilter}
+        onChange={setBusFilter}
+        options={filterOptions.buses.map((b) => ({
+          value: b.id,
+          label: b.registrationNumber,
+        }))}
+      />
+      <FilterSelect
+        label="Permits"
+        value={permitFilter}
+        onChange={setPermitFilter}
+        options={filterOptions.permits.map((p) => ({
+          value: p.id,
+          label: p.permitNumber,
+        }))}
+      />
+      <input
+        type="date"
+        value={fromDate}
+        onChange={(e) => setFromDate(e.target.value)}
+        className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+        title="From Date"
+      />
+      <input
+        type="date"
+        value={toDate}
+        onChange={(e) => setToDate(e.target.value)}
+        className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+        title="To Date"
+      />
+    </FilterBar>
   );
 }

@@ -23,6 +23,11 @@ import {
   Users,
   AlertTriangle,
 } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardSkeleton,
+} from '@busmate/ui';
 import { PerformanceSnapshot } from '@/data/admin/systemMonitoring';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
@@ -68,12 +73,6 @@ function TrendIcon({ dir, positive }: { dir: 'up' | 'down' | 'stable'; positive?
   );
 }
 
-function usageBadgeColor(value: number, thresholds = { warn: 70, danger: 85 }): string {
-  if (value >= thresholds.danger) return 'text-destructive bg-destructive/10';
-  if (value >= thresholds.warn) return 'text-warning bg-warning/10';
-  return 'text-success bg-success/10';
-}
-
 // ── KPI Card ─────────────────────────────────────────────────────
 
 function KpiCard({
@@ -107,25 +106,27 @@ function KpiCard({
   }).join(' ');
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span className="text-xs font-medium text-muted-foreground">{label}</span>
+          </div>
+          <TrendIcon dir={trendDir} positive={trendPositiveIsGood} />
         </div>
-        <TrendIcon dir={trendDir} positive={trendPositiveIsGood} />
-      </div>
-      <div className="flex items-baseline gap-1 mb-2">
-        <span className="text-2xl font-bold text-foreground">{value}</span>
-        <span className="text-xs text-muted-foreground/70">{unit}</span>
-      </div>
-      <svg width={w} height={h} className="w-full overflow-visible">
-        <polyline
-          fill="none" stroke={sparkColor} strokeWidth="1.5" strokeLinejoin="round"
-          points={points}
-        />
-      </svg>
-    </div>
+        <div className="flex items-baseline gap-1 mb-2">
+          <span className="text-2xl font-bold text-foreground">{value}</span>
+          <span className="text-xs text-muted-foreground/70">{unit}</span>
+        </div>
+        <svg width={w} height={h} className="w-full overflow-visible">
+          <polyline
+            fill="none" stroke={sparkColor} strokeWidth="1.5" strokeLinejoin="round"
+            points={points}
+          />
+        </svg>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -137,8 +138,6 @@ interface PerformanceMetricsProps {
   loading: boolean;
   lastRefresh: Date;
   isLive: boolean;
-  onToggleLive: () => void;
-  onRefresh: () => void;
 }
 
 export function PerformanceMetrics({
@@ -147,12 +146,9 @@ export function PerformanceMetrics({
   loading,
   lastRefresh,
   isLive,
-  onToggleLive,
-  onRefresh,
 }: PerformanceMetricsProps) {
   // Build chart data
   const chartData = useMemo(() => {
-    // Show last ~60 data points for readable charts
     const slice = history.slice(-60);
     const labels = slice.map((p) => formatTime(p.timestamp));
 
@@ -261,10 +257,7 @@ export function PerformanceMetrics({
     return (
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border border-border p-6 animate-pulse">
-            <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
-            <div className="h-48 bg-muted rounded" />
-          </div>
+          <CardSkeleton key={i} />
         ))}
       </div>
     );
@@ -279,33 +272,6 @@ export function PerformanceMetrics({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Performance Metrics</h2>
-          <p className="text-sm text-muted-foreground">Real-time CPU, memory, response times, and request rates</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onToggleLive}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              isLive
-                ? 'bg-success/10 text-success border-success/20 hover:bg-success/15'
-                : 'bg-muted text-muted-foreground border-border hover:bg-muted'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-success animate-pulse' : 'bg-secondary'}`} />
-            {isLive ? 'Live' : 'Paused'}
-          </button>
-          <button
-            onClick={onRefresh}
-            className="px-3 py-1.5 text-xs font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard
@@ -345,38 +311,44 @@ export function PerformanceMetrics({
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CPU & Memory Chart */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-primary" />
-            CPU & Memory Usage
-          </h3>
-          <div className="h-64">
-            <Line data={chartData.cpuMemory} options={chartOptions('CPU & Memory', 'Usage %', 100)} />
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Cpu className="h-4 w-4 text-primary" />
+              CPU & Memory Usage
+            </h3>
+            <div className="h-64">
+              <Line data={chartData.cpuMemory} options={chartOptions('CPU & Memory', 'Usage %', 100)} />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Response Time Chart */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-warning" />
-            Average Response Time
-          </h3>
-          <div className="h-64">
-            <Line data={chartData.responseTime} options={chartOptions('Response Time', 'Time (ms)')} />
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-warning" />
+              Average Response Time
+            </h3>
+            <div className="h-64">
+              <Line data={chartData.responseTime} options={chartOptions('Response Time', 'Time (ms)')} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Request Rate + Error Rate (dual axis) */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[hsl(var(--purple-600))]" />
-          Request Rate & Error Rate
-        </h3>
-        <div className="h-72">
-          <Line data={chartData.requestRate} options={dualAxisOptions} />
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+            Request Rate & Error Rate
+          </h3>
+          <div className="h-72">
+            <Line data={chartData.requestRate} options={dualAxisOptions} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Footer */}
       <div className="text-center text-xs text-muted-foreground/70">

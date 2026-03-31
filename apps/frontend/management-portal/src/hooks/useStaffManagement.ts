@@ -15,11 +15,6 @@ import {
 
 export type StaffTab = 'all' | 'drivers' | 'conductors';
 
-interface SortConfig {
-  column: string;
-  direction: 'asc' | 'desc';
-}
-
 // ── Hook ──────────────────────────────────────────────────────────
 
 export function useStaffManagement() {
@@ -31,7 +26,7 @@ export function useStaffManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('__all__');
   const [shiftFilter, setShiftFilter] = useState<string>('__all__');
-  const [sort, setSort] = useState<SortConfig>({ column: 'fullName', direction: 'asc' });
+  const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({ field: 'fullName', direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -93,10 +88,10 @@ export function useStaffManagement() {
     }
 
     // Sorting
-    if (sort.column) {
+    if (sort.field) {
       result.sort((a, b) => {
-        const aVal = String((a as unknown as Record<string, unknown>)[sort.column] ?? '');
-        const bVal = String((b as unknown as Record<string, unknown>)[sort.column] ?? '');
+        const aVal = String((a as unknown as Record<string, unknown>)[sort.field] ?? '');
+        const bVal = String((b as unknown as Record<string, unknown>)[sort.field] ?? '');
         const cmp = aVal.localeCompare(bVal);
         return sort.direction === 'asc' ? cmp : -cmp;
       });
@@ -154,9 +149,10 @@ export function useStaffManagement() {
 
   const handleSort = useCallback((column: string) => {
     setSort((prev) => ({
-      column,
-      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc',
+      field: column,
+      direction: prev.field === column && prev.direction === 'asc' ? 'desc' : 'asc',
     }));
+    setCurrentPage(1);
   }, []);
 
   const handlePageSizeChange = useCallback((size: number) => {

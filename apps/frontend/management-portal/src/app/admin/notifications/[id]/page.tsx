@@ -21,7 +21,7 @@ export default function NotificationDetailPage() {
     showBreadcrumbs: true,
     breadcrumbs: [
       { label: 'Notifications', href: '/admin/notifications' },
-      { label: 'Explorer', href: '/admin/notifications/listing' },
+      { label: 'Explorer', href: '/admin/notifications' },
       { label: notification?.id || 'Detail' },
     ],
   });
@@ -49,13 +49,6 @@ export default function NotificationDetailPage() {
 
   return (
     <div className="space-y-4">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground/80 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </button>
       <NotificationDetailPanel notification={notification} />
     </div>
   );

@@ -1,23 +1,8 @@
 'use client';
 
-import React, { useCallback } from 'react';
-import {
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-  MapPin,
-  Users,
-  Bus,
-  User,
-  Calendar,
-  Route,
-} from 'lucide-react';
-import {
-  SearchFilterBar,
-  SelectFilter,
-} from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { useCallback } from 'react';
+import { Users, Bus, User } from 'lucide-react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -146,12 +131,12 @@ export default function TripAdvancedFilters({
 
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setRouteFilter('all');
-    setOperatorFilter('all');
-    setScheduleFilter('all');
-    setBusFilter('all');
-    setPspFilter('all');
+    setStatusFilter('__all__');
+    setRouteFilter('__all__');
+    setOperatorFilter('__all__');
+    setScheduleFilter('__all__');
+    setBusFilter('__all__');
+    setPspFilter('__all__');
     setFromDate('');
     setToDate('');
     setHasPsp(false);
@@ -165,291 +150,153 @@ export default function TripAdvancedFilters({
     setHasPsp, setHasBus, setHasDriver, setHasConductor, onClearAll,
   ]);
 
-  // ── Build active-filter chips ─────────────────────────────────
-
-  const chips: FilterChipDescriptor[] = [];
-
-  if (statusFilter !== 'all') {
-    chips.push({
-      key: 'status',
-      label: STATUS_LABELS[statusFilter] || statusFilter,
-      onRemove: () => setStatusFilter('all'),
-      colorClass: 'bg-success/10 text-success border-success/20',
-      icon: <CheckCircle className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (routeFilter !== 'all') {
-    const routeName = filterOptions.routes.find((r) => r.id === routeFilter)?.name;
-    chips.push({
-      key: 'route',
-      label: `Route: ${routeName || routeFilter}`,
-      onRemove: () => setRouteFilter('all'),
-      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-      icon: <Route className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (operatorFilter !== 'all') {
-    const opName = filterOptions.operators.find((o) => o.id === operatorFilter)?.name;
-    chips.push({
-      key: 'operator',
-      label: `Operator: ${opName || operatorFilter}`,
-      onRemove: () => setOperatorFilter('all'),
-      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
-      icon: <User className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (scheduleFilter !== 'all') {
-    const schName = filterOptions.schedules.find((s) => s.id === scheduleFilter)?.name;
-    chips.push({
-      key: 'schedule',
-      label: `Schedule: ${schName || scheduleFilter}`,
-      onRemove: () => setScheduleFilter('all'),
-      colorClass: 'bg-primary/10 text-primary border-primary/20',
-      icon: <Clock className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (busFilter !== 'all') {
-    const busReg = filterOptions.buses.find((b) => b.id === busFilter)?.registrationNumber;
-    chips.push({
-      key: 'bus',
-      label: `Bus: ${busReg || busFilter}`,
-      onRemove: () => setBusFilter('all'),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-      icon: <Bus className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (pspFilter !== 'all') {
-    const pspNum = filterOptions.passengerServicePermits.find((p) => p.id === pspFilter)?.permitNumber;
-    chips.push({
-      key: 'psp',
-      label: `PSP: ${pspNum || pspFilter}`,
-      onRemove: () => setPspFilter('all'),
-      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-      icon: <Users className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (fromDate) {
-    chips.push({
-      key: 'from-date',
-      label: `From: ${fromDate}`,
-      onRemove: () => setFromDate(''),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-      icon: <Calendar className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (toDate) {
-    chips.push({
-      key: 'to-date',
-      label: `To: ${toDate}`,
-      onRemove: () => setToDate(''),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-      icon: <Calendar className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (hasPsp) {
-    chips.push({
-      key: 'has-psp',
-      label: 'Has PSP',
-      onRemove: () => setHasPsp(false),
-      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-      icon: <Users className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (hasBus) {
-    chips.push({
-      key: 'has-bus',
-      label: 'Has Bus',
-      onRemove: () => setHasBus(false),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-      icon: <Bus className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (hasDriver) {
-    chips.push({
-      key: 'has-driver',
-      label: 'Has Driver',
-      onRemove: () => setHasDriver(false),
-      colorClass: 'bg-primary/10 text-primary border-primary/20',
-      icon: <User className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (hasConductor) {
-    chips.push({
-      key: 'has-conductor',
-      label: 'Has Conductor',
-      onRemove: () => setHasConductor(false),
-      colorClass: 'bg-warning/10 text-orange-700 border-orange-200',
-      icon: <User className="h-3 w-3 opacity-70" />,
-    });
-  }
+  const activeFilterCount = [statusFilter, routeFilter, operatorFilter, scheduleFilter, busFilter, pspFilter].filter(v => v !== '__all__').length
+    + [fromDate, toDate].filter(Boolean).length
+    + [hasPsp, hasBus, hasDriver, hasConductor].filter(Boolean).length;
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
       searchPlaceholder="Search trips by route name, operator, schedule…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="trip"
-      loading={loading}
-      filters={
-        <>
-          {/* Row 1: Primary dropdown filters */}
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={uniqueOptions(
-              filterOptions.statuses.map((s) => ({
-                value: s,
-                label: STATUS_LABELS[s] || s,
-              })),
-            )}
-            allLabel="All Statuses"
-            icon={<AlertCircle className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={routeFilter}
-            onChange={setRouteFilter}
-            options={uniqueOptions(
-              filterOptions.routes.map((r) => ({
-                value: r.id,
-                label: r.routeGroup ? `${r.name} (${r.routeGroup})` : r.name,
-              })),
-            )}
-            allLabel="All Routes"
-            icon={<Route className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={operatorFilter}
-            onChange={setOperatorFilter}
-            options={uniqueOptions(
-              filterOptions.operators.map((o) => ({
-                value: o.id,
-                label: o.name,
-              })),
-            )}
-            allLabel="All Operators"
-            icon={<User className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={scheduleFilter}
-            onChange={setScheduleFilter}
-            options={uniqueOptions(
-              filterOptions.schedules.map((s) => ({
-                value: s.id,
-                label: s.name,
-              })),
-            )}
-            allLabel="All Schedules"
-            icon={<Clock className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={busFilter}
-            onChange={setBusFilter}
-            options={uniqueOptions(
-              filterOptions.buses.map((b) => ({
-                value: b.id,
-                label: b.registrationNumber,
-              })),
-            )}
-            allLabel="All Buses"
-            icon={<Bus className="h-3.5 w-3.5" />}
-          />
-          <SelectFilter
-            value={pspFilter}
-            onChange={setPspFilter}
-            options={uniqueOptions(
-              filterOptions.passengerServicePermits.map((p) => ({
-                value: p.id,
-                label: p.permitNumber,
-              })),
-            )}
-            allLabel="All PSPs"
-            icon={<Users className="h-3.5 w-3.5" />}
-          />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      {/* Row 1: Primary dropdown filters */}
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={uniqueOptions(
+          filterOptions.statuses.map((s) => ({
+            value: s,
+            label: STATUS_LABELS[s] || s,
+          })),
+        )}
+      />
+      <FilterSelect
+        label="Routes"
+        value={routeFilter}
+        onChange={setRouteFilter}
+        options={uniqueOptions(
+          filterOptions.routes.map((r) => ({
+            value: r.id,
+            label: r.routeGroup ? `${r.name} (${r.routeGroup})` : r.name,
+          })),
+        )}
+      />
+      <FilterSelect
+        label="Operators"
+        value={operatorFilter}
+        onChange={setOperatorFilter}
+        options={uniqueOptions(
+          filterOptions.operators.map((o) => ({
+            value: o.id,
+            label: o.name,
+          })),
+        )}
+      />
+      <FilterSelect
+        label="Schedules"
+        value={scheduleFilter}
+        onChange={setScheduleFilter}
+        options={uniqueOptions(
+          filterOptions.schedules.map((s) => ({
+            value: s.id,
+            label: s.name,
+          })),
+        )}
+      />
+      <FilterSelect
+        label="Buses"
+        value={busFilter}
+        onChange={setBusFilter}
+        options={uniqueOptions(
+          filterOptions.buses.map((b) => ({
+            value: b.id,
+            label: b.registrationNumber,
+          })),
+        )}
+      />
+      <FilterSelect
+        label="PSPs"
+        value={pspFilter}
+        onChange={setPspFilter}
+        options={uniqueOptions(
+          filterOptions.passengerServicePermits.map((p) => ({
+            value: p.id,
+            label: p.permitNumber,
+          })),
+        )}
+      />
 
-          {/* Date range inputs */}
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
-            placeholder="From Date"
-            title="From Date"
-          />
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
-            placeholder="To Date"
-            title="To Date"
-          />
+      {/* Date range inputs */}
+      <input
+        type="date"
+        value={fromDate}
+        onChange={(e) => setFromDate(e.target.value)}
+        className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+        placeholder="From Date"
+        title="From Date"
+      />
+      <input
+        type="date"
+        value={toDate}
+        onChange={(e) => setToDate(e.target.value)}
+        className="appearance-none pl-3 pr-2 py-1.5 text-xs font-medium rounded-lg border bg-muted border-border text-muted-foreground hover:border-border hover:bg-card focus:outline-none focus:ring-2 focus:ring-purple-500/25 focus:border-purple-400 transition-all duration-150"
+        placeholder="To Date"
+        title="To Date"
+      />
 
-          {/* Assignment toggle buttons */}
-          <button
-            type="button"
-            onClick={() => setHasPsp(!hasPsp)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
-              hasPsp
-                ? 'bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]'
-                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
-            }`}
-          >
-            <Users className="h-3 w-3" />
-            PSP
-          </button>
-          <button
-            type="button"
-            onClick={() => setHasBus(!hasBus)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
-              hasBus
-                ? 'bg-primary/10 border-indigo-300 text-indigo-800'
-                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
-            }`}
-          >
-            <Bus className="h-3 w-3" />
-            Bus
-          </button>
-          <button
-            type="button"
-            onClick={() => setHasDriver(!hasDriver)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
-              hasDriver
-                ? 'bg-primary/10 border-primary/30 text-primary'
-                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
-            }`}
-          >
-            <User className="h-3 w-3" />
-            Driver
-          </button>
-          <button
-            type="button"
-            onClick={() => setHasConductor(!hasConductor)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
-              hasConductor
-                ? 'bg-warning/10 border-orange-300 text-warning'
-                : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
-            }`}
-          >
-            <User className="h-3 w-3" />
-            Conductor
-          </button>
-        </>
-      }
-      activeChips={chips}
-      onClearAllFilters={handleClearAll}
-    />
+      {/* Assignment toggle buttons */}
+      <button
+        type="button"
+        onClick={() => setHasPsp(!hasPsp)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
+          hasPsp
+            ? 'bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]'
+            : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
+        }`}
+      >
+        <Users className="h-3 w-3" />
+        PSP
+      </button>
+      <button
+        type="button"
+        onClick={() => setHasBus(!hasBus)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
+          hasBus
+            ? 'bg-primary/10 border-indigo-300 text-indigo-800'
+            : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
+        }`}
+      >
+        <Bus className="h-3 w-3" />
+        Bus
+      </button>
+      <button
+        type="button"
+        onClick={() => setHasDriver(!hasDriver)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
+          hasDriver
+            ? 'bg-primary/10 border-primary/30 text-primary'
+            : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
+        }`}
+      >
+        <User className="h-3 w-3" />
+        Driver
+      </button>
+      <button
+        type="button"
+        onClick={() => setHasConductor(!hasConductor)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 whitespace-nowrap ${
+          hasConductor
+            ? 'bg-warning/10 border-orange-300 text-warning'
+            : 'bg-muted border-border text-muted-foreground hover:border-border hover:bg-card'
+        }`}
+      >
+        <User className="h-3 w-3" />
+        Conductor
+      </button>
+    </FilterBar>
   );
 }

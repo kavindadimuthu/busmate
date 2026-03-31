@@ -23,10 +23,10 @@ export function useNotificationsOverview() {
   const upcoming = useMemo(() => getScheduledNotifications(5), []);
   const drafts = useMemo(() => getDraftNotifications(5), []);
 
-  const navigateToAll = () => router.push('/admin/notifications/listing');
-  const navigateToSent = () => router.push('/admin/notifications/listing?tab=sent');
-  const navigateToScheduled = () => router.push('/admin/notifications/listing?tab=scheduled');
-  const navigateToDrafts = () => router.push('/admin/notifications/listing?tab=drafts');
+  const navigateToAll = () => router.push('/admin/notifications');
+  const navigateToSent = () => router.push('/admin/notifications?tab=sent');
+  const navigateToScheduled = () => router.push('/admin/notifications?tab=scheduled');
+  const navigateToDrafts = () => router.push('/admin/notifications?tab=drafts');
   const navigateToCompose = () => router.push('/admin/notifications/compose');
   const navigateToNotification = (id: string) => router.push(`/admin/notifications/${id}`);
 

@@ -13,6 +13,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardAction,
+  FormGrid,
+  FormSkeleton,
+  StatusBadge,
 } from '@busmate/ui';
 import {
   Zap,
@@ -40,31 +49,6 @@ import {
 
 // ── Helpers ──────────────────────────────────────────────────────
 
-function Section({
-  icon,
-  title,
-  description,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="px-6 py-6 border-b border-border/50">
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h3>
-      </div>
-      {description && (
-        <p className="text-sm text-muted-foreground mb-5">{description}</p>
-      )}
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
-
 function ToggleRow({
   id,
   label,
@@ -88,17 +72,6 @@ function ToggleRow({
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onChange} />
     </div>
-  );
-}
-
-function KeyStatusBadge({ status }: { status: ApiKey['status'] }) {
-  const styles = {
-    active: 'bg-success/15 text-success',
-    revoked: 'bg-destructive/15 text-destructive',
-    expired: 'bg-muted text-muted-foreground',
-  };
-  return (
-    <Badge className={`${styles[status]} capitalize`}>{status}</Badge>
   );
 }
 
@@ -225,260 +198,285 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
 
   if (!settings) {
     return (
-      <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
+      <div className="space-y-4">
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
       </div>
     );
   }
 
   return (
-    <div>
-          <Section
-            icon={<Zap className="h-5 w-5 text-warning" />}
-            title="Rate Limiting & Timeouts"
-            description="Control request throughput and response timeouts"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div>
-                <Label htmlFor="rateLimitPerMinute">Rate Limit / min</Label>
-                <Input
-                  id="rateLimitPerMinute"
-                  type="number"
-                  min={1}
-                  value={settings.rateLimitPerMinute}
-                  onChange={(e) =>
-                    update('rateLimitPerMinute', parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="rateLimitPerHour">Rate Limit / hour</Label>
-                <Input
-                  id="rateLimitPerHour"
-                  type="number"
-                  min={1}
-                  value={settings.rateLimitPerHour}
-                  onChange={(e) =>
-                    update('rateLimitPerHour', parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="apiTimeout">API Timeout (sec)</Label>
-                <Input
-                  id="apiTimeout"
-                  type="number"
-                  min={1}
-                  value={settings.apiTimeout}
-                  onChange={(e) =>
-                    update('apiTimeout', parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxPayloadSize">Max Payload (MB)</Label>
-                <Input
-                  id="maxPayloadSize"
-                  type="number"
-                  min={1}
-                  value={settings.maxPayloadSize}
-                  onChange={(e) =>
-                    update('maxPayloadSize', parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
+    <div className="space-y-4">
+      {/* ── Rate Limiting & Timeouts ─────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Zap className="h-5 w-5 text-warning" />
+            Rate Limiting &amp; Timeouts
+          </CardTitle>
+          <CardDescription>Control request throughput and response timeouts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormGrid columns={3} className="lg:grid-cols-4">
+            <div>
+              <Label htmlFor="rateLimitPerMinute">Rate Limit / min</Label>
+              <Input
+                id="rateLimitPerMinute"
+                type="number"
+                min={1}
+                value={settings.rateLimitPerMinute}
+                onChange={(e) =>
+                  update('rateLimitPerMinute', parseInt(e.target.value) || 0)
+                }
+              />
             </div>
-          </Section>
+            <div>
+              <Label htmlFor="rateLimitPerHour">Rate Limit / hour</Label>
+              <Input
+                id="rateLimitPerHour"
+                type="number"
+                min={1}
+                value={settings.rateLimitPerHour}
+                onChange={(e) =>
+                  update('rateLimitPerHour', parseInt(e.target.value) || 0)
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="apiTimeout">API Timeout (sec)</Label>
+              <Input
+                id="apiTimeout"
+                type="number"
+                min={1}
+                value={settings.apiTimeout}
+                onChange={(e) =>
+                  update('apiTimeout', parseInt(e.target.value) || 0)
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxPayloadSize">Max Payload (MB)</Label>
+              <Input
+                id="maxPayloadSize"
+                type="number"
+                min={1}
+                value={settings.maxPayloadSize}
+                onChange={(e) =>
+                  update('maxPayloadSize', parseInt(e.target.value) || 0)
+                }
+              />
+            </div>
+          </FormGrid>
+        </CardContent>
+      </Card>
 
-          {/* ── Performance ───────────────────────────── */}
-          <Section
-            icon={<Server className="h-5 w-5 text-primary" />}
-            title="Performance"
-            description="Caching, compression & database connection settings"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
-              <div>
-                <Label htmlFor="cacheExpiryMinutes">Cache Expiry (min)</Label>
-                <Input
-                  id="cacheExpiryMinutes"
-                  type="number"
-                  min={1}
-                  value={settings.cacheExpiryMinutes}
-                  onChange={(e) =>
-                    update('cacheExpiryMinutes', parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxDatabaseConnections">Max DB Connections</Label>
-                <Input
-                  id="maxDatabaseConnections"
-                  type="number"
-                  min={1}
-                  value={settings.maxDatabaseConnections}
-                  onChange={(e) =>
-                    update('maxDatabaseConnections', parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
-            </div>
-            <div className="space-y-1 divide-y divide-gray-50">
-              <ToggleRow
-                id="responseCompression"
-                label="Response Compression"
-                description="Enable GZIP compression for API responses"
-                checked={settings.responseCompression}
-                onChange={(v) => update('responseCompression', v)}
-              />
-              <ToggleRow
-                id="aggressiveCaching"
-                label="Aggressive Caching"
-                description="Cache aggressively for improved performance"
-                checked={settings.aggressiveCaching}
-                onChange={(v) => update('aggressiveCaching', v)}
-              />
-              <ToggleRow
-                id="apiLoggingEnabled"
-                label="API Request Logging"
-                description="Log all API requests for monitoring and debugging"
-                checked={settings.apiLoggingEnabled}
-                onChange={(v) => update('apiLoggingEnabled', v)}
+      {/* ── Performance ───────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Server className="h-5 w-5 text-primary" />
+            Performance
+          </CardTitle>
+          <CardDescription>Caching, compression &amp; database connection settings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormGrid columns={3} className="mb-5">
+            <div>
+              <Label htmlFor="cacheExpiryMinutes">Cache Expiry (min)</Label>
+              <Input
+                id="cacheExpiryMinutes"
+                type="number"
+                min={1}
+                value={settings.cacheExpiryMinutes}
+                onChange={(e) =>
+                  update('cacheExpiryMinutes', parseInt(e.target.value) || 0)
+                }
               />
             </div>
-          </Section>
-
-          {/* ── CORS ──────────────────────────────────── */}
-          <Section
-            icon={<Globe className="h-5 w-5 text-success" />}
-            title="CORS Configuration"
-            description="Cross-Origin Resource Sharing allowed origins"
-          >
+            <div>
+              <Label htmlFor="maxDatabaseConnections">Max DB Connections</Label>
+              <Input
+                id="maxDatabaseConnections"
+                type="number"
+                min={1}
+                value={settings.maxDatabaseConnections}
+                onChange={(e) =>
+                  update('maxDatabaseConnections', parseInt(e.target.value) || 0)
+                }
+              />
+            </div>
+          </FormGrid>
+          <div className="space-y-1 divide-y divide-gray-50">
             <ToggleRow
-              id="corsEnabled"
-              label="CORS Protection"
-              description="Enable Cross-Origin Resource Sharing protection"
-              checked={settings.corsEnabled}
-              onChange={(v) => update('corsEnabled', v)}
+              id="responseCompression"
+              label="Response Compression"
+              description="Enable GZIP compression for API responses"
+              checked={settings.responseCompression}
+              onChange={(v) => update('responseCompression', v)}
             />
-            {settings.corsEnabled && (
-              <div className="mt-4">
-                <Label className="mb-2 block">Allowed Origins</Label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {settings.corsAllowedOrigins.map((origin) => (
-                    <span
-                      key={origin}
-                      className="inline-flex items-center gap-1.5 bg-muted text-sm px-3 py-1 rounded-full"
-                    >
-                      {origin}
-                      <button
-                        onClick={() => removeOrigin(origin)}
-                        className="text-muted-foreground/70 hover:text-destructive/80"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="https://example.com"
-                    value={newOrigin}
-                    onChange={(e) => setNewOrigin(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addOrigin()}
-                    className="max-w-sm"
-                  />
-                  <Button variant="outline" size="sm" onClick={addOrigin}>
-                    <Plus className="h-4 w-4 mr-1" /> Add
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Section>
-
-          {/* ── Webhook ───────────────────────────────── */}
-          <Section
-            icon={<Database className="h-5 w-5 text-[hsl(var(--purple-600))]" />}
-            title="Webhook"
-            description="Forward events to an external endpoint"
-          >
             <ToggleRow
-              id="webhookEnabled"
-              label="Webhook Enabled"
-              description="Send system events to external URL"
-              checked={settings.webhookEnabled}
-              onChange={(v) => update('webhookEnabled', v)}
+              id="aggressiveCaching"
+              label="Aggressive Caching"
+              description="Cache aggressively for improved performance"
+              checked={settings.aggressiveCaching}
+              onChange={(v) => update('aggressiveCaching', v)}
             />
-            {settings.webhookEnabled && (
-              <div className="mt-3">
-                <Label htmlFor="webhookUrl">Webhook URL</Label>
-                <Input
-                  id="webhookUrl"
-                  value={settings.webhookUrl}
-                  onChange={(e) => update('webhookUrl', e.target.value)}
-                  placeholder="https://hooks.example.com/events"
-                />
-              </div>
-            )}
-          </Section>
-
-          {/* ── Action Bar ──────────────────────────── */}
-          <div className="px-6 py-4 flex items-center justify-between bg-muted/50 border-t border-border/50">
-            <div className="flex items-center gap-2 text-sm">
-              {saved && (
-                <span className="flex items-center gap-1 text-success">
-                  <CheckCircle className="h-4 w-4" />
-                  Settings saved
-                </span>
-              )}
-              {isDirty && !saved && (
-                <span className="text-warning">You have unsaved changes</span>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                disabled={!isDirty || saving}
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Reset
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={!isDirty || saving}
-                className="bg-primary hover:bg-primary text-white"
-              >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save Changes
-              </Button>
-            </div>
+            <ToggleRow
+              id="apiLoggingEnabled"
+              label="API Request Logging"
+              description="Log all API requests for monitoring and debugging"
+              checked={settings.apiLoggingEnabled}
+              onChange={(v) => update('apiLoggingEnabled', v)}
+            />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ── CORS ──────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Globe className="h-5 w-5 text-success" />
+            CORS Configuration
+          </CardTitle>
+          <CardDescription>Cross-Origin Resource Sharing allowed origins</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ToggleRow
+            id="corsEnabled"
+            label="CORS Protection"
+            description="Enable Cross-Origin Resource Sharing protection"
+            checked={settings.corsEnabled}
+            onChange={(v) => update('corsEnabled', v)}
+          />
+          {settings.corsEnabled && (
+            <div className="mt-4">
+              <Label className="mb-2 block">Allowed Origins</Label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {settings.corsAllowedOrigins.map((origin) => (
+                  <span
+                    key={origin}
+                    className="inline-flex items-center gap-1.5 bg-muted text-sm px-3 py-1 rounded-full"
+                  >
+                    {origin}
+                    <button
+                      onClick={() => removeOrigin(origin)}
+                      className="text-muted-foreground/70 hover:text-destructive/80"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://example.com"
+                  value={newOrigin}
+                  onChange={(e) => setNewOrigin(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addOrigin()}
+                  className="max-w-sm"
+                />
+                <Button variant="outline" size="sm" onClick={addOrigin}>
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Webhook ───────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Database className="h-5 w-5 text-[hsl(var(--purple-600))]" />
+            Webhook
+          </CardTitle>
+          <CardDescription>Forward events to an external endpoint</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ToggleRow
+            id="webhookEnabled"
+            label="Webhook Enabled"
+            description="Send system events to external URL"
+            checked={settings.webhookEnabled}
+            onChange={(v) => update('webhookEnabled', v)}
+          />
+          {settings.webhookEnabled && (
+            <div className="mt-3">
+              <Label htmlFor="webhookUrl">Webhook URL</Label>
+              <Input
+                id="webhookUrl"
+                value={settings.webhookUrl}
+                onChange={(e) => update('webhookUrl', e.target.value)}
+                placeholder="https://hooks.example.com/events"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Action Bar ──────────────────────────────── */}
+      <Card className="py-0">
+        <CardContent className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            {saved && (
+              <span className="flex items-center gap-1 text-success">
+                <CheckCircle className="h-4 w-4" />
+                Settings saved
+              </span>
+            )}
+            {isDirty && !saved && (
+              <span className="text-warning">You have unsaved changes</span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={!isDirty || saving}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={!isDirty || saving}
+              className="bg-primary hover:bg-primary text-white"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── API Keys ──────────────────────────────────── */}
-      <div className="px-6 py-6 border-t border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <Key className="h-4 w-4 text-warning" />
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">API Keys</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">Manage API keys used by external integrations</p>
-          </div>
-          <Button
-            size="sm"
-            className="bg-primary hover:bg-primary text-white"
-            onClick={() => {
-              alert('TODO: Show API key creation dialog');
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Generate Key
-          </Button>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Key className="h-4 w-4 text-warning" />
+            API Keys
+          </CardTitle>
+          <CardDescription>Manage API keys used by external integrations</CardDescription>
+          <CardAction>
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-primary text-white"
+              onClick={() => {
+                alert('TODO: Show API key creation dialog');
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Generate Key
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -500,7 +498,10 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
                       <MaskedKey apiKey={key.key} />
                     </TableCell>
                     <TableCell>
-                      <KeyStatusBadge status={key.status} />
+                      <StatusBadge
+                        status={key.status === 'revoked' ? 'rejected' : key.status}
+                        label={key.status === 'revoked' ? 'Revoked' : undefined}
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(key.createdAt).toLocaleDateString()}
@@ -548,7 +549,8 @@ export function ApiSettingsPanel({ onSaved }: ApiSettingsPanelProps) {
               </TableBody>
             </Table>
           </div>
-        </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

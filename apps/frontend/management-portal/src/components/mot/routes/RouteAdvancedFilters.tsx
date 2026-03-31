@@ -1,8 +1,9 @@
 'use client';
 
-import { Navigation, Route as RouteIcon } from 'lucide-react';
-import { SearchFilterBar, SelectFilter, SegmentedControl } from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor, SegmentOption } from '@/components/shared/SearchFilterBar';
+import { Navigation } from 'lucide-react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
+import { SegmentedControl } from '@/components/shared/SearchFilterBar';
+import type { SegmentOption } from '@/components/shared/SearchFilterBar';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -59,9 +60,9 @@ const DIRECTION_SEGMENTS: SegmentOption[] = [
 /**
  * Route-specific search & filter bar.
  *
- * Wraps the generic `<SearchFilterBar>` with route filter controls
+ * Wraps the generic `<FilterBar>` with route filter controls
  * (route group dropdown, direction segmented control, distance and
- * duration range inputs) and derives active filter chips automatically.
+ * duration range inputs) and derives active filter count automatically.
  */
 export function RouteAdvancedFilters({
   searchTerm,
@@ -90,120 +91,81 @@ export function RouteAdvancedFilters({
     label: rg.name,
   }));
 
-  // Derive active filter chips
-  const chips: FilterChipDescriptor[] = [
-    routeGroupFilter !== 'all' && {
-      key: 'routeGroup',
-      label: filterOptions.routeGroups.find((rg) => rg.id === routeGroupFilter)?.name ?? routeGroupFilter,
-      onRemove: () => setRouteGroupFilter('all'),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-    },
-    directionFilter !== 'all' && {
-      key: 'direction',
-      label: directionFilter === 'OUTBOUND' ? 'Outbound' : 'Inbound',
-      onRemove: () => setDirectionFilter('all'),
-      colorClass: 'bg-primary/10 text-primary border-primary/20',
-    },
-    minDistance && {
-      key: 'minDistance',
-      label: `Min ${minDistance} km`,
-      onRemove: () => setMinDistance(''),
-      colorClass: 'bg-warning/10 text-warning border-warning/20',
-    },
-    maxDistance && {
-      key: 'maxDistance',
-      label: `Max ${maxDistance} km`,
-      onRemove: () => setMaxDistance(''),
-      colorClass: 'bg-warning/10 text-warning border-warning/20',
-    },
-    minDuration && {
-      key: 'minDuration',
-      label: `Min ${minDuration} min`,
-      onRemove: () => setMinDuration(''),
-      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
-    },
-    maxDuration && {
-      key: 'maxDuration',
-      label: `Max ${maxDuration} min`,
-      onRemove: () => setMaxDuration(''),
-      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
-    },
-  ].filter(Boolean) as FilterChipDescriptor[];
+  // Derive active filter count
+  const activeFilterCount = [
+    routeGroupFilter !== '__all__',
+    directionFilter !== 'all',
+    !!minDistance,
+    !!maxDistance,
+    !!minDuration,
+    !!maxDuration,
+  ].filter(Boolean).length;
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={(val) => {
         setSearchTerm(val);
         onSearch?.(val);
       }}
       searchPlaceholder="Search routes by name, description, group, or stop names…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="route"
-      loading={loading}
-      filters={
-        <>
-          {/* Route Group dropdown */}
-          <SelectFilter
-            value={routeGroupFilter}
-            onChange={setRouteGroupFilter}
-            options={routeGroupOptions}
-            allLabel="All Groups"
-            icon={<RouteIcon className="h-3.5 w-3.5" />}
-            activeColorClass="bg-primary/10 border-indigo-300 text-indigo-800"
-          />
+      activeFilterCount={activeFilterCount}
+      onClearAll={onClearAll}
+    >
+      {/* Route Group dropdown */}
+      <FilterSelect
+        label="Groups"
+        value={routeGroupFilter}
+        onChange={setRouteGroupFilter}
+        options={routeGroupOptions}
+      />
 
-          {/* Direction segmented control */}
-          <SegmentedControl
-            value={directionFilter}
-            onChange={setDirectionFilter}
-            options={DIRECTION_SEGMENTS}
-          />
+      {/* Direction segmented control */}
+      <SegmentedControl
+        value={directionFilter}
+        onChange={setDirectionFilter}
+        options={DIRECTION_SEGMENTS}
+      />
 
-          {/* Distance range */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">Dist (km):</span>
-            <input
-              type="number"
-              placeholder="Min"
-              value={minDistance}
-              onChange={(e) => setMinDistance(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-warning/40 focus:bg-card transition-all"
-            />
-            <span className="text-muted-foreground/70 text-xs">–</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={maxDistance}
-              onChange={(e) => setMaxDistance(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-warning/40 focus:bg-card transition-all"
-            />
-          </div>
+      {/* Distance range */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground shrink-0">Dist (km):</span>
+        <input
+          type="number"
+          placeholder="Min"
+          value={minDistance}
+          onChange={(e) => setMinDistance(e.target.value)}
+          className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-warning/40 focus:bg-card transition-all"
+        />
+        <span className="text-muted-foreground/70 text-xs">–</span>
+        <input
+          type="number"
+          placeholder="Max"
+          value={maxDistance}
+          onChange={(e) => setMaxDistance(e.target.value)}
+          className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-warning/40 focus:bg-card transition-all"
+        />
+      </div>
 
-          {/* Duration range */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground shrink-0">Dur (min):</span>
-            <input
-              type="number"
-              placeholder="Min"
-              value={minDuration}
-              onChange={(e) => setMinDuration(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-primary/40 focus:bg-card transition-all"
-            />
-            <span className="text-muted-foreground/70 text-xs">–</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={maxDuration}
-              onChange={(e) => setMaxDuration(e.target.value)}
-              className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-primary/40 focus:bg-card transition-all"
-            />
-          </div>
-        </>
-      }
-      activeChips={chips}
-      onClearAllFilters={onClearAll}
-    />
+      {/* Duration range */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground shrink-0">Dur (min):</span>
+        <input
+          type="number"
+          placeholder="Min"
+          value={minDuration}
+          onChange={(e) => setMinDuration(e.target.value)}
+          className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-primary/40 focus:bg-card transition-all"
+        />
+        <span className="text-muted-foreground/70 text-xs">–</span>
+        <input
+          type="number"
+          placeholder="Max"
+          value={maxDuration}
+          onChange={(e) => setMaxDuration(e.target.value)}
+          className="w-16 px-2 py-1.5 text-xs border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-primary/40 focus:bg-card transition-all"
+        />
+      </div>
+    </FilterBar>
   );
 }

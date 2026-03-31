@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { Calendar, CheckCircle, XCircle, Route } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 import {
-  SearchFilterBar,
-  SelectFilter,
   SegmentedControl,
 } from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor, SegmentOption } from '@/components/shared/SearchFilterBar';
+import type { SegmentOption } from '@/components/shared/SearchFilterBar';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -51,9 +50,9 @@ const SCHEDULE_TYPE_SEGMENTS: SegmentOption[] = [
 /**
  * Schedule-specific search & filter bar.
  *
- * Wraps the generic <SearchFilterBar> with schedule filter controls
+ * Wraps the generic <FilterBar> with schedule filter controls
  * (status dropdown, schedule-type segmented control, route dropdown, date range)
- * and derives active filter chips automatically.
+ * and derives active filter count automatically.
  */
 export function ScheduleAdvancedFilters({
   searchTerm,
@@ -89,9 +88,9 @@ export function ScheduleAdvancedFilters({
 
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
+    setStatusFilter('__all__');
     setScheduleTypeFilter('all');
-    setRouteFilter('all');
+    setRouteFilter('__all__');
     setEffectiveStartDate('');
     setEffectiveEndDate('');
     onClearAll?.();
@@ -108,98 +107,40 @@ export function ScheduleAdvancedFilters({
     label: r.routeGroup ? r.name + ' (' + r.routeGroup + ')' : r.name,
   }));
 
-  // Active filter chips
-  const chips: FilterChipDescriptor[] = [];
-
-  if (statusFilter !== 'all') {
-    const label = statusFilter.charAt(0) + statusFilter.slice(1).toLowerCase();
-    const colorMap: Record<string, string> = {
-      ACTIVE:    'bg-success/10 text-success border-success/20',
-      INACTIVE:  'bg-destructive/10 text-destructive border-destructive/20',
-      PENDING:   'bg-warning/10 text-warning border-warning/20',
-      CANCELLED: 'bg-muted text-foreground/80 border-border',
-    };
-    chips.push({
-      key: 'status',
-      label,
-      onRemove: () => setStatusFilter('all'),
-      colorClass: colorMap[statusFilter] ?? 'bg-muted text-foreground/80 border-border',
-      icon: statusFilter === 'ACTIVE'
-        ? <CheckCircle className="h-3 w-3 opacity-70" />
-        : <XCircle className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (scheduleTypeFilter !== 'all') {
-    chips.push({
-      key: 'scheduleType',
-      label: scheduleTypeFilter === 'REGULAR' ? 'Regular' : 'Special',
-      onRemove: () => setScheduleTypeFilter('all'),
-      colorClass: scheduleTypeFilter === 'REGULAR'
-        ? 'bg-primary/10 text-primary border-primary/20'
-        : 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-      icon: <Calendar className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (routeFilter !== 'all') {
-    const routeName = filterOptions.routes.find((r) => r.id === routeFilter)?.name ?? routeFilter;
-    chips.push({
-      key: 'route',
-      label: routeName,
-      onRemove: () => setRouteFilter('all'),
-      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
-      icon: <Route className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (effectiveStartDate) {
-    chips.push({
-      key: 'startDate',
-      label: 'From: ' + effectiveStartDate,
-      onRemove: () => setEffectiveStartDate(''),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-    });
-  }
-
-  if (effectiveEndDate) {
-    chips.push({
-      key: 'endDate',
-      label: 'To: ' + effectiveEndDate,
-      onRemove: () => setEffectiveEndDate(''),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-    });
-  }
+  // Active filter count
+  const activeFilterCount = [
+    statusFilter !== '__all__',
+    scheduleTypeFilter !== 'all',
+    routeFilter !== '__all__',
+    !!effectiveStartDate,
+    !!effectiveEndDate,
+  ].filter(Boolean).length;
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
       searchPlaceholder="Search schedules by name, route, or description..."
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="schedule"
-      loading={loading}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            allLabel="All Statuses"
-          />
-          <SegmentedControl
-            value={scheduleTypeFilter}
-            onChange={setScheduleTypeFilter}
-            options={SCHEDULE_TYPE_SEGMENTS}
-          />
-          <SelectFilter
-            value={routeFilter}
-            onChange={setRouteFilter}
-            options={routeOptions}
-            allLabel="All Routes"
-            icon={<Route className="h-3.5 w-3.5" />}
-          />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={statusOptions}
+      />
+      <SegmentedControl
+        value={scheduleTypeFilter}
+        onChange={setScheduleTypeFilter}
+        options={SCHEDULE_TYPE_SEGMENTS}
+      />
+      <FilterSelect
+        label="Routes"
+        value={routeFilter}
+        onChange={setRouteFilter}
+        options={routeOptions}
+      />
           <div className="flex items-center gap-1.5 shrink-0">
             <Calendar className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
             <input
@@ -218,11 +159,7 @@ export function ScheduleAdvancedFilters({
               title="Effective to"
             />
           </div>
-        </>
-      }
-      activeChips={chips}
-      onClearAllFilters={handleClearAll}
-    />
+    </FilterBar>
   );
 }
 

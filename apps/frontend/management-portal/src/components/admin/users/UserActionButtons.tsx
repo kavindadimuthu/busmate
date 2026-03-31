@@ -1,8 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Plus, Upload, Download } from 'lucide-react';
-import { ActionButton, ActionButtonsContainer } from '@/components/shared/ActionButton';
+import { Plus, Upload, Download, MoreHorizontal } from 'lucide-react';
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -21,57 +27,49 @@ export function UserActionButtons({
   onExportAll,
   isLoading = false,
 }: UserActionButtonsProps) {
-  const overflowItems = [];
-
-  if (onImportUsers) {
-    overflowItems.push({
-      icon: <Upload className="h-3.5 w-3.5" />,
-      label: 'Import',
-      onClick: onImportUsers,
-      disabled: isLoading,
-    });
-  }
-
-  if (onExportAll) {
-    overflowItems.push({
-      icon: <Download className="h-3.5 w-3.5" />,
-      label: 'Export All',
-      onClick: onExportAll,
-      disabled: isLoading,
-    });
-  }
+  const hasOverflow = !!onImportUsers || !!onExportAll;
 
   return (
-    <ActionButtonsContainer
-      overflowItems={overflowItems.length > 0 ? overflowItems : undefined}
-    >
-      <ActionButton
-        icon={<Plus className="h-4 w-4" />}
-        label="Add User"
-        variant="primary"
-        onClick={onAddUser}
-        disabled={isLoading}
-      />
+    <div className="flex items-center gap-2">
+      <Button onClick={onAddUser} disabled={isLoading}>
+        <Plus className="h-4 w-4" />
+        Add User
+      </Button>
       {onImportUsers && (
-        <ActionButton
-          icon={<Upload className="h-4 w-4" />}
-          label="Import"
-          variant="ghost"
-          onClick={onImportUsers}
-          disabled={isLoading}
-          className="hidden sm:inline-flex"
-        />
+        <Button variant="ghost" onClick={onImportUsers} disabled={isLoading} className="hidden sm:inline-flex">
+          <Upload className="h-4 w-4" />
+          Import
+        </Button>
       )}
       {onExportAll && (
-        <ActionButton
-          icon={<Download className="h-4 w-4" />}
-          label="Export All"
-          variant="secondary"
-          onClick={onExportAll}
-          disabled={isLoading}
-          className="hidden sm:inline-flex"
-        />
+        <Button variant="outline" onClick={onExportAll} disabled={isLoading} className="hidden sm:inline-flex">
+          <Download className="h-4 w-4" />
+          Export All
+        </Button>
       )}
-    </ActionButtonsContainer>
+      {hasOverflow && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="sm:hidden">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onImportUsers && (
+              <DropdownMenuItem onClick={onImportUsers} disabled={isLoading}>
+                <Upload className="h-3.5 w-3.5" />
+                Import
+              </DropdownMenuItem>
+            )}
+            {onExportAll && (
+              <DropdownMenuItem onClick={onExportAll} disabled={isLoading}>
+                <Download className="h-3.5 w-3.5" />
+                Export All
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 }

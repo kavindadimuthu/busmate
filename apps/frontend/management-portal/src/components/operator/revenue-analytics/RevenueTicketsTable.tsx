@@ -1,21 +1,27 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Eye, FileText } from 'lucide-react';
-import { DataTable, type DataTableColumn, type SortState } from '@/components/shared/DataTable';
+import { Eye, FileText, Ticket } from 'lucide-react';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { TicketRecord } from '@/data/operator/revenue';
 
 // ── Props ─────────────────────────────────────────────────────────
 
-interface RevenueTicketsTableProps {
-  /** Paginated ticket records for the current page. */
+interface RevenueTicketsTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   data: TicketRecord[];
-  /** Show skeleton loading state. */
-  loading: boolean;
-  /** Current sort state. */
-  currentSort: SortState;
-  /** Callback when a sortable column header is clicked. */
-  onSort: (field: string, direction: 'asc' | 'desc') => void;
+  totalItems: number;
 }
 
 // ── Status badge ──────────────────────────────────────────────────
@@ -74,24 +80,24 @@ function PaymentMethodBadge({ method }: { method: string }) {
 
 // ── Column definitions ────────────────────────────────────────────
 
-function useTicketColumns(): DataTableColumn<TicketRecord>[] {
+function useTicketColumns(): ColumnDef<TicketRecord>[] {
   return useMemo(
     () => [
       {
-        key: 'ticketId',
+        id: 'ticketId',
         header: 'Ticket ID',
         sortable: true,
-        minWidth: 'min-w-[140px]',
-        render: (row) => (
+        width: 'min-w-[140px]',
+        cell: ({ row }) => (
           <span className="text-xs font-mono text-foreground/80">{row.ticketId}</span>
         ),
       },
       {
-        key: 'issueDateTime',
+        id: 'issueDateTime',
         header: 'Date / Time',
         sortable: true,
-        minWidth: 'min-w-[140px]',
-        render: (row) => {
+        width: 'min-w-[140px]',
+        cell: ({ row }) => {
           const dt = new Date(row.issueDateTime);
           return (
             <div>
@@ -106,35 +112,35 @@ function useTicketColumns(): DataTableColumn<TicketRecord>[] {
         },
       },
       {
-        key: 'busNumber',
+        id: 'busNumber',
         header: 'Bus',
         sortable: true,
-        render: (row) => (
+        cell: ({ row }) => (
           <span className="text-xs font-medium text-foreground/80">{row.busNumber}</span>
         ),
       },
       {
-        key: 'routeName',
+        id: 'routeName',
         header: 'Route',
         sortable: true,
-        minWidth: 'min-w-[150px]',
-        render: (row) => (
+        width: 'min-w-[150px]',
+        cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">{row.routeName}</span>
         ),
       },
       {
-        key: 'conductorName',
+        id: 'conductorName',
         header: 'Conductor',
         sortable: true,
-        render: (row) => (
+        cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">{row.conductorName}</span>
         ),
       },
       {
-        key: 'pickupLocation',
+        id: 'pickupLocation',
         header: 'From → To',
-        minWidth: 'min-w-[160px]',
-        render: (row) => (
+        width: 'min-w-[160px]',
+        cell: ({ row }) => (
           <div className="text-xs text-muted-foreground">
             <span>{row.pickupLocation}</span>
             <span className="text-muted-foreground/50 mx-1">→</span>
@@ -143,40 +149,38 @@ function useTicketColumns(): DataTableColumn<TicketRecord>[] {
         ),
       },
       {
-        key: 'distanceKm',
+        id: 'distanceKm',
         header: 'Distance',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <span className="text-xs tabular-nums text-muted-foreground">
             {row.distanceKm.toFixed(1)} km
           </span>
         ),
       },
       {
-        key: 'ticketPrice',
+        id: 'ticketPrice',
         header: 'Price',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
+        align: 'right',
+        cell: ({ row }) => (
           <span className="text-xs font-semibold tabular-nums text-foreground">
             Rs {row.ticketPrice.toLocaleString()}
           </span>
         ),
       },
       {
-        key: 'paymentMethod',
+        id: 'paymentMethod',
         header: 'Payment',
         sortable: true,
-        render: (row) => <PaymentMethodBadge method={row.paymentMethod} />,
+        cell: ({ row }) => <PaymentMethodBadge method={row.paymentMethod} />,
       },
       {
-        key: 'status',
+        id: 'status',
         header: 'Status',
         sortable: true,
-        render: (row) => <StatusBadge status={row.status} />,
+        cell: ({ row }) => <StatusBadge status={row.status} />,
       },
     ],
     [],
@@ -194,7 +198,13 @@ function useTicketColumns(): DataTableColumn<TicketRecord>[] {
 export function RevenueTicketsTable({
   data,
   loading,
-  currentSort,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
 }: RevenueTicketsTableProps) {
   const columns = useTicketColumns();
@@ -217,11 +227,23 @@ export function RevenueTicketsTable({
       <DataTable<TicketRecord>
         columns={columns}
         data={data}
-        loading={loading}
-        currentSort={currentSort}
+        totalItems={totalItems}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
         onSort={onSort}
-        rowKey={(row) => row.ticketId}
-        skeletonRowCount={10}
+        getRowId={(row) => row.ticketId}
+        loading={loading}
+        emptyState={
+          <EmptyState
+            icon={<Ticket className="h-8 w-8" />}
+            title="No ticket records found"
+            description="Try adjusting your search or filters."
+          />
+        }
       />
     </div>
   );

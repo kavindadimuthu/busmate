@@ -99,8 +99,8 @@ export interface UserStatsData {
 
 export interface UserFiltersState {
   search: string;
-  userType: UserType | 'all';
-  status: UserStatus | 'all';
+  userType: UserType | '__all__';
+  status: UserStatus | '__all__';
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
@@ -376,11 +376,11 @@ export function getFilteredUsers(filters: UserFiltersState): SystemUser[] {
     });
   }
 
-  if (filters.userType !== 'all') {
+  if (filters.userType !== '__all__') {
     filtered = filtered.filter((u) => u.userType === filters.userType);
   }
 
-  if (filters.status !== 'all') {
+  if (filters.status !== '__all__') {
     filtered = filtered.filter((u) => u.status === filters.status);
   }
 
@@ -413,8 +413,8 @@ export function getFilteredUsers(filters: UserFiltersState): SystemUser[] {
   return filtered;
 }
 
-export function getUserStatsData(): UserStatsData {
-  const users = mockUsers;
+export function getUserStatsData(userType?: UserType): UserStatsData {
+  const users = userType ? mockUsers.filter((u) => u.userType === userType) : mockUsers;
   const byType: Record<UserType, number> = { mot: 0, timekeeper: 0, operator: 0, conductor: 0, driver: 0, passenger: 0 };
   let active = 0, inactive = 0, suspended = 0, pending = 0;
 

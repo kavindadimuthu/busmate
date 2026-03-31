@@ -2,7 +2,6 @@
 
 import { RefreshCw } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { DataPagination } from '@/components/shared/DataPagination';
 import {
   OperatorTripStatsCards,
   OperatorTripsFilters,
@@ -27,6 +26,11 @@ export default function OperatorTripsPage() {
     queryParams, handleSearch, handleSort, handlePageChange,
     handlePageSizeChange, handleView, handleClearAllFilters, handleRefresh,
   } = useOperatorTripsListing();
+
+  const handleSortColumn = (column: string) => {
+    const newDir = queryParams.sortBy === column && queryParams.sortDir === 'asc' ? 'desc' : 'asc';
+    handleSort(column, newDir);
+  };
 
   useSetPageActions(
     <button onClick={handleRefresh} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors">
@@ -64,24 +68,19 @@ export default function OperatorTripsPage() {
         onSearch={handleSearch}
       />
 
-      <div className="bg-card shadow-sm rounded-xl border border-border overflow-hidden">
-        <OperatorTripsTable
+      <OperatorTripsTable
           trips={trips}
           onView={handleView}
-          onSort={handleSort}
+          onSort={handleSortColumn}
           loading={isLoading}
-          currentSort={{ field: queryParams.sortBy, direction: queryParams.sortDir }}
-        />
-        <DataPagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          totalElements={pagination.totalElements}
+          sortColumn={queryParams.sortBy}
+          sortDirection={queryParams.sortDir}
+          totalItems={pagination.totalElements}
+          page={pagination.currentPage + 1}
           pageSize={pagination.pageSize}
-          onPageChange={handlePageChange}
+          onPageChange={(p) => handlePageChange(p - 1)}
           onPageSizeChange={handlePageSizeChange}
-          loading={isLoading}
         />
-      </div>
     </div>
   );
 }

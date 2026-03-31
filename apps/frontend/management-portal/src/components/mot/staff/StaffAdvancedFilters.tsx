@@ -1,6 +1,6 @@
 'use client';
 
-import { SearchFilterBar, SelectFilter, FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 
 interface StaffFilterOptions {
     statuses: string[];
@@ -36,53 +36,31 @@ export default function StaffAdvancedFilters({
     filteredCount = 0,
     onClearAll,
 }: StaffAdvancedFiltersProps) {
-    const activeChips: FilterChipDescriptor[] = [];
-
-    if (statusFilter !== 'all') {
-        activeChips.push({
-            key: 'status',
-            label: `Status: ${statusFilter}`,
-            onRemove: () => setStatusFilter('all'),
-        });
-    }
-    if (provinceFilter !== 'all') {
-        activeChips.push({
-            key: 'province',
-            label: `Province: ${provinceFilter}`,
-            onRemove: () => setProvinceFilter('all'),
-        });
-    }
+    const activeFilterCount = [statusFilter, provinceFilter].filter(v => v !== '__all__').length;
 
     return (
-        <SearchFilterBar
+        <FilterBar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search staff by name, email, NIC..."
-            totalCount={totalCount}
-            filteredCount={filteredCount}
-            resultLabel="staff members"
-            loading={loading}
-            activeChips={activeChips}
-            onClearAllFilters={onClearAll}
-            filters={
-                <>
-                    <SelectFilter
-                        value={statusFilter}
-                        onChange={setStatusFilter}
-                        options={filterOptions.statuses.map((s) => ({
-                            value: s,
-                            label: s.charAt(0).toUpperCase() + s.slice(1),
-                        }))}
-                        allLabel="All Statuses"
-                    />
-                    <SelectFilter
-                        value={provinceFilter}
-                        onChange={setProvinceFilter}
-                        options={filterOptions.provinces.map((p) => ({ value: p, label: p }))}
-                        allLabel="All Provinces"
-                    />
-                </>
-            }
-        />
+            activeFilterCount={activeFilterCount}
+            onClearAll={onClearAll}
+        >
+            <FilterSelect
+                label="Statuses"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={filterOptions.statuses.map((s) => ({
+                    value: s,
+                    label: s.charAt(0).toUpperCase() + s.slice(1),
+                }))}
+            />
+            <FilterSelect
+                label="Provinces"
+                value={provinceFilter}
+                onChange={setProvinceFilter}
+                options={filterOptions.provinces.map((p) => ({ value: p, label: p }))}
+            />
+        </FilterBar>
     );
 }

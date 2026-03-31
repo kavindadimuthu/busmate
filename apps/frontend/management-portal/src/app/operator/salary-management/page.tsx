@@ -1,9 +1,8 @@
 'use client';
 
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import { SearchFilterBar, SelectFilter } from '@/components/shared/SearchFilterBar';
-import { DataPagination } from '@/components/shared/DataPagination';
+import { FilterBar, FilterSelect, Tabs, TabsList, TabsTrigger } from '@busmate/ui';
+import { BarChart3, BookOpen, TableProperties } from 'lucide-react';
 import {
   SalaryStatsCards,
   SalaryTable,
@@ -15,7 +14,7 @@ import {
 } from '@/components/operator/salary-mgmt';
 import {
   useSalaryManagement,
-  SALARY_TABS,
+  type SalaryTab,
 } from '@/hooks/operator/salary-mgmt/useSalaryManagement';
 
 export default function SalaryManagementPage() {
@@ -31,7 +30,7 @@ export default function SalaryManagementPage() {
     activeTab, setActiveTab, loading, allRecords, filteredRecords,
     sortedRecords, paginatedRecords, totalPages, stats, monthlySummaries,
     sort, currentPage, setCurrentPage, pageSize, searchTerm,
-    detailRecord, filterSelectConfigs, activeChips,
+    detailRecord, filterSelectConfigs, activeFilterCount,
     handleSort, handlePageSizeChange, handleSearchChange,
     handleClearAllFilters, handleExport, handleViewDetail, handleCloseDetail, loadData,
   } = useSalaryManagement();
@@ -42,28 +41,26 @@ export default function SalaryManagementPage() {
 
   return (
     <div className="space-y-6">
-      <SwitchableTabs tabs={SALARY_TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SalaryTab)}>
+        <TabsList>
+          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4" /> Overview</TabsTrigger>
+          <TabsTrigger value="records"><TableProperties className="h-4 w-4" /> Salary Records</TabsTrigger>
+          <TabsTrigger value="rules"><BookOpen className="h-4 w-4" /> Salary Rules</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {activeTab !== 'rules' && <SalaryStatsCards stats={stats} loading={loading} />}
 
       {activeTab !== 'rules' && (
-        <SearchFilterBar
+        <FilterBar
           searchValue={searchTerm}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search by staff name, ID, bus number, route..."
-          totalCount={allRecords.length}
-          filteredCount={sortedRecords.length}
-          loadedCount={paginatedRecords.length}
-          resultLabel="salary record"
-          loading={loading}
-          filters={
-            filterSelectConfigs.length > 0 ? (
-              <>{filterSelectConfigs.map(({ key, ...props }) => <SelectFilter key={key} {...props} />)}</>
-            ) : undefined
-          }
-          activeChips={activeChips}
-          onClearAllFilters={handleClearAllFilters}
-        />
+          activeFilterCount={activeFilterCount}
+          onClearAll={handleClearAllFilters}
+        >
+          {filterSelectConfigs.map(({ key, ...props }) => <FilterSelect key={key} {...props} />)}
+        </FilterBar>
       )}
 
       {activeTab === 'overview' && (
@@ -78,13 +75,17 @@ export default function SalaryManagementPage() {
       {activeTab === 'records' && (
         <>
           <SalaryTable
-            data={paginatedRecords} loading={loading} currentSort={sort}
-            onSort={handleSort} onViewDetail={handleViewDetail}
-          />
-          <DataPagination
-            currentPage={currentPage} totalPages={totalPages} totalElements={sortedRecords.length}
-            pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={handlePageSizeChange}
+            data={paginatedRecords}
             loading={loading}
+            sortColumn={sort.field}
+            sortDirection={sort.direction}
+            onSort={handleSort}
+            totalItems={sortedRecords.length}
+            page={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={handlePageSizeChange}
+            onViewDetail={handleViewDetail}
           />
         </>
       )}

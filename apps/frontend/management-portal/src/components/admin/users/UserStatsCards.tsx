@@ -2,21 +2,22 @@
 
 import {
   Users,
-  Shield,
   UserCheck,
   UserX,
   UserPlus,
   AlertTriangle,
 } from 'lucide-react';
 import { StatsCard, StatsCardGrid } from '@busmate/ui';
-import type { UserStatsData } from '@/data/admin/users';
+import type { UserStatsData, UserType } from '@/data/admin/users';
+import { USER_TYPE_CONFIG } from '@/data/admin/users';
 
 interface UserStatsCardsProps {
   stats: UserStatsData | null;
   loading?: boolean;
+  activeUserType: UserType;
 }
 
-export function UserStatsCards({ stats, loading = false }: UserStatsCardsProps) {
+export function UserStatsCards({ stats, loading = false, activeUserType }: UserStatsCardsProps) {
   const defaultStats: UserStatsData = {
     total: 0,
     active: 0,
@@ -34,11 +35,12 @@ export function UserStatsCards({ stats, loading = false }: UserStatsCardsProps) 
   };
 
   const s = stats || defaultStats;
+  const typeLabel = USER_TYPE_CONFIG[activeUserType].label + 's';
 
   if (loading) {
     return (
-      <StatsCardGrid className="lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <StatsCardGrid className="lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="h-28 rounded-xl border bg-card animate-pulse" />
         ))}
       </StatsCardGrid>
@@ -46,9 +48,9 @@ export function UserStatsCards({ stats, loading = false }: UserStatsCardsProps) 
   }
 
   return (
-    <StatsCardGrid className="lg:grid-cols-6">
+    <StatsCardGrid className="lg:grid-cols-5">
       <StatsCard
-        title="Total Users"
+        title={`Total ${typeLabel}`}
         value={s.total.toLocaleString()}
         icon={<Users className="h-5 w-5" />}
       />
@@ -71,11 +73,6 @@ export function UserStatsCards({ stats, loading = false }: UserStatsCardsProps) 
         title="Pending"
         value={s.pending.toLocaleString()}
         icon={<UserPlus className="h-5 w-5" />}
-      />
-      <StatsCard
-        title="MOT Officers"
-        value={s.byType.mot.toLocaleString()}
-        icon={<Shield className="h-5 w-5" />}
       />
     </StatsCardGrid>
   );

@@ -24,6 +24,12 @@ import {
   TrendingDown,
   Minus,
 } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  Progress,
+  CardSkeleton,
+} from '@busmate/ui';
 import { ResourceSnapshot } from '@/data/admin/systemMonitoring';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend);
@@ -80,8 +86,6 @@ interface ResourceUsagePanelProps {
   loading: boolean;
   lastRefresh: Date;
   isLive: boolean;
-  onToggleLive: () => void;
-  onRefresh: () => void;
 }
 
 export function ResourceUsagePanel({
@@ -90,8 +94,6 @@ export function ResourceUsagePanel({
   loading,
   lastRefresh,
   isLive,
-  onToggleLive,
-  onRefresh,
 }: ResourceUsagePanelProps) {
   const chartData = useMemo(() => {
     const slice = history.slice(-60);
@@ -218,10 +220,7 @@ export function ResourceUsagePanel({
     return (
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border border-border p-6 animate-pulse">
-            <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
-            <div className="h-48 bg-muted rounded" />
-          </div>
+          <CardSkeleton key={i} />
         ))}
       </div>
     );
@@ -233,145 +232,138 @@ export function ResourceUsagePanel({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Resource Usage</h2>
-          <p className="text-sm text-muted-foreground">Database connections, disk space, network traffic, and more</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onToggleLive}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              isLive
-                ? 'bg-success/10 text-success border-success/20 hover:bg-success/15'
-                : 'bg-muted text-muted-foreground border-border hover:bg-muted'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-success animate-pulse' : 'bg-secondary'}`} />
-            {isLive ? 'Live' : 'Paused'}
-          </button>
-          <button
-            onClick={onRefresh}
-            className="px-3 py-1.5 text-xs font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Cpu className="h-4 w-4 text-primary" />
-            <span className="text-xs font-medium text-muted-foreground">CPU</span>
-            <TrendIcon data={cpuData} />
-          </div>
-          <div className="text-2xl font-bold text-foreground">{latest.cpuUsage}%</div>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <HardDrive className="h-4 w-4 text-success" />
-            <span className="text-xs font-medium text-muted-foreground">Memory</span>
-            <TrendIcon data={memData} />
-          </div>
-          <div className="text-2xl font-bold text-foreground">{latest.memoryUsedGB}GB</div>
-          <div className="text-xs text-muted-foreground/70">of {latest.memoryTotalGB}GB</div>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Database className="h-4 w-4 text-[hsl(var(--purple-600))]" />
-            <span className="text-xs font-medium text-muted-foreground">Disk</span>
-            <TrendIcon data={diskData} />
-          </div>
-          <div className="text-2xl font-bold text-foreground">{latest.diskUsedGB}GB</div>
-          <div className="text-xs text-muted-foreground/70">of {latest.diskTotalGB}GB</div>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Wifi className="h-4 w-4 text-warning" />
-            <span className="text-xs font-medium text-muted-foreground">Network In</span>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{latest.networkInMbps}</div>
-          <div className="text-xs text-muted-foreground/70">Mbps</div>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Server className="h-4 w-4 text-indigo-600" />
-            <span className="text-xs font-medium text-muted-foreground">DB Connections</span>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{latest.dbConnections}</div>
-          <div className="text-xs text-muted-foreground/70">of {latest.dbMaxConnections}</div>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="h-4 w-4 text-primary/90" />
-            <span className="text-xs font-medium text-muted-foreground">Sessions</span>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{latest.activeSessions.toLocaleString()}</div>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Cpu className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">CPU</span>
+              <TrendIcon data={cpuData} />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{latest.cpuUsage}%</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <HardDrive className="h-4 w-4 text-success" />
+              <span className="text-xs font-medium text-muted-foreground">Memory</span>
+              <TrendIcon data={memData} />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{latest.memoryUsedGB}GB</div>
+            <div className="text-xs text-muted-foreground/70">of {latest.memoryTotalGB}GB</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Database className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+              <span className="text-xs font-medium text-muted-foreground">Disk</span>
+              <TrendIcon data={diskData} />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{latest.diskUsedGB}GB</div>
+            <div className="text-xs text-muted-foreground/70">of {latest.diskTotalGB}GB</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Wifi className="h-4 w-4 text-warning" />
+              <span className="text-xs font-medium text-muted-foreground">Network In</span>
+            </div>
+            <div className="text-2xl font-bold text-foreground">{latest.networkInMbps}</div>
+            <div className="text-xs text-muted-foreground/70">Mbps</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Server className="h-4 w-4 text-indigo-600" />
+              <span className="text-xs font-medium text-muted-foreground">DB Connections</span>
+            </div>
+            <div className="text-2xl font-bold text-foreground">{latest.dbConnections}</div>
+            <div className="text-xs text-muted-foreground/70">of {latest.dbMaxConnections}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-primary/90" />
+              <span className="text-xs font-medium text-muted-foreground">Sessions</span>
+            </div>
+            <div className="text-2xl font-bold text-foreground">{latest.activeSessions.toLocaleString()}</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Progress Bars */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Current Utilization</h3>
-        <div className="space-y-4">
-          <ProgressBar
-            value={latest.cpuUsage} color="bg-primary/80" label="CPU Usage"
-            detail={`${latest.cpuUsage}% utilized`}
-          />
-          <ProgressBar
-            value={latest.memoryUsage} color="bg-success" label="Memory Usage"
-            detail={`${latest.memoryUsedGB}GB / ${latest.memoryTotalGB}GB`}
-          />
-          <ProgressBar
-            value={latest.diskUsage} color="bg-[hsl(var(--purple-500))]" label="Disk Usage"
-            detail={`${latest.diskUsedGB}GB / ${latest.diskTotalGB}GB`}
-          />
-          <ProgressBar
-            value={Math.round((latest.dbConnections / latest.dbMaxConnections) * 100)}
-            color="bg-indigo-500" label="Database Connections"
-            detail={`${latest.dbConnections} / ${latest.dbMaxConnections}`}
-          />
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Current Utilization</h3>
+          <div className="space-y-4">
+            <ProgressBar
+              value={latest.cpuUsage} color="bg-primary/80" label="CPU Usage"
+              detail={`${latest.cpuUsage}% utilized`}
+            />
+            <ProgressBar
+              value={latest.memoryUsage} color="bg-success" label="Memory Usage"
+              detail={`${latest.memoryUsedGB}GB / ${latest.memoryTotalGB}GB`}
+            />
+            <ProgressBar
+              value={latest.diskUsage} color="bg-[hsl(var(--purple-500))]" label="Disk Usage"
+              detail={`${latest.diskUsedGB}GB / ${latest.diskTotalGB}GB`}
+            />
+            <ProgressBar
+              value={Math.round((latest.dbConnections / latest.dbMaxConnections) * 100)}
+              color="bg-indigo-500" label="Database Connections"
+              detail={`${latest.dbConnections} / ${latest.dbMaxConnections}`}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CPU/Memory/Disk over time */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-primary" />
-            CPU, Memory & Disk
-          </h3>
-          <div className="h-64">
-            <Line data={chartData.resources} options={lineOptions('Usage %', 100)} />
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Cpu className="h-4 w-4 text-primary" />
+              CPU, Memory & Disk
+            </h3>
+            <div className="h-64">
+              <Line data={chartData.resources} options={lineOptions('Usage %', 100)} />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Network */}
-        <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Wifi className="h-4 w-4 text-warning" />
-            Network Traffic
-          </h3>
-          <div className="h-64">
-            <Bar data={chartData.network} options={barOptions} />
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Wifi className="h-4 w-4 text-warning" />
+              Network Traffic
+            </h3>
+            <div className="h-64">
+              <Bar data={chartData.network} options={barOptions} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* DB & Sessions */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Database className="h-4 w-4 text-[hsl(var(--purple-600))]" />
-          Database Connections & Active Sessions
-        </h3>
-        <div className="h-64">
-          <Line data={chartData.dbSessions} options={dualAxisOptions} />
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Database className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+            Database Connections & Active Sessions
+          </h3>
+          <div className="h-64">
+            <Line data={chartData.dbSessions} options={dualAxisOptions} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Footer */}
       <div className="text-center text-xs text-muted-foreground/70">

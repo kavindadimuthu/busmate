@@ -41,7 +41,7 @@ export function DashboardServiceStatus({ services, loading = false }: DashboardS
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-foreground text-sm">Service Status</h3>
         <Link
-          href="/admin/monitoring/api"
+          href="/admin/monitoring?tab=api"
           className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           Details <ArrowUpRight className="h-3 w-3" />

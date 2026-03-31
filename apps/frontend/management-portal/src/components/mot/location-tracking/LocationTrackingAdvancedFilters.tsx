@@ -1,23 +1,17 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 import {
-  SearchFilterBar,
-  SelectFilter,
   SegmentedControl,
-  type FilterChipDescriptor,
   type SegmentOption,
 } from '@/components/shared/SearchFilterBar';
 import {
-  MapPin,
-  Building2,
-  CheckCircle2,
   XCircle,
   Clock,
   Wifi,
   WifiOff,
   Navigation,
-  Bus,
 } from 'lucide-react';
 import type { TrackingFilterState, TrackingFilterOptions } from '@/types/LocationTracking';
 
@@ -111,9 +105,9 @@ export function LocationTrackingAdvancedFilters({
     setSearchTerm('');
     onFiltersChange({
       search: '',
-      routeId: 'all',
-      operatorId: 'all',
-      tripStatus: 'all',
+      routeId: '__all__',
+      operatorId: '__all__',
+      tripStatus: '__all__',
       deviceStatus: 'all',
       movementStatus: 'all',
       showOnlyActive: false,
@@ -152,128 +146,41 @@ export function LocationTrackingAdvancedFilters({
     });
   }, [filterOptions.tripStatuses]);
 
-  // Build active filter chips
-  const chips: FilterChipDescriptor[] = [];
-
-  if (filters.routeId !== 'all') {
-    const route = filterOptions.routes.find((r) => r.id === filters.routeId);
-    chips.push({
-      key: 'route',
-      label: route?.name || filters.routeId,
-      onRemove: () => updateFilter('routeId', 'all'),
-      colorClass: 'bg-primary/10 text-primary border-primary/20',
-      icon: <MapPin className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (filters.operatorId !== 'all') {
-    const operator = filterOptions.operators.find((o) => o.id === filters.operatorId);
-    chips.push({
-      key: 'operator',
-      label: operator?.name || filters.operatorId,
-      onRemove: () => updateFilter('operatorId', 'all'),
-      colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-      icon: <Building2 className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (filters.tripStatus !== 'all') {
-    const statusLabel = filters.tripStatus
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-    chips.push({
-      key: 'tripStatus',
-      label: statusLabel,
-      onRemove: () => updateFilter('tripStatus', 'all'),
-      colorClass: 'bg-warning/10 text-warning border-warning/20',
-      icon: <Clock className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (filters.deviceStatus !== 'all') {
-    chips.push({
-      key: 'deviceStatus',
-      label: filters.deviceStatus === 'online' ? 'Online' : 'Offline',
-      onRemove: () => updateFilter('deviceStatus', 'all'),
-      colorClass:
-        filters.deviceStatus === 'online'
-          ? 'bg-success/10 text-success border-success/20'
-          : 'bg-destructive/10 text-destructive border-destructive/20',
-      icon: filters.deviceStatus === 'online' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />,
-    });
-  }
-
-  if (filters.movementStatus !== 'all') {
-    const statusLabel =
-      filters.movementStatus.charAt(0).toUpperCase() + filters.movementStatus.slice(1);
-    chips.push({
-      key: 'movementStatus',
-      label: statusLabel,
-      onRemove: () => updateFilter('movementStatus', 'all'),
-      colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-      icon: <Navigation className="h-3 w-3 opacity-70" />,
-    });
-  }
-
-  if (filters.showOnlyActive) {
-    chips.push({
-      key: 'showOnlyActive',
-      label: 'Active Only',
-      onRemove: () => updateFilter('showOnlyActive', false),
-      colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
-      icon: <CheckCircle2 className="h-3 w-3" />,
-    });
-  }
-
-  if (!filters.showOfflineDevices) {
-    chips.push({
-      key: 'showOfflineDevices',
-      label: 'Hide Offline',
-      onRemove: () => updateFilter('showOfflineDevices', true),
-      colorClass: 'bg-muted text-foreground/80 border-border',
-      icon: <WifiOff className="h-3 w-3" />,
-    });
-  }
+  const activeFilterCount = [filters.routeId, filters.operatorId, filters.tripStatus].filter(v => v !== '__all__').length
+    + [filters.deviceStatus, filters.movementStatus].filter(v => v !== 'all').length
+    + (filters.showOnlyActive ? 1 : 0)
+    + (!filters.showOfflineDevices ? 1 : 0);
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
       searchPlaceholder="Search by bus number, route, operator..."
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      loadedCount={loadedCount}
-      loading={loading}
-      activeChips={chips}
-      onClearAllFilters={chips.length > 0 ? handleClearAll : undefined}
-      filters={
-        <>
-          {/* Route Filter */}
-          <SelectFilter
-            value={filters.routeId}
-            onChange={(value: string) => updateFilter('routeId', value)}
-            options={routeOptions}
-            allLabel="All Routes"
-            icon={<MapPin className="h-3.5 w-3.5" />}
-          />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      {/* Route Filter */}
+      <FilterSelect
+        label="Routes"
+        value={filters.routeId}
+        onChange={(value: string) => updateFilter('routeId', value)}
+        options={routeOptions}
+      />
 
       {/* Operator Filter */}
-      <SelectFilter
+      <FilterSelect
+        label="Operators"
         value={filters.operatorId}
         onChange={(value: string) => updateFilter('operatorId', value)}
         options={operatorOptions}
-        allLabel="All Operators"
-        icon={<Building2 className="h-3.5 w-3.5" />}
       />
 
       {/* Trip Status Filter */}
-      <SelectFilter
+      <FilterSelect
+        label="Statuses"
         value={filters.tripStatus}
         onChange={(value: string) => updateFilter('tripStatus', value)}
         options={tripStatusOptions}
-        allLabel="All Statuses"
-        icon={<Clock className="h-3.5 w-3.5" />}
       />
 
       {/* Device Status Segmented Control */}
@@ -291,8 +198,6 @@ export function LocationTrackingAdvancedFilters({
         }
         options={MOVEMENT_STATUS_SEGMENTS}
       />
-        </>
-      }
-    />
+    </FilterBar>
   );
 }

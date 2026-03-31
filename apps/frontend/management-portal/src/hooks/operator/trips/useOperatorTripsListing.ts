@@ -58,11 +58,11 @@ export function useOperatorTripsListing() {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [routeFilter, setRouteFilter] = useState('all');
-  const [scheduleFilter, setScheduleFilter] = useState('all');
-  const [busFilter, setBusFilter] = useState('all');
-  const [permitFilter, setPermitFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('__all__');
+  const [routeFilter, setRouteFilter] = useState('__all__');
+  const [scheduleFilter, setScheduleFilter] = useState('__all__');
+  const [busFilter, setBusFilter] = useState('__all__');
+  const [permitFilter, setPermitFilter] = useState('__all__');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [queryParams, setQueryParams] = useState<QueryParams>(INITIAL_QUERY);
@@ -117,11 +117,11 @@ export function useOperatorTripsListing() {
       setQueryParams((prev) => ({
         ...prev,
         ...updates,
-        status: statusFilter !== 'all' ? (statusFilter as TripStatus) : undefined,
-        routeId: routeFilter !== 'all' ? routeFilter : undefined,
-        scheduleId: scheduleFilter !== 'all' ? scheduleFilter : undefined,
-        busId: busFilter !== 'all' ? busFilter : undefined,
-        permitId: permitFilter !== 'all' ? permitFilter : undefined,
+        status: statusFilter !== '__all__' ? (statusFilter as TripStatus) : undefined,
+        routeId: routeFilter !== '__all__' ? routeFilter : undefined,
+        scheduleId: scheduleFilter !== '__all__' ? scheduleFilter : undefined,
+        busId: busFilter !== '__all__' ? busFilter : undefined,
+        permitId: permitFilter !== '__all__' ? permitFilter : undefined,
         fromDate: fromDate || undefined,
         toDate: toDate || undefined,
       }));
@@ -168,11 +168,11 @@ export function useOperatorTripsListing() {
 
   const handleClearAllFilters = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setRouteFilter('all');
-    setScheduleFilter('all');
-    setBusFilter('all');
-    setPermitFilter('all');
+    setStatusFilter('__all__');
+    setRouteFilter('__all__');
+    setScheduleFilter('__all__');
+    setBusFilter('__all__');
+    setPermitFilter('__all__');
     setFromDate('');
     setToDate('');
     setQueryParams((prev) => ({ ...INITIAL_QUERY, size: prev.size }));

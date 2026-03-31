@@ -12,11 +12,10 @@ import {
   getUniqueServices,
   getUniqueUserTypes,
   getUniqueActions,
+  getLogStats,
 } from '@/data/admin';
 
 export type TabKey = 'user-activity' | 'security' | 'application';
-
-const ITEMS_PER_PAGE = 15;
 
 export function useLogsListing() {
   const router = useRouter();
@@ -27,6 +26,7 @@ export function useLogsListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
     field: 'timestamp',
     direction: 'desc',
@@ -37,6 +37,7 @@ export function useLogsListing() {
     setSearchTerm('');
     setFilters({});
     setCurrentPage(1);
+    setPageSize(20);
     setSort({ field: 'timestamp', direction: 'desc' });
   }, []);
 
@@ -68,6 +69,11 @@ export function useLogsListing() {
     setCurrentPage(1);
   }, []);
 
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  }, []);
+
   const filterConfig = useMemo(() => {
     switch (activeTab) {
       case 'user-activity':
@@ -76,7 +82,6 @@ export function useLogsListing() {
             key: 'userType',
             label: 'User Type',
             options: [
-              { value: 'all', label: 'All Types' },
               ...getUniqueUserTypes().map((t) => ({ value: t, label: t })),
             ],
           },
@@ -84,7 +89,6 @@ export function useLogsListing() {
             key: 'action',
             label: 'Action',
             options: [
-              { value: 'all', label: 'All Actions' },
               ...getUniqueActions().map((a) => ({ value: a, label: a })),
             ],
           },
@@ -92,7 +96,6 @@ export function useLogsListing() {
             key: 'status',
             label: 'Status',
             options: [
-              { value: 'all', label: 'All' },
               { value: 'success', label: 'Success' },
               { value: 'error', label: 'Error' },
               { value: 'warning', label: 'Warning' },
@@ -105,7 +108,6 @@ export function useLogsListing() {
             key: 'eventType',
             label: 'Event Type',
             options: [
-              { value: 'all', label: 'All Events' },
               { value: 'login', label: 'Login' },
               { value: 'logout', label: 'Logout' },
               { value: 'failed_login', label: 'Failed Login' },
@@ -118,7 +120,6 @@ export function useLogsListing() {
             key: 'severity',
             label: 'Severity',
             options: [
-              { value: 'all', label: 'All' },
               { value: 'critical', label: 'Critical' },
               { value: 'high', label: 'High' },
               { value: 'medium', label: 'Medium' },
@@ -132,7 +133,6 @@ export function useLogsListing() {
             key: 'level',
             label: 'Level',
             options: [
-              { value: 'all', label: 'All Levels' },
               { value: 'ERROR', label: 'ERROR' },
               { value: 'WARN', label: 'WARN' },
               { value: 'INFO', label: 'INFO' },
@@ -143,13 +143,14 @@ export function useLogsListing() {
             key: 'service',
             label: 'Service',
             options: [
-              { value: 'all', label: 'All Services' },
               ...getUniqueServices().map((s) => ({ value: s, label: s })),
             ],
           },
         ];
     }
   }, [activeTab]);
+
+  const stats = useMemo(() => getLogStats(), []);
 
   const totalCounts = useMemo(
     () => ({
@@ -197,13 +198,14 @@ export function useLogsListing() {
     return sorted;
   }, [filteredLogs, sort]);
 
-  const totalPages = Math.ceil(sortedLogs.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedLogs.length / pageSize);
   const paginatedLogs = useMemo(
-    () => sortedLogs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
-    [sortedLogs, currentPage]
+    () => sortedLogs.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sortedLogs, currentPage, pageSize]
   );
 
   return {
+    stats,
     activeTab,
     searchTerm,
     filters,
@@ -215,7 +217,7 @@ export function useLogsListing() {
     sortedLogs,
     totalPages,
     paginatedLogs,
-    itemsPerPage: ITEMS_PER_PAGE,
+    pageSize,
     handleTabChange,
     handleSort,
     handleFilterChange,
@@ -223,5 +225,6 @@ export function useLogsListing() {
     handleViewDetail,
     handleClearAll,
     setCurrentPage,
+    handlePageSizeChange,
   };
 }

@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { LayoutList, Map } from 'lucide-react';
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import type { TabItem } from '@/components/shared/SwitchableTabs';
+import { Tabs, TabsList, TabsTrigger } from '@busmate/ui';
 
 export type ViewType = 'table' | 'map';
 
@@ -12,27 +11,19 @@ interface ViewTabsProps {
   onViewChange: (view: ViewType) => void;
 }
 
-const TABS: TabItem<ViewType>[] = [
-  { id: 'table', label: 'List View', icon: LayoutList },
-  { id: 'map',   label: 'Map View',  icon: Map },
-];
-
 /**
  * Bus-stop view switcher — table / map.
- *
- * Wraps `<SwitchableTabs>` with bus-stop-specific tab definitions.
- * Result counts are intentionally omitted here — they are shown in the
- * search/filter bar instead.
  */
 export function ViewTabs({
   activeView,
   onViewChange,
 }: ViewTabsProps) {
   return (
-    <SwitchableTabs<ViewType>
-      tabs={TABS}
-      activeTab={activeView}
-      onTabChange={onViewChange}
-    />
+    <Tabs value={activeView} onValueChange={(v) => onViewChange(v as ViewType)}>
+      <TabsList>
+        <TabsTrigger value="table"><LayoutList className="h-4 w-4" /> List View</TabsTrigger>
+        <TabsTrigger value="map"><Map className="h-4 w-4" /> Map View</TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 }

@@ -1,12 +1,7 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
-import { CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
-import {
-  SearchFilterBar,
-  SelectFilter,
-} from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { useCallback } from 'react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 import type { OperatorPermitFilterOptions } from '@/data/operator/permits';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -57,8 +52,8 @@ export function PermitFilters({
 }: PermitFiltersProps) {
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setPermitTypeFilter('all');
+    setStatusFilter('__all__');
+    setPermitTypeFilter('__all__');
     onClearAll?.();
   }, [setSearchTerm, setStatusFilter, setPermitTypeFilter, onClearAll]);
 
@@ -74,73 +69,32 @@ export function PermitFilters({
     label: PERMIT_TYPE_LABELS[t] ?? t,
   }));
 
-  // ── Active filter chips ─────────────────────────────────────────
+  // ── Active filter count ─────────────────────────────────────────
 
-  const activeChips = useMemo<FilterChipDescriptor[]>(() => {
-    const chips: FilterChipDescriptor[] = [];
-
-    if (statusFilter !== 'all') {
-      const statusIcons: Record<string, React.ReactNode> = {
-        ACTIVE: <CheckCircle className="h-3 w-3 opacity-70" />,
-        INACTIVE: <XCircle className="h-3 w-3 opacity-70" />,
-        PENDING: <Clock className="h-3 w-3 opacity-70" />,
-        EXPIRED: <XCircle className="h-3 w-3 opacity-70" />,
-      };
-      chips.push({
-        key: 'status',
-        label: STATUS_LABELS[statusFilter] ?? statusFilter,
-        onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-success/10 text-success border-success/20',
-        icon: statusIcons[statusFilter],
-      });
-    }
-
-    if (permitTypeFilter !== 'all') {
-      chips.push({
-        key: 'permitType',
-        label: PERMIT_TYPE_LABELS[permitTypeFilter] ?? permitTypeFilter,
-        onRemove: () => setPermitTypeFilter('all'),
-        colorClass: 'bg-warning/10 text-warning border-warning/20',
-        icon: <FileText className="h-3 w-3 opacity-70" />,
-      });
-    }
-
-    return chips;
-  }, [statusFilter, permitTypeFilter, setStatusFilter, setPermitTypeFilter]);
+  const activeFilterCount = [statusFilter, permitTypeFilter].filter(v => v !== '__all__').length;
 
   // ── Render ──────────────────────────────────────────────────────
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Search by permit number or route group…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="permit"
-      loading={loading}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            allLabel="All Statuses"
-            icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-success/10 border-success/30 text-success"
-          />
-          <SelectFilter
-            value={permitTypeFilter}
-            onChange={setPermitTypeFilter}
-            options={permitTypeOptions}
-            allLabel="All Types"
-            icon={<FileText className="h-3.5 w-3.5" />}
-            activeColorClass="bg-warning/10 border-warning/30 text-warning"
-          />
-        </>
-      }
-      activeChips={activeChips}
-      onClearAllFilters={handleClearAll}
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={statusOptions}
+      />
+      <FilterSelect
+        label="Types"
+        value={permitTypeFilter}
+        onChange={setPermitTypeFilter}
+        options={permitTypeOptions}
+      />
+    </FilterBar>
   );
 }

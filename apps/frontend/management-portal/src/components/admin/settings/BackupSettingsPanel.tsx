@@ -18,6 +18,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardAction,
+  StatsCard,
+  StatsCardGrid,
+  FormSkeleton,
+  StatusBadge,
 } from '@busmate/ui';
 import {
   Database,
@@ -54,82 +64,6 @@ import {
   deleteBackup,
   downloadBackup,
 } from '@/data/admin/systemSettings';
-
-// ── Status badge ─────────────────────────────────────────────────
-
-function BackupStatusBadge({ status }: { status: BackupEntry['status'] }) {
-  const map = {
-    completed: { cls: 'bg-success/15 text-success', icon: <CheckCircle className="h-3 w-3" /> },
-    failed: { cls: 'bg-destructive/15 text-destructive', icon: <XCircle className="h-3 w-3" /> },
-    'in-progress': { cls: 'bg-primary/15 text-primary', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
-  };
-  const { cls, icon } = map[status];
-  return (
-    <Badge className={`${cls} capitalize flex items-center gap-1 w-fit`}>
-      {icon}
-      {status}
-    </Badge>
-  );
-}
-
-// ── Stats cards ──────────────────────────────────────────────────
-
-function BackupStatsCards({ stats }: { stats: BackupStats }) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="rounded-xl border border-success/20 bg-success/10 p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-success/15 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-success" />
-          </div>
-          <div>
-            <p className="text-xs text-success uppercase tracking-wide font-medium">Last Backup</p>
-            <p className="font-semibold text-success">{stats.lastBackupTime}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-primary/20 bg-primary/10 p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/15 rounded-lg">
-            <Database className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-primary uppercase tracking-wide font-medium">Last Size</p>
-            <p className="font-semibold text-primary">{stats.lastBackupSize}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-violet-100 rounded-lg">
-            <HardDrive className="h-5 w-5 text-violet-600" />
-          </div>
-          <div>
-            <p className="text-xs text-violet-600 uppercase tracking-wide font-medium">Storage Used</p>
-            <p className="font-semibold text-violet-900">
-              {stats.totalStorageUsed}
-              <span className="text-xs text-violet-400 ml-1">/ {stats.maxStorage}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-warning/20 bg-warning/10 p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-warning/15 rounded-lg">
-            <Shield className="h-5 w-5 text-warning" />
-          </div>
-          <div>
-            <p className="text-xs text-warning uppercase tracking-wide font-medium">Success Rate</p>
-            <p className="font-semibold text-warning">{stats.successRate}%</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Component ────────────────────────────────────────────────────
 
@@ -220,268 +154,277 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
 
   if (!settings || !stats) {
     return (
-      <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
+      <div className="space-y-4">
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* ── Stats ──────────────────────────────────── */}
-      <div className="px-6 py-6 border-b border-border/50">
-        <BackupStatsCards stats={stats} />
-      </div>
+      <StatsCardGrid>
+        <StatsCard
+          title="Last Backup"
+          value={stats.lastBackupTime}
+          icon={<CheckCircle className="h-5 w-5 text-success" />}
+          className="border-success/20 bg-success/10"
+        />
+        <StatsCard
+          title="Last Backup Size"
+          value={stats.lastBackupSize}
+          icon={<Database className="h-5 w-5" />}
+        />
+        <StatsCard
+          title="Storage Used"
+          value={stats.totalStorageUsed}
+          description={`of ${stats.maxStorage}`}
+          icon={<HardDrive className="h-5 w-5" />}
+        />
+        <StatsCard
+          title="Success Rate"
+          value={`${stats.successRate}%`}
+          icon={<Shield className="h-5 w-5 text-warning" />}
+          className="border-warning/20 bg-warning/10"
+        />
+      </StatsCardGrid>
 
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── Configuration + Quick Actions ─────────── */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl border border-border">
-              <div className="px-5 py-4 border-b border-border/50">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Backup Configuration</h3>
-                </div>
-              </div>
-              <div className="p-5 space-y-5">
-              {/* Auto Backup */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="autoBackupEnabled" className="text-base font-medium">
-                    Automatic Backup
-                  </Label>
-                  <p className="text-sm text-muted-foreground">Enable scheduled backups</p>
-                </div>
-                <Switch
-                  id="autoBackupEnabled"
-                  checked={settings.autoBackupEnabled}
-                  onCheckedChange={(v) => update('autoBackupEnabled', v)}
-                />
-              </div>
-
-              {settings.autoBackupEnabled && (
-                <>
+      {/* ── Configuration + History ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left column */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Backup Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Settings className="h-4 w-4 text-primary" />
+                Backup Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-5">
+                {/* Auto Backup */}
+                <div className="flex items-center justify-between">
                   <div>
-                    <Label>Frequency</Label>
-                    <Select
-                      value={settings.backupFrequency}
-                      onValueChange={(v) =>
-                        update('backupFrequency', v as BackupSettings['backupFrequency'])
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hourly">Hourly</SelectItem>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="autoBackupEnabled" className="text-base font-medium">
+                      Automatic Backup
+                    </Label>
+                    <p className="text-sm text-muted-foreground">Enable scheduled backups</p>
                   </div>
+                  <Switch
+                    id="autoBackupEnabled"
+                    checked={settings.autoBackupEnabled}
+                    onCheckedChange={(v) => update('autoBackupEnabled', v)}
+                  />
+                </div>
 
-                  <div>
-                    <Label>Backup Time</Label>
-                    <div className="relative">
-                      <Input
-                        type="time"
-                        value={settings.backupTime}
-                        onChange={(e) => update('backupTime', e.target.value)}
-                      />
-                      <Clock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
+                {settings.autoBackupEnabled && (
+                  <>
+                    <div>
+                      <Label>Frequency</Label>
+                      <Select
+                        value={settings.backupFrequency}
+                        onValueChange={(v) =>
+                          update('backupFrequency', v as BackupSettings['backupFrequency'])
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hourly">Hourly</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
-                </>
-              )}
 
-              <div>
-                <Label>Retention Period (days)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={settings.retentionDays}
-                  onChange={(e) =>
-                    update('retentionDays', parseInt(e.target.value) || 1)
-                  }
-                />
-              </div>
+                    <div>
+                      <Label>Backup Time</Label>
+                      <div className="relative">
+                        <Input
+                          type="time"
+                          value={settings.backupTime}
+                          onChange={(e) => update('backupTime', e.target.value)}
+                        />
+                        <Clock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
+                      </div>
+                    </div>
+                  </>
+                )}
 
-              <div>
-                <Label>Storage Location</Label>
-                <Select
-                  value={settings.storageLocation}
-                  onValueChange={(v) =>
-                    update('storageLocation', v as BackupSettings['storageLocation'])
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="local">Local Storage</SelectItem>
-                    <SelectItem value="aws-s3">AWS S3</SelectItem>
-                    <SelectItem value="google-cloud">Google Cloud</SelectItem>
-                    <SelectItem value="azure-blob">Azure Blob</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label>Retention Period (days)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={settings.retentionDays}
+                    onChange={(e) => update('retentionDays', parseInt(e.target.value) || 1)}
+                  />
+                </div>
 
-              {/* Toggles */}
-              <div className="space-y-3 pt-3 border-t border-border/50">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="encryptBackups" className="flex items-center gap-1.5">
-                    <Lock className="h-3.5 w-3.5" /> Encrypt Backups
-                  </Label>
-                  <Switch
-                    id="encryptBackups"
-                    checked={settings.encryptBackups}
-                    onCheckedChange={(v) => update('encryptBackups', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="includeDatabase" className="flex items-center gap-1.5">
-                    <Database className="h-3.5 w-3.5" /> Include Database
-                  </Label>
-                  <Switch
-                    id="includeDatabase"
-                    checked={settings.includeDatabase}
-                    onCheckedChange={(v) => update('includeDatabase', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="includeFiles" className="flex items-center gap-1.5">
-                    <FolderArchive className="h-3.5 w-3.5" /> Include Files
-                  </Label>
-                  <Switch
-                    id="includeFiles"
-                    checked={settings.includeFiles}
-                    onCheckedChange={(v) => update('includeFiles', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="includeConfigs" className="flex items-center gap-1.5">
-                    <Settings className="h-3.5 w-3.5" /> Include Configs
-                  </Label>
-                  <Switch
-                    id="includeConfigs"
-                    checked={settings.includeConfigs}
-                    onCheckedChange={(v) => update('includeConfigs', v)}
-                  />
-                </div>
-              </div>
-
-              {/* Notifications */}
-              <div className="space-y-3 pt-3 border-t border-border/50">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="notifyOnComplete">Notify on Complete</Label>
-                  <Switch
-                    id="notifyOnComplete"
-                    checked={settings.notifyOnComplete}
-                    onCheckedChange={(v) => update('notifyOnComplete', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="notifyOnFailure">Notify on Failure</Label>
-                  <Switch
-                    id="notifyOnFailure"
-                    checked={settings.notifyOnFailure}
-                    onCheckedChange={(v) => update('notifyOnFailure', v)}
-                  />
-                </div>
-              </div>
-
-              {/* Save/Reset */}
-              <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                <div className="text-sm">
-                  {saved && (
-                    <span className="flex items-center gap-1 text-success">
-                      <CheckCircle className="h-4 w-4" /> Saved
-                    </span>
-                  )}
-                  {isDirty && !saved && (
-                    <span className="text-warning text-xs">Unsaved</span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleReset} disabled={!isDirty || saving}>
-                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!isDirty || saving}
-                    className="bg-primary hover:bg-primary text-white"
+                <div>
+                  <Label>Storage Location</Label>
+                  <Select
+                    value={settings.storageLocation}
+                    onValueChange={(v) =>
+                      update('storageLocation', v as BackupSettings['storageLocation'])
+                    }
                   >
-                    {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-                    Save
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="local">Local Storage</SelectItem>
+                      <SelectItem value="aws-s3">AWS S3</SelectItem>
+                      <SelectItem value="google-cloud">Google Cloud</SelectItem>
+                      <SelectItem value="azure-blob">Azure Blob</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Toggles */}
+                <div className="space-y-3 pt-3 border-t border-border/50">
+                  {(
+                    [
+                      { id: 'encryptBackups', key: 'encryptBackups', icon: Lock, label: 'Encrypt Backups' },
+                      { id: 'includeDatabase', key: 'includeDatabase', icon: Database, label: 'Include Database' },
+                      { id: 'includeFiles', key: 'includeFiles', icon: FolderArchive, label: 'Include Files' },
+                      { id: 'includeConfigs', key: 'includeConfigs', icon: Settings, label: 'Include Configs' },
+                    ] as const
+                  ).map(({ id, key, icon: Icon, label }) => (
+                    <div key={id} className="flex items-center justify-between">
+                      <Label htmlFor={id} className="flex items-center gap-1.5">
+                        <Icon className="h-3.5 w-3.5" /> {label}
+                      </Label>
+                      <Switch
+                        id={id}
+                        checked={settings[key]}
+                        onCheckedChange={(v) => update(key, v)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notifications */}
+                <div className="space-y-3 pt-3 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="notifyOnComplete">Notify on Complete</Label>
+                    <Switch
+                      id="notifyOnComplete"
+                      checked={settings.notifyOnComplete}
+                      onCheckedChange={(v) => update('notifyOnComplete', v)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="notifyOnFailure">Notify on Failure</Label>
+                    <Switch
+                      id="notifyOnFailure"
+                      checked={settings.notifyOnFailure}
+                      onCheckedChange={(v) => update('notifyOnFailure', v)}
+                    />
+                  </div>
+                </div>
+
+                {/* Save/Reset */}
+                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                  <div className="text-sm">
+                    {saved && (
+                      <span className="flex items-center gap-1 text-success">
+                        <CheckCircle className="h-4 w-4" /> Saved
+                      </span>
+                    )}
+                    {isDirty && !saved && (
+                      <span className="text-warning text-xs">Unsaved</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleReset} disabled={!isDirty || saving}>
+                      <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={!isDirty || saving}
+                      className="bg-primary hover:bg-primary text-white"
+                    >
+                      {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Backup */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Play className="h-4 w-4 text-primary" />
+                Quick Backup
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {(
+                  [
+                    { type: 'Database', icon: Database, color: 'blue' },
+                    { type: 'Full System', icon: HardDrive, color: 'gray' },
+                    { type: 'Configuration', icon: Settings, color: 'purple' },
+                    { type: 'Files Only', icon: FolderArchive, color: 'teal' },
+                  ] as const
+                ).map(({ type, icon: Icon, color }) => (
+                  <Button
+                    key={type}
+                    variant="outline"
+                    className={`w-full justify-start bg-${color}-500/10 text-${color}-600 border-${color}-200 hover:bg-${color}-500/20 shadow-sm`}
+                    disabled={backupLoading !== null}
+                    onClick={() => handleCreateBackup(type)}
+                  >
+                    {backupLoading === type ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Icon className="h-4 w-4 mr-2" />
+                    )}
+                    {type} Backup
+                  </Button>
+                ))}
+
+                <div className="pt-3 border-t border-border/50">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start bg-warning/10 text-warning border-orange-200 hover:bg-warning/15 shadow-sm"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.dump,.sql,.zip';
+                      input.click();
+                      alert('File upload & restore (mock)');
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Restore from File
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border">
-            <div className="px-5 py-4 border-b border-border/50">
-              <h3 className="text-sm font-semibold text-foreground">Quick Backup</h3>
-            </div>
-            <div className="p-5 space-y-3">
-              {(
-                [
-                  { type: 'Database', icon: Database, color: 'blue' },
-                  { type: 'Full System', icon: HardDrive, color: 'gray' },
-                  { type: 'Configuration', icon: Settings, color: 'purple' },
-                  { type: 'Files Only', icon: FolderArchive, color: 'teal' },
-                ] as const
-              ).map(({ type, icon: Icon, color }) => (
-                <Button
-                  key={type}
-                  variant="outline"
-                  className={`w-full justify-start bg-${color}-500/10 text-${color}-600 border-${color}-200 hover:bg-${color}-500/20 shadow-sm`}
-                  disabled={backupLoading !== null}
-                  onClick={() => handleCreateBackup(type)}
-                >
-                  {backupLoading === type ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Icon className="h-4 w-4 mr-2" />
-                  )}
-                  {type} Backup
-                </Button>
-              ))}
-
-              <div className="pt-3 border-t border-border/50">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start bg-warning/10 text-warning border-orange-200 hover:bg-warning/15 shadow-sm"
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = '.dump,.sql,.zip';
-                    input.click();
-                    alert('File upload & restore (mock)');
-                  }}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Restore from File
-                </Button>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* ── History & Recovery ───────────────────────── */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-border">
-            <div className="px-5 py-4 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Backup History</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Recent backup operations and their status
-                  </p>
-                </div>
+        {/* Right column */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Backup History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Database className="h-4 w-4 text-primary" />
+                Backup History
+              </CardTitle>
+              <CardDescription>Recent backup operations and their status</CardDescription>
+              <CardAction>
                 <Button
                   className="bg-primary hover:bg-primary text-white"
                   onClick={() => handleCreateBackup('Full System')}
@@ -494,9 +437,10 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                   )}
                   Start Backup
                 </Button>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -518,7 +462,10 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                         <TableCell>{backup.size}</TableCell>
                         <TableCell>{backup.duration}</TableCell>
                         <TableCell>
-                          <BackupStatusBadge status={backup.status} />
+                          <StatusBadge
+                            status={backup.status === 'failed' ? 'error' : backup.status}
+                            label={backup.status === 'failed' ? 'Failed' : undefined}
+                          />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
@@ -574,19 +521,19 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                   </TableBody>
                 </Table>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Recovery Options */}
-          <div className="rounded-xl border border-border">
-            <div className="px-5 py-4 border-b border-border/50">
-              <div className="flex items-center gap-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
                 <AlertTriangle className="h-4 w-4 text-warning" />
-                <h3 className="text-sm font-semibold text-foreground">Recovery Options</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mt-0.5">System recovery and disaster management</p>
-            </div>
-            <div className="p-5">
+                Recovery Options
+              </CardTitle>
+              <CardDescription>System recovery and disaster management</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
                   <h4 className="font-medium text-primary mb-2">Point-in-Time Recovery</h4>
@@ -633,10 +580,10 @@ export function BackupSettingsPanel({ onSaved }: BackupSettingsPanelProps) {
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
+    </div>
   );
 }

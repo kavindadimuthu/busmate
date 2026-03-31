@@ -64,7 +64,7 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
           <h3 className="font-semibold text-foreground text-sm">Active Alerts</h3>
         </div>
         <Link
-          href="/admin/monitoring/alerts"
+          href="/admin/monitoring?tab=alerts"
           className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           View all <ArrowUpRight className="h-3 w-3" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { DataPagination } from '@/components/shared/DataPagination';
+import { DataTablePagination } from '@busmate/ui';
 
 interface RoutePaginationProps {
   currentPage: number;
@@ -15,28 +15,23 @@ interface RoutePaginationProps {
 /**
  * Route pagination bar.
  *
- * Thin wrapper around the shared `<DataPagination>` component —
+ * Thin wrapper around the shared `<DataTablePagination>` component —
  * passes through all props and applies route-specific page size options.
  */
 export function RoutePagination({
   currentPage,
-  totalPages,
   totalElements,
   pageSize,
   onPageChange,
   onPageSizeChange,
-  loading,
 }: RoutePaginationProps) {
   return (
-    <DataPagination
-      currentPage={currentPage}
-      totalPages={totalPages}
-      totalElements={totalElements}
+    <DataTablePagination
+      page={currentPage}
+      totalItems={totalElements}
       pageSize={pageSize}
       onPageChange={onPageChange}
       onPageSizeChange={onPageSizeChange}
-      loading={loading}
-      pageSizeOptions={[5, 10, 25, 50, 100]}
     />
   );
 }

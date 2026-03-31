@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import Link from 'next/link';
 import {
   Eye,
   Car,
@@ -14,20 +13,29 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
-import type { DataTableColumn, SortState } from '@/components/shared/DataTable';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { StaffMember, Driver, Conductor } from '@/data/operator/staff';
 
 // ── Types ─────────────────────────────────────────────────────────
 
 export type StaffTableMode = 'all' | 'drivers' | 'conductors';
 
-interface StaffTableProps {
+interface StaffTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   staff: StaffMember[];
   mode: StaffTableMode;
-  loading?: boolean;
-  currentSort?: SortState;
-  onSort?: (field: string, direction: 'asc' | 'desc') => void;
+  totalItems: number;
 }
 
 // ── Status badge ──────────────────────────────────────────────────
@@ -98,13 +106,13 @@ function formatExpiry(dateString: string): string {
 
 // ── Column builders ───────────────────────────────────────────────
 
-function buildStaffColumn(): DataTableColumn<StaffMember> {
+function buildStaffColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'fullName',
+    id: 'fullName',
     header: 'Staff',
     sortable: true,
-    minWidth: 'min-w-[180px]',
-    render: (member) => {
+    width: 'min-w-[180px]',
+    cell: ({ row: member }) => {
       const initials = member.avatarInitials || member.fullName.charAt(0).toUpperCase();
       const avatarCls =
         member.role === 'DRIVER' ? 'bg-success/15 text-success' : 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))]';
@@ -129,12 +137,12 @@ function buildStaffColumn(): DataTableColumn<StaffMember> {
   };
 }
 
-function buildContactColumn(): DataTableColumn<StaffMember> {
+function buildContactColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'contact',
+    id: 'contact',
     header: 'Contact',
-    minWidth: 'min-w-[160px]',
-    render: (member) => (
+    width: 'min-w-[160px]',
+    cell: ({ row: member }) => (
       <div className="space-y-0.5">
         <div className="flex items-center gap-1.5">
           <Phone className="w-3 h-3 text-muted-foreground/50 shrink-0" />
@@ -149,24 +157,23 @@ function buildContactColumn(): DataTableColumn<StaffMember> {
   };
 }
 
-function buildEmployeeIdColumn(): DataTableColumn<StaffMember> {
+function buildEmployeeIdColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'employeeId',
+    id: 'employeeId',
     header: 'Employee ID',
     sortable: true,
-    cellClassName: 'whitespace-nowrap',
-    render: (member) => (
-      <span className="text-sm text-muted-foreground font-mono">{member.employeeId}</span>
+    cell: ({ row: member }) => (
+      <span className="text-sm text-muted-foreground font-mono whitespace-nowrap">{member.employeeId}</span>
     ),
   };
 }
 
-function buildRouteColumn(): DataTableColumn<StaffMember> {
+function buildRouteColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'assignedRoute',
+    id: 'assignedRoute',
     header: 'Assigned Route',
-    minWidth: 'min-w-[140px]',
-    render: (member) =>
+    width: 'min-w-[140px]',
+    cell: ({ row: member }) =>
       member.assignedRoute ? (
         <div className="flex items-start gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-primary/70 mt-0.5 shrink-0" />
@@ -187,32 +194,29 @@ function buildRouteColumn(): DataTableColumn<StaffMember> {
   };
 }
 
-function buildStatusColumn(): DataTableColumn<StaffMember> {
+function buildStatusColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'status',
+    id: 'status',
     header: 'Status',
     sortable: true,
-    cellClassName: 'whitespace-nowrap',
-    render: (member) => <StatusBadge status={member.status} />,
+    cell: ({ row: member }) => <StatusBadge status={member.status} />,
   };
 }
 
-function buildShiftColumn(): DataTableColumn<StaffMember> {
+function buildShiftColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'shiftStatus',
+    id: 'shiftStatus',
     header: 'Shift',
-    cellClassName: 'whitespace-nowrap',
-    render: (member) => <ShiftBadge shift={member.shiftStatus} />,
+    cell: ({ row: member }) => <ShiftBadge shift={member.shiftStatus} />,
   };
 }
 
-function buildActionsColumn(): DataTableColumn<StaffMember> {
+function buildActionsColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'actions',
+    id: 'actions',
     header: 'Actions',
-    headerClassName: 'text-center',
-    cellClassName: 'whitespace-nowrap text-center',
-    render: (member) => (
+    align: 'center',
+    cell: ({ row: member }) => (
       <button
         onClick={() => window.location.href = `/operator/staff-management/${member.id}`}
         title="View staff details"
@@ -237,21 +241,26 @@ function buildActionsColumn(): DataTableColumn<StaffMember> {
 export function StaffTable({
   staff,
   mode,
-  loading = false,
-  currentSort = { field: '', direction: 'asc' },
+  loading,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
 }: StaffTableProps) {
-  const columns = useMemo((): DataTableColumn<StaffMember>[] => {
+  const columns = useMemo((): ColumnDef<StaffMember>[] => {
     if (mode === 'all') {
       return [
         buildStaffColumn(),
         buildEmployeeIdColumn(),
         buildContactColumn(),
         {
-          key: 'role',
+          id: 'role',
           header: 'Role',
-          cellClassName: 'whitespace-nowrap',
-          render: (member) => <RoleBadge role={member.role} />,
+          cell: ({ row: member }) => <RoleBadge role={member.role} />,
         },
         buildRouteColumn(),
         buildStatusColumn(),
@@ -266,10 +275,10 @@ export function StaffTable({
         buildEmployeeIdColumn(),
         buildContactColumn(),
         {
-          key: 'license',
+          id: 'license',
           header: 'License',
-          minWidth: 'min-w-[130px]',
-          render: (member) => {
+          width: 'min-w-[130px]',
+          cell: ({ row: member }) => {
             const driver = member as Driver;
             return (
               <div>
@@ -299,10 +308,10 @@ export function StaffTable({
       buildEmployeeIdColumn(),
       buildContactColumn(),
       {
-        key: 'certificate',
+        id: 'certificate',
         header: 'Certificate',
-        minWidth: 'min-w-[130px]',
-        render: (member) => {
+        width: 'min-w-[130px]',
+        cell: ({ row: member }) => {
           const conductor = member as Conductor;
           return (
             <div>
@@ -320,10 +329,10 @@ export function StaffTable({
         },
       },
       {
-        key: 'languages',
+        id: 'languages',
         header: 'Languages',
-        minWidth: 'min-w-[110px]',
-        render: (member) => {
+        width: 'min-w-[110px]',
+        cell: ({ row: member }) => {
           const conductor = member as Conductor;
           const langs = conductor.languagesSpoken ?? [];
           return (
@@ -354,11 +363,11 @@ export function StaffTable({
 
   const emptyIcon =
     mode === 'drivers' ? (
-      <Car className="w-10 h-10 mb-3 text-muted-foreground/50" />
+      <Car className="h-8 w-8" />
     ) : mode === 'conductors' ? (
-      <UserCheck className="w-10 h-10 mb-3 text-muted-foreground/50" />
+      <UserCheck className="h-8 w-8" />
     ) : (
-      <Users className="w-10 h-10 mb-3 text-muted-foreground/50" />
+      <Users className="h-8 w-8" />
     );
 
   const emptyLabel =
@@ -372,16 +381,22 @@ export function StaffTable({
     <DataTable<StaffMember>
       columns={columns}
       data={staff}
-      loading={loading}
-      rowKey={(member) => member.id}
-      currentSort={currentSort}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
+      getRowId={(member) => member.id}
+      loading={loading}
       emptyState={
-        <div className="flex flex-col items-center py-12 text-muted-foreground/70">
-          {emptyIcon}
-          <p className="font-medium text-muted-foreground">{emptyLabel}</p>
-          <p className="text-sm mt-1">Try adjusting your search or filters</p>
-        </div>
+        <EmptyState
+          icon={emptyIcon}
+          title={emptyLabel}
+          description="Try adjusting your search or filters"
+        />
       }
     />
   );

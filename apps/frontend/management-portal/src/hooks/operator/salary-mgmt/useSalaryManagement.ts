@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import React from 'react';
 import {
   getAllSalaryRecords,
   computeSalaryStats,
@@ -10,21 +9,12 @@ import {
   type MonthlySalarySummary,
   type SalaryFilterOptions,
 } from '@/data/operator/salary';
-import type { SortState } from '@/components/shared/DataTable';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
-import type { TabItem } from '@/components/shared/SwitchableTabs';
+
 import type { FilterSelectConfig } from '@/hooks/operator/revenue-analytics/useRevenueAnalytics';
-import { Award, BarChart3, BookOpen, Bus, MapPin, Shield, TableProperties } from 'lucide-react';
 
 // ── Tab configuration ─────────────────────────────────────────────
 
 export type SalaryTab = 'overview' | 'records' | 'rules';
-
-export const SALARY_TABS: TabItem<SalaryTab>[] = [
-  { id: 'overview', label: 'Overview', icon: BarChart3 },
-  { id: 'records', label: 'Salary Records', icon: TableProperties },
-  { id: 'rules', label: 'Salary Rules', icon: BookOpen },
-];
 
 // ── Hook ──────────────────────────────────────────────────────────
 
@@ -37,15 +27,15 @@ export function useSalaryManagement() {
   const [detailRecord, setDetailRecord] = useState<SalaryRecord | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [performanceFilter, setPerformanceFilter] = useState('all');
-  const [busFilter, setBusFilter] = useState('all');
-  const [routeFilter, setRouteFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('__all__');
+  const [statusFilter, setStatusFilter] = useState('__all__');
+  const [performanceFilter, setPerformanceFilter] = useState('__all__');
+  const [busFilter, setBusFilter] = useState('__all__');
+  const [routeFilter, setRouteFilter] = useState('__all__');
+  const [dateFilter, setDateFilter] = useState('__all__');
 
-  const [sort, setSort] = useState<SortState>({ field: 'periodStart', direction: 'desc' });
-  const [currentPage, setCurrentPage] = useState(0);
+  const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({ field: 'periodStart', direction: 'desc' });
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
   // ── Load data ───────────────────────────────────────────────────
@@ -72,7 +62,7 @@ export function useSalaryManagement() {
   const filteredRecords = useMemo(() => {
     let records = allRecords;
 
-    if (dateFilter !== 'all') {
+    if (dateFilter !== '__all__') {
       const now = new Date();
       let startDate: Date;
       switch (dateFilter) {
@@ -92,11 +82,11 @@ export function useSalaryManagement() {
       records = records.filter((r) => r.periodStart >= startStr);
     }
 
-    if (roleFilter !== 'all') records = records.filter((r) => r.role === roleFilter);
-    if (statusFilter !== 'all') records = records.filter((r) => r.paymentStatus === statusFilter);
-    if (performanceFilter !== 'all') records = records.filter((r) => r.performanceRating === performanceFilter);
-    if (busFilter !== 'all') records = records.filter((r) => r.busAssigned === busFilter);
-    if (routeFilter !== 'all') records = records.filter((r) => r.routeAssigned === routeFilter);
+    if (roleFilter !== '__all__') records = records.filter((r) => r.role === roleFilter);
+    if (statusFilter !== '__all__') records = records.filter((r) => r.paymentStatus === statusFilter);
+    if (performanceFilter !== '__all__') records = records.filter((r) => r.performanceRating === performanceFilter);
+    if (busFilter !== '__all__') records = records.filter((r) => r.busAssigned === busFilter);
+    if (routeFilter !== '__all__') records = records.filter((r) => r.routeAssigned === routeFilter);
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -136,7 +126,7 @@ export function useSalaryManagement() {
   // ── Paginated records ───────────────────────────────────────────
 
   const paginatedRecords = useMemo(() => {
-    const start = currentPage * pageSize;
+    const start = (currentPage - 1) * pageSize;
     return sortedRecords.slice(start, start + pageSize);
   }, [sortedRecords, currentPage, pageSize]);
 
@@ -156,30 +146,33 @@ export function useSalaryManagement() {
 
   // ── Handlers ────────────────────────────────────────────────────
 
-  const handleSort = useCallback((field: string, direction: 'asc' | 'desc') => {
-    setSort({ field, direction });
-    setCurrentPage(0);
+  const handleSort = useCallback((column: string) => {
+    setSort((prev) => ({
+      field: column,
+      direction: prev.field === column && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+    setCurrentPage(1);
   }, []);
 
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
-    setCurrentPage(0);
+    setCurrentPage(1);
   }, []);
 
   const handleSearchChange = useCallback((v: string) => {
     setSearchTerm(v);
-    setCurrentPage(0);
+    setCurrentPage(1);
   }, []);
 
   const handleClearAllFilters = useCallback(() => {
     setSearchTerm('');
-    setRoleFilter('all');
-    setStatusFilter('all');
-    setPerformanceFilter('all');
-    setBusFilter('all');
-    setRouteFilter('all');
-    setDateFilter('all');
-    setCurrentPage(0);
+    setRoleFilter('__all__');
+    setStatusFilter('__all__');
+    setPerformanceFilter('__all__');
+    setBusFilter('__all__');
+    setRouteFilter('__all__');
+    setDateFilter('__all__');
+    setCurrentPage(1);
   }, []);
 
   const handleExport = useCallback(() => {
@@ -202,126 +195,58 @@ export function useSalaryManagement() {
       {
         key: 'date',
         value: dateFilter,
-        onChange: (v: string) => { setDateFilter(v); setCurrentPage(0); },
+        onChange: (v: string) => { setDateFilter(v); setCurrentPage(1); },
         options: [
           { value: 'today', label: 'Today' },
           { value: '7d', label: 'Last 7 Days' },
           { value: '30d', label: 'Last 30 Days' },
         ],
-        allLabel: 'All Dates',
-        activeColorClass: 'bg-primary/10 border-primary/30 text-primary',
+        label: 'Dates',
       },
       {
         key: 'role',
         value: roleFilter,
-        onChange: (v: string) => { setRoleFilter(v); setCurrentPage(0); },
+        onChange: (v: string) => { setRoleFilter(v); setCurrentPage(1); },
         options: filterOptions.roles,
-        allLabel: 'All Roles',
-        icon: React.createElement(Shield, { className: 'h-3.5 w-3.5' }),
+        label: 'Roles',
       },
       {
         key: 'status',
         value: statusFilter,
-        onChange: (v: string) => { setStatusFilter(v); setCurrentPage(0); },
+        onChange: (v: string) => { setStatusFilter(v); setCurrentPage(1); },
         options: filterOptions.statuses,
-        allLabel: 'All Statuses',
+        label: 'Statuses',
       },
       {
         key: 'performance',
         value: performanceFilter,
-        onChange: (v: string) => { setPerformanceFilter(v); setCurrentPage(0); },
+        onChange: (v: string) => { setPerformanceFilter(v); setCurrentPage(1); },
         options: filterOptions.performanceRatings,
-        allLabel: 'All Performance',
-        icon: React.createElement(Award, { className: 'h-3.5 w-3.5' }),
+        label: 'Performance',
       },
       {
         key: 'bus',
         value: busFilter,
-        onChange: (v: string) => { setBusFilter(v); setCurrentPage(0); },
+        onChange: (v: string) => { setBusFilter(v); setCurrentPage(1); },
         options: filterOptions.buses,
-        allLabel: 'All Buses',
-        icon: React.createElement(Bus, { className: 'h-3.5 w-3.5' }),
+        label: 'Buses',
       },
       {
         key: 'route',
         value: routeFilter,
-        onChange: (v: string) => { setRouteFilter(v); setCurrentPage(0); },
+        onChange: (v: string) => { setRouteFilter(v); setCurrentPage(1); },
         options: filterOptions.routes,
-        allLabel: 'All Routes',
-        icon: React.createElement(MapPin, { className: 'h-3.5 w-3.5' }),
+        label: 'Routes',
       },
     ];
   }, [filterOptions, dateFilter, roleFilter, statusFilter, performanceFilter, busFilter, routeFilter]);
 
-  // ── Active filter chips ─────────────────────────────────────────
+  // ── Active filter count ─────────────────────────────────────────
 
-  const activeChips: FilterChipDescriptor[] = useMemo(() => {
-    const chips: FilterChipDescriptor[] = [];
-
-    if (dateFilter !== 'all') {
-      const labels: Record<string, string> = { today: 'Today', '7d': 'Last 7 days', '30d': 'Last 30 days' };
-      chips.push({
-        key: 'date',
-        label: labels[dateFilter] ?? dateFilter,
-        onRemove: () => setDateFilter('all'),
-        colorClass: 'bg-primary/10 text-primary border-primary/20',
-      });
-    }
-
-    if (roleFilter !== 'all') {
-      const role = filterOptions?.roles.find((r) => r.value === roleFilter);
-      chips.push({
-        key: 'role',
-        label: role?.label ?? roleFilter,
-        onRemove: () => setRoleFilter('all'),
-        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-        icon: React.createElement(Shield, { className: 'h-3 w-3 opacity-70' }),
-      });
-    }
-
-    if (statusFilter !== 'all') {
-      const st = filterOptions?.statuses.find((s) => s.value === statusFilter);
-      chips.push({
-        key: 'status',
-        label: st?.label ?? statusFilter,
-        onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-success/10 text-success border-success/20',
-      });
-    }
-
-    if (performanceFilter !== 'all') {
-      const perf = filterOptions?.performanceRatings.find((p) => p.value === performanceFilter);
-      chips.push({
-        key: 'performance',
-        label: perf?.label ?? performanceFilter,
-        onRemove: () => setPerformanceFilter('all'),
-        colorClass: 'bg-warning/10 text-warning border-warning/20',
-        icon: React.createElement(Award, { className: 'h-3 w-3 opacity-70' }),
-      });
-    }
-
-    if (busFilter !== 'all') {
-      chips.push({
-        key: 'bus',
-        label: busFilter,
-        onRemove: () => setBusFilter('all'),
-        colorClass: 'bg-primary/10 text-teal-700 border-teal-200',
-        icon: React.createElement(Bus, { className: 'h-3 w-3 opacity-70' }),
-      });
-    }
-
-    if (routeFilter !== 'all') {
-      chips.push({
-        key: 'route',
-        label: routeFilter,
-        onRemove: () => setRouteFilter('all'),
-        colorClass: 'bg-primary/10 text-indigo-700 border-indigo-200',
-        icon: React.createElement(MapPin, { className: 'h-3 w-3 opacity-70' }),
-      });
-    }
-
-    return chips;
-  }, [dateFilter, roleFilter, statusFilter, performanceFilter, busFilter, routeFilter, filterOptions]);
+  const activeFilterCount = useMemo(() => {
+    return [dateFilter, roleFilter, statusFilter, performanceFilter, busFilter, routeFilter]
+      .filter((v) => v !== '__all__').length;
+  }, [dateFilter, roleFilter, statusFilter, performanceFilter, busFilter, routeFilter]);
 
   return {
     activeTab,
@@ -341,7 +266,7 @@ export function useSalaryManagement() {
     searchTerm,
     detailRecord,
     filterSelectConfigs,
-    activeChips,
+    activeFilterCount,
     handleSort,
     handlePageSizeChange,
     handleSearchChange,

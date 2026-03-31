@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   filterNotifications,
   getNotifications,
+  getNotificationStats,
   getSentNotifications,
   getScheduledNotifications,
   getDraftNotifications,
@@ -13,8 +14,6 @@ import {
 import type { Notification } from '@/data/admin/types';
 
 export type TabKey = 'all' | 'sent' | 'scheduled' | 'drafts';
-
-const ITEMS_PER_PAGE = 15;
 
 export function useNotificationsListing() {
   const router = useRouter();
@@ -25,6 +24,7 @@ export function useNotificationsListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
     field: 'createdAt',
     direction: 'desc',
@@ -35,6 +35,7 @@ export function useNotificationsListing() {
     setSearchTerm('');
     setFilters({});
     setCurrentPage(1);
+    setPageSize(20);
     setSort({ field: 'createdAt', direction: 'desc' });
   }, []);
 
@@ -66,6 +67,13 @@ export function useNotificationsListing() {
     setCurrentPage(1);
   }, []);
 
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  }, []);
+
+  const stats = useMemo(() => getNotificationStats(), []);
+
   const totalCounts = useMemo(
     () => ({
       all: getNotifications().length,
@@ -83,7 +91,6 @@ export function useNotificationsListing() {
         key: 'type',
         label: 'Type',
         options: [
-          { value: 'all', label: 'All Types' },
           { value: 'info', label: 'Info' },
           { value: 'warning', label: 'Warning' },
           { value: 'critical', label: 'Critical' },
@@ -95,7 +102,6 @@ export function useNotificationsListing() {
         key: 'priority',
         label: 'Priority',
         options: [
-          { value: 'all', label: 'All Priorities' },
           { value: 'low', label: 'Low' },
           { value: 'medium', label: 'Medium' },
           { value: 'high', label: 'High' },
@@ -106,7 +112,6 @@ export function useNotificationsListing() {
         key: 'targetAudience',
         label: 'Audience',
         options: [
-          { value: 'all', label: 'All Audiences' },
           ...audiences.map((a) => ({ value: a, label: a.replace('_', ' ') })),
         ],
       },
@@ -114,7 +119,6 @@ export function useNotificationsListing() {
         key: 'channel',
         label: 'Channel',
         options: [
-          { value: 'all', label: 'All Channels' },
           { value: 'push', label: 'Push' },
           { value: 'email', label: 'Email' },
           { value: 'sms', label: 'SMS' },
@@ -169,13 +173,14 @@ export function useNotificationsListing() {
     return sorted;
   }, [filteredNotifications, sort]);
 
-  const totalPages = Math.ceil(sortedNotifications.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedNotifications.length / pageSize);
   const paginatedNotifications = useMemo(
-    () => sortedNotifications.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
-    [sortedNotifications, currentPage]
+    () => sortedNotifications.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sortedNotifications, currentPage, pageSize]
   );
 
   return {
+    stats,
     activeTab,
     searchTerm,
     filters,
@@ -187,7 +192,7 @@ export function useNotificationsListing() {
     sortedNotifications,
     totalPages,
     paginatedNotifications,
-    itemsPerPage: ITEMS_PER_PAGE,
+    pageSize,
     handleTabChange,
     handleSort,
     handleFilterChange,
@@ -195,5 +200,6 @@ export function useNotificationsListing() {
     handleViewDetail,
     handleClearAll,
     setCurrentPage,
+    handlePageSizeChange,
   };
 }

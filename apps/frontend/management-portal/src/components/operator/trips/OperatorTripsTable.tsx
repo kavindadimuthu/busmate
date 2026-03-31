@@ -14,17 +14,27 @@ import {
   MapPin,
   FileText,
 } from 'lucide-react';
-import { DataTable, type DataTableColumn } from '@/components/shared/DataTable';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { OperatorTrip, TripStatus } from '@/data/operator/trips';
 
 // ── Types ─────────────────────────────────────────────────────────
 
-interface OperatorTripsTableProps {
+interface OperatorTripsTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   trips: OperatorTrip[];
+  totalItems: number;
   onView: (tripId: string) => void;
-  onSort: (sortBy: string, sortDir: 'asc' | 'desc') => void;
-  loading: boolean;
-  currentSort: { field: string; direction: 'asc' | 'desc' };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -127,20 +137,26 @@ function getStatusMeta(status?: TripStatus): {
  */
 export function OperatorTripsTable({
   trips,
-  onView,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
   loading,
-  currentSort,
+  onView,
 }: OperatorTripsTableProps) {
-  const columns: DataTableColumn<OperatorTrip>[] = useMemo(
+  const columns: ColumnDef<OperatorTrip>[] = useMemo(
     () => [
       // ── Trip Date ────────────────────────────────────────────
       {
-        key: 'tripDate',
+        id: 'tripDate',
         header: 'Trip Date',
         sortable: true,
-        minWidth: 'min-w-[160px]',
-        render: (trip) => (
+        width: 'min-w-[160px]',
+        cell: ({ row: trip }) => (
           <div className="flex items-center gap-3">
             <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center ring-1 ring-blue-200/60">
               <Calendar className="w-4 h-4 text-primary" />
@@ -159,11 +175,11 @@ export function OperatorTripsTable({
 
       // ── Route ────────────────────────────────────────────────
       {
-        key: 'routeName',
+        id: 'routeName',
         header: 'Route',
         sortable: true,
-        minWidth: 'min-w-[180px]',
-        render: (trip) => (
+        width: 'min-w-[180px]',
+        cell: ({ row: trip }) => (
           <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
             <div className="min-w-0">
@@ -180,23 +196,22 @@ export function OperatorTripsTable({
 
       // ── Schedule ─────────────────────────────────────────────
       {
-        key: 'scheduleName',
+        id: 'scheduleName',
         header: 'Schedule',
         sortable: true,
-        minWidth: 'min-w-[120px]',
-        render: (trip) => (
+        width: 'min-w-[120px]',
+        cell: ({ row: trip }) => (
           <span className="text-sm text-foreground/80">{trip.scheduleName || '—'}</span>
         ),
       },
 
       // ── Departure / Arrival ───────────────────────────────────
       {
-        key: 'scheduledDepartureTime',
+        id: 'scheduledDepartureTime',
         header: 'Departure',
         sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        minWidth: 'min-w-[100px]',
-        render: (trip) => (
+        width: 'min-w-[100px]',
+        cell: ({ row: trip }) => (
           <div>
             <p className="text-sm font-semibold text-foreground">
               {formatTime(trip.scheduledDepartureTime)}
@@ -213,10 +228,10 @@ export function OperatorTripsTable({
 
       // ── Assignments ───────────────────────────────────────────
       {
-        key: 'assignments',
+        id: 'assignments',
         header: 'Assignments',
-        minWidth: 'min-w-[160px]',
-        render: (trip) => (
+        width: 'min-w-[160px]',
+        cell: ({ row: trip }) => (
           <div className="flex flex-col gap-1">
             <span
               className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
@@ -246,10 +261,10 @@ export function OperatorTripsTable({
 
       // ── Staff ─────────────────────────────────────────────────
       {
-        key: 'staff',
+        id: 'staff',
         header: 'Staff',
-        minWidth: 'min-w-[140px]',
-        render: (trip) => (
+        width: 'min-w-[140px]',
+        cell: ({ row: trip }) => (
           <div className="flex flex-col gap-0.5">
             {trip.driverName ? (
               <p className="text-xs text-foreground/80 truncate max-w-[160px]">
@@ -273,11 +288,10 @@ export function OperatorTripsTable({
 
       // ── Status ────────────────────────────────────────────────
       {
-        key: 'status',
+        id: 'status',
         header: 'Status',
         sortable: true,
-        cellClassName: 'whitespace-nowrap',
-        render: (trip) => {
+        cell: ({ row: trip }) => {
           const { icon, label, colorClass } = getStatusMeta(trip.status as TripStatus);
           return (
             <span
@@ -292,11 +306,10 @@ export function OperatorTripsTable({
 
       // ── Actions ───────────────────────────────────────────────
       {
-        key: 'actions',
+        id: 'actions',
         header: 'Actions',
-        headerClassName: 'text-center',
-        cellClassName: 'text-center whitespace-nowrap',
-        render: (trip) => (
+        align: 'center',
+        cell: ({ row: trip }) => (
           <button
             onClick={() => onView(trip.id)}
             title="View trip details"
@@ -314,21 +327,22 @@ export function OperatorTripsTable({
     <DataTable<OperatorTrip>
       columns={columns}
       data={trips}
-      loading={loading}
-      currentSort={currentSort}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
-      rowKey={(trip) => trip.id}
-      showRefreshing
+      getRowId={(trip) => trip.id}
+      loading={loading}
       emptyState={
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Calendar className="w-7 h-7 text-primary/70" />
-          </div>
-          <h3 className="text-base font-semibold text-foreground mb-1">No trips found</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            No trips match your current filters. Try adjusting your search criteria.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Calendar className="h-8 w-8" />}
+          title="No trips found"
+          description="No trips match your current filters. Try adjusting your search criteria."
+        />
       }
     />
   );

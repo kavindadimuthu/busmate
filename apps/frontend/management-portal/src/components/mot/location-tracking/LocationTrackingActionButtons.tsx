@@ -2,12 +2,12 @@
 
 import React from 'react';
 import {
-  ActionButton,
-  ActionButtonsContainer,
-  OverflowMenu,
-  type ActionButtonVariant,
-  type OverflowMenuItem,
-} from '@/components/shared/ActionButton';
+  Button,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@busmate/ui';
 import {
   RefreshCw,
   Maximize2,
@@ -15,6 +15,7 @@ import {
   Radio,
   Settings,
   Download,
+  MoreHorizontal,
 } from 'lucide-react';
 
 interface LocationTrackingActionButtonsProps {
@@ -40,9 +41,6 @@ interface LocationTrackingActionButtonsProps {
 
 /**
  * Location tracking page action buttons.
- *
- * Wraps the shared `<ActionButton>`, `<ActionButtonsContainer>`, and
- * `<OverflowMenu>` components with location-tracking-specific actions.
  */
 export function LocationTrackingActionButtons({
   autoRefresh,
@@ -55,26 +53,8 @@ export function LocationTrackingActionButtons({
   onSettings,
   onExport,
 }: LocationTrackingActionButtonsProps) {
-  const overflowItems: OverflowMenuItem[] = [
-    {
-      icon: <Settings className="h-3.5 w-3.5" />,
-      label: 'Settings',
-      onClick: onSettings || (() => console.log('Settings clicked')),
-      disabled: isLoading,
-    },
-    {
-      icon: <Download className="h-3.5 w-3.5" />,
-      label: 'Export Data',
-      onClick: onExport || (() => console.log('Export clicked')),
-      disabled: isLoading,
-    },
-  ];
-
-  // Determine the variant for the live/paused button
-  const liveButtonVariant: ActionButtonVariant = autoRefresh ? 'success' : 'secondary';
-
   return (
-    <ActionButtonsContainer>
+    <div className="flex items-center gap-2">
       {/* Last Update Indicator (text only, not a button) */}
       {lastUpdate && (
         <div className="flex items-center px-3 py-2 text-xs text-muted-foreground">
@@ -88,44 +68,61 @@ export function LocationTrackingActionButtons({
       )}
 
       {/* Live/Paused Toggle */}
-      <ActionButton
-        icon={<Radio className={`h-4 w-4 ${autoRefresh ? 'animate-pulse' : ''}`} />}
-        label={autoRefresh ? 'Live' : 'Paused'}
-        variant={liveButtonVariant}
+      <Button
+        variant={autoRefresh ? 'success' : 'outline'}
         onClick={onAutoRefreshToggle}
         disabled={isLoading}
-      />
+      >
+        <Radio className={`h-4 w-4 ${autoRefresh ? 'animate-pulse' : ''}`} />
+        {autoRefresh ? 'Live' : 'Paused'}
+      </Button>
 
       {/* Refresh Button */}
-      <ActionButton
-        icon={<RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />}
-        label="Refresh"
-        variant="primary"
-        onClick={onRefresh}
-        disabled={isLoading}
-      />
+      <Button onClick={onRefresh} disabled={isLoading}>
+        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        Refresh
+      </Button>
 
       {/* Fullscreen Toggle */}
-      <ActionButton
-        icon={
-          viewMode === 'fullscreen' ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )
-        }
-        label={viewMode === 'fullscreen' ? 'Exit Fullscreen' : 'Fullscreen'}
-        variant="secondary"
+      <Button
+        variant="outline"
         onClick={() =>
           onViewModeChange(viewMode === 'fullscreen' ? 'standard' : 'fullscreen')
         }
         disabled={isLoading}
-      />
+      >
+        {viewMode === 'fullscreen' ? (
+          <Minimize2 className="h-4 w-4" />
+        ) : (
+          <Maximize2 className="h-4 w-4" />
+        )}
+        {viewMode === 'fullscreen' ? 'Exit Fullscreen' : 'Fullscreen'}
+      </Button>
 
       {/* Overflow Menu */}
-      {overflowItems.length > 0 && (
-        <OverflowMenu items={overflowItems} />
-      )}
-    </ActionButtonsContainer>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={onSettings || (() => console.log('Settings clicked'))}
+            disabled={isLoading}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onExport || (() => console.log('Export clicked'))}
+            disabled={isLoading}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export Data
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

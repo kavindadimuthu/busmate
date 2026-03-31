@@ -9,7 +9,6 @@ import {
   StaffTable,
   StaffActionButtons,
 } from '@/components/operator/staff';
-import { DataPagination } from '@/components/shared/DataPagination';
 
 export default function StaffManagementPage() {
   useSetPageMetadata({
@@ -73,24 +72,19 @@ export default function StaffManagementPage() {
         onClearAll={handleClearAllFilters}
       />
 
-      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-        <StaffTable
+      <StaffTable
           staff={paginatedStaff}
           mode={activeTab}
           loading={loading}
-          currentSort={sort}
+          sortColumn={sort.field}
+          sortDirection={sort.direction}
           onSort={handleSort}
-        />
-        <DataPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalElements={filteredStaff.length}
+          totalItems={filteredStaff.length}
+          page={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={handlePageSizeChange}
-          loading={loading}
         />
-      </div>
 
       <p className="text-xs text-muted-foreground/70 text-center">
         Staff records are managed by BusMate administration. This view is read-only. Contact support if you need to update staff information.

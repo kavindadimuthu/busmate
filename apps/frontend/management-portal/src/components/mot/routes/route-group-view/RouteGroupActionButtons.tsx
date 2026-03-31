@@ -4,12 +4,15 @@ import React from 'react';
 import {
   Edit,
   Trash2,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
-  ActionButton,
-  ActionButtonsContainer,
-} from '@/components/shared/ActionButton';
-import type { OverflowMenuItem } from '@/components/shared/ActionButton';
+  Button,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@busmate/ui';
 
 interface RouteGroupActionButtonsProps {
   onEdit: () => void;
@@ -20,7 +23,7 @@ interface RouteGroupActionButtonsProps {
 /**
  * Route group page action buttons.
  *
- * Wraps the shared `<ActionButton>` and `<ActionButtonsContainer>` components
+ * Wraps the shared `<Button>` and `<DropdownMenu>` components
  * with route-group-specific actions.
  */
 export function RouteGroupActionButtons({
@@ -28,43 +31,37 @@ export function RouteGroupActionButtons({
   onDelete,
   isDeleting = false,
 }: RouteGroupActionButtonsProps) {
-  const overflowItems: OverflowMenuItem[] = [
-    { 
-      icon: <Edit className="h-3.5 w-3.5" />, 
-      label: 'Edit Route Group', 
-      onClick: onEdit, 
-      disabled: isDeleting 
-    },
-    { 
-      icon: <Trash2 className="h-3.5 w-3.5" />, 
-      label: isDeleting ? 'Deleting...' : 'Delete Route Group', 
-      onClick: onDelete, 
-      disabled: isDeleting,
-      variant: 'danger' as const,
-    },
-  ];
-
   return (
-    <ActionButtonsContainer overflowItems={overflowItems}>
+    <div className="flex items-center gap-2">
       {/* Edit — sm+ only */}
-      <ActionButton
-        icon={<Edit className="h-4 w-4" />}
-        label="Edit"
-        variant="secondary"
-        onClick={onEdit}
-        disabled={isDeleting}
-        className="hidden sm:inline-flex"
-      />
+      <Button variant="outline" onClick={onEdit} disabled={isDeleting} className="hidden sm:inline-flex">
+        <Edit className="h-4 w-4" />
+        Edit
+      </Button>
 
       {/* Delete — sm+ only */}
-      <ActionButton
-        icon={<Trash2 className="h-4 w-4" />}
-        label={isDeleting ? 'Deleting...' : 'Delete'}
-        variant="danger"
-        onClick={onDelete}
-        disabled={isDeleting}
-        className="hidden sm:inline-flex"
-      />
-    </ActionButtonsContainer>
+      <Button variant="destructive" onClick={onDelete} disabled={isDeleting} className="hidden sm:inline-flex">
+        <Trash2 className="h-4 w-4" />
+        {isDeleting ? 'Deleting...' : 'Delete'}
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className="sm:hidden">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit} disabled={isDeleting}>
+            <Edit className="h-3.5 w-3.5" />
+            Edit Route Group
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onDelete} disabled={isDeleting} className="text-destructive">
+            <Trash2 className="h-3.5 w-3.5" />
+            {isDeleting ? 'Deleting...' : 'Delete Route Group'}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

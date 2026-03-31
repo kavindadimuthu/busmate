@@ -1,9 +1,8 @@
 'use client';
 
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import { SearchFilterBar, SelectFilter } from '@/components/shared/SearchFilterBar';
-import { DataPagination } from '@/components/shared/DataPagination';
+import { FilterBar, FilterSelect, Tabs, TabsList, TabsTrigger } from '@busmate/ui';
+import { BarChart3, Ticket } from 'lucide-react';
 import {
   RevenueStatsCards,
   RevenueBreakdownPanel,
@@ -13,7 +12,7 @@ import {
 } from '@/components/operator/revenue-analytics';
 import {
   useRevenueAnalytics,
-  REVENUE_TABS,
+  type RevenueTab,
 } from '@/hooks/operator/revenue-analytics/useRevenueAnalytics';
 
 export default function RevenueAnalyticsPage() {
@@ -30,7 +29,7 @@ export default function RevenueAnalyticsPage() {
     sortedTickets, paginatedTickets, totalPages,
     kpis, busByRevenue, routeByRevenue, conductorByRevenue, paymentByRevenue, dailySummaries,
     sort, currentPage, setCurrentPage, pageSize,
-    searchTerm, filterSelectConfigs, activeChips,
+    searchTerm, filterSelectConfigs, activeFilterCount,
     handleSort, handlePageSizeChange, handleSearchChange,
     handleClearAllFilters, handleExport, loadData,
   } = useRevenueAnalytics();
@@ -41,26 +40,23 @@ export default function RevenueAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <SwitchableTabs tabs={REVENUE_TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as RevenueTab)}>
+        <TabsList>
+          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4" /> Overview</TabsTrigger>
+          <TabsTrigger value="tickets"><Ticket className="h-4 w-4" /> All Tickets</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <RevenueStatsCards kpis={kpis} loading={loading} />
 
-      <SearchFilterBar
+      <FilterBar
         searchValue={searchTerm}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search tickets by ID, bus, route, conductor, location..."
-        totalCount={allTickets.length}
-        filteredCount={sortedTickets.length}
-        loadedCount={paginatedTickets.length}
-        resultLabel="ticket"
-        loading={loading}
-        filters={
-          filterSelectConfigs.length > 0 ? (
-            <>{filterSelectConfigs.map(({ key, ...props }) => <SelectFilter key={key} {...props} />)}</>
-          ) : undefined
-        }
-        activeChips={activeChips}
-        onClearAllFilters={handleClearAllFilters}
-      />
+        activeFilterCount={activeFilterCount}
+        onClearAll={handleClearAllFilters}
+      >
+        {filterSelectConfigs.map(({ key, ...props }) => <FilterSelect key={key} {...props} />)}
+      </FilterBar>
 
       {activeTab === 'overview' && (
         <>
@@ -76,11 +72,17 @@ export default function RevenueAnalyticsPage() {
 
       {activeTab === 'tickets' && (
         <>
-          <RevenueTicketsTable data={paginatedTickets} loading={loading} currentSort={sort} onSort={handleSort} />
-          <DataPagination
-            currentPage={currentPage} totalPages={totalPages} totalElements={sortedTickets.length}
-            pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={handlePageSizeChange}
+          <RevenueTicketsTable
+            data={paginatedTickets}
             loading={loading}
+            sortColumn={sort.field}
+            sortDirection={sort.direction}
+            onSort={handleSort}
+            totalItems={sortedTickets.length}
+            page={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={handlePageSizeChange}
           />
         </>
       )}

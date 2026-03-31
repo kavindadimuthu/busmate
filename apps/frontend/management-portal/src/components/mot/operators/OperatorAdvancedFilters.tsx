@@ -1,18 +1,7 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  Building,
-  MapPin,
-} from 'lucide-react';
-import {
-  SearchFilterBar,
-  SelectFilter,
-} from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { useCallback } from 'react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -86,9 +75,9 @@ export default function OperatorAdvancedFilters({
 
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setOperatorTypeFilter('all');
-    setRegionFilter('all');
+    setStatusFilter('__all__');
+    setOperatorTypeFilter('__all__');
+    setRegionFilter('__all__');
     onClearAll?.();
   }, [setSearchTerm, setStatusFilter, setOperatorTypeFilter, setRegionFilter, onClearAll]);
 
@@ -109,91 +98,38 @@ export default function OperatorAdvancedFilters({
     label: r,
   }));
 
-  // ── Active filter chips ─────────────────────────────────────────
+  // ── Active filter count ─────────────────────────────────────────
 
-  const activeChips = useMemo<FilterChipDescriptor[]>(() => {
-    const chips: FilterChipDescriptor[] = [];
-
-    if (statusFilter !== 'all') {
-      const icons: Record<string, React.ReactNode> = {
-        active: <CheckCircle className="h-3 w-3 opacity-70" />,
-        inactive: <XCircle className="h-3 w-3 opacity-70" />,
-        pending: <Clock className="h-3 w-3 opacity-70" />,
-        cancelled: <XCircle className="h-3 w-3 opacity-70" />,
-      };
-      chips.push({
-        key: 'status',
-        label: STATUS_LABELS[statusFilter] ?? statusFilter,
-        onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-success/10 text-success border-success/20',
-        icon: icons[statusFilter],
-      });
-    }
-
-    if (operatorTypeFilter !== 'all') {
-      chips.push({
-        key: 'operatorType',
-        label: TYPE_LABELS[operatorTypeFilter] ?? operatorTypeFilter,
-        onRemove: () => setOperatorTypeFilter('all'),
-        colorClass: 'bg-primary/10 text-primary border-primary/20',
-        icon: <Building className="h-3 w-3 opacity-70" />,
-      });
-    }
-
-    if (regionFilter !== 'all') {
-      chips.push({
-        key: 'region',
-        label: regionFilter,
-        onRemove: () => setRegionFilter('all'),
-        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-        icon: <MapPin className="h-3 w-3 opacity-70" />,
-      });
-    }
-
-    return chips;
-  }, [statusFilter, operatorTypeFilter, regionFilter, setStatusFilter, setOperatorTypeFilter, setRegionFilter]);
+  const activeFilterCount = [statusFilter, operatorTypeFilter, regionFilter].filter(v => v !== '__all__').length;
 
   // ── Render ──────────────────────────────────────────────────────
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
       searchPlaceholder="Search operators by name or region…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="operator"
-      loading={loading}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            allLabel="All Statuses"
-            icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-success/10 border-success/30 text-success"
-          />
-          <SelectFilter
-            value={operatorTypeFilter}
-            onChange={setOperatorTypeFilter}
-            options={typeOptions}
-            allLabel="All Types"
-            icon={<Building className="h-3.5 w-3.5" />}
-            activeColorClass="bg-primary/10 border-primary/30 text-primary"
-          />
-          <SelectFilter
-            value={regionFilter}
-            onChange={setRegionFilter}
-            options={regionOptions}
-            allLabel="All Regions"
-            icon={<MapPin className="h-3.5 w-3.5" />}
-            activeColorClass="bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]"
-          />
-        </>
-      }
-      activeChips={activeChips}
-      onClearAllFilters={handleClearAll}
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={statusOptions}
+      />
+      <FilterSelect
+        label="Types"
+        value={operatorTypeFilter}
+        onChange={setOperatorTypeFilter}
+        options={typeOptions}
+      />
+      <FilterSelect
+        label="Regions"
+        value={regionFilter}
+        onChange={setRegionFilter}
+        options={regionOptions}
+      />
+    </FilterBar>
   );
 }

@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Trash2, CheckCircle2 } from 'lucide-react';
+import { Trash2, CheckCircle2, MoreHorizontal } from 'lucide-react';
 import {
-  ActionButton,
-  ActionButtonsContainer,
-} from '@/components/shared/ActionButton';
-import type { OverflowMenuItem } from '@/components/shared/ActionButton';
+  Button,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@busmate/ui';
 
 interface NotificationDetailActionsProps {
   isReceived: boolean;
@@ -25,31 +27,41 @@ export function NotificationDetailActions({
 }: NotificationDetailActionsProps) {
   if (!hasNotification) return null;
 
-  const overflowItems: OverflowMenuItem[] = [
-    ...(isReceived
-      ? [{ icon: <CheckCircle2 className="h-3.5 w-3.5" />, label: isRead ? 'Marked as Read' : 'Mark as Read', onClick: onToggleRead }]
-      : []),
-    { icon: <Trash2 className="h-3.5 w-3.5" />, label: 'Delete', onClick: onDelete, variant: 'danger' as const },
-  ];
-
   return (
-    <ActionButtonsContainer overflowItems={overflowItems}>
+    <div className="flex items-center gap-2">
       {isReceived && (
-        <ActionButton
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          label={isRead ? 'Marked as Read' : 'Mark as Read'}
-          variant={isRead ? 'success' : 'secondary'}
+        <Button
+          variant={isRead ? 'success' : 'outline'}
           onClick={onToggleRead}
           className="hidden sm:inline-flex"
-        />
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          {isRead ? 'Marked as Read' : 'Mark as Read'}
+        </Button>
       )}
-      <ActionButton
-        icon={<Trash2 className="h-4 w-4" />}
-        label="Delete"
-        variant="danger"
-        onClick={onDelete}
-        className="hidden sm:inline-flex"
-      />
-    </ActionButtonsContainer>
+      <Button variant="destructive" onClick={onDelete} className="hidden sm:inline-flex">
+        <Trash2 className="h-4 w-4" />
+        Delete
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className="sm:hidden">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {isReceived && (
+            <DropdownMenuItem onClick={onToggleRead}>
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {isRead ? 'Marked as Read' : 'Mark as Read'}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={onDelete} className="text-destructive">
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

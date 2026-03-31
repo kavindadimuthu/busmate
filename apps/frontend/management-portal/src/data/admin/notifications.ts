@@ -491,11 +491,11 @@ export function filterNotifications(filters: {
   search?: string;
 }): Notification[] {
   return mockNotifications.filter(n => {
-    if (filters.status && filters.status !== 'all' && n.status !== filters.status) return false;
-    if (filters.type && filters.type !== 'all' && n.type !== filters.type) return false;
-    if (filters.priority && filters.priority !== 'all' && n.priority !== filters.priority) return false;
-    if (filters.targetAudience && filters.targetAudience !== 'all' && n.targetAudience !== filters.targetAudience) return false;
-    if (filters.channel && filters.channel !== 'all' && n.channel !== filters.channel) return false;
+    if (filters.status && filters.status !== '__all__' && n.status !== filters.status) return false;
+    if (filters.type && filters.type !== '__all__' && n.type !== filters.type) return false;
+    if (filters.priority && filters.priority !== '__all__' && n.priority !== filters.priority) return false;
+    if (filters.targetAudience && filters.targetAudience !== '__all__' && n.targetAudience !== filters.targetAudience) return false;
+    if (filters.channel && filters.channel !== '__all__' && n.channel !== filters.channel) return false;
     if (filters.search) {
       const term = filters.search.toLowerCase();
       return (

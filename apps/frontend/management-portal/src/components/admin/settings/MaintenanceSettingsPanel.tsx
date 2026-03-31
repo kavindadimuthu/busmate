@@ -19,6 +19,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  StatsCard,
+  StatsCardGrid,
+  FormSkeleton,
+  StatusBadge,
 } from '@busmate/ui';
 import {
   Wrench,
@@ -52,88 +61,6 @@ import {
   getSystemStatus,
   performMaintenanceAction,
 } from '@/data/admin/systemSettings';
-
-// ── Status badge ─────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: MaintenanceHistoryEntry['status'] }) {
-  const map = {
-    completed: { cls: 'bg-success/15 text-success', icon: <CheckCircle className="h-3 w-3" /> },
-    failed: { cls: 'bg-destructive/15 text-destructive', icon: <XCircle className="h-3 w-3" /> },
-    warning: { cls: 'bg-warning/15 text-warning', icon: <AlertTriangle className="h-3 w-3" /> },
-    'in-progress': { cls: 'bg-primary/15 text-primary', icon: <Loader2 className="h-3 w-3 animate-spin" /> },
-  };
-  const { cls, icon } = map[status];
-  return (
-    <Badge className={`${cls} capitalize flex items-center gap-1 w-fit`}>
-      {icon}
-      {status}
-    </Badge>
-  );
-}
-
-// ── System status cards ──────────────────────────────────────────
-
-function SystemStatusCards({ status }: { status: SystemStatus }) {
-  const healthColor =
-    status.health === 'operational'
-      ? 'bg-success/10 border-success/20 text-success'
-      : status.health === 'degraded'
-      ? 'bg-warning/10 border-warning/20 text-warning'
-      : 'bg-destructive/10 border-destructive/20 text-destructive';
-
-  const healthIcon =
-    status.health === 'operational' ? (
-      <CheckCircle className="h-7 w-7 text-success" />
-    ) : status.health === 'degraded' ? (
-      <AlertTriangle className="h-7 w-7 text-warning" />
-    ) : (
-      <XCircle className="h-7 w-7 text-destructive" />
-    );
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className={`rounded-xl border p-4 ${healthColor}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide opacity-70">System Health</p>
-            <p className="text-lg font-semibold capitalize mt-0.5">{status.health}</p>
-          </div>
-          {healthIcon}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-primary/20 bg-primary/10 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-primary uppercase tracking-wide">Active Sessions</p>
-            <p className="text-lg font-semibold text-primary mt-0.5">{status.activeSessions}</p>
-          </div>
-          <Users className="h-7 w-7 text-primary/80" />
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-violet-600 uppercase tracking-wide">Uptime</p>
-            <p className="text-lg font-semibold text-violet-900 mt-0.5">{status.uptimePercentage}%</p>
-          </div>
-          <Zap className="h-7 w-7 text-violet-500" />
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border bg-muted p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Running Since</p>
-            <p className="text-lg font-semibold text-foreground mt-0.5">{status.uptime}</p>
-          </div>
-          <Server className="h-7 w-7 text-muted-foreground/70" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Component ────────────────────────────────────────────────────
 
@@ -214,22 +141,66 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
 
   if (!settings || !status) {
     return (
-      <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary/80" />
+      <div className="space-y-4">
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
       </div>
     );
   }
 
+  const healthClassName =
+    status.health === 'operational'
+      ? 'border-success/20 bg-success/10'
+      : status.health === 'degraded'
+      ? 'border-warning/20 bg-warning/10'
+      : 'border-destructive/20 bg-destructive/10';
+
+  const healthIcon =
+    status.health === 'operational' ? (
+      <CheckCircle className="h-5 w-5 text-success" />
+    ) : status.health === 'degraded' ? (
+      <AlertTriangle className="h-5 w-5 text-warning" />
+    ) : (
+      <XCircle className="h-5 w-5 text-destructive" />
+    );
+
   return (
-    <div>
+    <div className="space-y-4">
       {/* ── System Status ─────────────────────────────── */}
-      <div className="px-6 py-6 border-b border-border/50">
-        <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide mb-4">System Status</p>
-        <SystemStatusCards status={status} />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm uppercase tracking-wide">System Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StatsCardGrid>
+            <StatsCard
+              title="System Health"
+              value={status.health}
+              icon={healthIcon}
+              className={healthClassName}
+            />
+            <StatsCard
+              title="Active Sessions"
+              value={status.activeSessions}
+              icon={<Users className="h-5 w-5" />}
+            />
+            <StatsCard
+              title="Uptime"
+              value={`${status.uptimePercentage}%`}
+              icon={<Zap className="h-5 w-5" />}
+            />
+            <StatsCard
+              title="Running Since"
+              value={status.uptime}
+              icon={<Server className="h-5 w-5" />}
+            />
+          </StatsCardGrid>
+        </CardContent>
+      </Card>
 
       {/* ── Maintenance Mode Toggle ──────────────────── */}
-      <div className={`px-6 py-6 border-b border-border/50 ${settings.maintenanceMode ? 'bg-warning/10/40' : ''}`}>
+      <Card>
+        <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-3 rounded-lg ${settings.maintenanceMode ? 'bg-warning/15' : 'bg-muted'}`}>
@@ -295,50 +266,49 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
               </div>
             </div>
           )}
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="px-6 py-6 border-b border-border/50">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ── Scheduled Maintenance + Quick Actions ────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Scheduled Maintenance */}
-        <div className="rounded-xl border border-border">
-          <div className="px-5 py-4 border-b border-border/50">
-            <div className="flex items-center gap-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Scheduled Maintenance</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">Configure automatic maintenance windows</p>
-          </div>
-          <div className="p-5 space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="autoMaintenanceEnabled" className="text-base font-medium">
-                  Automatic Maintenance
-                </Label>
-                <p className="text-sm text-muted-foreground">Run scheduled maintenance tasks</p>
+              Scheduled Maintenance
+            </CardTitle>
+            <CardDescription>Configure automatic maintenance windows</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="autoMaintenanceEnabled" className="text-base font-medium">
+                    Automatic Maintenance
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Run scheduled maintenance tasks</p>
+                </div>
+                <Switch
+                  id="autoMaintenanceEnabled"
+                  checked={settings.autoMaintenanceEnabled}
+                  onCheckedChange={(v) => update('autoMaintenanceEnabled', v)}
+                />
               </div>
-              <Switch
-                id="autoMaintenanceEnabled"
-                checked={settings.autoMaintenanceEnabled}
-                onCheckedChange={(v) => update('autoMaintenanceEnabled', v)}
-              />
-            </div>
 
-            {settings.autoMaintenanceEnabled && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Window Start</Label>
-                    <div className="relative">
+              {settings.autoMaintenanceEnabled && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Window Start</Label>
                       <Input
                         type="time"
                         value={settings.maintenanceWindowStart}
                         onChange={(e) => update('maintenanceWindowStart', e.target.value)}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <Label>Window End</Label>
-                    <div className="relative">
+                    <div>
+                      <Label>Window End</Label>
                       <Input
                         type="time"
                         value={settings.maintenanceWindowEnd}
@@ -346,151 +316,154 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
                       />
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <Label>Frequency</Label>
-                  <Select
-                    value={settings.maintenanceFrequency}
-                    onValueChange={(v) =>
-                      update('maintenanceFrequency', v as MaintenanceSettings['maintenanceFrequency'])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="notifyUsersBeforeMaintenance" className="text-base font-medium">
-                      <span className="flex items-center gap-1.5">
-                        <Bell className="h-3.5 w-3.5" /> Notify Users
-                      </span>
-                    </Label>
-                    <p className="text-sm text-muted-foreground">Send notifications before maintenance</p>
-                  </div>
-                  <Switch
-                    id="notifyUsersBeforeMaintenance"
-                    checked={settings.notifyUsersBeforeMaintenance}
-                    onCheckedChange={(v) => update('notifyUsersBeforeMaintenance', v)}
-                  />
-                </div>
-
-                {settings.notifyUsersBeforeMaintenance && (
-                  <div>
-                    <Label htmlFor="notifyMinutesBefore">Notify Minutes Before</Label>
-                    <Input
-                      id="notifyMinutesBefore"
-                      type="number"
-                      min={5}
-                      value={settings.notifyMinutesBefore}
-                      onChange={(e) =>
-                        update('notifyMinutesBefore', parseInt(e.target.value) || 5)
+                    <Label>Frequency</Label>
+                    <Select
+                      value={settings.maintenanceFrequency}
+                      onValueChange={(v) =>
+                        update('maintenanceFrequency', v as MaintenanceSettings['maintenanceFrequency'])
                       }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="notifyUsersBeforeMaintenance" className="text-base font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <Bell className="h-3.5 w-3.5" /> Notify Users
+                        </span>
+                      </Label>
+                      <p className="text-sm text-muted-foreground">Send notifications before maintenance</p>
+                    </div>
+                    <Switch
+                      id="notifyUsersBeforeMaintenance"
+                      checked={settings.notifyUsersBeforeMaintenance}
+                      onCheckedChange={(v) => update('notifyUsersBeforeMaintenance', v)}
                     />
                   </div>
-                )}
-              </>
-            )}
 
-            {/* Save / Reset */}
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
-              <div className="flex items-center gap-2 text-sm">
-                {saved && (
-                  <span className="flex items-center gap-1 text-success">
-                    <CheckCircle className="h-4 w-4" />
-                    Saved
-                  </span>
-                )}
-                {isDirty && !saved && (
-                  <span className="text-warning text-xs">Unsaved changes</span>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleReset} disabled={!isDirty || saving}>
-                  <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={!isDirty || saving}
-                  className="bg-primary hover:bg-primary text-white"
-                >
-                  {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-                  Save
-                </Button>
+                  {settings.notifyUsersBeforeMaintenance && (
+                    <div>
+                      <Label htmlFor="notifyMinutesBefore">Notify Minutes Before</Label>
+                      <Input
+                        id="notifyMinutesBefore"
+                        type="number"
+                        min={5}
+                        value={settings.notifyMinutesBefore}
+                        onChange={(e) =>
+                          update('notifyMinutesBefore', parseInt(e.target.value) || 5)
+                        }
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Save / Reset */}
+              <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2 text-sm">
+                  {saved && (
+                    <span className="flex items-center gap-1 text-success">
+                      <CheckCircle className="h-4 w-4" />
+                      Saved
+                    </span>
+                  )}
+                  {isDirty && !saved && (
+                    <span className="text-warning text-xs">Unsaved changes</span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleReset} disabled={!isDirty || saving}>
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={!isDirty || saving}
+                    className="bg-primary hover:bg-primary text-white"
+                  >
+                    {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+                    Save
+                  </Button>
+                </div>
               </div>
             </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Quick Actions */}
-        <div className="rounded-xl border border-border">
-          <div className="px-5 py-4 border-b border-border/50">
-            <div className="flex items-center gap-2">
+        {/* Maintenance Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
               <Wrench className="h-4 w-4 text-violet-600" />
-              <h3 className="text-sm font-semibold text-foreground">Maintenance Actions</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">Run on-demand maintenance tasks</p>
-          </div>
-          <div className="p-5 space-y-3">
-            {(
-              [
-                { action: 'optimize-db', icon: Database, label: 'Database Optimization', color: 'blue' },
-                { action: 'clear-cache', icon: HardDrive, label: 'Clear System Cache', color: 'green' },
-                { action: 'restart-services', icon: RefreshCw, label: 'Restart Services', color: 'purple' },
-                { action: 'security-scan', icon: Shield, label: 'Security Scan', color: 'gray' },
-              ] as const
-            ).map(({ action, icon: Icon, label, color }) => (
-              <Button
-                key={action}
-                variant="outline"
-                className={`w-full justify-start bg-${color}-500/10 text-${color}-600 border-${color}-200 hover:bg-${color}-500/20 shadow-sm`}
-                disabled={actionLoading !== null}
-                onClick={() => handleAction(action)}
-              >
-                {actionLoading === action ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Icon className="h-4 w-4 mr-2" />
-                )}
-                {label}
-              </Button>
-            ))}
+              Maintenance Actions
+            </CardTitle>
+            <CardDescription>Run on-demand maintenance tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(
+                [
+                  { action: 'optimize-db', icon: Database, label: 'Database Optimization', color: 'blue' },
+                  { action: 'clear-cache', icon: HardDrive, label: 'Clear System Cache', color: 'green' },
+                  { action: 'restart-services', icon: RefreshCw, label: 'Restart Services', color: 'purple' },
+                  { action: 'security-scan', icon: Shield, label: 'Security Scan', color: 'gray' },
+                ] as const
+              ).map(({ action, icon: Icon, label, color }) => (
+                <Button
+                  key={action}
+                  variant="outline"
+                  className={`w-full justify-start bg-${color}-500/10 text-${color}-600 border-${color}-200 hover:bg-${color}-500/20 shadow-sm`}
+                  disabled={actionLoading !== null}
+                  onClick={() => handleAction(action)}
+                >
+                  {actionLoading === action ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Icon className="h-4 w-4 mr-2" />
+                  )}
+                  {label}
+                </Button>
+              ))}
 
-            <div className="border-t pt-4 mt-4">
-              <h4 className="font-medium text-foreground/80 mb-3">Emergency Actions</h4>
-              <Button
-                variant="outline"
-                className="w-full justify-start bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15 shadow-sm"
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to initiate an emergency shutdown?')) {
-                    alert('Emergency shutdown initiated (mock).');
-                  }
-                }}
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Emergency Shutdown
-              </Button>
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-foreground/80 mb-3">Emergency Actions</h4>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15 shadow-sm"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to initiate an emergency shutdown?')) {
+                      alert('Emergency shutdown initiated (mock).');
+                    }
+                  }}
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Emergency Shutdown
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* ── Maintenance History ─────────────────────── */}
-      <div className="px-6 py-6">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Maintenance History</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">Record of past maintenance tasks and their outcomes</p>
-        <div className="overflow-x-auto">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm uppercase tracking-wide">Maintenance History</CardTitle>
+          <CardDescription>Record of past maintenance tasks and their outcomes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -511,7 +484,10 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
                     </TableCell>
                     <TableCell>{entry.duration}</TableCell>
                     <TableCell>
-                      <StatusBadge status={entry.status} />
+                      <StatusBadge
+                        status={entry.status === 'failed' ? 'error' : entry.status}
+                        label={entry.status === 'failed' ? 'Failed' : undefined}
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                       {entry.details}
@@ -531,8 +507,8 @@ export function MaintenanceSettingsPanel({ onSaved }: MaintenanceSettingsPanelPr
               </TableBody>
             </Table>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

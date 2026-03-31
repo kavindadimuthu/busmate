@@ -1,19 +1,7 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  Users,
-  MapPin,
-  FileText,
-} from 'lucide-react';
-import {
-  SearchFilterBar,
-  SelectFilter,
-} from '@/components/shared/SearchFilterBar';
-import type { FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import React, { useCallback } from 'react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -74,10 +62,10 @@ export function PermitAdvancedFilters({
 
   const handleClearAll = useCallback(() => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setOperatorFilter('all');
-    setRouteGroupFilter('all');
-    setPermitTypeFilter('all');
+    setStatusFilter('__all__');
+    setOperatorFilter('__all__');
+    setRouteGroupFilter('__all__');
+    setPermitTypeFilter('__all__');
     onClearAll?.();
   }, [setSearchTerm, setStatusFilter, setOperatorFilter, setRouteGroupFilter, setPermitTypeFilter, onClearAll]);
 
@@ -103,111 +91,49 @@ export function PermitAdvancedFilters({
     label: t,
   }));
 
-  // ── Active filter chips ─────────────────────────────────────────
+  // ── Active filter count ─────────────────────────────────────────
 
-  const activeChips = useMemo<FilterChipDescriptor[]>(() => {
-    const chips: FilterChipDescriptor[] = [];
-
-    if (statusFilter !== 'all') {
-      const icons: Record<string, React.ReactNode> = {
-        ACTIVE: <CheckCircle className="h-3 w-3 opacity-70" />,
-        INACTIVE: <XCircle className="h-3 w-3 opacity-70" />,
-        PENDING: <Clock className="h-3 w-3 opacity-70" />,
-        EXPIRED: <XCircle className="h-3 w-3 opacity-70" />,
-      };
-      chips.push({
-        key: 'status',
-        label: STATUS_LABELS[statusFilter] ?? statusFilter,
-        onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-success/10 text-success border-success/20',
-        icon: icons[statusFilter],
-      });
-    }
-
-    if (operatorFilter !== 'all') {
-      const opName = filterOptions.operators.find((op) => op.id === operatorFilter)?.name ?? 'Unknown';
-      chips.push({
-        key: 'operator',
-        label: opName,
-        onRemove: () => setOperatorFilter('all'),
-        colorClass: 'bg-primary/10 text-primary border-primary/20',
-        icon: <Users className="h-3 w-3 opacity-70" />,
-      });
-    }
-
-    if (routeGroupFilter !== 'all') {
-      const rgName = filterOptions.routeGroups.find((rg) => rg.id === routeGroupFilter)?.name ?? 'Unknown';
-      chips.push({
-        key: 'routeGroup',
-        label: rgName,
-        onRemove: () => setRouteGroupFilter('all'),
-        colorClass: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
-        icon: <MapPin className="h-3 w-3 opacity-70" />,
-      });
-    }
-
-    if (permitTypeFilter !== 'all') {
-      chips.push({
-        key: 'permitType',
-        label: permitTypeFilter,
-        onRemove: () => setPermitTypeFilter('all'),
-        colorClass: 'bg-warning/10 text-warning border-warning/20',
-        icon: <FileText className="h-3 w-3 opacity-70" />,
-      });
-    }
-
-    return chips;
-  }, [statusFilter, operatorFilter, routeGroupFilter, permitTypeFilter, filterOptions, setStatusFilter, setOperatorFilter, setRouteGroupFilter, setPermitTypeFilter]);
+  const activeFilterCount = [
+    statusFilter !== '__all__',
+    operatorFilter !== '__all__',
+    routeGroupFilter !== '__all__',
+    permitTypeFilter !== '__all__',
+  ].filter(Boolean).length;
 
   // ── Render ──────────────────────────────────────────────────────
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Search by permit number, operator, or route group…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="permit"
-      loading={loading}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            allLabel="All Statuses"
-            icon={<CheckCircle className="h-3.5 w-3.5" />}
-            activeColorClass="bg-success/10 border-success/30 text-success"
-          />
-          <SelectFilter
-            value={operatorFilter}
-            onChange={setOperatorFilter}
-            options={operatorOptions}
-            allLabel="All Operators"
-            icon={<Users className="h-3.5 w-3.5" />}
-            activeColorClass="bg-primary/10 border-primary/30 text-primary"
-          />
-          <SelectFilter
-            value={routeGroupFilter}
-            onChange={setRouteGroupFilter}
-            options={routeGroupOptions}
-            allLabel="All Route Groups"
-            icon={<MapPin className="h-3.5 w-3.5" />}
-            activeColorClass="bg-[hsl(var(--purple-50))] border-purple-300 text-[hsl(var(--purple-800))]"
-          />
-          <SelectFilter
-            value={permitTypeFilter}
-            onChange={setPermitTypeFilter}
-            options={permitTypeOptions}
-            allLabel="All Types"
-            icon={<FileText className="h-3.5 w-3.5" />}
-            activeColorClass="bg-warning/10 border-warning/30 text-warning"
-          />
-        </>
-      }
-      activeChips={activeChips}
-      onClearAllFilters={handleClearAll}
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={statusOptions}
+      />
+      <FilterSelect
+        label="Operators"
+        value={operatorFilter}
+        onChange={setOperatorFilter}
+        options={operatorOptions}
+      />
+      <FilterSelect
+        label="Route Groups"
+        value={routeGroupFilter}
+        onChange={setRouteGroupFilter}
+        options={routeGroupOptions}
+      />
+      <FilterSelect
+        label="Types"
+        value={permitTypeFilter}
+        onChange={setPermitTypeFilter}
+        options={permitTypeOptions}
+      />
+    </FilterBar>
   );
 }

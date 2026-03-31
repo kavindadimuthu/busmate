@@ -835,7 +835,7 @@ export interface GetTripsParams {
   sortBy?: keyof OperatorTrip;
   sortDir?: 'asc' | 'desc';
   search?: string;
-  status?: TripStatus | 'all';
+  status?: TripStatus | '__all__';
   routeId?: string;
   scheduleId?: string;
   permitId?: string;
@@ -884,7 +884,7 @@ export function getOperatorTrips(params: GetTripsParams = {}): OperatorTripPagin
   }
 
   // Status filter
-  if (status && status !== 'all') {
+  if (status && status !== '__all__') {
     filtered = filtered.filter((t) => t.status === status);
   }
 

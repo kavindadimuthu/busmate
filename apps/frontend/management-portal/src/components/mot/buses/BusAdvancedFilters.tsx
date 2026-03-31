@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { Bus, Users } from 'lucide-react';
-import { SearchFilterBar, SelectFilter, FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { useMemo } from 'react';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 
 interface FilterOptions {
   statuses: Array<string>;
@@ -72,117 +71,64 @@ export default function BusAdvancedFilters({
     [filterOptions.models]
   );
 
-  const activeChips = useMemo(() => {
-    const chips: FilterChipDescriptor[] = [];
-    if (statusFilter !== 'all') {
-      chips.push({
-        key: 'status',
-        label: `Status: ${statusFilter.charAt(0) + statusFilter.slice(1).toLowerCase()}`,
-        onRemove: () => setStatusFilter('all'),
-        colorClass: 'bg-success/15 text-success',
-      });
-    }
-    if (operatorFilter !== 'all') {
-      const opName = filterOptions.operators.find((op) => op.id === operatorFilter)?.name || 'Unknown';
-      chips.push({
-        key: 'operator',
-        label: `Operator: ${opName}`,
-        onRemove: () => setOperatorFilter('all'),
-        colorClass: 'bg-primary/15 text-primary',
-        icon: <Users className="h-4 w-4" />,
-      });
-    }
-    if (modelFilter !== 'all') {
-      chips.push({
-        key: 'model',
-        label: `Model: ${modelFilter}`,
-        onRemove: () => setModelFilter('all'),
-        colorClass: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-800))]',
-        icon: <Bus className="h-4 w-4" />,
-      });
-    }
-    if (minCapacity || maxCapacity) {
-      chips.push({
-        key: 'capacity',
-        label: `Capacity: ${minCapacity || '0'} – ${maxCapacity || '∞'}`,
-        onRemove: () => {
-          setMinCapacity('');
-          setMaxCapacity('');
-        },
-        colorClass: 'bg-warning/15 text-warning',
-      });
-    }
-    return chips;
-  }, [statusFilter, operatorFilter, modelFilter, minCapacity, maxCapacity, filterOptions.operators, setStatusFilter, setOperatorFilter, setModelFilter, setMinCapacity, setMaxCapacity]);
+  const activeFilterCount = [statusFilter, operatorFilter, modelFilter].filter(v => v !== '__all__').length + (minCapacity || maxCapacity ? 1 : 0);
 
   const handleClearAll = () => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setOperatorFilter('all');
-    setModelFilter('all');
+    setStatusFilter('__all__');
+    setOperatorFilter('__all__');
+    setModelFilter('__all__');
     setMinCapacity('');
     setMaxCapacity('');
     onClearAll?.();
   };
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
       searchPlaceholder="Search by registration, plate number, model, or operator..."
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="buses"
-      loading={loading}
-      activeChips={activeChips}
-      onClearAllFilters={handleClearAll}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            allLabel="All Statuses"
-            activeColorClass="ring-green-500 border-success"
-          />
-          <SelectFilter
-            value={operatorFilter}
-            onChange={setOperatorFilter}
-            options={operatorOptions}
-            allLabel="All Operators"
-            icon={<Users className="h-3.5 w-3.5" />}
-            activeColorClass="ring-blue-500 border-primary"
-          />
-          <SelectFilter
-            value={modelFilter}
-            onChange={setModelFilter}
-            options={modelOptions}
-            allLabel="All Models"
-            icon={<Bus className="h-3.5 w-3.5" />}
-            activeColorClass="ring-purple-500 border-[hsl(var(--purple-500))]"
-          />
-          {/* Capacity range inputs */}
-          <div className="flex items-center gap-1.5">
-            <input
-              type="number"
-              placeholder="Min"
-              value={minCapacity}
-              onChange={(e) => setMinCapacity(e.target.value)}
-              className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
-              min="0"
-            />
-            <span className="text-muted-foreground/70 text-xs">–</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={maxCapacity}
-              onChange={(e) => setMaxCapacity(e.target.value)}
-              className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
-              min="0"
-            />
-          </div>
-        </>
-      }
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={handleClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={statusOptions}
+      />
+      <FilterSelect
+        label="Operators"
+        value={operatorFilter}
+        onChange={setOperatorFilter}
+        options={operatorOptions}
+      />
+      <FilterSelect
+        label="Models"
+        value={modelFilter}
+        onChange={setModelFilter}
+        options={modelOptions}
+      />
+      {/* Capacity range inputs */}
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          placeholder="Min"
+          value={minCapacity}
+          onChange={(e) => setMinCapacity(e.target.value)}
+          className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
+          min="0"
+        />
+        <span className="text-muted-foreground/70 text-xs">–</span>
+        <input
+          type="number"
+          placeholder="Max"
+          value={maxCapacity}
+          onChange={(e) => setMaxCapacity(e.target.value)}
+          className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
+          min="0"
+        />
+      </div>
+    </FilterBar>
   );
 }
