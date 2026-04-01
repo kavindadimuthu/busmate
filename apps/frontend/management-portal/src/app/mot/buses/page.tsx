@@ -45,7 +45,7 @@ export default function BusesPage() {
 
   useSetPageActions(
     <BusActionButtons
-      onAddBus={() => router.push('/mot/buses/add-new')}
+      onAddBus={() => router.push('/mot/buses/create')}
       onImportBuses={() => router.push('/mot/buses/import')}
       onExportAll={handleExportAll}
       isLoading={isLoading}

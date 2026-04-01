@@ -134,7 +134,7 @@ export function OperatorTabsSection({
             Refresh
           </button>
           <Link
-            href={`/mot/buses/add-new?operatorId=${operator.id}`}
+            href={`/mot/buses/create?operatorId=${operator.id}`}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary"
           >
             <Plus className="w-4 h-4" />
@@ -157,7 +157,7 @@ export function OperatorTabsSection({
             This operator doesn't have any buses registered yet.
           </p>
           <Link
-            href={`/mot/buses/add-new?operatorId=${operator.id}`}
+            href={`/mot/buses/create?operatorId=${operator.id}`}
             className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary"
           >
             <Plus className="w-5 h-5" />

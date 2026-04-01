@@ -44,7 +44,7 @@ export default function OperatorsPage() {
 
   useSetPageActions(
     <OperatorActionButtons
-      onAddOperator={() => router.push('/mot/operators/add-new')}
+      onAddOperator={() => router.push('/mot/operators/create')}
       onImportOperators={() => router.push('/mot/operators/import')}
       onExportAll={handleExportAll}
       isLoading={isLoading}

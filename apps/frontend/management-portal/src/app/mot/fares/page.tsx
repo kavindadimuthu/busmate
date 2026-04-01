@@ -34,7 +34,7 @@ export default function FaresPage() {
 
   useSetPageActions(
     <div className="flex items-center gap-2 shrink-0">
-      <Button onClick={() => router.push('/mot/fares/amendments/new')}>
+      <Button onClick={() => router.push('/mot/fares/amendments/create')}>
         <Plus className="w-4 h-4" />
         New Amendment
       </Button>

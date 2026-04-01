@@ -181,12 +181,12 @@ export function useStaffManagement() {
   }, [filteredStaff]);
 
   const handleView = useCallback(
-    (member: any) => router.push(`/mot/staff-management/${member.id}`),
+    (member: any) => router.push(`/mot/staff/${member.id}`),
     [router],
   );
 
   const handleEdit = useCallback(
-    (member: any) => router.push(`/mot/staff-management/${member.id}/edit`),
+    (member: any) => router.push(`/mot/staff/${member.id}/edit`),
     [router],
   );
 

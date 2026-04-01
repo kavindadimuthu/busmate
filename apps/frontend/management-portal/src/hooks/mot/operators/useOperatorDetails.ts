@@ -83,7 +83,7 @@ export function useOperatorDetails() {
   }, [router, operatorId]);
 
   const handleAddBus = useCallback(() => {
-    router.push(`/mot/buses/add-new?operatorId=${operatorId}`);
+    router.push(`/mot/buses/create?operatorId=${operatorId}`);
   }, [router, operatorId]);
 
   const handleDelete = useCallback(() => {

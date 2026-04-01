@@ -446,7 +446,7 @@ function makeQuickActions(): QuickAction[] {
       id: 'qa-3',
       label: 'Manage Staff',
       description: 'View drivers & conductors',
-      href: '/operator/staff-management',
+      href: '/operator/staff',
       icon: 'users',
       color: 'purple',
     },

@@ -37,7 +37,7 @@ export function useBusDetail() {
         title: bus.plateNumber,
         description: `${bus.manufacturer} ${bus.model} · Bus details – read-only view`,
         breadcrumbs: [
-          { label: 'Fleet Management', href: '/operator/fleet-management' },
+          { label: 'Fleet Management', href: '/operator/fleet' },
           { label: bus.plateNumber },
         ],
       });

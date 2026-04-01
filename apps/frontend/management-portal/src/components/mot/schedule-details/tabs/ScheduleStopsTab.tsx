@@ -154,14 +154,14 @@ export function ScheduleStopsTab({ schedule, route }: ScheduleStopsTabProps) {
                   {/* Action Buttons */}
                   <div className="shrink-0 ml-6 flex items-center space-x-2">
                     <button
-                      onClick={() => router.push(`/mot/bus-stops/${stop.stopId}`)}
+                      onClick={() => router.push(`/mot/stops/${stop.stopId}`)}
                       className="p-2 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
                       title="View stop details"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => router.push(`/mot/bus-stops/${stop.stopId}/edit`)}
+                      onClick={() => router.push(`/mot/stops/${stop.stopId}/edit`)}
                       className="p-2 text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted rounded-md transition-colors"
                       title="Edit stop"
                     >

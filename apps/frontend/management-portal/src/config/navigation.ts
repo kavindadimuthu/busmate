@@ -32,10 +32,10 @@ export const motNavigation: NavigationConfig = {
           href: "/mot/dashboard",
         },
         {
-          id: "bus-stops",
+          id: "stops",
           label: "Bus Stops",
           icon: MapPin,
-          href: "/mot/bus-stops",
+          href: "/mot/stops",
         },
         {
           id: "routes",
@@ -76,13 +76,13 @@ export const motNavigation: NavigationConfig = {
           id: "staff",
           label: "Staff",
           icon: Users2,
-          href: "/mot/staff-management",
+          href: "/mot/staff",
         },
         {
-          id: "passenger-service-permits",
+          id: "passenger-permits",
           label: "Permits",
           icon: FileText,
-          href: "/mot/passenger-service-permits",
+          href: "/mot/passenger-permits",
         },
         {
           id: "fares",
@@ -102,10 +102,10 @@ export const motNavigation: NavigationConfig = {
           href: "/mot/analytics",
         },
         {
-          id: "location-tracking",
+          id: "tracking",
           label: "Live Tracking",
           icon: Navigation,
-          href: "/mot/location-tracking",
+          href: "/mot/tracking",
         },
         {
           id: "notifications",
@@ -184,10 +184,10 @@ export const operatorNavigation: NavigationConfig = {
           href: "/operator/dashboard",
         },
         {
-          id: "fleetmanagement",
+          id: "fleet",
           label: "Fleet",
           icon: Bus,
-          href: "/operator/fleet-management",
+          href: "/operator/fleet",
         },
         {
           id: "trips",
@@ -199,7 +199,7 @@ export const operatorNavigation: NavigationConfig = {
           id: "staff",
           label: "Staff",
           icon: Users2,
-          href: "/operator/staff-management",
+          href: "/operator/staff",
         },
       ],
     },
@@ -207,10 +207,10 @@ export const operatorNavigation: NavigationConfig = {
       label: "Finance",
       items: [
         {
-          id: "salary-management",
+          id: "salaries",
           label: "Salary",
           icon: DollarSign,
-          href: "/operator/salary-management",
+          href: "/operator/salaries",
         },
         {
           id: "revenue-analytics",
@@ -219,10 +219,10 @@ export const operatorNavigation: NavigationConfig = {
           href: "/operator/revenue-analytics",
         },
         {
-          id: "passenger-service-permits",
+          id: "passenger-permits",
           label: "Permits",
           icon: FileText,
-          href: "/operator/passenger-service-permits",
+          href: "/operator/passenger-permits",
         },
       ],
     },

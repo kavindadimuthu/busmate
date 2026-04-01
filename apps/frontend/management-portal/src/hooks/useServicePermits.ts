@@ -109,7 +109,7 @@ export function useServicePermits() {
 
   const handleView = useCallback(
     (permitId: string) => {
-      router.push(`/operator/passenger-service-permits/${permitId}`);
+      router.push(`/operator/passenger-permits/${permitId}`);
     },
     [router],
   );

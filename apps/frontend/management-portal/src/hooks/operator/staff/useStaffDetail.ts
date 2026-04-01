@@ -33,7 +33,7 @@ export function useStaffDetail() {
         title: 'Staff Profile Details',
         description: `${isDriver ? 'Driver' : 'Conductor'} Profile`,
         breadcrumbs: [
-          { label: 'Staff Management', href: '/operator/staff-management' },
+          { label: 'Staff Management', href: '/operator/staff' },
           { label: staff.fullName },
         ],
       });

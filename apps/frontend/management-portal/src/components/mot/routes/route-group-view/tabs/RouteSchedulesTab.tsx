@@ -209,7 +209,7 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
           Create schedules to define when buses operate on this route.
         </p>
         <button
-          onClick={() => router.push(`/mot/schedules/add-new?routeId=${route.id}`)}
+          onClick={() => router.push(`/mot/schedules/create?routeId=${route.id}`)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
@@ -249,7 +249,7 @@ export function RouteSchedulesTab({ route }: RouteSchedulesTabProps) {
         </div>
 
         <button
-          onClick={() => router.push(`/mot/schedules/add-new?routeId=${route.id}`)}
+          onClick={() => router.push(`/mot/schedules/create?routeId=${route.id}`)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />

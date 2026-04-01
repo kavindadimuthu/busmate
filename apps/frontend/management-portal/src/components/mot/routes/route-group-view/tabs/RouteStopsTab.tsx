@@ -139,7 +139,7 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
                 {/* Stop card */}
                 <div
                   className={`flex-1 bg-card rounded-xl border p-4 transition-all cursor-pointer ${cardStyles}`}
-                  onClick={() => stop.stopId && router.push(`/mot/bus-stops/${stop.stopId}`)}
+                  onClick={() => stop.stopId && router.push(`/mot/stops/${stop.stopId}`)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -179,7 +179,7 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/mot/bus-stops/${stop.stopId}`);
+                          router.push(`/mot/stops/${stop.stopId}`);
                         }}
                         className="p-2.5 text-muted-foreground/70 hover:text-primary hover:bg-primary/15 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                         title="View stop details"
@@ -222,7 +222,7 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
           </div>
 
           <button
-            onClick={() => router.push('/mot/bus-stops')}
+            onClick={() => router.push('/mot/stops')}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
           >
             View All Stops

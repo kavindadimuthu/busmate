@@ -14,7 +14,7 @@ export function useStaffDetails() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleEdit = () => router.push(`/mot/staff-management/${staffId}/edit`);
+  const handleEdit = () => router.push(`/mot/staff/${staffId}/edit`);
   const handleDelete = () => setShowDeleteModal(true);
   const handleDeleteCancel = () => setShowDeleteModal(false);
 
@@ -23,7 +23,7 @@ export function useStaffDetails() {
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsDeleting(false);
     setShowDeleteModal(false);
-    router.push('/mot/staff-management');
+    router.push('/mot/staff');
   };
 
   const handleBack = () => router.back();
@@ -34,7 +34,7 @@ export function useStaffDetails() {
     activeItem: 'staff',
     showBreadcrumbs: true,
     breadcrumbs: [
-      { label: 'Staff Management', href: '/mot/staff-management' },
+      { label: 'Staff Management', href: '/mot/staff' },
       { label: staff?.fullName || 'Staff Details' },
     ],
   });

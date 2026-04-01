@@ -80,7 +80,7 @@ export function useFleetManagement() {
   }, [loadStatistics, loadBuses]);
 
   const handleView = useCallback((bus: OperatorBus) => {
-    router.push(`/operator/fleet-management/${bus.id}`);
+    router.push(`/operator/fleet/${bus.id}`);
   }, [router]);
 
   const activeFilterCount =

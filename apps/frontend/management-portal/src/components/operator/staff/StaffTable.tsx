@@ -218,7 +218,7 @@ function buildActionsColumn(): ColumnDef<StaffMember> {
     align: 'center',
     cell: ({ row: member }) => (
       <button
-        onClick={() => window.location.href = `/operator/staff-management/${member.id}`}
+        onClick={() => window.location.href = `/operator/staff/${member.id}`}
         title="View staff details"
         className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
       >

@@ -46,7 +46,7 @@ export function usePermitDetail() {
         title: 'Service Permit Details',
         description: permit.permitNumber,
         breadcrumbs: [
-          { label: 'Service Permits', href: '/operator/passenger-service-permits' },
+          { label: 'Service Permits', href: '/operator/passenger-permits' },
           { label: permit.permitNumber },
         ],
       });
@@ -54,7 +54,7 @@ export function usePermitDetail() {
   }, [permit, setMetadata]);
 
   const handleBack = useCallback(() => {
-    router.push('/operator/passenger-service-permits');
+    router.push('/operator/passenger-permits');
   }, [router]);
 
   const handleRefresh = useCallback(() => {

@@ -18,7 +18,7 @@ import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   AUTO_REFRESH_INTERVAL,
-} from '@/data/mot/location-tracking-mock/locationTracking';
+} from '@/data/mot/tracking-mock/locationTracking';
 
 // ── Types ─────────────────────────────────────────────────────────
 
