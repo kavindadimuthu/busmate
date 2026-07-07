@@ -56,12 +56,12 @@
     --input:              260 10% 88%;
     --ring:               258 84% 59%;
 
-    /* Sidebar — softly violet-tinted */
-    --sidebar:                    260 14% 97%;
-    --sidebar-foreground:         260 14% 16%;
-    --sidebar-active:             258 84% 59%;
+    /* Sidebar — saturated violet rail */
+    --sidebar:                    258 55% 39%;
+    --sidebar-foreground:         255 100% 95%;
+    --sidebar-active:             259 87% 67%;
     --sidebar-active-foreground:  0 0% 100%;
-    --sidebar-muted:              260 12% 92%;
+    --sidebar-muted:              258 100% 91%;
 
     /* Charts — violet-led palette */
     --chart-1: 258 84% 59%;
@@ -110,12 +110,12 @@
     --input:              258 8% 22%;
     --ring:               259 87% 67%;
 
-    /* Sidebar — deeper violet-tinted background */
-    --sidebar:                    258 14% 9%;
-    --sidebar-foreground:         258 8% 80%;
-    --sidebar-active:             259 84% 63%;
+    /* Sidebar — saturated violet rail */
+    --sidebar:                    258 50% 28%;
+    --sidebar-foreground:         255 100% 93%;
+    --sidebar-active:             259 87% 67%;
     --sidebar-active-foreground:  0 0% 100%;
-    --sidebar-muted:              258 8% 16%;
+    --sidebar-muted:              258 100% 88%;
 
     /* Charts */
     --chart-1: 259 87% 69%;

@@ -81,12 +81,12 @@
     --input:              220 13% 88%;
     --ring:               221 83% 53%;
 
-    /* Sidebar */
-    --sidebar:                    0 0% 100%;
-    --sidebar-foreground:         220 16% 18%;
-    --sidebar-active:             221 83% 53%;
+    /* Sidebar — saturated brand rail */
+    --sidebar:                    229 68% 43%;
+    --sidebar-foreground:         214 100% 94%;
+    --sidebar-active:             217 91% 58%;
     --sidebar-active-foreground:  0 0% 100%;
-    --sidebar-muted:              220 14% 93%;
+    --sidebar-muted:              219 100% 90%;
 
     /* Charts */
     --chart-1: 221 83% 53%;
@@ -136,12 +136,12 @@
     --input:              214 10% 24%;
     --ring:               217 91% 60%;
 
-    /* Sidebar — distinctly deeper than background */
-    --sidebar:                    216 15% 11%;
-    --sidebar-foreground:         214 12% 83%;
-    --sidebar-active:             217 91% 55%;
+    /* Sidebar — saturated brand rail */
+    --sidebar:                    229 64% 32%;
+    --sidebar-foreground:         214 100% 92%;
+    --sidebar-active:             217 91% 58%;
     --sidebar-active-foreground:  0 0% 100%;
-    --sidebar-muted:              214 10% 18%;
+    --sidebar-muted:              219 100% 88%;
 
     /* Charts */
     --chart-1: 217 91% 65%;

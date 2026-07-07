@@ -56,12 +56,12 @@
     --input:              185 18% 86%;
     --ring:               174 60% 36%;
 
-    /* Sidebar — cool tinted surface */
-    --sidebar:                    195 35% 97%;
-    --sidebar-foreground:         185 20% 15%;
-    --sidebar-active:             174 60% 36%;
+    /* Sidebar — saturated ocean rail */
+    --sidebar:                    186 69% 30%;
+    --sidebar-foreground:         180 60% 94%;
+    --sidebar-active:             174 65% 42%;
     --sidebar-active-foreground:  0 0% 100%;
-    --sidebar-muted:              185 20% 92%;
+    --sidebar-muted:              178 70% 88%;
 
     /* Charts — teal-led palette */
     --chart-1: 174 60% 36%;
@@ -110,12 +110,12 @@
     --input:              196 14% 22%;
     --ring:               174 55% 48%;
 
-    /* Sidebar — deeper teal-tinted background */
-    --sidebar:                    196 22% 9%;
-    --sidebar-foreground:         185 12% 80%;
-    --sidebar-active:             174 52% 44%;
+    /* Sidebar — saturated ocean rail */
+    --sidebar:                    186 64% 22%;
+    --sidebar-foreground:         180 60% 92%;
+    --sidebar-active:             174 55% 46%;
     --sidebar-active-foreground:  0 0% 100%;
-    --sidebar-muted:              196 14% 16%;
+    --sidebar-muted:              178 70% 86%;
 
     /* Charts */
     --chart-1: 174 55% 52%;
