@@ -8,7 +8,7 @@
 #   2. Copy source and compile (invalidated only when source changes)
 
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
-FROM maven:3.9.6-amazoncorretto-21 AS build
+FROM maven:3.9.6-amazoncorretto-17 AS build
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B --no-transfer-progress
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM amazoncorretto:21-alpine
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 

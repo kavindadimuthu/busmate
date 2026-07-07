@@ -51,33 +51,33 @@ SPRING_ARGS = --spring.jpa.hibernate.ddl-auto=$(DDL_AUTO) --spring.sql.init.mode
 # Run targets
 .PHONY: run-local
 run-local:
-	mvn spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(LOCAL_URL) --spring.datasource.username=$(LOCAL_USERNAME) --spring.datasource.password=$(LOCAL_PASSWORD) $(SPRING_ARGS)"
+	./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(LOCAL_URL) --spring.datasource.username=$(LOCAL_USERNAME) --spring.datasource.password=$(LOCAL_PASSWORD) $(SPRING_ARGS)"
 
 .PHONY: run-prod
 run-prod:
-	mvn spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(PROD_URL) --spring.datasource.username=$(PROD_USERNAME) --spring.datasource.password=$(PROD_PASSWORD) $(SPRING_ARGS)"
+	./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(PROD_URL) --spring.datasource.username=$(PROD_USERNAME) --spring.datasource.password=$(PROD_PASSWORD) $(SPRING_ARGS)"
 
 .PHONY: run-test
 run-test:
-	mvn spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(TEST_URL) --spring.datasource.username=$(TEST_USERNAME) --spring.datasource.password=$(TEST_PASSWORD) $(SPRING_ARGS)"
+	./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(TEST_URL) --spring.datasource.username=$(TEST_USERNAME) --spring.datasource.password=$(TEST_PASSWORD) $(SPRING_ARGS)"
 
 .PHONY: run-aws
 run-aws:
-	mvn spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(AWS_URL) --spring.datasource.username=$(AWS_USERNAME) --spring.datasource.password=$(AWS_PASSWORD) $(SPRING_ARGS)"
+	./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=$(AWS_URL) --spring.datasource.username=$(AWS_USERNAME) --spring.datasource.password=$(AWS_PASSWORD) $(SPRING_ARGS)"
 
 # Build and test targets
 .PHONY: build
 build:
-	mvn clean compile
+	./mvnw clean compile
 
 .PHONY: test
 test:
-	mvn test
+	./mvnw test
 
 .PHONY: clean
 clean:
-	mvn clean
+	./mvnw clean
 
 .PHONY: package
 package:
-	mvn clean package -DskipTests
+	./mvnw clean package -DskipTests
