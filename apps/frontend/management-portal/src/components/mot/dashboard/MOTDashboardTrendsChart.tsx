@@ -41,16 +41,16 @@ export function MOTDashboardTrendsChart({ trendHistory, loading = false }: MOTDa
 
   if (loading || trendHistory.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
         <div className="flex items-center justify-between mb-6">
-          <div className="h-5 w-40 bg-gray-200 rounded" />
+          <div className="h-5 w-40 bg-muted rounded" />
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-8 w-20 bg-gray-100 rounded-lg" />
+              <div key={i} className="h-8 w-20 bg-muted rounded-lg" />
             ))}
           </div>
         </div>
-        <div className="h-72 bg-gray-100 rounded-lg" />
+        <div className="h-72 bg-muted rounded-lg" />
       </div>
     );
   }
@@ -155,12 +155,12 @@ export function MOTDashboardTrendsChart({ trendHistory, loading = false }: MOTDa
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">Weekly Trends</h3>
-          <p className="text-xs text-gray-500 mt-0.5">Operations overview for the past week</p>
+          <h3 className="text-base font-semibold text-foreground">Weekly Trends</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Operations overview for the past week</p>
         </div>
 
         {/* Metric tabs */}
@@ -172,7 +172,7 @@ export function MOTDashboardTrendsChart({ trendHistory, loading = false }: MOTDa
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 active === m.key
                   ? 'text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-muted text-muted-foreground hover:bg-muted'
               }`}
               style={active === m.key ? { backgroundColor: m.color } : undefined}
             >
@@ -186,7 +186,7 @@ export function MOTDashboardTrendsChart({ trendHistory, loading = false }: MOTDa
             className={`ml-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               compareMode
                 ? 'bg-indigo-100 text-indigo-700'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                : 'bg-muted text-muted-foreground hover:bg-muted'
             }`}
           >
             Compare

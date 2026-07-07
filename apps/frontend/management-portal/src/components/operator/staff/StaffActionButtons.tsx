@@ -1,7 +1,7 @@
 'use client';
 
 import { Download } from 'lucide-react';
-import { ActionButton, ActionButtonsContainer } from '@/components/shared/ActionButton';
+import { Button } from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -17,14 +17,11 @@ export function StaffActionButtons({
   isLoading = false,
 }: StaffActionButtonsProps) {
   return (
-    <ActionButtonsContainer>
-      <ActionButton
-        icon={<Download className="h-4 w-4" />}
-        label="Export"
-        variant="secondary"
-        onClick={onExportAll}
-        disabled={isLoading}
-      />
-    </ActionButtonsContainer>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" onClick={onExportAll} disabled={isLoading}>
+        <Download className="h-4 w-4" />
+        Export
+      </Button>
+    </div>
   );
 }

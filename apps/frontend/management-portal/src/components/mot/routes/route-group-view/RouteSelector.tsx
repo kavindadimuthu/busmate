@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Navigation } from 'lucide-react';
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import type { TabItem } from '@/components/shared/SwitchableTabs';
+import { Tabs, TabsList, TabsTrigger } from '@busmate/ui';
 import type { RouteResponse } from '@busmate/api-client-route';
 
 interface RouteSelectorProps {
@@ -13,7 +12,7 @@ interface RouteSelectorProps {
 }
 
 /**
- * Route selector implemented as switchable tabs.
+ * Route selector implemented as tabs.
  *
  * Each tab represents a route (Outbound/Inbound), and clicking a tab
  * switches the displayed route details.
@@ -23,22 +22,18 @@ export function RouteSelector({
   selectedRouteId,
   onSelectRoute,
 }: RouteSelectorProps) {
-  const tabs: TabItem[] = useMemo(() => {
-    return routes.map((route) => ({
-      id: route.id || '',
-      label: route.direction === 'OUTBOUND' ? 'Outbound' : 'Inbound',
-      icon: Navigation,
-    }));
-  }, [routes]);
-
   if (routes.length === 0) return null;
 
   return (
-    <SwitchableTabs
-      tabs={tabs}
-      activeTab={selectedRouteId || ''}
-      onTabChange={(routeId) => onSelectRoute(routeId)}
-      ariaLabel="Route selector"
-    />
+    <Tabs value={selectedRouteId || ''} onValueChange={(routeId) => onSelectRoute(routeId)}>
+      <TabsList>
+        {routes.map((route) => (
+          <TabsTrigger key={route.id} value={route.id || ''}>
+            <Navigation className="h-4 w-4" />
+            {route.direction === 'OUTBOUND' ? 'Outbound' : 'Inbound'}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }

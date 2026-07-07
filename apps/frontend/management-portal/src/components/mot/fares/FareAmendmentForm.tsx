@@ -102,8 +102,8 @@ export function FareAmendmentForm({
     const hasError = showValidation && validationErrors[field];
     return `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm ${
       hasError
-        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+        ? 'border-destructive/30 focus:ring-red-500 focus:border-destructive'
+        : 'border-border focus:ring-blue-500 focus:border-primary'
     }`;
   };
 
@@ -129,13 +129,13 @@ export function FareAmendmentForm({
       {/* Section 1: Basic Information */}
       <div className="border-l-4 border-l-blue-500 pl-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">1</div>
-          <h3 className="text-lg font-semibold text-gray-900">Amendment Information</h3>
+          <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">1</div>
+          <h3 className="text-lg font-semibold text-foreground">Amendment Information</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reference Number <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
+              Reference Number <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
@@ -145,14 +145,14 @@ export function FareAmendmentForm({
               className={fieldClasses('referenceNumber')}
             />
             {getFieldError('referenceNumber') && (
-              <div className="flex items-center gap-1 mt-1 text-sm text-red-600">
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
                 <AlertCircle className="w-4 h-4" />{getFieldError('referenceNumber')}
               </div>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
+              Title <span className="text-destructive/80">*</span>
             </label>
             <input
               type="text"
@@ -162,14 +162,14 @@ export function FareAmendmentForm({
               className={fieldClasses('title')}
             />
             {getFieldError('title') && (
-              <div className="flex items-center gap-1 mt-1 text-sm text-red-600">
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
                 <AlertCircle className="w-4 h-4" />{getFieldError('title')}
               </div>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Effective Date <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
+              Effective Date <span className="text-destructive/80">*</span>
             </label>
             <input
               type="date"
@@ -178,13 +178,13 @@ export function FareAmendmentForm({
               className={fieldClasses('effectiveDate')}
             />
             {getFieldError('effectiveDate') && (
-              <div className="flex items-center gap-1 mt-1 text-sm text-red-600">
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
                 <AlertCircle className="w-4 h-4" />{getFieldError('effectiveDate')}
               </div>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Gazette Number</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">Gazette Number</label>
             <input
               type="text"
               value={formData.gazetteNumber}
@@ -194,7 +194,7 @@ export function FareAmendmentForm({
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
@@ -204,8 +204,8 @@ export function FareAmendmentForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Maximum Stages <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
+              Maximum Stages <span className="text-destructive/80">*</span>
             </label>
             <input
               type="number"
@@ -216,13 +216,13 @@ export function FareAmendmentForm({
               className={fieldClasses('maxStages')}
             />
             {getFieldError('maxStages') && (
-              <div className="flex items-center gap-1 mt-1 text-sm text-red-600">
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
                 <AlertCircle className="w-4 h-4" />{getFieldError('maxStages')}
               </div>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">Remarks</label>
             <input
               type="text"
               value={formData.remarks}
@@ -237,27 +237,27 @@ export function FareAmendmentForm({
       {/* Section 2: Fare Rates */}
       <div className="border-l-4 border-l-purple-500 pl-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">2</div>
-          <h3 className="text-lg font-semibold text-gray-900">Fare Rates Configuration</h3>
+          <div className="w-6 h-6 bg-[hsl(var(--purple-600))] text-white rounded-full flex items-center justify-center text-sm font-semibold">2</div>
+          <h3 className="text-lg font-semibold text-foreground">Fare Rates Configuration</h3>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Define the base fare (stage 1) and per-stage increment for each permit type.
           The fare for stage N = Base Rate + (N - 1) × Increment Rate, rounded to nearest Rs. 0.50.
         </p>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+          <table className="min-w-full border border-border rounded-lg overflow-hidden">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Permit Type</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Base Rate (Rs.) *</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Increment/Stage (Rs.) *</th>
+              <tr className="bg-muted">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Permit Type</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Base Rate (Rs.) *</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Increment/Stage (Rs.) *</th>
               </tr>
             </thead>
             <tbody>
               {PERMIT_TYPES.map((pt, idx) => (
-                <tr key={pt} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <tr key={pt} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/40'}>
+                  <td className="px-4 py-3 text-sm font-medium text-foreground">
                     {PERMIT_TYPE_LABELS[pt]}
                   </td>
                   <td className="px-4 py-3">
@@ -271,7 +271,7 @@ export function FareAmendmentForm({
                       className={fieldClasses(`baseRate_${pt}`)}
                     />
                     {getFieldError(`baseRate_${pt}`) && (
-                      <p className="text-xs text-red-600 mt-1">{getFieldError(`baseRate_${pt}`)}</p>
+                      <p className="text-xs text-destructive mt-1">{getFieldError(`baseRate_${pt}`)}</p>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -285,7 +285,7 @@ export function FareAmendmentForm({
                       className={fieldClasses(`increment_${pt}`)}
                     />
                     {getFieldError(`increment_${pt}`) && (
-                      <p className="text-xs text-red-600 mt-1">{getFieldError(`increment_${pt}`)}</p>
+                      <p className="text-xs text-destructive mt-1">{getFieldError(`increment_${pt}`)}</p>
                     )}
                   </td>
                 </tr>
@@ -299,19 +299,19 @@ export function FareAmendmentForm({
       {hasValidPreview && (
         <div className="border-l-4 border-l-emerald-500 pl-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">3</div>
-            <h3 className="text-lg font-semibold text-gray-900">Fare Preview</h3>
+            <div className="w-6 h-6 bg-success text-white rounded-full flex items-center justify-center text-sm font-semibold">3</div>
+            <h3 className="text-lg font-semibold text-foreground">Fare Preview</h3>
           </div>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Sample fares generated from the configured rates (rounded to nearest Rs. 0.50).
           </p>
           <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+            <table className="min-w-full border border-border rounded-lg overflow-hidden">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Stage</th>
+                <tr className="bg-muted">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Stage</th>
                   {PERMIT_TYPES.map((pt) => (
-                    <th key={pt} className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                    <th key={pt} className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {PERMIT_TYPE_LABELS[pt]} (Rs.)
                     </th>
                   ))}
@@ -319,10 +319,10 @@ export function FareAmendmentForm({
               </thead>
               <tbody>
                 {previewStages.map((entry, idx) => (
-                  <tr key={entry.stage} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
-                    <td className="px-4 py-2.5 text-sm font-semibold text-gray-900">{entry.stage}</td>
+                  <tr key={entry.stage} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/40'}>
+                    <td className="px-4 py-2.5 text-sm font-semibold text-foreground">{entry.stage}</td>
                     {PERMIT_TYPES.map((pt) => (
-                      <td key={pt} className="px-4 py-2.5 text-sm text-right tabular-nums text-gray-700">
+                      <td key={pt} className="px-4 py-2.5 text-sm text-right tabular-nums text-foreground/80">
                         {entry.fares[pt].toFixed(2)}
                       </td>
                     ))}
@@ -335,18 +335,18 @@ export function FareAmendmentForm({
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         <button
           onClick={onCancel}
           disabled={isSubmitting}
-          className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="px-6 py-2.5 border border-border rounded-lg text-sm font-medium text-foreground/80 hover:bg-muted transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+          className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary transition-colors disabled:opacity-50 inline-flex items-center gap-2"
         >
           {isSubmitting && (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

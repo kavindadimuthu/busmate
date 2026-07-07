@@ -14,10 +14,10 @@ interface BusTripsTabProps {
 type TripStatus = TripRecord['status'];
 
 const STATUS_META: Record<TripStatus, { label: string; icon: React.ReactNode; classes: string }> = {
-  COMPLETED:   { label: 'Completed',   icon: <CheckCircle  className="w-3.5 h-3.5" />, classes: 'bg-green-100 text-green-800 border-green-200' },
-  IN_PROGRESS: { label: 'In Progress', icon: <Navigation   className="w-3.5 h-3.5" />, classes: 'bg-blue-100 text-blue-800 border-blue-200' },
-  SCHEDULED:   { label: 'Scheduled',   icon: <Clock        className="w-3.5 h-3.5" />, classes: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  CANCELLED:   { label: 'Cancelled',   icon: <XCircle      className="w-3.5 h-3.5" />, classes: 'bg-gray-100 text-gray-500 border-gray-200' },
+  COMPLETED:   { label: 'Completed',   icon: <CheckCircle  className="w-3.5 h-3.5" />, classes: 'bg-success/15 text-success border-success/20' },
+  IN_PROGRESS: { label: 'In Progress', icon: <Navigation   className="w-3.5 h-3.5" />, classes: 'bg-primary/15 text-primary border-primary/20' },
+  SCHEDULED:   { label: 'Scheduled',   icon: <Clock        className="w-3.5 h-3.5" />, classes: 'bg-warning/15 text-warning border-warning/20' },
+  CANCELLED:   { label: 'Cancelled',   icon: <XCircle      className="w-3.5 h-3.5" />, classes: 'bg-muted text-muted-foreground border-border' },
 };
 
 function formatDateTime(iso?: string) {
@@ -60,14 +60,14 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Trips',   value: trips.length,                       cls: 'bg-gray-50 border-gray-200' },
-          { label: 'Completed',     value: completed.length,                   cls: 'bg-green-50 border-green-200' },
-          { label: 'Total Revenue', value: totalRevenue > 0 ? `LKR ${totalRevenue.toLocaleString()}` : '—', cls: 'bg-blue-50 border-blue-200' },
-          { label: 'Passengers',    value: totalPax > 0 ? totalPax.toLocaleString() : '—',                  cls: 'bg-purple-50 border-purple-200' },
+          { label: 'Total Trips',   value: trips.length,                       cls: 'bg-muted border-border' },
+          { label: 'Completed',     value: completed.length,                   cls: 'bg-success/10 border-success/20' },
+          { label: 'Total Revenue', value: totalRevenue > 0 ? `LKR ${totalRevenue.toLocaleString()}` : '—', cls: 'bg-primary/10 border-primary/20' },
+          { label: 'Passengers',    value: totalPax > 0 ? totalPax.toLocaleString() : '—',                  cls: 'bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-200))]' },
         ].map(item => (
           <div key={item.label} className={`rounded-lg border p-4 ${item.cls}`}>
-            <p className="text-xs text-gray-500">{item.label}</p>
-            <p className="text-xl font-bold text-gray-900 truncate">{item.value}</p>
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className="text-xl font-bold text-foreground truncate">{item.value}</p>
           </div>
         ))}
       </div>
@@ -75,7 +75,7 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1 text-xs text-gray-500">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Filter className="w-3.5 h-3.5" /> Filter:
           </span>
           {(['ALL', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const).map(s => (
@@ -84,8 +84,8 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
               onClick={() => setFilter(s)}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                 filter === s
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:bg-muted'
               }`}
             >
               {s === 'ALL' ? 'All' : s === 'IN_PROGRESS' ? 'In Progress' : s.charAt(0) + s.slice(1).toLowerCase()}
@@ -95,7 +95,7 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
 
         <button
           onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
         >
           <Calendar className="w-3.5 h-3.5" />
           Date {sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
@@ -104,9 +104,9 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
 
       {/* Trip list */}
       {filtered.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-10 text-center shadow-sm">
-          <Route className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">No trips match the current filter.</p>
+        <div className="bg-card border border-border rounded-xl p-10 text-center shadow-sm">
+          <Route className="w-10 h-10 text-muted-foreground/50 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No trips match the current filter.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -114,16 +114,16 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
             const sm = STATUS_META[trip.status];
             const dur = duration(trip.departureTime, trip.arrivalTime);
             return (
-              <div key={trip.tripId} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div key={trip.tripId} className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   {/* Route info */}
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0">
-                      <Navigation className="w-4 h-4 text-blue-600" />
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <Navigation className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{trip.routeName}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-sm font-semibold text-foreground">{trip.routeName}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {trip.origin} → {trip.destination}
                       </p>
                     </div>
@@ -137,14 +137,14 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
                 </div>
 
                 {/* Details row */}
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground border-t border-border/50 pt-3">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
                     Dep: {formatDateTime(trip.departureTime)}
                   </span>
                   {trip.arrivalTime && (
                     <span className="flex items-center gap-1">
-                      <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                      <CheckCircle className="w-3.5 h-3.5 text-success/80" />
                       Arr: {formatDateTime(trip.arrivalTime)}
                     </span>
                   )}
@@ -156,7 +156,7 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
                     </span>
                   )}
                   {trip.revenue !== undefined && (
-                    <span className="flex items-center gap-1 text-green-700 font-medium">
+                    <span className="flex items-center gap-1 text-success font-medium">
                       <DollarSign className="w-3.5 h-3.5" />
                       LKR {trip.revenue.toLocaleString()}
                     </span>
@@ -168,7 +168,7 @@ export function BusTripsTab({ bus }: BusTripsTabProps) {
         </div>
       )}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-muted-foreground/70">
         Showing the {trips.length} most recent trip records. Full trip history will be available once the trip management API is integrated.
       </p>
     </div>

@@ -59,19 +59,19 @@ export function WorkspaceHeader({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left Section - Title and Description */}
         <div className="flex-1">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              {activeSection === 'planning' && <Calendar className="h-5 w-5 text-blue-600" />}
-              {activeSection === 'assignments' && <Settings className="h-5 w-5 text-blue-600" />}
-              {activeSection === 'monitoring' && <Filter className="h-5 w-5 text-blue-600" />}
+            <div className="p-2 bg-primary/15 rounded-lg">
+              {activeSection === 'planning' && <Calendar className="h-5 w-5 text-primary" />}
+              {activeSection === 'assignments' && <Settings className="h-5 w-5 text-primary" />}
+              {activeSection === 'monitoring' && <Filter className="h-5 w-5 text-primary" />}
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{getSectionTitle()}</h1>
-              <p className="text-sm text-gray-600">{getSectionDescription()}</p>
+              <h1 className="text-xl font-semibold text-foreground">{getSectionTitle()}</h1>
+              <p className="text-sm text-muted-foreground">{getSectionDescription()}</p>
             </div>
           </div>
         </div>
@@ -79,8 +79,8 @@ export function WorkspaceHeader({
         {/* Right Section - Date Range and Actions */}
         <div className="flex items-center space-x-4">
           {/* Date Range Selector */}
-          <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
+          <div className="flex items-center space-x-2 bg-muted rounded-lg p-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center space-x-1">
               <input
                 type="date"
@@ -88,7 +88,7 @@ export function WorkspaceHeader({
                 onChange={handleStartDateChange}
                 className="text-sm border-none bg-transparent focus:outline-none"
               />
-              <span className="text-gray-400">–</span>
+              <span className="text-muted-foreground/70">–</span>
               <input
                 type="date"
                 value={workspace.selectedDateRange.endDate.toISOString().split('T')[0]}
@@ -100,15 +100,15 @@ export function WorkspaceHeader({
 
           {/* Active Context Display */}
           {workspace.selectedRouteGroup && (
-            <div className="flex items-center space-x-2 bg-blue-50 rounded-lg px-3 py-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-blue-700">
+            <div className="flex items-center space-x-2 bg-primary/10 rounded-lg px-3 py-2">
+              <div className="w-2 h-2 bg-primary/80 rounded-full"></div>
+              <span className="text-sm font-medium text-primary">
                 {workspace.routeGroups.find(rg => rg.id === workspace.selectedRouteGroup)?.name || 'Route Group'}
               </span>
               {workspace.selectedRoute && (
                 <>
-                  <span className="text-blue-400">→</span>
-                  <span className="text-sm text-blue-600">
+                  <span className="text-primary/70">→</span>
+                  <span className="text-sm text-primary">
                     {workspace.routeGroups
                       .find(rg => rg.id === workspace.selectedRouteGroup)
                       ?.routes?.find(r => r.id === workspace.selectedRoute)?.name || 'Route'}
@@ -121,8 +121,8 @@ export function WorkspaceHeader({
           {/* Action Indicators */}
           <div className="flex items-center space-x-2">
             {(workspace.isGeneratingTrips || workspace.isAssigningPsps) && (
-              <div className="flex items-center space-x-2 text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              <div className="flex items-center space-x-2 text-primary">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
                 <span className="text-sm font-medium">
                   {workspace.isGeneratingTrips ? 'Generating trips...' : 'Assigning PSPs...'}
                 </span>
@@ -135,25 +135,25 @@ export function WorkspaceHeader({
       {/* Quick Stats Bar */}
       {workspace.selectedRoute && (
         <div className="mt-4 grid grid-cols-4 gap-4">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="text-sm font-medium text-gray-900">Total Trips</div>
-            <div className="text-2xl font-bold text-gray-700">{workspace.trips.length}</div>
+          <div className="bg-muted rounded-lg p-3">
+            <div className="text-sm font-medium text-foreground">Total Trips</div>
+            <div className="text-2xl font-bold text-foreground/80">{workspace.trips.length}</div>
           </div>
-          <div className="bg-green-50 rounded-lg p-3">
-            <div className="text-sm font-medium text-green-900">Assigned</div>
-            <div className="text-2xl font-bold text-green-700">
+          <div className="bg-success/10 rounded-lg p-3">
+            <div className="text-sm font-medium text-success">Assigned</div>
+            <div className="text-2xl font-bold text-success">
               {workspace.trips.filter(trip => trip.passengerServicePermitId).length}
             </div>
           </div>
-          <div className="bg-orange-50 rounded-lg p-3">
+          <div className="bg-warning/10 rounded-lg p-3">
             <div className="text-sm font-medium text-orange-900">Pending</div>
             <div className="text-2xl font-bold text-orange-700">
               {workspace.trips.filter(trip => !trip.passengerServicePermitId).length}
             </div>
           </div>
-          <div className="bg-blue-50 rounded-lg p-3">
-            <div className="text-sm font-medium text-blue-900">Available PSPs</div>
-            <div className="text-2xl font-bold text-blue-700">{workspace.permits.length}</div>
+          <div className="bg-primary/10 rounded-lg p-3">
+            <div className="text-sm font-medium text-primary">Available PSPs</div>
+            <div className="text-2xl font-bold text-primary">{workspace.permits.length}</div>
           </div>
         </div>
       )}

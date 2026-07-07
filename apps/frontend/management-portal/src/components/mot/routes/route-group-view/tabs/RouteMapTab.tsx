@@ -23,27 +23,27 @@ export function RouteMapTab({ route }: RouteMapTabProps) {
   return (
     <div className="space-y-4">
       {/* Map header info bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted rounded-xl p-4 border border-border/50">
         {/* Route summary */}
         <div className="flex items-center gap-6">
           {/* Direction */}
           <div className="flex items-center gap-2">
             <div
               className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                isOutbound ? 'bg-emerald-100' : 'bg-cyan-100'
+                isOutbound ? 'bg-success/15' : 'bg-primary/15'
               }`}
             >
               <Navigation
                 className={`w-4 h-4 ${
                   isOutbound
-                    ? 'text-emerald-600 rotate-45'
-                    : 'text-cyan-600 -rotate-[135deg]'
+                    ? 'text-success rotate-45'
+                    : 'text-primary/90 -rotate-[135deg]'
                 }`}
               />
             </div>
             <div>
-              <div className="text-xs text-gray-500">Direction</div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-xs text-muted-foreground">Direction</div>
+              <div className="text-sm font-semibold text-foreground">
                 {route.direction}
               </div>
             </div>
@@ -51,12 +51,12 @@ export function RouteMapTab({ route }: RouteMapTabProps) {
 
           {/* Distance */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Map className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center">
+              <Map className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <div className="text-xs text-gray-500">Distance</div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-xs text-muted-foreground">Distance</div>
+              <div className="text-sm font-semibold text-foreground">
                 {route.distanceKm?.toFixed(1) || 0} km
               </div>
             </div>
@@ -68,8 +68,8 @@ export function RouteMapTab({ route }: RouteMapTabProps) {
               <MapPin className="w-4 h-4 text-violet-600" />
             </div>
             <div>
-              <div className="text-xs text-gray-500">Stops</div>
-              <div className="text-sm font-semibold text-gray-900">{stopsCount}</div>
+              <div className="text-xs text-muted-foreground">Stops</div>
+              <div className="text-sm font-semibold text-foreground">{stopsCount}</div>
             </div>
           </div>
         </div>
@@ -78,7 +78,7 @@ export function RouteMapTab({ route }: RouteMapTabProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsFullscreen(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground/80 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
           >
             <Maximize2 className="w-4 h-4" />
             <span className="hidden sm:inline">Fullscreen</span>
@@ -87,26 +87,26 @@ export function RouteMapTab({ route }: RouteMapTabProps) {
       </div>
 
       {/* Map container */}
-      <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+      <div className="rounded-xl overflow-hidden border border-border shadow-sm">
         <RouteMap route={route} className="h-[500px]" />
       </div>
 
       {/* Route legend */}
-      <div className="flex items-center justify-center gap-6 text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100">
+      <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground bg-muted rounded-lg p-3 border border-border/50">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-emerald-500 rounded-full" />
+          <div className="w-4 h-4 bg-success rounded-full" />
           <span>Start Point</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full" />
+          <div className="w-4 h-4 bg-primary/80 rounded-full" />
           <span>Intermediate Stops</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-500 rounded-full" />
+          <div className="w-4 h-4 bg-destructive rounded-full" />
           <span>End Point</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-1 bg-blue-500 rounded" />
+          <div className="w-6 h-1 bg-primary/80 rounded" />
           <span>Route Path</span>
         </div>
       </div>

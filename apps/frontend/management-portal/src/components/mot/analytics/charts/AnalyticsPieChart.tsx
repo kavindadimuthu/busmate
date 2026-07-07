@@ -44,9 +44,9 @@ export function AnalyticsPieChart({
 }: AnalyticsPieChartProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        {title && <div className="h-5 bg-gray-200 rounded w-40 mb-4" />}
-        <div className="h-52 bg-gray-100 rounded-full w-52 mx-auto" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        {title && <div className="h-5 bg-secondary rounded w-40 mb-4" />}
+        <div className="h-52 bg-muted rounded-full w-52 mx-auto" />
       </div>
     );
   }
@@ -97,11 +97,11 @@ export function AnalyticsPieChart({
   const ChartComponent = type === 'doughnut' ? Doughnut : Pie;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       {(title || subtitle) && (
         <div className="mb-4">
-          {title && <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>}
-          {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+          {title && <h3 className="font-semibold text-foreground text-sm">{title}</h3>}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
         </div>
       )}
 
@@ -111,8 +111,8 @@ export function AnalyticsPieChart({
           <ChartComponent data={chartData} options={options} />
           {type === 'doughnut' && centerValue && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-bold text-gray-900">{centerValue}</span>
-              {centerLabel && <span className="text-xs text-gray-500">{centerLabel}</span>}
+              <span className="text-2xl font-bold text-foreground">{centerValue}</span>
+              {centerLabel && <span className="text-xs text-muted-foreground">{centerLabel}</span>}
             </div>
           )}
         </div>
@@ -128,13 +128,13 @@ export function AnalyticsPieChart({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-gray-700 truncate">{item.label}</span>
-                    <span className="text-sm font-medium text-gray-900 tabular-nums">
+                    <span className="text-sm text-foreground/80 truncate">{item.label}</span>
+                    <span className="text-sm font-medium text-foreground tabular-nums">
                       {formatValue(item.value)}
                     </span>
                   </div>
                   {showLabels && (
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1">
+                    <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                       <div
                         className="h-1.5 rounded-full transition-all duration-500"
                         style={{

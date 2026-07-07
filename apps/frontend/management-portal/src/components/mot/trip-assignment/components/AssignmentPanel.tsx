@@ -86,11 +86,11 @@ export function AssignmentPanel({
 
   if (!workspace.selectedRoute) {
     return (
-      <div className="w-1/3 bg-white border-r border-gray-200 p-6">
+      <div className="w-1/3 bg-card border-r border-border p-6">
         <div className="text-center py-12">
-          <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Route</h3>
-          <p className="text-gray-500">
+          <Settings className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Select a Route</h3>
+          <p className="text-muted-foreground">
             Choose a route from the sidebar to start managing assignments
           </p>
         </div>
@@ -101,37 +101,37 @@ export function AssignmentPanel({
   const availablePsps = getAvailablePsps();
 
   return (
-    <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+    <div className="w-1/3 bg-card border-r border-border flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <Settings className="h-5 w-5 text-green-600" />
+          <div className="p-2 bg-success/15 rounded-lg">
+            <Settings className="h-5 w-5 text-success" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">PSP Assignment</h2>
-            <p className="text-sm text-gray-600">Assign permits to selected trips</p>
+            <h2 className="text-lg font-semibold text-foreground">PSP Assignment</h2>
+            <p className="text-sm text-muted-foreground">Assign permits to selected trips</p>
           </div>
         </div>
       </div>
 
       {/* Assignment Status */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50">
+      <div className="p-6 border-b border-border bg-muted">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{workspace.selectedTrips.length}</div>
-            <div className="text-sm text-gray-600">Selected Trips</div>
+            <div className="text-2xl font-bold text-primary">{workspace.selectedTrips.length}</div>
+            <div className="text-sm text-muted-foreground">Selected Trips</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{selectedPsps.length}</div>
-            <div className="text-sm text-gray-600">Selected PSPs</div>
+            <div className="text-2xl font-bold text-success">{selectedPsps.length}</div>
+            <div className="text-sm text-muted-foreground">Selected PSPs</div>
           </div>
         </div>
       </div>
 
       {/* Assignment Mode */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-md font-medium text-gray-900 mb-3">Assignment Mode</h3>
+      <div className="p-6 border-b border-border">
+        <h3 className="text-md font-medium text-foreground mb-3">Assignment Mode</h3>
         <div className="space-y-2">
           <label className="flex items-center space-x-2">
             <input
@@ -140,11 +140,11 @@ export function AssignmentPanel({
               value="auto"
               checked={assignmentMode === 'auto'}
               onChange={(e) => setAssignmentMode(e.target.value as 'auto' | 'manual')}
-              className="w-4 h-4 text-blue-600"
+              className="w-4 h-4 text-primary"
             />
-            <span className="text-sm font-medium text-gray-900">Auto Distribution</span>
+            <span className="text-sm font-medium text-foreground">Auto Distribution</span>
           </label>
-          <p className="ml-6 text-xs text-gray-600">
+          <p className="ml-6 text-xs text-muted-foreground">
             Distribute selected PSPs evenly across selected trips
           </p>
           
@@ -155,11 +155,11 @@ export function AssignmentPanel({
               value="manual"
               checked={assignmentMode === 'manual'}
               onChange={(e) => setAssignmentMode(e.target.value as 'auto' | 'manual')}
-              className="w-4 h-4 text-blue-600"
+              className="w-4 h-4 text-primary"
             />
-            <span className="text-sm font-medium text-gray-900">Manual Assignment</span>
+            <span className="text-sm font-medium text-foreground">Manual Assignment</span>
           </label>
-          <p className="ml-6 text-xs text-gray-600">
+          <p className="ml-6 text-xs text-muted-foreground">
             Assign all selected PSPs to all selected trips
           </p>
         </div>
@@ -168,22 +168,22 @@ export function AssignmentPanel({
       {/* Available PSPs */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-md font-medium text-gray-900 mb-4">Available PSPs</h3>
+          <h3 className="text-md font-medium text-foreground mb-4">Available PSPs</h3>
           
           {workspace.isLoadingPermits ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mx-auto mb-2"></div>
-              <div className="text-sm text-gray-600">Loading permits...</div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent mx-auto mb-2"></div>
+              <div className="text-sm text-muted-foreground">Loading permits...</div>
             </div>
           ) : workspace.permitsError ? (
             <div className="text-center py-8">
-              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              <div className="text-sm text-red-600">{workspace.permitsError}</div>
+              <AlertCircle className="h-8 w-8 text-destructive/80 mx-auto mb-2" />
+              <div className="text-sm text-destructive">{workspace.permitsError}</div>
             </div>
           ) : availablePsps.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">No available PSPs for this route group</p>
+              <Users className="h-8 w-8 text-muted-foreground/70 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No available PSPs for this route group</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -196,27 +196,27 @@ export function AssignmentPanel({
                     key={psp.id}
                     className={`p-4 border rounded-lg cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-border hover:bg-muted'
                     }`}
                     onClick={() => psp.id && handlePspSelect(psp.id)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         {isSelected ? (
-                          <CheckSquare className="h-4 w-4 text-blue-600" />
+                          <CheckSquare className="h-4 w-4 text-primary" />
                         ) : (
-                          <Square className="h-4 w-4 text-gray-400" />
+                          <Square className="h-4 w-4 text-muted-foreground/70" />
                         )}
                         <div>
-                          <h4 className="font-medium text-gray-900">{psp.permitNumber}</h4>
-                          <p className="text-sm text-gray-600">{psp.operatorName}</p>
+                          <h4 className="font-medium text-foreground">{psp.permitNumber}</h4>
+                          <p className="text-sm text-muted-foreground">{psp.operatorName}</p>
                         </div>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         psp.status === 'ACTIVE' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-success/15 text-success' 
+                          : 'bg-muted text-foreground'
                       }`}>
                         {psp.status}
                       </span>
@@ -224,18 +224,18 @@ export function AssignmentPanel({
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Capacity</span>
+                        <span className="text-muted-foreground">Capacity</span>
                         <span className="font-medium">
                           {getAssignedTripsCount(psp.id || '')} / {psp.maximumBusAssigned}
                         </span>
                       </div>
                       
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-secondary rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all ${
-                            utilization >= 90 ? 'bg-red-500' :
-                            utilization >= 70 ? 'bg-yellow-500' :
-                            'bg-green-500'
+                            utilization >= 90 ? 'bg-destructive' :
+                            utilization >= 70 ? 'bg-warning' :
+                            'bg-success'
                           }`}
                           style={{ width: `${Math.min(utilization, 100)}%` }}
                         ></div>
@@ -250,28 +250,28 @@ export function AssignmentPanel({
       </div>
 
       {/* Assignment Action */}
-      <div className="p-6 border-t border-gray-200 bg-gray-50">
+      <div className="p-6 border-t border-border bg-muted">
         <div className="space-y-4">
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Assignment Notes (Optional)
             </label>
             <textarea
               value={assignmentNotes}
               onChange={(e) => setAssignmentNotes(e.target.value)}
               placeholder="Add notes for this assignment..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm resize-none"
               rows={2}
             />
           </div>
 
           {/* Error Display */}
           {workspace.assignmentError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-red-600">{workspace.assignmentError}</span>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <span className="text-sm text-destructive">{workspace.assignmentError}</span>
               </div>
             </div>
           )}
@@ -284,7 +284,7 @@ export function AssignmentPanel({
               selectedPsps.length === 0 || 
               workspace.isAssigningPsps
             }
-            className="w-full bg-green-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+            className="w-full bg-success text-white px-4 py-3 rounded-lg font-medium hover:bg-success disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
           >
             {workspace.isAssigningPsps ? (
               <>

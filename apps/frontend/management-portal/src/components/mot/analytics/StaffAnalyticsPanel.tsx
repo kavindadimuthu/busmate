@@ -1,13 +1,12 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsBarChart } from './charts/AnalyticsBarChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import { AnalyticsLineChart } from './charts/AnalyticsLineChart';
 import { AnalyticsDataTable, RatingStars, ProgressBar } from './charts/AnalyticsDataTable';
 import { Users, Clock, Search, UserCheck } from 'lucide-react';
 import type { StaffAnalyticsData } from '@/data/mot/analytics';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -19,50 +18,6 @@ interface StaffAnalyticsPanelProps {
 // ── Component ────────────────────────────────────────────────────
 
 export function StaffAnalyticsPanel({ data, loading = false }: StaffAnalyticsPanelProps) {
-  // KPI metrics
-  const kpiMetrics: StatsCardMetric[] = [
-    {
-      label: 'Total Staff',
-      value: data.totalStaff.toLocaleString(),
-      trend: 'up',
-      trendValue: '+45 new hires this month',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [4380, 4420, 4450, 4480, 4500, 4521],
-      icon: Users,
-    },
-    {
-      label: 'Active Staff',
-      value: data.activeStaff.toLocaleString(),
-      trend: 'stable',
-      trendValue: `${((data.activeStaff / data.totalStaff) * 100).toFixed(1)}% active`,
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [4050, 4070, 4085, 4100, 4115, 4123],
-      icon: UserCheck,
-    },
-    {
-      label: 'Timekeepers',
-      value: data.timekeepers.toLocaleString(),
-      trend: 'up',
-      trendValue: '+18 this month',
-      trendPositiveIsGood: true,
-      color: 'purple',
-      sparkData: [2280, 2300, 2315, 2328, 2340, 2345],
-      icon: Clock,
-    },
-    {
-      label: 'Inspectors',
-      value: data.inspectors.toLocaleString(),
-      trend: 'up',
-      trendValue: '+12 this month',
-      trendPositiveIsGood: true,
-      color: 'teal',
-      sparkData: [1720, 1735, 1750, 1760, 1770, 1778],
-      icon: Search,
-    },
-  ];
-
   // Staff performance columns
   const performanceColumns = [
     { key: 'name', label: 'Name' },
@@ -90,11 +45,36 @@ export function StaffAnalyticsPanel({ data, loading = false }: StaffAnalyticsPan
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={kpiMetrics}
-        loading={loading}
-        columns={4}
-      />
+      <StatsCardGrid className="lg:grid-cols-4">
+        <StatsCard
+          title="Total Staff"
+          value={data.totalStaff.toLocaleString()}
+          icon={<Users className="h-5 w-5" />}
+          description="+45 new hires this month"
+          trend={{ value: 45, direction: 'up' }}
+        />
+        <StatsCard
+          title="Active Staff"
+          value={data.activeStaff.toLocaleString()}
+          icon={<UserCheck className="h-5 w-5" />}
+          description={`${((data.activeStaff / data.totalStaff) * 100).toFixed(1)}% active`}
+          trend={{ value: 0, direction: 'neutral' }}
+        />
+        <StatsCard
+          title="Timekeepers"
+          value={data.timekeepers.toLocaleString()}
+          icon={<Clock className="h-5 w-5" />}
+          description="+18 this month"
+          trend={{ value: 18, direction: 'up' }}
+        />
+        <StatsCard
+          title="Inspectors"
+          value={data.inspectors.toLocaleString()}
+          icon={<Search className="h-5 w-5" />}
+          description="+12 this month"
+          trend={{ value: 12, direction: 'up' }}
+        />
+      </StatsCardGrid>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

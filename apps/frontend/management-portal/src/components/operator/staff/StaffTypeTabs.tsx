@@ -1,8 +1,7 @@
 'use client';
 
 import { Users, Car, UserCheck } from 'lucide-react';
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import type { TabItem } from '@/components/shared/SwitchableTabs';
+import { Tabs, TabsList, TabsTrigger } from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -21,18 +20,22 @@ interface StaffTypeTabsProps {
 // ── Component ─────────────────────────────────────────────────────
 
 export function StaffTypeTabs({ activeTab, onTabChange, counts }: StaffTypeTabsProps) {
-  const tabs: TabItem<StaffTabValue>[] = [
-    { id: 'all',        label: 'All Staff',  icon: Users,      count: counts.all },
-    { id: 'drivers',    label: 'Drivers',    icon: Car,        count: counts.drivers },
-    { id: 'conductors', label: 'Conductors', icon: UserCheck,  count: counts.conductors },
-  ];
-
   return (
-    <SwitchableTabs<StaffTabValue>
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={onTabChange}
-      ariaLabel="Staff role filter"
-    />
+    <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as StaffTabValue)}>
+      <TabsList>
+        <TabsTrigger value="all">
+          <Users className="h-4 w-4" /> All Staff
+          {counts.all > 0 && <span className="ml-1 text-xs font-semibold">{counts.all.toLocaleString()}</span>}
+        </TabsTrigger>
+        <TabsTrigger value="drivers">
+          <Car className="h-4 w-4" /> Drivers
+          {counts.drivers > 0 && <span className="ml-1 text-xs font-semibold">{counts.drivers.toLocaleString()}</span>}
+        </TabsTrigger>
+        <TabsTrigger value="conductors">
+          <UserCheck className="h-4 w-4" /> Conductors
+          {counts.conductors > 0 && <span className="ml-1 text-xs font-semibold">{counts.conductors.toLocaleString()}</span>}
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 }

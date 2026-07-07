@@ -12,10 +12,10 @@ const ICON_MAP: Record<StaffStatusItem['icon'], React.ReactNode> = {
 };
 
 const BG: Record<string, string> = {
-  '#3b82f6': 'bg-blue-50 text-blue-600 border-blue-100',
-  '#14b8a6': 'bg-teal-50 text-teal-600 border-teal-100',
-  '#a855f7': 'bg-purple-50 text-purple-600 border-purple-100',
-  '#f59e0b': 'bg-amber-50 text-amber-600 border-amber-100',
+  '#3b82f6': 'bg-primary/10 text-primary border-primary/10',
+  '#14b8a6': 'bg-primary/10 text-teal-600 border-teal-100',
+  '#a855f7': 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-600))] border-purple-100',
+  '#f59e0b': 'bg-warning/10 text-warning border-warning/10',
 };
 
 interface OperatorDashboardStaffStatusProps {
@@ -26,11 +26,11 @@ interface OperatorDashboardStaffStatusProps {
 export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: OperatorDashboardStaffStatusProps) {
   if (loading || staffStatus.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 w-28 bg-gray-200 rounded mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 w-28 bg-muted rounded mb-4" />
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-20 bg-gray-100 rounded-lg" />
+            <div key={i} className="h-20 bg-muted rounded-lg" />
           ))}
         </div>
       </div>
@@ -45,13 +45,13 @@ export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: O
   const onDutyPct = total ? Math.round((onDutyCount / total.value) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Staff Status</h3>
+        <h3 className="text-sm font-semibold text-foreground">Staff Status</h3>
         <Link
-          href="/operator/staff-management"
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          href="/operator/staff"
+          className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           Manage
           <ExternalLink className="h-3 w-3" />
@@ -62,12 +62,12 @@ export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: O
       {total && (
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-gray-500">{onDutyCount} on duty of {total.value} total</span>
-            <span className="text-xs font-semibold text-gray-900">{onDutyPct}%</span>
+            <span className="text-xs text-muted-foreground">{onDutyCount} on duty of {total.value} total</span>
+            <span className="text-xs font-semibold text-foreground">{onDutyPct}%</span>
           </div>
-          <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full bg-green-500 transition-all duration-500"
+              className="h-full rounded-full bg-success transition-all duration-500"
               style={{ width: `${onDutyPct}%` }}
             />
           </div>
@@ -77,7 +77,7 @@ export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: O
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-3">
         {staffStatus.map((item) => {
-          const style = BG[item.color] ?? 'bg-gray-50 text-gray-600 border-gray-100';
+          const style = BG[item.color] ?? 'bg-muted text-muted-foreground border-border';
           return (
             <div key={item.label} className={`flex flex-col gap-2 p-3 rounded-lg border ${style}`}>
               <div className="opacity-70">{ICON_MAP[item.icon]}</div>

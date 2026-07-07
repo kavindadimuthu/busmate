@@ -352,12 +352,12 @@ export function UserForm({
     icon?: React.ReactNode;
   }) => (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-xs font-medium text-muted-foreground mb-1">
+        {label} {required && <span className="text-destructive/80">*</span>}
       </label>
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70">
             {icon}
           </div>
         )}
@@ -367,12 +367,12 @@ export function UserForm({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled || loading}
-          className={`w-full ${icon ? 'pl-10' : 'pl-3'} pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-50 disabled:text-gray-500 ${
-            error ? 'border-red-300 bg-red-50' : 'border-gray-200'
+          className={`w-full ${icon ? 'pl-10' : 'pl-3'} pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-card disabled:bg-muted disabled:text-muted-foreground ${
+            error ? 'border-destructive/30 bg-destructive/10' : 'border-border'
           }`}
         />
       </div>
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );
 
@@ -394,15 +394,15 @@ export function UserForm({
     disabled?: boolean;
   }) => (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-xs font-medium text-muted-foreground mb-1">
+        {label} {required && <span className="text-destructive/80">*</span>}
       </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled || loading}
-        className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-50 ${
-          error ? 'border-red-300 bg-red-50' : 'border-gray-200'
+        className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-card disabled:bg-muted ${
+          error ? 'border-destructive/30 bg-destructive/10' : 'border-border'
         }`}
       >
         {options.map((opt) => (
@@ -411,7 +411,7 @@ export function UserForm({
           </option>
         ))}
       </select>
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );
 
@@ -443,7 +443,7 @@ export function UserForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           {mode === 'edit' ? 'Back to User' : 'Back to Users'}
@@ -453,14 +453,14 @@ export function UserForm({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card border border-border rounded-lg hover:bg-muted disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -481,9 +481,9 @@ export function UserForm({
         {/* Main form */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <User className="h-4 w-4 text-blue-600" />
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" />
               Personal Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -546,9 +546,9 @@ export function UserForm({
           </div>
 
           {/* Account Settings */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Shield className="h-4 w-4 text-blue-600" />
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" />
               Account Settings
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -635,9 +635,9 @@ export function UserForm({
           })}
 
           {/* Notes */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-blue-600" />
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
               Notes
             </h3>
             <textarea
@@ -646,25 +646,25 @@ export function UserForm({
               placeholder="Add any notes about this user..."
               rows={3}
               disabled={loading}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-50 resize-none"
+              className="w-full px-3 py-2.5 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-card disabled:bg-muted resize-none"
             />
           </div>
         </div>
 
         {/* Sidebar Preview */}
         <div>
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sticky top-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Preview</h3>
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6 sticky top-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4">Preview</h3>
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-bold mb-3">
                 {(firstName?.[0] || '?')}{(lastName?.[0] || '?')}
               </div>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-foreground">
                 {userType === 'operator' && companyName
                   ? companyName
                   : `${firstName || 'First'} ${lastName || 'Last'}`}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">{email || 'email@example.com'}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{email || 'email@example.com'}</p>
               <div className="flex items-center gap-2 mt-3">
                 {userType && (
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${USER_TYPE_CONFIG[userType].bgColor} ${USER_TYPE_CONFIG[userType].color} ${USER_TYPE_CONFIG[userType].borderColor}`}>
@@ -679,7 +679,7 @@ export function UserForm({
                 )}
               </div>
               {phone && (
-                <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
                   <Phone className="h-3 w-3" /> {phone}
                 </p>
               )}
@@ -698,8 +698,8 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
   switch (userType) {
     case 'mot':
       return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <Shield className="h-4 w-4 text-indigo-600" />
             MOT Officer Details
           </h3>
@@ -745,7 +745,7 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
             />
           </div>
           <div className="mt-4">
-            <label className="block text-xs font-medium text-gray-600 mb-2">Permissions</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-2">Permissions</label>
             <div className="flex flex-wrap gap-2">
               {ctx.availablePermissions.map((perm: string) => (
                 <button
@@ -756,7 +756,7 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     ctx.permissions.includes(perm)
                       ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                      : 'bg-muted text-muted-foreground border-border hover:bg-muted'
                   }`}
                 >
                   {perm.replace(/_/g, ' ')}
@@ -769,8 +769,8 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
 
     case 'timekeeper':
       return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <Clock className="h-4 w-4 text-teal-600" />
             Timekeeper Details
           </h3>
@@ -813,9 +813,9 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
 
     case 'operator':
       return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Truck className="h-4 w-4 text-orange-600" />
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Truck className="h-4 w-4 text-warning" />
             Operator Details
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -867,9 +867,9 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
 
     case 'conductor':
       return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <CircleDot className="h-4 w-4 text-green-600" />
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <CircleDot className="h-4 w-4 text-success" />
             Conductor Details
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -917,9 +917,9 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
 
     case 'driver':
       return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Car className="h-4 w-4 text-blue-600" />
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Car className="h-4 w-4 text-primary" />
             Driver Details
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -971,7 +971,7 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
             />
           </div>
           <div className="mt-4">
-            <label className="block text-xs font-medium text-gray-600 mb-2">Vehicle Classes</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-2">Vehicle Classes</label>
             <div className="flex flex-wrap gap-2">
               {ctx.availableVehicleClasses.map((cls: string) => (
                 <button
@@ -981,8 +981,8 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
                   disabled={loading}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${
                     ctx.vehicleClasses.includes(cls)
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                      ? 'bg-primary/15 text-primary border-primary/30'
+                      : 'bg-muted text-muted-foreground border-border hover:bg-muted'
                   }`}
                 >
                   Class {cls}
@@ -995,9 +995,9 @@ function renderTypeSpecificForm(userType: UserType, ctx: any) {
 
     case 'passenger':
       return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="h-4 w-4 text-purple-600" />
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Users className="h-4 w-4 text-[hsl(var(--purple-600))]" />
             Passenger Details
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -318,12 +318,12 @@ export function getMockPermits(options: GetPermitsOptions = {}): GetPermitsResul
   }
 
   // Filter by status
-  if (status !== 'all') {
+  if (status !== '__all__') {
     filtered = filtered.filter((p) => p.status === status.toUpperCase());
   }
 
   // Filter by permit type
-  if (permitType !== 'all') {
+  if (permitType !== '__all__') {
     filtered = filtered.filter((p) => p.permitType === permitType.toUpperCase());
   }
 

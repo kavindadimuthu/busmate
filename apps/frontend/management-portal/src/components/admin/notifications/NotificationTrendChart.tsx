@@ -24,9 +24,9 @@ interface NotificationTrendChartProps {
 export function NotificationTrendChart({ stats, loading = false }: NotificationTrendChartProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 h-72 animate-pulse">
-        <div className="h-4 bg-gray-200 rounded w-40 mb-4" />
-        <div className="h-full bg-gray-100 rounded" />
+      <div className="bg-card rounded-xl border border-border p-6 h-72 animate-pulse">
+        <div className="h-4 bg-secondary rounded w-40 mb-4" />
+        <div className="h-full bg-muted rounded" />
       </div>
     );
   }
@@ -93,18 +93,18 @@ export function NotificationTrendChart({ stats, loading = false }: NotificationT
   const totalDraft = stats.dailyCounts.reduce((s, d) => s + d.draft, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-gray-900">Notification Activity (Last 7 Days)</h3>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <h3 className="text-base font-semibold text-foreground">Notification Activity (Last 7 Days)</h3>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500" /> Sent: {totalSent}
+            <span className="w-2.5 h-2.5 rounded-full bg-success" /> Sent: {totalSent}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Scheduled: {totalScheduled}
+            <span className="w-2.5 h-2.5 rounded-full bg-warning" /> Scheduled: {totalScheduled}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Drafts: {totalDraft}
+            <span className="w-2.5 h-2.5 rounded-full bg-[hsl(var(--purple-500))]" /> Drafts: {totalDraft}
           </span>
         </div>
       </div>

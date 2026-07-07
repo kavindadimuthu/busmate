@@ -1,29 +1,35 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Eye, FileText } from 'lucide-react';
-import { DataTable, type DataTableColumn, type SortState } from '@/components/shared/DataTable';
+import { Eye, FileText, Ticket } from 'lucide-react';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { TicketRecord } from '@/data/operator/revenue';
 
 // ── Props ─────────────────────────────────────────────────────────
 
-interface RevenueTicketsTableProps {
-  /** Paginated ticket records for the current page. */
+interface RevenueTicketsTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   data: TicketRecord[];
-  /** Show skeleton loading state. */
-  loading: boolean;
-  /** Current sort state. */
-  currentSort: SortState;
-  /** Callback when a sortable column header is clicked. */
-  onSort: (field: string, direction: 'asc' | 'desc') => void;
+  totalItems: number;
 }
 
 // ── Status badge ──────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  SOLD: 'bg-green-50 text-green-700 border-green-200',
-  REFUNDED: 'bg-amber-50 text-amber-700 border-amber-200',
-  CANCELLED: 'bg-red-50 text-red-700 border-red-200',
+  SOLD: 'bg-success/10 text-success border-success/20',
+  REFUNDED: 'bg-warning/10 text-warning border-warning/20',
+  CANCELLED: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -36,7 +42,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-        STATUS_STYLES[status] ?? 'bg-gray-50 text-gray-600 border-gray-200'
+        STATUS_STYLES[status] ?? 'bg-muted text-muted-foreground border-border'
       }`}
     >
       {STATUS_LABELS[status] ?? status}
@@ -47,10 +53,10 @@ function StatusBadge({ status }: { status: string }) {
 // ── Payment method badge ──────────────────────────────────────────
 
 const PAYMENT_STYLES: Record<string, string> = {
-  CASH: 'bg-emerald-50 text-emerald-700',
-  CARD: 'bg-blue-50 text-blue-700',
-  QR: 'bg-purple-50 text-purple-700',
-  PASS: 'bg-amber-50 text-amber-700',
+  CASH: 'bg-success/10 text-success',
+  CARD: 'bg-primary/10 text-primary',
+  QR: 'bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))]',
+  PASS: 'bg-warning/10 text-warning',
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -64,7 +70,7 @@ function PaymentMethodBadge({ method }: { method: string }) {
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-        PAYMENT_STYLES[method] ?? 'bg-gray-50 text-gray-600'
+        PAYMENT_STYLES[method] ?? 'bg-muted text-muted-foreground'
       }`}
     >
       {PAYMENT_LABELS[method] ?? method}
@@ -74,31 +80,31 @@ function PaymentMethodBadge({ method }: { method: string }) {
 
 // ── Column definitions ────────────────────────────────────────────
 
-function useTicketColumns(): DataTableColumn<TicketRecord>[] {
+function useTicketColumns(): ColumnDef<TicketRecord>[] {
   return useMemo(
     () => [
       {
-        key: 'ticketId',
+        id: 'ticketId',
         header: 'Ticket ID',
         sortable: true,
-        minWidth: 'min-w-[140px]',
-        render: (row) => (
-          <span className="text-xs font-mono text-gray-700">{row.ticketId}</span>
+        width: 'min-w-[140px]',
+        cell: ({ row }) => (
+          <span className="text-xs font-mono text-foreground/80">{row.ticketId}</span>
         ),
       },
       {
-        key: 'issueDateTime',
+        id: 'issueDateTime',
         header: 'Date / Time',
         sortable: true,
-        minWidth: 'min-w-[140px]',
-        render: (row) => {
+        width: 'min-w-[140px]',
+        cell: ({ row }) => {
           const dt = new Date(row.issueDateTime);
           return (
             <div>
-              <p className="text-xs font-medium text-gray-800">
+              <p className="text-xs font-medium text-foreground">
                 {dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-muted-foreground/70">
                 {dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
@@ -106,77 +112,75 @@ function useTicketColumns(): DataTableColumn<TicketRecord>[] {
         },
       },
       {
-        key: 'busNumber',
+        id: 'busNumber',
         header: 'Bus',
         sortable: true,
-        render: (row) => (
-          <span className="text-xs font-medium text-gray-700">{row.busNumber}</span>
+        cell: ({ row }) => (
+          <span className="text-xs font-medium text-foreground/80">{row.busNumber}</span>
         ),
       },
       {
-        key: 'routeName',
+        id: 'routeName',
         header: 'Route',
         sortable: true,
-        minWidth: 'min-w-[150px]',
-        render: (row) => (
-          <span className="text-xs text-gray-600">{row.routeName}</span>
+        width: 'min-w-[150px]',
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">{row.routeName}</span>
         ),
       },
       {
-        key: 'conductorName',
+        id: 'conductorName',
         header: 'Conductor',
         sortable: true,
-        render: (row) => (
-          <span className="text-xs text-gray-600">{row.conductorName}</span>
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">{row.conductorName}</span>
         ),
       },
       {
-        key: 'pickupLocation',
+        id: 'pickupLocation',
         header: 'From → To',
-        minWidth: 'min-w-[160px]',
-        render: (row) => (
-          <div className="text-xs text-gray-600">
+        width: 'min-w-[160px]',
+        cell: ({ row }) => (
+          <div className="text-xs text-muted-foreground">
             <span>{row.pickupLocation}</span>
-            <span className="text-gray-300 mx-1">→</span>
+            <span className="text-muted-foreground/50 mx-1">→</span>
             <span>{row.dropOffLocation}</span>
           </div>
         ),
       },
       {
-        key: 'distanceKm',
+        id: 'distanceKm',
         header: 'Distance',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
-          <span className="text-xs tabular-nums text-gray-600">
+        align: 'right',
+        cell: ({ row }) => (
+          <span className="text-xs tabular-nums text-muted-foreground">
             {row.distanceKm.toFixed(1)} km
           </span>
         ),
       },
       {
-        key: 'ticketPrice',
+        id: 'ticketPrice',
         header: 'Price',
         sortable: true,
-        cellClassName: 'text-right',
-        headerClassName: 'text-right',
-        render: (row) => (
-          <span className="text-xs font-semibold tabular-nums text-gray-900">
+        align: 'right',
+        cell: ({ row }) => (
+          <span className="text-xs font-semibold tabular-nums text-foreground">
             Rs {row.ticketPrice.toLocaleString()}
           </span>
         ),
       },
       {
-        key: 'paymentMethod',
+        id: 'paymentMethod',
         header: 'Payment',
         sortable: true,
-        render: (row) => <PaymentMethodBadge method={row.paymentMethod} />,
+        cell: ({ row }) => <PaymentMethodBadge method={row.paymentMethod} />,
       },
       {
-        key: 'status',
+        id: 'status',
         header: 'Status',
         sortable: true,
-        render: (row) => <StatusBadge status={row.status} />,
+        cell: ({ row }) => <StatusBadge status={row.status} />,
       },
     ],
     [],
@@ -194,20 +198,26 @@ function useTicketColumns(): DataTableColumn<TicketRecord>[] {
 export function RevenueTicketsTable({
   data,
   loading,
-  currentSort,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
 }: RevenueTicketsTableProps) {
   const columns = useTicketColumns();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">Ticket Records</h3>
-          <p className="text-xs text-gray-400 mt-0.5">Detailed view of all ticket transactions</p>
+          <h3 className="text-base font-semibold text-foreground">Ticket Records</h3>
+          <p className="text-xs text-muted-foreground/70 mt-0.5">Detailed view of all ticket transactions</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted transition-colors">
             <FileText className="h-3 w-3" />
             Export CSV
           </button>
@@ -217,11 +227,23 @@ export function RevenueTicketsTable({
       <DataTable<TicketRecord>
         columns={columns}
         data={data}
-        loading={loading}
-        currentSort={currentSort}
+        totalItems={totalItems}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
         onSort={onSort}
-        rowKey={(row) => row.ticketId}
-        skeletonRowCount={10}
+        getRowId={(row) => row.ticketId}
+        loading={loading}
+        emptyState={
+          <EmptyState
+            icon={<Ticket className="h-8 w-8" />}
+            title="No ticket records found"
+            description="Try adjusting your search or filters."
+          />
+        }
       />
     </div>
   );

@@ -120,9 +120,9 @@ export function TripTabsSection({
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
+    <div className="bg-card shadow rounded-lg">
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="flex space-x-8 px-6" aria-label="Tabs">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -135,8 +135,8 @@ export function TripTabsSection({
                 className={`
                   group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors
                   ${isActive
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground/80 hover:border-border'
                   }
                 `}
                 aria-current={isActive ? 'page' : undefined}
@@ -144,7 +144,7 @@ export function TripTabsSection({
                 <Icon 
                   className={`
                     mr-2 h-5 w-5 transition-colors
-                    ${isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'}
+                    ${isActive ? 'text-primary/80' : 'text-muted-foreground/70 group-hover:text-muted-foreground'}
                   `}
                 />
                 <span>{tab.name}</span>
@@ -155,16 +155,16 @@ export function TripTabsSection({
       </div>
 
       {/* Tab Actions */}
-      <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+      <div className="px-6 py-3 bg-muted border-b border-border flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {tabs.find(tab => tab.id === activeTab)?.description}
           </p>
         </div>
         {onRefresh && (
           <button
             onClick={onRefresh}
-            className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 bg-card border border-border rounded-md text-sm font-medium text-foreground/80 hover:bg-muted transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh

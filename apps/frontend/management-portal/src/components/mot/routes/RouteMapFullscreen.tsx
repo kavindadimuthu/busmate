@@ -193,7 +193,7 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
               content: `
                 <div class="p-2">
                   <div class="font-medium">${stop.stopName || `Stop ${index + 1}`}</div>
-                  <div class="text-sm text-gray-600">${(stop.distanceFromStartKm || 0).toFixed(1)} km from start</div>
+                  <div class="text-sm text-muted-foreground">${(stop.distanceFromStartKm || 0).toFixed(1)} km from start</div>
                 </div>
               `
             });
@@ -412,18 +412,18 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full h-full mx-2 max-h-[95vh] flex flex-col">
+      <div className="bg-card rounded-lg shadow-xl w-full h-full mx-2 max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className={`${route.direction === 'INBOUND' ? 'bg-purple-50 border-purple-200' : 'bg-blue-50 border-blue-200'} p-4 border-b rounded-t-lg`}>
+        <div className={`${route.direction === 'INBOUND' ? 'bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-200))]' : 'bg-primary/10 border-primary/20'} p-4 border-b rounded-t-lg`}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className={`text-xl font-semibold ${route.direction === 'INBOUND' ? 'text-purple-900' : 'text-blue-900'}`}>
+              <h2 className={`text-xl font-semibold ${route.direction === 'INBOUND' ? 'text-[hsl(var(--purple-900))]' : 'text-primary'}`}>
                 {route.direction === 'INBOUND' ? '← Inbound Route' : '→ Outbound Route'}
               </h2>
-              <p className={`text-sm ${route.direction === 'INBOUND' ? 'text-purple-700' : 'text-blue-700'}`}>
+              <p className={`text-sm ${route.direction === 'INBOUND' ? 'text-[hsl(var(--purple-700))]' : 'text-primary'}`}>
                 {route.startStopName} → {route.endStopName}
               </p>
-              <p className={`text-xs ${route.direction === 'INBOUND' ? 'text-purple-600' : 'text-blue-600'}`}>
+              <p className={`text-xs ${route.direction === 'INBOUND' ? 'text-[hsl(var(--purple-600))]' : 'text-primary'}`}>
                 Distance: {route.distanceKm?.toFixed(1) || 0} km • Duration: ~{route.estimatedDurationMinutes || 0} min • {stops.length} stops
               </p>
             </div>
@@ -432,7 +432,7 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
               {isMapInitialized && (
                 <button
                   onClick={resetMapView}
-                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                   title="Reset view"
                 >
                   <RotateCcw className="w-5 h-5" />
@@ -443,7 +443,7 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
               {isMapInitialized && (
                 <button
                   onClick={openInFullMaps}
-                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                   title="Open in Google Maps"
                 >
                   <ExternalLink className="w-5 h-5" />
@@ -453,7 +453,7 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                 title="Close fullscreen view"
               >
                 <X className="w-5 h-5" />
@@ -467,14 +467,14 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
           {/* Map Container */}
           <div className="flex-1 relative">
             {mapError ? (
-              <div className="h-full bg-gray-50 flex items-center justify-center">
+              <div className="h-full bg-muted flex items-center justify-center">
                 <div className="text-center">
-                  <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Map Error</h3>
-                  <p className="text-gray-600 mb-4">{mapError}</p>
+                  <AlertCircle className="w-16 h-16 text-destructive/70 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Map Error</h3>
+                  <p className="text-muted-foreground mb-4">{mapError}</p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Retry
@@ -485,14 +485,14 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
               <>
                 <div 
                   ref={mapRef} 
-                  className="w-full h-full bg-gray-200"
+                  className="w-full h-full bg-secondary"
                 />
                 
                 {(isLoading || !isMapInitialized) && (
-                  <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-muted flex items-center justify-center">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading fullscreen route map...</p>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Loading fullscreen route map...</p>
                     </div>
                   </div>
                 )}
@@ -501,31 +501,31 @@ export function RouteMapFullscreen({ route, isOpen, onClose }: RouteMapFullscree
           </div>
 
           {/* Sidebar with stops list */}
-          <div className="w-80 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
-            <h3 className="font-medium text-gray-900 mb-3">Route Stops ({stops.length})</h3>
-            <p className="text-xs text-gray-500 mb-4">
+          <div className="w-80 bg-muted border-l border-border p-4 overflow-y-auto">
+            <h3 className="font-medium text-foreground mb-3">Route Stops ({stops.length})</h3>
+            <p className="text-xs text-muted-foreground mb-4">
               ℹ️ {route.direction === 'INBOUND' ? 'Purple' : 'Blue'} route = Road-based path • Red route = Direct fallback
             </p>
             <div className="space-y-3">
               {stops.map((stop, index) => (
-                <div key={index} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                <div key={index} className="bg-card rounded-lg p-3 shadow-sm border border-border">
                   <div className="flex items-center gap-3">
                     <div 
                       className={`w-3 h-3 rounded-full shrink-0 ${
-                        index === 0 ? 'bg-green-500' : 
-                        index === stops.length - 1 ? 'bg-red-500' : 
-                        route.direction === 'INBOUND' ? 'bg-purple-500' : 'bg-blue-500'
+                        index === 0 ? 'bg-success' : 
+                        index === stops.length - 1 ? 'bg-destructive' : 
+                        route.direction === 'INBOUND' ? 'bg-[hsl(var(--purple-500))]' : 'bg-primary/80'
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">
+                      <div className="font-medium text-foreground truncate">
                         {stop.stopName || `Stop ${index + 1}`}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {(stop.distanceFromStartKm || 0).toFixed(1)} km from start
                       </div>
                       {stop.location && stop.location.latitude && stop.location.longitude && (
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="text-xs text-muted-foreground/70 mt-1">
                           {stop.location.latitude.toFixed(4)}, {stop.location.longitude.toFixed(4)}
                         </div>
                       )}

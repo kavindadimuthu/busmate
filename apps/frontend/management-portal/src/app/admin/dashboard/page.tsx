@@ -39,15 +39,15 @@ export default function AdminDashboardPage() {
 
   useSetPageActions(
     <>
-      <span className="text-xs text-gray-400 hidden sm:inline">
+      <span className="text-xs text-muted-foreground hidden sm:inline">
         Updated {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </span>
       <button
         onClick={toggleLive}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
           isLive
-            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            ? 'bg-success/15 text-success hover:bg-success/20'
+            : 'bg-muted text-muted-foreground hover:bg-muted'
         }`}
       >
         <Radio className={`h-3.5 w-3.5 ${isLive ? 'animate-pulse' : ''}`} />
@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
       <button
         onClick={refresh}
         disabled={loading}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-background border border-border text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors"
       >
         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
         Refresh
@@ -66,11 +66,10 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Row 1: KPI Cards ─────────────────────────────────────── */}
+      {/* Row 1: KPI Cards */}
       <DashboardKPICards kpis={kpis} loading={loading} />
 
-      {/* ── Row 2: Trends chart + System health ─────────────────── */}
+      {/* Row 2: Trends + Health */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[400px]">
         <div className="xl:col-span-2">
           <DashboardTrendsChart trendHistory={trendHistory} loading={loading} />
@@ -80,14 +79,14 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 3: Service status + User distribution + Alerts ───── */}
+      {/* Row 3: Service + Users + Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <DashboardServiceStatus services={services} loading={loading} />
         <DashboardUserStats userDistribution={userDistribution} loading={loading} />
         <DashboardAlertsWidget alerts={activeAlerts} loading={loading} />
       </div>
 
-      {/* ── Row 4: Activity feed + Quick actions ─────────────────── */}
+      {/* Row 4: Activity + Actions */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <DashboardActivityFeed activity={activity} loading={loading} />

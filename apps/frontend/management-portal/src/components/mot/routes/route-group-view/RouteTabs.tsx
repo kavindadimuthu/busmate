@@ -46,9 +46,9 @@ export function RouteTabs({ route }: RouteTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   return (
-    <div className="bg-white rounded-xl border-l-3 border-blue-600 shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl border-l-3 border-primary shadow-sm overflow-hidden">
       {/* Tab navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <div className="flex overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -60,13 +60,13 @@ export function RouteTabs({ route }: RouteTabsProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors ${
                   isActive
-                    ? 'border-blue-500 text-blue-600 bg-blue-50/50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'border-primary text-primary bg-primary/10/50'
+                    : 'border-transparent text-muted-foreground hover:text-foreground/80 hover:bg-muted'
                 }`}
               >
                 <Icon
                   className={`w-4 h-4 ${
-                    isActive ? 'text-blue-500' : 'text-gray-400'
+                    isActive ? 'text-primary/80' : 'text-muted-foreground/70'
                   }`}
                 />
                 {tab.label}
@@ -92,15 +92,15 @@ export function RouteTabs({ route }: RouteTabsProps) {
 
 export function RouteTabsEmpty() {
   return (
-    <div className="bg-white rounded-xl border-l-3 border-blue-600 shadow-sm p-12">
+    <div className="bg-card rounded-xl border-l-3 border-primary shadow-sm p-12">
       <div className="text-center">
-        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <RouteIcon className="w-8 h-8 text-gray-400" />
+        <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+          <RouteIcon className="w-8 h-8 text-muted-foreground/70" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-foreground mb-2">
           No Route Selected
         </h3>
-        <p className="text-gray-500 max-w-sm mx-auto">
+        <p className="text-muted-foreground max-w-sm mx-auto">
           Select a route from the tabs above to view its details, stops, map, and schedules.
         </p>
       </div>

@@ -243,19 +243,19 @@ export default function ScheduleAIStudio() {
   const hasRouteSelected = !!data.selectedRouteId;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 bg-linear-to-r from-violet-50 to-purple-50 border-b border-slate-200">
+      <div className="flex items-center justify-between px-5 py-4 bg-linear-to-r from-violet-50 to-purple-50 border-b border-border">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-violet-600" />
-          <h2 className="text-sm font-semibold text-slate-700">AI Schedule Studio</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">AI Schedule Studio</h2>
           <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200">
             Beta
           </span>
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-violet-100 text-violet-700' : 'text-slate-500 hover:bg-slate-100'
+          className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-violet-100 text-violet-700' : 'text-muted-foreground hover:bg-muted'
             }`}
           title="AI Settings"
         >
@@ -266,19 +266,19 @@ export default function ScheduleAIStudio() {
       <div className="p-4 flex-1 flex flex-col">
         {/* Settings Panel */}
         {showSettings && (
-          <div className="mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <h3 className="font-medium text-slate-700 mb-3 text-sm">AI Service Settings</h3>
+          <div className="mb-4 p-4 bg-muted rounded-lg border border-border">
+            <h3 className="font-medium text-muted-foreground mb-3 text-sm">AI Service Settings</h3>
 
             <div className="grid grid-cols-2 gap-4">
               {/* Provider Selection */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   AI Provider
                 </label>
                 <select
                   value={selectedProvider}
                   onChange={(e) => setSelectedProvider(e.target.value as AIServiceProvider)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-500 text-sm"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-500 text-sm"
                 >
                   {availableServices.map((service) => (
                     <option
@@ -290,14 +290,14 @@ export default function ScheduleAIStudio() {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {currentService?.description}
                 </p>
               </div>
 
               {/* Output Format */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   Output Format
                 </label>
                 <div className="flex gap-2">
@@ -305,7 +305,7 @@ export default function ScheduleAIStudio() {
                     onClick={() => setOutputFormat('json')}
                     className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-colors ${outputFormat === 'json'
                       ? 'bg-violet-600 text-white shadow-sm'
-                      : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                      : 'bg-card border border-border text-muted-foreground hover:bg-muted'
                       }`}
                   >
                     JSON
@@ -314,7 +314,7 @@ export default function ScheduleAIStudio() {
                     onClick={() => setOutputFormat('yaml')}
                     className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-colors ${outputFormat === 'yaml'
                       ? 'bg-violet-600 text-white shadow-sm'
-                      : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                      : 'bg-card border border-border text-muted-foreground hover:bg-muted'
                       }`}
                   >
                     YAML
@@ -327,11 +327,11 @@ export default function ScheduleAIStudio() {
 
         {/* Route Context Warning */}
         {!hasRouteSelected && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3 bg-warning/10 border border-warning/20 rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-800">Route Required</p>
-              <p className="text-sm text-amber-700">
+              <p className="text-sm font-medium text-warning">Route Required</p>
+              <p className="text-sm text-warning">
                 Please select a route in Form Mode first. The AI needs route context (stops, locations) to generate accurate schedules.
               </p>
             </div>
@@ -340,27 +340,27 @@ export default function ScheduleAIStudio() {
 
         {/* Prompt Input */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-slate-700 mb-2">
+          <label className="block text-xs font-medium text-muted-foreground mb-2">
             Describe the schedules you want to generate
           </label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="e.g., Generate a weekday morning schedule starting at 6:00 AM with 10-minute intervals between stops..."
-            className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-200 focus:border-purple-500 disabled:bg-gray-50 disabled:text-gray-500"
+            className="w-full h-32 px-4 py-3 border border-border rounded-lg resize-none focus:ring-2 focus:ring-purple-200 focus:border-[hsl(var(--purple-500))] disabled:bg-muted disabled:text-muted-foreground"
             disabled={generation.isLoading || !hasRouteSelected}
           />
         </div>
 
         {/* Example Prompts */}
         <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">Try an example:</p>
+          <p className="text-sm text-muted-foreground mb-2">Try an example:</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.slice(0, 3).map((example, index) => (
               <button
                 key={index}
                 onClick={() => handleExampleClick(example)}
-                className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors truncate max-w-xs"
+                className="text-xs px-3 py-1.5 bg-muted hover:bg-secondary text-foreground/80 rounded-full transition-colors truncate max-w-xs"
                 disabled={generation.isLoading || !hasRouteSelected}
                 title={example}
               >
@@ -374,7 +374,7 @@ export default function ScheduleAIStudio() {
         <button
           onClick={handleGenerate}
           disabled={generation.isLoading || !hasRouteSelected || !prompt.trim()}
-          className="w-full mb-4 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
+          className="w-full mb-4 px-4 py-3 bg-[hsl(var(--purple-600))] hover:bg-[hsl(var(--purple-700))] disabled:bg-secondary text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
           {generation.isLoading ? (
             <>
@@ -391,12 +391,12 @@ export default function ScheduleAIStudio() {
 
         {/* Error Display */}
         {generation.error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-red-800">Generation Failed</p>
-                <p className="text-sm text-red-700 mt-1">{generation.error}</p>
+                <p className="font-medium text-destructive">Generation Failed</p>
+                <p className="text-sm text-destructive mt-1">{generation.error}</p>
               </div>
             </div>
           </div>
@@ -406,13 +406,13 @@ export default function ScheduleAIStudio() {
         {generation.result && (
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-foreground/80">
                 Generated Schedule ({outputFormat.toUpperCase()})
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={handleGenerate}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1 transition-colors"
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted flex items-center gap-1 transition-colors"
                   title="Regenerate"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -420,11 +420,11 @@ export default function ScheduleAIStudio() {
                 </button>
                 <button
                   onClick={handleCopy}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1 transition-colors"
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted flex items-center gap-1 transition-colors"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-green-600" />
+                      <Check className="w-4 h-4 text-success" />
                       Copied!
                     </>
                   ) : (
@@ -436,7 +436,7 @@ export default function ScheduleAIStudio() {
                 </button>
                 <button
                   onClick={handleApply}
-                  className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1 transition-colors"
+                  className="px-3 py-1.5 text-sm bg-success hover:bg-success text-white rounded-lg flex items-center gap-1 transition-colors"
                 >
                   <ArrowRight className="w-4 h-4" />
                   Apply to Workspace
@@ -447,12 +447,12 @@ export default function ScheduleAIStudio() {
             <textarea
               readOnly
               value={generation.result}
-              className="flex-1 min-h-[400px] w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg font-mono text-sm resize-none"
+              className="flex-1 min-h-[400px] w-full px-4 py-3 bg-muted border border-border rounded-lg font-mono text-sm resize-none"
             />
 
             {/* Response Metadata */}
             {generation.lastResponse && (
-              <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+              <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                 <span>Provider: {generation.lastResponse.provider}</span>
                 <span>Model: {generation.lastResponse.model}</span>
                 {generation.lastResponse.tokensUsed && (
@@ -466,9 +466,9 @@ export default function ScheduleAIStudio() {
         {/* Initial State - No Result Yet */}
         {!generation.result && !generation.error && !generation.isLoading && hasRouteSelected && (
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-slate-500">
+            <div className="text-center text-muted-foreground">
               <Sparkles className="w-12 h-12 mx-auto mb-3 text-violet-300" />
-              <p className="font-medium text-slate-700">Ready to Generate</p>
+              <p className="font-medium text-muted-foreground">Ready to Generate</p>
               <p className="text-sm mt-1">
                 Enter a prompt above and click Generate to create schedules using AI
               </p>

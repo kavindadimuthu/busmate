@@ -1,32 +1,23 @@
 'use client';
 
-import React from 'react';
 import {
   Users,
-  Shield,
-  Truck,
-  Clock,
   UserCheck,
-  CircleDot,
-  Car,
   UserX,
   UserPlus,
   AlertTriangle,
 } from 'lucide-react';
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
-import type { UserStatsData } from '@/data/admin/users';
-
-// ── Types ─────────────────────────────────────────────────────────
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
+import type { UserStatsData, UserType } from '@/data/admin/users';
+import { USER_TYPE_CONFIG } from '@/data/admin/users';
 
 interface UserStatsCardsProps {
   stats: UserStatsData | null;
   loading?: boolean;
+  activeUserType: UserType;
 }
 
-// ── Component ─────────────────────────────────────────────────────
-
-export function UserStatsCards({ stats, loading = false }: UserStatsCardsProps) {
+export function UserStatsCards({ stats, loading = false, activeUserType }: UserStatsCardsProps) {
   const defaultStats: UserStatsData = {
     total: 0,
     active: 0,
@@ -43,77 +34,46 @@ export function UserStatsCards({ stats, loading = false }: UserStatsCardsProps) 
     },
   };
 
-  const currentStats = stats || defaultStats;
+  const s = stats || defaultStats;
+  const typeLabel = USER_TYPE_CONFIG[activeUserType].label + 's';
 
-  const metrics: StatsCardMetric[] = [
-    {
-      label: 'Total Users',
-      value: currentStats.total.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'All users',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [],
-      icon: Users,
-    },
-    {
-      label: 'Active',
-      value: currentStats.active.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'Active users',
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [],
-      icon: UserCheck,
-    },
-    {
-      label: 'Inactive',
-      value: currentStats.inactive.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'Inactive users',
-      trendPositiveIsGood: false,
-      color: 'red',
-      sparkData: [],
-      icon: UserX,
-    },
-    {
-      label: 'Suspended',
-      value: currentStats.suspended.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'Suspended users',
-      trendPositiveIsGood: false,
-      color: 'red',
-      sparkData: [],
-      icon: AlertTriangle,
-    },
-    {
-      label: 'Pending',
-      value: currentStats.pending.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'Pending approval',
-      trendPositiveIsGood: true,
-      color: 'amber',
-      sparkData: [],
-      icon: UserPlus,
-    },
-    {
-      label: 'MOT Officers',
-      value: currentStats.byType.mot.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'MOT staff',
-      trendPositiveIsGood: true,
-      color: 'purple',
-      sparkData: [],
-      icon: Shield,
-    },
-  ];
+  if (loading) {
+    return (
+      <StatsCardGrid className="lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-28 rounded-xl border bg-card animate-pulse" />
+        ))}
+      </StatsCardGrid>
+    );
+  }
 
   return (
-    <StatsCardsContainer
-      metrics={metrics}
-      loading={loading}
-      columns={6}
-      skeletonCount={6}
-    />
+    <StatsCardGrid className="lg:grid-cols-5">
+      <StatsCard
+        title={`Total ${typeLabel}`}
+        value={s.total.toLocaleString()}
+        icon={<Users className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Active"
+        value={s.active.toLocaleString()}
+        icon={<UserCheck className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Inactive"
+        value={s.inactive.toLocaleString()}
+        icon={<UserX className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Suspended"
+        value={s.suspended.toLocaleString()}
+        icon={<AlertTriangle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Pending"
+        value={s.pending.toLocaleString()}
+        icon={<UserPlus className="h-5 w-5" />}
+      />
+    </StatsCardGrid>
   );
 }

@@ -34,15 +34,15 @@ export function StaffSummary({ staff }: StaffSummaryProps) {
                 return {
                     icon: Search,
                     label: 'Inspector',
-                    color: 'bg-purple-100 text-purple-700 border-purple-200',
-                    iconColor: 'text-purple-600',
+                    color: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))] border-[hsl(var(--purple-200))]',
+                    iconColor: 'text-[hsl(var(--purple-600))]',
                 };
             default:
                 return {
                     icon: User,
                     label: type,
-                    color: 'bg-gray-100 text-gray-700 border-gray-200',
-                    iconColor: 'text-gray-600',
+                    color: 'bg-muted text-foreground/80 border-border',
+                    iconColor: 'text-muted-foreground',
                 };
         }
     };
@@ -63,16 +63,16 @@ export function StaffSummary({ staff }: StaffSummaryProps) {
     };
 
     return (
-        <div className="bg-white shadow-lg rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-card shadow-lg rounded-2xl border border-border/50 overflow-hidden">
             {/* Profile Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center text-3xl font-bold border-2 border-white/30">
+                    <div className="w-20 h-20 bg-card/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center text-3xl font-bold border-2 border-white/30">
                         {staff.fullName.charAt(0).toUpperCase()}
                     </div>
                     <div className="text-center sm:text-left">
                         <h2 className="text-2xl font-bold text-white">{staff.fullName}</h2>
-                        <p className="text-blue-100 mt-1">{staff.email || 'No email provided'}</p>
+                        <p className="text-primary/20 mt-1">{staff.email || 'No email provided'}</p>
                         <div className="flex items-center gap-3 mt-3 justify-center sm:justify-start">
                             <span
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold ${typeConfig.color}`}
@@ -82,8 +82,8 @@ export function StaffSummary({ staff }: StaffSummaryProps) {
                             </span>
                             <span
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold ${staff.status === 'active'
-                                        ? 'bg-green-100 text-green-700 border-green-200'
-                                        : 'bg-red-100 text-red-700 border-red-200'
+                                        ? 'bg-success/15 text-success border-success/20'
+                                        : 'bg-destructive/15 text-destructive border-destructive/20'
                                     }`}
                             >
                                 {staff.status === 'active' ? (
@@ -126,13 +126,13 @@ function InfoField({
 }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="shrink-0 text-blue-500 mt-0.5">{icon}</div>
+            <div className="shrink-0 text-primary/80 mt-0.5">{icon}</div>
             <div>
-                <h4 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
+                <h4 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                     {label}
                 </h4>
-                <p className="text-gray-800 text-sm font-medium mt-0.5">
-                    {value || <span className="text-gray-400">—</span>}
+                <p className="text-foreground text-sm font-medium mt-0.5">
+                    {value || <span className="text-muted-foreground/70">—</span>}
                 </p>
             </div>
         </div>

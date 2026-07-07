@@ -1,9 +1,9 @@
 'use client';
 
 import { useSetPageMetadata } from '@/context/PageContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@busmate/ui';
+import { Badge } from '@busmate/ui';
+import { Avatar, AvatarFallback, AvatarImage } from '@busmate/ui';
 import {
   Clock,
   Activity,
@@ -55,11 +55,11 @@ const SHIFT_SCHEDULE = [
 ];
 
 const SHIFT_COLORS: Record<string, string> = {
-  Morning: 'bg-amber-100 text-amber-700',
-  Afternoon: 'bg-blue-100 text-blue-700',
+  Morning: 'bg-warning/15 text-warning',
+  Afternoon: 'bg-primary/15 text-primary',
   Evening: 'bg-indigo-100 text-indigo-700',
-  Night: 'bg-gray-200 text-gray-700',
-  Off: 'bg-gray-100 text-gray-400',
+  Night: 'bg-secondary text-foreground/80',
+  Off: 'bg-muted text-muted-foreground/70',
 };
 
 export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
@@ -82,13 +82,13 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
       {/* Hero Banner */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-teal-700 via-teal-600 to-cyan-600 shadow-lg">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white transform translate-x-20 -translate-y-20" />
-          <div className="absolute bottom-0 left-1/3 w-48 h-48 rounded-full bg-white transform translate-y-16" />
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-card transform translate-x-20 -translate-y-20" />
+          <div className="absolute bottom-0 left-1/3 w-48 h-48 rounded-full bg-card transform translate-y-16" />
         </div>
         <div className="relative px-8 py-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <Avatar className="w-24 h-24 ring-4 ring-white/30 shadow-xl shrink-0">
             <AvatarImage src="/images/placeholder-avatar.png" alt={displayName} />
-            <AvatarFallback className="text-2xl font-bold bg-teal-500 text-white">
+            <AvatarFallback className="text-2xl font-bold bg-primary text-white">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -96,13 +96,13 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
             <h1 className="text-2xl font-bold text-white">{displayName}</h1>
             <p className="text-teal-100 mt-1">{formatRole(userData?.user_role || 'timeKeeper')}</p>
             <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
-              <Badge className="bg-green-400/20 text-green-100 border border-green-400/30 backdrop-blur">
+              <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">
                 Active
               </Badge>
-              <Badge className="bg-teal-400/20 text-teal-100 border border-teal-400/30 backdrop-blur">
+              <Badge className="bg-teal-400/20 text-teal-100 border border-primary/40/30 backdrop-blur">
                 Verified
               </Badge>
-              <Badge className="bg-cyan-400/20 text-cyan-100 border border-cyan-400/30 backdrop-blur">
+              <Badge className="bg-primary/50/20 text-primary/20 border border-primary/40/30 backdrop-blur">
                 Timekeeper
               </Badge>
             </div>
@@ -114,9 +114,9 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
         {/* Left column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
                 <User className="w-4 h-4 text-teal-600" />
                 Personal Information
               </CardTitle>
@@ -124,37 +124,37 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
             <CardContent className="pt-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Full Name</span>
-                  <span className="text-sm font-medium text-gray-800">{displayName}</span>
+                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Full Name</span>
+                  <span className="text-sm font-medium text-foreground">{displayName}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Email Address</span>
-                  <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Email Address</span>
+                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-muted-foreground/70" />
                     {userData?.email || 'Not provided'}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Username</span>
-                  <span className="text-sm font-medium text-gray-800">{userData?.username || 'N/A'}</span>
+                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Username</span>
+                  <span className="text-sm font-medium text-foreground">{userData?.username || 'N/A'}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">System Role</span>
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">System Role</span>
+                  <span className="text-sm font-medium text-foreground">
                     {formatRole(userData?.user_role || 'timeKeeper')}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Station</span>
-                  <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Station</span>
+                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-muted-foreground/70" />
                     Central Bus Terminal
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Staff ID</span>
-                  <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
-                    <IdCard className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Staff ID</span>
+                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    <IdCard className="w-3.5 h-3.5 text-muted-foreground/70" />
                     {userData?.id ? `TK-${userData.id.slice(-6).toUpperCase()}` : 'TK-XXXXXX'}
                   </span>
                 </div>
@@ -163,9 +163,9 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
           </Card>
 
           {/* Weekly Work Schedule */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-teal-600" />
                 Weekly Work Schedule
               </CardTitle>
@@ -176,18 +176,18 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                   <div
                     key={day}
                     className={`flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${
-                      status === 'off' ? 'bg-gray-50' : 'bg-teal-50/60 hover:bg-teal-50'
+                      status === 'off' ? 'bg-muted' : 'bg-primary/10/60 hover:bg-primary/10'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-2 h-2 rounded-full ${
-                          status === 'off' ? 'bg-gray-300' : 'bg-teal-500'
+                          status === 'off' ? 'bg-secondary' : 'bg-primary'
                         }`}
                       />
                       <span
                         className={`text-sm font-medium w-24 ${
-                          status === 'off' ? 'text-gray-400' : 'text-gray-800'
+                          status === 'off' ? 'text-muted-foreground/70' : 'text-foreground'
                         }`}
                       >
                         {day}
@@ -195,12 +195,12 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                     </div>
                     <div className="flex items-center gap-3">
                       {time !== '—' && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {time}
                         </span>
                       )}
-                      <Badge className={`text-xs ${SHIFT_COLORS[shift] || 'bg-gray-100 text-gray-500'} border-0`}>
+                      <Badge className={`text-xs ${SHIFT_COLORS[shift] || 'bg-muted text-muted-foreground'} border-0`}>
                         {shift}
                       </Badge>
                     </div>
@@ -211,9 +211,9 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
           </Card>
 
           {/* Duties & Responsibilities */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-teal-600" />
                 Duties & Responsibilities
               </CardTitle>
@@ -260,7 +260,7 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                 ].map(({ icon: Icon, color, label, description }) => (
                   <div
                     key={label}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-muted hover:bg-muted transition-colors"
                   >
                     <div
                       className={`w-8 h-8 rounded-lg bg-${color}-100 flex items-center justify-center shrink-0 mt-0.5`}
@@ -268,8 +268,8 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                       <Icon className={`w-4 h-4 text-${color}-600`} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{label}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-snug">{description}</p>
+                      <p className="text-sm font-medium text-foreground">{label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
                     </div>
                   </div>
                 ))}
@@ -281,45 +281,45 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
         {/* Right column */}
         <div className="space-y-6">
           {/* Account Overview */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800">Account Overview</CardTitle>
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground">Account Overview</CardTitle>
             </CardHeader>
             <CardContent className="pt-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Clock className="h-4 w-4 text-teal-600" />
                   </div>
-                  <span className="text-sm text-gray-600">Last Login</span>
+                  <span className="text-sm text-muted-foreground">Last Login</span>
                 </div>
-                <span className="text-sm font-medium text-gray-800">Today</span>
+                <span className="text-sm font-medium text-foreground">Today</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-                    <Activity className="h-4 w-4 text-green-600" />
+                  <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                    <Activity className="h-4 w-4 text-success" />
                   </div>
-                  <span className="text-sm text-gray-600">Account Status</span>
+                  <span className="text-sm text-muted-foreground">Account Status</span>
                 </div>
-                <Badge className="bg-green-100 text-green-700 border-0">Active</Badge>
+                <Badge className="bg-success/15 text-success border-0">Active</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-purple-600" />
+                  <div className="w-8 h-8 rounded-lg bg-[hsl(var(--purple-50))] flex items-center justify-center">
+                    <Shield className="h-4 w-4 text-[hsl(var(--purple-600))]" />
                   </div>
-                  <span className="text-sm text-gray-600">Security</span>
+                  <span className="text-sm text-muted-foreground">Security</span>
                 </div>
-                <span className="text-sm font-medium text-green-600">Verified</span>
+                <span className="text-sm font-medium text-success">Verified</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Shift Summary */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800">This Week</CardTitle>
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground">This Week</CardTitle>
             </CardHeader>
             <CardContent className="pt-5 space-y-4">
               {[
@@ -333,18 +333,18 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                     <div className={`w-8 h-8 rounded-lg bg-${color}-50 flex items-center justify-center`}>
                       <Icon className={`h-4 w-4 text-${color}-600`} />
                     </div>
-                    <span className="text-sm text-gray-600">{label}</span>
+                    <span className="text-sm text-muted-foreground">{label}</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{value}</span>
+                  <span className="text-sm font-medium text-foreground/80">{value}</span>
                 </div>
               ))}
             </CardContent>
           </Card>
 
           {/* Access Permissions */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
                 <Shield className="w-4 h-4 text-teal-600" />
                 Access Level
               </CardTitle>
@@ -358,15 +358,15 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                   { module: 'Route Management', access: 'No Access', color: 'red' },
                   { module: 'Fleet Management', access: 'No Access', color: 'red' },
                 ].map(({ module, access, color }) => (
-                  <div key={module} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <span className="text-sm text-gray-700">{module}</span>
+                  <div key={module} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+                    <span className="text-sm text-foreground/80">{module}</span>
                     <Badge
                       className={
                         color === 'green'
-                          ? 'bg-green-100 text-green-700 border-0'
+                          ? 'bg-success/15 text-success border-0'
                           : color === 'blue'
-                          ? 'bg-blue-100 text-blue-700 border-0'
-                          : 'bg-red-100 text-red-700 border-0'
+                          ? 'bg-primary/15 text-primary border-0'
+                          : 'bg-destructive/15 text-destructive border-0'
                       }
                     >
                       {access}
@@ -378,9 +378,9 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
           </Card>
 
           {/* Recent Activity */}
-          <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3 border-b border-gray-50">
-              <CardTitle className="text-base font-semibold text-gray-800">Recent Activity</CardTitle>
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-semibold text-foreground">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
               <div className="space-y-4">
@@ -393,8 +393,8 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                   <div key={text} className="flex items-start gap-3">
                     <div className={`w-2 h-2 rounded-full bg-${dot}-500 mt-1.5 shrink-0`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-700 leading-snug">{text}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{time}</p>
+                      <p className="text-sm text-foreground/80 leading-snug">{text}</p>
+                      <p className="text-xs text-muted-foreground/70 mt-0.5">{time}</p>
                     </div>
                   </div>
                 ))}

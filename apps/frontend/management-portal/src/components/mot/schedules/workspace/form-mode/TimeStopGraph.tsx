@@ -44,14 +44,14 @@ interface EmptyStateProps {
 
 function EmptyState({ icon, title, description }: EmptyStateProps) {
     return (
-        <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">Time-Stop Graph</h3>
+        <div className="flex flex-col rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+            <div className="px-5 py-3 bg-muted border-b border-border">
+                <h3 className="text-sm font-semibold text-muted-foreground">Time-Stop Graph</h3>
             </div>
-            <div className="p-8 text-center text-slate-500">
+            <div className="p-8 text-center text-muted-foreground">
                 {icon}
-                <p className="text-base font-medium text-slate-700">{title}</p>
-                <p className="text-sm mt-2 text-slate-500">{description}</p>
+                <p className="text-base font-medium text-muted-foreground">{title}</p>
+                <p className="text-sm mt-2 text-muted-foreground">{description}</p>
             </div>
         </div>
     );
@@ -66,30 +66,30 @@ interface ZoomControlsProps {
 function ZoomControls({ onZoomIn, onZoomOut, onResetView }: ZoomControlsProps) {
     return (
         <div className="flex items-center gap-2">
-            <div className="flex items-center bg-slate-100 rounded-lg p-1">
+            <div className="flex items-center bg-muted rounded-lg p-1">
                 <button
                     onClick={onZoomIn}
-                    className="p-1.5 bg-white rounded-md hover:bg-slate-50 transition-colors shadow-sm"
+                    className="p-1.5 bg-card rounded-md hover:bg-muted transition-colors shadow-sm"
                     title="Zoom In"
                 >
-                    <ZoomIn className="h-4 w-4 text-slate-600" />
+                    <ZoomIn className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
                     onClick={onZoomOut}
-                    className="p-1.5 bg-white rounded-md hover:bg-slate-50 transition-colors shadow-sm ml-1"
+                    className="p-1.5 bg-card rounded-md hover:bg-muted transition-colors shadow-sm ml-1"
                     title="Zoom Out"
                 >
-                    <ZoomOut className="h-4 w-4 text-slate-600" />
+                    <ZoomOut className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
                     onClick={onResetView}
-                    className="p-1.5 bg-white rounded-md hover:bg-slate-50 transition-colors shadow-sm ml-1"
+                    className="p-1.5 bg-card rounded-md hover:bg-muted transition-colors shadow-sm ml-1"
                     title="Reset View"
                 >
-                    <RotateCcw className="h-4 w-4 text-slate-600" />
+                    <RotateCcw className="h-4 w-4 text-muted-foreground" />
                 </button>
             </div>
-            <span className="text-xs text-slate-500 flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Move className="h-3 w-3" /> Drag to pan, scroll to zoom
             </span>
         </div>
@@ -105,7 +105,7 @@ function Tooltip({ tooltip }: TooltipProps) {
 
     return (
         <div
-            className="absolute pointer-events-none z-50 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg"
+            className="absolute pointer-events-none z-50 bg-foreground text-white text-xs rounded-lg px-3 py-2 shadow-lg"
             style={{
                 left: tooltip.x + 15,
                 top: tooltip.y - 10,
@@ -119,7 +119,7 @@ function Tooltip({ tooltip }: TooltipProps) {
                 />
                 <span className="font-medium">{tooltip.scheduleName}</span>
             </div>
-            <div className="text-gray-300">
+            <div className="text-muted-foreground/50">
                 <div>{tooltip.stopName}</div>
                 <div className="font-mono">{tooltip.time}</div>
             </div>
@@ -147,20 +147,20 @@ function LegendPanel({
     onScheduleClick,
 }: LegendPanelProps) {
     return (
-        <div className="w-48 bg-white rounded-md p-4 flex flex-col">
+        <div className="w-48 bg-card rounded-md p-4 flex flex-col">
             <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium">Schedules</span>
                 <div className="flex gap-1">
                     <button
                         onClick={onShowAll}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1 hover:bg-muted rounded"
                         title="Show All"
                     >
                         <Eye className="h-3 w-3" />
                     </button>
                     <button
                         onClick={onHideAll}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1 hover:bg-muted rounded"
                         title="Hide All"
                     >
                         <EyeOff className="h-3 w-3" />
@@ -180,7 +180,7 @@ function LegendPanel({
                             key={index}
                             className={cn(
                                 "flex items-center gap-2 p-2 rounded cursor-pointer transition-colors",
-                                isActive ? "bg-blue-50 ring-1 ring-blue-200" : "hover:bg-gray-50",
+                                isActive ? "bg-primary/10 ring-1 ring-blue-200" : "hover:bg-muted",
                                 !isVisible && "opacity-50"
                             )}
                             onClick={() => onScheduleClick(index)}
@@ -190,12 +190,12 @@ function LegendPanel({
                                     e.stopPropagation();
                                     onToggleVisibility(index);
                                 }}
-                                className="p-1 hover:bg-gray-200 rounded"
+                                className="p-1 hover:bg-secondary rounded"
                             >
                                 {isVisible ? (
                                     <Eye className="h-3 w-3" />
                                 ) : (
-                                    <EyeOff className="h-3 w-3 text-gray-400" />
+                                    <EyeOff className="h-3 w-3 text-muted-foreground/70" />
                                 )}
                             </button>
                             <div
@@ -206,7 +206,7 @@ function LegendPanel({
                                 <div className="text-xs font-medium truncate">
                                     {schedule.name || `Schedule ${index + 1}`}
                                 </div>
-                                <div className="text-xs text-gray-500 font-mono">
+                                <div className="text-xs text-muted-foreground font-mono">
                                     {firstStopTime.substring(0, 5)}
                                 </div>
                             </div>
@@ -216,13 +216,13 @@ function LegendPanel({
             </div>
 
             {/* Legend info */}
-            <div className="mt-4 pt-3 border-t border-slate-200 text-xs text-slate-500 space-y-1">
+            <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground space-y-1">
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-emerald-600" />
+                    <div className="w-3 h-3 rounded-full bg-success" />
                     <span>First stop</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-rose-600" />
+                    <div className="w-3 h-3 rounded-full bg-destructive" />
                     <span>Last stop</span>
                 </div>
             </div>
@@ -314,7 +314,7 @@ export default function TimeStopGraph() {
     if (!selectedRouteId) {
         return (
             <EmptyState
-                icon={<Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />}
+                icon={<Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />}
                 title="Select a Route"
                 description="Choose a route above to view the time-stop graph"
             />
@@ -324,7 +324,7 @@ export default function TimeStopGraph() {
     if (routeStops.length === 0) {
         return (
             <EmptyState
-                icon={<Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />}
+                icon={<Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />}
                 title="No Stops Available"
                 description="This route has no stops defined"
             />
@@ -334,7 +334,7 @@ export default function TimeStopGraph() {
     if (schedules.length === 0) {
         return (
             <EmptyState
-                icon={<Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />}
+                icon={<Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />}
                 title="No Schedules"
                 description="Add a schedule to see the time-stop visualization"
             />
@@ -342,9 +342,9 @@ export default function TimeStopGraph() {
     }
 
     return (
-        <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700">
+        <div className="flex flex-col rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 bg-muted border-b border-border">
+                <h3 className="text-sm font-semibold text-muted-foreground">
                     Time-Stop Graph
                 </h3>
 
@@ -359,7 +359,7 @@ export default function TimeStopGraph() {
                 {/* Main graph area */}
                 <div
                     ref={containerRef}
-                    className="flex-1 bg-slate-50 overflow-hidden relative border-r border-slate-200"
+                    className="flex-1 bg-muted overflow-hidden relative border-r border-border"
                     style={{ height: '600px', cursor: isPanning ? 'grabbing' : 'grab' }}
                 >
                     <svg

@@ -25,13 +25,13 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
   if (loading) {
     const skeletonHeights = [60, 80, 40, 90, 50, 70, 55, 85, 35, 65, 75, 45, 95, 25];
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-48 mb-6" />
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 animate-pulse">
+        <div className="h-5 bg-secondary rounded w-48 mb-6" />
         <div className="flex items-end gap-2 h-40">
           {Array.from({ length: 14 }).map((_, i) => (
             <div
               key={i}
-              className="flex-1 bg-gray-200 rounded-t"
+              className="flex-1 bg-secondary rounded-t"
               style={{ height: `${skeletonHeights[i]}%` }}
             />
           ))}
@@ -45,16 +45,16 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
   const maxRevenue = chartData.length > 0 ? Math.max(...chartData.map((d) => d.totalRevenue)) : 1;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-base font-semibold text-gray-900">
+        <h3 className="text-base font-semibold text-foreground">
           Daily Revenue Trend
         </h3>
-        <span className="text-xs text-gray-400">Last 14 days</span>
+        <span className="text-xs text-muted-foreground/70">Last 14 days</span>
       </div>
 
       {chartData.length === 0 ? (
-        <div className="text-center py-12 text-sm text-gray-500">
+        <div className="text-center py-12 text-sm text-muted-foreground">
           No revenue data available
         </div>
       ) : (
@@ -72,7 +72,7 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
                 >
                   {/* Tooltip on hover */}
                   <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 pointer-events-none">
-                    <div className="bg-gray-900 text-white text-[10px] px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+                    <div className="bg-foreground text-white text-[10px] px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
                       <p className="font-semibold">Rs {day.totalRevenue.toLocaleString()}</p>
                       <p className="opacity-70">{day.ticketsSold} tickets</p>
                     </div>
@@ -82,8 +82,8 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
                   <div
                     className={`w-full rounded-t transition-all duration-300 cursor-pointer ${
                       isToday
-                        ? 'bg-blue-500 hover:bg-blue-600'
-                        : 'bg-blue-200 hover:bg-blue-300'
+                        ? 'bg-primary/80 hover:bg-primary'
+                        : 'bg-primary/20 hover:bg-primary/30'
                     }`}
                     style={{ height: `${Math.max(heightPct, 2)}%` }}
                   />
@@ -103,7 +103,7 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
                 <div
                   key={day.date}
                   className={`flex-1 text-center text-[9px] truncate ${
-                    isToday ? 'font-semibold text-blue-600' : 'text-gray-400'
+                    isToday ? 'font-semibold text-primary' : 'text-muted-foreground/70'
                   }`}
                 >
                   {label}
@@ -113,10 +113,10 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
           </div>
 
           {/* Summary row */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-            <div className="text-xs text-gray-500">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+            <div className="text-xs text-muted-foreground">
               Avg:{' '}
-              <span className="font-semibold text-gray-800">
+              <span className="font-semibold text-foreground">
                 Rs{' '}
                 {Math.round(
                   chartData.reduce((s, d) => s + d.totalRevenue, 0) / chartData.length,
@@ -124,9 +124,9 @@ export function RevenueTrendsChart({ data, loading }: RevenueTrendsChartProps) {
               </span>
               /day
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               Total:{' '}
-              <span className="font-semibold text-gray-800">
+              <span className="font-semibold text-foreground">
                 Rs {chartData.reduce((s, d) => s + d.totalRevenue, 0).toLocaleString()}
               </span>
             </div>

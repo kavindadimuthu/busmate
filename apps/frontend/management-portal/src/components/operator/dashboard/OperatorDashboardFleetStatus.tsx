@@ -19,14 +19,14 @@ interface OperatorDashboardFleetStatusProps {
 export function OperatorDashboardFleetStatus({ fleetStatus, loading = false }: OperatorDashboardFleetStatusProps) {
   if (loading || fleetStatus.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 h-full flex flex-col animate-pulse">
-        <div className="h-5 w-28 bg-gray-200 rounded mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 h-full flex flex-col animate-pulse">
+        <div className="h-5 w-28 bg-muted rounded mb-4" />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-40 h-40 bg-gray-100 rounded-full" />
+          <div className="w-40 h-40 bg-muted rounded-full" />
         </div>
         <div className="mt-4 space-y-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-4 bg-gray-100 rounded w-full" />
+            <div key={i} className="h-4 bg-muted rounded w-full" />
           ))}
         </div>
       </div>
@@ -69,15 +69,15 @@ export function OperatorDashboardFleetStatus({ fleetStatus, loading = false }: O
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 h-full flex flex-col">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4">Fleet Status</h3>
+    <div className="bg-card rounded-xl border border-border p-6 h-full flex flex-col">
+      <h3 className="text-sm font-semibold text-foreground mb-4">Fleet Status</h3>
 
       {/* Chart with center text */}
       <div className="relative flex-1 min-h-[180px] flex items-center justify-center">
         <Doughnut data={chartData} options={options} />
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-2xl font-bold text-gray-900">{total}</span>
-          <span className="text-xs text-gray-500">Total Buses</span>
+          <span className="text-2xl font-bold text-foreground">{total}</span>
+          <span className="text-xs text-muted-foreground">Total Buses</span>
         </div>
       </div>
 
@@ -86,8 +86,8 @@ export function OperatorDashboardFleetStatus({ fleetStatus, loading = false }: O
         {fleetStatus.map((item) => (
           <div key={item.label} className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-            <span className="text-xs text-gray-600 truncate">{item.label}</span>
-            <span className="text-xs font-semibold text-gray-900 ml-auto">{item.value}</span>
+            <span className="text-xs text-muted-foreground truncate">{item.label}</span>
+            <span className="text-xs font-semibold text-foreground ml-auto">{item.value}</span>
           </div>
         ))}
       </div>

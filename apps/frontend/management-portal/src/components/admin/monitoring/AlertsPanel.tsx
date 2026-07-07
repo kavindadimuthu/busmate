@@ -15,7 +15,20 @@ import {
   Smartphone,
   XCircle,
 } from 'lucide-react';
-import { MonitoringAlert, AlertRule } from '@/data/admin/system-monitoring';
+import {
+  Card,
+  CardContent,
+  Badge,
+  Button,
+  Switch,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  CardSkeleton,
+  EmptyState,
+} from '@busmate/ui';
+import { MonitoringAlert, AlertRule } from '@/data/admin/systemMonitoring';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -49,71 +62,81 @@ function AlertItem({
   const [expanded, setExpanded] = useState(false);
 
   const severityStyles = {
-    critical: { bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500', badge: 'bg-red-100 text-red-700' },
-    warning: { bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700' },
-    info: { bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
+    critical: { bg: 'bg-destructive/10', border: 'border-destructive/20', dot: 'bg-destructive' },
+    warning: { bg: 'bg-warning/10', border: 'border-warning/20', dot: 'bg-warning' },
+    info: { bg: 'bg-primary/10', border: 'border-primary/20', dot: 'bg-primary/80' },
+  };
+
+  const severityVariant: Record<string, 'destructive' | 'outline' | 'secondary'> = {
+    critical: 'destructive',
+    warning: 'outline',
+    info: 'secondary',
   };
 
   const statusStyles = {
-    active: { badge: 'bg-red-100 text-red-700', icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-    acknowledged: { badge: 'bg-amber-100 text-amber-700', icon: <Clock className="h-3.5 w-3.5" /> },
-    resolved: { badge: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3.5 w-3.5" /> },
+    active: { icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+    acknowledged: { icon: <Clock className="h-3.5 w-3.5" /> },
+    resolved: { icon: <CheckCircle className="h-3.5 w-3.5" /> },
   };
 
   const sev = severityStyles[alert.severity];
   const stat = statusStyles[alert.status];
 
   return (
-    <div className={`rounded-xl border ${alert.status === 'resolved' ? 'bg-white border-gray-200 opacity-60' : `${sev.bg} ${sev.border}`} transition-all`}>
+    <Card className={`${alert.status === 'resolved' ? 'opacity-60' : `${sev.bg} ${sev.border}`}`}>
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-4 p-4 text-left"
       >
-        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${alert.status === 'resolved' ? 'bg-green-500' : sev.dot}`} />
+        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${alert.status === 'resolved' ? 'bg-success' : sev.dot}`} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{alert.title}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{alert.source} — {timeAgo(alert.createdAt)}</p>
+          <p className="text-sm font-medium text-foreground truncate">{alert.title}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{alert.source} — {timeAgo(alert.createdAt)}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${sev.badge}`}>
+          <Badge variant={severityVariant[alert.severity]} className={alert.severity === 'warning' ? 'border-warning text-warning' : ''}>
             {alert.severity}
-          </span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${stat.badge}`}>
+          </Badge>
+          <Badge variant="outline" className={`flex items-center gap-1 ${
+            alert.status === 'active' ? 'border-destructive/30 text-destructive' :
+            alert.status === 'acknowledged' ? 'border-warning/30 text-warning' :
+            'border-success/30 text-success'
+          }`}>
             {stat.icon}
             {alert.status}
-          </span>
-          {expanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+          </Badge>
+          {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground/70" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/70" />}
         </div>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 pt-3">
-          <p className="text-sm text-gray-700 mb-3">{alert.message}</p>
+        <div className="px-4 pb-4 border-t border-border/50 pt-3">
+          <p className="text-sm text-foreground/80 mb-3">{alert.message}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
             <div>
-              <span className="text-gray-400">Metric</span>
-              <p className="font-medium text-gray-700 mt-0.5">{alert.metric}</p>
+              <span className="text-muted-foreground/70">Metric</span>
+              <p className="font-medium text-foreground/80 mt-0.5">{alert.metric}</p>
             </div>
             <div>
-              <span className="text-gray-400">Threshold</span>
-              <p className="font-medium text-gray-700 mt-0.5">{alert.threshold}{alert.unit}</p>
+              <span className="text-muted-foreground/70">Threshold</span>
+              <p className="font-medium text-foreground/80 mt-0.5">{alert.threshold}{alert.unit}</p>
             </div>
             <div>
-              <span className="text-gray-400">Current Value</span>
-              <p className="font-medium text-gray-700 mt-0.5">{alert.currentValue}{alert.unit}</p>
+              <span className="text-muted-foreground/70">Current Value</span>
+              <p className="font-medium text-foreground/80 mt-0.5">{alert.currentValue}{alert.unit}</p>
             </div>
             <div>
-              <span className="text-gray-400">Created</span>
-              <p className="font-medium text-gray-700 mt-0.5">{formatDate(alert.createdAt)}</p>
+              <span className="text-muted-foreground/70">Created</span>
+              <p className="font-medium text-foreground/80 mt-0.5">{formatDate(alert.createdAt)}</p>
             </div>
           </div>
           {alert.acknowledgedAt && (
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-muted-foreground mb-2">
               Acknowledged by {alert.acknowledgedBy} at {formatDate(alert.acknowledgedAt)}
             </p>
           )}
           {alert.resolvedAt && (
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-muted-foreground mb-2">
               Resolved at {formatDate(alert.resolvedAt)}
             </p>
           )}
@@ -121,24 +144,28 @@ function AlertItem({
           {alert.status !== 'resolved' && (
             <div className="flex gap-2 mt-2">
               {alert.status === 'active' && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-warning border-warning/30 hover:bg-warning/10"
                   onClick={(e) => { e.stopPropagation(); onAcknowledge(alert.id); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors"
                 >
-                  <Clock className="h-3.5 w-3.5" /> Acknowledge
-                </button>
+                  <Clock className="h-3.5 w-3.5 mr-1.5" /> Acknowledge
+                </Button>
               )}
-              <button
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-success border-success/30 hover:bg-success/10"
                 onClick={(e) => { e.stopPropagation(); onResolve(alert.id); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 transition-colors"
               >
-                <Check className="h-3.5 w-3.5" /> Resolve
-              </button>
+                <Check className="h-3.5 w-3.5 mr-1.5" /> Resolve
+              </Button>
             </div>
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -158,45 +185,36 @@ function AlertRuleRow({
     'in-app': <Bell className="h-3.5 w-3.5" />,
   };
 
-  const severityBadge = {
-    info: 'bg-blue-100 text-blue-700',
-    warning: 'bg-amber-100 text-amber-700',
-    critical: 'bg-red-100 text-red-700',
+  const severityVariant: Record<string, 'destructive' | 'outline' | 'secondary'> = {
+    info: 'secondary',
+    warning: 'outline',
+    critical: 'destructive',
   };
 
   return (
-    <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-      rule.enabled
-        ? 'bg-white border-gray-200 hover:shadow-sm'
-        : 'bg-gray-50 border-gray-100 opacity-60'
+    <Card className={`flex items-center gap-4 p-4 ${
+      !rule.enabled ? 'opacity-60' : ''
     }`}>
-      {/* Toggle */}
-      <button
-        onClick={() => onToggle(rule.id)}
-        className={`relative w-10 h-5 rounded-full transition-colors ${
-          rule.enabled ? 'bg-green-500' : 'bg-gray-300'
-        }`}
-      >
-        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
-          rule.enabled ? 'translate-x-5' : 'translate-x-0.5'
-        }`} />
-      </button>
+      <Switch
+        checked={rule.enabled}
+        onCheckedChange={() => onToggle(rule.id)}
+      />
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{rule.name}</p>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <p className="text-sm font-medium text-foreground">{rule.name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
           {rule.metric} {rule.condition} {rule.threshold}{rule.unit} • Cooldown: {rule.cooldownMinutes}m
         </p>
       </div>
 
       {/* Severity */}
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${severityBadge[rule.severity]}`}>
+      <Badge variant={severityVariant[rule.severity]} className={rule.severity === 'warning' ? 'border-warning text-warning' : ''}>
         {rule.severity}
-      </span>
+      </Badge>
 
       {/* Channels */}
-      <div className="flex items-center gap-1.5 text-gray-400">
+      <div className="flex items-center gap-1.5 text-muted-foreground/70">
         {rule.notifyChannels.map((ch) => (
           <span key={ch} title={ch}>{channelIcons[ch]}</span>
         ))}
@@ -204,16 +222,14 @@ function AlertRuleRow({
 
       {/* Trigger count */}
       <div className="text-right min-w-[60px]">
-        <p className="text-sm font-medium text-gray-700">{rule.triggerCount}</p>
-        <p className="text-xs text-gray-400">triggers</p>
+        <p className="text-sm font-medium text-foreground/80">{rule.triggerCount}</p>
+        <p className="text-xs text-muted-foreground/70">triggers</p>
       </div>
-    </div>
+    </Card>
   );
 }
 
 // ── Main Component ───────────────────────────────────────────────
-
-type AlertTab = 'all' | 'active' | 'resolved' | 'rules';
 
 interface AlertsPanelProps {
   alerts: MonitoringAlert[];
@@ -234,14 +250,7 @@ export function AlertsPanel({
   onResolveAlert,
   onToggleRule,
 }: AlertsPanelProps) {
-  const [tab, setTab] = useState<AlertTab>('all');
-
-  const tabs: { key: AlertTab; label: string; count?: number }[] = [
-    { key: 'all', label: 'All Alerts', count: alerts.length },
-    { key: 'active', label: 'Active', count: activeAlerts.length },
-    { key: 'resolved', label: 'Resolved', count: alerts.filter((a) => a.status === 'resolved').length },
-    { key: 'rules', label: 'Alert Rules', count: alertRules.length },
-  ];
+  const [tab, setTab] = useState<string>('all');
 
   const filteredAlerts =
     tab === 'active'
@@ -254,10 +263,7 @@ export function AlertsPanel({
     return (
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-            <div className="h-3 bg-gray-100 rounded w-2/3" />
-          </div>
+          <CardSkeleton key={i} />
         ))}
       </div>
     );
@@ -265,105 +271,129 @@ export function AlertsPanel({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900">Alerts & Notifications</h2>
-        <p className="text-sm text-gray-500">Manage alert thresholds and view active alerts</p>
-      </div>
-
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <span className="text-xs font-medium text-gray-500">Critical</span>
-          </div>
-          <div className="text-2xl font-bold text-red-600">
-            {alerts.filter((a) => a.severity === 'critical' && a.status !== 'resolved').length}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <span className="text-xs font-medium text-gray-500">Warning</span>
-          </div>
-          <div className="text-2xl font-bold text-amber-500">
-            {alerts.filter((a) => a.severity === 'warning' && a.status !== 'resolved').length}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <span className="text-xs font-medium text-gray-500">Resolved</span>
-          </div>
-          <div className="text-2xl font-bold text-green-600">
-            {alerts.filter((a) => a.status === 'resolved').length}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Bell className="h-4 w-4 text-blue-600" />
-            <span className="text-xs font-medium text-gray-500">Active Rules</span>
-          </div>
-          <div className="text-2xl font-bold text-blue-600">
-            {alertRules.filter((r) => r.enabled).length}
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <span className="text-xs font-medium text-muted-foreground">Critical</span>
+            </div>
+            <div className="text-2xl font-bold text-destructive">
+              {alerts.filter((a) => a.severity === 'critical' && a.status !== 'resolved').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="h-4 w-4 text-warning/80" />
+              <span className="text-xs font-medium text-muted-foreground">Warning</span>
+            </div>
+            <div className="text-2xl font-bold text-warning/80">
+              {alerts.filter((a) => a.severity === 'warning' && a.status !== 'resolved').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <span className="text-xs font-medium text-muted-foreground">Resolved</span>
+            </div>
+            <div className="text-2xl font-bold text-success">
+              {alerts.filter((a) => a.status === 'resolved').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Bell className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">Active Rules</span>
+            </div>
+            <div className="text-2xl font-bold text-primary">
+              {alertRules.filter((r) => r.enabled).length}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              tab === t.key
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {t.label}
-            {t.count !== undefined && (
-              <span className={`px-1.5 py-0.5 rounded-full text-xs ${
-                tab === t.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {t.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="w-full">
+          <TabsTrigger value="all" className="flex-1">
+            All Alerts
+            <Badge variant="secondary" className="ml-1.5 text-xs">{alerts.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="active" className="flex-1">
+            Active
+            <Badge variant="secondary" className="ml-1.5 text-xs">{activeAlerts.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="resolved" className="flex-1">
+            Resolved
+            <Badge variant="secondary" className="ml-1.5 text-xs">{alerts.filter((a) => a.status === 'resolved').length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="rules" className="flex-1">
+            Alert Rules
+            <Badge variant="secondary" className="ml-1.5 text-xs">{alertRules.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Content */}
-      {tab !== 'rules' ? (
-        <div className="space-y-3">
-          {filteredAlerts.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <BellOff className="h-8 w-8 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-500">No alerts found</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {tab === 'active' ? 'All alerts have been resolved!' : 'No alerts in this category'}
-              </p>
-            </div>
-          ) : (
-            filteredAlerts.map((alert) => (
-              <AlertItem
-                key={alert.id}
-                alert={alert}
-                onAcknowledge={onAcknowledgeAlert}
-                onResolve={onResolveAlert}
-              />
-            ))
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {alertRules.map((rule) => (
-            <AlertRuleRow key={rule.id} rule={rule} onToggle={onToggleRule} />
-          ))}
-        </div>
-      )}
+        <TabsContent value="all">
+          <AlertList alerts={filteredAlerts} onAcknowledge={onAcknowledgeAlert} onResolve={onResolveAlert} emptyMessage="No alerts found" />
+        </TabsContent>
+        <TabsContent value="active">
+          <AlertList alerts={filteredAlerts} onAcknowledge={onAcknowledgeAlert} onResolve={onResolveAlert} emptyMessage="All alerts have been resolved!" />
+        </TabsContent>
+        <TabsContent value="resolved">
+          <AlertList alerts={filteredAlerts} onAcknowledge={onAcknowledgeAlert} onResolve={onResolveAlert} emptyMessage="No resolved alerts" />
+        </TabsContent>
+        <TabsContent value="rules">
+          <div className="space-y-3">
+            {alertRules.map((rule) => (
+              <AlertRuleRow key={rule.id} rule={rule} onToggle={onToggleRule} />
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ── Alert List helper ────────────────────────────────────────────
+
+function AlertList({
+  alerts,
+  onAcknowledge,
+  onResolve,
+  emptyMessage,
+}: {
+  alerts: MonitoringAlert[];
+  onAcknowledge: (id: string) => Promise<void>;
+  onResolve: (id: string) => Promise<void>;
+  emptyMessage: string;
+}) {
+  if (alerts.length === 0) {
+    return (
+      <EmptyState
+        icon={<BellOff className="h-8 w-8" />}
+        title="No alerts found"
+        description={emptyMessage}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {alerts.map((alert) => (
+        <AlertItem
+          key={alert.id}
+          alert={alert}
+          onAcknowledge={onAcknowledge}
+          onResolve={onResolve}
+        />
+      ))}
     </div>
   );
 }

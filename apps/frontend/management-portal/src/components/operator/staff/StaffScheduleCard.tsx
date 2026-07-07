@@ -20,19 +20,19 @@ export function StaffScheduleCard({ schedule }: StaffScheduleCardProps) {
   const nonWorkingDays = ordered.filter(d => !d.isWorkingDay).length;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div className="bg-card border border-border rounded-lg shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <CalendarDays className="w-4 h-4 text-indigo-500" />
-          <h2 className="text-sm font-semibold text-gray-900">Weekly Schedule</h2>
+          <h2 className="text-sm font-semibold text-foreground">Weekly Schedule</h2>
         </div>
-        <div className="flex gap-3 text-xs text-gray-500">
+        <div className="flex gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" />
             {workingDays} working
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-gray-200 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-secondary inline-block" />
             {nonWorkingDays} off
           </span>
         </div>
@@ -44,12 +44,12 @@ export function StaffScheduleCard({ schedule }: StaffScheduleCardProps) {
             <div
               key={day.dayOfWeek}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${
-                day.isWorkingDay ? 'bg-indigo-50 border border-indigo-100' : 'bg-gray-50 border border-gray-100'
+                day.isWorkingDay ? 'bg-primary/10 border border-primary/10' : 'bg-muted border border-border/50'
               }`}
             >
               {/* Day */}
               <div className="w-20 shrink-0">
-                <span className={`text-sm font-medium ${day.isWorkingDay ? 'text-indigo-900' : 'text-gray-400'}`}>
+                <span className={`text-sm font-medium ${day.isWorkingDay ? 'text-primary' : 'text-muted-foreground/70'}`}>
                   {day.dayName}
                 </span>
               </div>
@@ -63,13 +63,13 @@ export function StaffScheduleCard({ schedule }: StaffScheduleCardProps) {
                     <span className="font-mono font-medium">{day.shiftEnd}</span>
                   </div>
                   {day.routeNumber && (
-                    <span className="text-xs bg-white border border-indigo-200 text-indigo-600 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs bg-card border border-indigo-200 text-indigo-600 px-2 py-0.5 rounded-full font-medium">
                       {day.routeNumber}
                     </span>
                   )}
                 </div>
               ) : (
-                <span className="text-xs text-gray-400 italic">Day off</span>
+                <span className="text-xs text-muted-foreground/70 italic">Day off</span>
               )}
             </div>
           ))}

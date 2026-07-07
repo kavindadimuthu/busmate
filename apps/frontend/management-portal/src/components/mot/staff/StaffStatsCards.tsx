@@ -1,60 +1,53 @@
-'use client';
+import * as React from "react";
+import { Users, CheckCircle, XCircle, Clock, Search, MapPin } from "lucide-react";
+import { StatsCard, StatsCardGrid } from "@busmate/ui";
 
-import { Users, CheckCircle, XCircle, Clock, Search, MapPin } from 'lucide-react';
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
-import { StatsCardMetric } from '@/components/shared/StatsCard';
-
-interface StaffStatsCardsProps {
-    stats: {
-        totalStaff: { count: number };
-        activeStaff: { count: number };
-        inactiveStaff: { count: number };
-        totalTimekeepers: { count: number };
-        totalInspectors: { count: number };
-        provincesCount: { count: number };
-    };
-    loading?: boolean;
+interface StaffStats {
+  totalStaff: { count: number };
+  activeStaff: { count: number };
+  inactiveStaff: { count: number };
+  totalTimekeepers: { count: number };
+  totalInspectors: { count: number };
+  provincesCount: { count: number };
 }
 
-export function StaffStatsCards({ stats, loading }: StaffStatsCardsProps) {
-    const metrics: StatsCardMetric[] = [
-        {
-            label: 'Total Staff',
-            value: String(stats.totalStaff.count),
-            color: 'blue',
-            icon: Users,
-        },
-        {
-            label: 'Active',
-            value: String(stats.activeStaff.count),
-            color: 'green',
-            icon: CheckCircle,
-        },
-        {
-            label: 'Inactive',
-            value: String(stats.inactiveStaff.count),
-            color: 'red',
-            icon: XCircle,
-        },
-        {
-            label: 'Timekeepers',
-            value: String(stats.totalTimekeepers.count),
-            color: 'purple',
-            icon: Clock,
-        },
-        {
-            label: 'Inspectors',
-            value: String(stats.totalInspectors.count),
-            color: 'teal',
-            icon: Search,
-        },
-        {
-            label: 'Provinces',
-            value: String(stats.provincesCount.count),
-            color: 'amber',
-            icon: MapPin,
-        },
-    ];
+interface StaffStatsCardsProps {
+  stats: StaffStats;
+}
 
-    return <StatsCardsContainer metrics={metrics} columns={6} loading={loading} />;
+export function StaffStatsCards({ stats }: StaffStatsCardsProps) {
+  return (
+    <StatsCardGrid className="lg:grid-cols-6">
+      <StatsCard
+        title="Total Staff"
+        value={stats.totalStaff.count.toLocaleString()}
+        icon={<Users className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Active"
+        value={stats.activeStaff.count.toLocaleString()}
+        icon={<CheckCircle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Inactive"
+        value={stats.inactiveStaff.count.toLocaleString()}
+        icon={<XCircle className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Timekeepers"
+        value={stats.totalTimekeepers.count.toLocaleString()}
+        icon={<Clock className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Inspectors"
+        value={stats.totalInspectors.count.toLocaleString()}
+        icon={<Search className="h-5 w-5" />}
+      />
+      <StatsCard
+        title="Provinces"
+        value={stats.provincesCount.count.toLocaleString()}
+        icon={<MapPin className="h-5 w-5" />}
+      />
+    </StatsCardGrid>
+  );
 }

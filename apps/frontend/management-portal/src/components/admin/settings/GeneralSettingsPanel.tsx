@@ -1,18 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
+  Input,
+  Label,
+  Switch,
+  Button,
+  Textarea,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  FormGrid,
+  FormSkeleton,
+} from '@busmate/ui';
 import {
   Settings,
   Globe,
@@ -27,38 +34,11 @@ import {
   CheckCircle,
   Loader2,
 } from 'lucide-react';
-import type { GeneralSettings } from '@/data/admin/system-settings';
+import type { GeneralSettings } from '@/data/admin/systemSettings';
 import {
   getGeneralSettings,
   updateGeneralSettings,
-} from '@/data/admin/system-settings';
-
-// ── Section wrapper ──────────────────────────────────────────────
-
-function Section({
-  icon,
-  title,
-  description,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="px-6 py-6 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{title}</h3>
-      </div>
-      {description && (
-        <p className="text-sm text-gray-500 mb-5">{description}</p>
-      )}
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
+} from '@/data/admin/systemSettings';
 
 // ── Toggle row ───────────────────────────────────────────────────
 
@@ -81,7 +61,7 @@ function ToggleRow({
         <Label htmlFor={id} className="text-base font-medium">
           {label}
         </Label>
-        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onChange} />
     </div>
@@ -143,21 +123,26 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
 
   if (!settings) {
     return (
-      <div className="px-6 py-16 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+      <div className="space-y-4">
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
+        <FormSkeleton fields={4} columns={2} showTitle={false} showDescription={false} />
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* ── Site Information ─────────────────────────── */}
-        <Section
-          icon={<Globe className="h-5 w-5 text-blue-600" />}
-          title="Site Information"
-          description="Basic details about your BusMate instance"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Globe className="h-5 w-5 text-primary" />
+            Site Information
+          </CardTitle>
+          <CardDescription>Basic details about your BusMate instance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormGrid columns={2}>
             <div>
               <Label htmlFor="siteName">Site Name</Label>
               <Input
@@ -190,16 +175,21 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
                 onChange={(e) => update('faviconUrl', e.target.value)}
               />
             </div>
-          </div>
-        </Section>
+          </FormGrid>
+        </CardContent>
+      </Card>
 
-        {/* ── Contact Information ─────────────────────── */}
-        <Section
-          icon={<Mail className="h-5 w-5 text-green-600" />}
-          title="Contact Information"
-          description="Primary contact details displayed on the platform"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* ── Contact Information ─────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Mail className="h-5 w-5 text-success" />
+            Contact Information
+          </CardTitle>
+          <CardDescription>Primary contact details displayed on the platform</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormGrid columns={2}>
             <div>
               <Label htmlFor="contactEmail">
                 <span className="flex items-center gap-1.5">
@@ -251,16 +241,21 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
                 rows={2}
               />
             </div>
-          </div>
-        </Section>
+          </FormGrid>
+        </CardContent>
+      </Card>
 
-        {/* ── Regional Settings ───────────────────────── */}
-        <Section
-          icon={<Clock className="h-5 w-5 text-purple-600" />}
-          title="Regional Settings"
-          description="Configure locale and timezone preferences"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* ── Regional Settings ───────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Clock className="h-5 w-5 text-[hsl(var(--purple-600))]" />
+            Regional Settings
+          </CardTitle>
+          <CardDescription>Configure locale and timezone preferences</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormGrid columns={3} className="lg:grid-cols-4">
             <div>
               <Label>Time Zone</Label>
               <Select
@@ -325,16 +320,21 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </Section>
+          </FormGrid>
+        </CardContent>
+      </Card>
 
-        {/* ── Security Settings ───────────────────────── */}
-        <Section
-          icon={<Shield className="h-5 w-5 text-red-600" />}
-          title="Security Settings"
-          description="Authentication and access control preferences"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+      {/* ── Security Settings ───────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Shield className="h-5 w-5 text-destructive" />
+            Security Settings
+          </CardTitle>
+          <CardDescription>Authentication and access control preferences</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FormGrid columns={3} className="mb-5">
             <div>
               <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
               <Input
@@ -371,7 +371,7 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
                 }
               />
             </div>
-          </div>
+          </FormGrid>
           <div className="space-y-1 divide-y divide-gray-50">
             <ToggleRow
               id="twoFactorEnabled"
@@ -388,14 +388,19 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
               onChange={(v) => update('lockAfterFailedAttempts', v)}
             />
           </div>
-        </Section>
+        </CardContent>
+      </Card>
 
-        {/* ── Notification Preferences ────────────────── */}
-        <Section
-          icon={<Lock className="h-5 w-5 text-amber-600" />}
-          title="Notification Preferences"
-          description="Choose how system alerts are delivered"
-        >
+      {/* ── Notification Preferences ────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Lock className="h-5 w-5 text-warning" />
+            Notification Preferences
+          </CardTitle>
+          <CardDescription>Choose how system alerts are delivered</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-1 divide-y divide-gray-50">
             <ToggleRow
               id="emailNotifications"
@@ -412,44 +417,47 @@ export function GeneralSettingsPanel({ onSaved }: GeneralSettingsPanelProps) {
               onChange={(v) => update('smsAlerts', v)}
             />
           </div>
-        </Section>
+        </CardContent>
+      </Card>
 
       {/* ── Action Bar ──────────────────────────────── */}
-      <div className="px-6 py-4 flex items-center justify-between bg-gray-50/50 rounded-b-xl border-t border-gray-100">
-        <div className="flex items-center gap-2 text-sm">
-          {saved && (
-            <span className="flex items-center gap-1 text-green-600">
-              <CheckCircle className="h-4 w-4" />
-              Settings saved
-            </span>
-          )}
-          {isDirty && !saved && (
-            <span className="text-amber-600">You have unsaved changes</span>
-          )}
-        </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            disabled={!isDirty || saving}
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!isDirty || saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
+      <Card className="py-0">
+        <CardContent className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            {saved && (
+              <span className="flex items-center gap-1 text-success">
+                <CheckCircle className="h-4 w-4" />
+                Settings saved
+              </span>
             )}
-            Save Changes
-          </Button>
-        </div>
-      </div>
+            {isDirty && !saved && (
+              <span className="text-warning">You have unsaved changes</span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={!isDirty || saving}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={!isDirty || saving}
+              className="bg-primary hover:bg-primary text-white"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowUpRight, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
-import { ServiceSummary } from '@/data/admin/dashboard-v2';
+import { ServiceSummary } from '@/data/admin/dashboardV2';
 
 // ── Health Score Ring ─────────────────────────────────────────────
 
@@ -24,8 +24,8 @@ function HealthRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-gray-900">{score}</span>
-        <span className="text-[10px] text-gray-500 font-medium">Health</span>
+        <span className="text-2xl font-bold text-foreground">{score}</span>
+        <span className="text-[10px] text-muted-foreground font-medium">Health</span>
       </div>
     </div>
   );
@@ -34,14 +34,14 @@ function HealthRing({ score }: { score: number }) {
 // ── Progress bar ──────────────────────────────────────────────────
 
 function ResourceBar({ label, value, unit = '%' }: { label: string; value: number; unit?: string }) {
-  const color = value >= 85 ? 'bg-red-500' : value >= 70 ? 'bg-amber-500' : 'bg-blue-500';
+  const color = value >= 85 ? 'bg-destructive' : value >= 70 ? 'bg-warning' : 'bg-primary/80';
   return (
     <div>
-      <div className="flex justify-between text-xs text-gray-500 mb-1">
+      <div className="flex justify-between text-xs text-muted-foreground mb-1">
         <span>{label}</span>
-        <span className="font-medium text-gray-700">{value.toFixed(1)}{unit}</span>
+        <span className="font-medium text-foreground">{value.toFixed(1)}{unit}</span>
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${Math.min(value, 100)}%` }}
@@ -54,9 +54,9 @@ function ResourceBar({ label, value, unit = '%' }: { label: string; value: numbe
 // ── Service status icon ───────────────────────────────────────────
 
 function StatusIcon({ status }: { status: ServiceSummary['status'] }) {
-  if (status === 'healthy')  return <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />;
-  if (status === 'degraded') return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />;
-  return <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />;
+  if (status === 'healthy')  return <CheckCircle2 className="h-3.5 w-3.5 text-success/80 shrink-0" />;
+  if (status === 'degraded') return <AlertTriangle className="h-3.5 w-3.5 text-warning/80 shrink-0" />;
+  return <XCircle className="h-3.5 w-3.5 text-destructive/80 shrink-0" />;
 }
 
 // ── Main component ────────────────────────────────────────────────
@@ -81,11 +81,11 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse space-y-4">
-        <div className="h-5 bg-gray-200 rounded w-32" />
-        <div className="w-28 h-28 bg-gray-100 rounded-full mx-auto" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse space-y-4">
+        <div className="h-5 bg-muted rounded w-32" />
+        <div className="w-28 h-28 bg-muted rounded-full mx-auto" />
         <div className="space-y-3">
-          {[0, 1, 2].map((i) => <div key={i} className="h-4 bg-gray-100 rounded" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-4 bg-muted rounded" />)}
         </div>
       </div>
     );
@@ -94,13 +94,13 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
   const overallStatus = downSvc > 0 ? 'degraded' : degradedSvc > 0 ? 'degraded' : 'healthy';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 h-full flex flex-col gap-5">
+    <div className="bg-card rounded-xl border border-border p-6 h-full flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900 text-sm">System Health</h3>
+        <h3 className="font-semibold text-foreground text-sm">System Health</h3>
         <Link
           href="/admin/monitoring"
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           Details <ArrowUpRight className="h-3 w-3" />
         </Link>
@@ -111,23 +111,23 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
 
       {/* Status badges */}
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-green-50 rounded-lg p-2">
-          <p className="text-lg font-bold text-green-700">{healthySvc}</p>
-          <p className="text-[10px] text-green-600">Healthy</p>
+        <div className="bg-success/10 rounded-lg p-2">
+          <p className="text-lg font-bold text-success">{healthySvc}</p>
+          <p className="text-[10px] text-success">Healthy</p>
         </div>
-        <div className="bg-amber-50 rounded-lg p-2">
-          <p className="text-lg font-bold text-amber-700">{degradedSvc}</p>
-          <p className="text-[10px] text-amber-600">Degraded</p>
+        <div className="bg-warning/10 rounded-lg p-2">
+          <p className="text-lg font-bold text-warning">{degradedSvc}</p>
+          <p className="text-[10px] text-warning">Degraded</p>
         </div>
-        <div className="bg-red-50 rounded-lg p-2">
-          <p className="text-lg font-bold text-red-700">{downSvc}</p>
-          <p className="text-[10px] text-red-600">Down</p>
+        <div className="bg-destructive/10 rounded-lg p-2">
+          <p className="text-lg font-bold text-destructive">{downSvc}</p>
+          <p className="text-[10px] text-destructive">Down</p>
         </div>
       </div>
 
       {/* Resource bars */}
       <div className="space-y-3">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Resources</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Resources</p>
         <ResourceBar label="CPU" value={cpuUsage} />
         <ResourceBar label="Memory" value={memUsage} />
         <ResourceBar label="Disk" value={diskUsage} />
@@ -135,18 +135,18 @@ export function DashboardSystemHealth({ services, loading = false }: DashboardSy
 
       {/* Service list */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Services</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Services</p>
         {services.slice(0, 5).map((svc) => (
           <div key={svc.id} className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <StatusIcon status={svc.status} />
-              <span className="text-xs text-gray-700 truncate">{svc.name}</span>
+              <span className="text-xs text-foreground truncate">{svc.name}</span>
             </div>
-            <span className="text-[10px] text-gray-400 shrink-0">{svc.responseTime > 0 ? `${svc.responseTime}ms` : '—'}</span>
+            <span className="text-[10px] text-muted-foreground shrink-0">{svc.responseTime > 0 ? `${svc.responseTime}ms` : '—'}</span>
           </div>
         ))}
         {services.length > 5 && (
-          <Link href="/admin/monitoring/api" className="text-xs text-blue-600 hover:underline">
+          <Link href="/admin/monitoring?tab=api" className="text-xs text-primary hover:underline">
             +{services.length - 5} more services
           </Link>
         )}

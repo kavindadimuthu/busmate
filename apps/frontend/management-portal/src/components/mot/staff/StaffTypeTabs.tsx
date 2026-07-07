@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { Users, Clock, Search } from 'lucide-react';
-import { SwitchableTabs } from '@/components/shared/SwitchableTabs';
-import type { TabItem } from '@/components/shared/SwitchableTabs';
+import { Tabs, TabsList, TabsTrigger } from '@busmate/ui';
 import type { StaffType } from '@/data/mot/staff';
 
 type TabValue = 'all' | StaffType;
@@ -19,17 +18,22 @@ interface StaffTypeTabsProps {
 }
 
 export function StaffTypeTabs({ activeTab, onTabChange, counts }: StaffTypeTabsProps) {
-    const tabs: TabItem<TabValue>[] = [
-        { id: 'all', label: 'All Staff', icon: Users, count: counts.all },
-        { id: 'timekeeper', label: 'Timekeepers', icon: Clock, count: counts.timekeeper },
-        { id: 'inspector', label: 'Inspectors', icon: Search, count: counts.inspector },
-    ];
-
     return (
-        <SwitchableTabs<TabValue>
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-        />
+        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as TabValue)}>
+            <TabsList>
+                <TabsTrigger value="all">
+                    <Users className="h-4 w-4" /> All Staff
+                    {counts.all > 0 && <span className="ml-1 text-xs font-semibold">{counts.all.toLocaleString()}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="timekeeper">
+                    <Clock className="h-4 w-4" /> Timekeepers
+                    {counts.timekeeper > 0 && <span className="ml-1 text-xs font-semibold">{counts.timekeeper.toLocaleString()}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="inspector">
+                    <Search className="h-4 w-4" /> Inspectors
+                    {counts.inspector > 0 && <span className="ml-1 text-xs font-semibold">{counts.inspector.toLocaleString()}</span>}
+                </TabsTrigger>
+            </TabsList>
+        </Tabs>
     );
 }

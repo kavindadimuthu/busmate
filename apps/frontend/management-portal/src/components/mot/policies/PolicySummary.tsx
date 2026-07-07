@@ -20,47 +20,47 @@ export function PolicySummary({ policy }: PolicySummaryProps) {
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'published':
-                return 'bg-green-100 text-green-800 border-green-300';
+                return 'bg-success/15 text-success border-success/30';
             case 'draft':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                return 'bg-warning/15 text-warning border-warning/30';
             case 'under review':
-                return 'bg-blue-100 text-blue-800 border-blue-300';
+                return 'bg-primary/15 text-primary border-primary/30';
             case 'archived':
-                return 'bg-gray-100 text-gray-800 border-gray-300';
+                return 'bg-muted text-foreground border-border';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-300';
+                return 'bg-muted text-foreground border-border';
         }
     };
 
     const getPriorityColor = (priority: string) => {
         switch (priority.toLowerCase()) {
             case 'high':
-                return 'bg-red-100 text-red-700 border-red-300';
+                return 'bg-destructive/15 text-destructive border-destructive/30';
             case 'medium':
-                return 'bg-orange-100 text-orange-700 border-orange-300';
+                return 'bg-warning/15 text-orange-700 border-orange-300';
             case 'low':
-                return 'bg-gray-100 text-gray-600 border-gray-300';
+                return 'bg-muted text-muted-foreground border-border';
             default:
-                return 'bg-gray-100 text-gray-600 border-gray-300';
+                return 'bg-muted text-muted-foreground border-border';
         }
     };
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-card rounded-lg border border-border shadow-sm">
             {/* Header */}
-            <div className="p-6 border-b border-gray-100">
+            <div className="p-6 border-b border-border/50">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                                <FileText className="w-5 h-5 text-blue-600" />
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <FileText className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">{policy.title}</h2>
-                                <p className="text-sm text-gray-500">{policy.id} · {policy.version}</p>
+                                <h2 className="text-xl font-bold text-foreground">{policy.title}</h2>
+                                <p className="text-sm text-muted-foreground">{policy.id} · {policy.version}</p>
                             </div>
                         </div>
-                        <p className="text-gray-600 mt-3">{policy.description}</p>
+                        <p className="text-muted-foreground mt-3">{policy.description}</p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
@@ -79,71 +79,71 @@ export function PolicySummary({ policy }: PolicySummaryProps) {
             <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="flex items-start gap-3">
-                        <User className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <User className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Author</p>
-                            <p className="text-sm text-gray-900">{policy.author}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Author</p>
+                            <p className="text-sm text-foreground">{policy.author}</p>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <Building2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <Building2 className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Department</p>
-                            <p className="text-sm text-gray-900">{policy.department}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Department</p>
+                            <p className="text-sm text-foreground">{policy.department}</p>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <Calendar className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <Calendar className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Effective Date</p>
-                            <p className="text-sm text-gray-900">{policy.effectiveDate}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Effective Date</p>
+                            <p className="text-sm text-foreground">{policy.effectiveDate}</p>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <Clock className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <Clock className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Expiry Date</p>
-                            <p className="text-sm text-gray-900">{policy.expiryDate || 'No expiry'}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Expiry Date</p>
+                            <p className="text-sm text-foreground">{policy.expiryDate || 'No expiry'}</p>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <Tag className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <Tag className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Type / Category</p>
-                            <p className="text-sm text-gray-900">{policy.type} · {policy.category}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Type / Category</p>
+                            <p className="text-sm text-foreground">{policy.type} · {policy.category}</p>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <Calendar className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <Calendar className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Published Date</p>
-                            <p className="text-sm text-gray-900">{policy.publishedDate}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Published Date</p>
+                            <p className="text-sm text-foreground">{policy.publishedDate}</p>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                        <Clock className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <Clock className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Last Modified</p>
-                            <p className="text-sm text-gray-900">{policy.lastModified}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Last Modified</p>
+                            <p className="text-sm text-foreground">{policy.lastModified}</p>
                         </div>
                     </div>
 
                     {policy.documentUrl && (
                         <div className="flex items-start gap-3">
-                            <ExternalLink className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                            <ExternalLink className="w-5 h-5 text-muted-foreground/70 mt-0.5 shrink-0" />
                             <div>
-                                <p className="text-sm font-medium text-gray-500">Document</p>
+                                <p className="text-sm font-medium text-muted-foreground">Document</p>
                                 <a
                                     href={policy.documentUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                    className="text-sm text-primary hover:text-primary underline"
                                 >
                                     View Document
                                 </a>
@@ -154,13 +154,13 @@ export function PolicySummary({ policy }: PolicySummaryProps) {
 
                 {/* Tags */}
                 {policy.tags.length > 0 && (
-                    <div className="mt-6 pt-4 border-t border-gray-100">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Tags</p>
+                    <div className="mt-6 pt-4 border-t border-border/50">
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Tags</p>
                         <div className="flex flex-wrap gap-2">
                             {policy.tags.map((tag) => (
                                 <span
                                     key={tag}
-                                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
                                 >
                                     {tag}
                                 </span>

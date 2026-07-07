@@ -102,7 +102,7 @@ export {
   resolveAlert,
   toggleAlertRule,
   restartMicroservice,
-} from './system-monitoring';
+} from './systemMonitoring';
 export type {
   PerformanceSnapshot,
   ResourceSnapshot,
@@ -111,7 +111,7 @@ export type {
   MonitoringAlert,
   AlertRule,
   SystemHealthSummary,
-} from './system-monitoring';
+} from './systemMonitoring';
 
 // Logs data and functions
 export {
@@ -158,7 +158,7 @@ export {
   restoreBackup,
   deleteBackup,
   downloadBackup,
-} from './system-settings';
+} from './systemSettings';
 export type {
   GeneralSettings,
   ApiSettings,
@@ -169,4 +169,4 @@ export type {
   BackupSettings,
   BackupEntry,
   BackupStats,
-} from './system-settings';
+} from './systemSettings';

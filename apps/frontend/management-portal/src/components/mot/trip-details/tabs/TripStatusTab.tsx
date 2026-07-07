@@ -59,9 +59,9 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
       case 'pending':
         return {
           icon: Clock,
-          color: 'text-yellow-500',
-          bgColor: 'bg-yellow-100',
-          borderColor: 'border-yellow-200',
+          color: 'text-warning',
+          bgColor: 'bg-warning/15',
+          borderColor: 'border-warning/20',
           label: 'Pending'
         };
       case 'active':
@@ -70,41 +70,41 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
       case 'departed':
         return {
           icon: Play,
-          color: 'text-green-500',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
+          color: 'text-success/80',
+          bgColor: 'bg-success/15',
+          borderColor: 'border-success/20',
           label: status.replace('_', ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase())
         };
       case 'completed':
         return {
           icon: CheckCircle,
-          color: 'text-blue-500',
-          bgColor: 'bg-blue-100',
-          borderColor: 'border-blue-200',
+          color: 'text-primary/80',
+          bgColor: 'bg-primary/15',
+          borderColor: 'border-primary/20',
           label: 'Completed'
         };
       case 'cancelled':
         return {
           icon: XCircle,
-          color: 'text-red-500',
-          bgColor: 'bg-red-100',
-          borderColor: 'border-red-200',
+          color: 'text-destructive/80',
+          bgColor: 'bg-destructive/15',
+          borderColor: 'border-destructive/20',
           label: 'Cancelled'
         };
       case 'delayed':
         return {
           icon: AlertTriangle,
-          color: 'text-orange-500',
-          bgColor: 'bg-orange-100',
+          color: 'text-warning/80',
+          bgColor: 'bg-warning/15',
           borderColor: 'border-orange-200',
           label: 'Delayed'
         };
       default:
         return {
           icon: Clock,
-          color: 'text-gray-500',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
+          color: 'text-muted-foreground',
+          bgColor: 'bg-muted',
+          borderColor: 'border-border',
           label: status || 'Unknown'
         };
     }
@@ -169,7 +169,7 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
             <StatusIcon className={`h-8 w-8 ${statusDisplay.color}`} />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">Current Status</h3>
+            <h3 className="text-xl font-semibold text-foreground">Current Status</h3>
             <p className={`text-lg font-medium ${statusDisplay.color}`}>
               {statusDisplay.label}
             </p>
@@ -178,33 +178,33 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
       </div>
 
       {/* Trip Timeline */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-6">Trip Progress</h3>
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-medium text-foreground mb-6">Trip Progress</h3>
         
         <div className="space-y-6">
           {/* Scheduled vs Actual Times */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Departure */}
             <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900">Departure</h4>
+              <h4 className="text-md font-medium text-foreground">Departure</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Scheduled:</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-muted-foreground">Scheduled:</span>
+                  <span className="text-sm font-medium text-foreground">
                     {formatTime(trip.scheduledDepartureTime)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Actual:</span>
+                  <span className="text-sm text-muted-foreground">Actual:</span>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-foreground">
                       {formatTime(trip.actualDepartureTime) || 'Not recorded'}
                     </span>
                     {departureDelay !== null && (
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        departureDelay > 0 ? 'bg-red-100 text-red-800' : 
-                        departureDelay < 0 ? 'bg-green-100 text-green-800' : 
-                        'bg-gray-100 text-gray-800'
+                        departureDelay > 0 ? 'bg-destructive/15 text-destructive' : 
+                        departureDelay < 0 ? 'bg-success/15 text-success' : 
+                        'bg-muted text-foreground'
                       }`}>
                         {departureDelay > 0 && '+'}
                         {departureDelay}m
@@ -217,25 +217,25 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
 
             {/* Arrival */}
             <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900">Arrival</h4>
+              <h4 className="text-md font-medium text-foreground">Arrival</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Scheduled:</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-muted-foreground">Scheduled:</span>
+                  <span className="text-sm font-medium text-foreground">
                     {formatTime(trip.scheduledArrivalTime)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Actual:</span>
+                  <span className="text-sm text-muted-foreground">Actual:</span>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-foreground">
                       {formatTime(trip.actualArrivalTime) || 'Not recorded'}
                     </span>
                     {arrivalDelay !== null && (
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        arrivalDelay > 0 ? 'bg-red-100 text-red-800' : 
-                        arrivalDelay < 0 ? 'bg-green-100 text-green-800' : 
-                        'bg-gray-100 text-gray-800'
+                        arrivalDelay > 0 ? 'bg-destructive/15 text-destructive' : 
+                        arrivalDelay < 0 ? 'bg-success/15 text-success' : 
+                        'bg-muted text-foreground'
                       }`}>
                         {arrivalDelay > 0 && '+'}
                         {arrivalDelay}m
@@ -249,15 +249,15 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
 
           {/* Performance Summary */}
           {(departureDelay !== null || arrivalDelay !== null) && (
-            <div className="pt-4 border-t border-gray-200">
-              <h4 className="text-md font-medium text-gray-900 mb-3">Performance Summary</h4>
+            <div className="pt-4 border-t border-border">
+              <h4 className="text-md font-medium text-foreground mb-3">Performance Summary</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {departureDelay !== null && (
-                  <div className="text-center p-3 rounded-lg bg-gray-50">
-                    <p className="text-sm text-gray-600">Departure Variance</p>
+                  <div className="text-center p-3 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Departure Variance</p>
                     <p className={`text-lg font-semibold ${
-                      departureDelay > 0 ? 'text-red-600' : 
-                      departureDelay < 0 ? 'text-green-600' : 'text-gray-600'
+                      departureDelay > 0 ? 'text-destructive' : 
+                      departureDelay < 0 ? 'text-success' : 'text-muted-foreground'
                     }`}>
                       {departureDelay > 0 && '+'}
                       {departureDelay} minutes
@@ -265,21 +265,21 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
                   </div>
                 )}
                 {arrivalDelay !== null && (
-                  <div className="text-center p-3 rounded-lg bg-gray-50">
-                    <p className="text-sm text-gray-600">Arrival Variance</p>
+                  <div className="text-center p-3 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Arrival Variance</p>
                     <p className={`text-lg font-semibold ${
-                      arrivalDelay > 0 ? 'text-red-600' : 
-                      arrivalDelay < 0 ? 'text-green-600' : 'text-gray-600'
+                      arrivalDelay > 0 ? 'text-destructive' : 
+                      arrivalDelay < 0 ? 'text-success' : 'text-muted-foreground'
                     }`}>
                       {arrivalDelay > 0 && '+'}
                       {arrivalDelay} minutes
                     </p>
                   </div>
                 )}
-                <div className="text-center p-3 rounded-lg bg-gray-50">
-                  <p className="text-sm text-gray-600">On-Time Performance</p>
+                <div className="text-center p-3 rounded-lg bg-muted">
+                  <p className="text-sm text-muted-foreground">On-Time Performance</p>
                   <p className={`text-lg font-semibold ${
-                    (departureDelay || 0) <= 5 && (arrivalDelay || 0) <= 5 ? 'text-green-600' : 'text-red-600'
+                    (departureDelay || 0) <= 5 && (arrivalDelay || 0) <= 5 ? 'text-success' : 'text-destructive'
                   }`}>
                     {(departureDelay || 0) <= 5 && (arrivalDelay || 0) <= 5 ? 'On Time' : 'Delayed'}
                   </p>
@@ -291,8 +291,8 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
       </div>
 
       {/* Status History */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-6">Status History</h3>
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-medium text-foreground mb-6">Status History</h3>
         
         {statusHistory.length > 0 ? (
           <div className="space-y-4">
@@ -309,23 +309,23 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900 capitalize">
+                      <p className="text-sm font-medium text-foreground capitalize">
                         {entryStatusDisplay.label}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {formatDateTime(entry.timestamp)}
                       </p>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{entry.description}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{entry.description}</p>
                     {entry.user && (
                       <div className="flex items-center space-x-1 mt-1">
-                        <User className="w-3 h-3 text-gray-400" />
-                        <p className="text-xs text-gray-500">by {entry.user}</p>
+                        <User className="w-3 h-3 text-muted-foreground/70" />
+                        <p className="text-xs text-muted-foreground">by {entry.user}</p>
                       </div>
                     )}
                   </div>
                   {index < statusHistory.length - 1 && (
-                    <div className="absolute ml-4 mt-8 w-0.5 h-4 bg-gray-200"></div>
+                    <div className="absolute ml-4 mt-8 w-0.5 h-4 bg-secondary"></div>
                   )}
                 </div>
               );
@@ -333,21 +333,21 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
           </div>
         ) : (
           <div className="text-center py-8">
-            <Activity className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No Status History</h4>
-            <p className="text-gray-500">Status changes will appear here as the trip progresses.</p>
+            <Activity className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+            <h4 className="text-lg font-medium text-foreground mb-2">No Status History</h4>
+            <p className="text-muted-foreground">Status changes will appear here as the trip progresses.</p>
           </div>
         )}
       </div>
 
       {/* Trip Notes */}
       {trip.notes && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div className="bg-warning/10 border border-warning/20 rounded-lg p-6">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-400 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-warning/70 mt-0.5" />
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Trip Notes</h3>
-              <p className="text-gray-700">{trip.notes}</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">Trip Notes</h3>
+              <p className="text-foreground/80">{trip.notes}</p>
             </div>
           </div>
         </div>
@@ -358,7 +358,7 @@ export function TripStatusTab({ trip, onRefresh }: TripStatusTabProps) {
         <div className="flex justify-center pt-4">
           <button
             onClick={onRefresh}
-            className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-muted text-foreground/80 text-sm font-medium rounded-md hover:bg-secondary transition-colors"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh Status Information

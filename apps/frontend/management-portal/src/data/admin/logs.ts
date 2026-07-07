@@ -744,13 +744,13 @@ export function filterUserActivityLogs(filters: {
 }): UserActivityLog[] {
   let filtered = [...mockUserActivityLogs];
 
-  if (filters.userType && filters.userType !== 'all') {
+  if (filters.userType && filters.userType !== '__all__') {
     filtered = filtered.filter(l => l.userType === filters.userType);
   }
-  if (filters.action && filters.action !== 'all') {
+  if (filters.action && filters.action !== '__all__') {
     filtered = filtered.filter(l => l.action === filters.action);
   }
-  if (filters.status && filters.status !== 'all') {
+  if (filters.status && filters.status !== '__all__') {
     filtered = filtered.filter(l => l.status === filters.status);
   }
   if (filters.search) {
@@ -774,10 +774,10 @@ export function filterSecurityLogs(filters: {
 }): SecurityLog[] {
   let filtered = [...mockSecurityLogs];
 
-  if (filters.eventType && filters.eventType !== 'all') {
+  if (filters.eventType && filters.eventType !== '__all__') {
     filtered = filtered.filter(l => l.eventType === filters.eventType);
   }
-  if (filters.severity && filters.severity !== 'all') {
+  if (filters.severity && filters.severity !== '__all__') {
     filtered = filtered.filter(l => l.severity === filters.severity);
   }
   if (filters.search) {
@@ -800,10 +800,10 @@ export function filterApplicationLogs(filters: {
 }): ApplicationLog[] {
   let filtered = [...mockApplicationLogs];
 
-  if (filters.level && filters.level !== 'all') {
+  if (filters.level && filters.level !== '__all__') {
     filtered = filtered.filter(l => l.level === filters.level);
   }
-  if (filters.service && filters.service !== 'all') {
+  if (filters.service && filters.service !== '__all__') {
     filtered = filtered.filter(l => l.service === filters.service);
   }
   if (filters.search) {

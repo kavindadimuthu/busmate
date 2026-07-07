@@ -40,11 +40,11 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
   const CopyButton = ({ text, label }: { text: string; label: string }) => (
     <button
       onClick={() => copyToClipboard(text, label)}
-      className="p-1 text-gray-400 hover:text-blue-600 rounded transition-colors"
+      className="p-1 text-muted-foreground/70 hover:text-primary rounded transition-colors"
       title="Copy"
     >
       {copied === label ? (
-        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+        <CheckCircle2 className="h-3.5 w-3.5 text-success/80" />
       ) : (
         <Copy className="h-3.5 w-3.5" />
       )}
@@ -64,12 +64,12 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
     copiable?: boolean;
     badge?: React.ReactNode;
   }) => (
-    <div className="flex items-start justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-[140px]">
+    <div className="flex items-start justify-between py-3 border-b border-border/50 last:border-0">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[140px]">
         {icon}
         {label}
       </div>
-      <div className="flex items-center gap-2 text-sm text-gray-900 text-right">
+      <div className="flex items-center gap-2 text-sm text-foreground text-right">
         {badge || <span className="font-mono">{value}</span>}
         {copiable && <CopyButton text={value} label={label} />}
       </div>
@@ -80,36 +80,36 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
     switch (status) {
       case 'success':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
             <CheckCircle2 className="h-3 w-3" /> Success
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
             <XCircle className="h-3 w-3" /> Error
           </span>
         );
       case 'warning':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
             <AlertTriangle className="h-3 w-3" /> Warning
           </span>
         );
       default:
-        return <span className="text-sm text-gray-900">{status}</span>;
+        return <span className="text-sm text-foreground">{status}</span>;
     }
   };
 
   const getSeverityBadge = (severity: string) => {
     const styles: Record<string, string> = {
-      critical: 'bg-red-600 text-white',
-      high: 'bg-red-50 text-red-700 border border-red-200',
-      medium: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
-      low: 'bg-green-50 text-green-700 border border-green-200',
+      critical: 'bg-destructive text-white',
+      high: 'bg-destructive/10 text-destructive border border-destructive/20',
+      medium: 'bg-warning/10 text-warning border border-warning/20',
+      low: 'bg-success/10 text-success border border-success/20',
     };
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[severity] || 'bg-gray-100 text-gray-700'}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[severity] || 'bg-muted text-foreground/80'}`}>
         <Shield className="h-3 w-3" /> {severity.charAt(0).toUpperCase() + severity.slice(1)}
       </span>
     );
@@ -117,10 +117,10 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
 
   const getLevelBadge = (level: string) => {
     const config: Record<string, { className: string; icon: React.ReactNode }> = {
-      ERROR: { className: 'bg-red-50 text-red-700 border border-red-200', icon: <XCircle className="h-3 w-3" /> },
-      WARN: { className: 'bg-yellow-50 text-yellow-700 border border-yellow-200', icon: <AlertTriangle className="h-3 w-3" /> },
-      INFO: { className: 'bg-blue-50 text-blue-700 border border-blue-200', icon: <Info className="h-3 w-3" /> },
-      DEBUG: { className: 'bg-gray-50 text-gray-600 border border-gray-200', icon: <Terminal className="h-3 w-3" /> },
+      ERROR: { className: 'bg-destructive/10 text-destructive border border-destructive/20', icon: <XCircle className="h-3 w-3" /> },
+      WARN: { className: 'bg-warning/10 text-warning border border-warning/20', icon: <AlertTriangle className="h-3 w-3" /> },
+      INFO: { className: 'bg-primary/10 text-primary border border-primary/20', icon: <Info className="h-3 w-3" /> },
+      DEBUG: { className: 'bg-muted text-muted-foreground border border-border', icon: <Terminal className="h-3 w-3" /> },
     };
     const c = config[level] || config.INFO;
     return (
@@ -133,11 +133,11 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
   const getTypeTitle = () => {
     switch (logType) {
       case 'user-activity':
-        return { icon: <User className="h-5 w-5 text-green-600" />, label: 'User Activity Log', color: 'bg-green-50 border-green-200' };
+        return { icon: <User className="h-5 w-5 text-success" />, label: 'User Activity Log', color: 'bg-success/10 border-success/20' };
       case 'security':
-        return { icon: <Shield className="h-5 w-5 text-orange-600" />, label: 'Security Log', color: 'bg-orange-50 border-orange-200' };
+        return { icon: <Shield className="h-5 w-5 text-warning" />, label: 'Security Log', color: 'bg-warning/10 border-orange-200' };
       case 'application':
-        return { icon: <Terminal className="h-5 w-5 text-purple-600" />, label: 'Application Log', color: 'bg-purple-50 border-purple-200' };
+        return { icon: <Terminal className="h-5 w-5 text-[hsl(var(--purple-600))]" />, label: 'Application Log', color: 'bg-[hsl(var(--purple-50))] border-[hsl(var(--purple-200))]' };
     }
   };
 
@@ -149,7 +149,7 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
       <div className="flex items-center gap-4">
         <button
           onClick={onBack}
-          className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -160,13 +160,13 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
               {typeInfo.label}
             </span>
           </div>
-          <p className="text-sm text-gray-500 font-mono">{log.id}</p>
+          <p className="text-sm text-muted-foreground font-mono">{log.id}</p>
         </div>
       </div>
 
       {/* Common fields */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">General Information</h3>
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">General Information</h3>
         <DetailRow
           label="Log ID"
           value={log.id}
@@ -227,9 +227,9 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
       </div>
 
       {/* Details / Message section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Details</h3>
-        <p className="text-sm text-gray-700 leading-relaxed">
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Details</h3>
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {logType === 'user-activity'
             ? (log as UserActivityLog).details
             : logType === 'security'
@@ -240,10 +240,10 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
 
       {/* Security - User Agent */}
       {logType === 'security' && (log as SecurityLog).userAgent && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">User Agent</h3>
+        <div className="bg-card rounded-xl border border-border p-6">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">User Agent</h3>
           <div className="flex items-center gap-2">
-            <code className="text-xs font-mono text-gray-600 bg-gray-50 p-3 rounded-lg flex-1 break-all">
+            <code className="text-xs font-mono text-muted-foreground bg-muted p-3 rounded-lg flex-1 break-all">
               {(log as SecurityLog).userAgent}
             </code>
             <CopyButton text={(log as SecurityLog).userAgent} label="userAgent" />
@@ -253,12 +253,12 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
 
       {/* Application - Stack Trace */}
       {logType === 'application' && (log as ApplicationLog).stackTrace && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-card rounded-xl border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Stack Trace</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Stack Trace</h3>
             <CopyButton text={(log as ApplicationLog).stackTrace!} label="stackTrace" />
           </div>
-          <pre className="text-xs font-mono text-red-700 bg-red-50 border border-red-100 rounded-lg p-4 overflow-x-auto max-h-64 whitespace-pre-wrap">
+          <pre className="text-xs font-mono text-destructive bg-destructive/10 border border-destructive/10 rounded-lg p-4 overflow-x-auto max-h-64 whitespace-pre-wrap">
             {(log as ApplicationLog).stackTrace}
           </pre>
         </div>
@@ -266,16 +266,16 @@ export function LogDetailPanel({ log, logType, onBack }: LogDetailPanelProps) {
 
       {/* Application - Metadata */}
       {logType === 'application' && (log as ApplicationLog).metadata && Object.keys((log as ApplicationLog).metadata!).length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-card rounded-xl border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Metadata</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Metadata</h3>
             <CopyButton
               text={JSON.stringify((log as ApplicationLog).metadata, null, 2)}
               label="metadata"
             />
           </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <pre className="text-xs font-mono text-gray-800 overflow-x-auto whitespace-pre-wrap">
+          <div className="bg-muted rounded-lg p-4">
+            <pre className="text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap">
               {JSON.stringify((log as ApplicationLog).metadata, null, 2)}
             </pre>
           </div>

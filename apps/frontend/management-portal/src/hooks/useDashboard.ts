@@ -11,7 +11,7 @@ import {
   ActiveAlertEntry,
   getDashboardSnapshot,
   simulateDashboardTick,
-} from '@/data/admin/dashboard-v2';
+} from '@/data/admin/dashboardV2';
 
 // ── Configuration ────────────────────────────────────────────────
 

@@ -22,12 +22,12 @@ interface TripAssignmentsTabProps {
 
 function AssignedBadge({ assigned }: { assigned: boolean }) {
   return assigned ? (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-success bg-success/10 px-2 py-0.5 rounded-full">
       <CheckCircle className="w-3 h-3" />
       Assigned
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full">
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
       <XCircle className="w-3 h-3" />
       Not Assigned
     </span>
@@ -36,11 +36,11 @@ function AssignedBadge({ assigned }: { assigned: boolean }) {
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
-      <div className="text-gray-400 mt-0.5 shrink-0">{icon}</div>
+    <div className="flex items-start gap-3 py-2.5 border-b border-border/30 last:border-0">
+      <div className="text-muted-foreground/70 mt-0.5 shrink-0">{icon}</div>
       <div className="flex-1 flex justify-between gap-4">
-        <span className="text-sm text-gray-500">{label}</span>
-        <span className="text-sm font-medium text-gray-800 text-right">{value}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm font-medium text-foreground text-right">{value}</span>
       </div>
     </div>
   );
@@ -58,11 +58,11 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="text-gray-500">{icon}</div>
-          <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+          <div className="text-muted-foreground">{icon}</div>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         </div>
         <AssignedBadge assigned={assigned} />
       </div>
@@ -93,14 +93,14 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
           <div
             key={label}
             className={`rounded-xl border-2 p-4 text-center transition-colors ${
-              assigned ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+              assigned ? 'bg-success/10 border-success/20' : 'bg-destructive/10 border-destructive/20'
             }`}
           >
             <div className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-              assigned ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'
+              assigned ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive/80'
             }`}>{icon}</div>
-            <p className="text-xs font-semibold text-gray-700">{label}</p>
-            <p className={`text-xs mt-0.5 ${assigned ? 'text-green-600' : 'text-red-500'}`}>
+            <p className="text-xs font-semibold text-foreground/80">{label}</p>
+            <p className={`text-xs mt-0.5 ${assigned ? 'text-success' : 'text-destructive/80'}`}>
               {assigned ? 'Assigned' : 'Missing'}
             </p>
           </div>
@@ -108,8 +108,8 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
       </div>
 
       {!allAssigned && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
-          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
+        <div className="flex items-start gap-2 bg-warning/10 border border-warning/20 rounded-xl px-4 py-3 text-sm text-warning">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-warning/80" />
           <p>
             One or more assignments are missing. Contact your operations team if you believe this is an error.
             Assignment changes are managed by the Ministry of Transport or your operations team.
@@ -135,7 +135,7 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">No permit assigned to this trip.</p>
+          <p className="text-sm text-muted-foreground/70">No permit assigned to this trip.</p>
         )}
       </SectionCard>
 
@@ -157,13 +157,13 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
                 <InfoRow icon={<FileText className="w-4 h-4" />} label="Colour" value={bus.colour} />
                 {/* Facilities */}
                 <div className="pt-3">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Facilities</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Facilities</p>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(bus.facilities).map(([key, val]) =>
                       val ? (
                         <span
                           key={key}
-                          className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full capitalize"
+                          className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full capitalize"
                         >
                           {key.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
@@ -177,7 +177,7 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">No bus assigned to this trip.</p>
+          <p className="text-sm text-muted-foreground/70">No bus assigned to this trip.</p>
         )}
       </SectionCard>
 
@@ -200,7 +200,7 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">No driver assigned to this trip.</p>
+            <p className="text-sm text-muted-foreground/70">No driver assigned to this trip.</p>
           )}
         </SectionCard>
 
@@ -218,14 +218,14 @@ export function TripAssignmentsTab({ trip, bus, staff, permit }: TripAssignments
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">No conductor assigned to this trip.</p>
+            <p className="text-sm text-muted-foreground/70">No conductor assigned to this trip.</p>
           )}
         </SectionCard>
       </div>
 
       {/* Read-only note */}
-      <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
-        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+      <div className="flex items-start gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
+        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-primary/80" />
         <p>
           Assignments are managed by the Ministry of Transport and your operations team.
           This view is read-only.

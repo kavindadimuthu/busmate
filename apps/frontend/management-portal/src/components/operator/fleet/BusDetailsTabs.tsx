@@ -59,7 +59,7 @@ export function BusDetailsTabs({ bus, onRefresh }: BusDetailsTabsProps) {
   return (
     <div>
       {/* Tab bar */}
-      <div className="flex items-center justify-between border-b border-gray-200 mb-6">
+      <div className="flex items-center justify-between border-b border-border mb-6">
         <nav className="flex -mb-px gap-0">
           {tabs.map(tab => (
             <button
@@ -67,8 +67,8 @@ export function BusDetailsTabs({ bus, onRefresh }: BusDetailsTabsProps) {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground/80 hover:border-border'
               }`}
             >
               {tab.icon}
@@ -76,8 +76,8 @@ export function BusDetailsTabs({ bus, onRefresh }: BusDetailsTabsProps) {
               {tab.count !== undefined && (
                 <span className={`text-xs rounded-full px-1.5 py-0.5 font-medium ${
                   activeTab === tab.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-muted text-muted-foreground'
                 }`}>
                   {tab.count}
                 </span>

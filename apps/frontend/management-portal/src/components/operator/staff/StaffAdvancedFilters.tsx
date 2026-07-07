@@ -1,11 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
-import {
-  SearchFilterBar,
-  SelectFilter,
-  FilterChipDescriptor,
-} from '@/components/shared/SearchFilterBar';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -37,19 +32,6 @@ const SHIFT_OPTIONS = [
   { value: 'OFF_DUTY',  label: 'Off Duty' },
 ];
 
-const STATUS_LABELS: Record<string, string> = {
-  ACTIVE:    'Active',
-  INACTIVE:  'Inactive',
-  ON_LEAVE:  'On Leave',
-  SUSPENDED: 'Suspended',
-};
-
-const SHIFT_LABELS: Record<string, string> = {
-  AVAILABLE: 'Available',
-  ASSIGNED:  'Assigned',
-  OFF_DUTY:  'Off Duty',
-};
-
 // ── Component ─────────────────────────────────────────────────────
 
 export function StaffAdvancedFilters({
@@ -64,55 +46,28 @@ export function StaffAdvancedFilters({
   filteredCount = 0,
   onClearAll,
 }: StaffAdvancedFiltersProps) {
-  const activeChips = useMemo<FilterChipDescriptor[]>(() => {
-    const chips: FilterChipDescriptor[] = [];
-
-    if (statusFilter !== 'all') {
-      chips.push({
-        key: 'status',
-        label: `Status: ${STATUS_LABELS[statusFilter] ?? statusFilter}`,
-        onRemove: () => setStatusFilter('all'),
-      });
-    }
-
-    if (shiftFilter !== 'all') {
-      chips.push({
-        key: 'shift',
-        label: `Shift: ${SHIFT_LABELS[shiftFilter] ?? shiftFilter}`,
-        onRemove: () => setShiftFilter('all'),
-      });
-    }
-
-    return chips;
-  }, [statusFilter, shiftFilter, setStatusFilter, setShiftFilter]);
+  const activeFilterCount = [statusFilter, shiftFilter].filter(v => v !== '__all__').length;
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Search by name, NIC, phone or employee ID…"
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="staff members"
-      loading={loading}
-      activeChips={activeChips}
-      onClearAllFilters={onClearAll}
-      filters={
-        <>
-          <SelectFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={STATUS_OPTIONS}
-            allLabel="All Statuses"
-          />
-          <SelectFilter
-            value={shiftFilter}
-            onChange={setShiftFilter}
-            options={SHIFT_OPTIONS}
-            allLabel="All Shifts"
-          />
-        </>
-      }
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={onClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={STATUS_OPTIONS}
+      />
+      <FilterSelect
+        label="Shifts"
+        value={shiftFilter}
+        onChange={setShiftFilter}
+        options={SHIFT_OPTIONS}
+      />
+    </FilterBar>
   );
 }

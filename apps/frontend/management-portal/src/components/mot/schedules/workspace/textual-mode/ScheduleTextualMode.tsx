@@ -53,31 +53,31 @@ export default function ScheduleTextualMode() {
   const formatLabel = format.toUpperCase();
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm overflow-hidden">
       {/* Header with instructions and format toggle */}
-      <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+      <div className="px-5 py-4 bg-muted border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-slate-700">Schedule Textual Mode</span>
+            <span className="text-sm font-semibold text-muted-foreground">Schedule Textual Mode</span>
             {parseError && (
-              <span className="text-xs text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md font-medium border border-rose-200">
+              <span className="text-xs text-destructive bg-destructive/10 px-2.5 py-1 rounded-md font-medium border border-destructive/20">
                 ⚠️ {parseError}
               </span>
             )}
             {!parseError && textContent.trim() && (
-              <span className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md font-medium border border-emerald-200">
+              <span className="text-xs text-success bg-success/10 px-2.5 py-1 rounded-md font-medium border border-success/20">
                 ✓ Valid {formatLabel}
               </span>
             )}
           </div>
 
           {/* Format Toggle Button */}
-          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
             <button
               onClick={() => handleFormatChange('yaml')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${format === 'yaml'
-                ? 'bg-blue-700 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
             >
               YAML
@@ -85,15 +85,15 @@ export default function ScheduleTextualMode() {
             <button
               onClick={() => handleFormatChange('json')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${format === 'json'
-                ? 'bg-blue-700 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
             >
               JSON
             </button>
           </div>
         </div>
-        <p className="text-sm text-slate-500 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           Enter or paste schedule data in {formatLabel} format. Changes will sync with Form Mode in real-time.
         </p>
       </div>
@@ -101,8 +101,8 @@ export default function ScheduleTextualMode() {
       <div className="p-4 flex-1 flex flex-col">
         {/* Route context warning */}
         {!hasRouteSelected && (
-          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800">
+          <div className="mb-3 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+            <p className="text-sm text-warning">
               <strong>Note:</strong> Please select a route in Form Mode first.
               The route context (stops, route info) is required to properly interpret schedule data.
             </p>
@@ -115,9 +115,9 @@ export default function ScheduleTextualMode() {
             className={`w-full h-[700px] border-2 rounded-lg px-4 py-3 outline-none font-mono text-sm resize-none transition-all duration-200
               ${parseError
                 ? 'border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200'
-                : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                : 'border-border focus:border-primary focus:ring-2 focus:ring-blue-200'
               }
-              ${!hasRouteSelected ? 'bg-slate-50' : 'bg-white'}
+              ${!hasRouteSelected ? 'bg-muted' : 'bg-card'}
             `}
             value={textContent}
             onChange={handleTextChange}
@@ -127,29 +127,29 @@ export default function ScheduleTextualMode() {
         </div>
 
         {/* Help section */}
-        <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="mt-3 p-3 bg-muted rounded-lg border border-border">
           <details className="text-sm">
-            <summary className="font-medium text-slate-700 cursor-pointer hover:text-slate-900">
+            <summary className="font-medium text-muted-foreground cursor-pointer hover:text-foreground">
               {formatLabel} Format Reference
             </summary>
-            <div className="mt-2 text-slate-600 space-y-2">
+            <div className="mt-2 text-muted-foreground space-y-2">
               <div>
-                <strong className="text-slate-700">Schedule Types:</strong> REGULAR, SPECIAL
+                <strong className="text-muted-foreground">Schedule Types:</strong> REGULAR, SPECIAL
               </div>
               <div>
-                <strong className="text-slate-700">Status Options:</strong> PENDING, ACTIVE, INACTIVE, CANCELLED
+                <strong className="text-muted-foreground">Status Options:</strong> PENDING, ACTIVE, INACTIVE, CANCELLED
               </div>
               <div>
-                <strong className="text-slate-700">Time Format:</strong> HH:mm or HH:mm:ss (e.g., "06:00" or "06:00:00")
+                <strong className="text-muted-foreground">Time Format:</strong> HH:mm or HH:mm:ss (e.g., "06:00" or "06:00:00")
               </div>
               <div>
-                <strong className="text-slate-700">Date Format:</strong> YYYY-MM-DD (e.g., "2024-01-15")
+                <strong className="text-muted-foreground">Date Format:</strong> YYYY-MM-DD (e.g., "2024-01-15")
               </div>
               <div>
-                <strong className="text-slate-700">Exception Types:</strong> ADDED (add service), REMOVED (remove service)
+                <strong className="text-muted-foreground">Exception Types:</strong> ADDED (add service), REMOVED (remove service)
               </div>
               <div>
-                <strong className="text-slate-700">Calendar:</strong> Set days to true/false to control operating days
+                <strong className="text-muted-foreground">Calendar:</strong> Set days to true/false to control operating days
               </div>
             </div>
           </details>

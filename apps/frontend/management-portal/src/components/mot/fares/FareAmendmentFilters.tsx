@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { SearchFilterBar, SelectFilter, FilterChipDescriptor } from '@/components/shared/SearchFilterBar';
+import { FilterBar, FilterSelect } from '@busmate/ui';
 import { AmendmentStatus } from '@/data/mot/fares';
 
 interface FareAmendmentFiltersProps {
@@ -22,40 +21,24 @@ export function FareAmendmentFilters({
   statusFilter,
   onStatusChange,
   statusOptions,
-  totalCount,
-  filteredCount,
   onClearAll,
-  loading,
 }: FareAmendmentFiltersProps) {
-  const activeChips: FilterChipDescriptor[] = [];
-
-  if (statusFilter !== 'all') {
-    activeChips.push({
-      key: 'status',
-      label: `Status: ${statusFilter}`,
-      onRemove: () => onStatusChange('all'),
-    });
-  }
+  const activeFilterCount = statusFilter !== '__all__' ? 1 : 0;
 
   return (
-    <SearchFilterBar
+    <FilterBar
       searchValue={searchTerm}
       onSearchChange={onSearchChange}
       searchPlaceholder="Search by reference, title, or gazette number..."
-      totalCount={totalCount}
-      filteredCount={filteredCount}
-      resultLabel="amendments"
-      loading={loading}
-      activeChips={activeChips}
-      onClearAllFilters={onClearAll}
-      filters={
-        <SelectFilter
-          value={statusFilter}
-          onChange={onStatusChange}
-          options={statusOptions.map((s) => ({ value: s, label: s }))}
-          allLabel="All Statuses"
-        />
-      }
-    />
+      activeFilterCount={activeFilterCount}
+      onClearAll={onClearAll}
+    >
+      <FilterSelect
+        label="Statuses"
+        value={statusFilter}
+        onChange={onStatusChange}
+        options={statusOptions.map((s) => ({ value: s, label: s }))}
+      />
+    </FilterBar>
   );
 }

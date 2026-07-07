@@ -18,14 +18,14 @@ interface TripOverviewCardProps {
 }
 
 const STATUS_CONFIG: Record<TripStatus, { label: string; icon: React.ReactNode; badge: string }> = {
-  PENDING:   { label: 'Pending',   icon: <Clock className="w-4 h-4" />,         badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  ACTIVE:    { label: 'Active',    icon: <CheckCircle className="w-4 h-4" />,    badge: 'bg-green-100 text-green-800 border-green-200' },
-  IN_TRANSIT:{ label: 'In Transit',icon: <Navigation className="w-4 h-4" />,     badge: 'bg-blue-100 text-blue-800 border-blue-200' },
-  BOARDING:  { label: 'Boarding',  icon: <Navigation className="w-4 h-4" />,     badge: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
+  PENDING:   { label: 'Pending',   icon: <Clock className="w-4 h-4" />,         badge: 'bg-warning/15 text-warning border-warning/20' },
+  ACTIVE:    { label: 'Active',    icon: <CheckCircle className="w-4 h-4" />,    badge: 'bg-success/15 text-success border-success/20' },
+  IN_TRANSIT:{ label: 'In Transit',icon: <Navigation className="w-4 h-4" />,     badge: 'bg-primary/15 text-primary border-primary/20' },
+  BOARDING:  { label: 'Boarding',  icon: <Navigation className="w-4 h-4" />,     badge: 'bg-primary/15 text-primary border-primary/20' },
   DEPARTED:  { label: 'Departed',  icon: <Navigation className="w-4 h-4" />,     badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-  COMPLETED: { label: 'Completed', icon: <CheckCircle className="w-4 h-4" />,    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  CANCELLED: { label: 'Cancelled', icon: <XCircle className="w-4 h-4" />,        badge: 'bg-red-100 text-red-800 border-red-200' },
-  DELAYED:   { label: 'Delayed',   icon: <AlertTriangle className="w-4 h-4" />,  badge: 'bg-amber-100 text-amber-800 border-amber-200' },
+  COMPLETED: { label: 'Completed', icon: <CheckCircle className="w-4 h-4" />,    badge: 'bg-success/15 text-success border-success/20' },
+  CANCELLED: { label: 'Cancelled', icon: <XCircle className="w-4 h-4" />,        badge: 'bg-destructive/15 text-destructive border-destructive/20' },
+  DELAYED:   { label: 'Delayed',   icon: <AlertTriangle className="w-4 h-4" />,  badge: 'bg-warning/15 text-warning border-warning/20' },
 };
 
 function formatDate(d?: string) {
@@ -53,16 +53,16 @@ export function TripOverviewCard({ trip }: TripOverviewCardProps) {
   const statusCfg = STATUS_CONFIG[trip.status] ?? {
     label: trip.status,
     icon: <Clock className="w-4 h-4" />,
-    badge: 'bg-gray-100 text-gray-700 border-gray-200',
+    badge: 'bg-muted text-foreground/80 border-border',
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="px-6 py-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-800">{trip.routeName}</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-foreground">{trip.routeName}</h2>
+          <p className="text-sm text-muted-foreground">
             Trip {trip.tripNumber ?? trip.id} &middot; Route {trip.routeNumber}
           </p>
         </div>
@@ -78,19 +78,19 @@ export function TripOverviewCard({ trip }: TripOverviewCardProps) {
       <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-4 gap-y-5 gap-x-6">
         {/* Date */}
         <div className="flex items-start gap-3 col-span-2 sm:col-span-1">
-          <Calendar className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+          <Calendar className="w-5 h-5 text-primary/80 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Trip Date</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">{formatDate(trip.tripDate)}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Trip Date</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">{formatDate(trip.tripDate)}</p>
           </div>
         </div>
 
         {/* Route */}
         <div className="flex items-start gap-3 col-span-2 sm:col-span-1">
-          <MapPin className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
+          <MapPin className="w-5 h-5 text-destructive/70 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Origin → Destination</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Origin → Destination</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">
               {trip.routeOrigin} &rarr; {trip.routeDestination}
             </p>
           </div>
@@ -100,26 +100,26 @@ export function TripOverviewCard({ trip }: TripOverviewCardProps) {
         <div className="flex items-start gap-3">
           <Clock className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Departure</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Departure</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">
               {formatTime(trip.scheduledDepartureTime)}
             </p>
             {trip.actualDepartureTime && (
-              <p className="text-xs text-amber-600">Actual: {formatTime(trip.actualDepartureTime)}</p>
+              <p className="text-xs text-warning">Actual: {formatTime(trip.actualDepartureTime)}</p>
             )}
           </div>
         </div>
 
         {/* Arrival */}
         <div className="flex items-start gap-3">
-          <Clock className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+          <Clock className="w-5 h-5 text-success/80 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Arrival</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Arrival</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">
               {formatTime(trip.scheduledArrivalTime)}
             </p>
             {trip.actualArrivalTime && (
-              <p className="text-xs text-emerald-600">Actual: {formatTime(trip.actualArrivalTime)}</p>
+              <p className="text-xs text-success">Actual: {formatTime(trip.actualArrivalTime)}</p>
             )}
           </div>
         </div>
@@ -128,12 +128,12 @@ export function TripOverviewCard({ trip }: TripOverviewCardProps) {
         <div className="flex items-start gap-3">
           <Bus className="w-5 h-5 text-indigo-400 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Bus</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Bus</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">
               {trip.busRegistrationNumber ?? 'Not Assigned'}
             </p>
             {trip.busServiceType && (
-              <p className="text-xs text-gray-500">{trip.busServiceType}</p>
+              <p className="text-xs text-muted-foreground">{trip.busServiceType}</p>
             )}
           </div>
         </div>
@@ -142,8 +142,8 @@ export function TripOverviewCard({ trip }: TripOverviewCardProps) {
         <div className="flex items-start gap-3">
           <FileText className="w-5 h-5 text-purple-400 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Permit</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">{trip.permitNumber}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Permit</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">{trip.permitNumber}</p>
           </div>
         </div>
 
@@ -151,25 +151,25 @@ export function TripOverviewCard({ trip }: TripOverviewCardProps) {
         <div className="flex items-start gap-3 col-span-2">
           <Navigation className="w-5 h-5 text-teal-500 mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Schedule</p>
-            <p className="text-sm font-semibold text-gray-800 mt-0.5">{trip.scheduleName}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Schedule</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">{trip.scheduleName}</p>
           </div>
         </div>
       </div>
 
       {/* Notes banner */}
       {trip.notes && (
-        <div className="px-6 py-3 bg-yellow-50 border-t border-yellow-100 flex items-start gap-2">
-          <FileText className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-yellow-800">{trip.notes}</p>
+        <div className="px-6 py-3 bg-warning/10 border-t border-yellow-100 flex items-start gap-2">
+          <FileText className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+          <p className="text-sm text-warning">{trip.notes}</p>
         </div>
       )}
 
       {/* Cancellation reason */}
       {trip.cancellationReason && (
-        <div className="px-6 py-3 bg-red-50 border-t border-red-100 flex items-start gap-2">
-          <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-red-700">
+        <div className="px-6 py-3 bg-destructive/10 border-t border-destructive/10 flex items-start gap-2">
+          <XCircle className="w-4 h-4 text-destructive/80 mt-0.5 shrink-0" />
+          <p className="text-sm text-destructive">
             <span className="font-medium">Cancellation reason:</span> {trip.cancellationReason}
           </p>
         </div>

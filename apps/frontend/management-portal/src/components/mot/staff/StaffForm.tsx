@@ -118,23 +118,23 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
 
     if (isLoadingData) {
         return (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12">
+            <div className="bg-card rounded-2xl shadow-lg border border-border/50 p-12">
                 <div className="flex flex-col items-center justify-center">
-                    <Loader2 className="animate-spin h-8 w-8 text-blue-600 mb-4" />
-                    <p className="text-gray-600 font-medium">Loading staff member details...</p>
+                    <Loader2 className="animate-spin h-8 w-8 text-primary mb-4" />
+                    <p className="text-muted-foreground font-medium">Loading staff member details...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden">
             {/* Form Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-5">
                 <h2 className="text-xl font-bold text-white">
                     {isEditMode ? 'Edit Staff Member' : 'Add New Staff Member'}
                 </h2>
-                <p className="text-blue-100 text-sm mt-1">
+                <p className="text-primary/20 text-sm mt-1">
                     {isEditMode
                         ? 'Update the staff member information below.'
                         : 'Fill in the details to create a new staff member.'}
@@ -143,8 +143,8 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
 
             {/* Error Alert */}
             {error && (
-                <div className="mx-8 mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="text-sm text-red-700">{error}</p>
+                <div className="mx-8 mt-6 bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                    <p className="text-sm text-destructive">{error}</p>
                 </div>
             )}
 
@@ -153,8 +153,8 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Full Name */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Full Name <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            Full Name <span className="text-destructive/80">*</span>
                         </label>
                         <input
                             type="text"
@@ -162,15 +162,15 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                             value={formData.fullName}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary transition-all"
                             placeholder="Enter full name"
                         />
                     </div>
 
                     {/* Phone */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Phone Number <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            Phone Number <span className="text-destructive/80">*</span>
                         </label>
                         <input
                             type="tel"
@@ -178,14 +178,14 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                             value={formData.phone}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary transition-all"
                             placeholder="e.g. 0771234567"
                         />
                     </div>
 
                     {/* Email */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
                             Email Address
                         </label>
                         <input
@@ -193,15 +193,15 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary transition-all"
                             placeholder="Email address"
                         />
                     </div>
 
                     {/* NIC */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            NIC <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            NIC <span className="text-destructive/80">*</span>
                         </label>
                         <input
                             type="text"
@@ -209,22 +209,22 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                             value={formData.nic}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary transition-all"
                             placeholder="National ID number"
                         />
                     </div>
 
                     {/* Staff Type */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Staff Type <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            Staff Type <span className="text-destructive/80">*</span>
                         </label>
                         <select
                             name="staffType"
                             value={formData.staffType}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary bg-card transition-all"
                         >
                             {staffTypes.map((type) => (
                                 <option key={type.value} value={type.value}>
@@ -236,15 +236,15 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
 
                     {/* Province */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Province <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            Province <span className="text-destructive/80">*</span>
                         </label>
                         <select
                             name="province"
                             value={formData.province}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary bg-card transition-all"
                         >
                             <option value="">Select province</option>
                             {provinces.map((province) => (
@@ -257,8 +257,8 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
 
                     {/* Assigned Location */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Assigned Location <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            Assigned Location <span className="text-destructive/80">*</span>
                         </label>
                         <input
                             type="text"
@@ -266,22 +266,22 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                             value={formData.assignedLocation}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary transition-all"
                             placeholder="Bus stand or terminal name"
                         />
                     </div>
 
                     {/* Status */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Status <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground/80 mb-1.5">
+                            Status <span className="text-destructive/80">*</span>
                         </label>
                         <select
                             name="status"
                             value={formData.status}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
+                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-primary bg-card transition-all"
                         >
                             {statusOptions.map((status) => (
                                 <option key={status.value} value={status.value}>
@@ -293,19 +293,19 @@ export default function StaffForm({ staffId, onSuccess, onCancel }: StaffFormPro
                 </div>
 
                 {/* Form Actions */}
-                <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
                     <button
                         type="button"
                         onClick={onCancel}
                         disabled={isLoading}
-                        className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors disabled:opacity-50"
+                        className="px-6 py-2.5 border border-border text-foreground/80 rounded-lg hover:bg-muted font-medium text-sm transition-colors disabled:opacity-50"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary font-medium text-sm transition-colors disabled:opacity-50"
                     >
                         {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                         {isEditMode ? 'Update Staff Member' : 'Create Staff Member'}

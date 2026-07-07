@@ -25,9 +25,9 @@ interface LogTrendChartProps {
 export function LogTrendChart({ stats, loading = false }: LogTrendChartProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="h-5 w-48 bg-gray-200 rounded animate-pulse mb-6" />
-        <div className="h-64 bg-gray-100 rounded animate-pulse" />
+      <div className="bg-card rounded-xl border border-border p-6">
+        <div className="h-5 w-48 bg-secondary rounded animate-pulse mb-6" />
+        <div className="h-64 bg-muted rounded animate-pulse" />
       </div>
     );
   }
@@ -107,24 +107,24 @@ export function LogTrendChart({ stats, loading = false }: LogTrendChartProps) {
   const totalApplication = stats.dailyLogCounts.reduce((sum, d) => sum + d.application, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-blue-600" />
-          <h3 className="text-base font-semibold text-gray-900">Log Volume — Last 7 Days</h3>
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold text-foreground">Log Volume — Last 7 Days</h3>
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span>
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1" />
-            Activity: <span className="font-semibold text-gray-700">{totalUserActivity.toLocaleString()}</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-success mr-1" />
+            Activity: <span className="font-semibold text-foreground/80">{totalUserActivity.toLocaleString()}</span>
           </span>
           <span>
-            <span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-1" />
-            Security: <span className="font-semibold text-gray-700">{totalSecurity.toLocaleString()}</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-warning mr-1" />
+            Security: <span className="font-semibold text-foreground/80">{totalSecurity.toLocaleString()}</span>
           </span>
           <span>
-            <span className="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1" />
-            App: <span className="font-semibold text-gray-700">{totalApplication.toLocaleString()}</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--purple-500))] mr-1" />
+            App: <span className="font-semibold text-foreground/80">{totalApplication.toLocaleString()}</span>
           </span>
         </div>
       </div>

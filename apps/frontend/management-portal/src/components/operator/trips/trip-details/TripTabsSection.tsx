@@ -52,9 +52,9 @@ export function TripTabsSection({
   const activeTabCfg = TABS.find((t) => t.id === activeTab);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Tab navigation */}
-      <nav className="flex border-b border-gray-200 overflow-x-auto">
+      <nav className="flex border-b border-border overflow-x-auto">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -64,8 +64,8 @@ export function TripTabsSection({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                 isActive
-                  ? 'border-blue-600 text-blue-700 bg-blue-50/50'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? 'border-primary text-primary bg-primary/10/50'
+                  : 'border-transparent text-muted-foreground hover:text-foreground/80 hover:bg-muted'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -76,9 +76,9 @@ export function TripTabsSection({
       </nav>
 
       {/* Tab description bar */}
-      <div className="px-5 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-        <Navigation className="w-3.5 h-3.5 text-gray-400" />
-        <p className="text-xs text-gray-500">{activeTabCfg?.description}</p>
+      <div className="px-5 py-2.5 bg-muted border-b border-border/50 flex items-center gap-2">
+        <Navigation className="w-3.5 h-3.5 text-muted-foreground/70" />
+        <p className="text-xs text-muted-foreground">{activeTabCfg?.description}</p>
       </div>
 
       {/* Content */}

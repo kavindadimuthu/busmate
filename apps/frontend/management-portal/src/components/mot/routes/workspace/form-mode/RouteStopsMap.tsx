@@ -14,8 +14,7 @@ import {
   DirectionsChunk,
   RouteDirectionsResult
 } from '@/services/routeWorkspaceMap';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button, Badge } from '@busmate/ui';
 import { PanelRightClose, PanelRightOpen, MapPin, Loader2 } from 'lucide-react';
 
 interface RouteStopsMapProps {
@@ -258,20 +257,20 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
   };
 
   return (
-    <div className={`flex flex-col border-l border-slate-200 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
+    <div className={`flex flex-col border-l border-border ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
       <div className={`flex ${collapsed ? 'flex-col items-center py-3' : 'justify-between items-center px-3 py-2'}`}>
         {collapsed ? (
           <div className="flex flex-col items-center gap-6">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggle}>
-              <PanelRightOpen className="h-4 w-4 text-slate-500" />
+              <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
             </Button>
-            <span className="transform -rotate-90 origin-center whitespace-nowrap text-xs font-medium text-slate-500">Route Map</span>
+            <span className="transform -rotate-90 origin-center whitespace-nowrap text-xs font-medium text-muted-foreground">Route Map</span>
           </div>
         ) : (
           <>
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-slate-400" />
-              <span className="text-sm font-medium text-slate-700">Route Map</span>
+              <MapPin className="h-4 w-4 text-muted-foreground/70" />
+              <span className="text-sm font-medium text-muted-foreground">Route Map</span>
               {validStops.length > 0 && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                   {validStops.length} stops
@@ -279,7 +278,7 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
               )}
             </div>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggle}>
-              <PanelRightClose className="h-4 w-4 text-slate-500" />
+              <PanelRightClose className="h-4 w-4 text-muted-foreground" />
             </Button>
           </>
         )}
@@ -287,16 +286,16 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
       {!collapsed && (
         <div className="px-2 pb-2 flex-1">
           {coordinateEditingMode?.routeIndex === routeIndex && (
-            <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-center gap-2">
+            <div className="mb-2 px-3 py-2 bg-primary/10 border border-primary/20 rounded-lg text-xs text-primary flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span><strong>Coordinate Editing:</strong> Click on the map to set the stop location.</span>
             </div>
           )}
           {loadError && (
-            <div className="text-xs text-red-600 mb-2 px-1">Error loading Google Maps</div>
+            <div className="text-xs text-destructive mb-2 px-1">Error loading Google Maps</div>
           )}
           {!isLoaded && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 px-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 px-1">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Loading Google Maps...
             </div>
@@ -304,16 +303,16 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
           {isLoaded && (
             <>
               {validStops.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/70">
                   <MapPin className="h-8 w-8 mb-2 opacity-40" />
                   <p className="text-xs">No stops with valid coordinates</p>
                 </div>
               )}
               {validStops.length === 1 && (
-                <div className="text-xs text-slate-500 mb-2 px-1">Add more stops with coordinates to show the route.</div>
+                <div className="text-xs text-muted-foreground mb-2 px-1">Add more stops with coordinates to show the route.</div>
               )}
               {validStops.length >= 2 && isLoading && (
-                <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 px-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 px-1">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Loading route...
                 </div>

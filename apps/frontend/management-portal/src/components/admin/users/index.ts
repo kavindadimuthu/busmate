@@ -5,6 +5,7 @@ export { UsersTable } from './UsersTable';
 export { UserDetailPanel } from './UserDetailPanel';
 export { UserForm } from './UserForm';
 export { ConfirmDialog } from './ConfirmDialog';
+export { UserTypeTabs } from './UserTypeTabs';
 
 // Deprecated - kept for backwards compatibility
 export { UserFilters } from './UserFilters';

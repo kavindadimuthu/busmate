@@ -68,7 +68,7 @@ export function Pagination({
   if (totalPages <= 1 && !onPageSizeChange) {
     return (
       <div className="flex items-center justify-between mt-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Showing {startItem} to {endItem} of {totalItems} results
         </p>
       </div>
@@ -78,19 +78,19 @@ export function Pagination({
   return (
     <div className="flex items-center justify-between mt-4">
       <div className="flex items-center gap-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Showing {startItem} to {endItem} of {totalItems} results
         </p>
         {onPageSizeChange && (
           <div className="flex items-center gap-2">
-            <label htmlFor="pageSize" className="text-sm text-gray-600">
+            <label htmlFor="pageSize" className="text-sm text-muted-foreground">
               Show:
             </label>
             <select
               id="pageSize"
               value={itemsPerPage}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="text-sm border border-border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
@@ -104,7 +104,7 @@ export function Pagination({
       <div className="flex items-center gap-1">
         {/* Previous Button */}
         <button
-          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
@@ -117,13 +117,13 @@ export function Pagination({
           {getVisiblePages().map((page, index) => (
             <div key={index}>
               {page === '...' ? (
-                <span className="px-3 py-1.5 text-sm text-gray-500">...</span>
+                <span className="px-3 py-1.5 text-sm text-muted-foreground">...</span>
               ) : (
                 <button
                   className={`px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 hover:bg-gray-50 focus:border-blue-500'
+                      ? 'bg-primary text-white border-primary'
+                      : 'border-border hover:bg-muted focus:border-primary'
                   }`}
                   onClick={() => onPageChange(page as number)}
                 >
@@ -136,7 +136,7 @@ export function Pagination({
 
         {/* Next Button */}
         <button
-          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >

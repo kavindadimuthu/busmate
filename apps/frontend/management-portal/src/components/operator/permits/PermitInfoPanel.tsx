@@ -35,9 +35,9 @@ export function PermitInfoPanel({ permit }: PermitInfoPanelProps) {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
       {/* Tab header */}
-      <div className="border-b border-gray-200 px-1">
+      <div className="border-b border-border px-1">
         <nav className="flex overflow-x-auto" aria-label="Permit info tabs">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
@@ -47,15 +47,15 @@ export function PermitInfoPanel({ permit }: PermitInfoPanelProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground/80 hover:border-border'
                 }`}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.count !== undefined && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                    isActive ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
                   }`}>
                     {tab.count}
                   </span>
@@ -87,8 +87,8 @@ function RoutesTab({ routes, routeGroupName, routeGroupCode }: RoutesTabProps) {
   if (routes.length === 0) {
     return (
       <div className="text-center py-8">
-        <RouteIcon className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-500 text-sm">No route information available.</p>
+        <RouteIcon className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+        <p className="text-muted-foreground text-sm">No route information available.</p>
       </div>
     );
   }
@@ -96,12 +96,12 @@ function RoutesTab({ routes, routeGroupName, routeGroupCode }: RoutesTabProps) {
   return (
     <div className="space-y-5">
       {/* Route group summary */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <RouteIcon className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+          <RouteIcon className="w-5 h-5 text-primary mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-blue-900">{routeGroupName}</p>
-            <p className="text-xs text-blue-700 mt-0.5">Code: {routeGroupCode} &middot; {routes.length} route{routes.length !== 1 ? 's' : ''}</p>
+            <p className="text-sm font-semibold text-primary">{routeGroupName}</p>
+            <p className="text-xs text-primary mt-0.5">Code: {routeGroupCode} &middot; {routes.length} route{routes.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
       </div>
@@ -109,30 +109,30 @@ function RoutesTab({ routes, routeGroupName, routeGroupCode }: RoutesTabProps) {
       {/* Individual routes */}
       <div className="space-y-3">
         {routes.map((route) => (
-          <div key={route.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-200 transition-colors">
+          <div key={route.id} className="border border-border rounded-lg p-4 hover:border-primary/20 transition-colors">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                  <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded">
                     {route.routeNumber}
                   </span>
-                  <p className="text-sm font-medium text-gray-900">{route.name}</p>
+                  <p className="text-sm font-medium text-foreground">{route.name}</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-green-600" />
+                    <MapPin className="w-3.5 h-3.5 text-success" />
                     {route.origin}
                   </span>
-                  <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/70" />
                   <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-red-500" />
+                    <MapPin className="w-3.5 h-3.5 text-destructive/80" />
                     {route.destination}
                   </span>
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs text-gray-500">Distance</p>
-                <p className="text-sm font-semibold text-gray-900">{route.distance} km</p>
+                <p className="text-xs text-muted-foreground">Distance</p>
+                <p className="text-sm font-semibold text-foreground">{route.distance} km</p>
               </div>
             </div>
           </div>
@@ -175,8 +175,8 @@ function DetailsTab({ permit }: DetailsTabProps) {
     <dl className="divide-y divide-gray-100">
       {rows.map(({ label, value }) => (
         <div key={label} className="py-3 grid grid-cols-3 gap-4">
-          <dt className="text-sm font-medium text-gray-500">{label}</dt>
-          <dd className="text-sm text-gray-900 col-span-2 font-medium break-all">{String(value)}</dd>
+          <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+          <dd className="text-sm text-foreground col-span-2 font-medium break-all">{String(value)}</dd>
         </div>
       ))}
     </dl>

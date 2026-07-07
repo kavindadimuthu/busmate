@@ -26,35 +26,22 @@ export default function MOTDashboardPage() {
   });
 
   const {
-    kpis,
-    trendHistory,
-    activity,
-    alerts,
-    fleetStatus,
-    routeStatus,
-    permitStatus,
-    operatorPerformance,
-    regionalDistribution,
-    quickActions,
-    loading,
-    lastRefresh,
-    isLive,
-    refresh,
-    toggleLive,
-    onAcknowledgeAlert,
+    kpis, trendHistory, activity, alerts, fleetStatus, routeStatus, permitStatus,
+    operatorPerformance, regionalDistribution, quickActions, loading, lastRefresh,
+    isLive, refresh, toggleLive, onAcknowledgeAlert,
   } = useMOTDashboard({ refreshInterval: 5000 });
 
   useSetPageActions(
     <>
-      <span className="text-xs text-gray-400 hidden sm:inline">
+      <span className="text-xs text-muted-foreground hidden sm:inline">
         Updated {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </span>
       <button
         onClick={toggleLive}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
           isLive
-            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            ? 'bg-success/10 text-success hover:bg-success/20'
+            : 'bg-muted text-muted-foreground hover:bg-accent'
         }`}
       >
         <Radio className={`h-3.5 w-3.5 ${isLive ? 'animate-pulse' : ''}`} />
@@ -63,7 +50,7 @@ export default function MOTDashboardPage() {
       <button
         onClick={refresh}
         disabled={loading}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-background border border-border text-muted-foreground hover:bg-accent disabled:opacity-50 transition-colors"
       >
         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
         Refresh
@@ -73,11 +60,8 @@ export default function MOTDashboardPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Row 1: KPI Cards ─────────────────────────────────────── */}
       <MOTDashboardKPICards kpis={kpis} loading={loading} />
 
-      {/* ── Row 2: Trends chart + Fleet status ───────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <MOTDashboardTrendsChart trendHistory={trendHistory} loading={loading} />
@@ -87,24 +71,17 @@ export default function MOTDashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 3: Route status + Permit status + Alerts ─────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <MOTDashboardRouteStatus routeStatus={routeStatus} loading={loading} />
         <MOTDashboardPermitStatus permitStatus={permitStatus} loading={loading} />
-        <MOTDashboardAlertsWidget 
-          alerts={alerts} 
-          loading={loading} 
-          onAcknowledge={onAcknowledgeAlert} 
-        />
+        <MOTDashboardAlertsWidget alerts={alerts} loading={loading} onAcknowledge={onAcknowledgeAlert} />
       </div>
 
-      {/* ── Row 4: Regional distribution + Operator performance ──── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <MOTDashboardRegionalDistribution regions={regionalDistribution} loading={loading} />
         <MOTDashboardOperatorPerformance operators={operatorPerformance} loading={loading} />
       </div>
 
-      {/* ── Row 5: Activity feed + Quick actions ─────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <MOTDashboardActivityFeed activity={activity} loading={loading} />

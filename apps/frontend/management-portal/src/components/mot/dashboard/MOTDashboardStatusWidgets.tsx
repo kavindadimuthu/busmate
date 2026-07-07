@@ -6,7 +6,7 @@ import { RouteStatusItem, PermitStatusItem } from '@/data/mot/dashboard';
 
 function StatusBar({ items, total }: { items: { label: string; value: number; color: string }[]; total: number }) {
   return (
-    <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+    <div className="flex h-3 rounded-full overflow-hidden bg-muted">
       {items.map((item, i) => (
         <div
           key={item.label}
@@ -32,12 +32,12 @@ interface MOTDashboardRouteStatusProps {
 export function MOTDashboardRouteStatus({ routeStatus, loading = false }: MOTDashboardRouteStatusProps) {
   if (loading || routeStatus.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 w-28 bg-gray-200 rounded mb-4" />
-        <div className="h-3 bg-gray-100 rounded-full mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 w-28 bg-muted rounded mb-4" />
+        <div className="h-3 bg-muted rounded-full mb-4" />
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-4 bg-gray-100 rounded w-full" />
+            <div key={i} className="h-4 bg-muted rounded w-full" />
           ))}
         </div>
       </div>
@@ -47,10 +47,10 @@ export function MOTDashboardRouteStatus({ routeStatus, loading = false }: MOTDas
   const total = routeStatus.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Route Status</h3>
-        <span className="text-xs text-gray-500">{total} total</span>
+        <h3 className="text-sm font-semibold text-foreground">Route Status</h3>
+        <span className="text-xs text-muted-foreground">{total} total</span>
       </div>
 
       {/* Status bar */}
@@ -65,11 +65,11 @@ export function MOTDashboardRouteStatus({ routeStatus, loading = false }: MOTDas
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-xs text-gray-600">{item.label}</span>
+              <span className="text-xs text-muted-foreground">{item.label}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-900">{item.value}</span>
-              <span className="text-[10px] text-gray-400">({item.percentage}%)</span>
+              <span className="text-xs font-medium text-foreground">{item.value}</span>
+              <span className="text-[10px] text-muted-foreground">({item.percentage}%)</span>
             </div>
           </div>
         ))}
@@ -88,12 +88,12 @@ interface MOTDashboardPermitStatusProps {
 export function MOTDashboardPermitStatus({ permitStatus, loading = false }: MOTDashboardPermitStatusProps) {
   if (loading || permitStatus.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 w-28 bg-gray-200 rounded mb-4" />
-        <div className="h-3 bg-gray-100 rounded-full mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 w-28 bg-muted rounded mb-4" />
+        <div className="h-3 bg-muted rounded-full mb-4" />
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-4 bg-gray-100 rounded w-full" />
+            <div key={i} className="h-4 bg-muted rounded w-full" />
           ))}
         </div>
       </div>
@@ -103,10 +103,10 @@ export function MOTDashboardPermitStatus({ permitStatus, loading = false }: MOTD
   const total = permitStatus.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Permit Status</h3>
-        <span className="text-xs text-gray-500">{total.toLocaleString()} total</span>
+        <h3 className="text-sm font-semibold text-foreground">Permit Status</h3>
+        <span className="text-xs text-muted-foreground">{total.toLocaleString()} total</span>
       </div>
 
       {/* Status bar */}
@@ -121,11 +121,11 @@ export function MOTDashboardPermitStatus({ permitStatus, loading = false }: MOTD
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-xs text-gray-600">{item.label}</span>
+              <span className="text-xs text-muted-foreground">{item.label}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-900">{item.value.toLocaleString()}</span>
-              <span className="text-[10px] text-gray-400">({item.percentage}%)</span>
+              <span className="text-xs font-medium text-foreground">{item.value.toLocaleString()}</span>
+              <span className="text-[10px] text-muted-foreground">({item.percentage}%)</span>
             </div>
           </div>
         ))}

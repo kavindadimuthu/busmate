@@ -1,12 +1,11 @@
 'use client';
 
-import { StatsCardsContainer } from '@/components/shared/StatsCardsContainer';
+import { StatsCard, StatsCardGrid } from '@busmate/ui';
 import { AnalyticsBarChart } from './charts/AnalyticsBarChart';
 import { AnalyticsPieChart } from './charts/AnalyticsPieChart';
 import { AnalyticsDataTable, ProgressBar } from './charts/AnalyticsDataTable';
 import { Route, MapPin, Users, TrendingUp } from 'lucide-react';
 import type { RouteAnalyticsData } from '@/data/mot/analytics';
-import type { StatsCardMetric } from '@/components/shared/StatsCard';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -18,50 +17,6 @@ interface RouteAnalyticsPanelProps {
 // ── Component ────────────────────────────────────────────────────
 
 export function RouteAnalyticsPanel({ data, loading = false }: RouteAnalyticsPanelProps) {
-  // KPI metrics
-  const kpiMetrics: StatsCardMetric[] = [
-    {
-      label: 'Total Routes',
-      value: data.totalRoutes.toLocaleString(),
-      trend: 'stable',
-      trendValue: 'No change this month',
-      trendPositiveIsGood: true,
-      color: 'blue',
-      sparkData: [480, 482, 484, 485, 486, 487],
-      icon: Route,
-    },
-    {
-      label: 'Active Routes',
-      value: data.activeRoutes.toLocaleString(),
-      trend: 'up',
-      trendValue: '+3 activated this week',
-      trendPositiveIsGood: true,
-      color: 'green',
-      sparkData: [415, 417, 418, 420, 421, 423],
-      icon: MapPin,
-    },
-    {
-      label: 'Avg. Passengers/Route',
-      value: data.averagePassengersPerRoute.toLocaleString(),
-      trend: 'up',
-      trendValue: '+4.2% vs last month',
-      trendPositiveIsGood: true,
-      color: 'teal',
-      sparkData: [890, 905, 918, 925, 936, 942],
-      icon: Users,
-    },
-    {
-      label: 'Highest Demand',
-      value: data.highestDemandRoute.passengers.toLocaleString(),
-      trend: 'up',
-      trendValue: data.highestDemandRoute.name,
-      trendPositiveIsGood: true,
-      color: 'purple',
-      sparkData: [42000, 43200, 43800, 44500, 44900, 45230],
-      icon: TrendingUp,
-    },
-  ];
-
   // Route performance table columns
   const performanceColumns = [
     { key: 'routeName', label: 'Route' },
@@ -95,11 +50,36 @@ export function RouteAnalyticsPanel({ data, loading = false }: RouteAnalyticsPan
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <StatsCardsContainer
-        metrics={kpiMetrics}
-        loading={loading}
-        columns={4}
-      />
+      <StatsCardGrid className="lg:grid-cols-4">
+        <StatsCard
+          title="Total Routes"
+          value={data.totalRoutes.toLocaleString()}
+          icon={<Route className="h-5 w-5" />}
+          description="No change this month"
+          trend={{ value: 0, direction: 'neutral' }}
+        />
+        <StatsCard
+          title="Active Routes"
+          value={data.activeRoutes.toLocaleString()}
+          icon={<MapPin className="h-5 w-5" />}
+          description="+3 activated this week"
+          trend={{ value: 3, direction: 'up' }}
+        />
+        <StatsCard
+          title="Avg. Passengers/Route"
+          value={data.averagePassengersPerRoute.toLocaleString()}
+          icon={<Users className="h-5 w-5" />}
+          description="+4.2% vs last month"
+          trend={{ value: 4.2, direction: 'up' }}
+        />
+        <StatsCard
+          title="Highest Demand"
+          value={data.highestDemandRoute.passengers.toLocaleString()}
+          icon={<TrendingUp className="h-5 w-5" />}
+          description={data.highestDemandRoute.name}
+          trend={{ value: 0, direction: 'up' }}
+        />
+      </StatsCardGrid>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

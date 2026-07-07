@@ -9,10 +9,10 @@ interface BusSeatingViewProps {
 }
 
 const SEAT_COLORS: Record<SeatStatus, { bg: string; border: string; label: string }> = {
-  AVAILABLE: { bg: 'bg-white',       border: 'border-gray-300', label: 'Available' },
-  RESERVED:  { bg: 'bg-yellow-100',  border: 'border-yellow-400', label: 'Reserved' },
-  BOOKED:    { bg: 'bg-blue-200',    border: 'border-blue-500', label: 'Booked' },
-  DAMAGED:   { bg: 'bg-red-100',     border: 'border-red-400',  label: 'Damaged' },
+  AVAILABLE: { bg: 'bg-card',       border: 'border-border', label: 'Available' },
+  RESERVED:  { bg: 'bg-warning/15',  border: 'border-warning', label: 'Reserved' },
+  BOOKED:    { bg: 'bg-primary/20',    border: 'border-primary', label: 'Booked' },
+  DAMAGED:   { bg: 'bg-destructive/15',     border: 'border-destructive/40',  label: 'Damaged' },
 };
 
 function Seat({ seat, onClick }: { seat: SeatInfo; onClick?: (s: SeatInfo) => void }) {
@@ -42,20 +42,20 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Seats', value: layout.totalSeats, cls: 'bg-gray-50 border-gray-200' },
-          { label: 'Available',   value: available,         cls: 'bg-white border-gray-200' },
-          { label: 'Booked',      value: booked,            cls: 'bg-blue-50 border-blue-200' },
-          { label: 'Damaged',     value: damaged,           cls: 'bg-red-50 border-red-200' },
+          { label: 'Total Seats', value: layout.totalSeats, cls: 'bg-muted border-border' },
+          { label: 'Available',   value: available,         cls: 'bg-card border-border' },
+          { label: 'Booked',      value: booked,            cls: 'bg-primary/10 border-primary/20' },
+          { label: 'Damaged',     value: damaged,           cls: 'bg-destructive/10 border-destructive/20' },
         ].map(item => (
           <div key={item.label} className={`rounded-lg border p-4 ${item.cls}`}>
-            <p className="text-xs text-gray-500">{item.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{item.value}</p>
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className="text-2xl font-bold text-foreground">{item.value}</p>
           </div>
         ))}
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         {Object.entries(SEAT_COLORS).map(([status, meta]) => (
           <span key={status} className="flex items-center gap-1.5">
             <span className={`w-4 h-4 rounded border-2 inline-block ${meta.bg} ${meta.border}`} />
@@ -65,17 +65,17 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
       </div>
 
       {/* Bus diagram */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-auto p-6">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-auto p-6">
         <div className="min-w-[300px] mx-auto" style={{ maxWidth: 380 }}>
           {/* Front of bus */}
           <div className="flex items-center justify-center mb-4">
-            <div className="border-2 border-gray-400 rounded-t-3xl w-36 h-8 flex items-center justify-center text-xs text-gray-500 font-medium bg-gray-100">
+            <div className="border-2 border-border rounded-t-3xl w-36 h-8 flex items-center justify-center text-xs text-muted-foreground font-medium bg-muted">
               FRONT / DRIVER
             </div>
           </div>
 
           {/* Seat rows */}
-          <div className="border-2 border-gray-300 rounded-xl p-4 space-y-2 bg-gray-50">
+          <div className="border-2 border-border rounded-xl p-4 space-y-2 bg-muted">
             {layout.layout.map(row => (
               <div key={row.rowNumber} className="flex items-center justify-between gap-4">
                 {/* Left seats (2) */}
@@ -84,7 +84,7 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
                 </div>
 
                 {/* Aisle label */}
-                <div className="text-xs text-gray-400 shrink-0">{row.rowNumber}</div>
+                <div className="text-xs text-muted-foreground/70 shrink-0">{row.rowNumber}</div>
 
                 {/* Right seats (2) */}
                 <div className="flex gap-1.5">
@@ -96,7 +96,7 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
             {/* Rear seat */}
             {layout.hasRearSeat && (
               <>
-                <div className="border-t border-dashed border-gray-300 my-2" />
+                <div className="border-t border-dashed border-border my-2" />
                 <div className="flex justify-center gap-1.5">
                   {Array.from({ length: layout.rearSeatCount }).map((_, i) => {
                     const seatNum = layout.totalSeats - layout.rearSeatCount + 1 + i;
@@ -116,7 +116,7 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
 
           {/* Rear label */}
           <div className="flex items-center justify-center mt-4">
-            <div className="border-2 border-gray-400 rounded-b-lg w-36 h-6 flex items-center justify-center text-xs text-gray-500 bg-gray-100">
+            <div className="border-2 border-border rounded-b-lg w-36 h-6 flex items-center justify-center text-xs text-muted-foreground bg-muted">
               REAR
             </div>
           </div>
@@ -124,16 +124,16 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
 
         {/* Selected seat info */}
         {selected && (
-          <div className="mt-5 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-            <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
+          <div className="mt-5 p-4 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-2">
+            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div className="text-sm text-primary">
               <strong>Seat {selected.seatNumber}</strong> · Row {selected.row} ·{' '}
               {selected.side === 'left' ? 'Left' : 'Right'} side ·{' '}
               {selected.position === 'window' ? 'Window' : 'Aisle'} ·{' '}
               <span className="font-semibold">{SEAT_COLORS[selected.status].label}</span>
               <button
                 onClick={() => setSelected(null)}
-                className="ml-3 text-blue-600 underline text-xs"
+                className="ml-3 text-primary underline text-xs"
               >
                 Dismiss
               </button>
@@ -142,7 +142,7 @@ export function BusSeatingView({ bus }: BusSeatingViewProps) {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 flex items-center gap-1">
+      <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
         <Users className="w-3.5 h-3.5" />
         Seating layout reflects the physical configuration. Live occupancy data requires the ticketing API integration.
       </p>

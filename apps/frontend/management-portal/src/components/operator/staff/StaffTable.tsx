@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import Link from 'next/link';
 import {
   Eye,
   Car,
@@ -14,35 +13,44 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
-import type { DataTableColumn, SortState } from '@/components/shared/DataTable';
+import { DataTable, EmptyState } from '@busmate/ui';
+import type { ColumnDef, DataTableProps } from '@busmate/ui';
 import type { StaffMember, Driver, Conductor } from '@/data/operator/staff';
 
 // ── Types ─────────────────────────────────────────────────────────
 
 export type StaffTableMode = 'all' | 'drivers' | 'conductors';
 
-interface StaffTableProps {
+interface StaffTableProps
+  extends Pick<
+    DataTableProps<any>,
+    | 'page'
+    | 'pageSize'
+    | 'onPageChange'
+    | 'onPageSizeChange'
+    | 'sortColumn'
+    | 'sortDirection'
+    | 'onSort'
+    | 'loading'
+  > {
   staff: StaffMember[];
   mode: StaffTableMode;
-  loading?: boolean;
-  currentSort?: SortState;
-  onSort?: (field: string, direction: 'asc' | 'desc') => void;
+  totalItems: number;
 }
 
 // ── Status badge ──────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  ACTIVE:    { label: 'Active',    cls: 'bg-green-100   text-green-700   border-green-200',   Icon: CheckCircle2 },
-  INACTIVE:  { label: 'Inactive',  cls: 'bg-gray-100    text-gray-600    border-gray-200',    Icon: XCircle },
-  ON_LEAVE:  { label: 'On Leave',  cls: 'bg-yellow-100  text-yellow-700  border-yellow-200',  Icon: AlertCircle },
-  SUSPENDED: { label: 'Suspended', cls: 'bg-red-100     text-red-700     border-red-200',     Icon: XCircle },
+  ACTIVE:    { label: 'Active',    cls: 'bg-success/15   text-success   border-success/20',   Icon: CheckCircle2 },
+  INACTIVE:  { label: 'Inactive',  cls: 'bg-muted    text-muted-foreground    border-border',    Icon: XCircle },
+  ON_LEAVE:  { label: 'On Leave',  cls: 'bg-warning/15  text-warning  border-warning/20',  Icon: AlertCircle },
+  SUSPENDED: { label: 'Suspended', cls: 'bg-destructive/15     text-destructive     border-destructive/20',     Icon: XCircle },
 } as const;
 
 const SHIFT_CONFIG = {
-  AVAILABLE: { label: 'Available', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  ASSIGNED:  { label: 'Assigned',  cls: 'bg-orange-100  text-orange-700  border-orange-200' },
-  OFF_DUTY:  { label: 'Off Duty',  cls: 'bg-gray-100    text-gray-500    border-gray-200' },
+  AVAILABLE: { label: 'Available', cls: 'bg-success/15 text-success border-success/20' },
+  ASSIGNED:  { label: 'Assigned',  cls: 'bg-warning/15  text-orange-700  border-orange-200' },
+  OFF_DUTY:  { label: 'Off Duty',  cls: 'bg-muted    text-muted-foreground    border-border' },
 } as const;
 
 function StatusBadge({ status }: { status: string }) {
@@ -69,14 +77,14 @@ function ShiftBadge({ shift }: { shift: string }) {
 function RoleBadge({ role }: { role: string }) {
   if (role === 'DRIVER') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
         <Car className="w-3 h-3" />
         Driver
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] border border-[hsl(var(--purple-200))]">
       <UserCheck className="w-3 h-3" />
       Conductor
     </span>
@@ -98,16 +106,16 @@ function formatExpiry(dateString: string): string {
 
 // ── Column builders ───────────────────────────────────────────────
 
-function buildStaffColumn(): DataTableColumn<StaffMember> {
+function buildStaffColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'fullName',
+    id: 'fullName',
     header: 'Staff',
     sortable: true,
-    minWidth: 'min-w-[180px]',
-    render: (member) => {
+    width: 'min-w-[180px]',
+    cell: ({ row: member }) => {
       const initials = member.avatarInitials || member.fullName.charAt(0).toUpperCase();
       const avatarCls =
-        member.role === 'DRIVER' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700';
+        member.role === 'DRIVER' ? 'bg-success/15 text-success' : 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))]';
       return (
         <div className="flex items-center gap-3">
           <div
@@ -116,10 +124,10 @@ function buildStaffColumn(): DataTableColumn<StaffMember> {
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
+            <p className="text-sm font-semibold text-foreground truncate leading-tight">
               {member.fullName}
             </p>
-            <p className="text-[11px] text-gray-400 font-mono leading-tight mt-0.5 truncate">
+            <p className="text-[11px] text-muted-foreground/70 font-mono leading-tight mt-0.5 truncate">
               {member.nic}
             </p>
           </div>
@@ -129,94 +137,90 @@ function buildStaffColumn(): DataTableColumn<StaffMember> {
   };
 }
 
-function buildContactColumn(): DataTableColumn<StaffMember> {
+function buildContactColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'contact',
+    id: 'contact',
     header: 'Contact',
-    minWidth: 'min-w-[160px]',
-    render: (member) => (
+    width: 'min-w-[160px]',
+    cell: ({ row: member }) => (
       <div className="space-y-0.5">
         <div className="flex items-center gap-1.5">
-          <Phone className="w-3 h-3 text-gray-300 shrink-0" />
-          <span className="text-sm text-gray-700">{member.phone}</span>
+          <Phone className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+          <span className="text-sm text-foreground/80">{member.phone}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Mail className="w-3 h-3 text-gray-300 shrink-0" />
-          <span className="text-[11px] text-gray-400 truncate">{member.email}</span>
+          <Mail className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+          <span className="text-[11px] text-muted-foreground/70 truncate">{member.email}</span>
         </div>
       </div>
     ),
   };
 }
 
-function buildEmployeeIdColumn(): DataTableColumn<StaffMember> {
+function buildEmployeeIdColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'employeeId',
+    id: 'employeeId',
     header: 'Employee ID',
     sortable: true,
-    cellClassName: 'whitespace-nowrap',
-    render: (member) => (
-      <span className="text-sm text-gray-600 font-mono">{member.employeeId}</span>
+    cell: ({ row: member }) => (
+      <span className="text-sm text-muted-foreground font-mono whitespace-nowrap">{member.employeeId}</span>
     ),
   };
 }
 
-function buildRouteColumn(): DataTableColumn<StaffMember> {
+function buildRouteColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'assignedRoute',
+    id: 'assignedRoute',
     header: 'Assigned Route',
-    minWidth: 'min-w-[140px]',
-    render: (member) =>
+    width: 'min-w-[140px]',
+    cell: ({ row: member }) =>
       member.assignedRoute ? (
         <div className="flex items-start gap-1.5">
-          <MapPin className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
+          <MapPin className="w-3.5 h-3.5 text-primary/70 mt-0.5 shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-800 truncate leading-tight">
+            <p className="text-xs font-medium text-foreground truncate leading-tight">
               {member.assignedRoute}
             </p>
             {member.assignedRouteName && (
-              <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">
+              <p className="text-[11px] text-muted-foreground/70 truncate leading-tight mt-0.5">
                 {member.assignedRouteName}
               </p>
             )}
           </div>
         </div>
       ) : (
-        <span className="text-xs text-gray-400 italic">Unassigned</span>
+        <span className="text-xs text-muted-foreground/70 italic">Unassigned</span>
       ),
   };
 }
 
-function buildStatusColumn(): DataTableColumn<StaffMember> {
+function buildStatusColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'status',
+    id: 'status',
     header: 'Status',
     sortable: true,
-    cellClassName: 'whitespace-nowrap',
-    render: (member) => <StatusBadge status={member.status} />,
+    cell: ({ row: member }) => <StatusBadge status={member.status} />,
   };
 }
 
-function buildShiftColumn(): DataTableColumn<StaffMember> {
+function buildShiftColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'shiftStatus',
+    id: 'shiftStatus',
     header: 'Shift',
-    cellClassName: 'whitespace-nowrap',
-    render: (member) => <ShiftBadge shift={member.shiftStatus} />,
+    cell: ({ row: member }) => <ShiftBadge shift={member.shiftStatus} />,
   };
 }
 
-function buildActionsColumn(): DataTableColumn<StaffMember> {
+function buildActionsColumn(): ColumnDef<StaffMember> {
   return {
-    key: 'actions',
+    id: 'actions',
     header: 'Actions',
-    headerClassName: 'text-center',
-    cellClassName: 'whitespace-nowrap text-center',
-    render: (member) => (
+    align: 'center',
+    cell: ({ row: member }) => (
       <button
-        onClick={() => window.location.href = `/operator/staff-management/${member.id}`}
+        onClick={() => window.location.href = `/operator/staff/${member.id}`}
         title="View staff details"
-        className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors duration-100"
+        className="p-1.5 rounded-lg text-primary/80 hover:bg-primary/10 transition-colors duration-100"
       >
         <Eye className="h-3.5 w-3.5" />
       </button>
@@ -237,21 +241,26 @@ function buildActionsColumn(): DataTableColumn<StaffMember> {
 export function StaffTable({
   staff,
   mode,
-  loading = false,
-  currentSort = { field: '', direction: 'asc' },
+  loading,
+  totalItems,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
   onSort,
 }: StaffTableProps) {
-  const columns = useMemo((): DataTableColumn<StaffMember>[] => {
+  const columns = useMemo((): ColumnDef<StaffMember>[] => {
     if (mode === 'all') {
       return [
         buildStaffColumn(),
         buildEmployeeIdColumn(),
         buildContactColumn(),
         {
-          key: 'role',
+          id: 'role',
           header: 'Role',
-          cellClassName: 'whitespace-nowrap',
-          render: (member) => <RoleBadge role={member.role} />,
+          cell: ({ row: member }) => <RoleBadge role={member.role} />,
         },
         buildRouteColumn(),
         buildStatusColumn(),
@@ -266,17 +275,17 @@ export function StaffTable({
         buildEmployeeIdColumn(),
         buildContactColumn(),
         {
-          key: 'license',
+          id: 'license',
           header: 'License',
-          minWidth: 'min-w-[130px]',
-          render: (member) => {
+          width: 'min-w-[130px]',
+          cell: ({ row: member }) => {
             const driver = member as Driver;
             return (
               <div>
-                <p className="text-xs font-mono text-gray-700">
+                <p className="text-xs font-mono text-foreground/80">
                   {driver.license?.licenseNumber ?? '—'}
                 </p>
-                <p className="text-[11px] text-gray-400 mt-0.5">
+                <p className="text-[11px] text-muted-foreground/70 mt-0.5">
                   Exp:{' '}
                   {driver.license?.expiryDate
                     ? formatExpiry(driver.license.expiryDate)
@@ -299,17 +308,17 @@ export function StaffTable({
       buildEmployeeIdColumn(),
       buildContactColumn(),
       {
-        key: 'certificate',
+        id: 'certificate',
         header: 'Certificate',
-        minWidth: 'min-w-[130px]',
-        render: (member) => {
+        width: 'min-w-[130px]',
+        cell: ({ row: member }) => {
           const conductor = member as Conductor;
           return (
             <div>
-              <p className="text-xs font-mono text-gray-700">
+              <p className="text-xs font-mono text-foreground/80">
                 {conductor.certificateNumber ?? '—'}
               </p>
-              <p className="text-[11px] text-gray-400 mt-0.5">
+              <p className="text-[11px] text-muted-foreground/70 mt-0.5">
                 Exp:{' '}
                 {conductor.certificationExpiryDate
                   ? formatExpiry(conductor.certificationExpiryDate)
@@ -320,10 +329,10 @@ export function StaffTable({
         },
       },
       {
-        key: 'languages',
+        id: 'languages',
         header: 'Languages',
-        minWidth: 'min-w-[110px]',
-        render: (member) => {
+        width: 'min-w-[110px]',
+        cell: ({ row: member }) => {
           const conductor = member as Conductor;
           const langs = conductor.languagesSpoken ?? [];
           return (
@@ -331,13 +340,13 @@ export function StaffTable({
               {langs.slice(0, 2).map((lang) => (
                 <span
                   key={lang}
-                  className="px-1.5 py-0.5 rounded text-[11px] bg-blue-50 text-blue-700 border border-blue-100"
+                  className="px-1.5 py-0.5 rounded text-[11px] bg-primary/10 text-primary border border-primary/10"
                 >
                   {lang}
                 </span>
               ))}
               {langs.length > 2 && (
-                <span className="px-1.5 py-0.5 rounded text-[11px] bg-gray-100 text-gray-500">
+                <span className="px-1.5 py-0.5 rounded text-[11px] bg-muted text-muted-foreground">
                   +{langs.length - 2}
                 </span>
               )}
@@ -354,11 +363,11 @@ export function StaffTable({
 
   const emptyIcon =
     mode === 'drivers' ? (
-      <Car className="w-10 h-10 mb-3 text-gray-300" />
+      <Car className="h-8 w-8" />
     ) : mode === 'conductors' ? (
-      <UserCheck className="w-10 h-10 mb-3 text-gray-300" />
+      <UserCheck className="h-8 w-8" />
     ) : (
-      <Users className="w-10 h-10 mb-3 text-gray-300" />
+      <Users className="h-8 w-8" />
     );
 
   const emptyLabel =
@@ -372,16 +381,22 @@ export function StaffTable({
     <DataTable<StaffMember>
       columns={columns}
       data={staff}
-      loading={loading}
-      rowKey={(member) => member.id}
-      currentSort={currentSort}
+      totalItems={totalItems}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
       onSort={onSort}
+      getRowId={(member) => member.id}
+      loading={loading}
       emptyState={
-        <div className="flex flex-col items-center py-12 text-gray-400">
-          {emptyIcon}
-          <p className="font-medium text-gray-500">{emptyLabel}</p>
-          <p className="text-sm mt-1">Try adjusting your search or filters</p>
-        </div>
+        <EmptyState
+          icon={emptyIcon}
+          title={emptyLabel}
+          description="Try adjusting your search or filters"
+        />
       }
     />
   );

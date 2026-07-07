@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Download, RefreshCw } from 'lucide-react';
-import { ActionButton } from '@/components/shared/ActionButton';
+import { Button } from '@busmate/ui';
 
 // ── Props ─────────────────────────────────────────────────────────
 
@@ -29,19 +29,18 @@ export function RevenueActionButtons({
 }: RevenueActionButtonsProps) {
   return (
     <>
-      <ActionButton
-        icon={<RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />}
-        label="Refresh"
-        variant="secondary"
+      <Button
+        variant="outline"
         onClick={onRefresh}
         disabled={isLoading}
-      />
-      <ActionButton
-        icon={<Download className="h-4 w-4" />}
-        label="Export"
-        variant="primary"
-        onClick={onExport}
-      />
+      >
+        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        Refresh
+      </Button>
+      <Button onClick={onExport}>
+        <Download className="h-4 w-4" />
+        Export
+      </Button>
     </>
   );
 }

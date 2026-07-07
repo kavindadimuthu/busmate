@@ -3,15 +3,14 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic';
-import { Toaster } from "@/components/ui/toaster"
-import { LayoutClient } from "@/components/shared/LayoutClient"
+import { Toaster } from "@busmate/ui"
+import { RoleLayoutClient } from "@/components/layouts/role-layout-client"
 import { getUserData } from "@/lib/utils/getUserData"
 import { isRoleAllowedForRoute, getRoleRedirectPath } from "@/lib/utils/getRoleRedirectPath"
 
 export const metadata: Metadata = {
   title: "BUSMATE LK MOT Portal",
   description: "Professional MOT dashboard for BUSMATE LK transportation system",
-  generator: 'v0.dev'
 }
 
 export default async function MotRootLayout({
@@ -31,9 +30,9 @@ export default async function MotRootLayout({
 
   return (
     <>
-      <LayoutClient role="mot" userData={userData}>
+      <RoleLayoutClient role="mot" userData={userData}>
         {children}
-      </LayoutClient>
+      </RoleLayoutClient>
       <Toaster />
     </>
   )

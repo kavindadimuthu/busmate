@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AlertTriangle, ArrowUpRight, Bell, CheckCircle2, XCircle } from 'lucide-react';
-import { ActiveAlertEntry } from '@/data/admin/dashboard-v2';
+import { ActiveAlertEntry } from '@/data/admin/dashboardV2';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -16,21 +16,21 @@ function timeAgo(iso: string): string {
 
 const SEVERITY_STYLES = {
   critical: {
-    badge: 'bg-red-100 text-red-700 border-red-200',
-    icon: <XCircle className="h-4 w-4 text-red-500" />,
-    dot: 'bg-red-500',
+    badge: 'bg-destructive/15 text-destructive border-destructive/20',
+    icon: <XCircle className="h-4 w-4 text-destructive/80" />,
+    dot: 'bg-destructive',
     border: 'border-l-red-500',
   },
   warning: {
-    badge: 'bg-amber-100 text-amber-700 border-amber-200',
-    icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-    dot: 'bg-amber-500',
+    badge: 'bg-warning/15 text-warning border-warning/20',
+    icon: <AlertTriangle className="h-4 w-4 text-warning/80" />,
+    dot: 'bg-warning',
     border: 'border-l-amber-500',
   },
   info: {
-    badge: 'bg-blue-100 text-blue-700 border-blue-200',
-    icon: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
-    dot: 'bg-blue-400',
+    badge: 'bg-primary/15 text-primary border-primary/20',
+    icon: <CheckCircle2 className="h-4 w-4 text-primary/80" />,
+    dot: 'bg-primary/50',
     border: 'border-l-blue-400',
   },
 };
@@ -46,26 +46,26 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-28 mb-4" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        <div className="h-5 bg-muted rounded w-28 mb-4" />
         {[0, 1, 2].map((i) => (
-          <div key={i} className="mb-3 h-14 bg-gray-100 rounded-lg" />
+          <div key={i} className="mb-3 h-14 bg-muted rounded-lg" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-4">
+    <div className="bg-card rounded-xl border border-border p-6 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-gray-600" />
-          <h3 className="font-semibold text-gray-900 text-sm">Active Alerts</h3>
+          <Bell className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground text-sm">Active Alerts</h3>
         </div>
         <Link
-          href="/admin/monitoring/alerts"
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+          href="/admin/monitoring?tab=alerts"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary font-medium"
         >
           View all <ArrowUpRight className="h-3 w-3" />
         </Link>
@@ -74,17 +74,17 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
       {/* Summary badges */}
       <div className="flex items-center gap-2">
         {criticalCount > 0 && (
-          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-destructive/15 text-destructive border border-destructive/20">
             {criticalCount} Critical
           </span>
         )}
         {warningCount > 0 && (
-          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/15 text-warning border border-warning/20">
             {warningCount} Warning
           </span>
         )}
         {alerts.length === 0 && (
-          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-success/15 text-success border border-success/20">
             All Clear
           </span>
         )}
@@ -93,8 +93,8 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
       {/* Alert list */}
       {alerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-center">
-          <CheckCircle2 className="h-8 w-8 text-green-400 mb-2" />
-          <p className="text-sm text-gray-500">No active alerts</p>
+          <CheckCircle2 className="h-8 w-8 text-success/70 mb-2" />
+          <p className="text-sm text-muted-foreground">No active alerts</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -103,14 +103,14 @@ export function DashboardAlertsWidget({ alerts, loading = false }: DashboardAler
             return (
               <div
                 key={alert.id}
-                className={`flex items-start gap-3 p-3 rounded-lg border-l-2 bg-gray-50 ${style.border}`}
+                className={`flex items-start gap-3 p-3 rounded-lg border-l-2 bg-muted ${style.border}`}
               >
                 <div className="mt-0.5 shrink-0">{style.icon}</div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{alert.title}</p>
-                  <p className="text-[10px] text-gray-500 truncate">{alert.source}</p>
+                  <p className="text-xs font-semibold text-foreground truncate">{alert.title}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{alert.source}</p>
                 </div>
-                <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{timeAgo(alert.createdAt)}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">{timeAgo(alert.createdAt)}</span>
               </div>
             );
           })}

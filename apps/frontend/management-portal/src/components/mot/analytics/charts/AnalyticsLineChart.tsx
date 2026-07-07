@@ -58,9 +58,9 @@ export function AnalyticsLineChart({
 
   if (loading || data.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-        {title && <div className="h-5 bg-gray-200 rounded w-40 mb-4" />}
-        <div className="h-52 bg-gray-100 rounded" />
+      <div className="bg-card rounded-xl border border-border p-6 animate-pulse">
+        {title && <div className="h-5 bg-secondary rounded w-40 mb-4" />}
+        <div className="h-52 bg-muted rounded" />
       </div>
     );
   }
@@ -128,14 +128,14 @@ export function AnalyticsLineChart({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-blue-600" />
+          <TrendingUp className="h-4 w-4 text-primary" />
           <div>
-            {title && <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>}
-            {subtitle && <span className="text-xs text-gray-400">{subtitle}</span>}
+            {title && <h3 className="font-semibold text-foreground text-sm">{title}</h3>}
+            {subtitle && <span className="text-xs text-muted-foreground/70">{subtitle}</span>}
           </div>
         </div>
 
@@ -145,7 +145,7 @@ export function AnalyticsLineChart({
             <button
               onClick={() => setCompareMode((v) => !v)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                compareMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                compareMode ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground hover:bg-secondary'
               }`}
             >
               Compare all
@@ -161,7 +161,7 @@ export function AnalyticsLineChart({
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                   active === d.key
                     ? 'text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-muted text-muted-foreground hover:bg-secondary'
                 }`}
                 style={active === d.key ? { backgroundColor: d.color } : undefined}
               >

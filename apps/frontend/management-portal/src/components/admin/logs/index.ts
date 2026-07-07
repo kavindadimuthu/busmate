@@ -1,5 +1,6 @@
 export { LogStatsCards } from './LogStatsCards';
-export { LogFilters } from './LogFilters';
+export { LogTypeTabs } from './LogTypeTabs';
+export { LogFilterBar } from './LogFilterBar';
 export { UserActivityTable } from './UserActivityTable';
 export { SecurityLogsTable } from './SecurityLogsTable';
 export { ApplicationLogsTable } from './ApplicationLogsTable';

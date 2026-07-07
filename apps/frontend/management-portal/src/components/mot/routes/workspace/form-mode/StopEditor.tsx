@@ -12,15 +12,22 @@ import {
 import { BusStopManagementService } from '@busmate/api-client-route';
 import type { StopRequest } from '@busmate/api-client-route';
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import {
+    Input,
+    Label,
+    Textarea,
+    Button,
+    Badge,
+    ScrollArea,
+    Separator,
+    Collapsible,
+    CollapsibleTrigger,
+    CollapsibleContent,
+    Tooltip,
+    TooltipTrigger,
+    TooltipContent,
+    TooltipProvider,
+} from '@busmate/ui';
 import {
     X, ChevronDown, MapPin, Search, Plus, Save,
     Loader2, Accessibility, Type, Navigation, Globe,
@@ -48,13 +55,13 @@ function EditorSection({ title, icon, defaultOpen = false, badge, children }: {
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
-                <button className="flex items-center justify-between w-full py-2 px-3 hover:bg-slate-50 rounded-md transition-colors text-left">
+                <button className="flex items-center justify-between w-full py-2 px-3 hover:bg-muted rounded-md transition-colors text-left">
                     <div className="flex items-center gap-2">
                         {icon}
-                        <span className="text-sm font-medium text-slate-700">{title}</span>
+                        <span className="text-sm font-medium text-muted-foreground">{title}</span>
                         {badge}
                     </div>
-                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 text-muted-foreground/70 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -70,7 +77,7 @@ function EditorSection({ title, icon, defaultOpen = false, badge, children }: {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div className="space-y-1">
-            <Label className="text-xs text-slate-500">{label}</Label>
+            <Label className="text-xs text-muted-foreground">{label}</Label>
             {children}
         </div>
     );
@@ -481,15 +488,15 @@ export default function StopEditor() {
 
             {/* Slide-over panel */}
             <div
-                className={`fixed top-0 right-0 z-50 h-full w-[420px] bg-white border-l border-slate-200 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+                className={`fixed top-0 right-0 z-50 h-full w-[420px] bg-card border-l border-border shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
                     open ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
                 {/* ── Header ── */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted shrink-0">
                     <div className="flex items-center gap-2 min-w-0">
-                        <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
-                        <h3 className="text-sm font-semibold text-slate-700 truncate">
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <h3 className="text-sm font-semibold text-muted-foreground truncate">
                             {selectedStop?.stop.name || 'Stop Editor'}
                         </h3>
                         {selectedStop && (
@@ -509,7 +516,7 @@ export default function StopEditor() {
                 {selectedStop ? (
                     <>
                         {/* ── Action bar ── */}
-                        <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-2 shrink-0">
+                        <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2 shrink-0">
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
@@ -547,7 +554,7 @@ export default function StopEditor() {
                                         size="sm"
                                         onClick={handleUpdateStop}
                                         disabled={isBusy}
-                                        className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                                        className="h-8 text-xs gap-1.5 bg-success hover:bg-success"
                                     >
                                         {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                                         Update
@@ -563,7 +570,7 @@ export default function StopEditor() {
                                 {/* Basic Info */}
                                 <EditorSection
                                     title="Basic Info"
-                                    icon={<Type className="h-4 w-4 text-slate-400" />}
+                                    icon={<Type className="h-4 w-4 text-muted-foreground/70" />}
                                     defaultOpen
                                     badge={
                                         selectedStop.stop.id ? (
@@ -576,9 +583,9 @@ export default function StopEditor() {
                                     }
                                 >
                                     <div className="flex items-center gap-2 text-xs">
-                                        <span className="text-slate-400">ID:</span>
-                                        <span className="font-mono text-slate-600">
-                                            {selectedStop.stop.id || <span className="text-slate-300 italic">Not assigned</span>}
+                                        <span className="text-muted-foreground/70">ID:</span>
+                                        <span className="font-mono text-muted-foreground">
+                                            {selectedStop.stop.id || <span className="text-muted-foreground/50 italic">Not assigned</span>}
                                         </span>
                                     </div>
 
@@ -607,7 +614,7 @@ export default function StopEditor() {
                                 {/* Translations */}
                                 <EditorSection
                                     title="Translations"
-                                    icon={<Globe className="h-4 w-4 text-slate-400" />}
+                                    icon={<Globe className="h-4 w-4 text-muted-foreground/70" />}
                                 >
                                     <Field label="Name (Sinhala)">
                                         <Input
@@ -630,7 +637,7 @@ export default function StopEditor() {
                                 {/* Coordinates */}
                                 <EditorSection
                                     title="Coordinates"
-                                    icon={<Navigation className="h-4 w-4 text-slate-400" />}
+                                    icon={<Navigation className="h-4 w-4 text-muted-foreground/70" />}
                                     defaultOpen
                                 >
                                     <div className="grid grid-cols-2 gap-2">
@@ -660,7 +667,7 @@ export default function StopEditor() {
                                 {/* Address */}
                                 <EditorSection
                                     title="Address"
-                                    icon={<MapPin className="h-4 w-4 text-slate-400" />}
+                                    icon={<MapPin className="h-4 w-4 text-muted-foreground/70" />}
                                 >
                                     <Field label="Address (English)">
                                         <Input
@@ -770,16 +777,16 @@ export default function StopEditor() {
                                 {/* Options */}
                                 <EditorSection
                                     title="Options"
-                                    icon={<Accessibility className="h-4 w-4 text-slate-400" />}
+                                    icon={<Accessibility className="h-4 w-4 text-muted-foreground/70" />}
                                 >
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={selectedStop.stop.isAccessible || false}
                                             onChange={(e) => handleFieldChange('isAccessible', e.target.checked)}
-                                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                            className="h-4 w-4 rounded border-border text-primary focus:ring-blue-500"
                                         />
-                                        <span className="text-sm text-slate-700">Wheelchair accessible</span>
+                                        <span className="text-sm text-muted-foreground">Wheelchair accessible</span>
                                     </label>
                                 </EditorSection>
                             </div>
@@ -788,7 +795,7 @@ export default function StopEditor() {
                 ) : (
                     /* Empty state when panel is open but no stop selected */
                     <div className="flex-1 flex items-center justify-center p-8">
-                        <div className="text-center text-slate-400">
+                        <div className="text-center text-muted-foreground/70">
                             <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
                             <p className="text-sm">Select a stop from the list to edit its details</p>
                         </div>

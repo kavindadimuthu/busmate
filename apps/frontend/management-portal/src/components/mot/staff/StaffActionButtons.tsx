@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Download } from 'lucide-react';
-import { ActionButton, ActionButtonsContainer } from '@/components/shared/ActionButton';
+import { Button } from '@busmate/ui';
 
 interface StaffActionButtonsProps {
     onAddStaff: () => void;
@@ -15,21 +15,15 @@ export function StaffActionButtons({
     isLoading = false,
 }: StaffActionButtonsProps) {
     return (
-        <ActionButtonsContainer>
-            <ActionButton
-                icon={<Plus className="h-4 w-4" />}
-                label="Add Staff Member"
-                variant="primary"
-                onClick={onAddStaff}
-                disabled={isLoading}
-            />
-            <ActionButton
-                icon={<Download className="h-4 w-4" />}
-                label="Export All"
-                variant="secondary"
-                onClick={onExportAll}
-                disabled={isLoading}
-            />
-        </ActionButtonsContainer>
+        <div className="flex items-center gap-2">
+            <Button onClick={onAddStaff} disabled={isLoading}>
+                <Plus className="h-4 w-4" />
+                Add Staff Member
+            </Button>
+            <Button variant="outline" onClick={onExportAll} disabled={isLoading}>
+                <Download className="h-4 w-4" />
+                Export All
+            </Button>
+        </div>
     );
 }

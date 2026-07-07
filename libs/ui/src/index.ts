@@ -1,0 +1,389 @@
+// @busmate/ui — shared UI library
+// Styles should be imported separately via "@busmate/ui/styles"
+
+// ── Utilities ─────────────────────────────────────────────
+export { cn } from "./lib/utils";
+
+// ── Hooks ─────────────────────────────────────────────────
+export { useMediaQuery, useMobile } from "./hooks";
+
+// ── Base Components (shadcn/ui primitives) ────────────────
+
+// Alert
+export {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertDestructiveIcon,
+  AlertWarningIcon,
+  AlertSuccessIcon,
+  AlertInfoIcon,
+  alertVariants,
+} from "./components/alert";
+
+// Accordion
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "./components/accordion";
+
+// Alert Dialog
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./components/alert-dialog";
+
+// Avatar
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarBadge,
+  AvatarGroup,
+  AvatarGroupCount,
+} from "./components/avatar";
+
+// Badge
+export { Badge, badgeVariants } from "./components/badge";
+
+// Breadcrumb
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "./components/breadcrumb";
+
+// Button
+export { Button, buttonVariants } from "./components/button";
+
+// Calendar
+export { Calendar, CalendarDayButton } from "./components/calendar";
+
+// Card
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+} from "./components/card";
+
+// Checkbox
+export { Checkbox } from "./components/checkbox";
+
+// Collapsible
+export {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "./components/collapsible";
+
+// Command
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from "./components/command";
+
+// DatePicker
+export { DatePicker, DateRangePicker } from "./components/date-picker";
+export type { DatePickerProps, DateRangePickerProps } from "./components/date-picker";
+
+// Dialog
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/dialog";
+
+// Dropdown Menu
+export {
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "./components/dropdown-menu";
+
+// Form primitives (react-hook-form integration)
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormMessage,
+} from "./components/form";
+
+// Input
+export { Input } from "./components/input";
+
+// Label
+export { Label } from "./components/label";
+
+// Pagination
+export {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationFirst,
+  PaginationLast,
+  PaginationEllipsis,
+} from "./components/pagination";
+
+// Popover
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverAnchor,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverDescription,
+} from "./components/popover";
+
+// Progress
+export { Progress } from "./components/progress";
+
+// Radio Group
+export { RadioGroup, RadioGroupItem } from "./components/radio-group";
+
+// Scroll Area
+export { ScrollArea, ScrollBar } from "./components/scroll-area";
+
+// Select
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "./components/select";
+
+// Separator
+export { Separator } from "./components/separator";
+
+// Sheet
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "./components/sheet";
+
+// Skeleton
+export { Skeleton } from "./components/skeleton";
+
+// Slider
+export { Slider } from "./components/slider";
+
+// Sonner (Toast replacement)
+export { Toaster } from "./components/sonner";
+
+// Switch
+export { Switch } from "./components/switch";
+
+// Table
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from "./components/table";
+
+// Tabs
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  tabsListVariants,
+} from "./components/tabs";
+
+// Textarea
+export { Textarea } from "./components/textarea";
+
+// Toggle
+export { Toggle, toggleVariants } from "./components/toggle";
+
+// Toggle Group
+export { ToggleGroup, ToggleGroupItem } from "./components/toggle-group";
+
+// Tooltip
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "./components/tooltip";
+
+// Theme Switcher (light / dark mode)
+export { ThemeSwitcher } from "./components/theme-switcher";
+
+// Theme Personality (color scheme switcher)
+export { ThemePersonalityProvider, useThemePersonality } from "./context/theme-personality-provider";
+export { ThemePersonalitySwitcher } from "./components/theme-personality-switcher";
+export { THEMES, DEFAULT_PERSONALITY, PERSONALITY_STORAGE_KEY } from "./context/theme-registry";
+export type { ThemePersonality, ThemeConfig } from "./context/theme-registry";
+
+// ── Patterns ──────────────────────────────────────────────
+
+// DataTable
+export { DataTable, DataTablePagination, useDataTable } from "./patterns/data-table";
+export type {
+  ColumnDef,
+  DataTableProps,
+  DataTableState,
+  UseDataTableOptions,
+} from "./patterns/data-table";
+
+// StatusBadge
+export { StatusBadge } from "./patterns/status-badge";
+
+// StatsCard
+export { StatsCard, StatsCardGrid } from "./patterns/stats-card";
+
+// Dialogs
+export { ConfirmDialog, FormDialog, useDialog } from "./patterns/dialogs";
+
+// FilterBar
+export { FilterBar, FilterSelect } from "./patterns/filter-bar";
+
+// Form
+export { FormWrapper, FormSection, FormGrid } from "./patterns/form";
+export {
+  InputField,
+  TextareaField,
+  SelectField,
+  CheckboxField,
+  SwitchField,
+  RadioGroupField,
+  DatePickerField,
+  DateRangePickerField,
+} from "./patterns/form";
+export type { FieldOption } from "./patterns/form";
+
+// EmptyState
+export { EmptyState } from "./patterns/empty-state";
+
+// ActivityLog
+export { ActivityLog } from "./patterns/activity-log";
+export type { ActivityItem } from "./patterns/activity-log";
+
+// Chart
+export {
+  ChartContainer,
+  ChartStyle,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  useChart,
+} from "./patterns/chart";
+export type { ChartConfig } from "./patterns/chart";
+
+// Loading & Error
+export {
+  LoadingSpinner,
+  loadingSpinnerVariants,
+  TableSkeleton,
+  CardSkeleton,
+  FormSkeleton,
+  ErrorFallback,
+  ErrorBoundary,
+} from "./patterns/loading";
+export type {
+  LoadingSpinnerProps,
+  TableSkeletonProps,
+  CardSkeletonProps,
+  FormSkeletonProps,
+  ErrorFallbackProps,
+  ErrorBoundaryProps,
+} from "./patterns/loading";
+
+// Dashboard
+export { DashboardGrid } from "./patterns/dashboard";
+
+// ── Layouts ───────────────────────────────────────────────
+
+// App Shell
+export { AppShell } from "./layouts/app-shell";
+export { MobileAppShell } from "./layouts/mobile-app-shell";
+export { ResponsiveShell } from "./layouts/responsive-shell";
+
+// Sidebar
+export { Sidebar } from "./layouts/sidebar";
+export type {
+  SidebarProps,
+  NavItem,
+  NavGroup,
+  NavigationConfig,
+  SidebarNavItem,
+  SidebarNavGroup,
+} from "./layouts/sidebar";
+
+// Header
+export { Header } from "./layouts/header";
+export type { HeaderProps, HeaderBreadcrumb } from "./layouts/header";
+
+// Content
+export { PageContainer, Section } from "./layouts/content";

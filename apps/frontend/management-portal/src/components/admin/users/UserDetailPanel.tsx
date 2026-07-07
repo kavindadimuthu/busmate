@@ -76,11 +76,11 @@ export function UserDetailPanel({
   const CopyButton = ({ text, label }: { text: string; label: string }) => (
     <button
       onClick={() => copyToClipboard(text, label)}
-      className="p-1 text-gray-400 hover:text-blue-600 rounded transition-colors"
+      className="p-1 text-muted-foreground/70 hover:text-primary rounded transition-colors"
       title="Copy"
     >
       {copied === label ? (
-        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+        <CheckCircle2 className="h-3.5 w-3.5 text-success/80" />
       ) : (
         <Copy className="h-3.5 w-3.5" />
       )}
@@ -98,13 +98,13 @@ export function UserDetailPanel({
     value: string;
     copiable?: boolean;
   }) => (
-    <div className="flex items-start justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-2 text-gray-500 min-w-[140px]">
+    <div className="flex items-start justify-between py-3 border-b border-border/50 last:border-0">
+      <div className="flex items-center gap-2 text-muted-foreground min-w-[140px]">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <div className="flex items-center gap-1 text-right">
-        <span className="text-sm text-gray-900 font-medium">{value}</span>
+        <span className="text-sm text-foreground font-medium">{value}</span>
         {copiable && <CopyButton text={value} label={label} />}
       </div>
     </div>
@@ -116,7 +116,7 @@ export function UserDetailPanel({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Users
@@ -124,7 +124,7 @@ export function UserDetailPanel({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onEdit(user.id)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/15 transition-colors"
           >
             <Edit className="h-4 w-4" />
             Edit
@@ -133,8 +133,8 @@ export function UserDetailPanel({
             onClick={() => onToggleStatus(user)}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
               isActive
-                ? 'text-orange-600 bg-orange-50 border-orange-200 hover:bg-orange-100'
-                : 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100'
+                ? 'text-warning bg-warning/10 border-orange-200 hover:bg-warning/15'
+                : 'text-success bg-success/10 border-success/20 hover:bg-success/15'
             }`}
           >
             {isActive ? (
@@ -151,7 +151,7 @@ export function UserDetailPanel({
           </button>
           <button
             onClick={() => onDelete(user)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg hover:bg-destructive/15 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
             Delete
@@ -160,20 +160,20 @@ export function UserDetailPanel({
       </div>
 
       {/* Profile Header Card */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-xl font-bold border-2 border-white/30">
+            <div className="w-16 h-16 rounded-full bg-card/20 backdrop-blur-sm flex items-center justify-center text-white text-xl font-bold border-2 border-white/30">
               {user.firstName[0]}{user.lastName[0]}
             </div>
             <div className="text-white">
               <h2 className="text-xl font-bold">{displayName}</h2>
               <div className="flex items-center gap-3 mt-1">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white border border-white/30`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30`}>
                   {typeConfig.label}
                 </span>
-                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white border border-white/30`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-400' : user.status === 'suspended' ? 'bg-red-400' : user.status === 'pending' ? 'bg-yellow-400' : 'bg-gray-400'}`} />
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-success/50' : user.status === 'suspended' ? 'bg-destructive/50' : user.status === 'pending' ? 'bg-warning/60' : 'bg-secondary'}`} />
                   {statusConfig.label}
                 </span>
                 <span className="text-white/70 text-xs">{user.id}</span>
@@ -186,9 +186,9 @@ export function UserDetailPanel({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Personal Information */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-600" />
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
               Personal Information
             </h3>
             <div className="space-y-0">
@@ -231,9 +231,9 @@ export function UserDetailPanel({
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Account Info */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
               Account Information
             </h3>
             <div className="space-y-0">
@@ -253,12 +253,12 @@ export function UserDetailPanel({
 
           {/* Notes */}
           {user.notes && (
-            <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-6">
-              <h3 className="text-sm font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+            <div className="bg-warning/10 rounded-xl border border-warning/20 shadow-sm p-6">
+              <h3 className="text-sm font-semibold text-warning mb-2 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Notes
               </h3>
-              <p className="text-sm text-yellow-700 leading-relaxed">{user.notes}</p>
+              <p className="text-sm text-warning leading-relaxed">{user.notes}</p>
             </div>
           )}
         </div>
@@ -288,24 +288,24 @@ function renderTypeSpecificDetails(user: SystemUser) {
 
 function DetailRow({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-xs font-medium text-gray-500">{label}</span>
-      <span className="text-sm font-medium text-gray-900">{String(value)}</span>
+    <div className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground">{String(value)}</span>
     </div>
   );
 }
 
 function MOTDetails({ user }: { user: MOTUser }) {
   const clearanceColors: Record<string, string> = {
-    basic: 'bg-gray-100 text-gray-700',
-    standard: 'bg-blue-100 text-blue-700',
-    enhanced: 'bg-purple-100 text-purple-700',
-    'top-secret': 'bg-red-100 text-red-700',
+    basic: 'bg-muted text-foreground/80',
+    standard: 'bg-primary/15 text-primary',
+    enhanced: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))]',
+    'top-secret': 'bg-destructive/15 text-destructive',
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
         <Shield className="h-4 w-4 text-indigo-600" />
         MOT Officer Details
       </h3>
@@ -314,19 +314,19 @@ function MOTDetails({ user }: { user: MOTUser }) {
         <DetailRow label="Department" value={user.department} />
         <DetailRow label="Designation" value={user.designation} />
         <DetailRow label="Office Location" value={user.officeLocation} />
-        <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
-          <span className="text-xs font-medium text-gray-500">Security Clearance</span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${clearanceColors[user.securityClearance] || 'bg-gray-100 text-gray-700'}`}>
+        <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+          <span className="text-xs font-medium text-muted-foreground">Security Clearance</span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${clearanceColors[user.securityClearance] || 'bg-muted text-foreground/80'}`}>
             {user.securityClearance.charAt(0).toUpperCase() + user.securityClearance.slice(1)}
           </span>
         </div>
         <div className="py-2.5">
-          <span className="text-xs font-medium text-gray-500">Permissions</span>
+          <span className="text-xs font-medium text-muted-foreground">Permissions</span>
           <div className="flex flex-wrap gap-1.5 mt-2">
             {user.permissions.map((perm) => (
               <span
                 key={perm}
-                className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200"
+                className="text-xs px-2 py-0.5 bg-primary/10 text-indigo-700 rounded-full border border-indigo-200"
               >
                 {perm.replace(/_/g, ' ')}
               </span>
@@ -340,8 +340,8 @@ function MOTDetails({ user }: { user: MOTUser }) {
 
 function TimekeeperDetails({ user }: { user: TimekeeperUser }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
         <Clock className="h-4 w-4 text-teal-600" />
         Timekeeper Details
       </h3>
@@ -358,9 +358,9 @@ function TimekeeperDetails({ user }: { user: TimekeeperUser }) {
 
 function OperatorDetails({ user }: { user: OperatorUser }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <Truck className="h-4 w-4 text-orange-600" />
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+        <Truck className="h-4 w-4 text-warning" />
         Operator Details
       </h3>
       <div className="space-y-0">
@@ -377,9 +377,9 @@ function OperatorDetails({ user }: { user: OperatorUser }) {
 
 function ConductorDetails({ user }: { user: ConductorUser }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <CircleDot className="h-4 w-4 text-green-600" />
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+        <CircleDot className="h-4 w-4 text-success" />
         Conductor Details
       </h3>
       <div className="space-y-0">
@@ -389,10 +389,10 @@ function ConductorDetails({ user }: { user: ConductorUser }) {
         <DetailRow label="Assigned Route" value={user.assignedRoute || 'Not assigned'} />
         <DetailRow label="Operator" value={user.operatorName} />
         <DetailRow label="Total Trips" value={user.totalTrips.toLocaleString()} />
-        <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
-          <span className="text-xs font-medium text-gray-500">Rating</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-gray-900">
-            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+        <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+          <span className="text-xs font-medium text-muted-foreground">Rating</span>
+          <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+            <Star className="h-3.5 w-3.5 text-warning fill-yellow-500" />
             {user.rating > 0 ? user.rating.toFixed(1) : 'N/A'}
           </span>
         </div>
@@ -406,27 +406,27 @@ function DriverDetails({ user }: { user: DriverUser }) {
   const isExpiringSoon = !isExpired && (new Date(user.drivingLicenseExpiry).getTime() - new Date().getTime()) < 90 * 86400000;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <Car className="h-4 w-4 text-blue-600" />
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+        <Car className="h-4 w-4 text-primary" />
         Driver Details
       </h3>
       <div className="space-y-0">
         <DetailRow label="Employee ID" value={user.employeeId} />
         <DetailRow label="License Number" value={user.drivingLicenseNumber} />
-        <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
-          <span className="text-xs font-medium text-gray-500">License Expiry</span>
-          <span className={`text-sm font-medium ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : 'text-gray-900'}`}>
+        <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+          <span className="text-xs font-medium text-muted-foreground">License Expiry</span>
+          <span className={`text-sm font-medium ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-foreground'}`}>
             {formatDateShort(user.drivingLicenseExpiry)}
             {isExpired && <span className="text-xs ml-1">(Expired)</span>}
             {isExpiringSoon && <span className="text-xs ml-1">(Expiring Soon)</span>}
           </span>
         </div>
-        <div className="py-2.5 border-b border-gray-100">
-          <span className="text-xs font-medium text-gray-500">Vehicle Classes</span>
+        <div className="py-2.5 border-b border-border/50">
+          <span className="text-xs font-medium text-muted-foreground">Vehicle Classes</span>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
             {user.vehicleClasses.map((cls) => (
-              <span key={cls} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full border border-blue-200 font-medium">
+              <span key={cls} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20 font-medium">
                 Class {cls}
               </span>
             ))}
@@ -437,9 +437,9 @@ function DriverDetails({ user }: { user: DriverUser }) {
         <DetailRow label="Operator" value={user.operatorName} />
         <DetailRow label="Total Trips" value={user.totalTrips.toLocaleString()} />
         <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs font-medium text-gray-500">Rating</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-gray-900">
-            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+          <span className="text-xs font-medium text-muted-foreground">Rating</span>
+          <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+            <Star className="h-3.5 w-3.5 text-warning fill-yellow-500" />
             {user.rating > 0 ? user.rating.toFixed(1) : 'N/A'}
           </span>
         </div>
@@ -450,9 +450,9 @@ function DriverDetails({ user }: { user: DriverUser }) {
 
 function PassengerDetails({ user }: { user: PassengerUser }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <Users className="h-4 w-4 text-purple-600" />
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+        <Users className="h-4 w-4 text-[hsl(var(--purple-600))]" />
         Passenger Details
       </h3>
       <div className="space-y-0">
@@ -462,12 +462,12 @@ function PassengerDetails({ user }: { user: PassengerUser }) {
         <DetailRow label="Preferred Payment" value={user.preferredPayment.charAt(0).toUpperCase() + user.preferredPayment.slice(1)} />
         {user.savedRoutes.length > 0 && (
           <div className="py-2.5">
-            <span className="text-xs font-medium text-gray-500">Saved Routes</span>
+            <span className="text-xs font-medium text-muted-foreground">Saved Routes</span>
             <div className="flex flex-wrap gap-1.5 mt-2">
               {user.savedRoutes.map((route) => (
                 <span
                   key={route}
-                  className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-200"
+                  className="text-xs px-2 py-0.5 bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] rounded-full border border-[hsl(var(--purple-200))]"
                 >
                   {route}
                 </span>
