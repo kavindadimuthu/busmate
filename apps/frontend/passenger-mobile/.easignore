@@ -1,0 +1,25 @@
+# EAS Build ignore file
+
+# Development files
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Node modules (already ignored by default)
+node_modules/
+
+# Temp files
+tmp/
+temp/
+
+# Any remaining problematic asset files
+assets/figma-screens/
+assets/**/*copy*
+assets/**/* *
+
+# Build artifacts
+android/app/build/
+ios/build/
+.expo/
+dist/

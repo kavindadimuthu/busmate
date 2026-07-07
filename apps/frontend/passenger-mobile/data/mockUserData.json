@@ -1,0 +1,384 @@
+{
+  "users": {
+    "kavindadimuthu260@gmail.com": {
+      "id": "user-001",
+      "email": "kavindadimuthu260@gmail.com",
+      "name": "Kavinda Dimuthu",
+      "phone": "+94771234567",
+      "profileImage": "https://iamkavinda.vercel.app/assets/profile-photo-CCXUFtA8.jpeg",
+      "role": "authenticated",
+      "app_role": "Passenger",
+      "memberSince": "June 2024",
+      "emailVerified": true,
+      "dob": "March 15, 1995",
+      "address": "123 Galle Road, Colombo 03",
+      "city": "Colombo",
+      "totalTrips": 24,
+      "savedRoutes": 5,
+      "walletBalance": 1250.50,
+      "travelCardNumber": "TC001234567",
+      "travelCardStatus": "active",
+      "language": "en",
+      "upcomingTrips": [
+        {
+          "id": "trip-001",
+          "bookingId": "SB2024072301",
+          "route": { "from": "Colombo Fort", "to": "Kandy" },
+          "date": "Today, Jul 23",
+          "time": "08:30 AM",
+          "arrivalTime": "11:00 AM",
+          "duration": "2h 30m",
+          "operator": "SLTB Express",
+          "routeNumber": "001",
+          "seatNumber": "A12",
+          "price": 250,
+          "status": "upcoming",
+          "busImage": "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800",
+          "driver": {
+            "name": "Mahinda Silva",
+            "phone": "+94771234567",
+            "rating": 4.8
+          },
+          "qrCode": "QR123456789"
+        }
+      ],
+      "recentTickets": [
+        {
+          "id": "ticket-001",
+          "bookingId": "SB2024072301",
+          "route": { "from": "Colombo Fort", "to": "Kandy" },
+          "date": "Today, Jul 23",
+          "time": "08:30 AM",
+          "duration": "2h 30m",
+          "operator": "SLTB Express",
+          "routeNumber": "001",
+          "seatNumber": "A12",
+          "price": 250,
+          "status": "upcoming",
+          "busImage": "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800"
+        },
+        {
+          "id": "ticket-002",
+          "bookingId": "SB2024072201",
+          "route": { "from": "Galle", "to": "Matara" },
+          "date": "Yesterday, Jul 22",
+          "time": "02:30 PM",
+          "duration": "45m",
+          "operator": "Lanka Travels",
+          "routeNumber": "138",
+          "seatNumber": "B05",
+          "price": 120,
+          "status": "completed",
+          "busImage": "https://images.pexels.com/photos/1098365/pexels-photo-1098365.jpeg?auto=compress&cs=tinysrgb&w=800"
+        },
+        {
+          "id": "ticket-003",
+          "bookingId": "SB2024072101",
+          "route": { "from": "Negombo", "to": "Colombo" },
+          "date": "Jul 21, 2024",
+          "time": "06:00 PM",
+          "duration": "1h 15m",
+          "operator": "Comfort Line",
+          "routeNumber": "205",
+          "seatNumber": "C08",
+          "price": 180,
+          "status": "cancelled",
+          "busImage": "https://images.pexels.com/photos/1098364/pexels-photo-1098364.jpeg?auto=compress&cs=tinysrgb&w=800"
+        }
+      ],
+      "favoriteRoutes": [
+        {
+          "id": "fav-001",
+          "from": "Colombo Fort",
+          "to": "Kandy",
+          "frequentTime": "Weekdays, Morning",
+          "lastUsed": "2 days ago"
+        },
+        {
+          "id": "fav-002",
+          "from": "Colombo Fort",
+          "to": "Galle",
+          "frequentTime": "Weekends",
+          "lastUsed": "1 week ago"
+        },
+        {
+          "id": "fav-003",
+          "from": "Nugegoda",
+          "to": "Colombo Fort",
+          "frequentTime": "Weekdays, Evening",
+          "lastUsed": "Yesterday"
+        },
+        {
+          "id": "fav-004",
+          "from": "Kandy",
+          "to": "Colombo Fort",
+          "frequentTime": "Monthly",
+          "lastUsed": "3 weeks ago"
+        },
+        {
+          "id": "fav-005",
+          "from": "Gampaha",
+          "to": "Colombo Fort",
+          "frequentTime": "Weekdays",
+          "lastUsed": "5 days ago"
+        }
+      ],
+      "recentRoutes": [
+        { "id": "recent-001", "from": "Colombo", "to": "Kandy", "saved": true },
+        { "id": "recent-002", "from": "Negombo", "to": "Colombo", "saved": false },
+        { "id": "recent-003", "from": "Colombo", "to": "Galle", "saved": true }
+      ]
+    },
+    "nadun@gmail.com": {
+      "id": "user-002",
+      "email": "nadun@gmail.com",
+      "name": "Nadun Perera",
+      "phone": "+94777654321",
+      "profileImage": "https://iamkavinda.vercel.app/assets/profile-photo-CCXUFtA8.jpeg",
+      "role": "authenticated",
+      "app_role": "Passenger",
+      "memberSince": "March 2024",
+      "emailVerified": true,
+      "dob": "August 22, 1992",
+      "address": "456 Kandy Road, Peradeniya",
+      "city": "Kandy",
+      "totalTrips": 18,
+      "savedRoutes": 3,
+      "walletBalance": 875.25,
+      "travelCardNumber": "TC001234568",
+      "travelCardStatus": "active",
+      "language": "en",
+      "upcomingTrips": [
+        {
+          "id": "trip-002",
+          "bookingId": "SB2024072302",
+          "route": { "from": "Kandy", "to": "Colombo Fort" },
+          "date": "Tomorrow, Jul 24",
+          "time": "07:15 AM",
+          "arrivalTime": "09:45 AM",
+          "duration": "2h 30m",
+          "operator": "Express Lanka",
+          "routeNumber": "002",
+          "seatNumber": "B08",
+          "price": 280,
+          "status": "upcoming",
+          "busImage": "https://i.pinimg.com/originals/8e/05/52/8e0552e8a7a9c86f473e713dbb2d4daa.jpg",
+          "driver": {
+            "name": "Sunil Fernando",
+            "phone": "+94772345678",
+            "rating": 4.6
+          },
+          "qrCode": "QR123456790"
+        }
+      ],
+      "recentTickets": [
+        {
+          "id": "ticket-004",
+          "bookingId": "SB2024072302",
+          "route": { "from": "Kandy", "to": "Colombo Fort" },
+          "date": "Tomorrow, Jul 24",
+          "time": "07:15 AM",
+          "duration": "2h 30m",
+          "operator": "Express Lanka",
+          "routeNumber": "002",
+          "seatNumber": "B08",
+          "price": 280,
+          "status": "upcoming",
+          "busImage": "https://images.pexels.com/photos/1098365/pexels-photo-1098365.jpeg?auto=compress&cs=tinysrgb&w=800"
+        },
+        {
+          "id": "ticket-005",
+          "bookingId": "SB2024072001",
+          "route": { "from": "Kandy", "to": "Nuwara Eliya" },
+          "date": "Jul 20, 2024",
+          "time": "10:00 AM",
+          "duration": "2h 15m",
+          "operator": "Hill Country Express",
+          "routeNumber": "301",
+          "seatNumber": "A15",
+          "price": 220,
+          "status": "completed",
+          "busImage": "https://images.pexels.com/photos/1098364/pexels-photo-1098364.jpeg?auto=compress&cs=tinysrgb&w=800"
+        }
+      ],
+      "favoriteRoutes": [
+        {
+          "id": "fav-006",
+          "from": "Kandy",
+          "to": "Colombo Fort",
+          "frequentTime": "Weekdays, Morning",
+          "lastUsed": "3 days ago"
+        },
+        {
+          "id": "fav-007",
+          "from": "Kandy",
+          "to": "Nuwara Eliya",
+          "frequentTime": "Weekends",
+          "lastUsed": "1 week ago"
+        },
+        {
+          "id": "fav-008",
+          "from": "Peradeniya",
+          "to": "Kandy",
+          "frequentTime": "Daily",
+          "lastUsed": "Yesterday"
+        }
+      ],
+      "recentRoutes": [
+        { "id": "recent-004", "from": "Kandy", "to": "Colombo", "saved": true },
+        { "id": "recent-005", "from": "Kandy", "to": "Nuwara Eliya", "saved": true },
+        { "id": "recent-006", "from": "Peradeniya", "to": "Kandy", "saved": false }
+      ]
+    },
+    "isuru@gmail.com": {
+      "id": "user-003",
+      "email": "isuru@gmail.com",
+      "name": "Isuru Naveen",
+      "phone": "+94763456789",
+      "profileImage": "https://iamkavinda.vercel.app/assets/profile-photo-CCXUFtA8.jpeg",
+      "role": "authenticated",
+      "app_role": "Timekeeper",
+      "memberSince": "June 2025",
+      "emailVerified": true,
+      "dob": "December 5, 1990",
+      "address": "789 Matara Road, Galle",
+      "city": "Galle",
+      "totalTrips": 32,
+      "savedRoutes": 8,
+      "walletBalance": 2100.75,
+      "travelCardNumber": "TC001234569",
+      "travelCardStatus": "active",
+      "language": "en",
+      "upcomingTrips": [
+        {
+          "id": "trip-003",
+          "bookingId": "SB2024072303",
+          "route": { "from": "Galle", "to": "Colombo Fort" },
+          "date": "Today, Jul 23",
+          "time": "03:30 PM",
+          "arrivalTime": "05:30 PM",
+          "duration": "2h 00m",
+          "operator": "Southern Express",
+          "routeNumber": "100",
+          "seatNumber": "A05",
+          "price": 200,
+          "status": "upcoming",
+          "busImage": "https://ajkobaly.com/wp-content/uploads/2023/06/ajk-obaly-bus-1-scaled.jpg",
+          "driver": {
+            "name": "Kamal Rathnayake",
+            "phone": "+94784567890",
+            "rating": 4.9
+          },
+          "qrCode": "QR123456791"
+        }
+      ],
+      "recentTickets": [
+        {
+          "id": "ticket-006",
+          "bookingId": "SB2024072303",
+          "route": { "from": "Galle", "to": "Colombo Fort" },
+          "date": "Today, Jul 23",
+          "time": "03:30 PM",
+          "duration": "2h 00m",
+          "operator": "Southern Express",
+          "routeNumber": "100",
+          "seatNumber": "A05",
+          "price": 200,
+          "status": "upcoming",
+          "busImage": "https://lesscarmorelife.com/wp-content/uploads/2023/03/img_3728.jpg?w=900"
+        },
+        {
+          "id": "ticket-007",
+          "bookingId": "SB2024072202",
+          "route": { "from": "Colombo Fort", "to": "Galle" },
+          "date": "Jul 22, 2024",
+          "time": "09:00 AM",
+          "duration": "2h 00m",
+          "operator": "Highway Express",
+          "routeNumber": "101",
+          "seatNumber": "B12",
+          "price": 190,
+          "status": "completed",
+          "busImage": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5j8Oyz03Mh7C3WFPqzbQFJQNeRJvd1UM9fg&s"
+        },
+        {
+          "id": "ticket-008",
+          "bookingId": "SB2024072102",
+          "route": { "from": "Galle", "to": "Matara" },
+          "date": "Jul 21, 2024",
+          "time": "11:30 AM",
+          "duration": "45m",
+          "operator": "Coast Line",
+          "routeNumber": "140",
+          "seatNumber": "A18",
+          "price": 85,
+          "status": "completed",
+          "busImage": "https://mysltravel.com/wp-content/uploads/2022/08/WhatsApp-Image-2022-08-29-at-4.26.32-PM.jpeg"
+        }
+      ],
+      "favoriteRoutes": [
+        {
+          "id": "fav-009",
+          "from": "Galle",
+          "to": "Colombo Fort",
+          "frequentTime": "Weekdays, Afternoon",
+          "lastUsed": "Today"
+        },
+        {
+          "id": "fav-010",
+          "from": "Colombo Fort",
+          "to": "Galle",
+          "frequentTime": "Weekdays, Morning",
+          "lastUsed": "Yesterday"
+        },
+        {
+          "id": "fav-011",
+          "from": "Galle",
+          "to": "Matara",
+          "frequentTime": "Weekly",
+          "lastUsed": "2 days ago"
+        },
+        {
+          "id": "fav-012",
+          "from": "Matara",
+          "to": "Galle",
+          "frequentTime": "Weekly",
+          "lastUsed": "2 days ago"
+        },
+        {
+          "id": "fav-013",
+          "from": "Galle",
+          "to": "Hikkaduwa",
+          "frequentTime": "Weekends",
+          "lastUsed": "1 week ago"
+        },
+        {
+          "id": "fav-014",
+          "from": "Unawatuna",
+          "to": "Galle",
+          "frequentTime": "Occasionally",
+          "lastUsed": "2 weeks ago"
+        },
+        {
+          "id": "fav-015",
+          "from": "Galle",
+          "to": "Tangalle",
+          "frequentTime": "Monthly",
+          "lastUsed": "3 weeks ago"
+        },
+        {
+          "id": "fav-016",
+          "from": "Weligama",
+          "to": "Galle",
+          "frequentTime": "Occasionally",
+          "lastUsed": "1 month ago"
+        }
+      ],
+      "recentRoutes": [
+        { "id": "recent-007", "from": "Galle", "to": "Colombo", "saved": true },
+        { "id": "recent-008", "from": "Galle", "to": "Matara", "saved": true },
+        { "id": "recent-009", "from": "Hikkaduwa", "to": "Galle", "saved": false }
+      ]
+    }
+  }
+}
