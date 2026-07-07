@@ -1,0 +1,63 @@
+name: Deploy to EC2
+on:
+  push:
+    branches:
+      - "main"
+      - "test-deployment"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Spring Boot App
+        run: |
+          ./mvnw clean package -DskipTests
+          ls -l target/*.jar
+
+      - name: Rename JAR to app.jar
+        run: |
+          JAR_FILE=$(find target -name "*.jar" -type f | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "No JAR file found!"
+            exit 1
+          fi
+          cp "$JAR_FILE" target/app.jar
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "Dockerfile,target/app.jar"
+          target: "~/app-${{ github.event.repository.name }}"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/app-${{ github.event.repository.name }}
+            ls -la
+            # Rename JAR if needed (in case it has a different name)
+            if [ -f target/app.jar ]; then
+              cp target/app.jar ./app.jar
+            else
+              echo "JAR file not found in target directory!"
+              exit 1
+            fi
+            docker stop ${{ github.event.repository.name }} 2>/dev/null || true
+            docker rm ${{ github.event.repository.name }} 2>/dev/null || true
+            docker build -t ${{ github.event.repository.name }}:latest .
+            docker run -d --name ${{ github.event.repository.name }} -p 8083:8083 ${{ github.event.repository.name }}:latest
