@@ -1,0 +1,628 @@
+{
+  "wallets": {
+    "kavindadimuthu260@gmail.com": {
+      "id": "wallet-001",
+      "userId": "user-001",
+      "balance": 1250.50,
+      "travelCard": {
+        "cardNumber": "4218 7643 9875 1234",
+        "maskedCardNumber": "•••• •••• •••• 1234",
+        "expiryDate": "12/27",
+        "holderName": "KAVINDA DIMUTHU",
+        "issuedDate": "Jan 10, 2024",
+        "status": "active",
+        "cvv": "123",
+        "cardType": "SmartBus Travel Card"
+      },
+      "recentTransactions": [
+        {
+          "id": "txn-001",
+          "type": "topup",
+          "amount": 1000,
+          "date": "Today, 10:30 AM",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Visa Credit Card",
+          "reference": "TXN123456789",
+          "description": "Credit card top-up via mobile app"
+        },
+        {
+          "id": "txn-002",
+          "type": "payment",
+          "amount": 250,
+          "date": "Yesterday, 3:15 PM",
+          "title": "Bus Ticket - Colombo to Kandy",
+          "status": "completed",
+          "reference": "BKG987654321",
+          "bookingId": "SB2024072301",
+          "description": "SLTB Express Route 001"
+        },
+        {
+          "id": "txn-003",
+          "type": "card-use",
+          "amount": 50,
+          "date": "Jan 22, 2024",
+          "title": "Bus Fare - Route 138",
+          "status": "completed",
+          "location": "Galle Road, Colombo",
+          "reference": "CRD456789123",
+          "description": "Travel card tap-in/tap-out"
+        },
+        {
+          "id": "txn-004",
+          "type": "payment",
+          "amount": 180,
+          "date": "Jan 20, 2024",
+          "title": "Bus Ticket - Galle to Matara",
+          "status": "completed",
+          "reference": "BKG123789456",
+          "description": "Online booking payment"
+        },
+        {
+          "id": "txn-005",
+          "type": "topup",
+          "amount": 500,
+          "date": "Jan 18, 2024",
+          "title": "Wallet Top-up",
+          "status": "failed",
+          "method": "Mastercard Debit",
+          "reference": "TXN987321654",
+          "error": "Payment gateway timeout",
+          "description": "Failed bank transaction"
+        }
+      ],
+      "allTransactions": [
+        {
+          "id": "txn-001",
+          "type": "topup",
+          "amount": 1000,
+          "date": "Today, 10:30 AM",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Visa Credit Card",
+          "reference": "TXN123456789",
+          "description": "Credit card top-up via mobile app"
+        },
+        {
+          "id": "txn-002",
+          "type": "payment",
+          "amount": 250,
+          "date": "Yesterday, 3:15 PM",
+          "title": "Bus Ticket - Colombo to Kandy",
+          "status": "completed",
+          "reference": "BKG987654321",
+          "bookingId": "SB2024072301",
+          "description": "SLTB Express Route 001"
+        },
+        {
+          "id": "txn-003",
+          "type": "card-use",
+          "amount": 50,
+          "date": "Jan 22, 2024",
+          "title": "Bus Fare - Route 138",
+          "status": "completed",
+          "location": "Galle Road, Colombo",
+          "reference": "CRD456789123",
+          "description": "Travel card tap-in/tap-out"
+        },
+        {
+          "id": "txn-004",
+          "type": "payment",
+          "amount": 180,
+          "date": "Jan 20, 2024",
+          "title": "Bus Ticket - Galle to Matara",
+          "status": "completed",
+          "reference": "BKG123789456",
+          "description": "Online booking payment"
+        },
+        {
+          "id": "txn-005",
+          "type": "topup",
+          "amount": 500,
+          "date": "Jan 18, 2024",
+          "title": "Wallet Top-up",
+          "status": "failed",
+          "method": "Mastercard Debit",
+          "reference": "TXN987321654",
+          "error": "Payment gateway timeout",
+          "description": "Failed bank transaction"
+        },
+        {
+          "id": "txn-006",
+          "type": "card-use",
+          "amount": 30,
+          "date": "Jan 15, 2024",
+          "title": "Bus Fare - Route 101",
+          "status": "completed",
+          "location": "Kandy City Center",
+          "reference": "CRD789456123",
+          "description": "Travel card usage"
+        },
+        {
+          "id": "txn-007",
+          "type": "payment",
+          "amount": 300,
+          "date": "Jan 12, 2024",
+          "title": "Bus Ticket - Colombo to Jaffna",
+          "status": "pending",
+          "reference": "BKG456123789",
+          "description": "Booking payment processing"
+        },
+        {
+          "id": "txn-008",
+          "type": "topup",
+          "amount": 2000,
+          "date": "Jan 10, 2024",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Bank Transfer",
+          "reference": "TXN789123456",
+          "description": "Online banking transfer"
+        },
+        {
+          "id": "txn-009",
+          "type": "refund",
+          "amount": 250,
+          "date": "Jan 8, 2024",
+          "title": "Booking Refund - Cancelled Trip",
+          "status": "completed",
+          "reference": "REF123456789",
+          "originalBooking": "BKG555666777",
+          "description": "Refund for cancelled bus service"
+        },
+        {
+          "id": "txn-010",
+          "type": "card-use",
+          "amount": 45,
+          "date": "Jan 5, 2024",
+          "title": "Bus Fare - Route 245",
+          "status": "completed",
+          "location": "Nugegoda Junction",
+          "reference": "CRD321654987",
+          "description": "Travel card tap usage"
+        }
+      ],
+      "paymentMethods": [
+        {
+          "id": "pm-001",
+          "type": "card",
+          "name": "Visa Credit Card",
+          "cardNumber": "•••• •••• •••• 4567",
+          "expiryDate": "09/26",
+          "cardType": "visa",
+          "isDefault": true,
+          "isActive": true
+        },
+        {
+          "id": "pm-002",
+          "type": "card",
+          "name": "Mastercard Debit",
+          "cardNumber": "•••• •••• •••• 8912",
+          "expiryDate": "12/25",
+          "cardType": "mastercard",
+          "isDefault": false,
+          "isActive": true
+        },
+        {
+          "id": "pm-003",
+          "type": "bank",
+          "name": "Commercial Bank",
+          "accountNumber": "•••• •••• 1234",
+          "bankName": "Commercial Bank of Ceylon",
+          "isDefault": false,
+          "isActive": true
+        }
+      ],
+      "notifications": {
+        "lowBalanceAlert": true,
+        "transactionAlerts": true,
+        "promotionalOffers": false,
+        "lowBalanceThreshold": 100
+      },
+      "settings": {
+        "autoTopup": {
+          "enabled": false,
+          "threshold": 200,
+          "amount": 1000,
+          "paymentMethodId": "pm-001"
+        },
+        "spendingLimits": {
+          "daily": 2000,
+          "monthly": 15000
+        }
+      }
+    },
+    "nadun@gmail.com": {
+      "id": "wallet-002",
+      "userId": "user-002",
+      "balance": 875.25,
+      "travelCard": {
+        "cardNumber": "4218 7643 9875 5678",
+        "maskedCardNumber": "•••• •••• •••• 5678",
+        "expiryDate": "08/26",
+        "holderName": "NADUN PERERA",
+        "issuedDate": "Mar 15, 2024",
+        "status": "active",
+        "cvv": "456",
+        "cardType": "SmartBus Travel Card"
+      },
+      "recentTransactions": [
+        {
+          "id": "txn-011",
+          "type": "payment",
+          "amount": 280,
+          "date": "Today, 7:15 AM",
+          "title": "Bus Ticket - Kandy to Colombo",
+          "status": "completed",
+          "reference": "BKG789123456",
+          "description": "Express Lanka Route 002"
+        },
+        {
+          "id": "txn-012",
+          "type": "topup",
+          "amount": 1500,
+          "date": "Yesterday, 2:00 PM",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Bank Transfer",
+          "reference": "TXN456789123",
+          "description": "Online banking transfer"
+        },
+        {
+          "id": "txn-013",
+          "type": "card-use",
+          "amount": 35,
+          "date": "Jan 21, 2024",
+          "title": "Bus Fare - Route 205",
+          "status": "completed",
+          "location": "Peradeniya University",
+          "reference": "CRD654321987",
+          "description": "Travel card usage"
+        }
+      ],
+      "allTransactions": [
+        {
+          "id": "txn-011",
+          "type": "payment",
+          "amount": 280,
+          "date": "Today, 7:15 AM",
+          "title": "Bus Ticket - Kandy to Colombo",
+          "status": "completed",
+          "reference": "BKG789123456",
+          "description": "Express Lanka Route 002"
+        },
+        {
+          "id": "txn-012",
+          "type": "topup",
+          "amount": 1500,
+          "date": "Yesterday, 2:00 PM",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Bank Transfer",
+          "reference": "TXN456789123",
+          "description": "Online banking transfer"
+        },
+        {
+          "id": "txn-013",
+          "type": "card-use",
+          "amount": 35,
+          "date": "Jan 21, 2024",
+          "title": "Bus Fare - Route 205",
+          "status": "completed",
+          "location": "Peradeniya University",
+          "reference": "CRD654321987",
+          "description": "Travel card usage"
+        },
+        {
+          "id": "txn-014",
+          "type": "payment",
+          "amount": 220,
+          "date": "Jan 20, 2024",
+          "title": "Bus Ticket - Kandy to Nuwara Eliya",
+          "status": "completed",
+          "reference": "BKG321456789",
+          "description": "Hill Country Express Route 301"
+        },
+        {
+          "id": "txn-015",
+          "type": "topup",
+          "amount": 800,
+          "date": "Jan 18, 2024",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Visa Credit Card",
+          "reference": "TXN987654321",
+          "description": "Credit card top-up"
+        },
+        {
+          "id": "txn-016",
+          "type": "card-use",
+          "amount": 25,
+          "date": "Jan 15, 2024",
+          "title": "Bus Fare - Route 152",
+          "status": "completed",
+          "location": "Kandy Railway Station",
+          "reference": "CRD159753486",
+          "description": "Travel card tap usage"
+        }
+      ],
+      "paymentMethods": [
+        {
+          "id": "pm-004",
+          "type": "bank",
+          "name": "People's Bank",
+          "accountNumber": "•••• •••• 9876",
+          "bankName": "People's Bank",
+          "isDefault": true,
+          "isActive": true
+        },
+        {
+          "id": "pm-005",
+          "type": "card",
+          "name": "Visa Debit Card",
+          "cardNumber": "•••• •••• •••• 3456",
+          "expiryDate": "06/27",
+          "cardType": "visa",
+          "isDefault": false,
+          "isActive": true
+        }
+      ],
+      "notifications": {
+        "lowBalanceAlert": true,
+        "transactionAlerts": true,
+        "promotionalOffers": true,
+        "lowBalanceThreshold": 150
+      },
+      "settings": {
+        "autoTopup": {
+          "enabled": true,
+          "threshold": 200,
+          "amount": 1000,
+          "paymentMethodId": "pm-004"
+        },
+        "spendingLimits": {
+          "daily": 1500,
+          "monthly": 10000
+        }
+      }
+    },
+    "isuru@gmail.com": {
+      "id": "wallet-003",
+      "userId": "user-003",
+      "balance": 2100.75,
+      "travelCard": {
+        "cardNumber": "4218 7643 9875 9012",
+        "maskedCardNumber": "•••• •••• •••• 9012",
+        "expiryDate": "05/28",
+        "holderName": "ISURU NAVEEN",
+        "issuedDate": "Jun 20, 2024",
+        "status": "active",
+        "cvv": "789",
+        "cardType": "SmartBus Travel Card"
+      },
+      "recentTransactions": [
+        {
+          "id": "txn-017",
+          "type": "payment",
+          "amount": 200,
+          "date": "Today, 3:30 PM",
+          "title": "Bus Ticket - Galle to Colombo",
+          "status": "completed",
+          "reference": "BKG654987321",
+          "description": "Southern Express Route 100"
+        },
+        {
+          "id": "txn-018",
+          "type": "card-use",
+          "amount": 85,
+          "date": "Yesterday, 11:30 AM",
+          "title": "Bus Fare - Route 140",
+          "status": "completed",
+          "location": "Galle Bus Stand",
+          "reference": "CRD987321654",
+          "description": "Travel card usage"
+        },
+        {
+          "id": "txn-019",
+          "type": "topup",
+          "amount": 2500,
+          "date": "Jan 22, 2024",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Bank Transfer",
+          "reference": "TXN321654987",
+          "description": "Salary account transfer"
+        }
+      ],
+      "allTransactions": [
+        {
+          "id": "txn-017",
+          "type": "payment",
+          "amount": 200,
+          "date": "Today, 3:30 PM",
+          "title": "Bus Ticket - Galle to Colombo",
+          "status": "completed",
+          "reference": "BKG654987321",
+          "description": "Southern Express Route 100"
+        },
+        {
+          "id": "txn-018",
+          "type": "card-use",
+          "amount": 85,
+          "date": "Yesterday, 11:30 AM",
+          "title": "Bus Fare - Route 140",
+          "status": "completed",
+          "location": "Galle Bus Stand",
+          "reference": "CRD987321654",
+          "description": "Travel card usage"
+        },
+        {
+          "id": "txn-019",
+          "type": "topup",
+          "amount": 2500,
+          "date": "Jan 22, 2024",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Bank Transfer",
+          "reference": "TXN321654987",
+          "description": "Salary account transfer"
+        },
+        {
+          "id": "txn-020",
+          "type": "payment",
+          "amount": 190,
+          "date": "Jan 22, 2024",
+          "title": "Bus Ticket - Colombo to Galle",
+          "status": "completed",
+          "reference": "BKG789654123",
+          "description": "Highway Express Route 101"
+        },
+        {
+          "id": "txn-021",
+          "type": "card-use",
+          "amount": 45,
+          "date": "Jan 20, 2024",
+          "title": "Bus Fare - Route 350",
+          "status": "completed",
+          "location": "Hikkaduwa Junction",
+          "reference": "CRD456123789",
+          "description": "Travel card tap usage"
+        },
+        {
+          "id": "txn-022",
+          "type": "topup",
+          "amount": 1000,
+          "date": "Jan 18, 2024",
+          "title": "Wallet Top-up",
+          "status": "completed",
+          "method": "Mastercard Credit",
+          "reference": "TXN654789123",
+          "description": "Credit card top-up"
+        },
+        {
+          "id": "txn-023",
+          "type": "refund",
+          "amount": 180,
+          "date": "Jan 15, 2024",
+          "title": "Booking Refund - Service Cancelled",
+          "status": "completed",
+          "reference": "REF987654321",
+          "originalBooking": "BKG444555666",
+          "description": "Refund for cancelled service"
+        }
+      ],
+      "paymentMethods": [
+        {
+          "id": "pm-006",
+          "type": "card",
+          "name": "Mastercard Credit",
+          "cardNumber": "•••• •••• •••• 7890",
+          "expiryDate": "11/26",
+          "cardType": "mastercard",
+          "isDefault": true,
+          "isActive": true
+        },
+        {
+          "id": "pm-007",
+          "type": "bank",
+          "name": "Bank of Ceylon",
+          "accountNumber": "•••• •••• 5432",
+          "bankName": "Bank of Ceylon",
+          "isDefault": false,
+          "isActive": true
+        },
+        {
+          "id": "pm-008",
+          "type": "card",
+          "name": "Visa Debit Card",
+          "cardNumber": "•••• •••• •••• 2468",
+          "expiryDate": "03/28",
+          "cardType": "visa",
+          "isDefault": false,
+          "isActive": true
+        }
+      ],
+      "notifications": {
+        "lowBalanceAlert": true,
+        "transactionAlerts": true,
+        "promotionalOffers": true,
+        "lowBalanceThreshold": 200
+      },
+      "settings": {
+        "autoTopup": {
+          "enabled": false,
+          "threshold": 300,
+          "amount": 1500,
+          "paymentMethodId": "pm-006"
+        },
+        "spendingLimits": {
+          "daily": 3000,
+          "monthly": 20000
+        }
+      }
+    }
+  },
+  "cardRequests": [
+    {
+      "id": "req-001",
+      "userId": "user-001",
+      "email": "kavindadimuthu260@gmail.com",
+      "requestDate": "Jan 25, 2024",
+      "status": "processing",
+      "estimatedDelivery": "Feb 5, 2024",
+      "deliveryAddress": "123 Galle Road, Colombo 03",
+      "trackingNumber": "TRK123456789",
+      "cardFee": 200.00,
+      "deliveryFee": 50.00,
+      "totalFee": 250.00
+    },
+    {
+      "id": "req-002",
+      "userId": "user-002",
+      "email": "nadun@gmail.com",
+      "requestDate": "Mar 10, 2024",
+      "status": "delivered",
+      "deliveredDate": "Mar 20, 2024",
+      "deliveryAddress": "456 Kandy Road, Peradeniya",
+      "trackingNumber": "TRK987654321",
+      "cardFee": 200.00,
+      "deliveryFee": 50.00,
+      "totalFee": 250.00
+    }
+  ],
+  "blockedCards": [
+    {
+      "id": "block-001",
+      "userId": "user-003",
+      "email": "isuru@gmail.com",
+      "cardNumber": "4218 7643 9875 0000",
+      "blockDate": "Dec 15, 2023",
+      "reason": "Lost card",
+      "balanceTransferred": 450.25,
+      "status": "blocked"
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-001",
+      "title": "Weekend Top-up Bonus",
+      "description": "Get 5% bonus on top-ups above LKR 1000 during weekends",
+      "bonusPercentage": 5,
+      "minAmount": 1000,
+      "validDays": ["Saturday", "Sunday"],
+      "startDate": "2024-01-01",
+      "endDate": "2024-03-31",
+      "isActive": true
+    },
+    {
+      "id": "promo-002",
+      "title": "First Time User Discount",
+      "description": "50% off on first travel card request",
+      "discountPercentage": 50,
+      "applicableFor": "new_users",
+      "startDate": "2024-01-01",
+      "endDate": "2024-12-31",
+      "isActive": true
+    }
+  ]
+}
