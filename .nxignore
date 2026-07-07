@@ -1,0 +1,5 @@
+apps/frontend/*/node_modules
+apps/frontend/*/.expo
+apps/frontend/*/android/.gradle
+apps/frontend/*/ios/build
+apps/frontend/*/*.log

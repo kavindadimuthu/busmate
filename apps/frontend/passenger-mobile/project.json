@@ -1,0 +1,63 @@
+{
+  "name": "passenger-mobile",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "root": "apps/frontend/passenger-mobile",
+  "sourceRoot": "apps/frontend/passenger-mobile/app",
+  "tags": ["scope:frontend", "type:app", "framework:expo", "lang:typescript"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm dev",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm start",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm android",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "ios": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm ios",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "build:web": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm build:web",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm lint",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec tsc --noEmit",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    }
+  }
+}
