@@ -1,0 +1,108 @@
+{
+  "journeys": [
+    {
+      "id": "journey-001",
+      "route": {
+        "number": "138",
+        "name": "Colombo - Negombo",
+        "startTime": "8:30 AM",
+        "endTime": "10:00 AM",
+        "distance": "45 km"
+      },
+      "nextStop": {
+        "name": "Kadawatha",
+        "eta": "9:15 AM",
+        "distance": "2.5 km",
+        "estimatedMinutes": 5
+      },
+      "stops": [
+        {
+          "id": 1,
+          "number": 1,
+          "name": "Pettah",
+          "expected": "8:30 AM",
+          "actual": "8:30 AM",
+          "status": "completed",
+          "completed": true,
+          "arrivalTime": "8:30 AM",
+          "departureTime": "8:32 AM",
+          "passengerCount": 12
+        },
+        {
+          "id": 2,
+          "number": 2,
+          "name": "Maradana",
+          "expected": "8:45 AM",
+          "actual": "8:52 AM",
+          "status": "completed",
+          "completed": true,
+          "arrivalTime": "8:50 AM",
+          "departureTime": "8:52 AM",
+          "delayMinutes": 7,
+          "passengerCount": 8
+        },
+        {
+          "id": 3,
+          "number": 3,
+          "name": "Kelaniya",
+          "expected": "9:00 AM",
+          "actual": "9:01 AM",
+          "status": "completed",
+          "completed": true,
+          "arrivalTime": "9:00 AM",
+          "departureTime": "9:01 AM",
+          "delayMinutes": 1,
+          "passengerCount": 15
+        },
+        {
+          "id": 4,
+          "number": 4,
+          "name": "Kadawatha",
+          "expected": "9:15 AM",
+          "actual": "Arriving...",
+          "status": "current",
+          "completed": false,
+          "passengerCount": 6
+        },
+        {
+          "id": 5,
+          "number": 5,
+          "name": "Kiribathgoda",
+          "expected": "9:30 AM",
+          "status": "upcoming",
+          "completed": false
+        },
+        {
+          "id": 6,
+          "number": 6,
+          "name": "Wattala",
+          "expected": "9:45 AM",
+          "status": "upcoming",
+          "completed": false
+        },
+        {
+          "id": 7,
+          "number": 7,
+          "name": "Negombo",
+          "expected": "10:00 AM",
+          "status": "upcoming",
+          "completed": false,
+          "isFinal": true
+        }
+      ],
+      "summary": {
+        "completedStops": "3/7 Stops",
+        "onTime": "2/3",
+        "etaFinal": "10:05 AM",
+        "totalDistance": "45 km",
+        "averageSpeed": "32 km/h",
+        "delayTotal": "5 min"
+      },
+      "status": "in_progress",
+      "currentLocation": {
+        "lat": 6.9271,
+        "lng": 79.9612
+      }
+    }
+  ]
+}

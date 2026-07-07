@@ -1,0 +1,73 @@
+{
+  "seatData": {
+    "A1": 1, "A2": 2, "A3": 0, "A4": 1, "A5": 0,
+    "B1": 1, "B2": 1, "B3": 2, "B4": 0, "B5": 1,
+    "C1": 3, "C2": 1, "C3": 1, "C4": 2, "C5": 0,
+    "D1": 1, "D2": 0, "D3": 1, "D4": 1, "D5": 2,
+    "E1": 2, "E2": 1, "E3": 0, "E4": 0, "E5": 1,
+    "F1": 1, "F2": 1, "F3": 2, "F4": 1, "F5": 0,
+    "G1": 0, "G2": 1, "G3": 1, "G4": 2, "G5": 1,
+    "H1": 1, "H2": 0, "H3": 0, "H4": 1, "H5": 1,
+    "I1": 2, "I2": 1, "I3": 1, "I4": 0, "I5": 1,
+    "J1": 1, "J2": 1, "J3": 2, "J4": 1, "J5": 0,
+    "K1": 1, "K2": 0, "K3": 2, "K4": 1, "K5": 0
+  },
+  "tripData": {
+    "id": "BR-2024-001",
+    "route": {
+      "from": "Colombo",
+      "to": "Kandy"
+    },
+    "totalPassengers": 32,
+    "validatedPassengers": 28,
+    "pendingPassengers": 4
+  },
+  "passengers": [
+    {
+      "id": "1",
+      "name": "Kamal Perera",
+      "mobile": "+94 77 123 4567",
+      "seat": "A12",
+      "isValidated": true
+    },
+    {
+      "id": "2",
+      "name": "Nimal Silva",
+      "mobile": "+94 71 987 6543",
+      "seat": "B05",
+      "isValidated": false
+    },
+    {
+      "id": "3",
+      "name": "Saman Fernando",
+      "mobile": "+94 76 555 1234",
+      "seat": "C08",
+      "isValidated": true
+    },
+    {
+      "id": "4",
+      "name": "Ruwan Jayasinghe",
+      "mobile": "+94 78 999 8888",
+      "seat": "D15",
+      "isValidated": false
+    },
+    {
+      "id": "5",
+      "name": "Chamara Wickramasinghe",
+      "mobile": "+94 75 444 3333",
+      "seat": "E22",
+      "isValidated": true
+    },
+    {
+      "id": "6",
+      "name": "Priyanka Rathnayake",
+      "mobile": "+94 72 666 7777",
+      "seat": "F01",
+      "isValidated": true
+    }
+  ],
+  "busLayout": {
+    "rows": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
+    "cols": [1, 2, 3, 4, 5]
+  }
+}

@@ -1,0 +1,242 @@
+[
+  {
+    "tripId": "trip_001",
+    "passengers": 48,
+    "tickets": 45,
+    "cashRevenue": 8750,
+    "digitalRevenue": 4200,
+    "qrScans": {
+      "successful": 28,
+      "failed": 3,
+      "successRate": 90
+    }
+  },
+  {
+    "tripId": "trip_002",
+    "passengers": 35,
+    "tickets": 32,
+    "cashRevenue": 6200,
+    "digitalRevenue": 2800,
+    "qrScans": {
+      "successful": 18,
+      "failed": 2,
+      "successRate": 90
+    }
+  },
+  {
+    "tripId": "trip_003",
+    "passengers": 62,
+    "tickets": 58,
+    "cashRevenue": 11400,
+    "digitalRevenue": 5600,
+    "qrScans": {
+      "successful": 35,
+      "failed": 4,
+      "successRate": 90
+    }
+  },
+  {
+    "tripId": "trip_004",
+    "passengers": 43,
+    "tickets": 41,
+    "cashRevenue": 7850,
+    "digitalRevenue": 3950,
+    "qrScans": {
+      "successful": 25,
+      "failed": 2,
+      "successRate": 93
+    }
+  },
+  {
+    "tripId": "trip_005",
+    "passengers": 29,
+    "tickets": 27,
+    "cashRevenue": 5200,
+    "digitalRevenue": 2100,
+    "qrScans": {
+      "successful": 14,
+      "failed": 1,
+      "successRate": 93
+    }
+  },
+  {
+    "tripId": "trip_006",
+    "passengers": 55,
+    "tickets": 52,
+    "cashRevenue": 9800,
+    "digitalRevenue": 4900,
+    "qrScans": {
+      "successful": 31,
+      "failed": 3,
+      "successRate": 91
+    }
+  },
+  {
+    "tripId": "trip_007",
+    "passengers": 40,
+    "tickets": 38,
+    "cashRevenue": 7100,
+    "digitalRevenue": 3200,
+    "qrScans": {
+      "successful": 22,
+      "failed": 2,
+      "successRate": 92
+    }
+  },
+  {
+    "tripId": "trip_008",
+    "passengers": 52,
+    "tickets": 49,
+    "cashRevenue": 9200,
+    "digitalRevenue": 4600,
+    "qrScans": {
+      "successful": 29,
+      "failed": 3,
+      "successRate": 91
+    }
+  },
+  {
+    "tripId": "trip_009",
+    "passengers": 37,
+    "tickets": 35,
+    "cashRevenue": 6600,
+    "digitalRevenue": 2900,
+    "qrScans": {
+      "successful": 19,
+      "failed": 1,
+      "successRate": 95
+    }
+  },
+  {
+    "tripId": "trip_010",
+    "passengers": 47,
+    "tickets": 44,
+    "cashRevenue": 8300,
+    "digitalRevenue": 4100,
+    "qrScans": {
+      "successful": 26,
+      "failed": 2,
+      "successRate": 93
+    }
+  },
+  {
+    "tripId": "trip_011",
+    "passengers": 31,
+    "tickets": 29,
+    "cashRevenue": 5500,
+    "digitalRevenue": 2400,
+    "qrScans": {
+      "successful": 16,
+      "failed": 1,
+      "successRate": 94
+    }
+  },
+  {
+    "tripId": "trip_012",
+    "passengers": 59,
+    "tickets": 56,
+    "cashRevenue": 10500,
+    "digitalRevenue": 5200,
+    "qrScans": {
+      "successful": 33,
+      "failed": 4,
+      "successRate": 89
+    }
+  },
+  {
+    "tripId": "trip_013",
+    "passengers": 45,
+    "tickets": 42,
+    "cashRevenue": 7900,
+    "digitalRevenue": 3800,
+    "qrScans": {
+      "successful": 24,
+      "failed": 2,
+      "successRate": 92
+    }
+  },
+  {
+    "tripId": "trip_014",
+    "passengers": 35,
+    "tickets": 33,
+    "cashRevenue": 6100,
+    "digitalRevenue": 2700,
+    "qrScans": {
+      "successful": 17,
+      "failed": 2,
+      "successRate": 89
+    }
+  },
+  {
+    "tripId": "trip_015",
+    "passengers": 54,
+    "tickets": 51,
+    "cashRevenue": 9600,
+    "digitalRevenue": 4700,
+    "qrScans": {
+      "successful": 30,
+      "failed": 3,
+      "successRate": 91
+    }
+  },
+  {
+    "tripId": "trip_016",
+    "passengers": 39,
+    "tickets": 37,
+    "cashRevenue": 6900,
+    "digitalRevenue": 3100,
+    "qrScans": {
+      "successful": 20,
+      "failed": 1,
+      "successRate": 95
+    }
+  },
+  {
+    "tripId": "trip_017",
+    "passengers": 49,
+    "tickets": 46,
+    "cashRevenue": 8600,
+    "digitalRevenue": 4300,
+    "qrScans": {
+      "successful": 27,
+      "failed": 2,
+      "successRate": 93
+    }
+  },
+  {
+    "tripId": "trip_018",
+    "passengers": 33,
+    "tickets": 31,
+    "cashRevenue": 5800,
+    "digitalRevenue": 2500,
+    "qrScans": {
+      "successful": 16,
+      "failed": 1,
+      "successRate": 94
+    }
+  },
+  {
+    "tripId": "trip_019",
+    "passengers": 57,
+    "tickets": 54,
+    "cashRevenue": 10100,
+    "digitalRevenue": 5000,
+    "qrScans": {
+      "successful": 32,
+      "failed": 3,
+      "successRate": 91
+    }
+  },
+  {
+    "tripId": "trip_020",
+    "passengers": 42,
+    "tickets": 40,
+    "cashRevenue": 7500,
+    "digitalRevenue": 3600,
+    "qrScans": {
+      "successful": 23,
+      "failed": 2,
+      "successRate": 92
+    }
+  }
+]

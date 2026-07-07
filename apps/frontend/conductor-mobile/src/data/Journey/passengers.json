@@ -1,0 +1,96 @@
+{
+  "passengers": [
+    {
+      "id": "1",
+      "name": "Kamal Perera",
+      "isValidated": true,
+      "validationStatus": "validated",
+      "ticket": {
+        "seatNumber": "A12",
+        "ticketId": "#TK2024001234",
+        "paymentType": "QR Payment",
+        "passengerCount": 1,
+        "fare": 450.00,
+        "bookingReference": "BR-2024-001234"
+      },
+      "contact": {
+        "phone": "+94 77 123 4567",
+        "email": "kamal.perera@gmail.com"
+      },
+      "booking": {
+        "bookingTime": "2024-01-15 08:30 AM",
+        "arrivalTime": "2024-01-15 09:15 AM",
+        "departureTime": "2024-01-15 09:30 AM",
+        "boardingPoint": "Colombo Fort",
+        "destinationPoint": "Kandy"
+      },
+      "validation": {
+        "status": "Ticket has been validated",
+        "timestamp": "2024-01-15 09:16 AM",
+        "validatedBy": "Conductor-001",
+        "validationMethod": "qr"
+      },
+      "specialRequirements": ["Window Seat"]
+    },
+    {
+      "id": "2",
+      "name": "Nimal Silva",
+      "isValidated": false,
+      "validationStatus": "pending",
+      "ticket": {
+        "seatNumber": "B05",
+        "ticketId": "#TK2024001235",
+        "paymentType": "Cash Payment",
+        "passengerCount": 1,
+        "fare": 450.00,
+        "bookingReference": "BR-2024-001235"
+      },
+      "contact": {
+        "phone": "+94 71 987 6543"
+      },
+      "booking": {
+        "bookingTime": "2024-01-15 08:45 AM",
+        "arrivalTime": "2024-01-15 09:20 AM",
+        "boardingPoint": "Colombo Fort",
+        "destinationPoint": "Kandy"
+      },
+      "validation": {
+        "status": "Awaiting validation",
+        "timestamp": "2024-01-15 09:20 AM"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Saman Fernando",
+      "isValidated": true,
+      "validationStatus": "validated",
+      "ticket": {
+        "seatNumber": "C08",
+        "ticketId": "#TK2024001236",
+        "paymentType": "Digital Wallet",
+        "passengerCount": 2,
+        "fare": 900.00,
+        "bookingReference": "BR-2024-001236"
+      },
+      "contact": {
+        "phone": "+94 76 555 1234",
+        "email": "saman.fernando@outlook.com",
+        "emergencyContact": "+94 11 234 5678"
+      },
+      "booking": {
+        "bookingTime": "2024-01-15 07:30 AM",
+        "arrivalTime": "2024-01-15 09:00 AM",
+        "departureTime": "2024-01-15 09:30 AM",
+        "boardingPoint": "Colombo Fort",
+        "destinationPoint": "Kandy"
+      },
+      "validation": {
+        "status": "Ticket has been validated",
+        "timestamp": "2024-01-15 09:02 AM",
+        "validatedBy": "Conductor-001",
+        "validationMethod": "qr"
+      },
+      "specialRequirements": ["Family Seating", "Child Seat"]
+    }
+  ]
+}
