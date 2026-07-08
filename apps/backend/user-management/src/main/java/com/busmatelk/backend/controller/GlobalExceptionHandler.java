@@ -1,5 +1,6 @@
 package com.busmatelk.backend.controller;
 
+import com.busmatelk.backend.client.SupabaseAuthException;
 import com.busmatelk.backend.service.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,46 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+    }
+
+    // Known GoTrue error_codes mapped to the status a client should actually see (e.g. a
+    // duplicate signup is a 409, not a 500). Not exhaustive by design — see the fallback in
+    // handleSupabaseAuthException below for anything not listed here.
+    private static final Map<String, HttpStatus> SUPABASE_ERROR_STATUS = Map.ofEntries(
+            Map.entry("user_already_exists", HttpStatus.CONFLICT),
+            Map.entry("email_exists", HttpStatus.CONFLICT),
+            Map.entry("invalid_credentials", HttpStatus.UNAUTHORIZED),
+            Map.entry("email_not_confirmed", HttpStatus.FORBIDDEN),
+            Map.entry("user_banned", HttpStatus.FORBIDDEN),
+            Map.entry("signup_disabled", HttpStatus.FORBIDDEN),
+            Map.entry("weak_password", HttpStatus.BAD_REQUEST),
+            Map.entry("same_password", HttpStatus.BAD_REQUEST),
+            Map.entry("validation_failed", HttpStatus.BAD_REQUEST),
+            Map.entry("refresh_token_not_found", HttpStatus.UNAUTHORIZED),
+            Map.entry("refresh_token_already_used", HttpStatus.UNAUTHORIZED),
+            Map.entry("session_not_found", HttpStatus.UNAUTHORIZED),
+            Map.entry("over_email_send_rate_limit", HttpStatus.TOO_MANY_REQUESTS),
+            Map.entry("over_request_rate_limit", HttpStatus.TOO_MANY_REQUESTS));
+
+    /**
+     * An error_code in the table above wins. Otherwise, Supabase's own status is trustworthy
+     * for the 4xx/5xx split — GoTrue returning 4xx is invariably the caller's fault (bad
+     * input/credentials) even for an error_code this service doesn't recognize by name yet,
+     * so pass it through unchanged rather than guessing. Only Supabase's own 5xx, or a
+     * response whose body didn't even parse, falls back to 502 — signaling that the failure
+     * is upstream (Supabase), not this service.
+     */
+    @ExceptionHandler(SupabaseAuthException.class)
+    public ResponseEntity<Map<String, String>> handleSupabaseAuthException(SupabaseAuthException e) {
+        HttpStatus status = e.getErrorCode() != null ? SUPABASE_ERROR_STATUS.get(e.getErrorCode()) : null;
+        if (status == null) {
+            status = e.getStatusCode().is4xxClientError()
+                    ? HttpStatus.valueOf(e.getStatusCode().value())
+                    : HttpStatus.BAD_GATEWAY;
+        }
+        String message = e.getSupabaseMessage() != null ? e.getSupabaseMessage() : "Authentication request failed";
+        log.warn("Supabase auth error [{}]: {}", e.getErrorCode(), message);
+        return ResponseEntity.status(status).body(Map.of("error", message));
     }
 
     /**

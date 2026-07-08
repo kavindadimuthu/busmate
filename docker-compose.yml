@@ -1,0 +1,67 @@
+# Covers the three services this redesign plan actually spans: api-gateway (new, Phase 1),
+# user-management (this plan's main subject), and ticketing-service (included only because
+# api-gateway proxies /api/tickets to it and depends_on it).
+#
+# Deliberately excludes api-core: it's a separate, pre-existing service outside this plan's
+# scope, and it currently still listens on 8080 — the same port api-gateway claims here. That
+# conflict needs resolving separately before api-core could join this same compose file.
+#
+# user-management's Dockerfile expects a pre-built jar (COPY target/*.jar app.jar) — run
+# `./mvnw -f apps/backend/user-management package` (or `make gateway-build` for the gateway's
+# TypeScript build) before `docker compose up --build` the first time or after code changes.
+services:
+  api-gateway:
+    build:
+      context: apps/backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - USER_MANAGEMENT_URL=http://user-management:8081
+      - TICKETING_SERVICE_URL=${TICKETING_SERVICE_URL:-http://ticketing-service:8083}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - NODE_ENV=production
+    depends_on:
+      user-management:
+        condition: service_healthy
+      ticketing-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-management:
+    build:
+      context: apps/backend/user-management
+      dockerfile: Dockerfile
+    # No ports mapping — internal only now that the gateway is the single public entry point
+    # (reachable from other containers on the Docker network at user-management:8081).
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  ticketing-service:
+    build:
+      context: apps/backend/ticketing-service
+      dockerfile: Dockerfile
+    # Kept its existing host port mapping — this plan doesn't touch ticketing-service's own
+    # port exposure model (that belongs to its own separate redesign track), even though the
+    # target architecture eventually makes it internal-only too.
+    ports:
+      - "8083:8083"

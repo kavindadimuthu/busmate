@@ -19,8 +19,8 @@ public class OpenAPIConfig {
                         .version("1.0.0")
                         .description("API for managing routes, schedules, stops, permits, and related entities for NTC Planning Section. " +
                                 "Use the Authorize button to enter a JWT token obtained from Supabase login."))
+                .addServersItem(new Server().url("http://localhost:8081").description("Local Development"))
                 .addServersItem(new Server().url("http://107.21.189.199:8081").description("AWS EC2 Production"))
-                .addServersItem(new Server().url("http://localhost:8080").description("Local Development"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new io.swagger.v3.oas.models.Components()
                         .addSecuritySchemes("bearerAuth",

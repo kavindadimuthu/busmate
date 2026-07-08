@@ -4,9 +4,12 @@ spring:
     
   datasource:
     # Change from direct connection to transaction pooler with optimized settings
-    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?connectTimeout=10&socketTimeout=30&loginTimeout=10&prepareThreshold=0&preparedStatementCacheQueries=0&reWriteBatchedInserts=true&tcpKeepAlive=true&autoCommit=false&sslmode=require
-    username: postgres.gvxbzcxjueghvrtsfdxc
-    password: v9usBELRIbQjMVAQ
+    # URL and username aren't sensitive on their own (no credential embedded), so their
+    # fallback is the real current value; password falls back to an obvious placeholder
+    # since it's the actual database credential — set SPRING_DATASOURCE_PASSWORD for real use.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?connectTimeout=10&socketTimeout=30&loginTimeout=10&prepareThreshold=0&preparedStatementCacheQueries=0&reWriteBatchedInserts=true&tcpKeepAlive=true&autoCommit=false&sslmode=require}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres.gvxbzcxjueghvrtsfdxc}
+    password: ${SPRING_DATASOURCE_PASSWORD:v9usBELRIbQjMVAQ}
     driver-class-name: org.postgresql.Driver
     
     # HikariCP Connection Pool Configuration for Supabase
@@ -73,7 +76,7 @@ spring:
     
   # Kafka Configuration
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     template:
       default-topic: operator-events
     consumer:
@@ -98,12 +101,18 @@ cors:
   max-age: 3600
 
 supabase:
-  url: https://gvxbzcxjueghvrtsfdxc.supabase.co
-  anon-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg
+  # url and anon-key aren't sensitive on their own — the anon key is designed to be a
+  # public, client-safe key (same idea as a Firebase client config), so its fallback is the
+  # real value. jwt.secret and api.key (the service-role key) are genuinely sensitive — the
+  # former lets anyone forge valid JWTs, the latter grants full admin API access — so both
+  # fall back to an obvious placeholder instead. Set SUPABASE_JWT_SECRET and
+  # SUPABASE_SERVICE_ROLE_KEY for real use.
+  url: ${SUPABASE_URL:https://gvxbzcxjueghvrtsfdxc.supabase.co}
+  anon-key: ${SUPABASE_ANON_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg}
   jwt:
-    secret: v7dyiu735nxybSzPS41oWmOtOLwZyaJOApdGaFqWpTNGYkmL7yWP6fnKPG2FWSxr5AB5kSdFiRiT78YcB7vT5w==
+    secret: ${SUPABASE_JWT_SECRET:dev-only-placeholder-jwt-secret-change-me}
   api:
-    key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTI4MDMyOSwiZXhwIjoyMDY0ODU2MzI5fQ.ZjjzelN798zx5x5ntA5_d9a8UUZuDiAuX4WgPQSwY5E
+    key: ${SUPABASE_SERVICE_ROLE_KEY:dev-only-placeholder-service-role-key-change-me}
 
 # Shared secret other backend services use to call /internal/** directly (never routed
 # through the API gateway, which blocks /internal/** entirely). Override via env var in

@@ -2,6 +2,8 @@ package com.busmatelk.backend.client;
 
 import com.busmatelk.backend.client.dto.SupabaseSignupResponse;
 import com.busmatelk.backend.client.dto.SupabaseTokenResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +24,7 @@ import java.util.Map;
 public class SupabaseAuthClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${supabase.url}")
     private String supabaseUrl;
@@ -146,7 +149,23 @@ public class SupabaseAuthClient {
         try {
             return call.get();
         } catch (HttpStatusCodeException e) {
-            throw new RuntimeException(errorPrefix + ": " + e.getResponseBodyAsString(), e);
+            String body = e.getResponseBodyAsString();
+            String errorCode = null;
+            String supabaseMessage = null;
+            try {
+                JsonNode node = objectMapper.readTree(body);
+                if (node.hasNonNull("error_code")) {
+                    errorCode = node.get("error_code").asText();
+                }
+                if (node.hasNonNull("msg")) {
+                    supabaseMessage = node.get("msg").asText();
+                }
+            } catch (Exception parseError) {
+                // Body wasn't the expected GoTrue {code,error_code,msg} shape — errorCode/
+                // supabaseMessage stay null, and GlobalExceptionHandler still falls back to
+                // e's real HTTP status rather than guessing.
+            }
+            throw new SupabaseAuthException(errorPrefix + ": " + body, e.getStatusCode(), errorCode, supabaseMessage, e);
         }
     }
 }
