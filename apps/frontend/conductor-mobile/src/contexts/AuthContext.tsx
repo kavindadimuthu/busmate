@@ -23,7 +23,7 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Identity fields (name/email/phone/role/accountStatus) are real, sourced
-// from user-management via the API gateway. busId/route aren't part of a
+// from user-service via the API gateway. busId/route aren't part of a
 // conductor's identity — they're populated per-trip via useOngoingTrip.
 function toAppUser(me: AuthMeResponse, previous?: User | null): User {
   return {

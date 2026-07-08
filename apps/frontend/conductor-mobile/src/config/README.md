@@ -2,22 +2,22 @@
 
 ## Service Architecture
 
-Your app now supports **3 different microservices** with separate base URLs:
+Your app uses `api-gateway` as the main backend entry point and can still target individual services directly for debugging.
 
-### 1. **User Management Service** (`user`)
-- **Port:** 8081
+### 1. **User Service** (`user`)
+- **Port:** 9020 through gateway 8080
 - **Handles:** Authentication, conductor profiles, notifications
-- **Base URL:** `http://18.140.161.237:8081/api`
+- **Base URL:** `http://localhost:8080/api`
 
-### 2. **Schedule Management Service** (`schedule`)
-- **Port:** 8080  
+### 2. **Core Service** (`schedule`)
+- **Port:** 9010 through gateway 8080
 - **Handles:** Schedules, trips, routes, analytics, employee shifts
-- **Base URL:** `http://18.140.161.237:8080/api`
+- **Base URL:** `http://localhost:8080/api`
 
 ### 3. **Ticket Management Service** (`ticket`)
-- **Port:** 8083
+- **Port:** 9030 through gateway 8080
 - **Handles:** Ticket validation, issuing, scanning, printing
-- **Base URL:** `http://54.91.217.117:8083/api`
+- **Base URL:** `http://localhost:8080/api`
 
 ## Environment Variables
 
@@ -25,9 +25,10 @@ Configure different base URLs using environment variables:
 
 ```bash
 # .env
-EXPO_PUBLIC_USER_API_URL=18.140.161.237:8081/api
-EXPO_PUBLIC_SCHEDULE_API_URL=18.140.161.237:8080/api
-EXPO_PUBLIC_TICKET_API_URL=54.91.217.117:8083/api
+EXPO_PUBLIC_API_GATEWAY_URL=http://localhost:8080
+EXPO_PUBLIC_USER_API_URL=http://localhost:8080/api
+EXPO_PUBLIC_SCHEDULE_API_URL=http://localhost:8080/api
+EXPO_PUBLIC_TICKET_API_URL=http://localhost:8080/api
 ```
 
 ## Usage Examples
@@ -69,13 +70,13 @@ const result = await ticketApi.validateTicket(ticketId);
 
 | API Module | Service Type | Port | Purpose |
 |------------|-------------|------|---------|
-| `authApi` | `user` | 8081 | Login, logout, token validation |
-| `employeeApi.getProfile()` | `user` | 8081 | Conductor profile data |
-| `employeeApi.getSchedule()` | `schedule` | 8080 | Conductor schedules |
-| `journeyApi` | `schedule` | 8080 | Trip management |
-| `ticketApi` | `ticket` | 8083 | Ticket operations |
-| `notificationApi` | `user` | 8081 | Notifications |
-| `analyticsApi` | `schedule`/`ticket` | 8080/8083 | Reports and analytics |
+| `authApi` | `user` | 9020 via 8080 | Login, logout, token validation |
+| `employeeApi.getProfile()` | `user` | 9020 via 8080 | Conductor profile data |
+| `employeeApi.getSchedule()` | `schedule` | 9010 via 8080 | Conductor schedules |
+| `journeyApi` | `schedule` | 9010 via 8080 | Trip management |
+| `ticketApi` | `ticket` | 9030 via 8080 | Ticket operations |
+| `notificationApi` | `user` | 9020 via 8080 | Notifications |
+| `analyticsApi` | `schedule`/`ticket` | 9010/9030 via 8080 | Reports and analytics |
 
 ## Configuration Updates
 

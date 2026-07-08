@@ -8,7 +8,7 @@ import { clearSession, getAccessToken, hasStoredSession, saveSession } from '@/l
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 
 // App User type. Identity fields (name/email/phone/role/accountStatus/
-// emailVerified) are real, sourced from user-management via the API gateway.
+// emailVerified) are real, sourced from user-service via the API gateway.
 // The trip/wallet/route fields are local placeholders — those services
 // aren't wired up yet, matching this app's pre-existing behavior.
 type User = {

@@ -5,13 +5,15 @@ import { OpenAPI as UserAPI } from '@busmate/api-client-user';
 import { installUserApiTokenResolver } from '@/lib/auth/tokenStore';
 
 export function configureApiClients() {
-  RouteAPI.BASE = import.meta.env.VITE_ROUTE_MANAGEMENT_API_URL || 'http://localhost:8080';
-  TicketingAPI.BASE = import.meta.env.VITE_TICKETING_API_URL || 'http://localhost:8083';
+  const gatewayBaseUrl = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
+
+  RouteAPI.BASE = import.meta.env.VITE_ROUTE_MANAGEMENT_API_URL || gatewayBaseUrl;
+  TicketingAPI.BASE = import.meta.env.VITE_TICKETING_API_URL || gatewayBaseUrl;
   LocationAPI.BASE = (import.meta.env.VITE_LOCATION_TRACKING_API_URL || 'http://localhost:4000') + '/api';
 
   // Auth/user/profile calls are routed through the API gateway (not straight to
   // user-management) so JWT verification, CORS and rate limiting are enforced centrally.
-  UserAPI.BASE = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
+  UserAPI.BASE = gatewayBaseUrl;
   installUserApiTokenResolver();
 
   // TOKEN resolvers for the other clients will be added when their auth is implemented.

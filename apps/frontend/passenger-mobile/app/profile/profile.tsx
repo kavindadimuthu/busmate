@@ -20,7 +20,7 @@ export default function ProfileInfoScreen() {
   const [userDetails, setUserDetails] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch profile data from user-management (via the API gateway)
+  // Fetch profile data from user-service (via the API gateway)
   const fetchProfileData = async () => {
     if (!user?.id) return;
 

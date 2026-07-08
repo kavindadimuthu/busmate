@@ -5,8 +5,9 @@ jest.mock('../config/env', () => ({
   env: {
     PORT: 8080,
     SUPABASE_JWT_SECRET: 'test-secret',
-    USER_MANAGEMENT_URL: 'http://localhost:8081',
-    TICKETING_SERVICE_URL: 'http://localhost:8083',
+    USER_SERVICE_URL: 'http://localhost:9020',
+    CORE_SERVICE_URL: 'http://localhost:9010',
+    TICKETING_SERVICE_URL: 'http://localhost:9030',
     NODE_ENV: 'test',
     ALLOWED_ORIGINS: ['http://localhost:3000'],
     RATE_LIMIT_WINDOW_MS: 60000,

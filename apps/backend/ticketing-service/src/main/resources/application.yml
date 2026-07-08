@@ -68,7 +68,7 @@ spring:
     active: production # Enable production profile for Swagger UI testing
 
 server:
-  port: 8083
+  port: ${SERVER_PORT:9030}
 
 # Ensure Swagger UI is properly configured and cached correctly
 springdoc:

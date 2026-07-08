@@ -29,7 +29,7 @@ export default function EditProfileScreen() {
     phoneNumber: '',
   });
 
-  // Fetch current profile data from user-management (via the API gateway)
+  // Fetch current profile data from user-service (via the API gateway)
   const fetchProfileData = async () => {
     if (!user?.id) return;
 

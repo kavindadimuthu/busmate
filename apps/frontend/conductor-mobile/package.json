@@ -10,7 +10,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "generate:api-user:local": "openapi --input http://localhost:8081/v3/api-docs --output ./src/lib/api-client/user-management"
+    "generate:api-user:local": "openapi --input http://localhost:9020/v3/api-docs --output ./src/lib/api-client/user-management"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

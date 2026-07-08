@@ -6,7 +6,7 @@ export const ENV = {
   // API Base URLs
   API_ENDPOINTS: {
     // Auth/user/profile calls go through the API gateway (not straight to
-    // user-management) so JWT verification, CORS and rate limiting are
+    // user-service) so JWT verification, CORS and rate limiting are
     // enforced centrally — see apps/backend/api-gateway. No cloud gateway
     // deployment exists yet, so the production fallback is the same as dev
     // until EXPO_PUBLIC_API_GATEWAY_URL is set for a real deployment.
@@ -17,15 +17,19 @@ export const ENV = {
     USER_SERVICE:
       process.env.EXPO_PUBLIC_USER_MANAGEMENT_API_URL ||
       process.env.NEXT_PUBLIC_USER_MANAGEMENT_API_URL ||
-      (__DEV__ ? 'http://localhost:8081' : 'http://107.21.189.199:8081'),
+      (__DEV__ ? 'http://localhost:9020' : 'http://localhost:8080'),
     ROUTE_SERVICE:
       process.env.EXPO_PUBLIC_ROUTE_MANAGEMENT_API_URL ||
       process.env.NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL ||
-      'http://18.140.161.237:8080',
+      process.env.EXPO_PUBLIC_API_GATEWAY_URL ||
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+      'http://localhost:8080',
     TICKETING_SERVICE:
       process.env.EXPO_PUBLIC_TICKETING_MANAGEMENT_API_URL ||
       process.env.NEXT_PUBLIC_TICKETING_MANAGEMENT_API_URL ||
-      'http://54.91.217.117:8083',
+      process.env.EXPO_PUBLIC_API_GATEWAY_URL ||
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+      'http://localhost:8080',
     LOCATION_SERVICE:
       process.env.EXPO_PUBLIC_LOCATION_TRACKING_API_URL ||
       process.env.NEXT_PUBLIC_LOCATION_TRACKING_API_URL ||
@@ -34,9 +38,9 @@ export const ENV = {
   
   // Local development endpoints (uncomment for local testing)
   // API_ENDPOINTS: {
-  //   USER_SERVICE: 'http://10.0.2.2:8081', // Android emulator
-  //   ROUTE_SERVICE: 'http://10.0.2.2:8080',
-  //   TICKETING_SERVICE: 'http://10.0.2.2:8083',
+  //   USER_SERVICE: 'http://10.0.2.2:9020', // Android emulator direct service
+  //   ROUTE_SERVICE: 'http://10.0.2.2:9010',
+  //   TICKETING_SERVICE: 'http://10.0.2.2:9030',
   //   LOCATION_SERVICE: 'http://10.0.2.2:4000',
   // },
   

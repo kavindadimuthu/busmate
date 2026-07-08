@@ -1,0 +1,69 @@
+# Production backend stack.
+#
+# Only api-gateway is published to the host. Downstream services keep their
+# stable internal ports on the Docker network:
+#   core-service      : 9010
+#   user-service      : 9020
+#   ticketing-service : 9030
+#   api-gateway       : 8080
+services:
+  api-gateway:
+    build:
+      context: apps/backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - USER_SERVICE_URL=http://user-service:9020
+      - CORE_SERVICE_URL=http://core-service:9010
+      - TICKETING_SERVICE_URL=http://ticketing-service:9030
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - NODE_ENV=production
+    depends_on:
+      user-service:
+        condition: service_started
+      core-service:
+        condition: service_started
+      ticketing-service:
+        condition: service_started
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: apps/backend/user-service
+      dockerfile: Dockerfile
+    environment:
+      - SERVER_PORT=9020
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+    expose:
+      - "9020"
+    restart: unless-stopped
+
+  core-service:
+    build:
+      context: apps/backend/core-service
+      dockerfile: Dockerfile
+    environment:
+      - SERVER_PORT=9010
+    expose:
+      - "9010"
+    restart: unless-stopped
+
+  ticketing-service:
+    build:
+      context: apps/backend/ticketing-service
+      dockerfile: Dockerfile
+    environment:
+      - SERVER_PORT=9030
+    expose:
+      - "9030"
+    restart: unless-stopped

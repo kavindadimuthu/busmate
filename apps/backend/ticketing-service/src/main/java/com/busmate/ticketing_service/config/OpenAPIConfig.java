@@ -19,10 +19,10 @@ public class OpenAPIConfig {
                         .description("API for managing ticket issuance, validation, QR code generation, and scan history tracking within the BusmateLK platform.")
                         .contact(new Contact().name("BusmateLK Team")))
                 .addServersItem(new Server()
-                        .url("http://localhost:8083")
-                        .description("Local Development Server"))
+                        .url("http://localhost:9030")
+                        .description("Local ticketing-service"))
                 .addServersItem(new Server()
-                        .url("http://54.91.217.117:8083")
-                        .description("AWS EC2 Production Server"));
+                        .url("http://localhost:8080")
+                        .description("Local API gateway"));
     }
 }

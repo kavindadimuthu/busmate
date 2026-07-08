@@ -10,7 +10,7 @@ import { installUserApiTokenResolver } from '../auth/tokenStore';
  */
 export const initializeApiClients = () => {
   // Auth/user/profile calls are routed through the API gateway (not straight
-  // to user-management) so JWT verification, CORS and rate limiting are
+  // to user-service) so JWT verification, CORS and rate limiting are
   // enforced centrally. The token resolver auto-refreshes the access token
   // from AsyncStorage before it expires — see lib/auth/tokenStore.ts.
   UserOpenAPI.BASE = ENV.API_ENDPOINTS.API_GATEWAY;

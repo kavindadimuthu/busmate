@@ -2,7 +2,8 @@ import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 import { env } from '../config/env';
 
 const serviceUrls: Record<string, string> = {
-  USER_MANAGEMENT: env.USER_MANAGEMENT_URL,
+  USER_SERVICE: env.USER_SERVICE_URL,
+  CORE_SERVICE: env.CORE_SERVICE_URL,
   TICKETING: env.TICKETING_SERVICE_URL,
 };
 

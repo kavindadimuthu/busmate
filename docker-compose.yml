@@ -1,14 +1,10 @@
-# Covers the three services this redesign plan actually spans: api-gateway (new, Phase 1),
-# user-management (this plan's main subject), and ticketing-service (included only because
-# api-gateway proxies /api/tickets to it and depends_on it).
+# Covers the backend services currently exposed through api-gateway.
+# api-gateway is the main entry point on 8080. Downstream services also publish
+# their standard development ports for direct debugging and OpenAPI generation.
 #
-# Deliberately excludes api-core: it's a separate, pre-existing service outside this plan's
-# scope, and it currently still listens on 8080 — the same port api-gateway claims here. That
-# conflict needs resolving separately before api-core could join this same compose file.
-#
-# user-management's Dockerfile expects a pre-built jar (COPY target/*.jar app.jar) — run
-# `./mvnw -f apps/backend/user-management package` (or `make gateway-build` for the gateway's
-# TypeScript build) before `docker compose up --build` the first time or after code changes.
+# user-service's Dockerfile expects a pre-built jar (COPY target/*.jar app.jar) — run
+# `./mvnw -f apps/backend/user-service package` before `docker compose up --build`.
+# core-service's Dockerfile expects a pre-built jar under apps/backend/core-service/target/.
 services:
   api-gateway:
     build:
@@ -19,28 +15,32 @@ services:
     environment:
       - PORT=8080
       - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
-      - USER_MANAGEMENT_URL=http://user-management:8081
-      - TICKETING_SERVICE_URL=${TICKETING_SERVICE_URL:-http://ticketing-service:8083}
+      - USER_SERVICE_URL=http://user-service:9020
+      - CORE_SERVICE_URL=http://core-service:9010
+      - TICKETING_SERVICE_URL=${TICKETING_SERVICE_URL:-http://ticketing-service:9030}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - NODE_ENV=production
     depends_on:
-      user-management:
-        condition: service_healthy
+      user-service:
+        condition: service_started
+      core-service:
+        condition: service_started
       ticketing-service:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  user-management:
+  user-service:
     build:
-      context: apps/backend/user-management
+      context: apps/backend/user-service
       dockerfile: Dockerfile
-    # No ports mapping — internal only now that the gateway is the single public entry point
-    # (reachable from other containers on the Docker network at user-management:8081).
+    ports:
+      - "9020:9020"
     environment:
+      - SERVER_PORT=9020
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
@@ -49,19 +49,21 @@ services:
       - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+  core-service:
+    build:
+      context: apps/backend/core-service
+      dockerfile: Dockerfile
+    # Runs internally on 9010 so api-gateway can own public host port 8080.
+    ports:
+      - "9010:9010"
+    environment:
+      - SERVER_PORT=9010
 
   ticketing-service:
     build:
       context: apps/backend/ticketing-service
       dockerfile: Dockerfile
-    # Kept its existing host port mapping — this plan doesn't touch ticketing-service's own
-    # port exposure model (that belongs to its own separate redesign track), even though the
-    # target architecture eventually makes it internal-only too.
+    environment:
+      - SERVER_PORT=9030
     ports:
-      - "8083:8083"
+      - "9030:9030"

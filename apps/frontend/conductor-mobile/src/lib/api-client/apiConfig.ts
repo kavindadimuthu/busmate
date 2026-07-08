@@ -3,7 +3,7 @@ import { OpenAPI as UserOpenAPI } from './user-management/core/OpenAPI';
 import { installUserApiTokenResolver } from '../auth/tokenStore';
 
 /**
- * Initialize the user-management API client with the gateway base URL and
+ * Initialize the user-service API client with the gateway base URL and
  * the auto-refreshing token resolver. Call this once at app startup.
  */
 export const initializeApiClients = () => {
