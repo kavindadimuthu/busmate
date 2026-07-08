@@ -204,6 +204,21 @@ public class AuthService {
         });
     }
 
+    /**
+     * Verifies currentPassword by performing a real Supabase login with it (doubling as
+     * re-authentication), then applies newPassword using the session that login just returned.
+     * No separate "current password" check is needed against the local DB — Supabase Auth is
+     * the sole source of truth for credentials, this service never stores a password hash.
+     */
+    public void changePassword(UUID callerId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(callerId).orElseThrow();
+        SupabaseTokenResponse session = supabaseAuthClient.loginWithPassword(user.getEmail(), currentPassword);
+        if (session.getAccessToken() == null) {
+            throw new IllegalStateException("Password verification did not return a session");
+        }
+        supabaseAuthClient.updateUserPassword(session.getAccessToken(), newPassword);
+    }
+
     public AuthMeResponse getCurrentUserWithPermissions(UUID userId) {
         User user = userRepository.findById(userId).orElseThrow();
         List<String> permissions = permissionService.getEffectivePermissions(userId);

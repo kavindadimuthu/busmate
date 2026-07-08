@@ -1,26 +1,26 @@
 'use client';
 
-import { useSetPageMetadata } from '@/context/PageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@busmate/ui';
 import { Badge } from '@busmate/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@busmate/ui';
 import {
   Clock,
-  Activity,
-  Shield,
   Bus,
   Users,
   Route,
   FileText,
   DollarSign,
   BarChart3,
-  Building2,
-  Mail,
-  User,
-  IdCard,
   Navigation,
+  BadgeCheck,
+  ShieldAlert,
 } from 'lucide-react';
+import { useSetPageMetadata } from '@/context/PageContext';
 import UserData from '@/types/UserData';
+import { useMyProfile } from '@/hooks/useMyProfile';
+import { REQUIRED_PROFILE_FIELDS } from '@/lib/api/adminUsers';
+import { USER_STATUS_CONFIG, timeAgo } from '@/data/admin/users';
+import { ProfileInfoCard, PermissionsCard, ChangePasswordDialog } from '@/components/shared/profile';
 
 interface OperatorProfileProps {
   userData: UserData | null;
@@ -42,11 +42,11 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
     breadcrumbs: [{ label: 'Profile' }],
   });
 
+  const { user, permissions, loading, error, saving, saveProfile, changePassword } = useMyProfile();
+
   const initials = getInitials(userData?.firstName, userData?.lastName, userData?.email);
-  const displayName =
-    userData?.firstName && userData?.lastName
-      ? `${userData.firstName} ${userData.lastName}`
-      : userData?.firstName || userData?.email || 'Fleet Operator';
+  const displayName = user?.fullName || userData?.firstName || userData?.email || 'Fleet Operator';
+  const statusConfig = user ? USER_STATUS_CONFIG[user.accountStatus as keyof typeof USER_STATUS_CONFIG] : null;
 
   return (
     <div className="space-y-6">
@@ -67,89 +67,44 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
             <h1 className="text-2xl font-bold text-white">{displayName}</h1>
             <p className="text-indigo-200 mt-1">Fleet Operator</p>
             <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
-              <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">Active</Badge>
-              <Badge className="bg-indigo-400/20 text-indigo-100 border border-indigo-400/30 backdrop-blur">Verified</Badge>
+              {statusConfig && (
+                <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">
+                  {statusConfig.label}
+                </Badge>
+              )}
+              {user?.isEmailVerified && (
+                <Badge className="bg-indigo-400/20 text-indigo-100 border border-indigo-400/30 backdrop-blur">Verified</Badge>
+              )}
               <Badge className="bg-violet-400/20 text-violet-100 border border-violet-400/30 backdrop-blur">Operator</Badge>
             </div>
           </div>
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <User className="w-4 h-4 text-indigo-600" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Full Name</span>
-                  <span className="text-sm font-medium text-foreground">{displayName}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Email Address</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    {userData?.email || 'Not provided'}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Username</span>
-                  <span className="text-sm font-medium text-foreground">{userData?.username || 'N/A'}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">System Role</span>
-                  <span className="text-sm font-medium text-foreground">Fleet Operator</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Company</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    City Bus Services Pvt Ltd
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Operator ID</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <IdCard className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    {userData?.id ? `OP-${userData.id.slice(-6).toUpperCase()}` : 'OP-XXXXXX'}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Business Information */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-indigo-600" />
-                Business Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Business Registration</span>
-                  <span className="text-sm font-medium text-foreground">PV 12345678</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Operating Area</span>
-                  <span className="text-sm font-medium text-foreground">Colombo District</span>
-                </div>
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Business Address</span>
-                  <span className="text-sm font-medium text-foreground">123 Main Street, Colombo 07, Sri Lanka</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {user ? (
+            <ProfileInfoCard
+              user={user}
+              requiredProfileFields={REQUIRED_PROFILE_FIELDS['operator'] ?? []}
+              saving={saving}
+              onSave={saveProfile}
+              iconClassName="text-indigo-600"
+            />
+          ) : (
+            <Card className="shadow-sm border-border/50">
+              <CardContent className="pt-5">
+                <p className="text-sm text-muted-foreground">{loading ? 'Loading your profile…' : 'Profile unavailable.'}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Operator Capabilities */}
           <Card className="shadow-sm border-border/50">
@@ -183,37 +138,7 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
             </CardContent>
           </Card>
 
-          {/* Access Permissions */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Shield className="w-4 h-4 text-indigo-600" />
-                Access & Permissions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="space-y-3">
-                {[
-                  { module: 'Fleet Management', access: 'Full Access', color: 'green' },
-                  { module: 'Service Permits', access: 'Full Access', color: 'green' },
-                  { module: 'Trip Management', access: 'Full Access', color: 'green' },
-                  { module: 'Staff Management', access: 'Full Access', color: 'green' },
-                  { module: 'Revenue Management', access: 'View & Export', color: 'blue' },
-                  { module: 'MOT Administration', access: 'No Access', color: 'red' },
-                  { module: 'System Settings', access: 'No Access', color: 'red' },
-                ].map(({ module, access, color }) => (
-                  <div key={module} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                    <span className="text-sm text-foreground/80">{module}</span>
-                    <Badge className={
-                      color === 'green' ? 'bg-success/15 text-success border-0'
-                      : color === 'blue' ? 'bg-primary/15 text-primary border-0'
-                      : 'bg-destructive/15 text-destructive border-0'
-                    }>{access}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <PermissionsCard permissions={permissions} iconClassName="text-indigo-600" />
         </div>
 
         {/* Right column */}
@@ -231,25 +156,31 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
                   </div>
                   <span className="text-sm text-muted-foreground">Last Login</span>
                 </div>
-                <span className="text-sm font-medium text-foreground">Today</span>
+                <span className="text-sm font-medium text-foreground">{user ? timeAgo(user.lastLoginAt ?? null) : '—'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Activity className="h-4 w-4 text-success" />
+                    <BadgeCheck className="h-4 w-4 text-success" />
                   </div>
                   <span className="text-sm text-muted-foreground">Account Status</span>
                 </div>
-                <Badge className="bg-success/15 text-success border-0">Active</Badge>
+                {statusConfig ? (
+                  <Badge className={`${statusConfig.bgColor} ${statusConfig.color} border-0`}>{statusConfig.label}</Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-[hsl(var(--purple-50))] flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+                    <ShieldAlert className="h-4 w-4 text-[hsl(var(--purple-600))]" />
                   </div>
-                  <span className="text-sm text-muted-foreground">Security</span>
+                  <span className="text-sm text-muted-foreground">Email Verified</span>
                 </div>
-                <span className="text-sm font-medium text-success">Verified</span>
+                <span className={`text-sm font-medium ${user?.isEmailVerified ? 'text-success' : 'text-muted-foreground'}`}>
+                  {user ? (user.isEmailVerified ? 'Verified' : 'Not verified') : '—'}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -264,7 +195,7 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
                 { icon: Bus, color: 'indigo', label: 'Total Buses', value: '—' },
                 { icon: Route, color: 'blue', label: 'Active Routes', value: '—' },
                 { icon: Users, color: 'green', label: 'Total Staff', value: '—' },
-                { icon: Activity, color: 'amber', label: 'On-Time Rate', value: '—' },
+                { icon: Clock, color: 'amber', label: 'On-Time Rate', value: '—' },
               ].map(({ icon: Icon, color, label, value }) => (
                 <div key={label} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -279,28 +210,14 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
             </CardContent>
           </Card>
 
-          {/* Recent Activity */}
+          {/* Security */}
           <Card className="shadow-sm border-border/50">
             <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground">Recent Activity</CardTitle>
+              <CardTitle className="text-base font-semibold text-foreground">Security</CardTitle>
             </CardHeader>
-            <CardContent className="pt-5">
-              <div className="space-y-4">
-                {[
-                  { dot: 'indigo', text: 'Logged into operator portal', time: 'Just now' },
-                  { dot: 'green', text: 'Fleet vehicle registered', time: 'Yesterday' },
-                  { dot: 'blue', text: 'Driver schedule updated', time: '2 days ago' },
-                  { dot: 'purple', text: 'Permit renewal submitted', time: 'Last week' },
-                ].map(({ dot, text, time }) => (
-                  <div key={text} className="flex items-start gap-3">
-                    <div className={`w-2 h-2 rounded-full bg-${dot}-500 mt-1.5 shrink-0`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground/80 leading-snug">{text}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-0.5">{time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="pt-5 space-y-3">
+              <p className="text-sm text-muted-foreground">Change your password regularly to keep your account secure.</p>
+              <ChangePasswordDialog saving={saving} onSubmit={changePassword} />
             </CardContent>
           </Card>
         </div>

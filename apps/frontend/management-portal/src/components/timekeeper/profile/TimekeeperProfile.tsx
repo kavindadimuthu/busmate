@@ -1,13 +1,10 @@
 'use client';
 
-import { useSetPageMetadata } from '@/context/PageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@busmate/ui';
 import { Badge } from '@busmate/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@busmate/ui';
 import {
   Clock,
-  Activity,
-  Shield,
   Calendar,
   Bus,
   Users,
@@ -15,13 +12,16 @@ import {
   TimerIcon,
   MapPin,
   ClipboardList,
-  Building2,
-  Mail,
-  User,
-  IdCard,
   AlarmClock,
+  BadgeCheck,
+  ShieldAlert,
 } from 'lucide-react';
+import { useSetPageMetadata } from '@/context/PageContext';
 import UserData from '@/types/UserData';
+import { useMyProfile } from '@/hooks/useMyProfile';
+import { REQUIRED_PROFILE_FIELDS } from '@/lib/api/adminUsers';
+import { USER_STATUS_CONFIG, timeAgo } from '@/data/admin/users';
+import { ProfileInfoCard, PermissionsCard, ChangePasswordDialog } from '@/components/shared/profile';
 
 interface TimekeeperProfileProps {
   userData: UserData | null;
@@ -32,16 +32,6 @@ function getInitials(firstName?: string, lastName?: string, email?: string): str
   if (firstName) return firstName.slice(0, 2).toUpperCase();
   if (email) return email.slice(0, 2).toUpperCase();
   return 'TK';
-}
-
-function formatRole(role: string): string {
-  const roleMap: Record<string, string> = {
-    timeKeeper: 'Timekeeper Officer',
-    mot: 'Ministry of Transport Officer',
-    admin: 'System Administrator',
-    operator: 'Fleet Operator',
-  };
-  return roleMap[role] || role;
 }
 
 const SHIFT_SCHEDULE = [
@@ -71,11 +61,11 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
     breadcrumbs: [{ label: 'Profile' }],
   });
 
+  const { user, permissions, loading, error, saving, saveProfile, changePassword } = useMyProfile();
+
   const initials = getInitials(userData?.firstName, userData?.lastName, userData?.email);
-  const displayName =
-    userData?.firstName && userData?.lastName
-      ? `${userData.firstName} ${userData.lastName}`
-      : userData?.firstName || userData?.email || 'Timekeeper Officer';
+  const displayName = user?.fullName || userData?.firstName || userData?.email || 'Timekeeper Officer';
+  const statusConfig = user ? USER_STATUS_CONFIG[user.accountStatus as keyof typeof USER_STATUS_CONFIG] : null;
 
   return (
     <div className="space-y-6">
@@ -94,14 +84,16 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
           </Avatar>
           <div className="text-center sm:text-left">
             <h1 className="text-2xl font-bold text-white">{displayName}</h1>
-            <p className="text-teal-100 mt-1">{formatRole(userData?.user_role || 'timeKeeper')}</p>
+            <p className="text-teal-100 mt-1">Timekeeper Officer</p>
             <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
-              <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">
-                Active
-              </Badge>
-              <Badge className="bg-teal-400/20 text-teal-100 border border-primary/40/30 backdrop-blur">
-                Verified
-              </Badge>
+              {statusConfig && (
+                <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">
+                  {statusConfig.label}
+                </Badge>
+              )}
+              {user?.isEmailVerified && (
+                <Badge className="bg-teal-400/20 text-teal-100 border border-primary/40/30 backdrop-blur">Verified</Badge>
+              )}
               <Badge className="bg-primary/50/20 text-primary/20 border border-primary/40/30 backdrop-blur">
                 Timekeeper
               </Badge>
@@ -110,57 +102,30 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <User className="w-4 h-4 text-teal-600" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Full Name</span>
-                  <span className="text-sm font-medium text-foreground">{displayName}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Email Address</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    {userData?.email || 'Not provided'}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Username</span>
-                  <span className="text-sm font-medium text-foreground">{userData?.username || 'N/A'}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">System Role</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {formatRole(userData?.user_role || 'timeKeeper')}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Station</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    Central Bus Terminal
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Staff ID</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <IdCard className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    {userData?.id ? `TK-${userData.id.slice(-6).toUpperCase()}` : 'TK-XXXXXX'}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {user ? (
+            <ProfileInfoCard
+              user={user}
+              requiredProfileFields={REQUIRED_PROFILE_FIELDS['timekeeper'] ?? []}
+              saving={saving}
+              onSave={saveProfile}
+              iconClassName="text-teal-600"
+            />
+          ) : (
+            <Card className="shadow-sm border-border/50">
+              <CardContent className="pt-5">
+                <p className="text-sm text-muted-foreground">{loading ? 'Loading your profile…' : 'Profile unavailable.'}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Weekly Work Schedule */}
           <Card className="shadow-sm border-border/50">
@@ -276,6 +241,8 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
               </div>
             </CardContent>
           </Card>
+
+          <PermissionsCard permissions={permissions} iconClassName="text-teal-600" />
         </div>
 
         {/* Right column */}
@@ -293,25 +260,31 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
                   </div>
                   <span className="text-sm text-muted-foreground">Last Login</span>
                 </div>
-                <span className="text-sm font-medium text-foreground">Today</span>
+                <span className="text-sm font-medium text-foreground">{user ? timeAgo(user.lastLoginAt ?? null) : '—'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Activity className="h-4 w-4 text-success" />
+                    <BadgeCheck className="h-4 w-4 text-success" />
                   </div>
                   <span className="text-sm text-muted-foreground">Account Status</span>
                 </div>
-                <Badge className="bg-success/15 text-success border-0">Active</Badge>
+                {statusConfig ? (
+                  <Badge className={`${statusConfig.bgColor} ${statusConfig.color} border-0`}>{statusConfig.label}</Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-[hsl(var(--purple-50))] flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+                    <ShieldAlert className="h-4 w-4 text-[hsl(var(--purple-600))]" />
                   </div>
-                  <span className="text-sm text-muted-foreground">Security</span>
+                  <span className="text-sm text-muted-foreground">Email Verified</span>
                 </div>
-                <span className="text-sm font-medium text-success">Verified</span>
+                <span className={`text-sm font-medium ${user?.isEmailVerified ? 'text-success' : 'text-muted-foreground'}`}>
+                  {user ? (user.isEmailVerified ? 'Verified' : 'Not verified') : '—'}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -341,64 +314,14 @@ export function TimekeeperProfile({ userData }: TimekeeperProfileProps) {
             </CardContent>
           </Card>
 
-          {/* Access Permissions */}
+          {/* Security */}
           <Card className="shadow-sm border-border/50">
             <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Shield className="w-4 h-4 text-teal-600" />
-                Access Level
-              </CardTitle>
+              <CardTitle className="text-base font-semibold text-foreground">Security</CardTitle>
             </CardHeader>
-            <CardContent className="pt-5">
-              <div className="space-y-3">
-                {[
-                  { module: 'Trip Monitoring', access: 'Full Access', color: 'green' },
-                  { module: 'Attendance Tracking', access: 'Full Access', color: 'green' },
-                  { module: 'Schedule Viewing', access: 'View Only', color: 'blue' },
-                  { module: 'Route Management', access: 'No Access', color: 'red' },
-                  { module: 'Fleet Management', access: 'No Access', color: 'red' },
-                ].map(({ module, access, color }) => (
-                  <div key={module} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                    <span className="text-sm text-foreground/80">{module}</span>
-                    <Badge
-                      className={
-                        color === 'green'
-                          ? 'bg-success/15 text-success border-0'
-                          : color === 'blue'
-                          ? 'bg-primary/15 text-primary border-0'
-                          : 'bg-destructive/15 text-destructive border-0'
-                      }
-                    >
-                      {access}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="space-y-4">
-                {[
-                  { dot: 'teal', text: 'Logged into portal', time: 'Just now' },
-                  { dot: 'green', text: 'Trip log submitted', time: 'Yesterday' },
-                  { dot: 'blue', text: 'Attendance recorded', time: '2 days ago' },
-                  { dot: 'amber', text: 'Delay reported — Route 120', time: 'Last week' },
-                ].map(({ dot, text, time }) => (
-                  <div key={text} className="flex items-start gap-3">
-                    <div className={`w-2 h-2 rounded-full bg-${dot}-500 mt-1.5 shrink-0`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground/80 leading-snug">{text}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-0.5">{time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="pt-5 space-y-3">
+              <p className="text-sm text-muted-foreground">Change your password regularly to keep your account secure.</p>
+              <ChangePasswordDialog saving={saving} onSubmit={changePassword} />
             </CardContent>
           </Card>
         </div>

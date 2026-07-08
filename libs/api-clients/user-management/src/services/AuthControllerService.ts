@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { AuthMeResponse } from '../models/AuthMeResponse';
+import type { ChangePasswordRequest } from '../models/ChangePasswordRequest';
 import type { ForgotPasswordRequest } from '../models/ForgotPasswordRequest';
 import type { LoginRequestDTO } from '../models/LoginRequestDTO';
 import type { LoginResponse } from '../models/LoginResponse';
@@ -117,6 +118,21 @@ export class AuthControllerService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/auth/forgot-password',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns string OK
+     * @throws ApiError
+     */
+    public static changePassword(
+        requestBody: ChangePasswordRequest,
+    ): CancelablePromise<Record<string, string>> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/auth/change-password',
             body: requestBody,
             mediaType: 'application/json',
         });

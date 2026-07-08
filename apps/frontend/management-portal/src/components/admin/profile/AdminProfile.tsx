@@ -6,19 +6,20 @@ import { Badge } from '@busmate/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@busmate/ui';
 import {
   Clock,
-  Activity,
   Shield,
   Settings,
   Users,
   FileText,
   SquareActivity,
-  Building2,
-  Mail,
-  User,
-  IdCard,
   Bell,
+  BadgeCheck,
+  ShieldAlert,
 } from 'lucide-react';
 import UserData from '@/types/UserData';
+import { useMyProfile } from '@/hooks/useMyProfile';
+import { REQUIRED_PROFILE_FIELDS } from '@/lib/api/adminUsers';
+import { USER_STATUS_CONFIG, timeAgo } from '@/data/admin/users';
+import { ProfileInfoCard, PermissionsCard, ChangePasswordDialog } from '@/components/shared/profile';
 
 interface AdminProfileProps {
   userData: UserData | null;
@@ -40,11 +41,11 @@ export function AdminProfile({ userData }: AdminProfileProps) {
     breadcrumbs: [{ label: 'Profile' }],
   });
 
+  const { user, permissions, loading, error, saving, saveProfile, changePassword } = useMyProfile();
+
   const initials = getInitials(userData?.firstName, userData?.lastName, userData?.email);
-  const displayName =
-    userData?.firstName && userData?.lastName
-      ? `${userData.firstName} ${userData.lastName}`
-      : userData?.firstName || userData?.email || 'System Administrator';
+  const displayName = user?.fullName || userData?.firstName || userData?.email || 'System Administrator';
+  const statusConfig = user ? USER_STATUS_CONFIG[user.accountStatus as keyof typeof USER_STATUS_CONFIG] : null;
 
   return (
     <div className="space-y-6">
@@ -65,63 +66,43 @@ export function AdminProfile({ userData }: AdminProfileProps) {
             <h1 className="text-2xl font-bold text-white">{displayName}</h1>
             <p className="text-muted-foreground/50 mt-1">System Administrator</p>
             <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
-              <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">Active</Badge>
-              <Badge className="bg-primary/50/20 text-primary/20 border border-primary/40/30 backdrop-blur">Verified</Badge>
+              {statusConfig && (
+                <Badge className="bg-success/50/20 text-success-foreground/80 border border-success/40/30 backdrop-blur">
+                  {statusConfig.label}
+                </Badge>
+              )}
+              {user?.isEmailVerified && (
+                <Badge className="bg-primary/50/20 text-primary/20 border border-primary/40/30 backdrop-blur">Verified</Badge>
+              )}
               <Badge className="bg-destructive/50/20 text-destructive-foreground/80 border border-destructive/40/30 backdrop-blur">Super Admin</Badge>
             </div>
           </div>
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Full Name</span>
-                  <span className="text-sm font-medium text-foreground">{displayName}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Email Address</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    {userData?.email || 'Not provided'}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Username</span>
-                  <span className="text-sm font-medium text-foreground">{userData?.username || 'N/A'}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">System Role</span>
-                  <span className="text-sm font-medium text-foreground">System Administrator</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Department</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    System Administration
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">Admin ID</span>
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <IdCard className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    {userData?.id ? `ADM-${userData.id.slice(-6).toUpperCase()}` : 'ADM-XXXXXX'}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {user ? (
+            <ProfileInfoCard
+              user={user}
+              requiredProfileFields={REQUIRED_PROFILE_FIELDS['admin'] ?? []}
+              saving={saving}
+              onSave={saveProfile}
+            />
+          ) : (
+            <Card className="shadow-sm border-border/50">
+              <CardContent className="pt-5">
+                <p className="text-sm text-muted-foreground">{loading ? 'Loading your profile…' : 'Profile unavailable.'}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Admin Capabilities */}
           <Card className="shadow-sm border-border/50">
@@ -155,34 +136,7 @@ export function AdminProfile({ userData }: AdminProfileProps) {
             </CardContent>
           </Card>
 
-          {/* Access Permissions */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Shield className="w-4 h-4 text-muted-foreground" />
-                Access & Permissions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="space-y-3">
-                {[
-                  { module: 'User Management', access: 'Full Access', color: 'green' },
-                  { module: 'System Configuration', access: 'Full Access', color: 'green' },
-                  { module: 'System Monitoring', access: 'Full Access', color: 'green' },
-                  { module: 'Audit Logs', access: 'Full Access', color: 'green' },
-                  { module: 'Notifications', access: 'Full Access', color: 'green' },
-                  { module: 'All Portal Modules', access: 'View Only', color: 'blue' },
-                ].map(({ module, access, color }) => (
-                  <div key={module} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                    <span className="text-sm text-foreground/80">{module}</span>
-                    <Badge className={color === 'green' ? 'bg-success/15 text-success border-0' : 'bg-primary/15 text-primary border-0'}>
-                      {access}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <PermissionsCard permissions={permissions} />
         </div>
 
         {/* Right column */}
@@ -200,76 +154,43 @@ export function AdminProfile({ userData }: AdminProfileProps) {
                   </div>
                   <span className="text-sm text-muted-foreground">Last Login</span>
                 </div>
-                <span className="text-sm font-medium text-foreground">Today</span>
+                <span className="text-sm font-medium text-foreground">{user ? timeAgo(user.lastLoginAt ?? null) : '—'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Activity className="h-4 w-4 text-success" />
+                    <BadgeCheck className="h-4 w-4 text-success" />
                   </div>
                   <span className="text-sm text-muted-foreground">Account Status</span>
                 </div>
-                <Badge className="bg-success/15 text-success border-0">Active</Badge>
+                {statusConfig ? (
+                  <Badge className={`${statusConfig.bgColor} ${statusConfig.color} border-0`}>{statusConfig.label}</Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-[hsl(var(--purple-50))] flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-[hsl(var(--purple-600))]" />
+                    <ShieldAlert className="h-4 w-4 text-[hsl(var(--purple-600))]" />
                   </div>
-                  <span className="text-sm text-muted-foreground">Security Score</span>
+                  <span className="text-sm text-muted-foreground">Email Verified</span>
                 </div>
-                <span className="text-sm font-medium text-success">Excellent</span>
+                <span className={`text-sm font-medium ${user?.isEmailVerified ? 'text-success' : 'text-muted-foreground'}`}>
+                  {user ? (user.isEmailVerified ? 'Verified' : 'Not verified') : '—'}
+                </span>
               </div>
             </CardContent>
           </Card>
 
-          {/* System Stats */}
+          {/* Security */}
           <Card className="shadow-sm border-border/50">
             <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground">System Overview</CardTitle>
+              <CardTitle className="text-base font-semibold text-foreground">Security</CardTitle>
             </CardHeader>
-            <CardContent className="pt-5 space-y-4">
-              {[
-                { icon: Users, color: 'blue', label: 'Registered Users', value: '—' },
-                { icon: SquareActivity, color: 'green', label: 'System Uptime', value: '—' },
-                { icon: FileText, color: 'purple', label: 'Audit Events Today', value: '—' },
-                { icon: Bell, color: 'orange', label: 'Active Alerts', value: '—' },
-              ].map(({ icon: Icon, color, label, value }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-lg bg-${color}-50 flex items-center justify-center`}>
-                      <Icon className={`h-4 w-4 text-${color}-600`} />
-                    </div>
-                    <span className="text-sm text-muted-foreground">{label}</span>
-                  </div>
-                  <span className="text-sm font-medium text-muted-foreground/70">{value}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="shadow-sm border-border/50">
-            <CardHeader className="pb-3 border-b border-border/30">
-              <CardTitle className="text-base font-semibold text-foreground">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-5">
-              <div className="space-y-4">
-                {[
-                  { dot: 'green', text: 'Logged into admin portal', time: 'Just now' },
-                  { dot: 'blue', text: 'User roles updated', time: 'Yesterday' },
-                  { dot: 'purple', text: 'System settings modified', time: '2 days ago' },
-                  { dot: 'orange', text: 'Monthly report generated', time: 'Last week' },
-                ].map(({ dot, text, time }) => (
-                  <div key={text} className="flex items-start gap-3">
-                    <div className={`w-2 h-2 rounded-full bg-${dot}-500 mt-1.5 shrink-0`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground/80 leading-snug">{text}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-0.5">{time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="pt-5 space-y-3">
+              <p className="text-sm text-muted-foreground">Change your password regularly to keep your account secure.</p>
+              <ChangePasswordDialog saving={saving} onSubmit={changePassword} />
             </CardContent>
           </Card>
         </div>

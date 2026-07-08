@@ -1,5 +1,6 @@
 package com.busmatelk.backend.controller;
 
+import com.busmatelk.backend.dto.request.ChangePasswordRequest;
 import com.busmatelk.backend.dto.request.ForgotPasswordRequest;
 import com.busmatelk.backend.dto.request.LoginRequestDTO;
 import com.busmatelk.backend.dto.request.RefreshTokenRequest;
@@ -72,5 +73,13 @@ public class AuthController {
     public ResponseEntity<AuthMeResponse> me(Authentication authentication) {
         UUID userId = UUID.fromString((String) authentication.getPrincipal());
         return ResponseEntity.ok(authService.getCurrentUserWithPermissions(userId));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(Authentication authentication,
+                                                                @RequestBody ChangePasswordRequest request) {
+        UUID userId = UUID.fromString((String) authentication.getPrincipal());
+        authService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
 }

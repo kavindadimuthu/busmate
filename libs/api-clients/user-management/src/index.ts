@@ -8,6 +8,7 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AuthMeResponse } from './models/AuthMeResponse';
+export type { ChangePasswordRequest } from './models/ChangePasswordRequest';
 export type { CheckPermissionRequest } from './models/CheckPermissionRequest';
 export type { CreatePermissionRequest } from './models/CreatePermissionRequest';
 export type { CreateUserRequest } from './models/CreateUserRequest';
