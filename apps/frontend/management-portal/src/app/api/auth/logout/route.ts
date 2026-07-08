@@ -1,20 +1,20 @@
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { ACCESS_TOKEN_COOKIE, clearSessionCookies, logoutSession } from '@/lib/auth/session';
 
-export async function GET(request: NextRequest) {
-
-  const clearSessionCookies = async () => {
-    const cookieName = '__asgardeo__session';
-    const cookieStore = await cookies();
-    cookieStore.delete(cookieName);
-  }
-  
+export async function POST(request: NextRequest) {
   try {
-    // Clear the session cookie
-    await clearSessionCookies();
-    return NextResponse.json({ status: 'success', message: 'Logged out successfully' }, { status: 200 });
+    const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+    if (accessToken) {
+      await logoutSession(accessToken);
+    }
+
+    const response = NextResponse.json({ status: 'success', message: 'Logged out successfully' });
+    clearSessionCookies(response);
+    return response;
   } catch (error) {
     console.error("Error during logout:", error);
-    return NextResponse.json({ status: 'error', message: 'Logout failed' }, { status: 500 });
+    const response = NextResponse.json({ status: 'error', message: 'Logout failed' }, { status: 500 });
+    clearSessionCookies(response);
+    return response;
   }
 }

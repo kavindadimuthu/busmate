@@ -1,20 +1,65 @@
-import { asgardeoMiddleware, createRouteMatcher } from '@asgardeo/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
+import {
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+  clearSessionCookies,
+  getJwtSecret,
+  refreshSession,
+  setSessionCookies,
+} from '@/lib/auth/session';
 
-const isProtectedRoute = createRouteMatcher([
-  '/mot/**',
-  '/operator/**',
-  '/timekeeper/**',
-  '/admin/**',
-]);
+const PROTECTED_PREFIXES = ['/mot', '/operator', '/timekeeper', '/admin'];
 
-export default asgardeoMiddleware(async (asgardeo, req) => {
-  if (isProtectedRoute(req)) {
-    const protectionResult = await asgardeo.protectRoute();
-    if (protectionResult) {
-      return protectionResult;
+function isProtectedPath(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+export default async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Our own /api/auth/* routes (and any other API route) manage the session
+  // cookies themselves — don't touch them here.
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  const accessToken = req.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+  const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+
+  const response = NextResponse.next();
+  let hasValidSession = false;
+
+  if (accessToken) {
+    try {
+      jwt.verify(accessToken, getJwtSecret(), { algorithms: ['HS256'] });
+      hasValidSession = true;
+    } catch {
+      hasValidSession = false;
     }
   }
-});
+
+  // Access token missing/expired but a refresh token is present — refresh
+  // transparently so an active user is never bounced mid-session.
+  if (!hasValidSession && refreshToken) {
+    try {
+      const session = await refreshSession(refreshToken);
+      setSessionCookies(response, session);
+      hasValidSession = true;
+    } catch {
+      hasValidSession = false;
+      clearSessionCookies(response);
+    }
+  }
+
+  if (isProtectedPath(pathname) && !hasValidSession) {
+    const redirectResponse = NextResponse.redirect(new URL('/', req.url));
+    clearSessionCookies(redirectResponse);
+    return redirectResponse;
+  }
+
+  return response;
+}
 
 // Apply middleware to ALL routes except internals
 export const config = {
