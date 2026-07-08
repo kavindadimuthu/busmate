@@ -27,8 +27,14 @@ public class SecurityConfig {
                                                                                  // configuration
                 .csrf(csrf -> csrf.disable()) // ✅ New way to disable CSRF
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/public/**", "/api/auth/**", "/api/passenger/register", "/swagger-ui/**",
-                                "/swagger-ui.html", "/v3/api-docs/**")
+                        // /api/auth/me and /api/auth/logout are intentionally excluded — they need
+                        // an authenticated caller, matching the API gateway's own public/protected split.
+                        // /internal/** is exempt from the JWT flow entirely — InternalApiKeyFilter is its
+                        // only gate, and it's never reachable through the API gateway in the first place.
+                        .requestMatchers("/public/**", "/swagger-ui/**",
+                                "/swagger-ui.html", "/v3/api-docs/**", "/internal/**",
+                                "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
+                                "/api/auth/forgot-password", "/api/auth/reset-password", "/api/auth/verify-email")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

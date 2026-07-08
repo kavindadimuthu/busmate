@@ -86,6 +86,7 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 server:
+  address: 0.0.0.0
   port: 8081
 
 # CORS Configuration
@@ -97,11 +98,18 @@ cors:
   max-age: 3600
 
 supabase:
+  url: https://gvxbzcxjueghvrtsfdxc.supabase.co
   anon-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg
   jwt:
     secret: v7dyiu735nxybSzPS41oWmOtOLwZyaJOApdGaFqWpTNGYkmL7yWP6fnKPG2FWSxr5AB5kSdFiRiT78YcB7vT5w==
   api:
     key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTI4MDMyOSwiZXhwIjoyMDY0ODU2MzI5fQ.ZjjzelN798zx5x5ntA5_d9a8UUZuDiAuX4WgPQSwY5E
+
+# Shared secret other backend services use to call /internal/** directly (never routed
+# through the API gateway, which blocks /internal/** entirely). Override via env var in
+# every real environment — this fallback is an obvious local-dev-only placeholder.
+internal:
+  api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
 
 logging:
   level:

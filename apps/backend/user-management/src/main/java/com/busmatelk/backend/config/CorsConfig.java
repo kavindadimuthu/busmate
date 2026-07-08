@@ -15,15 +15,16 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow specific origins
+        // The API gateway (apps/backend/api-gateway) is now the single public entry point
+        // and owns public-facing CORS. This service is internal-only, so only localhost
+        // (direct-to-service local dev) and other internal service ports need to be allowed.
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3001",
-                "https://busmate-web-frontend.vercel.app",
-                "https://*.vercel.app",
-                "https://*.netlify.app",
-                "https://*.amazonaws.com",
-                "https://*.elasticbeanstalk.com"));
+                "http://localhost:8080",
+                "http://localhost:8081",
+                "http://localhost:8082",
+                "http://localhost:8083"));
 
         // Allow specific methods
         configuration.setAllowedMethods(Arrays.asList(

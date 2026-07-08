@@ -1,79 +1,76 @@
 package com.busmatelk.backend.controller;
 
+import com.busmatelk.backend.dto.request.ForgotPasswordRequest;
 import com.busmatelk.backend.dto.request.LoginRequestDTO;
-import com.busmatelk.backend.model.User;
-import com.busmatelk.backend.repository.UserRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import com.busmatelk.backend.dto.request.RefreshTokenRequest;
+import com.busmatelk.backend.dto.request.RegisterRequest;
+import com.busmatelk.backend.dto.request.ResetPasswordRequest;
+import com.busmatelk.backend.dto.request.VerifyEmailRequest;
+import com.busmatelk.backend.dto.response.AuthMeResponse;
+import com.busmatelk.backend.dto.response.LoginResponse;
+import com.busmatelk.backend.dto.response.RegisterResponse;
+import com.busmatelk.backend.service.AuthService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Value("${supabase.anon-key}")
-    private String supabaseAnonKey;
+    private final AuthService authService;
 
-    @Autowired
-    private UserRepo userRepo;
-
-
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO request) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        String supabaseUrl = "https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1/token?grant_type=password";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("apikey", supabaseAnonKey);
-
-        Map<String, String> payload = Map.of(
-                "email", request.getEmail(),
-                "password", request.getPassword()
-        );
-
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(payload, headers);
-
-        try {
-            // 1. Authenticate with Supabase
-            ResponseEntity<Map> response = restTemplate.postForEntity(supabaseUrl, entity, Map.class);
-
-            Map<String, Object> responseBody = new HashMap<>(response.getBody());
-
-            // 2. Extract user email from Supabase response
-            Map<String, Object> userMap = (Map<String, Object>) responseBody.get("user");
-            String email = (String) userMap.get("email");
-            System.out.println(email);
-
-
-            // 3. Fetch role from your local DB
-            Optional<User> dbUser = userRepo.findByEmail(email);
-            System.out.println(dbUser.isPresent());
-            if (dbUser.isPresent()) {
-                String role = dbUser.get().getRole();
-                System.out.println(role);
-
-                // 4. Inject app_role into the user section of response
-                userMap.put("app_role", role);
-                responseBody.put("user", userMap);
-
-                return ResponseEntity.ok(responseBody);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "User not founds in local DB"));
-            }
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Login failed", "message", e.getMessage()));
-        }
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.registerPassenger(request));
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestDTO request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorizationHeader) {
+        String accessToken = authorizationHeader.startsWith("Bearer ")
+                ? authorizationHeader.substring(7)
+                : authorizationHeader;
+        authService.logout(accessToken);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "Recovery email sent"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Password updated"));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request.getToken());
+        return ResponseEntity.ok(Map.of("message", "Email verified"));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<AuthMeResponse> me(Authentication authentication) {
+        UUID userId = UUID.fromString((String) authentication.getPrincipal());
+        return ResponseEntity.ok(authService.getCurrentUserWithPermissions(userId));
+    }
 }

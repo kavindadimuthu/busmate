@@ -17,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -44,17 +45,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         .parseClaimsJws(jwt)
                         .getBody();
 
-                String email = claims.get("email", String.class);
+                // Principal is the Supabase user_id (sub claim, a UUID string) so it lines up
+                // with PermissionCheckAspect and PermissionService, which key everything off userId.
+                String userId = claims.getSubject();
+
+                Map<String, Object> appMetadata = claims.get("app_metadata", Map.class);
+                String userType = appMetadata != null ? (String) appMetadata.get("user_type") : null;
 
                 // 📌 Create an Authentication object and put it in the context
                 var auth = new UsernamePasswordAuthenticationToken(
-                        email,                    // principal
+                        userId,                   // principal
                         null,                     // credentials (none)
                         List.of(new SimpleGrantedAuthority("ROLE_USER")) // authorities
                 );
+                auth.setDetails(userType);
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                System.out.println("✅ Supabase‑authenticated user: " + email);
+                System.out.println("✅ Supabase‑authenticated user: " + userId);
 
             } catch (JwtException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
