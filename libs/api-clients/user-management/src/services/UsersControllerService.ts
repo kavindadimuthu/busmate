@@ -58,6 +58,22 @@ export class UsersControllerService {
      * @returns UserResponse OK
      * @throws ApiError
      */
+    public static reactivateUser(
+        userId: string,
+    ): CancelablePromise<UserResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/users/{userId}/reactivate',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
+     * @param userId
+     * @returns UserResponse OK
+     * @throws ApiError
+     */
     public static getUser(
         userId: string,
     ): CancelablePromise<UserResponse> {

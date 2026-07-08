@@ -135,6 +135,24 @@ public class UserService {
         userEventPublisher.publishUserDeleted(targetUserId);
     }
 
+    /**
+     * Reverses deleteUser() — unbans in Supabase Auth first (the security-critical step,
+     * same ordering rationale as deleteUser), then flips the local status back to active.
+     * Gated on :update rather than :delete since this restores rather than removes access.
+     */
+    @Transactional
+    public UserResponse reactivateUser(UUID callerId, UUID targetUserId) {
+        User target = findUserOrThrow(targetUserId);
+        requireUpdateAccess(callerId, targetUserId, target.getUserType().getName());
+
+        supabaseAuthClient.unbanUser(target.getUserId().toString());
+
+        target.setAccountStatus("active");
+        target = userRepository.save(target);
+        userEventPublisher.publishUserUpdated(targetUserId, List.of("accountStatus"));
+        return toUserResponse(target);
+    }
+
     public UserPermissionsResponse getPermissions(UUID callerId, UUID targetUserId) {
         User target = findUserOrThrow(targetUserId);
         requireReadAccess(callerId, targetUserId, target.getUserType().getName());

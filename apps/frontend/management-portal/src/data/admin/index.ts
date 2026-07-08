@@ -13,55 +13,25 @@ export {
   mockData as dashboardMockData,
 } from './dashboard';
 
-// User management data and functions
+// User management data and functions — backed by the real user-management API
+// (see @/lib/api/adminUsers), this module only shapes/labels/formats it for the UI.
 export {
-  // New API functions
-  getAllUsers,
-  getUserById,
-  getFilteredUsers,
-  getUserStatsData,
-  updateUser,
-  updateUserStatus,
-  deleteUserById,
-  createUser,
+  toAdminUser,
   getUserDisplayName,
-  formatUserDate,
   formatDateShort,
   timeAgo,
+  formatProfileFieldLabel,
   // Config maps
   USER_TYPE_CONFIG,
+  USER_TYPE_ORDER,
   USER_STATUS_CONFIG,
-  // Legacy compatibility
-  getUsers,
-  getUserStats,
-  deleteUser,
-  createMOTUser,
-  getPassengerProfile,
-  getConductorProfile,
-  getFleetProfile,
-  getTimekeeperProfile,
-  getMOTProfile,
-  mockData as usersMockData,
+  USER_STATUS_ORDER,
 } from './users';
 export type {
   UserType,
   UserStatus,
-  UserBase,
-  MOTUser,
-  TimekeeperUser,
-  OperatorUser,
-  ConductorUser,
-  DriverUser,
-  PassengerUser,
-  SystemUser,
-  UserStatsData,
-  UserFiltersState,
-  // Legacy types
-  PassengerProfile,
-  ConductorProfile,
-  FleetProfile,
-  TimekeeperProfile,
-  MOTProfile,
+  AdminUser,
+  UserStats,
 } from './users';
 
 // Notifications data and functions

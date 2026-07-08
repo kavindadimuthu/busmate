@@ -62,6 +62,11 @@ public class UsersController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{userId}/reactivate")
+    public ResponseEntity<UserResponse> reactivateUser(Authentication authentication, @PathVariable UUID userId) {
+        return ResponseEntity.ok(userService.reactivateUser(callerId(authentication), userId));
+    }
+
     @GetMapping("/{userId}/profile")
     public ResponseEntity<Map<String, Object>> getProfile(Authentication authentication, @PathVariable UUID userId) {
         return ResponseEntity.ok(userProfileService.getProfile(callerId(authentication), userId));

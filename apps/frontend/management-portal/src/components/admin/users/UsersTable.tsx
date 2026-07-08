@@ -16,7 +16,7 @@ import {
   getUserDisplayName,
   timeAgo,
 } from '@/data/admin/users';
-import type { SystemUser } from '@/data/admin/users';
+import type { AdminUser } from '@/data/admin/users';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -32,12 +32,14 @@ interface UsersTableProps
     | 'onSort'
     | 'loading'
   > {
-  users: SystemUser[];
+  users: AdminUser[];
   totalItems: number;
-  onView: (user: SystemUser) => void;
-  onEdit: (user: SystemUser) => void;
-  onToggleStatus: (user: SystemUser) => void;
-  onDelete: (user: SystemUser) => void;
+  /** The signed-in admin's own userId — disables self-deactivation in the actions column. */
+  currentUserId?: string | null;
+  onView: (user: AdminUser) => void;
+  onEdit: (user: AdminUser) => void;
+  onToggleStatus: (user: AdminUser) => void;
+  onDelete: (user: AdminUser) => void;
   activeFilters?: Record<string, any>;
 }
 
@@ -46,6 +48,7 @@ interface UsersTableProps
 export function UsersTable({
   users,
   totalItems,
+  currentUserId,
   page,
   pageSize,
   onPageChange,
@@ -60,7 +63,7 @@ export function UsersTable({
   onDelete,
   activeFilters = {},
 }: UsersTableProps) {
-  const columns = useMemo<ColumnDef<SystemUser>[]>(
+  const columns = useMemo<ColumnDef<AdminUser>[]>(
     () => [
       {
         id: 'name',
@@ -69,16 +72,17 @@ export function UsersTable({
         width: 'min-w-[220px]',
         cell: ({ row: user }) => {
           const displayName = getUserDisplayName(user);
+          const initials = `${user.firstName[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '?';
           return (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {user.firstName[0]}{user.lastName[0]}
+                {initials}
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-foreground truncate">
                   {displayName}
                 </p>
-                <p className="text-xs text-muted-foreground/70 truncate">{user.id}</p>
+                <p className="text-xs text-muted-foreground/70 truncate">{user.username || user.id}</p>
               </div>
             </div>
           );
@@ -139,6 +143,7 @@ export function UsersTable({
         align: 'right',
         cell: ({ row: user }) => {
           const isActive = user.status === 'active';
+          const isSelf = !!currentUserId && user.id === currentUserId;
           return (
             <div className="flex items-center justify-end gap-1">
               <button
@@ -164,14 +169,15 @@ export function UsersTable({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleStatus(user);
+                  if (!isSelf) onToggleStatus(user);
                 }}
-                className={`p-1.5 rounded-lg transition-colors ${
+                disabled={isSelf}
+                className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                   isActive
                     ? 'text-muted-foreground/70 hover:text-warning hover:bg-warning/10'
                     : 'text-muted-foreground/70 hover:text-success hover:bg-success/10'
                 }`}
-                title={isActive ? 'Deactivate User' : 'Reactivate User'}
+                title={isSelf ? "You can't change your own status" : isActive ? 'Deactivate User' : 'Reactivate User'}
               >
                 {isActive ? (
                   <ToggleRight className="h-4 w-4" />
@@ -182,10 +188,11 @@ export function UsersTable({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(user);
+                  if (!isSelf) onDelete(user);
                 }}
-                className="p-1.5 text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                title="Delete User"
+                disabled={isSelf}
+                className="p-1.5 text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={isSelf ? "You can't deactivate your own account" : 'Deactivate User'}
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -194,13 +201,13 @@ export function UsersTable({
         },
       },
     ],
-    [onView, onEdit, onToggleStatus, onDelete],
+    [onView, onEdit, onToggleStatus, onDelete, currentUserId],
   );
 
   const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
   return (
-    <DataTable<SystemUser>
+    <DataTable<AdminUser>
       columns={columns}
       data={users}
       totalItems={totalItems}

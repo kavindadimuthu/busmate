@@ -1,7 +1,8 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { UserTypeTabs } from '@/components/admin/users/UserTypeTabs';
 import { UserStatsCards } from '@/components/admin/users/UserStatsCards';
@@ -10,13 +11,14 @@ import { UserAdvancedFilters } from '@/components/admin/users/UserAdvancedFilter
 import { UsersTable } from '@/components/admin/users/UsersTable';
 import { ConfirmDialog } from '@/components/admin/users/ConfirmDialog';
 import { useUsers } from '@/hooks/admin/users/useUsers';
-import { getUserStatsData } from '@/data/admin/users';
+import { useUserTypeCounts } from '@/hooks/admin/users/useUserTypeCounts';
+import { MANAGED_USER_TYPES } from '@/lib/api/adminUsers';
 import type { UserType } from '@/data/admin/users';
 
 // ── Constants ────────────────────────────────────────────────────
 
-const VALID_TABS = new Set<string>(['mot', 'timekeeper', 'operator', 'conductor', 'driver', 'passenger']);
-const DEFAULT_TAB: UserType = 'mot';
+const VALID_TABS = new Set<string>(MANAGED_USER_TYPES);
+const DEFAULT_TAB: UserType = 'admin';
 
 // ── Component ────────────────────────────────────────────────────
 
@@ -24,12 +26,12 @@ export default function UsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Derive active tab from URL query param, default to 'mot'
+  // Derive active tab from URL query param, default to 'admin'
   const rawTab = searchParams.get('tab');
   const activeTab: UserType = rawTab && VALID_TABS.has(rawTab) ? (rawTab as UserType) : DEFAULT_TAB;
 
-  // Global stats for tab counts
-  const globalStats = useMemo(() => getUserStatsData(), []);
+  // Per-type counts for the tab badges
+  const typeCounts = useUserTypeCounts();
 
   const handleTabChange = useCallback(
     (tab: UserType) => {
@@ -41,7 +43,7 @@ export default function UsersPage() {
   );
 
   const {
-    stats, paginatedUsers, allFilteredUsers, isLoading, searchTerm,
+    stats, paginatedUsers, totalItems, isLoading, loadError, currentUserId, searchTerm,
     statusFilter, sortBy, sortOrder, currentPage, pageSize, confirmDialog,
     actionLoading, handleSort, handleView, handleEdit, handleToggleStatus, handleDelete,
     handleClearAll, handleSearchChange, handleStatusChange,
@@ -66,10 +68,10 @@ export default function UsersPage() {
       <UserTypeTabs
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        counts={globalStats.byType}
+        counts={typeCounts}
       />
 
-      <UserStatsCards stats={stats} loading={isLoading} activeUserType={activeTab} />
+      <UserStatsCards stats={stats} loading={isLoading && !stats} activeUserType={activeTab} />
 
       <UserAdvancedFilters
         searchTerm={searchTerm}
@@ -79,8 +81,16 @@ export default function UsersPage() {
         onClearAll={handleClearAll}
       />
 
+      {loadError && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-destructive/20 bg-destructive/10 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          {loadError}
+        </div>
+      )}
+
       <UsersTable
           users={paginatedUsers}
+          currentUserId={currentUserId}
           loading={isLoading}
           sortColumn={sortBy}
           sortDirection={sortOrder}
@@ -89,7 +99,7 @@ export default function UsersPage() {
           onEdit={handleEdit}
           onToggleStatus={handleToggleStatus}
           onDelete={handleDelete}
-          totalItems={allFilteredUsers.length}
+          totalItems={totalItems}
           page={currentPage}
           pageSize={pageSize}
           onPageChange={handlePageChange}
@@ -110,4 +120,3 @@ export default function UsersPage() {
     </div>
   );
 }
-

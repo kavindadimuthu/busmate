@@ -63,7 +63,7 @@ export function UserAdvancedFilters({
     <FilterBar
       searchValue={searchTerm}
       onSearchChange={handleSearchChange}
-      searchPlaceholder="Search users by name, email, phone, NIC, or ID…"
+      searchPlaceholder="Search users by name or email…"
       activeFilterCount={activeFilterCount}
       onClearAll={handleClearAll}
     >

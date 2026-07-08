@@ -121,6 +121,18 @@ public class SupabaseAuthClient {
         }, "Supabase ban user failed");
     }
 
+    /**
+     * Reverses banUser() — "none" is GoTrue's documented value for clearing an existing ban.
+     */
+    public void unbanUser(String userId) {
+        HttpHeaders headers = serviceRoleHeaders();
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(Map.of("ban_duration", "none"), headers);
+        execute(() -> {
+            restTemplate.exchange(supabaseUrl + "/auth/v1/admin/users/" + userId, HttpMethod.PUT, entity, Void.class);
+            return null;
+        }, "Supabase unban user failed");
+    }
+
     public void deleteUser(String userId) {
         HttpHeaders headers = serviceRoleHeaders();
         HttpEntity<Void> entity = new HttpEntity<>(headers);

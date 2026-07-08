@@ -9,53 +9,42 @@ import {
   ToggleRight,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Clock,
-  Shield,
-  Truck,
-  Car,
-  CircleDot,
   Users,
-  CreditCard,
-  Star,
-  Building2,
   BadgeCheck,
-  FileText,
+  BadgeX,
   Copy,
   CheckCircle2,
   Hash,
-  Briefcase,
-  Route,
+  AtSign,
+  KeyRound,
 } from 'lucide-react';
 import {
   USER_TYPE_CONFIG,
   USER_STATUS_CONFIG,
   getUserDisplayName,
-  formatUserDate,
   formatDateShort,
   timeAgo,
+  formatProfileFieldLabel,
 } from '@/data/admin/users';
-import type {
-  SystemUser,
-  MOTUser,
-  TimekeeperUser,
-  OperatorUser,
-  ConductorUser,
-  DriverUser,
-  PassengerUser,
-} from '@/data/admin/users';
+import type { AdminUser } from '@/data/admin/users';
+import type { UserPermissionsResponse } from '@/lib/api/adminUsers';
 
 interface UserDetailPanelProps {
-  user: SystemUser;
+  user: AdminUser;
+  permissions?: UserPermissionsResponse | null;
+  currentUserId?: string | null;
   onBack: () => void;
   onEdit: (userId: string) => void;
-  onToggleStatus: (user: SystemUser) => void;
-  onDelete: (user: SystemUser) => void;
+  onToggleStatus: (user: AdminUser) => void;
+  onDelete: (user: AdminUser) => void;
 }
 
 export function UserDetailPanel({
   user,
+  permissions,
+  currentUserId,
   onBack,
   onEdit,
   onToggleStatus,
@@ -66,6 +55,7 @@ export function UserDetailPanel({
   const statusConfig = USER_STATUS_CONFIG[user.status];
   const displayName = getUserDisplayName(user);
   const isActive = user.status === 'active';
+  const isSelf = !!currentUserId && user.id === currentUserId;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -110,6 +100,8 @@ export function UserDetailPanel({
     </div>
   );
 
+  const profileEntries = Object.entries(user.profileData ?? {}).filter(([, v]) => v !== null && v !== undefined && v !== '');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -130,8 +122,10 @@ export function UserDetailPanel({
             Edit
           </button>
           <button
-            onClick={() => onToggleStatus(user)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+            onClick={() => !isSelf && onToggleStatus(user)}
+            disabled={isSelf}
+            title={isSelf ? "You can't change your own status" : undefined}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
               isActive
                 ? 'text-warning bg-warning/10 border-orange-200 hover:bg-warning/15'
                 : 'text-success bg-success/10 border-success/20 hover:bg-success/15'
@@ -150,11 +144,13 @@ export function UserDetailPanel({
             )}
           </button>
           <button
-            onClick={() => onDelete(user)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg hover:bg-destructive/15 transition-colors"
+            onClick={() => !isSelf && onDelete(user)}
+            disabled={isSelf}
+            title={isSelf ? "You can't deactivate your own account" : undefined}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg hover:bg-destructive/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="h-4 w-4" />
-            Delete
+            Deactivate
           </button>
         </div>
       </div>
@@ -164,19 +160,21 @@ export function UserDetailPanel({
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8">
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 rounded-full bg-card/20 backdrop-blur-sm flex items-center justify-center text-white text-xl font-bold border-2 border-white/30">
-              {user.firstName[0]}{user.lastName[0]}
+              {user.firstName[0]}{user.lastName?.[0] ?? ''}
             </div>
             <div className="text-white">
               <h2 className="text-xl font-bold">{displayName}</h2>
               <div className="flex items-center gap-3 mt-1">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30`}>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30">
                   {typeConfig.label}
                 </span>
-                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-success/50' : user.status === 'suspended' ? 'bg-destructive/50' : user.status === 'pending' ? 'bg-warning/60' : 'bg-secondary'}`} />
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30">
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-success/50' : user.status === 'pending' ? 'bg-warning/60' : 'bg-secondary'}`} />
                   {statusConfig.label}
                 </span>
-                <span className="text-white/70 text-xs">{user.id}</span>
+                {isSelf && (
+                  <span className="text-white/70 text-xs">(You)</span>
+                )}
               </div>
             </div>
           </div>
@@ -205,27 +203,86 @@ export function UserDetailPanel({
                 copiable
               />
               <InfoRow
-                icon={<Phone className="h-3.5 w-3.5" />}
-                label="Phone"
-                value={user.phone}
-                copiable
+                icon={<AtSign className="h-3.5 w-3.5" />}
+                label="Username"
+                value={user.username || '—'}
               />
-              <InfoRow
-                icon={<FileText className="h-3.5 w-3.5" />}
-                label="NIC"
-                value={user.nic}
-                copiable
-              />
-              <InfoRow
-                icon={<MapPin className="h-3.5 w-3.5" />}
-                label="Address"
-                value={user.address}
-              />
+              {user.phone && (
+                <InfoRow
+                  icon={<Phone className="h-3.5 w-3.5" />}
+                  label="Phone"
+                  value={user.phone}
+                  copiable
+                />
+              )}
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-2 text-muted-foreground min-w-[140px]">
+                  {user.isEmailVerified ? <BadgeCheck className="h-3.5 w-3.5" /> : <BadgeX className="h-3.5 w-3.5" />}
+                  <span className="text-xs font-medium">Email Verified</span>
+                </div>
+                <span className={`text-sm font-medium ${user.isEmailVerified ? 'text-success' : 'text-muted-foreground'}`}>
+                  {user.isEmailVerified ? 'Verified' : 'Not verified'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Type-specific details */}
-          {renderTypeSpecificDetails(user)}
+          {/* Type-specific profile fields (free-form, backend-validated per type) */}
+          {profileEntries.length > 0 && (
+            <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Hash className="h-4 w-4 text-primary" />
+                {typeConfig.label} Details
+              </h3>
+              <div className="space-y-0">
+                {profileEntries.map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                    <span className="text-xs font-medium text-muted-foreground">{formatProfileFieldLabel(key)}</span>
+                    <span className="text-sm font-medium text-foreground">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Effective permissions */}
+          {permissions && (
+            <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-primary" />
+                Effective Permissions
+              </h3>
+              {permissions.effectivePermissions && permissions.effectivePermissions.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {permissions.effectivePermissions.map((perm) => (
+                    <span
+                      key={perm}
+                      className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20"
+                    >
+                      {perm}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No permissions granted.</p>
+              )}
+              {permissions.overrides && permissions.overrides.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Individual overrides</p>
+                  <div className="space-y-1.5">
+                    {permissions.overrides.map((override) => (
+                      <div key={override.permissionName} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">{override.permissionName}</span>
+                        <span className={override.isGranted ? 'text-success' : 'text-destructive'}>
+                          {override.isGranted ? 'Granted' : 'Revoked'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -250,231 +307,7 @@ export function UserDetailPanel({
               />
             </div>
           </div>
-
-          {/* Notes */}
-          {user.notes && (
-            <div className="bg-warning/10 rounded-xl border border-warning/20 shadow-sm p-6">
-              <h3 className="text-sm font-semibold text-warning mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Notes
-              </h3>
-              <p className="text-sm text-warning leading-relaxed">{user.notes}</p>
-            </div>
-          )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function renderTypeSpecificDetails(user: SystemUser) {
-  switch (user.userType) {
-    case 'mot':
-      return <MOTDetails user={user} />;
-    case 'timekeeper':
-      return <TimekeeperDetails user={user} />;
-    case 'operator':
-      return <OperatorDetails user={user} />;
-    case 'conductor':
-      return <ConductorDetails user={user} />;
-    case 'driver':
-      return <DriverDetails user={user} />;
-    case 'passenger':
-      return <PassengerDetails user={user} />;
-    default:
-      return null;
-  }
-}
-
-function DetailRow({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{String(value)}</span>
-    </div>
-  );
-}
-
-function MOTDetails({ user }: { user: MOTUser }) {
-  const clearanceColors: Record<string, string> = {
-    basic: 'bg-muted text-foreground/80',
-    standard: 'bg-primary/15 text-primary',
-    enhanced: 'bg-[hsl(var(--purple-100))] text-[hsl(var(--purple-700))]',
-    'top-secret': 'bg-destructive/15 text-destructive',
-  };
-
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Shield className="h-4 w-4 text-indigo-600" />
-        MOT Officer Details
-      </h3>
-      <div className="space-y-0">
-        <DetailRow label="Employee ID" value={user.employeeId} />
-        <DetailRow label="Department" value={user.department} />
-        <DetailRow label="Designation" value={user.designation} />
-        <DetailRow label="Office Location" value={user.officeLocation} />
-        <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-          <span className="text-xs font-medium text-muted-foreground">Security Clearance</span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${clearanceColors[user.securityClearance] || 'bg-muted text-foreground/80'}`}>
-            {user.securityClearance.charAt(0).toUpperCase() + user.securityClearance.slice(1)}
-          </span>
-        </div>
-        <div className="py-2.5">
-          <span className="text-xs font-medium text-muted-foreground">Permissions</span>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {user.permissions.map((perm) => (
-              <span
-                key={perm}
-                className="text-xs px-2 py-0.5 bg-primary/10 text-indigo-700 rounded-full border border-indigo-200"
-              >
-                {perm.replace(/_/g, ' ')}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TimekeeperDetails({ user }: { user: TimekeeperUser }) {
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Clock className="h-4 w-4 text-teal-600" />
-        Timekeeper Details
-      </h3>
-      <div className="space-y-0">
-        <DetailRow label="Employee ID" value={user.employeeId} />
-        <DetailRow label="Assigned Terminal" value={user.assignedTerminal} />
-        <DetailRow label="Assigned Route" value={user.assignedRoute} />
-        <DetailRow label="Shift" value={user.shift} />
-        <DetailRow label="Supervisor" value={user.supervisor} />
-      </div>
-    </div>
-  );
-}
-
-function OperatorDetails({ user }: { user: OperatorUser }) {
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Truck className="h-4 w-4 text-warning" />
-        Operator Details
-      </h3>
-      <div className="space-y-0">
-        <DetailRow label="Company Name" value={user.companyName} />
-        <DetailRow label="Registration Number" value={user.registrationNumber} />
-        <DetailRow label="Operator License" value={user.operatorLicense} />
-        <DetailRow label="Total Buses" value={user.totalBuses} />
-        <DetailRow label="Active Buses" value={user.activeBuses} />
-        <DetailRow label="Total Routes" value={user.totalRoutes} />
-      </div>
-    </div>
-  );
-}
-
-function ConductorDetails({ user }: { user: ConductorUser }) {
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <CircleDot className="h-4 w-4 text-success" />
-        Conductor Details
-      </h3>
-      <div className="space-y-0">
-        <DetailRow label="Employee ID" value={user.employeeId} />
-        <DetailRow label="License Number" value={user.licenseNumber} />
-        <DetailRow label="Assigned Bus" value={user.assignedBus || 'Not assigned'} />
-        <DetailRow label="Assigned Route" value={user.assignedRoute || 'Not assigned'} />
-        <DetailRow label="Operator" value={user.operatorName} />
-        <DetailRow label="Total Trips" value={user.totalTrips.toLocaleString()} />
-        <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-          <span className="text-xs font-medium text-muted-foreground">Rating</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-foreground">
-            <Star className="h-3.5 w-3.5 text-warning fill-yellow-500" />
-            {user.rating > 0 ? user.rating.toFixed(1) : 'N/A'}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DriverDetails({ user }: { user: DriverUser }) {
-  const isExpired = new Date(user.drivingLicenseExpiry) < new Date();
-  const isExpiringSoon = !isExpired && (new Date(user.drivingLicenseExpiry).getTime() - new Date().getTime()) < 90 * 86400000;
-
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Car className="h-4 w-4 text-primary" />
-        Driver Details
-      </h3>
-      <div className="space-y-0">
-        <DetailRow label="Employee ID" value={user.employeeId} />
-        <DetailRow label="License Number" value={user.drivingLicenseNumber} />
-        <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-          <span className="text-xs font-medium text-muted-foreground">License Expiry</span>
-          <span className={`text-sm font-medium ${isExpired ? 'text-destructive' : isExpiringSoon ? 'text-warning' : 'text-foreground'}`}>
-            {formatDateShort(user.drivingLicenseExpiry)}
-            {isExpired && <span className="text-xs ml-1">(Expired)</span>}
-            {isExpiringSoon && <span className="text-xs ml-1">(Expiring Soon)</span>}
-          </span>
-        </div>
-        <div className="py-2.5 border-b border-border/50">
-          <span className="text-xs font-medium text-muted-foreground">Vehicle Classes</span>
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {user.vehicleClasses.map((cls) => (
-              <span key={cls} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20 font-medium">
-                Class {cls}
-              </span>
-            ))}
-          </div>
-        </div>
-        <DetailRow label="Assigned Bus" value={user.assignedBus || 'Not assigned'} />
-        <DetailRow label="Assigned Route" value={user.assignedRoute || 'Not assigned'} />
-        <DetailRow label="Operator" value={user.operatorName} />
-        <DetailRow label="Total Trips" value={user.totalTrips.toLocaleString()} />
-        <div className="flex items-center justify-between py-2.5">
-          <span className="text-xs font-medium text-muted-foreground">Rating</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-foreground">
-            <Star className="h-3.5 w-3.5 text-warning fill-yellow-500" />
-            {user.rating > 0 ? user.rating.toFixed(1) : 'N/A'}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PassengerDetails({ user }: { user: PassengerUser }) {
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Users className="h-4 w-4 text-[hsl(var(--purple-600))]" />
-        Passenger Details
-      </h3>
-      <div className="space-y-0">
-        <DetailRow label="Total Trips" value={user.totalTrips.toLocaleString()} />
-        <DetailRow label="Total Spent" value={`Rs ${user.totalSpent.toLocaleString()}`} />
-        <DetailRow label="Wallet Balance" value={`Rs ${user.walletBalance.toLocaleString()}`} />
-        <DetailRow label="Preferred Payment" value={user.preferredPayment.charAt(0).toUpperCase() + user.preferredPayment.slice(1)} />
-        {user.savedRoutes.length > 0 && (
-          <div className="py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">Saved Routes</span>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {user.savedRoutes.map((route) => (
-                <span
-                  key={route}
-                  className="text-xs px-2 py-0.5 bg-[hsl(var(--purple-50))] text-[hsl(var(--purple-700))] rounded-full border border-[hsl(var(--purple-200))]"
-                >
-                  {route}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
