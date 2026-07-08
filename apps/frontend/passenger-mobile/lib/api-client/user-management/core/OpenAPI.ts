@@ -10,7 +10,6 @@ type Headers = Record<string, string>;
 export type OpenAPIConfig = {
     BASE: string;
     VERSION: string;
-    TIMEOUT?: number;
     WITH_CREDENTIALS: boolean;
     CREDENTIALS: 'include' | 'omit' | 'same-origin';
     TOKEN?: string | Resolver<string> | undefined;
@@ -23,7 +22,6 @@ export type OpenAPIConfig = {
 export const OpenAPI: OpenAPIConfig = {
     BASE: 'http://localhost:8081',
     VERSION: '1.0.0',
-    TIMEOUT: 30000,
     WITH_CREDENTIALS: false,
     CREDENTIALS: 'include',
     TOKEN: undefined,

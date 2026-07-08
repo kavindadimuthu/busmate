@@ -30,8 +30,7 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { PassengerApIsService } from '@/lib/api-client/route-management';
-import { PassengerControllerService } from '@/lib/api-client/user-management';
-import type { 
+import type {
   PassengerRouteResponse,
   PassengerNearbyStopsResponse,
   PassengerTripResponse,

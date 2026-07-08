@@ -2,16 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type FinanceOfficerDTO = {
+export type AuthMeResponse = {
     userId?: string;
+    email?: string;
     fullName?: string;
     username?: string;
-    email?: string;
-    role?: string;
-    accountStatus?: string;
-    isVerified?: boolean;
     phoneNumber?: string;
-    emp_id?: string;
-    password?: string;
+    userType?: string;
+    accountStatus?: string;
+    isEmailVerified?: boolean;
+    effectivePermissions?: Array<string>;
 };
 

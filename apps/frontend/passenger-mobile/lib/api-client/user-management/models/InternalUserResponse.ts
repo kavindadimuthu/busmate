@@ -2,15 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PassengerDTO = {
+export type InternalUserResponse = {
     userId?: string;
-    fullName?: string;
-    username?: string;
     email?: string;
-    role?: string;
+    userType?: string;
     accountStatus?: string;
-    isVerified?: boolean;
-    password?: string;
-    notification_preferences?: string;
 };
 

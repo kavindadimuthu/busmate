@@ -2,14 +2,17 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MotDTO = {
+export type UserResponse = {
     userId?: string;
+    email?: string;
     fullName?: string;
     username?: string;
-    email?: string;
-    role?: string;
+    phoneNumber?: string;
+    userType?: string;
     accountStatus?: string;
-    isVerified?: boolean;
-    password?: string;
+    isEmailVerified?: boolean;
+    lastLoginAt?: string;
+    createdAt?: string;
+    profileData?: Record<string, any>;
 };
 

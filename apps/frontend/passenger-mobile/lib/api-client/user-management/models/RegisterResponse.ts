@@ -2,13 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type UserDTO = {
-    fullName?: string;
-    username?: string;
-    phoneNumber?: string;
+export type RegisterResponse = {
+    userId?: string;
     email?: string;
-    role?: string;
+    userType?: string;
     accountStatus?: string;
-    lastLoginAt?: string;
 };
 

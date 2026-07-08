@@ -2,10 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PassengerUpdateDTO = {
+export type CreateUserRequest = {
+    email?: string;
+    password?: string;
     fullName?: string;
-    phoneNumber?: string;
     username?: string;
-    notification_preferences?: string;
+    phoneNumber?: string;
+    userType?: string;
+    profileData?: Record<string, any>;
 };
 

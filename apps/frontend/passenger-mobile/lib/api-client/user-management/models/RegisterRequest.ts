@@ -2,14 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TimekeeperDTO = {
-    id?: string;
-    fullname?: string;
-    phonenumber?: string;
+export type RegisterRequest = {
     email?: string;
-    assign_stand?: string;
-    nic?: string;
-    province?: string;
     password?: string;
+    fullName?: string;
+    username?: string;
+    phoneNumber?: string;
 };
 

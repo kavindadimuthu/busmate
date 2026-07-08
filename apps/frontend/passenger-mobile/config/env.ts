@@ -5,6 +5,15 @@ export const ENV = {
   
   // API Base URLs
   API_ENDPOINTS: {
+    // Auth/user/profile calls go through the API gateway (not straight to
+    // user-management) so JWT verification, CORS and rate limiting are
+    // enforced centrally — see apps/backend/api-gateway. No cloud gateway
+    // deployment exists yet, so the production fallback is the same as dev
+    // until EXPO_PUBLIC_API_GATEWAY_URL is set for a real deployment.
+    API_GATEWAY:
+      process.env.EXPO_PUBLIC_API_GATEWAY_URL ||
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+      'http://localhost:8080',
     USER_SERVICE:
       process.env.EXPO_PUBLIC_USER_MANAGEMENT_API_URL ||
       process.env.NEXT_PUBLIC_USER_MANAGEMENT_API_URL ||
