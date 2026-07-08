@@ -1,7 +1,10 @@
 import { AuthProvider } from '@/contexts/AuthContext';
 import { EmployeeScheduleProvider } from '@/contexts/EmployeeScheduleContext';
 import { TicketProvider } from '@/contexts/TicketContext';
+import { initializeApiClients } from '@/lib/api-client/apiConfig';
 import { Stack } from 'expo-router';
+
+initializeApiClients();
 
 export default function RootLayout() {
   return (

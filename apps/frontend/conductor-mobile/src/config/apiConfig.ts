@@ -1,3 +1,8 @@
+// Auth/user/profile calls go through the API gateway (not straight to
+// user-management) so JWT verification, CORS and rate limiting are enforced
+// centrally. See src/lib/api-client/apiConfig.ts.
+export const API_GATEWAY_URL = process.env.EXPO_PUBLIC_API_GATEWAY_URL || 'http://localhost:8080';
+
 // Service configuration for different API endpoints
 export const API_CONFIG = {
   USER_MANAGEMENT: {

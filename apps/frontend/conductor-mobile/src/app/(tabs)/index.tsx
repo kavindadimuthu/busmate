@@ -5,7 +5,7 @@ import { useEmployeeProfile } from '@/hooks/employee/useEmployeeProfile';
 import { formatDate, formatTime, useNextTrip } from '@/hooks/employee/useNextTrip';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -92,17 +92,6 @@ export default function HomeScreen() {
     );
   };
 
-  useEffect(() => {
-    // Fetch employee details if user exists but doesn't have employee data
-    if (user?.id && !user.employeeId) {
-      fetchProfile().catch(error => {
-        console.error('Failed to fetch employee profile:', error);
-        
-        Alert.alert('Error', 'Failed to load profile data. Please try again.');
-      });
-    }
-  }, [user?.id, user?.employeeId]); 
-  
   const today = new Date().toLocaleDateString('en-LK', {
     weekday: 'long',
     month: 'long',
@@ -244,9 +233,6 @@ export default function HomeScreen() {
           <Text style={styles.nameText}>
             Conductor: {user?.fullName || user?.name || 'Loading...'}
           </Text>
-          {/* <Text style={styles.infoText}>
-            Employee ID: { user?.employeeId || user?.id || 'Loading...'}
-          </Text> */}
           <Text style={styles.infoText}>
             Date: {new Date().toLocaleDateString('en-LK', {
               month: 'long',

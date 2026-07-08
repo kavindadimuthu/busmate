@@ -1,26 +1,10 @@
 import {
   ConductorTripApiResponse,
-  EmployeeProfile,
-  ShiftStatus,
-  UpdateProfileRequest,
-  UpdateProfileResponse
+  ShiftStatus
 } from '@/types/employee';
 import { apiClient } from '../apiClient';
 
 export const employeeApi = {
-  // Fetch employee profile by userId - User Management Service
-  getProfile: async (userId: string): Promise<EmployeeProfile> => {
-    return apiClient.authenticatedRequest<EmployeeProfile>(`/conductor/profile?userId=${userId}`, {}, 'user');
-  },
-// Update employee profile - User Management Service
-  updateProfile: async (userId: string, data: UpdateProfileRequest): Promise<UpdateProfileResponse> => {
-    return apiClient.authenticatedRequest<UpdateProfileResponse>(`/conductor/update?userId=${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }, 'user');
-  },
-
-  
 // Fetch employee schedule by conductorId - Schedule Management Service
   getSchedule: async (conductorId: string): Promise<ConductorTripApiResponse[]> => {
     return apiClient.authenticatedRequest<ConductorTripApiResponse[]>(`/trips/conductor/${conductorId}`, {}, 'schedule');

@@ -1,7 +1,6 @@
 import FingerprintModal from '@/components/Login/FingerprintModel';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -28,7 +27,7 @@ export default function LoginScreen() {
   const [showFingerprint, setShowFingerprint] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login, saveUserData, isBiometricSupported, hasBiometricCredentials } = useAuth();
+  const { login, restoreSession, isBiometricSupported, hasBiometricCredentials } = useAuth();
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
@@ -82,19 +81,12 @@ export default function LoginScreen() {
     setShowFingerprint(false);
     setIsLoading(true);
     try {
-      // Try to restore user data from AsyncStorage
-      
-      const userDataStr = await AsyncStorage.getItem('user');
-      const token = await AsyncStorage.getItem('authToken');
-      if (userDataStr && token) {
-        const userData = JSON.parse(userDataStr);
-        if (userData.role === 'conductor') {
-          await saveUserData(userData, token);
-          router.replace('/(tabs)');
-          return;
-        }
+      const result = await restoreSession();
+      if (result.success) {
+        router.replace('/(tabs)');
+        return;
       }
-      Alert.alert('Biometric Login Failed', 'No valid conductor session found. Please login with email and password first.');
+      Alert.alert('Biometric Login Failed', result.error || 'No valid conductor session found. Please login with email and password first.');
     } catch (error) {
       Alert.alert('Error', 'Failed to restore authentication data');
     } finally {
