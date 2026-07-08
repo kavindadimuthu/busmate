@@ -30,14 +30,15 @@ export function createApp() {
   // Stricter rate limiting on auth paths
   app.use(['/api/auth/login', '/api/auth/register', '/api/auth/forgot-password'], authRateLimiter);
 
-  // Route registration
+  // Route registration. Proxies are mounted at the app root (not at
+  // route.pathPrefix) and rely on pathFilter internally — see serviceProxy.ts
+  // for why sub-path mounting breaks exact-match routes.
   for (const route of routes) {
-    const proxy = createProxy(route.target);
+    const proxy = createProxy(route.target, route.pathPrefix);
     if (route.requiresAuth) {
-      app.use(route.pathPrefix, authMiddleware, proxy);
-    } else {
-      app.use(route.pathPrefix, proxy);
+      app.use(route.pathPrefix, authMiddleware);
     }
+    app.use(proxy);
   }
 
   app.use(errorHandler);

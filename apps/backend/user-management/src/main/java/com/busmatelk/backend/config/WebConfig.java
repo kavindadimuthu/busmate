@@ -16,6 +16,7 @@ public class WebConfig {
                         .allowedOriginPatterns(
                                 "http://localhost:3000",
                                 "http://localhost:3001",
+                                "http://localhost:4000",
                                 "https://busmate-web-frontend.vercel.app",
                                 "https://*.vercel.app",
                                 "https://*.netlify.app",

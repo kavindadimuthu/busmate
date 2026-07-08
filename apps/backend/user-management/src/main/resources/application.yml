@@ -94,7 +94,7 @@ server:
 
 # CORS Configuration
 cors:
-  allowed-origins: http://localhost:3000,http://localhost:3001,https://busmate-web-frontend.vercel.app
+  allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:4000,https://busmate-web-frontend.vercel.app
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH
   allowed-headers: "*"
   allow-credentials: true
