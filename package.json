@@ -48,7 +48,8 @@
     "e2e:env:logs": "bash tests/e2e/scripts/e2e-env.sh logs",
     "e2e:env:check": "bash tests/e2e/scripts/check-e2e-env.sh",
     "ui:storybook": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx storybook ui",
-    "ui:storybook:build": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build-storybook ui"
+    "ui:storybook:build": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build-storybook ui",
+    "seed:operators": "bash scripts/seed-operator-conductor-profiles.sh"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.54.1",
