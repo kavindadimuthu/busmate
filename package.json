@@ -9,9 +9,9 @@
     "dev:passenger-mobile": "pnpm --filter smart-bus-sri-lanka dev",
     "dev:passenger-web": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx dev passenger-web",
     "dev:api-gateway": "pnpm --filter api-gateway dev",
-    "dev:core-service": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx serve core-service",
-    "dev:user-service": "cd apps/backend/user-service && ./mvnw spring-boot:run",
-    "dev:ticketing-service": "cd apps/backend/ticketing-service && ./mvnw spring-boot:run",
+    "dev:core-service": "dotenvx run -f .env -- sh -c \"NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx serve core-service\"",
+    "dev:user-service": "dotenvx run -f .env -- sh -c \"cd apps/backend/user-service && ./mvnw spring-boot:run\"",
+    "dev:ticketing-service": "dotenvx run -f .env -- sh -c \"cd apps/backend/ticketing-service && ./mvnw spring-boot:run\"",
     "dev:backend": "docker compose up --build",
     "build": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx run-many -t build",
     "build:management-portal": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build management-portal",
@@ -51,6 +51,7 @@
     "ui:storybook:build": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build-storybook ui"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.54.1",
     "nx": "^21.0.0",
     "shadcn": "^4.0.2"
   },
