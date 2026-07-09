@@ -31,6 +31,8 @@ export type { ImportError } from './models/ImportError';
 export type { ImportOptionsUsed } from './models/ImportOptionsUsed';
 export type { ImportSummary } from './models/ImportSummary';
 export type { ImportWarning } from './models/ImportWarning';
+export type { InternalOperatorRequest } from './models/InternalOperatorRequest';
+export type { InternalOperatorStatusRequest } from './models/InternalOperatorStatusRequest';
 export { JourneySummary } from './models/JourneySummary';
 export type { JsonNode } from './models/JsonNode';
 export type { LocalTime } from './models/LocalTime';
@@ -121,6 +123,7 @@ export { BusOperatorOperationsService } from './services/BusOperatorOperationsSe
 export { BusPermitAssignmentService } from './services/BusPermitAssignmentService';
 export { BusStopManagementService } from './services/BusStopManagementService';
 export { HealthCheckService } from './services/HealthCheckService';
+export { InternalOperatorControllerService } from './services/InternalOperatorControllerService';
 export { OperatorManagementService } from './services/OperatorManagementService';
 export { PassengerQueryService } from './services/PassengerQueryService';
 export { PermitManagementService } from './services/PermitManagementService';

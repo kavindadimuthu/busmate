@@ -9,7 +9,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +33,7 @@ import com.busmate.routeschedule.scheduling.enums.ScheduleStatusEnum;
 import com.busmate.routeschedule.scheduling.service.ScheduleService;
 import com.busmate.routeschedule.shared.dto.PaginatedResponse;
 import com.busmate.routeschedule.shared.enums.StatusEnum;
+import com.busmate.routeschedule.shared.exception.BadRequestException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -474,6 +477,118 @@ public class BusOperatorController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(trip);
+    }
+
+    @PatchMapping("/{operatorId}/trips/{tripId}/assign-bus")
+    @Operation(
+        summary = "Assign one of the operator's own buses to a trip",
+        description = "Assigns a vehicle to a trip. The bus must belong to this operator."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Bus assigned successfully"),
+        @ApiResponse(responseCode = "400", description = "Bus does not belong to this operator, or trip already has a bus"),
+        @ApiResponse(responseCode = "404", description = "Trip or bus not found")
+    })
+    public ResponseEntity<TripResponse> assignBusToTrip(
+            @Parameter(description = "Operator ID", required = true)
+            @PathVariable UUID operatorId,
+            @Parameter(description = "Trip ID", required = true)
+            @PathVariable UUID tripId,
+            @Parameter(description = "Bus ID (must belong to this operator)", required = true)
+            @RequestParam UUID busId,
+            Authentication authentication) {
+
+        BusResponse bus = busService.getBusById(busId);
+        if (!bus.getOperatorId().equals(operatorId)) {
+            throw new BadRequestException("Bus does not belong to this operator");
+        }
+
+        String userId = authentication.getName();
+        TripResponse response = tripService.assignBusToTrip(tripId, busId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{operatorId}/trips/{tripId}/remove-bus")
+    @Operation(
+        summary = "Unassign the vehicle from one of the operator's trips",
+        description = "Removes the currently assigned bus from a trip owned by this operator."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Bus removed successfully"),
+        @ApiResponse(responseCode = "404", description = "Trip not found or doesn't belong to operator")
+    })
+    public ResponseEntity<TripResponse> removeBusFromTrip(
+            @Parameter(description = "Operator ID", required = true)
+            @PathVariable UUID operatorId,
+            @Parameter(description = "Trip ID", required = true)
+            @PathVariable UUID tripId,
+            Authentication authentication) {
+
+        TripResponse trip = tripService.getTripById(tripId);
+        if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String userId = authentication.getName();
+        TripResponse response = tripService.removeBusFromTrip(tripId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{operatorId}/trips/{tripId}/assign-conductor")
+    @Operation(
+        summary = "Assign a conductor to one of the operator's trips",
+        description = "Assigns a conductor (user-service userId) to a trip owned by this operator. " +
+                     "Ownership of the conductor account is enforced by the caller (the operator dashboard " +
+                     "only offers its own conductors) - core-service has no cross-service validation for this."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Conductor assigned successfully"),
+        @ApiResponse(responseCode = "400", description = "Trip already has a conductor assigned"),
+        @ApiResponse(responseCode = "404", description = "Trip not found or doesn't belong to operator")
+    })
+    public ResponseEntity<TripResponse> assignConductorToTrip(
+            @Parameter(description = "Operator ID", required = true)
+            @PathVariable UUID operatorId,
+            @Parameter(description = "Trip ID", required = true)
+            @PathVariable UUID tripId,
+            @Parameter(description = "Conductor's user-service userId", required = true)
+            @RequestParam UUID conductorId,
+            Authentication authentication) {
+
+        TripResponse trip = tripService.getTripById(tripId);
+        if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String userId = authentication.getName();
+        TripResponse response = tripService.assignConductorToTrip(tripId, conductorId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{operatorId}/trips/{tripId}/remove-conductor")
+    @Operation(
+        summary = "Unassign the conductor from one of the operator's trips",
+        description = "Removes the currently assigned conductor from a trip owned by this operator."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Conductor removed successfully"),
+        @ApiResponse(responseCode = "404", description = "Trip not found or doesn't belong to operator")
+    })
+    public ResponseEntity<TripResponse> removeConductorFromTrip(
+            @Parameter(description = "Operator ID", required = true)
+            @PathVariable UUID operatorId,
+            @Parameter(description = "Trip ID", required = true)
+            @PathVariable UUID tripId,
+            Authentication authentication) {
+
+        TripResponse trip = tripService.getTripById(tripId);
+        if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String userId = authentication.getName();
+        TripResponse response = tripService.removeConductorFromTrip(tripId, userId);
+        return ResponseEntity.ok(response);
     }
 
     // ============================================================================

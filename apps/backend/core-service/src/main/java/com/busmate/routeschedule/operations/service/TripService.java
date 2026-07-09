@@ -58,6 +58,15 @@ public interface TripService {
     TripResponse assignPassengerServicePermitToTrip(UUID tripId, UUID passengerServicePermitId, String userId);
     List<TripResponse> bulkAssignPassengerServicePermitToTrips(List<UUID> tripIds, UUID passengerServicePermitId, String userId);
     TripResponse removePassengerServicePermitFromTrip(UUID tripId, String userId);
+
+    // Bus (vehicle) assignment methods
+    TripResponse assignBusToTrip(UUID tripId, UUID busId, String userId);
+    TripResponse removeBusFromTrip(UUID tripId, String userId);
+
+    // Conductor assignment methods (no Driver/Conductor domain entity exists yet - conductorId
+    // is a bare user-service userId, validated for identity only, not ownership)
+    TripResponse assignConductorToTrip(UUID tripId, UUID conductorId, String userId);
+    TripResponse removeConductorFromTrip(UUID tripId, String userId);
     
     // Bulk PSP Assignment (many-to-many)
     BulkPspAssignmentResponse bulkAssignPspsToTrips(BulkPspAssignmentRequest request, String userId);

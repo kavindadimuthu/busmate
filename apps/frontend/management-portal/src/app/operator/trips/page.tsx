@@ -1,87 +1,63 @@
 'use client';
 
 import { RefreshCw } from 'lucide-react';
+import { Button } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import {
-  OperatorTripStatsCards,
-  OperatorTripsFilters,
-  OperatorTripsTable,
-} from '@/components/operator/trips';
-import { useOperatorTripsListing } from '@/hooks/operator/trips/useOperatorTripsListing';
+import { TripStatsCards, TripFilterBar, TripTable } from '@/components/operator/trips';
+import { useTripsManagement } from '@/hooks/operator/trips/useTripsManagement';
 
 export default function OperatorTripsPage() {
   useSetPageMetadata({
     title: 'My Trips',
-    description: 'View and monitor all trips operated by your fleet',
+    description: 'View and manage all trips operated by your fleet',
     activeItem: 'trips',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Trips' }],
   });
 
   const {
-    trips, stats, filterOptions, isLoading, statsLoading, pagination,
-    searchTerm, setSearchTerm, statusFilter, setStatusFilter, routeFilter, setRouteFilter,
-    scheduleFilter, setScheduleFilter, busFilter, setBusFilter,
-    permitFilter, setPermitFilter, fromDate, setFromDate, toDate, setToDate,
-    queryParams, handleSearch, handleSort, handlePageChange,
-    handlePageSizeChange, handleView, handleClearAllFilters, handleRefresh,
-  } = useOperatorTripsListing();
-
-  const handleSortColumn = (column: string) => {
-    const newDir = queryParams.sortBy === column && queryParams.sortDir === 'asc' ? 'desc' : 'asc';
-    handleSort(column, newDir);
-  };
+    state, trips, totalItems, stats, isLoading, statsLoading, error,
+    activeFilterCount, setPage, setPageSize, setSort, setSearch, setFilters,
+    clearFilters, handleRefresh, handleView, loadTrips,
+  } = useTripsManagement();
 
   useSetPageActions(
-    <button onClick={handleRefresh} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors">
-      <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+    <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+      <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
       Refresh
-    </button>,
+    </Button>,
   );
 
   return (
     <div className="space-y-6">
-      <OperatorTripStatsCards stats={stats} loading={statsLoading} />
+      <TripStatsCards stats={stats} loading={statsLoading} />
 
-      <OperatorTripsFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        routeFilter={routeFilter}
-        setRouteFilter={setRouteFilter}
-        scheduleFilter={scheduleFilter}
-        setScheduleFilter={setScheduleFilter}
-        busFilter={busFilter}
-        setBusFilter={setBusFilter}
-        permitFilter={permitFilter}
-        setPermitFilter={setPermitFilter}
-        fromDate={fromDate}
-        setFromDate={setFromDate}
-        toDate={toDate}
-        setToDate={setToDate}
-        filterOptions={filterOptions}
-        loading={false}
-        totalCount={pagination.totalElements}
-        filteredCount={pagination.totalElements}
-        onClearAll={handleClearAllFilters}
-        onSearch={handleSearch}
+      <TripFilterBar
+        searchValue={state.searchQuery}
+        onSearchChange={setSearch}
+        filters={state.filters}
+        onFiltersChange={setFilters}
+        onClearAll={clearFilters}
+        activeFilterCount={activeFilterCount}
       />
 
-      <OperatorTripsTable
-          trips={trips}
-          onView={handleView}
-          onSort={handleSortColumn}
-          loading={isLoading}
-          sortColumn={queryParams.sortBy}
-          sortDirection={queryParams.sortDir}
-          totalItems={pagination.totalElements}
-          page={pagination.currentPage + 1}
-          pageSize={pagination.pageSize}
-          onPageChange={(p) => handlePageChange(p - 1)}
-          onPageSizeChange={handlePageSizeChange}
-        />
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-start gap-3 text-sm text-destructive">
+          <div className="flex-1">
+            <span className="font-semibold">Error: </span>{error}
+          </div>
+          <button onClick={loadTrips} className="shrink-0 underline hover:no-underline text-xs font-medium">
+            Retry
+          </button>
+        </div>
+      )}
+
+      <TripTable
+        data={trips} totalItems={totalItems} page={state.page} pageSize={state.pageSize}
+        onPageChange={setPage} onPageSizeChange={setPageSize}
+        sortColumn={state.sortColumn} sortDirection={state.sortDirection}
+        onSort={setSort} loading={isLoading} onView={handleView}
+      />
     </div>
   );
 }
-

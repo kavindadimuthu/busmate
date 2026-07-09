@@ -2,9 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type Sortnull = {
-    sorted?: boolean;
-    unsorted?: boolean;
-    empty?: boolean;
+export type InternalOperatorStatusRequest = {
+    status: string;
 };
 

@@ -146,8 +146,24 @@ public class TripServiceImpl implements TripService {
             Boolean hasConductor) {
         
         return (root, query, criteriaBuilder) -> {
+            query.distinct(true);
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
-            
+
+            // Explicit LEFT JOINs for the optional associations (passengerServicePermit, bus).
+            // Using root.get("bus").get("operator") directly creates an implicit INNER join in
+            // JPA Criteria, which silently drops every trip that doesn't have a bus assigned yet
+            // (the normal state right after generation) from every filtered/paginated query -
+            // regardless of which predicate branch actually needed it. Joining once, explicitly,
+            // as LEFT and reusing the same Join reference across all predicates avoids that.
+            jakarta.persistence.criteria.Join<Trip, PassengerServicePermit> pspJoin =
+                    root.join("passengerServicePermit", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<PassengerServicePermit, Operator> pspOperatorJoin =
+                    pspJoin.join("operator", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<Trip, Bus> busJoin =
+                    root.join("bus", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<Bus, Operator> busOperatorJoin =
+                    busJoin.join("operator", jakarta.persistence.criteria.JoinType.LEFT);
+
             // Search filter (across multiple fields)
             if (search != null && !search.trim().isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase().trim() + "%";
@@ -156,50 +172,50 @@ public class TripServiceImpl implements TripService {
                         criteriaBuilder.like(criteriaBuilder.lower(root.get("schedule").get("route").get("name")), searchPattern),
                         criteriaBuilder.like(criteriaBuilder.lower(root.get("schedule").get("route").get("description")), searchPattern),
                         // Operator search through PSP
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("passengerServicePermit").get("operator").get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(pspOperatorJoin.get("name")), searchPattern),
                         // Operator search through Bus
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("bus").get("operator").get("name")), searchPattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("passengerServicePermit").get("permitNumber")), searchPattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("bus").get("plateNumber")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(busOperatorJoin.get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(pspJoin.get("permitNumber")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(busJoin.get("plateNumber")), searchPattern),
                         criteriaBuilder.like(criteriaBuilder.lower(root.get("notes")), searchPattern)
                 );
                 predicates.add(searchPredicate);
             }
-            
+
             // Status filter
             if (status != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), status));
             }
-            
+
             // Route filter
             if (routeId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("schedule").get("route").get("id"), routeId));
             }
-            
+
             // Operator filter
             if (operatorId != null) {
                 jakarta.persistence.criteria.Predicate operatorPredicate = criteriaBuilder.or(
-                        criteriaBuilder.equal(root.get("passengerServicePermit").get("operator").get("id"), operatorId),
-                        criteriaBuilder.equal(root.get("bus").get("operator").get("id"), operatorId)
+                        criteriaBuilder.equal(pspOperatorJoin.get("id"), operatorId),
+                        criteriaBuilder.equal(busOperatorJoin.get("id"), operatorId)
                 );
                 predicates.add(operatorPredicate);
             }
-            
+
             // Schedule filter
             if (scheduleId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("schedule").get("id"), scheduleId));
             }
-            
+
             // PSP filter
             if (passengerServicePermitId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("passengerServicePermit").get("id"), passengerServicePermitId));
+                predicates.add(criteriaBuilder.equal(pspJoin.get("id"), passengerServicePermitId));
             }
-            
+
             // Bus filter
             if (busId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("bus").get("id"), busId));
+                predicates.add(criteriaBuilder.equal(busJoin.get("id"), busId));
             }
-            
+
             // Date range filters
             if (fromDate != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("tripDate"), fromDate));
@@ -207,7 +223,7 @@ public class TripServiceImpl implements TripService {
             if (toDate != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("tripDate"), toDate));
             }
-            
+
             // Assignment filters
             if (hasPsp != null) {
                 if (hasPsp) {
@@ -216,7 +232,7 @@ public class TripServiceImpl implements TripService {
                     predicates.add(criteriaBuilder.isNull(root.get("passengerServicePermit")));
                 }
             }
-            
+
             if (hasBus != null) {
                 if (hasBus) {
                     predicates.add(criteriaBuilder.isNotNull(root.get("bus")));
@@ -224,7 +240,7 @@ public class TripServiceImpl implements TripService {
                     predicates.add(criteriaBuilder.isNull(root.get("bus")));
                 }
             }
-            
+
             if (hasDriver != null) {
                 if (hasDriver) {
                     predicates.add(criteriaBuilder.isNotNull(root.get("driverId")));
@@ -232,7 +248,7 @@ public class TripServiceImpl implements TripService {
                     predicates.add(criteriaBuilder.isNull(root.get("driverId")));
                 }
             }
-            
+
             if (hasConductor != null) {
                 if (hasConductor) {
                     predicates.add(criteriaBuilder.isNotNull(root.get("conductorId")));
@@ -240,7 +256,7 @@ public class TripServiceImpl implements TripService {
                     predicates.add(criteriaBuilder.isNull(root.get("conductorId")));
                 }
             }
-            
+
             return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
     }
@@ -616,6 +632,104 @@ public class TripServiceImpl implements TripService {
         return mapToResponse(savedTrip);
     }
 
+    @Override
+    public TripResponse assignBusToTrip(UUID tripId, UUID busId, String userId) {
+        log.info("Assigning bus {} to trip {} by user: {}", busId, tripId, userId);
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+
+        Bus bus = validateAndGetBus(busId);
+
+        if (trip.getBus() != null) {
+            throw new BadRequestException("Trip already has a bus assigned");
+        }
+
+        if (bus.getStatus() != StatusEnum.active) {
+            throw new BadRequestException("Bus must be active to assign to trip");
+        }
+
+        // Invariant: a bus can only be assigned to a trip whose permit (if already assigned)
+        // belongs to the same operator that owns the bus.
+        if (trip.getPassengerServicePermit() != null
+                && trip.getPassengerServicePermit().getOperator() != null
+                && bus.getOperator() != null
+                && !trip.getPassengerServicePermit().getOperator().getId().equals(bus.getOperator().getId())) {
+            throw new BadRequestException("Bus operator does not match the trip's permit operator");
+        }
+
+        trip.setBus(bus);
+        trip.setUpdatedBy(userId);
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("Successfully assigned bus {} to trip {}", busId, tripId);
+
+        return mapToResponse(savedTrip);
+    }
+
+    @Override
+    public TripResponse removeBusFromTrip(UUID tripId, String userId) {
+        log.info("Removing bus from trip {} by user: {}", tripId, userId);
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+
+        if (trip.getBus() == null) {
+            throw new BadRequestException("Trip does not have a bus assigned");
+        }
+
+        trip.setBus(null);
+        trip.setUpdatedBy(userId);
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("Successfully removed bus from trip {}", tripId);
+
+        return mapToResponse(savedTrip);
+    }
+
+    @Override
+    public TripResponse assignConductorToTrip(UUID tripId, UUID conductorId, String userId) {
+        log.info("Assigning conductor {} to trip {} by user: {}", conductorId, tripId, userId);
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+
+        if (trip.getConductorId() != null) {
+            throw new BadRequestException("Trip already has a conductor assigned");
+        }
+
+        // No Driver/Conductor domain entity exists in core-service (conductors live in
+        // user-service). Ownership scoping is enforced by the caller (operator-scoped
+        // controller); this layer only records the identifier.
+        trip.setConductorId(conductorId);
+        trip.setUpdatedBy(userId);
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("Successfully assigned conductor {} to trip {}", conductorId, tripId);
+
+        return mapToResponse(savedTrip);
+    }
+
+    @Override
+    public TripResponse removeConductorFromTrip(UUID tripId, String userId) {
+        log.info("Removing conductor from trip {} by user: {}", tripId, userId);
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
+
+        if (trip.getConductorId() == null) {
+            throw new BadRequestException("Trip does not have a conductor assigned");
+        }
+
+        trip.setConductorId(null);
+        trip.setUpdatedBy(userId);
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("Successfully removed conductor from trip {}", tripId);
+
+        return mapToResponse(savedTrip);
+    }
+
     private void validateTripRequest(TripRequest request) {
         if (request.getScheduledDepartureTime().isAfter(request.getScheduledArrivalTime())) {
             throw new ConflictException("Scheduled departure time cannot be after arrival time");
@@ -724,8 +838,15 @@ public class TripServiceImpl implements TripService {
             response.setBusId(trip.getBus().getId());
             response.setBusPlateNumber(trip.getBus().getPlateNumber());
             response.setBusModel(trip.getBus().getModel());
+
+            // Fall back to the bus's operator when no PSP is assigned yet, so operator-scoped
+            // access (BusOperatorController) still resolves correctly before PSP assignment.
+            if (response.getOperatorId() == null && trip.getBus().getOperator() != null) {
+                response.setOperatorId(trip.getBus().getOperator().getId());
+                response.setOperatorName(trip.getBus().getOperator().getName());
+            }
         }
-        
+
         return response;
     }
 

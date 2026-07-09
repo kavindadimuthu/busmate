@@ -7,6 +7,7 @@ import type { PageRouteResponse } from '../models/PageRouteResponse';
 import type { RouteFilterOptionsResponse } from '../models/RouteFilterOptionsResponse';
 import type { RouteGroupRequest } from '../models/RouteGroupRequest';
 import type { RouteGroupResponse } from '../models/RouteGroupResponse';
+import type { RouteRequest } from '../models/RouteRequest';
 import type { RouteResponse } from '../models/RouteResponse';
 import type { RouteStatisticsResponse } from '../models/RouteStatisticsResponse';
 import type { RouteUnifiedImportResponse } from '../models/RouteUnifiedImportResponse';
@@ -65,6 +66,30 @@ export class RouteManagementService {
             },
             errors: {
                 400: `Invalid pagination, sorting, or filtering parameters`,
+            },
+        });
+    }
+    /**
+     * Create an individual route
+     * Creates a standalone route linked to an existing route group. The routeGroupId in the request body determines the parent group. Requires authentication.
+     * @param requestBody
+     * @returns RouteResponse Route created successfully
+     * @throws ApiError
+     */
+    public static createRoute(
+        requestBody: RouteRequest,
+    ): CancelablePromise<RouteResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/routes',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Invalid input data`,
+                401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
+                404: `Route group or stop not found`,
+                409: `Route with same name already exists in the route group`,
             },
         });
     }
@@ -225,6 +250,7 @@ export class RouteManagementService {
             errors: {
                 400: `Invalid input data`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 409: `Route group already exists`,
             },
         });
@@ -286,6 +312,7 @@ export class RouteManagementService {
             errors: {
                 400: `Invalid input data`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 404: `Route group not found`,
                 409: `Route group name already exists`,
             },
@@ -310,6 +337,7 @@ export class RouteManagementService {
             errors: {
                 400: `Invalid UUID format`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 404: `Route group not found`,
             },
         });
@@ -363,6 +391,7 @@ export class RouteManagementService {
             errors: {
                 400: `Invalid file format or content`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
             },
         });
     }
@@ -408,6 +437,59 @@ export class RouteManagementService {
             },
             errors: {
                 400: `Invalid UUID format`,
+                404: `Route not found`,
+            },
+        });
+    }
+    /**
+     * Update an individual route
+     * Updates an existing route by its ID. All fields are replaced from the request body. Requires authentication.
+     * @param id Route ID
+     * @param requestBody
+     * @returns RouteResponse Route updated successfully
+     * @throws ApiError
+     */
+    public static updateRoute(
+        id: string,
+        requestBody: RouteRequest,
+    ): CancelablePromise<RouteResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/routes/{id}',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Invalid input data`,
+                401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
+                404: `Route, route group, or stop not found`,
+                409: `Route name conflict within route group`,
+            },
+        });
+    }
+    /**
+     * Delete an individual route
+     * Permanently deletes a route and its associated route stops. This action cannot be undone. Requires authentication.
+     * @param id Route ID
+     * @returns void
+     * @throws ApiError
+     */
+    public static deleteRoute(
+        id: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/routes/{id}',
+            path: {
+                'id': id,
+            },
+            errors: {
+                400: `Invalid UUID format`,
+                401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 404: `Route not found`,
             },
         });

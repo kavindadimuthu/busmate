@@ -2,16 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type OperatorResponse = {
-    id?: string;
-    name?: string;
+export type InternalOperatorRequest = {
+    userId: string;
+    name: string;
     operatorType?: string;
     region?: string;
     status?: string;
-    userId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    createdBy?: string;
-    updatedBy?: string;
 };
 

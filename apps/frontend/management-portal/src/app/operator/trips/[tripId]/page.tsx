@@ -2,7 +2,7 @@
 
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useSetPageMetadata } from '@/context/PageContext';
-import { TripOverviewCard, TripTabsSection } from '@/components/operator/trips/trip-details';
+import { TripSummary, TripAssignmentPanel } from '@/components/operator/trips';
 import { useTripDetail } from '@/hooks/operator/trips/useTripDetail';
 
 export default function OperatorTripDetailPage() {
@@ -18,7 +18,11 @@ export default function OperatorTripDetailPage() {
     padding: 0,
   });
 
-  const { trip, isLoading, error, handleBack } = useTripDetail();
+  const {
+    trip, isLoading, error, handleBack,
+    myBuses, myConductors, actionLoading,
+    assignBus, removeBus, assignConductor, removeConductor,
+  } = useTripDetail();
 
   if (isLoading) {
     return (
@@ -62,20 +66,23 @@ export default function OperatorTripDetailPage() {
 
   return (
     <main className="flex-1 p-6 space-y-6">
-      <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-sm text-primary">
-        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>This is a read-only view. Trip details are managed by your Motor Traffic authority.</span>
-      </div>
-      <TripOverviewCard trip={trip} />
-      <TripTabsSection
+      <button
+        onClick={handleBack}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Trips
+      </button>
+      <TripSummary trip={trip} />
+      <TripAssignmentPanel
         trip={trip}
-        route={trip.route ?? null}
-        schedule={trip.schedule ?? null}
-        bus={trip.bus ?? null}
-        staff={trip.staff ?? null}
-        permit={trip.permit ?? null}
+        myBuses={myBuses}
+        myConductors={myConductors}
+        actionLoading={actionLoading}
+        onAssignBus={assignBus}
+        onRemoveBus={removeBus}
+        onAssignConductor={assignConductor}
+        onRemoveConductor={removeConductor}
       />
     </main>
   );

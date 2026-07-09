@@ -86,6 +86,28 @@ export class OperatorManagementService {
         });
     }
     /**
+     * Get operator by linked user-service account id
+     * Retrieve the Operator business record linked to a given user-service account (see the unified operator lifecycle plan). Used by the operator dashboard to resolve 'my own operator record' from the logged-in user's id. Public GET like the rest of this controller — the userId itself isn't sensitive and this returns the same fields getOperatorById does.
+     * @param userId Linked user-service account id
+     * @returns OperatorResponse Operator found and retrieved successfully
+     * @throws ApiError
+     */
+    public static getOperatorByUserId(
+        userId: string,
+    ): CancelablePromise<OperatorResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/operators/by-user/{userId}',
+            path: {
+                'userId': userId,
+            },
+            errors: {
+                400: `Invalid UUID format`,
+                404: `No operator linked to this user id`,
+            },
+        });
+    }
+    /**
      * Get available filter options
      * Retrieve all available filter options for operator management frontend including operator types, regions, statuses, and sort options.
      * @returns OperatorFilterOptionsResponse Filter options retrieved successfully
