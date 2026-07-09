@@ -5,9 +5,9 @@ import {
 import { apiClient } from '../apiClient';
 
 export const employeeApi = {
-// Fetch employee schedule by conductorId - Schedule Management Service
+// Fetch trips assigned to this conductor - self-scoped conductor endpoint (core-service)
   getSchedule: async (conductorId: string): Promise<ConductorTripApiResponse[]> => {
-    return apiClient.authenticatedRequest<ConductorTripApiResponse[]>(`/trips/conductor/${conductorId}`, {}, 'schedule');
+    return apiClient.authenticatedRequest<ConductorTripApiResponse[]>(`/v1/conductor/${conductorId}/trips`, {}, 'schedule');
   },
 // Fetch shift status for a conductor - Schedule Management Service
   getShiftStatus: async (conductorId: string): Promise<ShiftStatus> => {
@@ -28,16 +28,16 @@ export const employeeApi = {
     }, 'schedule');
   },
 
-  // Start trip - Schedule Management Service
-  startTrip: async (tripId: string): Promise<ConductorTripApiResponse> => {
-    return apiClient.authenticatedRequest<ConductorTripApiResponse>(`/trips/${tripId}/start`, {
+  // Start trip - self-scoped conductor endpoint (verifies the trip is actually assigned to this conductor)
+  startTrip: async (conductorId: string, tripId: string): Promise<ConductorTripApiResponse> => {
+    return apiClient.authenticatedRequest<ConductorTripApiResponse>(`/v1/conductor/${conductorId}/trips/${tripId}/start`, {
       method: 'PATCH',
     }, 'schedule');
   },
 
-  // End trip - Schedule Management Service
-  endTrip: async (tripId: string): Promise<ConductorTripApiResponse> => {
-    return apiClient.authenticatedRequest<ConductorTripApiResponse>(`/trips/${tripId}/complete`, {
+  // End (complete) trip - self-scoped conductor endpoint
+  endTrip: async (conductorId: string, tripId: string): Promise<ConductorTripApiResponse> => {
+    return apiClient.authenticatedRequest<ConductorTripApiResponse>(`/v1/conductor/${conductorId}/trips/${tripId}/complete`, {
       method: 'PATCH',
     }, 'schedule');
   },

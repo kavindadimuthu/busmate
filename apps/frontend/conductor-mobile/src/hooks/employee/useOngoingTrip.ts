@@ -1,5 +1,6 @@
 import { isStartable, useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
 import { useTicket } from '@/contexts/TicketContext';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { employeeApi } from '@/services/api/employee';
 import { EmployeeSchedule } from '@/types/employee';
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { useState } from 'react';
 export function useOngoingTrip() {
   const { schedules, refreshSchedules, updateTripStatus } = useEmployeeScheduleContext();
   const { clearRouteStopsCache } = useTicket();
+  const { user } = useAuth();
   const [startingTrip, setStartingTrip] = useState(false);
   const [endingTrip, setEndingTrip] = useState(false);
 
@@ -49,11 +51,12 @@ export function useOngoingTrip() {
 
   // Start a trip
   const startTrip = async (tripId: string): Promise<boolean> => {
+    if (!user?.id) return false;
     try {
       setStartingTrip(true);
-      
+
       // Make the API call to start the trip first
-      await employeeApi.startTrip(tripId);
+      await employeeApi.startTrip(String(user.id), tripId);
       
       // Then update the trip status in context for UI feedback
       updateTripStatus(tripId, 'ongoing');
@@ -72,11 +75,12 @@ export function useOngoingTrip() {
 
   // End a trip
   const endTrip = async (tripId: string): Promise<boolean> => {
+    if (!user?.id) return false;
     try {
       setEndingTrip(true);
-      
+
       // Make the API call to end the trip first
-      await employeeApi.endTrip(tripId);
+      await employeeApi.endTrip(String(user.id), tripId);
       
       // Then update the trip status in context for UI feedback
       updateTripStatus(tripId, 'completed');

@@ -127,7 +127,7 @@ export default function HomeScreen() {
   
   const quickActions = [
     {
-      label: 'View Schedules',
+      label: 'View Journeys',
       icon: 'calendar',
       onPress: () => router.push('/Journey/schedules'),
     },

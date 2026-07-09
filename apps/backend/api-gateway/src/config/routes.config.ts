@@ -31,6 +31,7 @@ export const routes: RouteConfig[] = [
   { pathPrefix: '/api/schedules', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/buses', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/v1/bus-operator', target: 'CORE_SERVICE', requiresAuth: true },
+  { pathPrefix: '/api/v1/conductor', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/stops', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/routes', target: 'CORE_SERVICE', requiresAuth: true },
   // Ticketing
