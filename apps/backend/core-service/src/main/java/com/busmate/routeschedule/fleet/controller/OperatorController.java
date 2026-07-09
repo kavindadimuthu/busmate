@@ -188,6 +188,25 @@ public class OperatorController {
         return ResponseEntity.ok(response);
     }
 
+    // 4b. READ BY LINKED USER - self-lookup for the operator dashboard (unified lifecycle link)
+    @GetMapping("/by-user/{userId}")
+    @Operation(
+        summary = "Get operator by linked user-service account id",
+        description = "Retrieve the Operator business record linked to a given user-service account (see the unified operator lifecycle plan). Used by the operator dashboard to resolve 'my own operator record' from the logged-in user's id. Public GET like the rest of this controller — the userId itself isn't sensitive and this returns the same fields getOperatorById does.",
+        operationId = "getOperatorByUserId"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Operator found and retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "No operator linked to this user id"),
+        @ApiResponse(responseCode = "400", description = "Invalid UUID format")
+    })
+    public ResponseEntity<OperatorResponse> getOperatorByUserId(
+            @Parameter(description = "Linked user-service account id", example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID userId) {
+        OperatorResponse response = operatorService.getOperatorByUserId(userId);
+        return ResponseEntity.ok(response);
+    }
+
     // 5. UPDATE - Modification operation
     @PutMapping("/{id}")
     @Operation(

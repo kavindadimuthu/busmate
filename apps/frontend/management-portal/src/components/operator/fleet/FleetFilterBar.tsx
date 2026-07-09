@@ -2,14 +2,9 @@
 
 import * as React from "react";
 import { FilterBar, FilterSelect } from "@busmate/ui";
-import type { BusStatus, BusServiceType } from "@/data/operator/buses";
+import type { FleetFilters, BusStatus } from "@/hooks/operator/fleet/useFleetManagement";
 
 // ── Types ─────────────────────────────────────────────────────────
-
-export interface FleetFilters {
-  status: BusStatus | "__all__";
-  serviceType: BusServiceType | "__all__";
-}
 
 interface FleetFilterBarProps {
   searchValue: string;
@@ -21,29 +16,20 @@ interface FleetFilterBarProps {
 }
 
 // ── Filter options ────────────────────────────────────────────────
+// Matches core-service's real Bus.status check constraint exactly (pending/active/inactive/cancelled).
 
 const STATUS_OPTIONS: { value: BusStatus; label: string }[] = [
-  { value: "ACTIVE",      label: "Active"      },
-  { value: "INACTIVE",    label: "Inactive"    },
-  { value: "MAINTENANCE", label: "Maintenance" },
-  { value: "RETIRED",     label: "Retired"     },
-];
-
-const SERVICE_TYPE_OPTIONS: { value: BusServiceType; label: string }[] = [
-  { value: "SL",          label: "SL (Normal)" },
-  { value: "SL_AC",       label: "SL A/C"      },
-  { value: "SEMI_LUXURY", label: "Semi-Luxury" },
-  { value: "LUXURY",      label: "Luxury"      },
-  { value: "EXPRESS",     label: "Express"     },
+  { value: "active",   label: "Active"   },
+  { value: "inactive", label: "Inactive" },
+  { value: "pending",  label: "Pending"  },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 // ── Component ─────────────────────────────────────────────────────
 
 /**
- * Fleet search & filter bar.
- *
- * Composes the shared `FilterBar` pattern with bus-specific filters:
- * status and service type dropdowns.
+ * Fleet search & filter bar — status only (no service-type filter, since core-service's
+ * Bus entity has no such field).
  */
 export function FleetFilterBar({
   searchValue,
@@ -57,7 +43,7 @@ export function FleetFilterBar({
     <FilterBar
       searchValue={searchValue}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Search by plate number, model, driver, route…"
+      searchPlaceholder="Search by plate number or NTC registration number…"
       activeFilterCount={activeFilterCount}
       onClearAll={activeFilterCount > 0 ? onClearAll : undefined}
     >
@@ -70,16 +56,6 @@ export function FleetFilterBar({
         options={STATUS_OPTIONS}
         placeholder="All Statuses"
         className="w-40"
-      />
-      <FilterSelect
-        label="Service Type"
-        value={filters.serviceType === "__all__" ? "__all__" : filters.serviceType}
-        onChange={(value) =>
-          onFiltersChange({ serviceType: value as BusServiceType | "__all__" })
-        }
-        options={SERVICE_TYPE_OPTIONS}
-        placeholder="All Types"
-        className="w-44"
       />
     </FilterBar>
   );

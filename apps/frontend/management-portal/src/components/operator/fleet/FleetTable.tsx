@@ -4,14 +4,14 @@ import * as React from "react";
 import { Eye, Bus } from "lucide-react";
 import { DataTable, Button } from "@busmate/ui";
 import type { DataTableProps } from "@busmate/ui";
-import type { OperatorBus } from "@/data/operator/buses";
+import type { BusResponse } from "@busmate/api-client-route";
 import { fleetColumns } from "./FleetColumns";
 
 // ── Types ─────────────────────────────────────────────────────────
 
 interface FleetTableProps
   extends Pick<
-    DataTableProps<OperatorBus>,
+    DataTableProps<BusResponse>,
     | "page"
     | "pageSize"
     | "onPageChange"
@@ -21,9 +21,9 @@ interface FleetTableProps
     | "onSort"
     | "loading"
   > {
-  data: OperatorBus[];
+  data: BusResponse[];
   totalItems: number;
-  onView: (bus: OperatorBus) => void;
+  onView: (bus: BusResponse) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ export function FleetTable({
   onView,
 }: FleetTableProps) {
   const rowActions = React.useCallback(
-    (bus: OperatorBus) => (
+    (bus: BusResponse) => (
       <div className="flex items-center justify-end">
         <Button
           variant="ghost"
@@ -75,7 +75,7 @@ export function FleetTable({
   );
 
   return (
-    <DataTable<OperatorBus>
+    <DataTable<BusResponse>
       columns={fleetColumns}
       data={data}
       totalItems={totalItems}
@@ -87,7 +87,7 @@ export function FleetTable({
       sortDirection={sortDirection}
       onSort={onSort}
       loading={loading}
-      getRowId={(bus) => bus.id}
+      getRowId={(bus) => bus.id!}
       rowActions={rowActions}
       emptyState={emptyState}
     />

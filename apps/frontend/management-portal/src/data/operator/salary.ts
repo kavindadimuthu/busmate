@@ -1,14 +1,30 @@
 /**
  * @module data/operator/salary
  *
- * Mock salary data for the operator portal salary management.
- *
- * Links with existing staff data from `@/data/operator/staff` and provides
- * salary computation, payment tracking, and reporting functions.
+ * Mock salary data for the operator portal salary management. Still fully mock — out of
+ * scope for the real Fleet/Crew work (see docs/plans and the Crew Management build) — this
+ * file used to source its staff roster from the now-removed `@/data/operator/staff` mock
+ * (replaced by real conductor data in `@/hooks/operator/crew`), so it carries its own tiny
+ * inline roster instead to keep salary generation self-contained.
  * Replace with real API integrations when backend is available.
  */
 
-import { getAllStaff, type StaffMember } from './staff';
+interface SalaryMockStaffMember {
+  id: string;
+  fullName: string;
+  role: 'DRIVER' | 'CONDUCTOR';
+}
+
+const MOCK_SALARY_STAFF: SalaryMockStaffMember[] = [
+  { id: 'stf-001', fullName: 'Saman Kumara', role: 'CONDUCTOR' },
+  { id: 'stf-002', fullName: 'Nirosha Fernando', role: 'CONDUCTOR' },
+  { id: 'stf-003', fullName: 'Kasun Perera', role: 'DRIVER' },
+  { id: 'stf-004', fullName: 'Ruwan Silva', role: 'DRIVER' },
+];
+
+async function getAllStaff(): Promise<SalaryMockStaffMember[]> {
+  return MOCK_SALARY_STAFF;
+}
 
 // ── Types ─────────────────────────────────────────────────────────
 

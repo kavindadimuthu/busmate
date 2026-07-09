@@ -48,9 +48,9 @@ export function OperatorDashboardStaffStatus({ staffStatus, loading = false }: O
     <div className="bg-card rounded-xl border border-border p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-foreground">Staff Status</h3>
+        <h3 className="text-sm font-semibold text-foreground">Crew Status</h3>
         <Link
-          href="/operator/staff"
+          href="/operator/crew"
           className="text-xs text-primary hover:text-primary flex items-center gap-1"
         >
           Manage

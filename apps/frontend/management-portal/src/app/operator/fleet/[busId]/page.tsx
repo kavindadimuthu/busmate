@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { BusDetailsTabs } from '@/components/operator/fleet';
+import { BusSummaryCard } from '@/components/operator/fleet';
 import { useBusDetail } from '@/hooks/operator/fleet/useBusDetail';
 
 export default function OperatorBusDetailsPage() {
@@ -72,7 +72,7 @@ export default function OperatorBusDetailsPage() {
       <div className="bg-warning/10 border border-warning/20 rounded-lg px-4 py-2.5 text-sm text-warning">
         <strong>Read-only view.</strong> Bus registration details are managed by the National Transport Commission (NTC).
       </div>
-      <BusDetailsTabs bus={bus} onRefresh={handleRefresh} />
+      <BusSummaryCard bus={bus} />
     </div>
   );
 }

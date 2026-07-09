@@ -1,7 +1,7 @@
 import * as React from "react";
-import { Bus, CheckCircle, XCircle, Wrench, Gauge, Users } from "lucide-react";
+import { Bus, CheckCircle, XCircle, Clock, Gauge, Users } from "lucide-react";
 import { StatsCard, StatsCardGrid } from "@busmate/ui";
-import type { FleetStatistics } from "@/data/operator/buses";
+import type { FleetStatistics } from "@/hooks/operator/fleet/useFleetManagement";
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -13,16 +13,15 @@ interface FleetStatsCardsProps {
 // ── Component ─────────────────────────────────────────────────────
 
 /**
- * Fleet KPI stats cards.
- *
- * Composes `StatsCardGrid` + `StatsCard` from `@busmate/ui` with
- * fleet-specific metrics.
+ * Fleet KPI stats cards — computed from the operator's real buses
+ * (see useFleetManagement.loadStatistics; core-service has no dedicated
+ * operator-scoped stats endpoint yet).
  */
 export function FleetStatsCards({ stats, loading = false }: FleetStatsCardsProps) {
   if (loading) {
     return (
-      <StatsCardGrid className="lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <StatsCardGrid className="lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
             className="h-28 rounded-xl border bg-card animate-pulse"
@@ -33,7 +32,7 @@ export function FleetStatsCards({ stats, loading = false }: FleetStatsCardsProps
   }
 
   return (
-    <StatsCardGrid className="lg:grid-cols-6">
+    <StatsCardGrid className="lg:grid-cols-5">
       <StatsCard
         title="Total Buses"
         value={stats.totalBuses.toLocaleString()}
@@ -50,19 +49,14 @@ export function FleetStatsCards({ stats, loading = false }: FleetStatsCardsProps
         icon={<XCircle className="h-5 w-5" />}
       />
       <StatsCard
-        title="Maintenance"
-        value={stats.maintenanceBuses.toLocaleString()}
-        icon={<Wrench className="h-5 w-5" />}
+        title="Pending"
+        value={stats.pendingBuses.toLocaleString()}
+        icon={<Clock className="h-5 w-5" />}
       />
       <StatsCard
         title="Avg. Capacity"
-        value={`${Math.round(stats.averageCapacity)} seats`}
+        value={`${stats.averageCapacity} seats`}
         icon={<Gauge className="h-5 w-5" />}
-      />
-      <StatsCard
-        title="Total Seats"
-        value={stats.totalCapacity.toLocaleString()}
-        icon={<Users className="h-5 w-5" />}
       />
     </StatsCardGrid>
   );

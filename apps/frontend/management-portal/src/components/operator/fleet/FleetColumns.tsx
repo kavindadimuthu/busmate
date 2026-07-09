@@ -1,57 +1,40 @@
 "use client";
 
 import * as React from "react";
-import {
-  Bus,
-  CheckCircle,
-  XCircle,
-  Wrench,
-  AlertCircle,
-  MapPin,
-  User,
-} from "lucide-react";
+import { Bus, CheckCircle, XCircle, Clock, XOctagon } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
-import type { OperatorBus, BusStatus, BusServiceType } from "@/data/operator/buses";
+import type { BusResponse } from "@busmate/api-client-route";
 
 // ── Helpers ───────────────────────────────────────────────────────
+// Matches core-service's real Bus.status values (pending/active/inactive/cancelled) —
+// same styling convention as MOT's OperatorsColumns.tsx for consistency.
 
-const STATUS_META: Record<
-  BusStatus,
-  { label: string; icon: React.ReactNode; classes: string }
-> = {
-  ACTIVE: {
+const STATUS_META: Record<string, { label: string; icon: React.ReactNode; classes: string }> = {
+  active: {
     label: "Active",
     icon: <CheckCircle className="w-3.5 h-3.5" />,
     classes: "bg-success/15 text-success border-success/20",
   },
-  INACTIVE: {
+  inactive: {
     label: "Inactive",
     icon: <XCircle className="w-3.5 h-3.5" />,
-    classes: "bg-warning/15 text-warning border-orange-200",
+    classes: "bg-destructive/10 text-destructive border-destructive/20",
   },
-  MAINTENANCE: {
-    label: "Maintenance",
-    icon: <Wrench className="w-3.5 h-3.5" />,
+  pending: {
+    label: "Pending",
+    icon: <Clock className="w-3.5 h-3.5" />,
     classes: "bg-warning/15 text-warning border-warning/20",
   },
-  RETIRED: {
-    label: "Retired",
-    icon: <AlertCircle className="w-3.5 h-3.5" />,
+  cancelled: {
+    label: "Cancelled",
+    icon: <XOctagon className="w-3.5 h-3.5" />,
     classes: "bg-muted text-muted-foreground border-border",
   },
 };
 
-const SERVICE_TYPE_LABELS: Record<BusServiceType, string> = {
-  SL: "SL",
-  SL_AC: "SL A/C",
-  SEMI_LUXURY: "Semi-Luxury",
-  LUXURY: "Luxury",
-  EXPRESS: "Express",
-};
-
 // ── Column definitions ────────────────────────────────────────────
 
-export const fleetColumns: ColumnDef<OperatorBus>[] = [
+export const fleetColumns: ColumnDef<BusResponse>[] = [
   {
     id: "plateNumber",
     header: "Plate / Reg.",
@@ -63,10 +46,10 @@ export const fleetColumns: ColumnDef<OperatorBus>[] = [
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate leading-tight">
-            {row.plateNumber}
+            {row.plateNumber || "Unknown Plate"}
           </p>
           <p className="text-[11px] text-muted-foreground font-mono leading-tight mt-0.5 truncate">
-            {row.ntcRegistrationNumber}
+            {row.ntcRegistrationNumber || "—"}
           </p>
         </div>
       </div>
@@ -77,38 +60,15 @@ export const fleetColumns: ColumnDef<OperatorBus>[] = [
     header: "Model",
     sortable: true,
     cell: ({ row }) => (
-      <div>
-        <p className="text-sm text-foreground">{row.model}</p>
-        <p className="text-xs text-muted-foreground">{row.manufacturer}</p>
-      </div>
+      <span className="text-sm text-foreground">{row.model || "Not specified"}</span>
     ),
   },
   {
-    id: "serviceType",
-    header: "Service Type",
+    id: "capacity",
+    header: "Capacity",
     sortable: true,
     cell: ({ row }) => (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-indigo-700 border border-indigo-200">
-        {SERVICE_TYPE_LABELS[row.serviceType] ?? row.serviceType}
-      </span>
-    ),
-  },
-  {
-    id: "year",
-    header: "Year",
-    sortable: true,
-    hideBelow: "md",
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">{row.year}</span>
-    ),
-  },
-  {
-    id: "seatingCapacity",
-    header: "Seats",
-    sortable: true,
-    hideBelow: "md",
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">{row.seatingCapacity}</span>
+      <span className="text-sm text-muted-foreground">{row.capacity ?? 0} seats</span>
     ),
   },
   {
@@ -116,7 +76,7 @@ export const fleetColumns: ColumnDef<OperatorBus>[] = [
     header: "Status",
     sortable: true,
     cell: ({ row }) => {
-      const meta = STATUS_META[row.status] ?? STATUS_META.RETIRED;
+      const meta = STATUS_META[row.status ?? ""] ?? STATUS_META.pending;
       return (
         <span
           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${meta.classes}`}
@@ -126,37 +86,5 @@ export const fleetColumns: ColumnDef<OperatorBus>[] = [
         </span>
       );
     },
-  },
-  {
-    id: "driver",
-    header: "Driver",
-    hideBelow: "lg",
-    cell: ({ row }) =>
-      row.driver ? (
-        <div className="flex items-center gap-1.5">
-          <User className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
-          <span className="text-sm text-foreground truncate max-w-[130px]">
-            {row.driver.driverName}
-          </span>
-        </div>
-      ) : (
-        <span className="text-xs text-muted-foreground italic">Unassigned</span>
-      ),
-  },
-  {
-    id: "route",
-    header: "Route",
-    hideBelow: "lg",
-    cell: ({ row }) =>
-      row.routeAssignments[0] ? (
-        <div className="flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
-          <span className="text-sm text-foreground truncate max-w-[160px]">
-            {row.routeAssignments[0].routeName}
-          </span>
-        </div>
-      ) : (
-        <span className="text-xs text-muted-foreground italic">No route</span>
-      ),
   },
 ];

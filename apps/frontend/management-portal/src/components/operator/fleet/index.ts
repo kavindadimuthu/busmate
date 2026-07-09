@@ -1,15 +1,10 @@
 // Fleet management components for the Operator portal.
-// These are read-only components – operators can view but not edit fleet data.
+// Real data from core-service (via BusOperatorOperationsService) — operators can view
+// but not edit fleet data (bus registration remains an NTC/MOT regulatory function).
 
-export { FleetStatsCards }                   from './FleetStatsCards';
-export { FleetFilterBar, type FleetFilters } from './FleetFilterBar';
-export { FleetTable }                        from './FleetTable';
-export { fleetColumns }                      from './FleetColumns';
-
-// Bus details page components
-export { BusSummaryCard }    from './BusSummaryCard';
-export { BusSeatingView }    from './BusSeatingView';
-export { BusMaintenanceTab } from './BusMaintenanceTab';
-export { BusLocationTab }    from './BusLocationTab';
-export { BusTripsTab }       from './BusTripsTab';
-export { BusDetailsTabs }    from './BusDetailsTabs';
+export { FleetStatsCards } from './FleetStatsCards';
+export { FleetFilterBar }  from './FleetFilterBar';
+export { FleetTable }      from './FleetTable';
+export { fleetColumns }    from './FleetColumns';
+export { BusSummaryCard }  from './BusSummaryCard';
+export type { FleetFilters, BusStatus, FleetStatistics } from '@/hooks/operator/fleet/useFleetManagement';

@@ -17,6 +17,7 @@ import java.util.UUID;
 public interface OperatorService {
     OperatorResponse createOperator(OperatorRequest request, String userId);
     OperatorResponse getOperatorById(UUID id);
+    OperatorResponse getOperatorByUserId(UUID userId);
     List<OperatorResponse> getAllOperators();
     Page<OperatorResponse> getAllOperators(Pageable pageable);
     Page<OperatorResponse> getAllOperatorsWithFilters(String searchText, OperatorTypeEnum operatorType, StatusEnum status, Pageable pageable);

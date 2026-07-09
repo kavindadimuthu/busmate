@@ -196,10 +196,10 @@ export const operatorNavigation: NavigationConfig = {
           href: "/operator/trips",
         },
         {
-          id: "staff",
-          label: "Staff",
+          id: "crew",
+          label: "Crew",
           icon: Users2,
-          href: "/operator/staff",
+          href: "/operator/crew",
         },
       ],
     },

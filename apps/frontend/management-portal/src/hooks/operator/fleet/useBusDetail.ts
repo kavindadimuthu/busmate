@@ -1,25 +1,28 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { usePageContext } from '@/context/PageContext';
-import { getOperatorBusById, type OperatorBus } from '@/data/operator/buses';
+import { BusOperatorOperationsService } from '@busmate/api-client-route';
+import type { BusResponse } from '@busmate/api-client-route';
+import { useMyOperator } from '@/hooks/operator/useMyOperator';
 
 export function useBusDetail() {
   const { setMetadata } = usePageContext();
-  const router = useRouter();
   const params = useParams();
   const busId = params.busId as string;
 
-  const [bus, setBus] = useState<OperatorBus | null>(null);
+  const { operator, isLoading: operatorLoading, error: operatorError } = useMyOperator();
+
+  const [bus, setBus] = useState<BusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadBus = useCallback(async () => {
-    if (!busId) return;
+    if (!busId || !operator?.id) return;
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await getOperatorBusById(busId);
+      const data = await BusOperatorOperationsService.getOperatorBusById(operator.id, busId);
       setBus(data);
     } catch (err) {
       console.error('Error loading bus:', err);
@@ -27,7 +30,7 @@ export function useBusDetail() {
     } finally {
       setIsLoading(false);
     }
-  }, [busId]);
+  }, [busId, operator?.id]);
 
   useEffect(() => { loadBus(); }, [loadBus]);
 
@@ -35,10 +38,10 @@ export function useBusDetail() {
     if (bus) {
       setMetadata({
         title: bus.plateNumber,
-        description: `${bus.manufacturer} ${bus.model} · Bus details – read-only view`,
+        description: `${bus.model ?? 'Bus'} · Bus details – read-only view`,
         breadcrumbs: [
           { label: 'Fleet Management', href: '/operator/fleet' },
-          { label: bus.plateNumber },
+          { label: bus.plateNumber ?? 'Bus Details' },
         ],
       });
     }
@@ -48,5 +51,10 @@ export function useBusDetail() {
     await loadBus();
   }, [loadBus]);
 
-  return { bus, isLoading, error, handleRefresh };
+  return {
+    bus,
+    isLoading: isLoading || operatorLoading,
+    error: error ?? operatorError,
+    handleRefresh,
+  };
 }

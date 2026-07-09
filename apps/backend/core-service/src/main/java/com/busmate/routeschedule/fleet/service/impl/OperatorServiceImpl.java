@@ -54,6 +54,13 @@ public class OperatorServiceImpl implements OperatorService {
     }
 
     @Override
+    public OperatorResponse getOperatorByUserId(UUID userId) {
+        Operator operator = operatorRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No operator linked to userId: " + userId));
+        return mapToResponse(operator);
+    }
+
+    @Override
     public List<OperatorResponse> getAllOperators() {
         return operatorRepository.findAll().stream()
                 .map(this::mapToResponse)
