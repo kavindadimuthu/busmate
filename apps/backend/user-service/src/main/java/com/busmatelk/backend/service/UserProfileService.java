@@ -2,6 +2,7 @@ package com.busmatelk.backend.service;
 
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
+import com.busmatelk.backend.operator.OperatorSyncService;
 import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class UserProfileService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final ProfileSchemaValidator profileSchemaValidator;
+    private final OperatorSyncService operatorSyncService;
 
     public Map<String, Object> getProfile(UUID callerId, UUID targetUserId) {
         User target = findUserOrThrow(targetUserId);
@@ -37,10 +39,12 @@ public class UserProfileService {
         Map<String, Object> merged = new HashMap<>(profile.getProfileData());
         merged.putAll(patch);
 
-        profileSchemaValidator.validate(target.getUserType().getName(), merged);
+        String userTypeName = target.getUserType().getName();
+        profileSchemaValidator.validate(userTypeName, merged);
 
         profile.setProfileData(merged);
         profile = userProfileRepository.save(profile);
+        operatorSyncService.syncProfileUpdate(targetUserId, userTypeName, merged, target.getAccountStatus());
         return profile.getProfileData();
     }
 

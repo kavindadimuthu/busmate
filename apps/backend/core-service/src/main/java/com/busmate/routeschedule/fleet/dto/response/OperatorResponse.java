@@ -11,6 +11,7 @@ public class OperatorResponse {
     private String operatorType;
     private String region;
     private String status;
+    private UUID userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdBy;

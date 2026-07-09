@@ -31,4 +31,10 @@ public class Operator extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private StatusEnum status;
+
+    // Links this business entity back to its owning account in user-service.
+    // Nullable because operators created before the unified lifecycle (or directly via
+    // this service's own /api/operators) have no linked account.
+    @Column(name = "user_id", unique = true)
+    private UUID userId;
 }

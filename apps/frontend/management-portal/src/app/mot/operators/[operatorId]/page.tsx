@@ -4,11 +4,12 @@ import { AlertCircle } from 'lucide-react';
 import { OperatorSummary } from '@/components/operator/profile/OperatorSummary';
 import { OperatorTabsSection } from '@/components/operator/profile/OperatorTabsSection';
 import DeleteOperatorModal from '@/components/mot/users/operator/DeleteOperatorModal';
+import DeactivateOperatorModal from '@/components/mot/users/operator/DeactivateOperatorModal';
 import { useOperatorDetails } from '@/hooks/mot/operators/useOperatorDetails';
 
 export default function OperatorDetailsPage() {
   const {
-    operator, buses,
+    operator, linkedAccount, buses,
     isLoading, busesLoading, error, clearError,
     showDeleteModal, isDeleting,
     handleBack, handleRefresh,
@@ -60,7 +61,7 @@ export default function OperatorDetailsPage() {
         </div>
       )}
 
-      <OperatorSummary operator={operator} buses={buses} />
+      <OperatorSummary operator={operator} buses={buses} linkedAccount={linkedAccount} />
 
       <OperatorTabsSection
         operator={operator}
@@ -69,14 +70,24 @@ export default function OperatorDetailsPage() {
         onRefresh={handleRefresh}
       />
 
-      <DeleteOperatorModal
-        isOpen={showDeleteModal}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        operator={operator}
-        isDeleting={isDeleting}
-        busCount={buses.length}
-      />
+      {operator.userId ? (
+        <DeactivateOperatorModal
+          isOpen={showDeleteModal}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          operator={operator}
+          isDeactivating={isDeleting}
+        />
+      ) : (
+        <DeleteOperatorModal
+          isOpen={showDeleteModal}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          operator={operator}
+          isDeleting={isDeleting}
+          busCount={buses.length}
+        />
+      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Building, MapPin, Users, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Building, MapPin, Users, CheckCircle, XCircle, Clock, Link2 } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
-import type { OperatorResponse } from "@busmate/api-client-route";
+import type { OperatorResponseWithLink } from "@/types/operator";
 
 // ── Helpers ───────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ const TYPE_STYLES: Record<string, string> = {
 
 // ── Column definitions ────────────────────────────────────────────
 
-export const operatorsColumns: ColumnDef<OperatorResponse>[] = [
+export const operatorsColumns: ColumnDef<OperatorResponseWithLink>[] = [
   {
     id: "name",
     header: "Operator Name",
@@ -52,8 +52,13 @@ export const operatorsColumns: ColumnDef<OperatorResponse>[] = [
           <Building className="w-4 h-4 text-primary" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate leading-tight">
+          <p className="text-sm font-semibold truncate leading-tight flex items-center gap-1.5">
             {row.name || "Unnamed Operator"}
+            {row.userId && (
+              <span title="Linked to a user account">
+                <Link2 className="w-3 h-3 text-primary/70 shrink-0" />
+              </span>
+            )}
           </p>
           <p className="text-[11px] text-muted-foreground font-mono leading-tight mt-0.5 truncate">
             #{row.id?.slice(0, 8)}

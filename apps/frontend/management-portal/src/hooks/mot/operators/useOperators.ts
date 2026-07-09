@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { OperatorManagementService } from '@busmate/api-client-route';
-import type { OperatorResponse } from '@busmate/api-client-route';
+import { UsersControllerService } from '@busmate/api-client-user';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
 import type { OperatorFilters } from '../../../components/mot/operators/OperatorsFilterBar';
+import type { OperatorResponseWithLink } from '@/types/operator';
 
 // ── Initial state ─────────────────────────────────────────────────
 
@@ -38,11 +39,11 @@ export function useOperators() {
       initialFilters: INITIAL_FILTERS,
     });
 
-  const deleteDialog = useDialog<OperatorResponse>();
+  const deleteDialog = useDialog<OperatorResponseWithLink>();
 
   // ── Local state ───────────────────────────────────────────────
 
-  const [operators, setOperators] = useState<OperatorResponse[]>([]);
+  const [operators, setOperators] = useState<OperatorResponseWithLink[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -92,7 +93,7 @@ export function useOperators() {
       setIsLoading(true);
 
       if (hasRegionFilter) {
-        let results: OperatorResponse[] = [];
+        let results: OperatorResponseWithLink[] = [];
         let apiPage = 0;
         let hasMore = true;
         while (hasMore) {
@@ -158,20 +159,36 @@ export function useOperators() {
     return { data: filtered.slice(start, start + pageSize), totalItems: total };
   }, [operators, state, totalItems]);
 
-  // ── Delete ────────────────────────────────────────────────────
+  // ── Delete / Deactivate ─────────────────────────────────────────
 
+  /**
+   * Linked operators (operator.userId set) go through user-service's deactivate endpoint —
+   * that's the unified lifecycle's source of truth, and it syncs the status back to
+   * core-service automatically (see OperatorSyncService). Only legacy operators with no
+   * linked account (pre-dating the unified lifecycle) still get a real hard delete here.
+   */
   const handleDeleteConfirm = useCallback(async () => {
     const operator = deleteDialog.data;
     if (!operator?.id) return;
+    const isLinked = !!operator.userId;
     try {
       setIsDeleting(true);
-      await OperatorManagementService.deleteOperator(operator.id);
-      toast({ title: 'Operator Deleted', description: `${operator.name} has been deleted.` });
+      if (isLinked) {
+        await UsersControllerService.deleteUser(operator.userId!);
+        toast({ title: 'Operator Deactivated', description: `${operator.name} has been deactivated.` });
+      } else {
+        await OperatorManagementService.deleteOperator(operator.id);
+        toast({ title: 'Operator Deleted', description: `${operator.name} has been deleted.` });
+      }
       deleteDialog.close();
       loadOperators();
       loadStatistics();
     } catch {
-      toast({ title: 'Delete Failed', description: 'Failed to delete operator.', variant: 'destructive' });
+      toast({
+        title: isLinked ? 'Deactivation Failed' : 'Delete Failed',
+        description: `Failed to ${isLinked ? 'deactivate' : 'delete'} operator.`,
+        variant: 'destructive',
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -228,12 +245,12 @@ export function useOperators() {
   // ── Navigation ────────────────────────────────────────────────
 
   const handleView = useCallback(
-    (op: OperatorResponse) => router.push(`/mot/operators/${op.id}`),
+    (op: OperatorResponseWithLink) => router.push(`/mot/operators/${op.id}`),
     [router],
   );
 
   const handleEdit = useCallback(
-    (op: OperatorResponse) => router.push(`/mot/operators/${op.id}/edit`),
+    (op: OperatorResponseWithLink) => router.push(`/mot/operators/${op.id}/edit`),
     [router],
   );
 

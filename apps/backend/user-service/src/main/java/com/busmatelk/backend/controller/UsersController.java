@@ -67,6 +67,13 @@ public class UsersController {
         return ResponseEntity.ok(userService.reactivateUser(callerId(authentication), userId));
     }
 
+    /** Manual "retry sync" action — resets any FAILED core-service sync for this operator to PENDING. */
+    @PostMapping("/{userId}/operator-sync/retry")
+    public ResponseEntity<Void> retryOperatorSync(Authentication authentication, @PathVariable UUID userId) {
+        userService.retryOperatorSync(callerId(authentication), userId);
+        return ResponseEntity.accepted().build();
+    }
+
     @GetMapping("/{userId}/profile")
     public ResponseEntity<Map<String, Object>> getProfile(Authentication authentication, @PathVariable UUID userId) {
         return ResponseEntity.ok(userProfileService.getProfile(callerId(authentication), userId));

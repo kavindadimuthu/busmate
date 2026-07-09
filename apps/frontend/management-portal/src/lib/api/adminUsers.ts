@@ -27,6 +27,16 @@ export type {
   UserResponse,
 };
 
+/**
+ * UserResponse plus operatorSyncStatus, which the backend now always includes for
+ * userType="operator" but isn't declared on the generated UserResponse type (that would
+ * require regenerating @busmate/api-client-user against a running user-service, which we're
+ * avoiding here — see docs/plans/Unified-Operator-Lifecycle-Management-Plan.md Step 3).
+ * The generated client's request functions do plain JSON.parse, so the field is present on
+ * the real object at runtime; this just widens the static type to match.
+ */
+export type UserResponseWithSync = UserResponse & { operatorSyncStatus?: string | null };
+
 // The six real user_types seeded in user-management (see data.sql) — admin manages all
 // of them. "driver" does not exist as a distinct user_type in the real backend.
 export const MANAGED_USER_TYPES = ['admin', 'mot', 'timekeeper', 'operator', 'conductor', 'passenger'] as const;
@@ -40,10 +50,13 @@ export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
 // Per-type required profileData fields, mirrored exactly from
 // ProfileSchemaValidator.REQUIRED_FIELDS on the backend — keep these two in sync.
+// operator_type/region are required (in addition to organization_name/registration_id)
+// because core-service's Operator entity needs them for the unified operator lifecycle
+// sync — see docs/plans/Unified-Operator-Lifecycle-Management-Plan.md.
 export const REQUIRED_PROFILE_FIELDS: Partial<Record<ManagedUserType, string[]>> = {
   mot: ['employee_id'],
   timekeeper: ['assign_stand', 'nic'],
-  operator: ['organization_name', 'registration_id'],
+  operator: ['organization_name', 'registration_id', 'operator_type', 'region'],
   conductor: ['employee_id', 'assign_operator_id', 'nic_number'],
 };
 
@@ -94,7 +107,9 @@ export interface ListUsersParams {
  * Spring's Pageable resolver doesn't recognize; it silently falls back to page 0 / size 20
  * every time. This builds the flat `page`/`size`/`sort` query string Spring actually binds.
  */
-export async function listUsers(params: ListUsersParams): Promise<PageUserResponse> {
+export async function listUsers(
+  params: ListUsersParams,
+): Promise<Omit<PageUserResponse, 'content'> & { content?: UserResponseWithSync[] }> {
   const query = new URLSearchParams();
   query.set('user_type', params.userType);
   if (params.status) query.set('status', params.status);
@@ -123,8 +138,8 @@ export async function listUsers(params: ListUsersParams): Promise<PageUserRespon
   return res.json();
 }
 
-export function getUser(userId: string): Promise<UserResponse> {
-  return unwrap(UsersControllerService.getUser(userId));
+export function getUser(userId: string): Promise<UserResponseWithSync> {
+  return unwrap(UsersControllerService.getUser(userId)) as Promise<UserResponseWithSync>;
 }
 
 export function createUser(payload: CreateUserRequest): Promise<RegisterResponse> {
@@ -155,4 +170,29 @@ export function updateUserProfile(userId: string, patch: Record<string, unknown>
 
 export function getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
   return unwrap(UsersControllerService.getPermissions(userId));
+}
+
+/**
+ * Manual "retry sync" action for an operator whose core-service sync landed in FAILED.
+ * Hand-rolled (raw fetch, same pattern as listUsers()) because this endpoint doesn't exist
+ * in the generated client — see the UserResponseWithSync comment above for why.
+ */
+export async function retryOperatorSync(userId: string): Promise<void> {
+  let token: string;
+  try {
+    token = await fetchAccessToken();
+  } catch {
+    throw new AdminApiError(401, 'Your session has expired. Please sign in again.');
+  }
+
+  const res = await fetch(`${UserManagementAPI.BASE}/api/users/${userId}/operator-sync/retry`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const message = typeof body?.error === 'string' ? body.error : `Request failed (${res.status})`;
+    throw new AdminApiError(res.status, message);
+  }
 }

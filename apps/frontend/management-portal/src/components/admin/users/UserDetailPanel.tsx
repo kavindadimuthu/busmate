@@ -19,6 +19,8 @@ import {
   Hash,
   AtSign,
   KeyRound,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   USER_TYPE_CONFIG,
@@ -39,6 +41,8 @@ interface UserDetailPanelProps {
   onEdit: (userId: string) => void;
   onToggleStatus: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
+  onRetrySync?: (user: AdminUser) => void;
+  retrySyncLoading?: boolean;
 }
 
 export function UserDetailPanel({
@@ -49,6 +53,8 @@ export function UserDetailPanel({
   onEdit,
   onToggleStatus,
   onDelete,
+  onRetrySync,
+  retrySyncLoading = false,
 }: UserDetailPanelProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const typeConfig = USER_TYPE_CONFIG[user.userType];
@@ -114,6 +120,16 @@ export function UserDetailPanel({
           Back to Users
         </button>
         <div className="flex items-center gap-2">
+          {user.userType === 'operator' && user.operatorSyncStatus === 'FAILED' && onRetrySync && (
+            <button
+              onClick={() => onRetrySync(user)}
+              disabled={retrySyncLoading}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-warning bg-warning/10 border border-warning/20 rounded-lg hover:bg-warning/15 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${retrySyncLoading ? 'animate-spin' : ''}`} />
+              Retry Sync
+            </button>
+          )}
           <button
             onClick={() => onEdit(user.id)}
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/15 transition-colors"
@@ -172,6 +188,19 @@ export function UserDetailPanel({
                   <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-success/50' : user.status === 'pending' ? 'bg-warning/60' : 'bg-secondary'}`} />
                   {statusConfig.label}
                 </span>
+                {user.userType === 'operator' && user.operatorSyncStatus && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-card/20 text-white border border-white/30"
+                    title={
+                      user.operatorSyncStatus === 'FAILED'
+                        ? 'The linked core-service operator record could not be synced after several attempts — use Retry Sync.'
+                        : 'The linked core-service operator record is still syncing.'
+                    }
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    {user.operatorSyncStatus === 'FAILED' ? 'Sync Failed' : 'Sync Pending'}
+                  </span>
+                )}
                 {isSelf && (
                   <span className="text-white/70 text-xs">(You)</span>
                 )}

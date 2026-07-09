@@ -120,6 +120,16 @@ supabase:
 internal:
   api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
 
+# core-service's own base URL, called directly by OperatorSyncClient (never through the API
+# gateway — same rationale as internal.api-key above). Matches the CORE_SERVICE_URL already
+# used for this purpose in api-gateway's config.
+core-service:
+  url: ${CORE_SERVICE_URL:http://localhost:9010}
+
+# How often OperatorSyncRetryJob polls operator_sync_outbox for due PENDING rows.
+operator-sync:
+  retry-interval-ms: ${OPERATOR_SYNC_RETRY_INTERVAL_MS:30000}
+
 logging:
   level:
     com.busmate: INFO  # Reduce debug logging for busmate packages

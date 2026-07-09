@@ -9,9 +9,13 @@ import java.util.stream.Collectors;
 @Component
 public class ProfileSchemaValidator {
 
+    // operator_type and region are required in addition to organization_name/registration_id
+    // because core-service's Operator entity needs them to create the linked business
+    // record via the unified operator lifecycle sync (see
+    // docs/plans/Unified-Operator-Lifecycle-Management-Plan.md).
     private static final Map<String, List<String>> REQUIRED_FIELDS = Map.of(
         "conductor",  List.of("employee_id", "assign_operator_id", "nic_number"),
-        "operator",   List.of("organization_name", "registration_id"),
+        "operator",   List.of("organization_name", "registration_id", "operator_type", "region"),
         "timekeeper", List.of("assign_stand", "nic"),
         "mot",        List.of("employee_id")
     );

@@ -8,6 +8,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Users,
+  AlertTriangle,
 } from 'lucide-react';
 import { DataTable, EmptyState } from '@busmate/ui';
 import type { ColumnDef, DataTableProps } from '@busmate/ui';
@@ -106,12 +107,19 @@ export function UsersTable({
         cell: ({ row: user }) => {
           const statusConfig = USER_STATUS_CONFIG[user.status];
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${statusConfig.bgColor} ${statusConfig.color} ${statusConfig.borderColor}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor}`} />
-              {statusConfig.label}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${statusConfig.bgColor} ${statusConfig.color} ${statusConfig.borderColor}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor}`} />
+                {statusConfig.label}
+              </span>
+              {user.userType === 'operator' && user.operatorSyncStatus && (
+                <span title={user.operatorSyncStatus === 'FAILED' ? 'Sync failed' : 'Sync pending'}>
+                  <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                </span>
+              )}
+            </div>
           );
         },
       },

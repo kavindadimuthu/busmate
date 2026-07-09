@@ -8,6 +8,7 @@ import {
   getUserPermissions,
   deactivateUser,
   reactivateUser as apiReactivateUser,
+  retryOperatorSync,
   AdminApiError,
 } from '@/lib/api/adminUsers';
 import type { UserPermissionsResponse } from '@/lib/api/adminUsers';
@@ -31,6 +32,7 @@ export function useUserDetail() {
     type: 'delete' | 'toggle';
   }>({ open: false, type: 'delete' });
   const [actionLoading, setActionLoading] = useState(false);
+  const [retrySyncLoading, setRetrySyncLoading] = useState(false);
 
   const fetchUser = useCallback(async () => {
     setIsLoading(true);
@@ -80,6 +82,21 @@ export function useUserDetail() {
     }
   }, [user, confirmDialog.type, fetchUser]);
 
+  const handleRetrySync = useCallback(async () => {
+    if (!user) return;
+    setRetrySyncLoading(true);
+    try {
+      await retryOperatorSync(user.id);
+      toast.success(`Retrying sync for ${getUserDisplayName(user)}.`);
+      await fetchUser();
+    } catch (e) {
+      const message = e instanceof AdminApiError ? e.message : 'Something went wrong. Please try again.';
+      toast.error(message);
+    } finally {
+      setRetrySyncLoading(false);
+    }
+  }, [user, fetchUser]);
+
   const closeDialog = useCallback(() => setConfirmDialog({ open: false, type: 'delete' }), []);
 
   const getDialogProps = useCallback(() => {
@@ -113,11 +130,13 @@ export function useUserDetail() {
     currentUserId,
     confirmDialog,
     actionLoading,
+    retrySyncLoading,
     handleBack,
     handleEdit,
     handleToggleStatus,
     handleDelete,
     handleConfirmAction,
+    handleRetrySync,
     closeDialog,
     getDialogProps,
   };

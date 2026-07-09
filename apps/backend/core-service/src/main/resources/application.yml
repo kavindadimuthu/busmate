@@ -95,6 +95,11 @@ server:
 asgardeo:
   jwks-url: https://api.asgardeo.io/t/busmate/oauth2/jwks
 
+# Shared secret gating /internal/**, called directly by user-service (bypassing the
+# gateway) to sync operator records. Must match user-service's internal.api-key.
+internal:
+  api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
+
 logging:
   level:
     com.busmate.routeschedule: INFO  # Reduce debug logging

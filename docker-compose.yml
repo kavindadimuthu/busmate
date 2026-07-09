@@ -49,6 +49,7 @@ services:
       - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - CORE_SERVICE_URL=http://core-service:9010
   core-service:
     build:
       context: apps/backend/core-service
@@ -58,6 +59,7 @@ services:
       - "9010:9010"
     environment:
       - SERVER_PORT=9010
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
 
   ticketing-service:
     build:

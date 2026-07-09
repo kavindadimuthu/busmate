@@ -1,13 +1,18 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Edit, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Trash2, Ban } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import {
   OperatorManagementService,
   BusManagementService,
-  OperatorResponse,
   BusResponse,
 } from '@busmate/api-client-route';
+import { UsersControllerService } from '@busmate/api-client-user';
+import type { UserResponse } from '@busmate/api-client-user';
+import type { OperatorResponseWithLink } from '@/types/operator';
+
+/** UserResponse plus operatorSyncStatus — see the comment on OperatorResponseWithLink. */
+type LinkedAccount = UserResponse & { operatorSyncStatus?: string | null };
 
 export function useOperatorDetails() {
   const router = useRouter();
@@ -15,13 +20,14 @@ export function useOperatorDetails() {
   const operatorId = params.operatorId as string;
 
   // State
-  const [operator, setOperator] = useState<OperatorResponse | null>(null);
+  const [operator, setOperator] = useState<OperatorResponseWithLink | null>(null);
+  const [linkedAccount, setLinkedAccount] = useState<LinkedAccount | null>(null);
   const [buses, setBuses] = useState<BusResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busesLoading, setBusesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Delete modal states
+  // Delete/deactivate modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -35,8 +41,20 @@ export function useOperatorDetails() {
       setIsLoading(true);
       setError(null);
 
-      const operatorData = await OperatorManagementService.getOperatorById(operatorId);
+      const operatorData: OperatorResponseWithLink = await OperatorManagementService.getOperatorById(operatorId);
       setOperator(operatorData);
+
+      if (operatorData.userId) {
+        try {
+          const account = (await UsersControllerService.getUser(operatorData.userId)) as LinkedAccount;
+          setLinkedAccount(account);
+        } catch (err) {
+          console.error('Error loading linked account:', err);
+          setLinkedAccount(null);
+        }
+      } else {
+        setLinkedAccount(null);
+      }
     } catch (err) {
       console.error('Error loading operator details:', err);
       setError('Failed to load operator details. Please try again.');
@@ -94,20 +112,28 @@ export function useOperatorDetails() {
     setShowDeleteModal(false);
   }, []);
 
+  // Linked operators go through user-service's deactivate endpoint (the unified lifecycle's
+  // source of truth, which syncs the status back to core-service automatically); only legacy
+  // operators with no linked account still get a real hard delete. See useOperators.ts for
+  // the same branching on the list page.
   const handleDeleteConfirm = useCallback(async () => {
     if (!operator?.id) return;
 
     try {
       setIsDeleting(true);
-      await OperatorManagementService.deleteOperator(operator.id);
+      if (operator.userId) {
+        await UsersControllerService.deleteUser(operator.userId);
+      } else {
+        await OperatorManagementService.deleteOperator(operator.id);
+      }
       router.push('/mot/operators');
     } catch (error) {
       console.error('Error deleting operator:', error);
-      setError('Failed to delete operator. Please try again.');
+      setError(`Failed to ${operator.userId ? 'deactivate' : 'delete'} operator. Please try again.`);
     } finally {
       setIsDeleting(false);
     }
-  }, [operator?.id, router]);
+  }, [operator?.id, operator?.userId, router]);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -129,7 +155,10 @@ export function useOperatorDetails() {
     ],
   });
 
-  // Page actions
+  // Page actions — linked operators (operator.userId set) have their name/type/region/status
+  // owned by the user account, so there's nothing left to "Edit" here (see OperatorForm's
+  // locked-notice branch), and "Delete" becomes "Deactivate" (routed through user-service).
+  const isLinked = !!operator?.userId;
   useSetPageActions(
     React.createElement(
       React.Fragment,
@@ -143,15 +172,16 @@ export function useOperatorDetails() {
         React.createElement(ArrowLeft, { className: 'w-4 h-4' }),
         'Back'
       ),
-      React.createElement(
-        'button',
-        {
-          onClick: handleEdit,
-          className: 'flex items-center gap-2 px-3 py-1.5 text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors text-sm font-medium',
-        },
-        React.createElement(Edit, { className: 'w-4 h-4' }),
-        'Edit'
-      ),
+      !isLinked &&
+        React.createElement(
+          'button',
+          {
+            onClick: handleEdit,
+            className: 'flex items-center gap-2 px-3 py-1.5 text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors text-sm font-medium',
+          },
+          React.createElement(Edit, { className: 'w-4 h-4' }),
+          'Edit'
+        ),
       React.createElement(
         'button',
         {
@@ -167,14 +197,15 @@ export function useOperatorDetails() {
           onClick: handleDelete,
           className: 'flex items-center gap-2 px-3 py-1.5 text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors text-sm font-medium',
         },
-        React.createElement(Trash2, { className: 'w-4 h-4' }),
-        'Delete'
+        React.createElement(isLinked ? Ban : Trash2, { className: 'w-4 h-4' }),
+        isLinked ? 'Deactivate' : 'Delete'
       )
     )
   );
 
   return {
     operator,
+    linkedAccount,
     buses,
     isLoading,
     busesLoading,

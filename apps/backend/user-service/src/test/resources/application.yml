@@ -37,6 +37,12 @@ supabase:
 internal:
   api-key: test-internal-api-key
 
+# OperatorSyncClient's @Value("${core-service.url}") has no inline default, so this must be
+# set here too — it's never actually dialed in tests (no test drives an operator-typed
+# create/update/deactivate/reactivate), but the context still needs the placeholder to resolve.
+core-service:
+  url: http://localhost:19010
+
 logging:
   level:
     org.springframework: WARN

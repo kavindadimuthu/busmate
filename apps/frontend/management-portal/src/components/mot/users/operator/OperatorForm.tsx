@@ -75,6 +75,10 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!operatorId);
   const [isDirty, setIsDirty] = useState(false);
+  // Set once we know this operator is linked to a user-service account — its name/type/region/
+  // status are owned by that account (see the unified operator lifecycle plan) and would just
+  // get overwritten by the next sync, so editing them here would be silently discarded.
+  const [linkedUserId, setLinkedUserId] = useState<string | null>(null);
 
   const isEditMode = !!operatorId;
 
@@ -98,6 +102,7 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
           region: operator.region || '',
           status: operator.status || 'active',
         });
+        setLinkedUserId((operator as { userId?: string }).userId || null);
       }
     } catch (error) {
       console.error('Error loading operator:', error);
@@ -222,6 +227,36 @@ export default function OperatorForm({ operatorId, onSuccess, onCancel }: Operat
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading operator data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Linked operators have their name/type/region/status owned by the user-service account
+  // that created them — editing them here would just get overwritten by the next sync, so
+  // there's nothing left to edit. Redirect to the Admin dashboard instead.
+  if (isEditMode && linkedUserId) {
+    return (
+      <div className="bg-card rounded-lg shadow p-8 text-center space-y-4">
+        <User className="w-10 h-10 text-primary mx-auto" />
+        <h3 className="text-lg font-semibold text-foreground">This operator is linked to a user account</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Its name, type, region, and status are managed from that account and kept in sync
+          automatically. Edit them from the Admin dashboard&apos;s User Management instead.
+        </p>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={handleCancel}
+            className="px-6 py-2 border border-border text-foreground/80 rounded-lg hover:bg-muted transition-colors"
+          >
+            Back to Operator
+          </button>
+          <a
+            href={`/admin/users/${linkedUserId}`}
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
+          >
+            Open in Admin Dashboard
+          </a>
         </div>
       </div>
     );

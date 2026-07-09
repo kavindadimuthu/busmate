@@ -23,4 +23,10 @@ public class UserResponse {
     private Instant lastLoginAt;
     private Instant createdAt;
     private Map<String, Object> profileData;
+
+    /**
+     * "PENDING"/"FAILED" if this operator's most recent sync to core-service (see
+     * OperatorSyncService) hasn't landed yet; null otherwise (in sync, or not an operator).
+     */
+    private String operatorSyncStatus;
 }

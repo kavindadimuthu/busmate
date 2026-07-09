@@ -18,6 +18,7 @@ import java.util.UUID;
 public interface OperatorRepository extends JpaRepository<Operator, UUID> {
     boolean existsByName(String name);
     Optional<Operator> findByNameIgnoreCase(String name);
+    Optional<Operator> findByUserId(UUID userId);
     
     @Query(value = "SELECT * FROM operator o WHERE " +
            "(:searchText IS NULL OR :searchText = '' OR " +

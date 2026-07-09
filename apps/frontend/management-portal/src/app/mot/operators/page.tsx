@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@busmate/ui';
 
 import { OperatorsStatsCards } from '@/components/mot/operators/OperatorsStatsCards';
@@ -11,8 +10,6 @@ import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
 import { useOperators } from '@/hooks/mot/operators/useOperators';
 
 export default function OperatorsPage() {
-  const router = useRouter();
-
   const {
     filteredTableData,
     isLoading,
@@ -44,8 +41,6 @@ export default function OperatorsPage() {
 
   useSetPageActions(
     <OperatorActionButtons
-      onAddOperator={() => router.push('/mot/operators/create')}
-      onImportOperators={() => router.push('/mot/operators/import')}
       onExportAll={handleExportAll}
       isLoading={isLoading}
     />,
@@ -84,9 +79,13 @@ export default function OperatorsPage() {
       <ConfirmDialog
         open={deleteDialog.isOpen}
         onOpenChange={deleteDialog.setOpen}
-        title="Delete Operator"
-        description={`Are you sure you want to delete "${deleteDialog.data?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title={deleteDialog.data?.userId ? 'Deactivate Operator' : 'Delete Operator'}
+        description={
+          deleteDialog.data?.userId
+            ? `Deactivate "${deleteDialog.data?.name}"? This account will lose access until reactivated from the Admin dashboard.`
+            : `Are you sure you want to delete "${deleteDialog.data?.name}"? This action cannot be undone.`
+        }
+        confirmLabel={deleteDialog.data?.userId ? 'Deactivate' : 'Delete'}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         loading={isDeleting}

@@ -19,6 +19,26 @@ import {
 import type { AdminUser, UserType } from '@/data/admin/users';
 import { MANAGED_USER_TYPES, REQUIRED_PROFILE_FIELDS } from '@/lib/api/adminUsers';
 
+// Mirrors core-service's OperatorTypeEnum exactly — a free-text mismatch here would pass
+// this form's validation but fail the operator lifecycle sync to core-service (lands in
+// FAILED in operator_sync_outbox instead of ever reaching a real Operator record).
+const OPERATOR_TYPE_OPTIONS = [
+  { value: 'PRIVATE', label: 'Private Operator' },
+  { value: 'CTB', label: 'Ceylon Transport Board (CTB)' },
+];
+
+const SRI_LANKAN_PROVINCE_OPTIONS = [
+  'Western Province',
+  'Central Province',
+  'Southern Province',
+  'Northern Province',
+  'Eastern Province',
+  'North Western Province',
+  'North Central Province',
+  'Uva Province',
+  'Sabaragamuwa Province',
+].map((province) => ({ value: province, label: province }));
+
 export interface UserFormCoreValues {
   email?: string;
   password?: string;
@@ -161,6 +181,44 @@ export function UserForm({
           }`}
         />
       </div>
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+    </div>
+  );
+
+  const SelectField = ({
+    label,
+    value,
+    onChange,
+    options,
+    error,
+    required = false,
+  }: {
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+    options: { value: string; label: string }[];
+    error?: string;
+    required?: boolean;
+  }) => (
+    <div>
+      <label className="block text-xs font-medium text-muted-foreground mb-1">
+        {label} {required && <span className="text-destructive/80">*</span>}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={loading}
+        className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-card disabled:bg-muted disabled:text-muted-foreground ${
+          error ? 'border-destructive/30 bg-destructive/10' : 'border-border'
+        }`}
+      >
+        <option value="">Select {label.toLowerCase()}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );
@@ -325,17 +383,40 @@ export function UserForm({
                 {USER_TYPE_CONFIG[userType].label} Details
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {requiredProfileFields.map((field) => (
-                  <InputField
-                    key={field}
-                    label={formatProfileFieldLabel(field)}
-                    value={profileValues[field] ?? ''}
-                    onChange={(val) => setProfileValues((prev) => ({ ...prev, [field]: val }))}
-                    error={errors[`profile.${field}`]}
-                    placeholder={formatProfileFieldLabel(field)}
-                    required={mode === 'create'}
-                  />
-                ))}
+                {requiredProfileFields.map((field) => {
+                  const dropdownOptions =
+                    userType === 'operator' && field === 'operator_type'
+                      ? OPERATOR_TYPE_OPTIONS
+                      : userType === 'operator' && field === 'region'
+                        ? SRI_LANKAN_PROVINCE_OPTIONS
+                        : null;
+
+                  if (dropdownOptions) {
+                    return (
+                      <SelectField
+                        key={field}
+                        label={formatProfileFieldLabel(field)}
+                        value={profileValues[field] ?? ''}
+                        onChange={(val) => setProfileValues((prev) => ({ ...prev, [field]: val }))}
+                        options={dropdownOptions}
+                        error={errors[`profile.${field}`]}
+                        required={mode === 'create'}
+                      />
+                    );
+                  }
+
+                  return (
+                    <InputField
+                      key={field}
+                      label={formatProfileFieldLabel(field)}
+                      value={profileValues[field] ?? ''}
+                      onChange={(val) => setProfileValues((prev) => ({ ...prev, [field]: val }))}
+                      error={errors[`profile.${field}`]}
+                      placeholder={formatProfileFieldLabel(field)}
+                      required={mode === 'create'}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

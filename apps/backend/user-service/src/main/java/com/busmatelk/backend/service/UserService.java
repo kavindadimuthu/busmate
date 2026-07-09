@@ -8,6 +8,7 @@ import com.busmatelk.backend.dto.response.UserResponse;
 import com.busmatelk.backend.event.UserEventPublisher;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
+import com.busmatelk.backend.operator.OperatorSyncService;
 import com.busmatelk.backend.repository.UserPermissionOverrideRepository;
 import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
@@ -36,6 +37,7 @@ public class UserService {
     private final PermissionService permissionService;
     private final SupabaseAuthClient supabaseAuthClient;
     private final UserEventPublisher userEventPublisher;
+    private final OperatorSyncService operatorSyncService;
 
     /**
      * Checks if the caller is accessing their own resource and holds the given own-scoped permission.
@@ -133,6 +135,7 @@ public class UserService {
         target.setAccountStatus("inactive");
         userRepository.save(target);
         userEventPublisher.publishUserDeleted(targetUserId);
+        operatorSyncService.syncStatus(targetUserId, target.getUserType().getName(), "inactive");
     }
 
     /**
@@ -150,7 +153,16 @@ public class UserService {
         target.setAccountStatus("active");
         target = userRepository.save(target);
         userEventPublisher.publishUserUpdated(targetUserId, List.of("accountStatus"));
+        operatorSyncService.syncStatus(targetUserId, target.getUserType().getName(), "active");
         return toUserResponse(target);
+    }
+
+    /** Manual "retry sync" action for the admin dashboard — see OperatorSyncService.retryFailed. */
+    @Transactional
+    public void retryOperatorSync(UUID callerId, UUID targetUserId) {
+        User target = findUserOrThrow(targetUserId);
+        requireUpdateAccess(callerId, targetUserId, target.getUserType().getName());
+        operatorSyncService.retryFailed(targetUserId);
     }
 
     public UserPermissionsResponse getPermissions(UUID callerId, UUID targetUserId) {
@@ -180,18 +192,24 @@ public class UserService {
                 .map(UserProfile::getProfileData)
                 .orElse(null);
 
+        String userTypeName = user.getUserType().getName();
+        String operatorSyncStatus = OperatorSyncService.OPERATOR_USER_TYPE.equals(userTypeName)
+                ? operatorSyncService.getLatestSyncStatus(user.getUserId()).orElse(null)
+                : null;
+
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .username(user.getUsername())
                 .phoneNumber(user.getPhoneNumber())
-                .userType(user.getUserType().getName())
+                .userType(userTypeName)
                 .accountStatus(user.getAccountStatus())
                 .isEmailVerified(user.getIsEmailVerified())
                 .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .profileData(profileData)
+                .operatorSyncStatus(operatorSyncStatus)
                 .build();
     }
 

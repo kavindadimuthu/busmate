@@ -13,6 +13,7 @@ import com.busmatelk.backend.event.UserEventPublisher;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
 import com.busmatelk.backend.model.UserType;
+import com.busmatelk.backend.operator.OperatorSyncService;
 import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
@@ -37,6 +38,8 @@ public class AuthService {
     private final UserProfileRepository userProfileRepository;
     private final PermissionService permissionService;
     private final UserEventPublisher userEventPublisher;
+    private final ProfileSchemaValidator profileSchemaValidator;
+    private final OperatorSyncService operatorSyncService;
 
     /**
      * Self-registration flow — always creates a "passenger", pending verification.
@@ -98,6 +101,15 @@ public class AuthService {
         UserType targetType = userTypeRepository.findByName(request.getUserType())
                 .orElseThrow(() -> new IllegalArgumentException("Unknown user type: " + request.getUserType()));
 
+        // Validated up front, before the Supabase signup call, so an incomplete profile
+        // (e.g. an operator missing organization_name/operator_type/region — required since
+        // the unified operator lifecycle sync needs them) never leaves an orphaned Supabase
+        // Auth user behind.
+        Map<String, Object> profileData = request.getProfileData() != null
+                ? new HashMap<>(request.getProfileData())
+                : new HashMap<>();
+        profileSchemaValidator.validate(request.getUserType(), profileData);
+
         SupabaseSignupResponse signup = supabaseAuthClient.signup(request.getEmail(), request.getPassword());
         String userIdString = signup.userId();
         if (userIdString == null) {
@@ -125,15 +137,13 @@ public class AuthService {
                     .build();
             user = userRepository.save(user);
 
-            Map<String, Object> profileData = request.getProfileData() != null
-                    ? new HashMap<>(request.getProfileData())
-                    : new HashMap<>();
             UserProfile profile = UserProfile.builder()
                     .user(user)
                     .profileData(profileData)
                     .build();
             userProfileRepository.save(profile);
             userEventPublisher.publishUserCreated(user);
+            operatorSyncService.syncCreate(user.getUserId(), request.getUserType(), profileData, user.getAccountStatus());
 
             return new RegisterResponse(user.getUserId(), user.getEmail(), request.getUserType(), user.getAccountStatus());
         } catch (RuntimeException e) {

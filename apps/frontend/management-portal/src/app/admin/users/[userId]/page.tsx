@@ -17,11 +17,13 @@ export default function UserDetailPage() {
     currentUserId,
     confirmDialog,
     actionLoading,
+    retrySyncLoading,
     handleBack,
     handleEdit,
     handleToggleStatus,
     handleDelete,
     handleConfirmAction,
+    handleRetrySync,
     closeDialog,
     getDialogProps,
   } = useUserDetail();
@@ -81,6 +83,8 @@ export default function UserDetailPage() {
         onEdit={handleEdit}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onRetrySync={handleRetrySync}
+        retrySyncLoading={retrySyncLoading}
       />
       <ConfirmDialog
         open={confirmDialog.open}

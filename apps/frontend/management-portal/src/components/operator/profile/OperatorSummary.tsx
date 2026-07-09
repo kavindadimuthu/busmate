@@ -1,23 +1,31 @@
 'use client';
 
-import { 
-  Building2, 
-  MapPin, 
-  Calendar, 
-  User, 
-  Bus, 
+import {
+  Building2,
+  MapPin,
+  Calendar,
+  User,
+  Bus,
   Activity,
   FileText,
-  Clock
+  Clock,
+  Mail,
+  Phone,
+  AlertTriangle,
+  Link2,
 } from 'lucide-react';
-import type { OperatorResponse, BusResponse } from '@busmate/api-client-route';
+import type { BusResponse } from '@busmate/api-client-route';
+import type { UserResponse } from '@busmate/api-client-user';
+import type { OperatorResponseWithLink } from '@/types/operator';
 
 interface OperatorSummaryProps {
-  operator: OperatorResponse;
+  operator: OperatorResponseWithLink;
   buses: BusResponse[];
+  /** The user-service account this operator is linked to, if any — see useOperatorDetails. */
+  linkedAccount?: (UserResponse & { operatorSyncStatus?: string | null }) | null;
 }
 
-export function OperatorSummary({ operator, buses }: OperatorSummaryProps) {
+export function OperatorSummary({ operator, buses, linkedAccount }: OperatorSummaryProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     try {
@@ -115,6 +123,42 @@ export function OperatorSummary({ operator, buses }: OperatorSummaryProps) {
           </div>
         </div>
       </div>
+
+      {/* Linked Account — core-service's Operator has no contact fields of its own; this
+          closes that gap for operators created through the unified lifecycle (admin dashboard). */}
+      {linkedAccount && (
+        <div className="px-6 py-4 border-b border-border bg-muted/40">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Link2 className="w-4 h-4 text-primary" />
+              Linked Account
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+              {linkedAccount.email && (
+                <span className="flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" />
+                  {linkedAccount.email}
+                </span>
+              )}
+              {linkedAccount.phoneNumber && (
+                <span className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" />
+                  {linkedAccount.phoneNumber}
+                </span>
+              )}
+              {linkedAccount.operatorSyncStatus && (
+                <span
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20"
+                  title="This operator record's sync to core-service hasn't landed yet"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {linkedAccount.operatorSyncStatus === 'FAILED' ? 'Sync Failed' : 'Sync Pending'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Statistics Grid */}
       <div className="p-6">

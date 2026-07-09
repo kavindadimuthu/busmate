@@ -2,7 +2,7 @@
 // Data itself comes from @/lib/api/adminUsers (real user-management API via api-gateway) —
 // this file only shapes/labels/formats it for the UI.
 
-import type { UserResponse } from '@/lib/api/adminUsers';
+import type { UserResponseWithSync } from '@/lib/api/adminUsers';
 import { MANAGED_USER_TYPES, ACCOUNT_STATUSES } from '@/lib/api/adminUsers';
 import type { ManagedUserType, AccountStatus } from '@/lib/api/adminUsers';
 
@@ -23,6 +23,8 @@ export interface AdminUser {
   createdAt: string | null;
   lastLogin: string | null;
   profileData: Record<string, unknown> | null;
+  /** "PENDING"/"FAILED" if this operator's core-service sync hasn't landed yet; null otherwise. */
+  operatorSyncStatus?: string | null;
 }
 
 export interface UserStats {
@@ -32,7 +34,7 @@ export interface UserStats {
   pending: number;
 }
 
-export function toAdminUser(response: UserResponse): AdminUser {
+export function toAdminUser(response: UserResponseWithSync): AdminUser {
   const fullName = response.fullName?.trim() || response.email || 'Unknown User';
   const [firstName, ...rest] = fullName.split(/\s+/);
 
@@ -50,6 +52,7 @@ export function toAdminUser(response: UserResponse): AdminUser {
     createdAt: response.createdAt ?? null,
     lastLogin: response.lastLoginAt ?? null,
     profileData: response.profileData ?? null,
+    operatorSyncStatus: response.operatorSyncStatus ?? null,
   };
 }
 

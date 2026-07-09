@@ -1,17 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Eye, Edit2, Trash2, Building } from "lucide-react";
+import { Eye, Edit2, Trash2, Ban, Building } from "lucide-react";
 import { DataTable, Button, EmptyState } from "@busmate/ui";
 import type { DataTableProps } from "@busmate/ui";
-import type { OperatorResponse } from "@busmate/api-client-route";
+import type { OperatorResponseWithLink } from "@/types/operator";
 import { operatorsColumns } from "./OperatorsColumns";
 
 // ── Types ─────────────────────────────────────────────────────────
 
 interface OperatorsTableProps
   extends Pick<
-    DataTableProps<OperatorResponse>,
+    DataTableProps<OperatorResponseWithLink>,
     | "page"
     | "pageSize"
     | "onPageChange"
@@ -21,11 +21,11 @@ interface OperatorsTableProps
     | "onSort"
     | "loading"
   > {
-  data: OperatorResponse[];
+  data: OperatorResponseWithLink[];
   totalItems: number;
-  onView: (operator: OperatorResponse) => void;
-  onEdit: (operator: OperatorResponse) => void;
-  onDelete: (operator: OperatorResponse) => void;
+  onView: (operator: OperatorResponseWithLink) => void;
+  onEdit: (operator: OperatorResponseWithLink) => void;
+  onDelete: (operator: OperatorResponseWithLink) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -52,42 +52,47 @@ export function OperatorsTable({
   onDelete,
 }: OperatorsTableProps) {
   const rowActions = React.useCallback(
-    (operator: OperatorResponse) => (
-      <div className="flex items-center justify-end gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => onView(operator)}
-          title="View details"
-        >
-          <Eye className="h-3.5 w-3.5 text-primary" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => onEdit(operator)}
-          title="Edit operator"
-        >
-          <Edit2 className="h-3.5 w-3.5 text-warning/80" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive"
-          onClick={() => onDelete(operator)}
-          title="Delete operator"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    ),
+    (operator: OperatorResponseWithLink) => {
+      const isLinked = !!operator.userId;
+      return (
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onView(operator)}
+            title="View details"
+          >
+            <Eye className="h-3.5 w-3.5 text-primary" />
+          </Button>
+          {!isLinked && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onEdit(operator)}
+              title="Edit operator"
+            >
+              <Edit2 className="h-3.5 w-3.5 text-warning/80" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            onClick={() => onDelete(operator)}
+            title={isLinked ? 'Deactivate operator' : 'Delete operator'}
+          >
+            {isLinked ? <Ban className="h-3.5 w-3.5" /> : <Trash2 className="h-3.5 w-3.5" />}
+          </Button>
+        </div>
+      );
+    },
     [onView, onEdit, onDelete],
   );
 
   return (
-    <DataTable<OperatorResponse>
+    <DataTable<OperatorResponseWithLink>
       columns={operatorsColumns}
       data={data}
       totalItems={totalItems}
