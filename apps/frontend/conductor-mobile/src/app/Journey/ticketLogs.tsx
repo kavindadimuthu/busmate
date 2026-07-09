@@ -99,14 +99,11 @@ export default function TicketLogsScreen() {
     fetchCurrentTripTickets();
   }, [conductorId, ongoingTrip?.id]);
 
-  // Filter tickets by payment status for current trip only
-  const physicalTickets = currentTripTickets.filter((ticket: TicketLog) => 
-    ticket.paymentStatus === 'CONDUCTOR' // Physical tickets issued by conductor
-  );
-  
-  const onlineTickets = currentTripTickets.filter((ticket: TicketLog) => 
-    ticket.paymentStatus === 'ONLINE' // Online/QR tickets
-  );
+  // Split by issue method (authoritative field; paymentStatus kept as a fallback for older data)
+  const isOnlineTicket = (ticket: TicketLog) =>
+    String(ticket.issueMethod || ticket.paymentStatus).toUpperCase() === 'ONLINE';
+  const physicalTickets = currentTripTickets.filter((ticket: TicketLog) => !isOnlineTicket(ticket));
+  const onlineTickets = currentTripTickets.filter((ticket: TicketLog) => isOnlineTicket(ticket));
 
   // Helper function to get location name or fallback
   const getLocationName = (locationId: string): string => {

@@ -16,6 +16,7 @@ import com.busmate.routeschedule.licensing.repository.BusPassengerServicePermitA
 import com.busmate.routeschedule.fleet.repository.BusRepository;
 import com.busmate.routeschedule.fleet.repository.OperatorRepository;
 import com.busmate.routeschedule.fleet.service.BusService;
+import com.busmate.routeschedule.fleet.service.SeatLayoutFactory;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +42,7 @@ public class BusServiceImpl implements BusService {
     private final BusPassengerServicePermitAssignmentRepository busPermitAssignmentRepository;
     private final MapperUtils mapperUtils;
     private final ObjectMapper objectMapper;
+    private final SeatLayoutFactory seatLayoutFactory;
 
     @Override
     public BusResponse createBus(BusRequest request, String userId) {
@@ -110,8 +112,9 @@ public class BusServiceImpl implements BusService {
         bus.setCapacity(request.getCapacity());
         bus.setModel(request.getModel());
         bus.setFacilities(request.getFacilities());
+        bus.setSeatLayout(request.getSeatLayout());
         bus.setOperator(operator);
-        
+
         try {
             bus.setStatus(StatusEnum.valueOf(request.getStatus()));
         } catch (IllegalArgumentException e) {
@@ -452,8 +455,9 @@ public class BusServiceImpl implements BusService {
         bus.setCapacity(request.getCapacity());
         bus.setModel(request.getModel());
         bus.setFacilities(request.getFacilities());
+        bus.setSeatLayout(request.getSeatLayout());
         bus.setOperator(operator);
-        
+
         try {
             bus.setStatus(StatusEnum.valueOf(request.getStatus()));
         } catch (IllegalArgumentException e) {
@@ -469,6 +473,11 @@ public class BusServiceImpl implements BusService {
         BusResponse response = mapperUtils.map(bus, BusResponse.class);
         response.setOperatorId(bus.getOperator().getId());
         response.setOperatorName(bus.getOperator().getName());
+        // Always return a usable seat layout: fall back to a default 2+2 layout derived from
+        // capacity when the bus has none stored, so the conductor app never has to hardcode one.
+        if (bus.getSeatLayout() == null) {
+            response.setSeatLayout(seatLayoutFactory.defaultLayout(bus.getCapacity()));
+        }
         return response;
     }
 }

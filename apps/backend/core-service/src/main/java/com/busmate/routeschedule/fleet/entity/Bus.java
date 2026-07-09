@@ -41,6 +41,13 @@ public class Bus extends BaseEntity {
     @Column(columnDefinition = "jsonb")
     private JsonNode facilities;
 
+    // Structured seat layout of the bus (rows of left/right/back seat-id arrays + blocked seats).
+    // A value object owned by the Bus aggregate, stored as jsonb like `facilities`. Nullable:
+    // when absent, the service layer returns a default 2+2 layout derived from `capacity`.
+    @Type(JsonType.class)
+    @Column(name = "seat_layout", columnDefinition = "jsonb")
+    private JsonNode seatLayout;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private StatusEnum status;

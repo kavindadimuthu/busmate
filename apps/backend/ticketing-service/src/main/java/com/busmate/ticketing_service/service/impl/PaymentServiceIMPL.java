@@ -106,26 +106,7 @@ public class PaymentServiceIMPL implements PaymentService {
             Tickets savedTicket = ticketRepo.save(ticket);
 
             // Convert saved ticket to DTO for response
-            ConductorLogTicketDTO responseDTO = new ConductorLogTicketDTO();
-            responseDTO.setTicketId(savedTicket.getTicketId());
-            responseDTO.setPassengerId(savedTicket.getPassengerId());
-            responseDTO.setStartLocationId(savedTicket.getStartLocationId());
-            responseDTO.setEndLocationId(savedTicket.getEndLocationId());
-            responseDTO.setSeatNumber(savedTicket.getSeatNumber());
-            responseDTO.setFareAmount(savedTicket.getFareAmount().doubleValue());
-            responseDTO.setIssuedAt(savedTicket.getIssuedAt());
-
-            // Get payment status from transaction
-            if (savedTicket.getTransactions() != null) {
-                responseDTO.setPaymentStatus(savedTicket.getTransactions().getStatus().toString());
-            } else {
-                responseDTO.setPaymentStatus("UNKNOWN");
-            }
-
-            // Set passenger count to 1 (assuming 1 passenger per ticket)
-            responseDTO.setPassengerCount(1);
-
-            return responseDTO;
+            return toDto(savedTicket);
 
         } catch (Exception e) {
             throw new BadRequestException("Failed to issue ticket: " + e.getMessage());
@@ -139,31 +120,7 @@ public class PaymentServiceIMPL implements PaymentService {
             List<Tickets> tickets = ticketRepo.findByConductorId(conductorId);
 
             // Convert tickets to DTOs
-            return tickets.stream().map(ticket -> {
-                ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
-                dto.setTicketId(ticket.getTicketId());
-                dto.setPassengerId(ticket.getPassengerId());
-
-                // Direct assignment of String location IDs
-                dto.setStartLocationId(ticket.getStartLocationId());
-                dto.setEndLocationId(ticket.getEndLocationId());
-
-                dto.setSeatNumber(ticket.getSeatNumber());
-                dto.setFareAmount(ticket.getFareAmount().doubleValue());
-                dto.setIssuedAt(ticket.getIssuedAt());
-
-                // Get payment status from transaction
-                if (ticket.getTransactions() != null) {
-                    dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
-                } else {
-                    dto.setPaymentStatus("UNKNOWN");
-                }
-
-                // Set passenger count to 1 (assuming 1 passenger per ticket)
-                dto.setPassengerCount(1);
-
-                return dto;
-            }).toList();
+            return tickets.stream().map(this::toDto).toList();
 
         } catch (Exception e) {
             // Return empty list in case of error
@@ -178,31 +135,7 @@ public class PaymentServiceIMPL implements PaymentService {
             List<Tickets> tickets = ticketRepo.findByBusId(busId);
 
             // Convert tickets to DTOs
-            return tickets.stream().map(ticket -> {
-                ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
-                dto.setTicketId(ticket.getTicketId());
-                dto.setPassengerId(ticket.getPassengerId());
-
-                // Direct assignment of String location IDs
-                dto.setStartLocationId(ticket.getStartLocationId());
-                dto.setEndLocationId(ticket.getEndLocationId());
-
-                dto.setSeatNumber(ticket.getSeatNumber());
-                dto.setFareAmount(ticket.getFareAmount().doubleValue());
-                dto.setIssuedAt(ticket.getIssuedAt());
-
-                // Get payment status from transaction
-                if (ticket.getTransactions() != null) {
-                    dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
-                } else {
-                    dto.setPaymentStatus("UNKNOWN");
-                }
-
-                // Set passenger count to 1 (assuming 1 passenger per ticket)
-                dto.setPassengerCount(1);
-
-                return dto;
-            }).toList();
+            return tickets.stream().map(this::toDto).toList();
 
         } catch (Exception e) {
             // Return empty list in case of error
@@ -221,31 +154,7 @@ public class PaymentServiceIMPL implements PaymentService {
             }
 
             // Convert tickets to DTOs
-            return tickets.stream().map(ticket -> {
-                ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
-                dto.setTicketId(ticket.getTicketId());
-                dto.setPassengerId(ticket.getPassengerId());
-
-                // Direct assignment of String location IDs
-                dto.setStartLocationId(ticket.getStartLocationId());
-                dto.setEndLocationId(ticket.getEndLocationId());
-
-                dto.setSeatNumber(ticket.getSeatNumber());
-                dto.setFareAmount(ticket.getFareAmount().doubleValue());
-                dto.setIssuedAt(ticket.getIssuedAt());
-
-                // Get payment status from transaction
-                if (ticket.getTransactions() != null) {
-                    dto.setPaymentStatus(ticket.getIssueMethod().toString());
-                } else {
-                    dto.setPaymentStatus("UNKNOWN");
-                }
-
-                // Set passenger count to 1 (assuming 1 passenger per ticket)
-                dto.setPassengerCount(1);
-
-                return dto;
-            }).toList();
+            return tickets.stream().map(this::toDto).toList();
 
         } catch (NotFoundException e) {
             throw e;
@@ -308,31 +217,7 @@ public class PaymentServiceIMPL implements PaymentService {
             }
 
             // Convert tickets to DTOs
-            return tickets.stream().map(ticket -> {
-                ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
-                dto.setTicketId(ticket.getTicketId());
-                dto.setPassengerId(ticket.getPassengerId());
-
-                // Direct assignment of String location IDs
-                dto.setStartLocationId(ticket.getStartLocationId());
-                dto.setEndLocationId(ticket.getEndLocationId());
-
-                dto.setSeatNumber(ticket.getSeatNumber());
-                dto.setFareAmount(ticket.getFareAmount().doubleValue());
-                dto.setIssuedAt(ticket.getIssuedAt());
-
-                // Get payment status from transaction
-                if (ticket.getTransactions() != null) {
-                    dto.setPaymentStatus(ticket.getTransactions().getStatus().toString());
-                } else {
-                    dto.setPaymentStatus("UNKNOWN");
-                }
-
-                // Set passenger count to 1 (assuming 1 passenger per ticket)
-                dto.setPassengerCount(1);
-
-                return dto;
-            }).toList();
+            return tickets.stream().map(this::toDto).toList();
 
         } catch (NotFoundException e) {
             throw e;
@@ -377,34 +262,38 @@ public class PaymentServiceIMPL implements PaymentService {
                     .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + ticketId));
 
             // Convert ticket to DTO
-            ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
-            dto.setTicketId(ticket.getTicketId());
-            dto.setPassengerId(ticket.getPassengerId());
-
-            // Direct assignment of String location IDs
-            dto.setStartLocationId(ticket.getStartLocationId());
-            dto.setEndLocationId(ticket.getEndLocationId());
-
-            dto.setSeatNumber(ticket.getSeatNumber());
-            dto.setFareAmount(ticket.getFareAmount().doubleValue());
-            dto.setIssuedAt(ticket.getIssuedAt());
-
-            // Get payment status from transaction
-            if (ticket.getTransactions() != null) {
-                dto.setPaymentStatus(ticket.getStatus().toString());
-            } else {
-                dto.setPaymentStatus("UNKNOWN");
-            }
-
-            // Set passenger count to 1 (assuming 1 passenger per ticket)
-            dto.setPassengerCount(1);
-
-            return dto;
+            return toDto(ticket);
 
         } catch (NotFoundException e) {
             throw e;
         } catch (Exception e) {
             throw new BadRequestException("Failed to fetch ticket with ID: " + ticketId + ", " + e.getMessage());
         }
+    }
+
+    /**
+     * Single source of truth for Tickets -> ConductorLogTicketDTO. Exposes the issue method
+     * (CONDUCTOR/ONLINE) and validation status (VALID/NOT_VALID) as distinct, authoritative
+     * fields so the conductor app can render booked-vs-validated and cash-vs-online correctly.
+     * Previously each read method mapped inline and overloaded `paymentStatus` differently
+     * (getTicketDetailsByTripId in particular put the issue method there while the seat-map UI
+     * expected a validation flag), which is why validated seats never showed.
+     */
+    private ConductorLogTicketDTO toDto(Tickets ticket) {
+        ConductorLogTicketDTO dto = new ConductorLogTicketDTO();
+        dto.setTicketId(ticket.getTicketId());
+        dto.setPassengerId(ticket.getPassengerId());
+        dto.setStartLocationId(ticket.getStartLocationId());
+        dto.setEndLocationId(ticket.getEndLocationId());
+        dto.setSeatNumber(ticket.getSeatNumber());
+        dto.setFareAmount(ticket.getFareAmount() != null ? ticket.getFareAmount().doubleValue() : 0.0);
+        dto.setIssuedAt(ticket.getIssuedAt());
+        dto.setIssueMethod(ticket.getIssueMethod() != null ? ticket.getIssueMethod().toString() : null);
+        dto.setValidationStatus(ticket.getStatus() != null ? ticket.getStatus().toString() : null);
+        // Backward-compat: keep paymentStatus carrying the issue method (CONDUCTOR/ONLINE),
+        // which the trip-summary path historically keyed off.
+        dto.setPaymentStatus(ticket.getIssueMethod() != null ? ticket.getIssueMethod().toString() : "UNKNOWN");
+        dto.setPassengerCount(1);
+        return dto;
     }
 }

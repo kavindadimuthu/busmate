@@ -15,6 +15,9 @@ public class BusResponse {
     private Integer capacity;
     private String model;
     private JsonNode facilities;
+    // Structured seat layout. Never null in responses — the service fills a default 2+2
+    // layout derived from `capacity` when the bus has no explicit layout stored.
+    private JsonNode seatLayout;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

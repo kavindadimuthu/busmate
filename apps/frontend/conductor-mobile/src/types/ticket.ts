@@ -49,6 +49,10 @@ export interface TicketLog {
   passengerCount: number;
   fareAmount: number;
   paymentStatus: string;
+  // CONDUCTOR (cash issued on the bus) vs ONLINE (passenger booked online).
+  issueMethod?: 'CONDUCTOR' | 'ONLINE' | string | null;
+  // VALID (validated / boarded) vs NOT_VALID (booked, not yet validated).
+  validationStatus?: 'VALID' | 'NOT_VALID' | string | null;
   issuedAt: string;
 }
 

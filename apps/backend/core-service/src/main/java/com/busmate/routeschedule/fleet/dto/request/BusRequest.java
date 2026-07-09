@@ -26,5 +26,9 @@ public class BusRequest {
 
     private JsonNode facilities;
 
+    // Optional structured seat layout. If omitted, the bus falls back to a default 2+2
+    // layout generated from `capacity` when read back.
+    private JsonNode seatLayout;
+
     private String status = "active";
 }

@@ -1,4 +1,5 @@
 import { RouteStop, Trip } from '../../types/journey';
+import { BusInfo } from '../../types/seatMap';
 import { apiClient } from '../apiClient';
 
 export const journeyApi = {
@@ -57,9 +58,9 @@ export const journeyApi = {
     return apiClient.authenticatedRequest<any[]>(`/stops/schedule/${scheduleId}`, {}, 'schedule');
   },
 
-  // Get seat layout - Schedule Management Service
-  getSeatLayout: async (busId: string): Promise<any> => {
-    return apiClient.authenticatedRequest<any>(`/buses/${busId}/seats`, {}, 'schedule');
+  // Get a bus (incl. its real seatLayout) from core-service via the gateway.
+  getBusById: async (busId: string): Promise<BusInfo> => {
+    return apiClient.authenticatedRequest<BusInfo>(`/buses/${busId}`, {}, 'schedule');
   },
 
   // Get trips by conductor - Trip Management Service
