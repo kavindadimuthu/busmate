@@ -9,8 +9,8 @@ import { useOperatorDetails } from '@/hooks/mot/operators/useOperatorDetails';
 
 export default function OperatorDetailsPage() {
   const {
-    operator, linkedAccount, buses,
-    isLoading, busesLoading, error, clearError,
+    operator, linkedAccount, buses, permits,
+    isLoading, busesLoading, permitsLoading, error, clearError,
     showDeleteModal, isDeleting,
     handleBack, handleRefresh,
     handleDeleteCancel, handleDeleteConfirm,
@@ -67,6 +67,8 @@ export default function OperatorDetailsPage() {
         operator={operator}
         buses={buses}
         busesLoading={busesLoading}
+        permits={permits}
+        permitsLoading={permitsLoading}
         onRefresh={handleRefresh}
       />
 

@@ -4,8 +4,9 @@ import { ArrowLeft, Edit, Plus, Trash2, Ban } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import {
   OperatorManagementService,
-  BusManagementService,
+  BusOperatorOperationsService,
   BusResponse,
+  PassengerServicePermitResponse,
 } from '@busmate/api-client-route';
 import { UsersControllerService } from '@busmate/api-client-user';
 import type { UserResponse } from '@busmate/api-client-user';
@@ -23,8 +24,10 @@ export function useOperatorDetails() {
   const [operator, setOperator] = useState<OperatorResponseWithLink | null>(null);
   const [linkedAccount, setLinkedAccount] = useState<LinkedAccount | null>(null);
   const [buses, setBuses] = useState<BusResponse[]>([]);
+  const [permits, setPermits] = useState<PassengerServicePermitResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busesLoading, setBusesLoading] = useState(false);
+  const [permitsLoading, setPermitsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Delete/deactivate modal states
@@ -63,25 +66,18 @@ export function useOperatorDetails() {
     }
   }, [operatorId]);
 
-  // Load operator buses
+  // Load operator buses — via the operator-scoped endpoint (BusOperatorOperationsService),
+  // not the generic filtered bus list. That generic endpoint's sortBy needs a raw JPA
+  // property name (e.g. "ntcRegistrationNumber"); this hook used to pass the snake_case
+  // "ntc_registration_number", which core-service's sortBy allowlist check rejects with a
+  // 400 — silently swallowed here, leaving the fleet tab looking permanently empty. The
+  // operator-scoped endpoint sidesteps that entirely and is the more correct fetch anyway.
   const loadOperatorBuses = useCallback(async () => {
     if (!operatorId) return;
 
     try {
       setBusesLoading(true);
-
-      const busesResponse = await BusManagementService.getAllBuses(
-        0,
-        100,
-        'ntc_registration_number',
-        'asc',
-        undefined,
-        operatorId,
-        undefined,
-        undefined,
-        undefined
-      );
-
+      const busesResponse = await BusOperatorOperationsService.getOperatorBuses(operatorId, 0, 100);
       setBuses(busesResponse.content || []);
     } catch (err) {
       console.error('Error loading operator buses:', err);
@@ -90,10 +86,26 @@ export function useOperatorDetails() {
     }
   }, [operatorId]);
 
+  // Load operator permits — same operator-scoped endpoint family as buses.
+  const loadOperatorPermits = useCallback(async () => {
+    if (!operatorId) return;
+
+    try {
+      setPermitsLoading(true);
+      const permitsResponse = await BusOperatorOperationsService.getOperatorPermits(operatorId, 0, 100);
+      setPermits(permitsResponse.content || []);
+    } catch (err) {
+      console.error('Error loading operator permits:', err);
+    } finally {
+      setPermitsLoading(false);
+    }
+  }, [operatorId]);
+
   useEffect(() => {
     loadOperatorDetails();
     loadOperatorBuses();
-  }, [loadOperatorDetails, loadOperatorBuses]);
+    loadOperatorPermits();
+  }, [loadOperatorDetails, loadOperatorBuses, loadOperatorPermits]);
 
   // Handlers
   const handleEdit = useCallback(() => {
@@ -140,8 +152,8 @@ export function useOperatorDetails() {
   }, [router]);
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([loadOperatorDetails(), loadOperatorBuses()]);
-  }, [loadOperatorDetails, loadOperatorBuses]);
+    await Promise.all([loadOperatorDetails(), loadOperatorBuses(), loadOperatorPermits()]);
+  }, [loadOperatorDetails, loadOperatorBuses, loadOperatorPermits]);
 
   // Page metadata
   useSetPageMetadata({
@@ -207,8 +219,10 @@ export function useOperatorDetails() {
     operator,
     linkedAccount,
     buses,
+    permits,
     isLoading,
     busesLoading,
+    permitsLoading,
     error,
     clearError,
     showDeleteModal,
