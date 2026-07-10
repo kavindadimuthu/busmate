@@ -629,6 +629,9 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
           return {
             id: route.id, // Include route ID for updates
+            // Existing group ID in edit mode; empty in create mode (group
+            // doesn't exist yet — same pattern as id/routeStop.id above).
+            routeGroupId: routeGroupId || '',
             name: route.name,
             nameSinhala: route.nameSinhala,
             nameTamil: route.nameTamil,

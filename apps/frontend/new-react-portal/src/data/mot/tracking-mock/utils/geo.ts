@@ -178,7 +178,8 @@ function toDegrees(rad: number): number {
  */
 export function decodePolyline(encoded: string): { lat: number; lng: number }[] {
     const points: { lat: number; lng: number }[] = [];
-    let index = 0, len = encoded.length;
+    let index = 0;
+    const len = encoded.length;
     let lat = 0, lng = 0;
 
     while (index < len) {

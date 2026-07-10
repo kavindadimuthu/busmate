@@ -650,14 +650,14 @@ function makeFilterOptions(): AnalyticsFilterOptions {
 // ── Cached snapshot state ────────────────────────────────────────
 
 let _kpis: AnalyticsKPIMetric[] = makeKPIs();
-let _trendHistory: TrendPoint[] = makeTrendHistory();
-let _tripAnalytics: TripAnalyticsData = makeTripAnalytics();
-let _routeAnalytics: RouteAnalyticsData = makeRouteAnalytics();
-let _fleetAnalytics: FleetAnalyticsData = makeFleetAnalytics();
-let _staffAnalytics: StaffAnalyticsData = makeStaffAnalytics();
-let _revenueAnalytics: RevenueAnalyticsData = makeRevenueAnalytics();
-let _passengerAnalytics: PassengerAnalyticsData = makePassengerAnalytics();
-let _filterOptions: AnalyticsFilterOptions = makeFilterOptions();
+const _trendHistory: TrendPoint[] = makeTrendHistory();
+const _tripAnalytics: TripAnalyticsData = makeTripAnalytics();
+const _routeAnalytics: RouteAnalyticsData = makeRouteAnalytics();
+const _fleetAnalytics: FleetAnalyticsData = makeFleetAnalytics();
+const _staffAnalytics: StaffAnalyticsData = makeStaffAnalytics();
+const _revenueAnalytics: RevenueAnalyticsData = makeRevenueAnalytics();
+const _passengerAnalytics: PassengerAnalyticsData = makePassengerAnalytics();
+const _filterOptions: AnalyticsFilterOptions = makeFilterOptions();
 
 // ── Public API ───────────────────────────────────────────────────
 

@@ -18,6 +18,19 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      // Force a single @types/react(-dom) identity across the whole
+      // program, including inside third-party .d.ts files (e.g. several
+      // @radix-ui/* packages ship their own nested, older copy) — without
+      // this, TS treats the two copies' `React.ReactNode`/children shapes as
+      // structurally incompatible ("Property 'children' does not exist").
+      // Type-check only (tsc --noEmit); Vite's own resolve.dedupe in
+      // vite.config.ts handles the equivalent dedupe for the real runtime
+      // bundle, so this has no effect on what actually ships.
+      "react": ["../../../node_modules/@types/react"],
+      "react/jsx-runtime": ["../../../node_modules/@types/react/jsx-runtime"],
+      "react/jsx-dev-runtime": ["../../../node_modules/@types/react/jsx-dev-runtime"],
+      "react-dom": ["../../../node_modules/@types/react-dom"],
+      "react-dom/client": ["../../../node_modules/@types/react-dom/client"],
       "@/*": ["src/*"],
       "@busmate/ui": ["../../../libs/ui/src/index.ts"],
       "@busmate/ui/styles": ["../../../libs/ui/src/styles/globals.css"],
@@ -31,7 +44,10 @@
     /* Linting */
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "erasableSyntaxOnly": true,
+    // Off: the generated @busmate/api-client-* models use real `enum`
+    // declarations (not erasable). Vite/esbuild compiles enums fine — this
+    // flag only matters for pure type-erasure toolchains, not this build.
+    "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],

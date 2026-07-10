@@ -167,7 +167,7 @@ export function TripAssignmentWorkspace() {
       const fromDate = startDate.toISOString().split('T')[0];
       const toDate = endDate.toISOString().split('T')[0];
       
-      const response = await TripManagementService.generateTripsForSchedule(scheduleId, fromDate, toDate);
+      const response = await TripManagementService.generateTripsForSchedule1(scheduleId, fromDate, toDate);
       
       // Refresh trips after generation
       if (workspace.selectedRoute) {

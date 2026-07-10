@@ -8,6 +8,8 @@ export const env = {
   ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000').split(','),
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '60000'),
   RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX ?? '100'),
+  // Optional: the AI route-generation feature 503s (not a startup crash) when unset.
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 };
 
 function requireEnv(key: string): string {

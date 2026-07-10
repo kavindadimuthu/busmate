@@ -2,9 +2,7 @@
 
 import { RefreshCw, AlertCircle } from 'lucide-react';
 
-interface RouteGroupLoadingSkeletonProps {}
-
-export function RouteGroupLoadingSkeleton({}: RouteGroupLoadingSkeletonProps) {
+export function RouteGroupLoadingSkeleton() {
   return (
     <div className="space-y-6">
       {/* Header skeleton */}

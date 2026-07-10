@@ -198,7 +198,7 @@ export function ApiMonitoringPanel({
 
   const sortedEndpoints = useMemo(() => {
     return [...apiEndpoints].sort((a, b) => {
-      let cmp = 0;
+      let cmp: number;
       if (sortField === 'endpoint') cmp = a.endpoint.localeCompare(b.endpoint);
       else if (sortField === 'avgResponseTime') cmp = a.avgResponseTime - b.avgResponseTime;
       else if (sortField === 'errorRate') cmp = a.errorRate - b.errorRate;

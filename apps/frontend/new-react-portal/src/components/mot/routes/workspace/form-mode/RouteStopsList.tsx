@@ -369,16 +369,10 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         });
     }, [toast]);
 
-    if (!route) {
-        return (
-            <div className="flex flex-col rounded-lg bg-muted p-4">
-                <span className="text-sm font-medium text-muted-foreground mb-2">Route Stops List</span>
-                <p className="text-sm text-muted-foreground">No route data available</p>
-            </div>
-        );
-    }
-
-    const stops = route.routeStops || [];
+    // Hooks below must run unconditionally on every render (Rules of Hooks) —
+    // the "no route" placeholder is rendered at the bottom instead of via an
+    // early return here.
+    const stops = route?.routeStops || [];
 
     const handleFetchDistancesFromMap = useCallback(async () => {
         // Check if we have enough stops with coordinates
@@ -748,6 +742,15 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const isBusy = isFetchingDistances || isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops;
 
     const sortableIds = stops.map(stop => `stop-${stop.orderNumber}`);
+
+    if (!route) {
+        return (
+            <div className="flex flex-col rounded-lg bg-muted p-4">
+                <span className="text-sm font-medium text-muted-foreground mb-2">Route Stops List</span>
+                <p className="text-sm text-muted-foreground">No route data available</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col bg-card">

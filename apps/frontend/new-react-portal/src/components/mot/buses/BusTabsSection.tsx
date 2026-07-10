@@ -31,9 +31,24 @@ interface TabType {
   count?: number;
 }
 
+// The generated OperatorResponse type doesn't declare these contact/license
+// fields — pre-existing gap (identical in management-portal), unverified
+// whether core-service's Operator response actually returns them. Widened
+// locally rather than guessed at, matching UserResponseWithSync/
+// OperatorResponseWithLink's pattern elsewhere in this codebase; the JSX
+// below already handles the undefined case with 'Not specified' fallbacks,
+// so this doesn't change behavior — only silences the type error.
+type OperatorResponseWithContact = OperatorResponse & {
+  contactPerson?: string;
+  phoneNumber?: string;
+  email?: string;
+  address?: string;
+  licenseNumber?: string;
+};
+
 interface BusTabsSectionProps {
   bus: BusResponse;
-  operator?: OperatorResponse | null;
+  operator?: OperatorResponseWithContact | null;
   trips: TripResponse[];
   tripsLoading: boolean;
   onRefresh: () => Promise<void>;
@@ -173,8 +188,8 @@ export function BusTabsSection({
           bValue = new Date(b.tripDate || 0);
           break;
         case 'scheduledDepartureTime':
-          aValue = new Date(`${a.tripDate}T${a.scheduledDepartureTime}` || 0);
-          bValue = new Date(`${b.tripDate}T${b.scheduledDepartureTime}` || 0);
+          aValue = new Date(a.tripDate && a.scheduledDepartureTime ? `${a.tripDate}T${a.scheduledDepartureTime}` : 0);
+          bValue = new Date(b.tripDate && b.scheduledDepartureTime ? `${b.tripDate}T${b.scheduledDepartureTime}` : 0);
           break;
         case 'status':
           aValue = a.status || '';
@@ -396,7 +411,7 @@ export function BusTabsSection({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadge(trip.status)}>
+                      <span className={getStatusBadge(trip.status) || ''}>
                         {trip.status?.replace('_', ' ').toUpperCase()}
                       </span>
                     </td>
@@ -501,7 +516,7 @@ export function BusTabsSection({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status:</span>
-                  <span className={getStatusBadge(operator.status)}>
+                  <span className={getStatusBadge(operator.status) || ''}>
                     {operator.status?.charAt(0).toUpperCase() + (operator.status?.slice(1) || '')}
                   </span>
                 </div>

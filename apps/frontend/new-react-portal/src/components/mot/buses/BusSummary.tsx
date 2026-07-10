@@ -251,7 +251,7 @@ export function BusSummary({ bus, operator, onViewOperator }: BusSummaryProps) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Type:</span>
                   {operator?.operatorType && (
-                    <span className={getOperatorTypeBadge(operator.operatorType)}>
+                    <span className={getOperatorTypeBadge(operator.operatorType) || ''}>
                       {operator.operatorType}
                     </span>
                   )}

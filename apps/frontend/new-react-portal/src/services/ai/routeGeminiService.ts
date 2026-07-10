@@ -13,13 +13,15 @@ import {
   AIRouteGenerationResponse,
   RouteGenerationContext,
 } from './routeTypes';
+import { fetchAccessToken } from '@/lib/api/setup';
+import { getGatewayUrl } from '@/lib/auth/session';
 
 // ============================================================================
 // INTERNAL PROXY ENDPOINT
 // ============================================================================
 
-/** Backend route that proxies requests to Gemini server-side. */
-const AI_PROXY_ROUTE = '/api/ai/generate-route';
+/** Gateway route that proxies requests to Gemini server-side (auth-protected). */
+const AI_PROXY_ROUTE = () => `${getGatewayUrl()}/api/ai/generate-route`;
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 // ============================================================================
@@ -218,9 +220,13 @@ export class RouteGeminiAIService implements IRouteAIService {
       const userPrompt = request.prompt;
 
       // Call the server-side proxy — Gemini API key never leaves the server.
-      const response = await fetch(AI_PROXY_ROUTE, {
+      const accessToken = await fetchAccessToken();
+      const response = await fetch(AI_PROXY_ROUTE(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           systemPrompt,
           userPrompt,

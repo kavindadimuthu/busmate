@@ -33,7 +33,7 @@ export function useRoutesImport() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Template download error:', error);
-      throw new Error('Failed to download template');
+      throw new Error('Failed to download template', { cause: error });
     }
   }, []);
 

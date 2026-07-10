@@ -1,10 +1,12 @@
 /**
  * Schedule Workspace Types
- * 
+ *
  * These types represent the complete structure for managing schedule data
  * in the Schedule Workspace, including schedules, stops, calendars, and exceptions.
  * Designed to work seamlessly with the route-management-service Schedule APIs.
  */
+
+import { validateSchedule } from '@/validation-rules/scheduleValidation';
 
 // ============================================================================
 // ENUMS
@@ -248,9 +250,10 @@ export function createEmptyScheduleWorkspaceData(): ScheduleWorkspaceData {
  * This function is kept for backward compatibility and delegates to the new validation module
  */
 export function isScheduleValid(schedule: Schedule): { valid: boolean; errors: string[] } {
-  // Import dynamically to avoid circular dependencies
-  // The actual validation logic is now in /src/validation-rules/scheduleValidation.ts
-  const { validateSchedule } = require('@/validation-rules/scheduleValidation');
+  // The actual validation logic lives in /src/validation-rules/scheduleValidation.ts —
+  // safe to import directly at the top of the file: scheduleValidation.ts only
+  // imports Schedule/ScheduleCalendar as types from here, which TS elides at
+  // runtime, so there's no real circular module dependency.
   return validateSchedule(schedule);
 }
 

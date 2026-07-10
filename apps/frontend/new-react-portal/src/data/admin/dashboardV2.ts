@@ -340,10 +340,10 @@ const mockActiveAlerts: ActiveAlertEntry[] = [
 
 let _kpis: KPIMetric[] = makeKPIs();
 let _trendHistory: TrendPoint[] = makeTrendHistory();
-let _activity: ActivityEntry[] = [...mockActivity];
-let _services: ServiceSummary[] = [...mockServices];
-let _userDistribution: UserDistribution[] = [...mockUserDistribution];
-let _activeAlerts: ActiveAlertEntry[] = [...mockActiveAlerts];
+const _activity: ActivityEntry[] = [...mockActivity];
+const _services: ServiceSummary[] = [...mockServices];
+const _userDistribution: UserDistribution[] = [...mockUserDistribution];
+const _activeAlerts: ActiveAlertEntry[] = [...mockActiveAlerts];
 
 // ── Simulation tick ──────────────────────────────────────────────
 

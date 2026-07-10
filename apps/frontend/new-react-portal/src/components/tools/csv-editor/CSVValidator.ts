@@ -201,7 +201,7 @@ export const ROUTE_VALIDATION_RULES: ValidationRule[] = [
     customValidator: (value: any, row: CSVRow, rowIndex: number) => {
       if (value && typeof value === 'string') {
         // Route number should be alphanumeric
-        if (!/^[A-Z0-9\-\/]+$/i.test(value.trim())) {
+        if (!/^[A-Z0-9\-/]+$/i.test(value.trim())) {
           return 'Route number should contain only letters, numbers, hyphens, and forward slashes';
         }
       }

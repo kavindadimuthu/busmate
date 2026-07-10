@@ -1,7 +1,5 @@
 /* Minimal Service Worker for Web Push */
 
-/* eslint-disable no-restricted-globals */
-
 self.addEventListener('install', (event) => {
     // Activate worker immediately after install
     self.skipWaiting();

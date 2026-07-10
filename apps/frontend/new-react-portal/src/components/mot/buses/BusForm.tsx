@@ -183,10 +183,10 @@ export function BusForm({
 
   // Add custom facility
   const addCustomFacility = () => {
-    if (newFacilityKey.trim() && newFacilityLabel.trim() && !facilities.hasOwnProperty(newFacilityKey)) {
+    if (newFacilityKey.trim() && newFacilityLabel.trim() && !Object.hasOwn(facilities, newFacilityKey)) {
       const facilityKey = newFacilityKey.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      
-      if (facilityKey && !facilities.hasOwnProperty(facilityKey)) {
+
+      if (facilityKey && !Object.hasOwn(facilities, facilityKey)) {
         setFacilities(prev => ({
           ...prev,
           [facilityKey]: true
@@ -229,7 +229,7 @@ export function BusForm({
       setSubmitError(null);
       
       // Prepare facilities data as JsonNode (only include facilities, both true and false)
-      const facilitiesJson: JsonNode = Object.keys(facilities).length > 0 ? facilities : undefined;
+      const facilitiesJson: JsonNode | undefined = Object.keys(facilities).length > 0 ? facilities : undefined;
       
       const busData: BusRequest = {
         ...formData,

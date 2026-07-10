@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler.middleware';
 import { createProxy } from './proxy/serviceProxy';
 import { routes } from './config/routes.config';
 import { bffAuthRouter } from './bff/auth.routes';
+import { aiRouter } from './routes/ai.routes';
 
 export function createApp() {
   const app = express();
@@ -42,6 +43,11 @@ export function createApp() {
   // to forward raw. Strictly additive: doesn't touch the existing
   // Bearer-token /api/auth/* flow used by passenger-web/conductor-mobile.
   app.use('/api/bff/auth', express.json(), bffAuthRouter);
+
+  // AI route-generation proxy (Gemini) — keeps GEMINI_API_KEY server-side.
+  // Requires a valid portal session; same scoped-json-parser reasoning as
+  // the BFF above.
+  app.use('/api/ai', authMiddleware, express.json(), aiRouter);
 
   // Route registration. Proxies are mounted at the app root (not at
   // route.pathPrefix) and rely on pathFilter internally — see serviceProxy.ts
