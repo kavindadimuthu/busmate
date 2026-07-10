@@ -1,26 +1,25 @@
-export const ACCESS_TOKEN_STORAGE_KEY = "bm_access_token";
-export const REFRESH_TOKEN_STORAGE_KEY = "bm_refresh_token";
-
-export const ACCESS_TOKEN_COOKIE = ACCESS_TOKEN_STORAGE_KEY;
-export const REFRESH_TOKEN_COOKIE = REFRESH_TOKEN_STORAGE_KEY;
-
-const PORTAL_ROLES = ["admin", "mot", "timekeeper", "operator"] as const;
-export type PortalRole = (typeof PORTAL_ROLES)[number];
-
-export function isPortalRole(userType: string | null | undefined): userType is PortalRole {
-  return !!userType && (PORTAL_ROLES as readonly string[]).includes(userType.toLowerCase());
-}
+// Talks to the api-gateway BFF (apps/backend/api-gateway/src/bff), which
+// holds the real tokens in httpOnly cookies. This client only ever sees a
+// short-lived access token via /token, handed back on demand for the
+// generated OpenAPI clients — the refresh token never reaches the browser.
 
 export function getGatewayUrl(): string {
-  return import.meta.env.VITE_API_GATEWAY_URL || "http://localhost:8080";
+  return import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
 }
 
-export interface GatewaySession {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  userId: string;
+export interface LoginResult {
   userType: string;
+  redirectPath: string;
+}
+
+export interface CurrentUser {
+  userId: string;
+  email: string;
+  fullName?: string;
+  username?: string;
+  phoneNumber?: string;
+  userType: string;
+  accountStatus?: string;
 }
 
 export class GatewayAuthError extends Error {
@@ -28,74 +27,63 @@ export class GatewayAuthError extends Error {
 
   constructor(status: number, message: string) {
     super(message);
-    this.name = "GatewayAuthError";
+    this.name = 'GatewayAuthError';
     this.status = status;
   }
 }
 
 function extractErrorMessage(body: unknown, fallback: string): string {
-  if (body && typeof body === "object") {
+  if (body && typeof body === 'object') {
     const err = (body as Record<string, unknown>).error;
-    if (typeof err === "string") return err;
-    if (err && typeof err === "object" && typeof (err as Record<string, unknown>).message === "string") {
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object' && typeof (err as Record<string, unknown>).message === 'string') {
       return (err as Record<string, unknown>).message as string;
     }
   }
   return fallback;
 }
 
-async function gatewayAuthRequest(path: string, body: unknown): Promise<GatewaySession> {
+async function bffRequest<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${getGatewayUrl()}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      credentials: 'include',
+      ...init,
+      headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     });
   } catch {
-    throw new GatewayAuthError(502, "Unable to reach the authentication service");
+    throw new GatewayAuthError(502, 'Unable to reach the authentication service');
   }
 
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new GatewayAuthError(res.status, extractErrorMessage(data, "Authentication request failed"));
+    throw new GatewayAuthError(res.status, extractErrorMessage(data, 'Authentication request failed'));
   }
 
-  return {
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
-    expiresIn: Number(data.expiresIn) || 3600,
-    userId: data.userId,
-    userType: data.userType,
-  };
+  return data as T;
 }
 
-export function loginWithPassword(email: string, password: string): Promise<GatewaySession> {
-  return gatewayAuthRequest("/api/auth/login", { email, password });
+export function loginWithPassword(email: string, password: string): Promise<LoginResult> {
+  return bffRequest<LoginResult>('/api/bff/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
 }
 
-export function refreshSession(refreshToken: string): Promise<GatewaySession> {
-  return gatewayAuthRequest("/api/auth/refresh", { refreshToken });
-}
-
-export async function logoutSession(accessToken: string): Promise<void> {
+export async function logoutSession(): Promise<void> {
   try {
-    await fetch(`${getGatewayUrl()}/api/auth/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    await bffRequest('/api/bff/auth/logout', { method: 'POST' });
   } catch (error) {
-    console.error("Backend logout call failed:", error);
+    console.error('Logout failed:', error);
   }
 }
 
-export function storeSession(session: Pick<GatewaySession, "accessToken" | "refreshToken">): void {
-  localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, session.accessToken);
-  localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, session.refreshToken);
+export function fetchCurrentUser(): Promise<CurrentUser> {
+  return bffRequest<CurrentUser>('/api/bff/auth/me');
 }
 
-export function clearSession(): void {
-  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+export async function fetchBffAccessToken(): Promise<string> {
+  const { accessToken } = await bffRequest<{ accessToken: string }>('/api/bff/auth/token');
+  return accessToken;
 }

@@ -2,7 +2,7 @@ import { OpenAPI as RouteAPI } from '@busmate/api-client-route';
 import { OpenAPI as TicketingAPI } from '@busmate/api-client-ticketing';
 import { OpenAPI as LocationAPI } from '@busmate/api-client-location';
 import { OpenAPI as UserManagementAPI } from '@busmate/api-client-user';
-import { ACCESS_TOKEN_STORAGE_KEY, getGatewayUrl } from '@/lib/auth/session';
+import { fetchBffAccessToken, getGatewayUrl } from '@/lib/auth/session';
 
 const gatewayBaseUrl =
   import.meta.env.VITE_API_GATEWAY_URL ||
@@ -16,8 +16,9 @@ LocationAPI.BASE = (import.meta.env.VITE_LOCATION_TRACKING_API_URL || 'http://lo
 // browser-facing call to this service. See lib/api/adminUsers.ts for the admin CRUD layer.
 UserManagementAPI.BASE = gatewayBaseUrl;
 
-// Cache the token to avoid fetching on every API call.
-// The token is refreshed when a fetch fails (returns 401) or after expiry.
+// Cache the token in memory to avoid a round trip to the BFF on every API
+// call. The token itself lives server-side in an httpOnly cookie — this is
+// just a short-lived copy fetched via GET /api/bff/auth/token.
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
@@ -27,11 +28,7 @@ export async function fetchAccessToken(): Promise<string> {
     return cachedToken;
   }
 
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (!accessToken) {
-    cachedToken = null;
-    throw new Error('Missing access token');
-  }
+  const accessToken = await fetchBffAccessToken();
   cachedToken = accessToken;
 
   // Decode the JWT payload to extract expiry, refresh 60s before it expires
@@ -44,6 +41,11 @@ export async function fetchAccessToken(): Promise<string> {
   }
 
   return accessToken;
+}
+
+export function clearCachedAccessToken(): void {
+  cachedToken = null;
+  tokenExpiresAt = 0;
 }
 
 // Set up async token resolver for all generated API clients.

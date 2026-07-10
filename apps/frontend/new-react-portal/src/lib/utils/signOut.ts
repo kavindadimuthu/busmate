@@ -1,15 +1,11 @@
-import { ACCESS_TOKEN_STORAGE_KEY, clearSession, logoutSession } from "@/lib/auth/session";
+import { logoutSession } from "@/lib/auth/session";
+import { clearCachedAccessToken } from "@/lib/api/setup";
 
 export default async function signOut() {
     try {
-        const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-        if (accessToken) {
-            await logoutSession(accessToken);
-        }
-    } catch (error) {
-        console.error('Logout failed:', error);
+        await logoutSession();
     } finally {
-        clearSession();
+        clearCachedAccessToken();
         window.location.href = '/';
     }
 }
