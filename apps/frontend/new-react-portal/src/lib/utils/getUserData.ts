@@ -1,37 +1,33 @@
 import UserData from "@/types/UserData";
-import { cookies } from "next/headers";
+import { ACCESS_TOKEN_STORAGE_KEY, getGatewayUrl } from "@/lib/auth/session";
 import { getDecodedAccessToken } from "./getDecodedAccessToken";
-import { ACCESS_TOKEN_COOKIE, getGatewayUrl } from "@/lib/auth/session";
 
-/**
- * Utility function to fetch user data for the authenticated session.
- * This is used in server components to get user information for rendering.
- */
 export async function getUserData(): Promise<UserData | null> {
   try {
     const payload = await getDecodedAccessToken();
-    if (!payload) {
-      return null;
-    }
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
-    if (!accessToken) {
+    if (!payload || !accessToken) {
       return null;
     }
 
     const res = await fetch(`${getGatewayUrl()}/api/auth/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      cache: 'no-store',
     });
+
     if (!res.ok) {
-      return null;
+      return {
+        id: payload.sub,
+        email: payload.email || "",
+        user_role: payload.app_metadata?.user_type || "user",
+        username: payload.email || "Unknown User",
+      };
     }
 
     const me = await res.json();
-    const nameParts = String(me.fullName ?? '').trim().split(/\s+/).filter(Boolean);
+    const nameParts = String(me.fullName ?? "").trim().split(/\s+/).filter(Boolean);
     const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || undefined;
+    const lastName = nameParts.slice(1).join(" ") || undefined;
 
     return {
       id: me.userId ?? payload.sub,

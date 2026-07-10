@@ -15,7 +15,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import {
   Card,
   CardContent,

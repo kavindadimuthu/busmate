@@ -1,6 +1,6 @@
 /** Service Worker registration & Push subscription helper */
 
-const API_BASE = process.env.NEXT_PUBLIC_NOTIFICATION_MANAGEMENT_API_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_NOTIFICATION_MANAGEMENT_API_URL || 'http://localhost:8080';
 
 export async function ensureServiceWorkerRegistered() {
   if (typeof window === 'undefined') return null;

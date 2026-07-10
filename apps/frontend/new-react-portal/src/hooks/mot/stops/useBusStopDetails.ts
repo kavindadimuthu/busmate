@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { StopResponse, BusStopManagementService } from '@busmate/api-client-route';
 import { useToast } from '@/hooks/use-toast';

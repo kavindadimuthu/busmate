@@ -5,7 +5,7 @@ import { UserDetailPanel, ConfirmDialog } from '@/components/admin/users';
 import { getUserDisplayName } from '@/data/admin/users';
 import { useUserDetail } from '@/hooks/admin/users/useUserDetail';
 import { ArrowLeft, AlertTriangle, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 
 export default function UserDetailPage() {
   const {

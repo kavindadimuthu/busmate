@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import React from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { getStaffMemberById } from '@/data/mot/staff';

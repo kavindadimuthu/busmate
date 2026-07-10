@@ -2,9 +2,8 @@
  * Gemini AI Service Implementation for Route Generation
  *
  * Implements the IRouteAIService interface for Google's Gemini API.
- * All Gemini API calls are proxied through `/api/ai/generate-route` — a
- * Next.js server-side route — so the API key never appears in the browser
- * Network tab. The frontend only sends prompts; the server holds the key.
+ * Route generation calls are expected to go through a backend proxy endpoint
+ * so the API key does not appear in the browser Network tab.
  */
 
 import { AIServiceProvider } from './types';
@@ -19,7 +18,7 @@ import {
 // INTERNAL PROXY ENDPOINT
 // ============================================================================
 
-/** Next.js API route that proxies requests to Gemini server-side. */
+/** Backend route that proxies requests to Gemini server-side. */
 const AI_PROXY_ROUTE = '/api/ai/generate-route';
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 
@@ -187,12 +186,12 @@ export class RouteGeminiAIService implements IRouteAIService {
    * Check if the Gemini service is available.
    *
    * The feature can be disabled at the deployment level by setting
-   * NEXT_PUBLIC_GEMINI_ENABLED=false in the frontend environment.
+   * VITE_GEMINI_ENABLED=false in the frontend environment.
    * When not explicitly disabled, the service is considered available;
    * the server route will return 503 if the server-side key is missing.
    */
   isAvailable(): boolean {
-    return process.env.NEXT_PUBLIC_GEMINI_ENABLED !== 'false';
+    return import.meta.env.VITE_GEMINI_ENABLED !== 'false';
   }
 
   /**
@@ -208,7 +207,7 @@ export class RouteGeminiAIService implements IRouteAIService {
     if (!this.isAvailable()) {
       return {
         success: false,
-        error: 'AI route generation is disabled. Set NEXT_PUBLIC_GEMINI_ENABLED=true to enable it.',
+        error: 'AI route generation is disabled. Set VITE_GEMINI_ENABLED=true to enable it.',
         provider: this.provider,
         model: this.modelName,
       };

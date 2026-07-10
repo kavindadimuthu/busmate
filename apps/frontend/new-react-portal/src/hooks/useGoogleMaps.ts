@@ -7,7 +7,7 @@
 import { useLoadScript } from '@react-google-maps/api';
 import { useMemo } from 'react';
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 // Define libraries as a constant to prevent re-renders
 const LIBRARIES: ("places" | "geometry" | "drawing" | "visualization")[] = ['places', 'geometry'];

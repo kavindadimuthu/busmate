@@ -1,6 +1,6 @@
 import { getCookie } from '@/lib/utils/cookieUtils';
 
-const NOTIFICATION_API_BASE = process.env.NEXT_PUBLIC_NOTIFICATION_MANAGEMENT_API_URL || 'http://localhost:8080';
+const NOTIFICATION_API_BASE = import.meta.env.VITE_NOTIFICATION_MANAGEMENT_API_URL || 'http://localhost:8080';
 
 export interface SendNotificationRequest {
     title: string;

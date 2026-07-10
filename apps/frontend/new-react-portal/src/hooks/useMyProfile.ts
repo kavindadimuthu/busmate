@@ -6,7 +6,7 @@
 // user-management CRUD (see lib/api/adminUsers.ts) work identically here, just
 // scoped to the caller's own userId instead of an admin acting on someone else's.
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { toast } from 'sonner';
 import {
   AdminApiError,

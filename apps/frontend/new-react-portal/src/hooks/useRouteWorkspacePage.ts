@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams } from '@/lib/router';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { useToast } from '@/hooks/use-toast';
 import { useSetPageMetadata } from '@/context/PageContext';

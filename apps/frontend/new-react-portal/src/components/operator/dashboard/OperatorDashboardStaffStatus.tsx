@@ -1,7 +1,7 @@
 'use client';
 
 import { Car, Users, UserCheck, CalendarOff, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { StaffStatusItem } from '@/data/operator/dashboard';
 
 const ICON_MAP: Record<StaffStatusItem['icon'], React.ReactNode> = {

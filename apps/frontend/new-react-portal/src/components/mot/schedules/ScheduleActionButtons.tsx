@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Upload, Download, LayoutGrid, MoreHorizontal } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import {
   Button,
   DropdownMenu,

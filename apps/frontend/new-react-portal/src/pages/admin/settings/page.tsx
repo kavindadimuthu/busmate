@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useCallback } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { SettingsTabs } from '@/components/admin/settings/SettingsTabs';
 import type { SettingsTab } from '@/components/admin/settings/SettingsTabs';

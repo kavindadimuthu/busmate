@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from '@/lib/router';
 import { toast } from 'sonner';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { UserForm } from '@/components/admin/users';
@@ -10,7 +10,7 @@ import { getUserDisplayName, toAdminUser } from '@/data/admin/users';
 import type { AdminUser } from '@/data/admin/users';
 import { getUser, updateUser, updateUserProfile, AdminApiError } from '@/lib/api/adminUsers';
 import { ArrowLeft, AlertTriangle, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 
 export default function EditUserPage() {
   const params = useParams();

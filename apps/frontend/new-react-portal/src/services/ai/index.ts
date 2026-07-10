@@ -67,13 +67,13 @@ export function getAvailableAIServices(): AIServiceOption[] {
 export function isProviderAvailable(provider: AIServiceProvider): boolean {
   switch (provider) {
     case 'gemini':
-      return !!process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      return !!import.meta.env.VITE_GEMINI_API_KEY;
     case 'openai':
-      return !!process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+      return !!import.meta.env.VITE_OPENAI_API_KEY;
     case 'claude':
-      return !!process.env.NEXT_PUBLIC_CLAUDE_API_KEY;
+      return !!import.meta.env.VITE_CLAUDE_API_KEY;
     case 'deepseek':
-      return !!process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
+      return !!import.meta.env.VITE_DEEPSEEK_API_KEY;
     default:
       return false;
   }

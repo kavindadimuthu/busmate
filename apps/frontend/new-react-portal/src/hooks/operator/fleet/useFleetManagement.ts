@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useDataTable } from '@busmate/ui';
 import { BusOperatorOperationsService } from '@busmate/api-client-route';
 import type { BusResponse } from '@busmate/api-client-route';

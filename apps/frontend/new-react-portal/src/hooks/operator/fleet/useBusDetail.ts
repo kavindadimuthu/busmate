@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams } from '@/lib/router';
 import { usePageContext } from '@/context/PageContext';
 import { BusOperatorOperationsService } from '@busmate/api-client-route';
 import type { BusResponse } from '@busmate/api-client-route';

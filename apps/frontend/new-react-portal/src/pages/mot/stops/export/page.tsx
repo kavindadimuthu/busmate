@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Badge, Button } from '@busmate/ui';
 import { ArrowLeft, FileText, Filter } from 'lucide-react';

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { Bus, Calendar, Users, Route, Wrench, Activity, ArrowUpRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { QuickAction } from '@/data/operator/dashboard';

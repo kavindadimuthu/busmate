@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useDataTable } from '@busmate/ui';
 import { listUsers, AdminApiError } from '@/lib/api/adminUsers';
 import type { AccountStatus } from '@/lib/api/adminUsers';

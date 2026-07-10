@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { Activity, ArrowUpRight, ShieldAlert, User, DollarSign, Cpu } from 'lucide-react';
 import { ActivityEntry } from '@/data/admin/dashboardV2';
 

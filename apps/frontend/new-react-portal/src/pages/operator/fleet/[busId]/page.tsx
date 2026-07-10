@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { BusSummaryCard } from '@/components/operator/fleet';

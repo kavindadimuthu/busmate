@@ -2,15 +2,16 @@ import { OpenAPI as RouteAPI } from '@busmate/api-client-route';
 import { OpenAPI as TicketingAPI } from '@busmate/api-client-ticketing';
 import { OpenAPI as LocationAPI } from '@busmate/api-client-location';
 import { OpenAPI as UserManagementAPI } from '@busmate/api-client-user';
+import { ACCESS_TOKEN_STORAGE_KEY, getGatewayUrl } from '@/lib/auth/session';
 
 const gatewayBaseUrl =
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  process.env.NEXT_PUBLIC_USER_MANAGEMENT_API_URL ||
-  'http://localhost:8080';
+  import.meta.env.VITE_API_GATEWAY_URL ||
+  import.meta.env.VITE_USER_MANAGEMENT_API_URL ||
+  getGatewayUrl();
 
-RouteAPI.BASE = process.env.NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL || gatewayBaseUrl;
-TicketingAPI.BASE = process.env.NEXT_PUBLIC_TICKETING_API_URL || gatewayBaseUrl;
-LocationAPI.BASE = (process.env.NEXT_PUBLIC_LOCATION_TRACKING_API_URL || 'http://localhost:4000') + '/api';
+RouteAPI.BASE = import.meta.env.VITE_ROUTE_MANAGEMENT_API_URL || gatewayBaseUrl;
+TicketingAPI.BASE = import.meta.env.VITE_TICKETING_API_URL || gatewayBaseUrl;
+LocationAPI.BASE = (import.meta.env.VITE_LOCATION_TRACKING_API_URL || 'http://localhost:4000') + '/api';
 // Goes through api-gateway (not straight to user-management) — same as every other
 // browser-facing call to this service. See lib/api/adminUsers.ts for the admin CRUD layer.
 UserManagementAPI.BASE = gatewayBaseUrl;
@@ -26,13 +27,11 @@ export async function fetchAccessToken(): Promise<string> {
     return cachedToken;
   }
 
-  const res = await fetch('/api/auth/token');
-  if (!res.ok) {
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (!accessToken) {
     cachedToken = null;
-    throw new Error('Failed to retrieve access token');
+    throw new Error('Missing access token');
   }
-
-  const { accessToken } = await res.json();
   cachedToken = accessToken;
 
   // Decode the JWT payload to extract expiry, refresh 60s before it expires

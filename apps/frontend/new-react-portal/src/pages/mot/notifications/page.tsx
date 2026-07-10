@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { PenSquare, Inbox, Send } from 'lucide-react';
 
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';

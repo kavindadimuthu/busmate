@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { ArrowLeft } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import OperatorForm from '@/components/mot/users/operator/OperatorForm';

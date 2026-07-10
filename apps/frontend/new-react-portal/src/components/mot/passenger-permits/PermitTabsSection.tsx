@@ -18,7 +18,7 @@ import {
   Clock,
   FileText
 } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import type { 
   PassengerServicePermitResponse, 
   OperatorResponse, 

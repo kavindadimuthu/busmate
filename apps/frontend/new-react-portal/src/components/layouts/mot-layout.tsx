@@ -1,39 +1,6 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { redirect } from "next/navigation"
+import { RoleGate } from "@/components/layouts/role-gate";
+import type { ReactNode } from "react";
 
-export const dynamic = 'force-dynamic';
-import { Toaster } from "@busmate/ui"
-import { RoleLayoutClient } from "@/components/layouts/role-layout-client"
-import { getUserData } from "@/lib/utils/getUserData"
-import { isRoleAllowedForRoute, getRoleRedirectPath } from "@/lib/utils/getRoleRedirectPath"
-
-export const metadata: Metadata = {
-  title: "BUSMATE LK MOT Portal",
-  description: "Professional MOT dashboard for BUSMATE LK transportation system",
-}
-
-export default async function MotRootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const userData = await getUserData();
-
-  if (!userData) {
-    redirect('/');
-  }
-
-  if (!isRoleAllowedForRoute(userData.user_role, '/mot')) {
-    redirect(getRoleRedirectPath(userData.user_role));
-  }
-
-  return (
-    <>
-      <RoleLayoutClient role="mot" userData={userData}>
-        {children}
-      </RoleLayoutClient>
-      <Toaster />
-    </>
-  )
+export default function MotRootLayout({ children }: { children: ReactNode }) {
+  return <RoleGate role="mot">{children}</RoleGate>;
 }

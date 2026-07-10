@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { getAmendmentById, PermitType } from '@/data/mot/fares';
 import { ArrowLeft, Download } from 'lucide-react';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';

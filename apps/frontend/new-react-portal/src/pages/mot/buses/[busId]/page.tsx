@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { BusSummary } from '@/components/mot/buses/BusSummary';
 import { BusTabsSection } from '@/components/mot/buses/BusTabsSection';

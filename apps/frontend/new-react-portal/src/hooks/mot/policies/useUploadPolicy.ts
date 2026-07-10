@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { PolicyFormData } from '@/components/mot/policies/PolicyForm';
 

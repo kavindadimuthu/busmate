@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { ScheduleDetailsActions } from '@/components/mot/schedules/ScheduleDetailsActions';
 import {

@@ -17,7 +17,7 @@ import {
   Users,
   Activity
 } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import type { OperatorResponse, BusResponse, PassengerServicePermitResponse } from '@busmate/api-client-route';
 
 interface TabType {

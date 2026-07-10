@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/lib/router";
 import { AppShell, Header, Sidebar } from "@busmate/ui";
 import {
   PageProvider,
@@ -81,7 +80,7 @@ function getActiveItemFromPathname(pathname: string): string {
 function BrandLogo({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
-      <Image
+      <img
         src="/images/logo/busmate-icon.png"
         alt="BusMate LK"
         width={40}
@@ -93,14 +92,14 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="flex items-center gap-0">
-      <Image
+      <img
         src="/images/logo/busmate-icon.png"
         alt="BusMate LK"
         width={40}
         height={32}
         className="w-10 h-8 object-cover shrink-0"
       />
-      <Image
+      <img
         src="/images/logo/busmate-text.png"
         alt="BusMate LK"
         width={128}

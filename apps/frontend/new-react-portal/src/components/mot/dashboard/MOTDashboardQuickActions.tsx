@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { Route, Bus, Users, Shield, Calendar, Activity, ArrowUpRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { QuickAction } from '@/data/mot/dashboard';

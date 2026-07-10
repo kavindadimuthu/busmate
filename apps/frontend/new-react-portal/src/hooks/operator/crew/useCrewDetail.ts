@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from '@/lib/router';
 import { toast } from 'sonner';
 import { getUser, deactivateUser, reactivateUser, AdminApiError } from '@/lib/api/adminUsers';
 import { toAdminUser, getUserDisplayName } from '@/data/admin/users';

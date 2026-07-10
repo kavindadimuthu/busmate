@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/lib/router";
 import { useDataTable, useDialog } from "@busmate/ui";
 import { useToast } from "@/hooks/use-toast";
 import { RouteManagementService } from "@busmate/api-client-route";

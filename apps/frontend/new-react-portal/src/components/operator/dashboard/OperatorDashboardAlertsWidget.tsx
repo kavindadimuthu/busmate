@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, XCircle, Info, CheckCircle2, ExternalLink, Check } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { AlertEntry } from '@/data/operator/dashboard';
 
 function timeAgo(iso: string): string {

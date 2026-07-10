@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, CircleUser, LogOut, Moon, Palette, Settings, Sun } from "lucide-react";
-import Link from "next/link";
-import { useTheme } from "next-themes";
+import Link from "@/lib/router";
+import { useTheme } from "@/lib/theme";
 import { useThemePersonality, THEMES } from "@busmate/ui";
 import signOut from "@/lib/utils/signOut";
 import type UserData from "@/types/UserData";

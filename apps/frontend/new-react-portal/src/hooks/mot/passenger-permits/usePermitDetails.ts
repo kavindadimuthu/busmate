@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { PermitDetailsActions } from '@/components/mot/passenger-permits/PermitDetailsActions';
 import {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { useToast } from '@/hooks/use-toast';
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';

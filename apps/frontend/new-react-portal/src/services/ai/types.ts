@@ -117,28 +117,28 @@ export const AI_SERVICE_OPTIONS: AIServiceOption[] = [
     name: 'Google Gemini',
     description: 'Google\'s Gemini Pro model for schedule generation',
     isAvailable: true,
-    envKeyName: 'NEXT_PUBLIC_GEMINI_API_KEY',
+    envKeyName: 'VITE_GEMINI_API_KEY',
   },
   {
     id: 'openai',
     name: 'OpenAI GPT',
     description: 'OpenAI GPT-4 for advanced schedule generation',
     isAvailable: false,
-    envKeyName: 'NEXT_PUBLIC_OPENAI_API_KEY',
+    envKeyName: 'VITE_OPENAI_API_KEY',
   },
   {
     id: 'claude',
     name: 'Anthropic Claude',
     description: 'Claude AI for detailed schedule analysis',
     isAvailable: false,
-    envKeyName: 'NEXT_PUBLIC_CLAUDE_API_KEY',
+    envKeyName: 'VITE_CLAUDE_API_KEY',
   },
   {
     id: 'deepseek',
     name: 'DeepSeek',
     description: 'DeepSeek AI for efficient schedule generation',
     isAvailable: false,
-    envKeyName: 'NEXT_PUBLIC_DEEPSEEK_API_KEY',
+    envKeyName: 'VITE_DEEPSEEK_API_KEY',
   },
 ];
 
@@ -157,6 +157,6 @@ export function isProviderConfigured(provider: AIServiceProvider): boolean {
   const envKey = getEnvKeyForProvider(provider);
   if (!envKey) return false;
   
-  const apiKey = process.env[envKey];
+  const apiKey = import.meta.env[envKey];
   return !!apiKey && apiKey.trim().length > 0;
 }

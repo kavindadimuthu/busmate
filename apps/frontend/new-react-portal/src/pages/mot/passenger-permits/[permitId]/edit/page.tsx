@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { PermitForm } from '@/components/mot/passenger-permits/PermitForm';
 import { useEditPermit } from '@/hooks/mot/passenger-permits/useEditPermit';

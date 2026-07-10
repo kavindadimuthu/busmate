@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useSearchParams } from '@/lib/router';
+import Link from '@/lib/router';
 import { Tabs, TabsList, TabsTrigger } from '@busmate/ui';
 import { Activity, AlertTriangle, Cpu, Globe, LayoutDashboard } from 'lucide-react';
 

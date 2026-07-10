@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from '@/lib/router';
 import { toast } from 'sonner';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { UserForm } from '@/components/admin/users';

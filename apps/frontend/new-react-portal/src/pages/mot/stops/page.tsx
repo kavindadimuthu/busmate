@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import type { StopResponse } from '@busmate/api-client-route';
 import { ConfirmDialog } from '@busmate/ui';
 

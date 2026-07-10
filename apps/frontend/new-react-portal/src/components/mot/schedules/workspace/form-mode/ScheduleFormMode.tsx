@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from '@/lib/router';
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
 import { ScheduleTabs } from './ScheduleTabs';
 import ScheduleMetadata from './ScheduleMetadata';

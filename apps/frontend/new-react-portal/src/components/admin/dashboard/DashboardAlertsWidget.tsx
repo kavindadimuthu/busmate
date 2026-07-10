@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { AlertTriangle, ArrowUpRight, Bell, CheckCircle2, XCircle } from 'lucide-react';
 import { ActiveAlertEntry } from '@/data/admin/dashboardV2';
 

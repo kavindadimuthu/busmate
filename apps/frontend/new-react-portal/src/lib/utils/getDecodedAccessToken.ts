@@ -1,21 +1,23 @@
-'use server';
+import { ACCESS_TOKEN_STORAGE_KEY } from "@/lib/auth/session";
+import type { AccessTokenPayload } from "@/types/AccessTokenPayload";
 
-import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
-import { AccessTokenPayload } from '@/types/AccessTokenPayload';
-import { ACCESS_TOKEN_COOKIE, getJwtSecret } from '@/lib/auth/session';
+function decodeBase64Url(value: string): string {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+  return atob(padded);
+}
 
 export async function getDecodedAccessToken(): Promise<AccessTokenPayload | null> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
-    if (!token) {
+    const token = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+    const payload = token?.split(".")[1];
+    if (!payload) {
       return null;
     }
 
-    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AccessTokenPayload;
+    return JSON.parse(decodeBase64Url(payload)) as AccessTokenPayload;
   } catch (error) {
-    console.error("Error verifying access token:", error);
+    console.error("Error decoding access token:", error);
     return null;
   }
 }

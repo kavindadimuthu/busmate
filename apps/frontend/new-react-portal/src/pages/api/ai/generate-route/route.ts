@@ -4,7 +4,7 @@
  * This route keeps the Gemini API key out of the browser by forwarding
  * route-generation requests from the frontend to Google Generative Language
  * API entirely server-side. The key is read from `GEMINI_API_KEY` — a
- * server-only environment variable (no NEXT_PUBLIC_ prefix).
+ * server-only environment variable (no VITE_ prefix).
  *
  * Request body  (JSON):
  *   systemPrompt  string  – Full system context

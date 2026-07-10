@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { CSVData } from '@/components/tools/csv-editor/types';
 import { useToast } from '@/hooks/use-toast';

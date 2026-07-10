@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { Plus, Download, Grid3X3, FileText } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent, Button } from '@busmate/ui';

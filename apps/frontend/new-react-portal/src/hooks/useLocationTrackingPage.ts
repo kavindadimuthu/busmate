@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
 import type { TrackedBus, MapViewMode } from '@/types/LocationTracking';

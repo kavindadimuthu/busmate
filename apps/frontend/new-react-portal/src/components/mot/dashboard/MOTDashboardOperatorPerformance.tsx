@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowUp, ArrowDown, Minus, Star, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { OperatorPerformanceItem } from '@/data/mot/dashboard';
 
 function TrendIcon({ trend }: { trend: OperatorPerformanceItem['trend'] }) {

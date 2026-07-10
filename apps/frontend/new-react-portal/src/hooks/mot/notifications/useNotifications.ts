@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useToast } from '@/hooks/use-toast';
 import { useDialog } from '@busmate/ui';
 

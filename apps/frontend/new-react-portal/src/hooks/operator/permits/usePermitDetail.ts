@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { usePageContext } from '@/context/PageContext';
 import { getMockPermitById, type OperatorPermitDetail } from '@/data/operator/permits';
 

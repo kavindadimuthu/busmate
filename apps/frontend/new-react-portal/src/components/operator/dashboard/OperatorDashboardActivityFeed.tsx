@@ -1,7 +1,7 @@
 'use client';
 
 import { Car, User, Cpu, UserCheck, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/lib/router';
 import { ActivityEntry } from '@/data/operator/dashboard';
 
 function timeAgo(iso: string): string {

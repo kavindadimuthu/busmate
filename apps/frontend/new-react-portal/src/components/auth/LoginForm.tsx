@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { Loader2, Lock, Mail } from 'lucide-react';
+import { isPortalRole, loginWithPassword, logoutSession, storeSession } from '@/lib/auth/session';
+import { getRoleRedirectPath } from '@/lib/utils/getRoleRedirectPath';
 
 export function LoginForm() {
   const router = useRouter();
@@ -17,23 +19,19 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const session = await loginWithPassword(email, password);
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.error || 'Unable to sign in. Please try again.');
+      if (!isPortalRole(session.userType)) {
+        await logoutSession(session.accessToken);
+        setError('This portal is for staff accounts only. Please use the passenger or conductor app instead.');
         setLoading(false);
         return;
       }
 
-      router.push(data.redirectPath || '/');
-    } catch {
-      setError('Unable to reach the server. Please try again.');
+      storeSession(session);
+      router.push(getRoleRedirectPath(session.userType));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to reach the server. Please try again.');
       setLoading(false);
     }
   };

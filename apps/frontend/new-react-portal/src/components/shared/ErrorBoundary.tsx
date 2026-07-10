@@ -114,7 +114,7 @@ interface WorkspaceErrorFallbackProps {
  *  - Technical error details in development mode only
  */
 export function WorkspaceErrorFallback({ error, onReset }: WorkspaceErrorFallbackProps) {
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = import.meta.env.DEV;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-8">

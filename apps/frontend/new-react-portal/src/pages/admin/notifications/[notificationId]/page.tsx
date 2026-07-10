@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { NotificationDetailPanel } from '@/components/admin/notifications';
 import { getNotificationById } from '@/data/admin';

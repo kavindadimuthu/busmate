@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { RouteGroupActionButtons } from '@/components/mot/routes/route-group-view';
 import { RouteManagementService } from '@busmate/api-client-route';

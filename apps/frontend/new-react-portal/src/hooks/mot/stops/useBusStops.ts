@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { BusStopManagementService } from '@busmate/api-client-route';
 import type { StopResponse, PageStopResponse } from '@busmate/api-client-route';
 import { useDataTable, useDialog } from '@busmate/ui';

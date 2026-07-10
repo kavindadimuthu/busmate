@@ -154,7 +154,7 @@ export class GeminiAIService implements IAIService {
     temperature?: number;
     maxTokens?: number;
   }) {
-    this.apiKey = config?.apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+    this.apiKey = config?.apiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
     this.modelName = config?.model || DEFAULT_MODEL;
     this.temperature = config?.temperature ?? 0.7;
     this.maxTokens = config?.maxTokens ?? 8192;
@@ -176,7 +176,7 @@ export class GeminiAIService implements IAIService {
     if (!this.isAvailable()) {
       return {
         success: false,
-        error: 'Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY in your environment variables.',
+        error: 'Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your environment variables.',
         provider: this.provider,
         model: this.modelName,
       };
