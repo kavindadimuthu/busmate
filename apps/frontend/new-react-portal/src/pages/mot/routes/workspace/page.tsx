@@ -11,6 +11,7 @@ import DraftRecoveryBanner from '@/components/mot/routes/workspace/DraftRecovery
 import WorkspaceTopBar from '@/components/mot/routes/workspace/WorkspaceTopBar';
 import { ErrorBoundary, WorkspaceErrorFallback } from '@/components/shared/ErrorBoundary';
 import { useRouteWorkspacePage } from '@/hooks/useRouteWorkspacePage';
+import { Link } from '@/lib/router';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 function LoadingSpinner({ message }: { message: string }) {
@@ -42,7 +43,7 @@ function RouteWorkspaceContent() {
                     <h3 className="text-lg font-semibold">Failed to load route group</h3>
                     <p className="text-sm text-muted-foreground">{loadError}</p>
                     <Button variant="outline" asChild>
-                        <a href="/mot/routes/workspace">Create a new route group instead</a>
+                        <Link href="/mot/routes/workspace">Create a new route group instead</Link>
                     </Button>
                 </div>
             </div>

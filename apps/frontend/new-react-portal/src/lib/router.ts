@@ -1,4 +1,4 @@
-import { createElement, useMemo } from "react";
+import { createElement, forwardRef, useMemo } from "react";
 import {
   Link as RouterLink,
   Navigate,
@@ -14,12 +14,18 @@ type LinkProps = Omit<RouterLinkProps, "to"> & {
   to?: RouterLinkProps["to"];
 };
 
-export function Link({ href, to, ...props }: LinkProps) {
+// forwardRef so this shim is safe to pass to Radix's asChild (Tooltip,
+// Button, ...), which clones its child and attaches a ref.
+export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
+  { href, to, ...props },
+  ref,
+) {
   return createElement(RouterLink, {
     ...props,
     to: to ?? href ?? "#",
+    ref,
   });
-}
+});
 
 export { Navigate, useParams };
 export default Link;

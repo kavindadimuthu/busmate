@@ -1,6 +1,10 @@
+import { Outlet } from "react-router";
 import { RoleGate } from "@/components/layouts/role-gate";
-import type { ReactNode } from "react";
 
-export default function MotRootLayout({ children }: { children: ReactNode }) {
-  return <RoleGate role="mot">{children}</RoleGate>;
+export default function MotRootLayout() {
+  return (
+    <RoleGate role="mot">
+      <Outlet />
+    </RoleGate>
+  );
 }

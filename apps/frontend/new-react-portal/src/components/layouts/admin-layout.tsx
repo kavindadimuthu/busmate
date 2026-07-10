@@ -1,6 +1,10 @@
+import { Outlet } from "react-router";
 import { RoleGate } from "@/components/layouts/role-gate";
-import type { ReactNode } from "react";
 
-export default function AdminRootLayout({ children }: { children: ReactNode }) {
-  return <RoleGate role="admin">{children}</RoleGate>;
+export default function AdminRootLayout() {
+  return (
+    <RoleGate role="admin">
+      <Outlet />
+    </RoleGate>
+  );
 }

@@ -13,8 +13,10 @@ import {
   TooltipTrigger,
 } from "../../components/tooltip";
 import type { NavGroup, NavItem } from "./types";
+import type { AppLinkComponent } from "../../lib/link";
 
 export type { NavItem, NavGroup, NavigationConfig, SidebarNavItem, SidebarNavGroup } from "./types";
+export type { AppLinkComponent } from "../../lib/link";
 
 // ── Props ──────────────────────────────────────────────────
 
@@ -28,6 +30,12 @@ export interface SidebarProps {
   onCollapse: (collapsed: boolean) => void;
   userSection?: React.ReactNode;
   className?: string;
+  /**
+   * Router-aware link component (e.g. react-router's Link) used for nav
+   * items so navigation goes through client-side routing instead of a full
+   * page reload. Falls back to a plain <a> when not provided.
+   */
+  linkComponent?: AppLinkComponent;
 }
 
 // ── Component ──────────────────────────────────────────────
@@ -40,6 +48,7 @@ export function Sidebar({
   onCollapse,
   userSection,
   className,
+  linkComponent,
 }: SidebarProps) {
   const [brandHovered, setBrandHovered] = React.useState(false);
 
@@ -111,6 +120,7 @@ export function Sidebar({
                     item={item}
                     active={activeItemId === item.id}
                     collapsed={collapsed}
+                    linkComponent={linkComponent}
                   />
                 ))}
               </nav>
@@ -138,23 +148,23 @@ interface SidebarNavLinkProps {
   item: NavItem;
   active: boolean;
   collapsed: boolean;
+  linkComponent?: AppLinkComponent;
 }
 
-function SidebarNavLink({ item, active, collapsed }: SidebarNavLinkProps) {
+function SidebarNavLink({ item, active, collapsed, linkComponent: LinkComponent }: SidebarNavLinkProps) {
   const Icon = item.icon;
 
-  const link = (
-    <a
-      href={item.href}
-      className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-        active
-          ? "bg-sidebar-active text-sidebar-active-foreground"
-          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-muted/30",
-        item.disabled && "opacity-50 pointer-events-none",
-        collapsed && "justify-center px-2"
-      )}
-    >
+  const linkClassName = cn(
+    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+    active
+      ? "bg-sidebar-active text-sidebar-active-foreground"
+      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-muted/30",
+    item.disabled && "opacity-50 pointer-events-none",
+    collapsed && "justify-center px-2"
+  );
+
+  const linkContent = (
+    <>
       <Icon className="h-5 w-5 flex-shrink-0" />
       {!collapsed && (
         <>
@@ -166,6 +176,16 @@ function SidebarNavLink({ item, active, collapsed }: SidebarNavLinkProps) {
           )}
         </>
       )}
+    </>
+  );
+
+  const link = LinkComponent ? (
+    <LinkComponent href={item.href} className={linkClassName}>
+      {linkContent}
+    </LinkComponent>
+  ) : (
+    <a href={item.href} className={linkClassName}>
+      {linkContent}
     </a>
   );
 

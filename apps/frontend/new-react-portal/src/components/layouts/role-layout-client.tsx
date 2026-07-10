@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "@/lib/router";
+import { Link, usePathname } from "@/lib/router";
 import { AppShell, Header, Sidebar } from "@busmate/ui";
 import {
   PageProvider,
@@ -134,6 +134,7 @@ function RoleLayoutInner({ children, userData, config }: RoleLayoutInnerProps) {
           activeItemId={activeItemId}
           collapsed={collapsed}
           onCollapse={setCollapsed}
+          linkComponent={Link}
           userSection={
             <PortalSidebarUser
               userData={userData}
@@ -149,6 +150,7 @@ function RoleLayoutInner({ children, userData, config }: RoleLayoutInnerProps) {
           description={metadata.description}
           breadcrumbs={metadata.breadcrumbs}
           actions={actions}
+          linkComponent={Link}
         />
       }
     >
