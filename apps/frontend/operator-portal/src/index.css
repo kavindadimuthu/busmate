@@ -1,0 +1,9 @@
+/* Tailwind 4 + BusMate design tokens, shared with management-portal via
+   @busmate/ui. The @source directives tell Tailwind which files to scan for
+   utility classes so classes used in the shared UI lib and this app are
+   emitted (Tailwind 4 does not auto-scan node_modules / aliased libs). */
+@import "@busmate/ui/styles";
+
+@source "./";
+@source "../../../../libs/ui/src";
+@source "../../../../libs/portal-shared/src";

@@ -4,6 +4,8 @@ packages:
   - "apps/frontend/conductor-mobile"
   - "apps/frontend/passenger-mobile"
   - "apps/frontend/passenger-web"
+  - "apps/frontend/operator-portal"
+  - "apps/frontend/government-portal"
 
   # Backend services (Node.js only — Spring Boot services are Maven-managed)
   - "apps/backend/api-gateway"

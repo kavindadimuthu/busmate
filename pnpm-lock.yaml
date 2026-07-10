@@ -272,6 +272,67 @@ importers:
         specifier: ~5.9.2
         version: 5.9.3
 
+  apps/frontend/government-portal:
+    dependencies:
+      '@busmate/ui':
+        specifier: workspace:*
+        version: link:../../../libs/ui
+      '@hookform/resolvers':
+        specifier: ^3.10.0
+        version: 3.10.0(react-hook-form@7.71.2(react@19.2.4))
+      axios:
+        specifier: ^1.10.0
+        version: 1.13.6
+      lucide-react:
+        specifier: ^0.522.0
+        version: 0.522.0(react@19.2.4)
+      react:
+        specifier: ^19.2.1
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.1
+        version: 19.2.4(react@19.2.4)
+      react-hook-form:
+        specifier: ^7.54.1
+        version: 7.71.2(react@19.2.4)
+      react-router-dom:
+        specifier: ^6.20.1
+        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      recharts:
+        specifier: 2.15.0
+        version: 2.15.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      sonner:
+        specifier: ^1.7.1
+        version: 1.7.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.18
+        version: 4.2.2(vite@5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0))
+      '@types/node':
+        specifier: ^22.16.5
+        version: 22.19.13
+      '@types/react':
+        specifier: ^19
+        version: 19.1.17
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.1.17)
+      '@vitejs/plugin-react-swc':
+        specifier: ^3.11.0
+        version: 3.11.0(vite@5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0))
+      tailwindcss:
+        specifier: ^4.1.18
+        version: 4.2.2
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.19
+        version: 5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0)
+
   apps/frontend/management-portal:
     dependencies:
       '@busmate/ui':
@@ -521,6 +582,67 @@ importers:
       unimported:
         specifier: ^1.31.1
         version: 1.31.1(eslint@9.31.0(jiti@2.6.1))
+
+  apps/frontend/operator-portal:
+    dependencies:
+      '@busmate/ui':
+        specifier: workspace:*
+        version: link:../../../libs/ui
+      '@hookform/resolvers':
+        specifier: ^3.10.0
+        version: 3.10.0(react-hook-form@7.71.2(react@19.2.4))
+      axios:
+        specifier: ^1.10.0
+        version: 1.13.6
+      lucide-react:
+        specifier: ^0.522.0
+        version: 0.522.0(react@19.2.4)
+      react:
+        specifier: ^19.2.1
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.1
+        version: 19.2.4(react@19.2.4)
+      react-hook-form:
+        specifier: ^7.54.1
+        version: 7.71.2(react@19.2.4)
+      react-router-dom:
+        specifier: ^6.20.1
+        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      recharts:
+        specifier: 2.15.0
+        version: 2.15.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      sonner:
+        specifier: ^1.7.1
+        version: 1.7.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.18
+        version: 4.2.2(vite@5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0))
+      '@types/node':
+        specifier: ^22.16.5
+        version: 22.19.13
+      '@types/react':
+        specifier: ^19
+        version: 19.1.17
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.1.17)
+      '@vitejs/plugin-react-swc':
+        specifier: ^3.11.0
+        version: 3.11.0(vite@5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0))
+      tailwindcss:
+        specifier: ^4.1.18
+        version: 4.2.2
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.19
+        version: 5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0)
 
   apps/frontend/passenger-mobile:
     dependencies:
@@ -22052,10 +22174,22 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       react-router: 6.30.3(react@18.3.1)
 
+  react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      '@remix-run/router': 1.23.2
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      react-router: 6.30.3(react@19.2.4)
+
   react-router@6.30.3(react@18.3.1):
     dependencies:
       '@remix-run/router': 1.23.2
       react: 18.3.1
+
+  react-router@6.30.3(react@19.2.4):
+    dependencies:
+      '@remix-run/router': 1.23.2
+      react: 19.2.4
 
   react-smooth@4.0.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
