@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ImportedStop } from './ImportedStop';
 import type { ImportError } from './ImportError';
 export type StopImportResponse = {
     totalRecords?: number;
@@ -9,5 +10,6 @@ export type StopImportResponse = {
     failedImports?: number;
     errors?: Array<ImportError>;
     message?: string;
+    importedStops?: Array<ImportedStop>;
 };
 

@@ -13,7 +13,7 @@ import { Search, ArrowUpDown, Filter, MapPin, Clock } from 'lucide-react-native'
 import AppHeader from '../../components/ui/AppHeader';
 import RouteFilterModal from '../../components/modals/NewRouteFilterModal';
 import StopSearchInput from '../../components/StopSearchInput';
-import { PassengerStopResponse, PassengerApIsService } from '../../lib/api-client/route-management';
+import { PassengerStopResponse, PassengerQueryService } from '../../lib/api-client/route-management';
 
 interface FilterOptionsType {
   travelDate: Date;
@@ -57,7 +57,7 @@ export default function SearchScreen() {
 
       for (const city of majorCities) {
         try {
-          const response = await PassengerApIsService.searchStops(
+          const response = await PassengerQueryService.searchStops(
             undefined, // name
             city, // city
             undefined, // searchText

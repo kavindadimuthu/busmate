@@ -12,6 +12,7 @@ export type BusResponse = {
     capacity?: number;
     model?: string;
     facilities?: JsonNode;
+    seatLayout?: JsonNode;
     status?: string;
     createdAt?: string;
     updatedAt?: string;

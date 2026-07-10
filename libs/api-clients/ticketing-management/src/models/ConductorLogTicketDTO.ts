@@ -4,6 +4,9 @@
 /* eslint-disable */
 export type ConductorLogTicketDTO = {
     ticketId?: number;
+    busId?: string;
+    tripId?: string;
+    conductorId?: string;
     passengerId?: string;
     startLocationId?: string;
     endLocationId?: string;
@@ -11,6 +14,10 @@ export type ConductorLogTicketDTO = {
     passengerCount?: number;
     fareAmount?: number;
     paymentStatus?: string;
+    issueMethod?: string;
+    validationStatus?: string;
+    transactionStatus?: string;
+    bookingStatus?: string;
     issuedAt?: string;
 };
 

@@ -122,6 +122,7 @@ export { BusManagementService } from './services/BusManagementService';
 export { BusOperatorOperationsService } from './services/BusOperatorOperationsService';
 export { BusPermitAssignmentService } from './services/BusPermitAssignmentService';
 export { BusStopManagementService } from './services/BusStopManagementService';
+export { ConductorSelfServiceService } from './services/ConductorSelfServiceService';
 export { HealthCheckService } from './services/HealthCheckService';
 export { InternalOperatorControllerService } from './services/InternalOperatorControllerService';
 export { OperatorManagementService } from './services/OperatorManagementService';

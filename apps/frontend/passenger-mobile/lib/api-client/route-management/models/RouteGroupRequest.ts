@@ -5,6 +5,8 @@
 import type { RouteRequest } from './RouteRequest';
 export type RouteGroupRequest = {
     name: string;
+    nameSinhala?: string;
+    nameTamil?: string;
     description?: string;
     routes?: Array<RouteRequest>;
 };

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Info, X, AlertTriangle, Users } from 'lucide-react-native';
@@ -7,13 +7,20 @@ import { StyleSheet } from 'react-native';
 import AppHeader from '../../components/ui/AppHeader';
 import { useBooking } from '../../context/BookingContext';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
+import { BusManagementService } from '../../lib/api-client/route-management';
+import { TicketControllerService } from '../../lib/api-client/ticketing-management';
 
 interface Seat {
   id: string;
   number: string;
-  status: 'available' | 'occupied' | 'selected' | 'reserved' | 'priority';
+  status: 'available' | 'occupied' | 'selected';
   type: 'window' | 'aisle' | 'middle';
-  price?: number;
+}
+
+interface SeatLayoutRow {
+  left?: string[];
+  right?: string[];
+  back?: string[];
 }
 
 export default function SeatSelectionScreen() {
@@ -21,6 +28,10 @@ export default function SeatSelectionScreen() {
   const { bookingData, setSelectedSeat } = useBooking();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [showInfo, setShowInfo] = useState(false);
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [layoutRows, setLayoutRows] = useState<SeatLayoutRow[]>([]);
+  const [busLabel, setBusLabel] = useState('Bus');
+  const [loadingSeats, setLoadingSeats] = useState(true);
   const safeAreaStyle = useSafeAreaContainerStyles();
 
   // Redirect if no booking data
@@ -40,86 +51,72 @@ export default function SeatSelectionScreen() {
     }
   }, [bookingData, router]);
 
+  // Real seat map: the bus's actual seatLayout (core-service) merged with which seats are
+  // already booked for this trip (ticketing-service) - same approach as conductor-mobile's
+  // seat view. No more hardcoded 49-seat grid / fake occupied seats.
+  const loadSeatMap = useCallback(async () => {
+    if (!bookingData) return;
+    setLoadingSeats(true);
+    try {
+      const [bus, tickets] = await Promise.all([
+        BusManagementService.getBusById(bookingData.busId),
+        TicketControllerService.getTicketsByTripId(bookingData.tripId).catch(() => []),
+      ]);
+
+      setBusLabel(`${bus.plateNumber || 'Bus'}${bus.model ? ' - ' + bus.model : ''}`);
+
+      const occupied = new Set(
+        (tickets || [])
+          .filter((t) => t.validationStatus !== 'CANCELLED')
+          .flatMap((t) => (t.seatNumber || '').split(',').map((s) => s.trim()).filter(Boolean)),
+      );
+
+      const layout = bus.seatLayout as { rows?: SeatLayoutRow[] } | undefined;
+      const built: Seat[] = [];
+      let rows: SeatLayoutRow[] = layout?.rows ?? [];
+
+      if (!rows.length) {
+        // Fallback: capacity-only bus with no stored layout - simple 2+2 grid.
+        const capacity = bus.capacity || 0;
+        rows = [];
+        for (let n = 1; n <= capacity; n += 4) {
+          rows.push({
+            left: [String(n), String(n + 1)].filter((s) => Number(s) <= capacity),
+            right: [String(n + 2), String(n + 3)].filter((s) => Number(s) <= capacity),
+          });
+        }
+      }
+
+      rows.forEach((row) => {
+        row.left?.forEach((num, i) =>
+          built.push({ id: num, number: num, status: occupied.has(num) ? 'occupied' : 'available', type: i === 0 ? 'window' : 'aisle' }));
+        row.right?.forEach((num, i) =>
+          built.push({ id: num, number: num, status: occupied.has(num) ? 'occupied' : 'available', type: i === (row.right!.length - 1) ? 'window' : 'aisle' }));
+        row.back?.forEach((num, i) =>
+          built.push({ id: num, number: num, status: occupied.has(num) ? 'occupied' : 'available', type: i === 0 || i === row.back!.length - 1 ? 'window' : 'middle' }));
+      });
+
+      setLayoutRows(rows);
+      setSeats(built);
+    } catch (err) {
+      console.error('Error loading seat map:', err);
+      Alert.alert('Error', 'Failed to load the seat map for this bus.');
+    } finally {
+      setLoadingSeats(false);
+    }
+  }, [bookingData]);
+
+  useEffect(() => {
+    loadSeatMap();
+  }, [loadSeatMap]);
+
   if (!bookingData) {
     return null; // Will redirect via useEffect
   }
 
-  const passengersCount = 1; // Single passenger booking only
-
-  // Standardized 49-seat layout for all buses:
-  // - 11 rows of 2+2 configuration (44 seats: 1-44) 
-  // - 1 last row with 5 seats (5 seats: 45-49)
-  // Seat numbering: 1 = front-left corner, 49 = back-right corner
-  // Row 1: seats 1,2 (left) | 3,4 (right)  
-  // Row 2: seats 5,6 (left) | 7,8 (right)  
-  // ...continuing pattern...
-  // Row 11: seats 41,42 (left) | 43,44 (right)
-  // Last row: seats 45,46,47,48,49 (5 seats across)
-  const generateSeats = (): Seat[] => {
-    const seats: Seat[] = [];
-    // Some mock occupied seats for demonstration (using seat numbers 1-49)
-    // const occupiedSeats = ['1', '4', '6', '11', '17', '20', '25', '31', '47'];
-    const occupiedSeats = [''];
-    // const reservedSeats = ['7', '16'];
-    const reservedSeats = [''];
-    const prioritySeats = ['']; // For elderly, pregnant women, differently-abled
-    
-    let seatNumber = 1;
-    
-    // 11 rows of 2+2 configuration (44 seats)
-    for (let row = 1; row <= 11; row++) {
-      // Left side seats (2 seats)
-      for (let leftSeat = 1; leftSeat <= 2; leftSeat++) {
-        const seatId = seatNumber.toString();
-        seats.push({
-          id: seatId,
-          number: seatId,
-          status: prioritySeats.includes(seatId) ? 'priority' : 
-                 occupiedSeats.includes(seatId) ? 'occupied' : 
-                 reservedSeats.includes(seatId) ? 'reserved' : 'available',
-          type: leftSeat === 1 ? 'window' : 'aisle',
-          price: 250
-        });
-        seatNumber++;
-      }
-      
-      // Right side seats (2 seats)
-      for (let rightSeat = 1; rightSeat <= 2; rightSeat++) {
-        const seatId = seatNumber.toString();
-        seats.push({
-          id: seatId,
-          number: seatId,
-          status: prioritySeats.includes(seatId) ? 'priority' : 
-                 occupiedSeats.includes(seatId) ? 'occupied' : 
-                 reservedSeats.includes(seatId) ? 'reserved' : 'available',
-          type: rightSeat === 1 ? 'aisle' : 'window',
-          price: 250
-        });
-        seatNumber++;
-      }
-    }
-    
-    // Last row - 5 seats (seats 45-49)
-    for (let lastSeat = 1; lastSeat <= 5; lastSeat++) {
-      const seatId = seatNumber.toString();
-      seats.push({
-        id: seatId,
-        number: seatId,
-        status: occupiedSeats.includes(seatId) ? 'occupied' : 'available',
-        type: lastSeat === 1 || lastSeat === 5 ? 'window' : 'middle',
-        price: 225
-      });
-      seatNumber++;
-    }
-    
-    return seats;
-  };
-
-  const [seats] = useState<Seat[]>(generateSeats());
-
   const handleSeatPress = (seatId: string) => {
     const seatStatus = getSeatStatus(seatId);
-    if (seatStatus === 'occupied' || seatStatus === 'reserved' || seatId === 'driver') return;
+    if (seatStatus === 'occupied') return;
 
     if (selectedSeats.includes(seatId)) {
       // Deselect the seat
@@ -139,12 +136,12 @@ export default function SeatSelectionScreen() {
     }
   };
 
-  const getSeatStatus = (seatId: string): 'available' | 'occupied' | 'selected' | 'reserved' | 'priority' => {
+  const getSeatStatus = (seatId: string): 'available' | 'occupied' | 'selected' => {
     if (selectedSeats.includes(seatId)) return 'selected';
     return seats.find(s => s.id === seatId)?.status || 'available';
   };
 
-  const getSeatStyle = (status: 'available' | 'occupied' | 'selected' | 'reserved' | 'priority', type: string) => {
+  const getSeatStyle = (status: 'available' | 'occupied' | 'selected', type: string) => {
     const baseStyle = [
       styles.seat,
       type === 'window' && styles.windowSeat,
@@ -159,17 +156,29 @@ export default function SeatSelectionScreen() {
         return [...baseStyle, styles.seatOccupied];
       case 'selected':
         return [...baseStyle, styles.seatSelected];
-      case 'reserved':
-        return [...baseStyle, styles.seatReserved];
-      case 'priority':
-        return [...baseStyle, styles.seatPriority];
       default:
         return [...baseStyle, styles.seatAvailable];
     }
   };
 
-  const getSeatPrice = (seatId: string): number => {
-    return seats.find(s => s.id === seatId)?.price || 250;
+  const renderSeatButton = (seat: Seat) => {
+    const status = getSeatStatus(seat.id);
+    return (
+      <TouchableOpacity
+        key={seat.id}
+        onPress={() => handleSeatPress(seat.id)}
+        style={getSeatStyle(status, seat.type)}
+        disabled={status === 'occupied'}
+      >
+        <Text style={[
+          styles.seatText,
+          status === 'selected' && styles.seatTextSelected,
+          status === 'occupied' && styles.seatTextOccupied,
+        ]}>
+          {seat.number}
+        </Text>
+      </TouchableOpacity>
+    );
   };
 
   const renderDriverArea = () => (
@@ -184,124 +193,38 @@ export default function SeatSelectionScreen() {
     </View>
   );
 
-  const renderRegularRows = () => {
-    // First 44 seats (seats 1-44) in 11 rows of 4 seats each
-    const regularSeats = seats.filter(seat => {
-      const seatNum = parseInt(seat.id);
-      return seatNum >= 1 && seatNum <= 44;
-    });
-    const rows = [];
-
-    for (let i = 0; i < regularSeats.length; i += 4) {
-      const rowSeats = regularSeats.slice(i, i + 4);
-      const rowIndex = Math.floor(i / 4) + 1;
-      
-      rows.push(
-        <View key={`row-${rowIndex}`} style={styles.seatRow}>
-          <Text style={styles.rowNumber}>{rowIndex}</Text>
-          
-          {/* Left side seats */}
-          <View style={styles.seatPair}>
-            {rowSeats.slice(0, 2).map((seat) => {
-              const status = getSeatStatus(seat.id);
-              return (
-                <TouchableOpacity
-                  key={seat.id}
-                  onPress={() => handleSeatPress(seat.id)}
-                  style={getSeatStyle(status, seat.type)}
-                  disabled={status === 'occupied' || status === 'reserved'}
-                >
-                  <Text style={[
-                    styles.seatText,
-                    status === 'selected' && styles.seatTextSelected,
-                    status === 'occupied' && styles.seatTextOccupied,
-                    status === 'reserved' && styles.seatTextReserved,
-                    status === 'priority' && styles.seatTextPriority,
-                  ]}>
-                    {seat.number}
-                  </Text>
-                  {status === 'priority' && (
-                    <AlertTriangle size={10} color="#FF9800" style={styles.priorityIcon} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+  // Renders the bus body directly from the real layout's rows (left/right/back), instead of
+  // hardcoding a 44-seat + 5-seat split that only matched the old fictional 49-seat bus.
+  const renderRows = () => {
+    return layoutRows.map((row, rowIndex) => {
+      if (row.back?.length) {
+        return (
+          <View key={`row-${rowIndex}`} style={styles.lastRow}>
+            <Text style={styles.rowNumber}>{rowIndex + 1}</Text>
+            <View style={styles.lastRowSeats}>
+              {row.back.map((num) => renderSeatButton(seats.find((s) => s.id === num) || { id: num, number: num, status: 'available', type: 'middle' }))}
+            </View>
           </View>
-
-          {/* Aisle */}
-          <View style={styles.aisle} />
-
-          {/* Right side seats */}
+        );
+      }
+      return (
+        <View key={`row-${rowIndex}`} style={styles.seatRow}>
+          <Text style={styles.rowNumber}>{rowIndex + 1}</Text>
           <View style={styles.seatPair}>
-            {rowSeats.slice(2, 4).map((seat) => {
-              const status = getSeatStatus(seat.id);
-              return (
-                <TouchableOpacity
-                  key={seat.id}
-                  onPress={() => handleSeatPress(seat.id)}
-                  style={getSeatStyle(status, seat.type)}
-                  disabled={status === 'occupied' || status === 'reserved'}
-                >
-                  <Text style={[
-                    styles.seatText,
-                    status === 'selected' && styles.seatTextSelected,
-                    status === 'occupied' && styles.seatTextOccupied,
-                    status === 'reserved' && styles.seatTextReserved,
-                    status === 'priority' && styles.seatTextPriority,
-                  ]}>
-                    {seat.number}
-                  </Text>
-                  {status === 'priority' && (
-                    <AlertTriangle size={10} color="#FF9800" style={styles.priorityIcon} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+            {(row.left || []).map((num) => renderSeatButton(seats.find((s) => s.id === num) || { id: num, number: num, status: 'available', type: 'window' }))}
+          </View>
+          <View style={styles.aisle} />
+          <View style={styles.seatPair}>
+            {(row.right || []).map((num) => renderSeatButton(seats.find((s) => s.id === num) || { id: num, number: num, status: 'available', type: 'window' }))}
           </View>
         </View>
       );
-    }
-
-    return rows;
-  };
-
-  const renderLastRow = () => {
-    // Last 5 seats (seats 45-49)
-    const lastRowSeats = seats.filter(seat => {
-      const seatNum = parseInt(seat.id);
-      return seatNum >= 45 && seatNum <= 49;
     });
-    
-    return (
-      <View style={styles.lastRow}>
-        <Text style={styles.rowNumber}>12</Text>
-        <View style={styles.lastRowSeats}>
-          {lastRowSeats.map((seat) => {
-            const status = getSeatStatus(seat.id);
-            return (
-              <TouchableOpacity
-                key={seat.id}
-                onPress={() => handleSeatPress(seat.id)}
-                style={getSeatStyle(status, seat.type)}
-                disabled={status === 'occupied' || status === 'reserved'}
-              >
-                <Text style={[
-                  styles.seatText,
-                  status === 'selected' && styles.seatTextSelected,
-                  status === 'occupied' && styles.seatTextOccupied,
-                  status === 'reserved' && styles.seatTextReserved,
-                ]}>
-                  {seat.number}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    );
   };
 
-  const totalPrice = selectedSeats.reduce((total, seatId) => total + getSeatPrice(seatId), 0);
+  // Single flat fare (bookingData.fareAmount) applies regardless of which seat is picked -
+  // there's no real per-seat pricing tier in the backend today.
+  const totalPrice = selectedSeats.length > 0 ? bookingData.fareAmount : 0;
 
   return (
     <SafeAreaView style={safeAreaStyle}>
@@ -322,9 +245,6 @@ export default function SeatSelectionScreen() {
       {showInfo && (
         <View style={styles.infoPanel}>
           <Text style={styles.infoPanelTitle}>About Seat Selection</Text>
-          <Text style={styles.infoPanelText}>
-            Priority seats are reserved for elderly passengers, pregnant women, and differently-abled passengers.
-          </Text>
           <Text style={styles.infoPanelText}>
             Window seats offer scenic views, while aisle seats provide easy access to the corridor.
           </Text>
@@ -367,7 +287,7 @@ export default function SeatSelectionScreen() {
       {/* Bus Layout */}
       <View style={styles.busContainer}>
         <View style={styles.busHeader}>
-          <Text style={styles.busTitle}>SLTB Express - Route 001</Text>
+          <Text style={styles.busTitle}>{busLabel}</Text>
           <View style={styles.busInfo}>
             <Users size={14} color="#6B7280" style={{marginRight: 4}} />
             <Text style={styles.busInfoText}>
@@ -376,17 +296,18 @@ export default function SeatSelectionScreen() {
           </View>
         </View>
 
-        <ScrollView style={styles.seatsContainer} showsVerticalScrollIndicator={false}>
-          {renderDriverArea()}
-          <View style={styles.busBody}>
-            {renderRegularRows()}
-            {renderLastRow()}
+        {loadingSeats ? (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#004CFF" />
           </View>
-          
-          {/* <View style={styles.backDoor}>
-            <Text style={styles.doorLabel}>Rear Door</Text>
-          </View> */}
-        </ScrollView>
+        ) : (
+          <ScrollView style={styles.seatsContainer} showsVerticalScrollIndicator={false}>
+            {renderDriverArea()}
+            <View style={styles.busBody}>
+              {renderRows()}
+            </View>
+          </ScrollView>
+        )}
       </View>
 
       {/* Selected Seats Info */}

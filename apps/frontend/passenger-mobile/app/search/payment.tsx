@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CreditCard, Calendar, Lock, User, CheckCircle, ArrowLeft } from 'lucide-react-native';
+import { CreditCard, CheckCircle } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import AppHeader from '@/components/ui/AppHeader';
 import { useBooking } from '@/context/BookingContext';
 import { TicketControllerService } from '@/lib/api-client/ticketing-management';
-import type { PaymentRequestDTO } from '@/lib/api-client/ticketing-management';
-import { generateTransactionRef, formatFare, validateBookingData } from '@/utils/bookingUtils';
+import type { BookingRequestDTO } from '@/lib/api-client/ticketing-management';
+import { formatFare, validateBookingData } from '@/utils/bookingUtils';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 export default function PaymentScreen() {
   const router = useRouter();
   const { bookingData, setPaymentData, setBookedTicket, setBookingInProgress, isBookingInProgress } = useBooking();
   const safeAreaStyle = useSafeAreaContainerStyles();
-  
-  // Payment form state
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [cardholderName, setCardholderName] = useState('');
 
   // Redirect if no booking data
   useEffect(() => {
@@ -37,55 +31,9 @@ export default function PaymentScreen() {
     return null; // Will redirect via useEffect
   }
 
-  const totalAmount = bookingData.fareAmount + 25 + (bookingData.selectedSeatNumber ? 50 : 0);
-
-  const formatCardNumber = (value: string) => {
-    // Remove all non-digit characters
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    
-    // Add spaces every 4 digits
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
-  };
-
-  const formatExpiryDate = (value: string) => {
-    // Remove all non-digit characters
-    const v = value.replace(/\D/g, '');
-    
-    // Add slash after 2 digits
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    
-    return v;
-  };
-
-  const isFormValid = () => {
-    return (
-      cardNumber.replace(/\s/g, '').length >= 13 &&
-      expiryDate.length === 5 &&
-      cvv.length >= 3 &&
-      cardholderName.trim().length >= 2
-    );
-  };
+  const totalAmount = bookingData.fareAmount;
 
   const handlePayNow = async () => {
-    if (!isFormValid()) {
-      Alert.alert('Invalid Information', 'Please fill in all payment details correctly.');
-      return;
-    }
-
     // Validate booking data
     const validation = validateBookingData(bookingData);
     if (!validation.isValid) {
@@ -96,42 +44,50 @@ export default function PaymentScreen() {
     try {
       setBookingInProgress(true);
 
-      // Generate transaction reference
-      const transactionRef = generateTransactionRef();
-
-      // Store payment data
-      const paymentData = {
-        transactionRef,
-        paymentMethod: 'ONLINE',
-        amount: totalAmount
-      };
-      setPaymentData(paymentData);
-
-      // Prepare payment request for API
-      const paymentRequest: PaymentRequestDTO = {
-        busId: bookingData.busData.id,
+      // Step 1: initiate the booking - creates a PENDING ticket/transaction and hands off
+      // to the payment gateway (dummy gateway for now, real gateway later - same API shape).
+      const bookingRequest: BookingRequestDTO = {
+        passengerId: bookingData.passengerId,
+        busId: bookingData.busId,
         tripId: bookingData.tripId,
         startLocationId: bookingData.fromStopId,
         endLocationId: bookingData.toStopId,
         fareAmount: totalAmount,
-        paymentMethod: 'ONLINE',
-        transactionRef: transactionRef,
         seatNumber: bookingData.selectedSeatNumber,
-        passengerId: bookingData.passengerId
       };
+      const bookingResponse = await TicketControllerService.bookTicket(bookingRequest);
+      if (!bookingResponse.ticketId || !bookingResponse.paymentReference) {
+        throw new Error('Booking did not return a valid ticket.');
+      }
+      const ticketId = bookingResponse.ticketId;
 
-      // Call the ticket booking API
-      const ticketResponse = await TicketControllerService.createTicket(paymentRequest);
-      
-      // Store the booked ticket
-      setBookedTicket(ticketResponse);
+      // Brief simulated "processing" delay so the two-step flow is visible to the user,
+      // mirroring how a real redirect-based gateway would take a moment to respond.
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      // Step 2: confirm the payment with the gateway.
+      const confirmResponse = await TicketControllerService.confirmPayment(ticketId);
+
+      if (confirmResponse.paymentStatus !== 'SUCCESS') {
+        throw new Error('Payment was not confirmed by the payment gateway.');
+      }
+
+      setPaymentData({
+        ticketId,
+        paymentReference: bookingResponse.paymentReference,
+        amount: totalAmount,
+      });
+
+      // Fetch the full ticket details for the success/summary screens.
+      const ticket = await TicketControllerService.getTicketById(ticketId);
+      setBookedTicket(ticket);
 
       // Navigate to success page
       router.replace('/search/success');
 
     } catch (error) {
       console.error('Payment/Booking error:', error);
-      
+
       Alert.alert(
         'Booking Failed',
         'Something went wrong while processing your booking. Please try again.',
@@ -155,17 +111,13 @@ export default function PaymentScreen() {
             <Text style={styles.summaryValue}>{bookingData.fromStopName} → {bookingData.toStopName}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Base Fare</Text>
+            <Text style={styles.summaryLabel}>Fare</Text>
             <Text style={styles.summaryValue}>{formatFare(bookingData.fareAmount)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Service Fee</Text>
-            <Text style={styles.summaryValue}>LKR 25</Text>
           </View>
           {bookingData.selectedSeatNumber && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Seat {bookingData.selectedSeatNumber}</Text>
-              <Text style={styles.summaryValue}>LKR 50</Text>
+              <Text style={styles.summaryLabel}>Seat</Text>
+              <Text style={styles.summaryValue}>{bookingData.selectedSeatNumber}</Text>
             </View>
           )}
           <View style={styles.divider} />
@@ -181,81 +133,15 @@ export default function PaymentScreen() {
           <View style={styles.paymentMethodContainer}>
             <View style={styles.paymentMethodItem}>
               <CreditCard size={24} color="#004CFF" />
-              <Text style={styles.paymentMethodText}>Credit/Debit Card</Text>
+              <Text style={styles.paymentMethodText}>Online Payment</Text>
               <CheckCircle size={20} color="#1DD724" />
             </View>
           </View>
-          
+
           <Text style={styles.noteText}>
-            Note: This is a demo payment interface. No real payment will be processed.
+            Note: This uses a test payment gateway - no real payment will be processed. Tapping
+            &quot;Pay Now&quot; simulates a real gateway&apos;s initiate-then-confirm flow.
           </Text>
-        </View>
-
-        {/* Card Details */}
-        <View style={styles.cardForm}>
-          <Text style={styles.sectionTitle}>Card Details</Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Card Number</Text>
-            <View style={styles.inputWrapper}>
-              <CreditCard size={16} color="#6B7280" />
-              <TextInput
-                style={styles.textInput}
-                placeholder="1234 5678 9012 3456"
-                value={cardNumber}
-                onChangeText={(text) => setCardNumber(formatCardNumber(text))}
-                keyboardType="numeric"
-                maxLength={19}
-              />
-            </View>
-          </View>
-
-          <View style={styles.rowContainer}>
-            <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.inputLabel}>Expiry Date</Text>
-              <View style={styles.inputWrapper}>
-                <Calendar size={16} color="#6B7280" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="MM/YY"
-                  value={expiryDate}
-                  onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
-                  keyboardType="numeric"
-                  maxLength={5}
-                />
-              </View>
-            </View>
-
-            <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.inputLabel}>CVV</Text>
-              <View style={styles.inputWrapper}>
-                <Lock size={16} color="#6B7280" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="123"
-                  value={cvv}
-                  onChangeText={setCvv}
-                  keyboardType="numeric"
-                  maxLength={4}
-                  secureTextEntry
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Cardholder Name</Text>
-            <View style={styles.inputWrapper}>
-              <User size={16} color="#6B7280" />
-              <TextInput
-                style={styles.textInput}
-                placeholder="John Doe"
-                value={cardholderName}
-                onChangeText={setCardholderName}
-                autoCapitalize="words"
-              />
-            </View>
-          </View>
         </View>
       </ScrollView>
 
@@ -265,14 +151,14 @@ export default function PaymentScreen() {
           onPress={handlePayNow}
           style={[
             styles.payButton,
-            (!isFormValid() || isBookingInProgress) && styles.payButtonDisabled
+            isBookingInProgress && styles.payButtonDisabled
           ]}
-          disabled={!isFormValid() || isBookingInProgress}
+          disabled={isBookingInProgress}
         >
           {isBookingInProgress ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="white" />
-              <Text style={styles.payButtonText}>Processing...</Text>
+              <Text style={styles.payButtonText}>Processing payment...</Text>
             </View>
           ) : (
             <Text style={styles.payButtonText}>Pay Now - {formatFare(totalAmount)}</Text>
@@ -379,45 +265,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderLeftWidth: 4,
     borderLeftColor: '#FFC107',
-  },
-  cardForm: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-  },
-  rowContainer: {
-    flexDirection: 'row',
   },
   payButtonContainer: {
     backgroundColor: 'white',

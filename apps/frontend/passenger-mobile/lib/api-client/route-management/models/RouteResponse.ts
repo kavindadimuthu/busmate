@@ -7,9 +7,18 @@ import type { RouteStopResponse } from './RouteStopResponse';
 export type RouteResponse = {
     id?: string;
     name?: string;
+    nameSinhala?: string;
+    nameTamil?: string;
+    routeNumber?: string;
     description?: string;
+    roadType?: string;
+    routeThrough?: string;
+    routeThroughSinhala?: string;
+    routeThroughTamil?: string;
     routeGroupId?: string;
     routeGroupName?: string;
+    routeGroupNameSinhala?: string;
+    routeGroupNameTamil?: string;
     startStopId?: string;
     startStopName?: string;
     startStopLocation?: LocationDto;

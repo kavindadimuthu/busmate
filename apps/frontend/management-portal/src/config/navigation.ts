@@ -16,6 +16,7 @@ import {
   SquareActivity,
   Bus,
   DollarSign,
+  Ticket,
 } from "lucide-react";
 import type { NavigationConfig } from "@busmate/ui";
 
@@ -54,6 +55,12 @@ export const motNavigation: NavigationConfig = {
           label: "Trips",
           icon: PlaneTakeoff,
           href: "/mot/trips",
+        },
+        {
+          id: "tickets",
+          label: "Tickets",
+          icon: Ticket,
+          href: "/mot/tickets",
         },
       ],
     },
@@ -194,6 +201,12 @@ export const operatorNavigation: NavigationConfig = {
           label: "Trips",
           icon: PlaneTakeoff,
           href: "/operator/trips",
+        },
+        {
+          id: "tickets",
+          label: "Tickets",
+          icon: Ticket,
+          href: "/operator/tickets",
         },
         {
           id: "crew",

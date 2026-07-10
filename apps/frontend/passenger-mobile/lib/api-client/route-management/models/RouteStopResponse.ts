@@ -4,10 +4,13 @@
 /* eslint-disable */
 import type { LocationDto } from './LocationDto';
 export type RouteStopResponse = {
+    id?: string;
     stopId?: string;
     stopName?: string;
     location?: LocationDto;
     stopOrder?: number;
     distanceFromStartKm?: number;
+    distanceFromStartKmUnverified?: number;
+    distanceFromStartKmCalculated?: number;
 };
 

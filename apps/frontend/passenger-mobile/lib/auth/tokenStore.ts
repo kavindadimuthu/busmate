@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthControllerService, OpenAPI as UserAPI } from '@/lib/api-client/user-management';
+import { OpenAPI as RouteAPI } from '@/lib/api-client/route-management';
+import { OpenAPI as TicketingAPI } from '@/lib/api-client/ticketing-management';
 
 const ACCESS_TOKEN_KEY = 'busmate.auth.accessToken';
 const REFRESH_TOKEN_KEY = 'busmate.auth.refreshToken';
@@ -76,6 +78,14 @@ export async function resolveAccessToken(): Promise<string> {
   }
 }
 
+/**
+ * All three generated clients (user/route/ticketing-management) share the same passenger
+ * session - only UserAPI.TOKEN was ever wired to resolveAccessToken(), so every route-search
+ * and ticketing/booking call went out with no Authorization header at all and would 401
+ * against the gateway's requiresAuth routes. Install the same resolver on all three.
+ */
 export function installUserApiTokenResolver(): void {
   UserAPI.TOKEN = resolveAccessToken;
+  RouteAPI.TOKEN = resolveAccessToken;
+  TicketingAPI.TOKEN = resolveAccessToken;
 }

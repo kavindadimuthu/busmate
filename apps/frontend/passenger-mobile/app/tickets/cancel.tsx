@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import AppHeader from '@/components/ui/AppHeader';
+import { useAuth } from '@/context/AuthContext';
+import { TicketControllerService } from '@/lib/api-client/ticketing-management/services/TicketControllerService';
+import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
+import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management/models/ConductorLogTicketDTO';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 export default function CancelTicketScreen() {
   const router = useRouter();
+  const { ticketId } = useLocalSearchParams<{ ticketId: string }>();
+  const { user } = useAuth();
   const [selectedReason, setSelectedReason] = useState('');
   const [customReason, setCustomReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [ticket, setTicket] = useState<ConductorLogTicketDTO | null>(null);
+  const [fromStopName, setFromStopName] = useState<string | null>(null);
+  const [toStopName, setToStopName] = useState<string | null>(null);
   const safeAreaStyle = useSafeAreaContainerStyles();
 
   const cancellationReasons = [
@@ -23,28 +33,73 @@ export default function CancelTicketScreen() {
     'Other'
   ];
 
-  const ticketData = {
-    bookingId: 'SB2024011501',
-    route: { from: 'Colombo Fort', to: 'Kandy' },
-    date: 'Today, Jan 15',
-    time: '08:30 AM',
-    seatNumber: 'A12',
-    price: 250,
-    refundAmount: 225, // After cancellation fee
-    cancellationFee: 25
-  };
+  useEffect(() => {
+    const loadTicket = async () => {
+      if (!ticketId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const data = await TicketControllerService.getTicketById(Number(ticketId));
+        setTicket(data);
+        if (data.startLocationId) {
+          BusStopManagementService.getStopById(data.startLocationId)
+            .then((s) => setFromStopName(s.name ?? null))
+            .catch(() => {});
+        }
+        if (data.endLocationId) {
+          BusStopManagementService.getStopById(data.endLocationId)
+            .then((s) => setToStopName(s.name ?? null))
+            .catch(() => {});
+        }
+      } catch (err) {
+        console.error('Failed to load ticket for cancellation:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTicket();
+  }, [ticketId]);
 
   const handleCancelTicket = async () => {
-    if (!selectedReason) return;
-    
+    if (!selectedReason || !ticket?.ticketId || !user) return;
+
     setIsProcessing(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      await TicketControllerService.cancelTicket(ticket.ticketId, {
+        passengerId: user.id,
+        reason: selectedReason === 'Other' ? customReason || 'Other' : selectedReason,
+      });
       router.replace('/tickets');
-    }, 2000);
+    } catch (err) {
+      console.error('Cancel ticket error:', err);
+      Alert.alert('Cancellation Failed', 'Something went wrong while cancelling your ticket. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={safeAreaStyle}>
+        <AppHeader title="Cancel Ticket" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#004CFF" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!ticket) {
+    return (
+      <SafeAreaView style={safeAreaStyle}>
+        <AppHeader title="Cancel Ticket" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.warningText}>Ticket not found.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={safeAreaStyle}>
@@ -58,8 +113,8 @@ export default function CancelTicketScreen() {
           <View style={styles.warningContent}>
             <Text style={styles.warningTitle}>Cancellation Policy</Text>
             <Text style={styles.warningText}>
-              Free cancellation up to 2 hours before departure. 
-              A cancellation fee of LKR 25 will be deducted from your refund.
+              Cancelling this ticket is final and cannot be undone. If payment was already
+              confirmed, the full fare will be refunded to your original payment method.
             </Text>
           </View>
         </View>
@@ -69,19 +124,15 @@ export default function CancelTicketScreen() {
           <Text style={styles.sectionTitle}>Ticket Details</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Route</Text>
-            <Text style={styles.summaryValue}>{ticketData.route.from} → {ticketData.route.to}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Date & Time</Text>
-            <Text style={styles.summaryValue}>{ticketData.date} • {ticketData.time}</Text>
+            <Text style={styles.summaryValue}>{fromStopName || ticket.startLocationId} → {toStopName || ticket.endLocationId}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Seat</Text>
-            <Text style={styles.summaryValue}>{ticketData.seatNumber}</Text>
+            <Text style={styles.summaryValue}>{ticket.seatNumber || 'N/A'}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Booking ID</Text>
-            <Text style={styles.summaryValue}>#{ticketData.bookingId}</Text>
+            <Text style={styles.summaryValue}>#{ticket.ticketId}</Text>
           </View>
         </View>
 
@@ -137,21 +188,19 @@ export default function CancelTicketScreen() {
           <Text style={styles.sectionTitle}>Refund Information</Text>
           <View style={styles.refundDetails}>
             <View style={styles.refundRow}>
-              <Text style={styles.refundLabel}>Original Amount</Text>
-              <Text style={styles.refundValue}>LKR {ticketData.price}</Text>
-            </View>
-            <View style={styles.refundRow}>
-              <Text style={styles.refundLabel}>Cancellation Fee</Text>
-              <Text style={styles.refundFee}>- LKR {ticketData.cancellationFee}</Text>
+              <Text style={styles.refundLabel}>Fare Amount</Text>
+              <Text style={styles.refundValue}>LKR {ticket.fareAmount ?? 0}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.refundRow}>
               <Text style={styles.refundTotalLabel}>Refund Amount</Text>
-              <Text style={styles.refundTotalValue}>LKR {ticketData.refundAmount}</Text>
+              <Text style={styles.refundTotalValue}>
+                {ticket.bookingStatus === 'CONFIRMED' ? `LKR ${ticket.fareAmount ?? 0}` : 'N/A (not yet paid)'}
+              </Text>
             </View>
           </View>
           <Text style={styles.refundNote}>
-            Refund will be processed within 3-5 business days to your original payment method.
+            Refunds are processed via the test payment gateway and reflect immediately in your account.
           </Text>
         </View>
       </ScrollView>
@@ -188,6 +237,12 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
   },
   warningCard: {
     flexDirection: 'row',

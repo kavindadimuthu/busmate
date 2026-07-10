@@ -4,9 +4,16 @@
 /* eslint-disable */
 import type { RouteStopRequest } from './RouteStopRequest';
 export type RouteRequest = {
-    id?: string;
     name: string;
+    nameSinhala?: string;
+    nameTamil?: string;
+    routeNumber?: string;
     description?: string;
+    roadType?: string;
+    routeThrough?: string;
+    routeThroughSinhala?: string;
+    routeThroughTamil?: string;
+    routeGroupId: string;
     startStopId: string;
     endStopId: string;
     distanceKm?: number;

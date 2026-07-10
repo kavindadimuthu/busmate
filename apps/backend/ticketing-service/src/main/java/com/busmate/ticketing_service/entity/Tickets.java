@@ -11,7 +11,12 @@ import java.time.LocalDateTime;
 @Table(name = "tickets")
 public class Tickets {
     public enum IssueMethod { CONDUCTOR, ONLINE }
-    public enum Status { VALID, NOT_VALID }
+    // VALID = validated at boarding by a conductor (cash tickets are VALID immediately on
+    // issue; online tickets become VALID only when scanned/validated on the bus, same as
+    // before - this flag is about *boarding*, not payment). NOT_VALID = not yet boarded,
+    // regardless of payment state (payment state lives on Transactions/Online). CANCELLED =
+    // passenger-cancelled before boarding.
+    public enum Status { VALID, NOT_VALID, CANCELLED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

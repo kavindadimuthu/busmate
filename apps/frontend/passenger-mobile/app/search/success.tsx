@@ -122,8 +122,8 @@ export default function SuccessScreen() {
 
             {paymentData && (
               <View style={styles.ticketRow}>
-                <Text style={styles.ticketLabel}>Transaction Ref</Text>
-                <Text style={styles.ticketValue}>{paymentData.transactionRef}</Text>
+                <Text style={styles.ticketLabel}>Payment Reference</Text>
+                <Text style={styles.ticketValue}>{paymentData.paymentReference}</Text>
               </View>
             )}
           </View>
@@ -142,21 +142,21 @@ export default function SuccessScreen() {
             <View style={styles.tripRow}>
               <Calendar size={16} color="#004CFF" />
               <Text style={styles.tripText}>
-                {formatDate(bookingData.tripData.scheduledDeparture)}
+                {formatDate(bookingData.tripDate)}
               </Text>
             </View>
-            
+
             <View style={styles.tripRow}>
               <Clock size={16} color="#004CFF" />
               <Text style={styles.tripText}>
-                {formatTime(bookingData.tripData.scheduledDeparture)} - {formatTime(bookingData.tripData.scheduledArrival)}
+                {formatTime(bookingData.scheduledDepartureTime)} - {formatTime(bookingData.scheduledArrivalTime)}
               </Text>
             </View>
-            
+
             <View style={styles.tripRow}>
               <User size={16} color="#004CFF" />
               <Text style={styles.tripText}>
-                {bookingData.tripData.operator?.name || 'Bus Operator'}
+                {bookingData.operatorName || 'Bus Operator'}
               </Text>
             </View>
           </View>

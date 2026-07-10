@@ -10,5 +10,13 @@ export type LocationDto = {
     state?: string;
     zipCode?: string;
     country?: string;
+    addressSinhala?: string;
+    citySinhala?: string;
+    stateSinhala?: string;
+    countrySinhala?: string;
+    addressTamil?: string;
+    cityTamil?: string;
+    stateTamil?: string;
+    countryTamil?: string;
 };
 

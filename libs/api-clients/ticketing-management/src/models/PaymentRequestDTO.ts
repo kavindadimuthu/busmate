@@ -12,5 +12,6 @@ export type PaymentRequestDTO = {
     paymentMethod?: string;
     transactionRef?: string;
     seatNumber?: string;
+    passengerId?: string;
 };
 

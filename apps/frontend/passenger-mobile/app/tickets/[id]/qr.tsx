@@ -8,7 +8,8 @@ import QRCode from 'react-native-qrcode-svg';
 import AppHeader from '@/components/ui/AppHeader';
 import { useBooking } from '@/context/BookingContext';
 import { TicketControllerService, ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management';
-import { PassengerApIsService, PassengerStopResponse } from '@/lib/api-client/route-management';
+import { BusStopManagementService } from '@/lib/api-client/route-management';
+import type { StopResponse } from '@/lib/api-client/route-management';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 export default function QRCodeScreen() {
@@ -18,8 +19,8 @@ export default function QRCodeScreen() {
   const [brightness, setBrightness] = useState(1);
   const [showDebugData, setShowDebugData] = useState(false);
   const [ticketData, setTicketData] = useState<ConductorLogTicketDTO | null>(null);
-  const [startStop, setStartStop] = useState<PassengerStopResponse | null>(null);
-  const [endStop, setEndStop] = useState<PassengerStopResponse | null>(null);
+  const [startStop, setStartStop] = useState<StopResponse | null>(null);
+  const [endStop, setEndStop] = useState<StopResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const safeAreaStyle = useSafeAreaContainerStyles();
@@ -59,7 +60,7 @@ export default function QRCodeScreen() {
         
         if (currentTicketData.startLocationId) {
           promises.push(
-            PassengerApIsService.getStopDetails(currentTicketData.startLocationId)
+            BusStopManagementService.getStopById(currentTicketData.startLocationId)
               .then(stop => setStartStop(stop))
               .catch(err => console.warn('Failed to fetch start stop:', err))
           );
@@ -67,7 +68,7 @@ export default function QRCodeScreen() {
         
         if (currentTicketData.endLocationId) {
           promises.push(
-            PassengerApIsService.getStopDetails(currentTicketData.endLocationId)
+            BusStopManagementService.getStopById(currentTicketData.endLocationId)
               .then(stop => setEndStop(stop))
               .catch(err => console.warn('Failed to fetch end stop:', err))
           );

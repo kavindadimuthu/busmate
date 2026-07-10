@@ -18,12 +18,12 @@ export const initializeApiClients = () => {
   UserOpenAPI.CREDENTIALS = 'include';
   installUserApiTokenResolver();
 
-  // Configure Route Management API
+  // Configure Route Management API (token resolver installed above, shared with UserOpenAPI)
   RouteOpenAPI.BASE = ENV.API_ENDPOINTS.ROUTE_SERVICE;
   RouteOpenAPI.WITH_CREDENTIALS = false;
   RouteOpenAPI.CREDENTIALS = 'include';
 
-  // Configure Ticketing API
+  // Configure Ticketing API (token resolver installed above, shared with UserOpenAPI)
   TicketingOpenAPI.BASE = ENV.API_ENDPOINTS.TICKETING_SERVICE;
   TicketingOpenAPI.WITH_CREDENTIALS = false;
   TicketingOpenAPI.CREDENTIALS = 'include';
@@ -36,14 +36,11 @@ export const initializeApiClients = () => {
 };
 
 /**
- * Clear authorization tokens for the clients that don't manage their own
- * session (route/ticketing). UserOpenAPI.TOKEN stays installed as the
- * resolver from tokenStore.ts — it naturally returns '' once the stored
- * session is cleared via tokenStore.clearSession().
+ * No-op: all three clients' TOKEN is the resolveAccessToken() resolver installed by
+ * installUserApiTokenResolver(), which naturally returns '' once the stored session is
+ * cleared via tokenStore.clearSession() - nothing to null out here. Kept as a named export
+ * (called from the sign-out flow) so callers don't need to change.
  */
-export const clearAuthTokens = () => {
-  RouteOpenAPI.TOKEN = undefined;
-  TicketingOpenAPI.TOKEN = undefined;
-};
+export const clearAuthTokens = () => {};
 
 export { UserOpenAPI, RouteOpenAPI, TicketingOpenAPI };

@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type OperatorRequest = {
+    id?: string;
     name: string;
     operatorType?: string;
     region?: string;
