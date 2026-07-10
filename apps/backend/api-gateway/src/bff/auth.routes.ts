@@ -76,6 +76,37 @@ bffAuthRouter.post('/logout', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/bff/auth/token — hands the SPA a short-lived, readable access token
+// derived from the httpOnly cookie (refreshing it transparently if expired).
+// The SPA holds this in memory and uses it as `Authorization: Bearer` for direct
+// gateway API calls; the refresh token stays httpOnly. Mirrors management-portal's
+// /api/auth/token route so the generated OpenAPI clients work unchanged.
+bffAuthRouter.get('/token', async (req: Request, res: Response) => {
+  const accessToken = getAccessTokenCookie(req);
+  if (accessToken) {
+    try {
+      jwt.verify(accessToken, getJwtSecret(), { algorithms: ['HS256'] });
+      return res.json({ accessToken });
+    } catch {
+      // Expired/invalid — fall through to refresh.
+    }
+  }
+
+  const refreshToken = getRefreshTokenCookie(req);
+  if (!refreshToken) {
+    clearSessionCookies(res);
+    return res.status(401).json({ error: 'No session' });
+  }
+  try {
+    const session = await refreshSession(refreshToken);
+    setSessionCookies(res, session);
+    return res.json({ accessToken: session.accessToken });
+  } catch {
+    clearSessionCookies(res);
+    return res.status(401).json({ error: 'Failed to get token' });
+  }
+});
+
 // GET /api/bff/auth/me — the SPA bootstrap call. Validates the access cookie
 // (refreshing transparently if expired) and returns the current user + role so
 // the client AuthProvider can gate routes. Replaces management-portal's

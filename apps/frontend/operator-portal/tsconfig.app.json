@@ -18,7 +18,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@busmate/portal-shared": ["../../../libs/portal-shared/src/index.ts"]
+      "@busmate/portal-shared": ["../../../libs/portal-shared/src/index.ts"],
+      "@busmate/api-client-route": ["../../../libs/api-clients/route-management/src/index.ts"],
+      "@busmate/api-client-ticketing": ["../../../libs/api-clients/ticketing-management/src/index.ts"],
+      "@busmate/api-client-user": ["../../../libs/api-clients/user-management/src/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

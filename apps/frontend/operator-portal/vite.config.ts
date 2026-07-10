@@ -37,6 +37,19 @@ export default defineConfig({
         find: '@busmate/portal-shared',
         replacement: path.resolve(__dirname, '../../../libs/portal-shared/src/index.ts'),
       },
+      // Generated OpenAPI clients (source), same aliasing passenger-web uses.
+      {
+        find: '@busmate/api-client-route',
+        replacement: path.resolve(__dirname, '../../../libs/api-clients/route-management/src/index.ts'),
+      },
+      {
+        find: '@busmate/api-client-ticketing',
+        replacement: path.resolve(__dirname, '../../../libs/api-clients/ticketing-management/src/index.ts'),
+      },
+      {
+        find: '@busmate/api-client-user',
+        replacement: path.resolve(__dirname, '../../../libs/api-clients/user-management/src/index.ts'),
+      },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },

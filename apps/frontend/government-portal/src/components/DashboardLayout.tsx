@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Bus, Route as RouteIcon, MapPin, CalendarClock,
   FileCheck, Ticket, BarChart3, ClipboardCheck, LogOut,
 } from 'lucide-react';
-import { Button, cn } from '@busmate/ui';
+import { Button, cn, ThemeSwitcher, ThemePersonalitySwitcher } from '@busmate/ui';
 import { useAuth, normalizeRole } from '@busmate/portal-shared';
 
 // Nav differs per government role. Only the dashboard link is wired so far;
@@ -71,9 +71,14 @@ export function DashboardLayout() {
           <div className="text-sm text-muted-foreground">
             {user?.fullName || user?.username} · <span className="capitalize">{user?.userType}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Sign out
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Color theme + light/dark toggle — same @busmate/ui switchers as management-portal. */}
+            <ThemePersonalitySwitcher />
+            <ThemeSwitcher />
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" /> Sign out
+            </Button>
+          </div>
         </header>
         <main className="flex-1 p-6 overflow-auto">
           <Outlet />

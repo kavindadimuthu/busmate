@@ -22,6 +22,8 @@ public class CorsConfig {
                 "http://localhost:3000",
                 "http://localhost:3001",
                 "http://localhost:4000",
+                "http://localhost:4100", // operator-portal (Vite dev)
+                "http://localhost:4200", // government-portal (Vite dev)
                 "http://localhost:8080",
                 "http://localhost:9010",
                 "http://localhost:9020",

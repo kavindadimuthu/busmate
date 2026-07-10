@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { ThemeProvider } from 'next-themes';
+import { ThemePersonalityProvider } from '@busmate/ui';
 import { AuthProvider, ProtectedRoute } from '@busmate/portal-shared';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import LoginPage from '@/pages/LoginPage';
@@ -13,9 +15,11 @@ import NotFoundPage from '@/pages/NotFoundPage';
 // each guarded by the same ProtectedRoute (which already rejects operators).
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster position="top-right" richColors />
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <ThemePersonalityProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Toaster position="top-right" richColors />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/not-authorized" element={<NotAuthorizedPage />} />
@@ -33,7 +37,9 @@ export default function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemePersonalityProvider>
+    </ThemeProvider>
   );
 }
