@@ -87,7 +87,7 @@ For Mermaid embedded in `.md`, the header is an HTML comment above the fence. Ag
 
 ## Incremental generation, caching, source hashes
 
-- **Nx caching** already keys targets on inputs ([nx.json](../../../nx.json) `namedInputs`); generation
+- **Nx caching** already keys targets on inputs ([nx.json](../../nx.json) `namedInputs`); generation
   targets declare their source globs as `inputs` so unchanged sources skip regeneration.
 - **Source hashes:** the header records `source-sha256`. The freshness check recomputes the source hash
   and (re)generates into a temp dir, then diffs — cheap and deterministic.

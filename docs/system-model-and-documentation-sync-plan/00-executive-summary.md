@@ -18,31 +18,31 @@ BusMate monorepo so that:
 
 ## Current repository situation (evidence-based)
 
-BusMate is an **Nx + pnpm** monorepo (`pnpm@10.26.1`, `nx ^21`, [nx.json](../../../nx.json),
-[pnpm-workspace.yaml](../../../pnpm-workspace.yaml)) containing:
+BusMate is an **Nx + pnpm** monorepo (`pnpm@10.26.1`, `nx ^21`, [nx.json](../../nx.json),
+[pnpm-workspace.yaml](../../pnpm-workspace.yaml)) containing:
 
-- **3 Spring Boot / Java / Maven services**: [core-service](../../../apps/backend/core-service)
-  (14 controllers, 14 entities), [user-service](../../../apps/backend/user-service) (8 controllers),
-  [ticketing-service](../../../apps/backend/ticketing-service) (3 controllers).
-- **1 Node/Express TypeScript** [api-gateway](../../../apps/backend/api-gateway) with a BFF module.
+- **3 Spring Boot / Java / Maven services**: [core-service](../../apps/backend/core-service)
+  (14 controllers, 14 entities), [user-service](../../apps/backend/user-service) (8 controllers),
+  [ticketing-service](../../apps/backend/ticketing-service) (3 controllers).
+- **1 Node/Express TypeScript** [api-gateway](../../apps/backend/api-gateway) with a BFF module.
 - **5 frontends**: `management-portal` (Next.js), `new-react-portal` (Vite), `passenger-web`
   (Next.js), `conductor-mobile` + `passenger-mobile` (Expo).
-- **Shared libs**: [libs/ui](../../../libs/ui) (shadcn), [libs/api-clients/*](../../../libs/api-clients)
+- **Shared libs**: [libs/ui](../../libs/ui) (shadcn), [libs/api-clients/*](../../libs/api-clients)
   (4 generated OpenAPI clients).
 
 What already exists and can be **reused as a foundation**:
 
 - **API code-gen pipeline**: springdoc OpenAPI on each Spring service → `openapi-typescript-codegen`
   → `libs/api-clients/*`, post-processed by
-  [scripts/post-generate-api-client.mjs](../../../scripts/post-generate-api-client.mjs). Nx targets
+  [scripts/post-generate-api-client.mjs](../../scripts/post-generate-api-client.mjs). Nx targets
   `generate:local|cloud|spec` and `fetch-spec:local` exist per client
-  ([route-management/project.json](../../../libs/api-clients/route-management/project.json)).
+  ([route-management/project.json](../../libs/api-clients/route-management/project.json)).
 - **Nx project graph + tags** (`scope:*`, `type:*`, `framework:*`, `lang:*`) — a ready-made
   service/dependency model and `affected` engine.
-- **Extensive prose docs** under [docs/](../../../docs) (system-capability-audit, transit-workflow-evaluation,
+- **Extensive prose docs** under [docs/](../../docs) (system-capability-audit, transit-workflow-evaluation,
   route-network-and-operations, passenger-information) already using Mermaid.
-- **Copilot-style instructions** under [.github/instructions/](../../../.github/instructions).
-- **Custom tooling** in [tools/](../../../tools) (api-usage-analyzer, dev-portal).
+- **Copilot-style instructions** under [.github/instructions/](../../.github/instructions).
+- **Custom tooling** in [tools/](../../tools) (api-usage-analyzer, dev-portal).
 
 The critical gaps (detailed in [01-current-state-assessment.md](./01-current-state-assessment.md)):
 
@@ -74,7 +74,7 @@ phases. We do **not** flip the repo to specification-first everywhere. Instead:
 4. **Introduce one machine-readable architecture model** — **Structurizr DSL** — as the single source
    for C4 context/container/component diagrams, replacing hand-drawn Mermaid where it drifts.
 5. **Introduce a structured, multi-perspective workflow schema** (YAML) with a pilot on the existing
-   **Trip lifecycle** ([docs/route-network-and-operations/trips.md](../../../docs/route-network-and-operations/trips.md)).
+   **Trip lifecycle** ([docs/route-network-and-operations/trips.md](../../docs/route-network-and-operations/trips.md)).
 6. **Wire everything into CI (new)** as freshness + drift + breaking-change gates, using Nx `affected`
    to keep it fast.
 7. **Formalize AI-agent operation** with a root `AGENTS.md` that points agents at authoritative sources
@@ -101,7 +101,7 @@ full matrix in [03-source-of-truth-matrix.md](./03-source-of-truth-matrix.md).
 - New engineers and AI agents read one map instead of reverse-engineering 4 services.
 - Diagrams and data dictionaries stop lying (they are regenerated or CI fails).
 - Impact analysis ("who consumes this endpoint/event?") becomes a command, building on the existing
-  [tools/api-usage-analyzer](../../../tools/api-usage-analyzer).
+  [tools/api-usage-analyzer](../../tools/api-usage-analyzer).
 
 ## Major risks (see [11-risks-and-tradeoffs.md](./11-risks-and-tradeoffs.md))
 

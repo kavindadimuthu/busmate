@@ -5,7 +5,7 @@
 
 ## Problem today
 
-Agent guidance is fragmented: [.github/instructions/*.instructions.md](../../../.github/instructions)
+Agent guidance is fragmented: [.github/instructions/*.instructions.md](../../.github/instructions)
 cover only 2 frontends; `.agents/` and `.codex/` are empty; useful facts live in the user's private
 memory (`~/.claude/.../MEMORY.md`) which other agents/humans can't see. There is **no root `AGENTS.md`**
 and no machine-checkable rule about which files are generated.
@@ -123,7 +123,7 @@ flowchart TD
 
 ## Service-level agent instructions
 
-Keep the existing [.github/instructions](../../../.github/instructions) (Copilot format) for
+Keep the existing [.github/instructions](../../.github/instructions) (Copilot format) for
 frontend naming conventions; optionally add thin `apps/backend/<svc>/AGENTS.md` files that defer to the
 root and add service-specific notes (e.g. core-service package layout, user-service permission model).
 

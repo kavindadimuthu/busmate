@@ -1,8 +1,8 @@
 # 05 — Workflow & Perspective Model
 
 > Part of [`system-model-and-documentation-sync`](./README.md). Pilot example uses the **Trip lifecycle**,
-> which already exists in [docs/route-network-and-operations/trips.md](../../../docs/route-network-and-operations/trips.md)
-> and [operations/](../../../apps/backend/core-service/src/main/java/com/busmate/routeschedule/operations) code.
+> which already exists in [docs/route-network-and-operations/trips.md](../../docs/route-network-and-operations/trips.md)
+> and [operations/](../../apps/backend/core-service/src/main/java/com/busmate/routeschedule/operations) code.
 
 ## Goal
 
@@ -152,7 +152,7 @@ flowchart TD
   deterministic.
 - `states.transitions` → **state-machine tests** asserting illegal transitions are rejected.
 - `failure[].status: known-bug` → an *xfail*/`@Disabled` marker so the model tracks the defect.
-- Playwright ([tests/e2e](../../../tests/e2e)) scenarios can reference `WF-TRIP-*` IDs in test names for
+- Playwright ([tests/e2e](../../tests/e2e)) scenarios can reference `WF-TRIP-*` IDs in test names for
   traceability. **Test generation is opt-in and later** — not required for the pilot.
 
 ## What must remain manually authored

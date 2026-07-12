@@ -75,7 +75,7 @@ delivers it is noted.
   locally.
 - **AC22** Generated docs and diagrams are viewable in VS Code. *Verify:* Mermaid renders in Markdown preview
   (`bierner.markdown-mermaid`); OpenAPI opens in `42crunch.vscode-openapi`; both are recommend-only in
-  [.vscode/extensions.json](../../../.vscode/extensions.json).
+  [.vscode/extensions.json](../../.vscode/extensions.json).
 
 ## Ownership & knowledge
 

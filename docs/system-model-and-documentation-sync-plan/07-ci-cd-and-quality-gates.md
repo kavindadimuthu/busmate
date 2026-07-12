@@ -49,7 +49,7 @@
 
 - **API (`oasdiff`)**: block on removed/renamed operations, removed response fields, narrowed types,
   new required request params. Allow additive changes. Tie severity to the `conventionalCommits`
-  already configured in [nx.json](../../../nx.json) — a `!`/`BREAKING CHANGE` commit is required to
+  already configured in [nx.json](../../nx.json) — a `!`/`BREAKING CHANGE` commit is required to
   override with justification.
 - **Events**: additive-only on payloads; removing/renaming a field or channel is breaking → block.
 - **DB**: `DROP`/`ALTER ... DROP`/type-narrowing in a migration requires a linked ADR + `expand/contract`
@@ -86,6 +86,6 @@ bot pushes the regenerated files to the PR branch (opt-in, advisory) — but the
 ## CD note
 
 CD is out of scope for this plan (deployment stays with existing
-[docker-compose*.yml](../../../docker-compose.production.yml) + Makefile). The gates above run in CI only.
+[docker-compose*.yml](../../docker-compose.production.yml) + Makefile). The gates above run in CI only.
 
 Continue to [08-ai-agent-operating-model.md](./08-ai-agent-operating-model.md).

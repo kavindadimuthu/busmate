@@ -30,7 +30,7 @@ net (CI + contracts) is in place.
 
 - **Objective:** Get *any* CI running affected build/test/lint. The repo has none.
 - **Scope:** `.github/workflows/ci.yml` running `pnpm install`, `nx affected -t build,test,lint`
-  against `main` (`defaultBase` already set in [nx.json](../../../nx.json)).
+  against `main` (`defaultBase` already set in [nx.json](../../nx.json)).
 - **Prereqs:** Phase 0.
 - **Tasks:** cache pnpm store + Nx cache; matrix for Java (mvnw) vs Node; wire `affected:*` scripts.
   - *Why:* every later gate hangs off this. *Where:* `.github/workflows/`.
@@ -51,7 +51,7 @@ net (CI + contracts) is in place.
      springdoc **build-time** approach* (springdoc-openapi-maven-plugin) over curling a live server so
      it works in CI without a running DB. *Inputs:* controllers/DTOs. *Outputs:* committed spec.
   2. Repoint `libs/api-clients/*` generation at the committed spec (reuse existing `generate:spec` +
-     [post-generate-api-client.mjs](../../../scripts/post-generate-api-client.mjs)); keep `generate:cloud`
+     [post-generate-api-client.mjs](../../scripts/post-generate-api-client.mjs)); keep `generate:cloud`
      as a labelled dev convenience.
   3. Add `oasdiff` gate (PR spec vs `main` spec) — advisory first.
   - *Why:* eliminates the "generate clients from a live server" instability (G2). *Where:* backend + libs + CI.
@@ -86,7 +86,7 @@ net (CI + contracts) is in place.
 - **Prereqs:** Phase 2 (needs committed specs for API anchors).
 - **Tasks:** author schema + Trip model ([05](./05-workflow-and-perspective-model.md)); build
   `tools/workflows/{validate,render-mermaid}`; convert the endpoint/role tables in
-  [docs/route-network-and-operations/trips.md](../../../docs/route-network-and-operations/trips.md) to
+  [docs/route-network-and-operations/trips.md](../../docs/route-network-and-operations/trips.md) to
   *links/generated includes* so the fact lives once.
   - *Why:* validates the approach cheaply before scaling to all workflows.
   - *Inputs:* trip code + specs. *Outputs:* perspective diagrams + validated model.
@@ -103,7 +103,7 @@ net (CI + contracts) is in place.
 - **Prereqs:** Phases 2–3 (contracts + DB docs as safety net), a DB backup/restore procedure.
 - **Tasks:**
   1. Generate baseline from current schema; wire the 3 existing
-     [core-service V001–V003](../../../apps/backend/core-service/src/main/resources/db/migration) as
+     [core-service V001–V003](../../apps/backend/core-service/src/main/resources/db/migration) as
      post-baseline history; retire the dead `schema.sql`.
   2. Set `flyway.baseline-on-migrate` for existing Supabase DBs so they adopt the baseline without re-creating.
   3. Flip `ddl-auto` to `validate`; add `migrate-check` gate (Flyway validate + destructive-DDL lint).
@@ -152,7 +152,7 @@ net (CI + contracts) is in place.
 
 - **Objective:** Promote advisory gates to blocking; add impact-analysis PR comments; optional pre-commit hook.
 - **Scope:** flip gates 3/4/6/8/9 to required after a green soak; extend
-  [tools/api-usage-analyzer](../../../tools/api-usage-analyzer) for endpoint/event/entity consumers;
+  [tools/api-usage-analyzer](../../tools/api-usage-analyzer) for endpoint/event/entity consumers;
   add PR-summary bot.
 - **Prereqs:** Phases 2–7 green for ~2 weeks.
 - **Tasks:** branch-protection required checks; impact target; light husky pre-commit

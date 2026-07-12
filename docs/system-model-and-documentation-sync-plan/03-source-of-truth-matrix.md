@@ -11,7 +11,7 @@ spec-first (code/clients generated from spec); `model→docs` = model renders to
 | Concern | Current source | Proposed authoritative source | Derived artifacts | Validation | Owner | Human-edit | AI-edit | Direction | Breaking-change policy | Drift detection |
 |---|---|---|---|---|---|---|---|---|---|---|
 | HTTP API (per service) | live `/v3/api-docs` | `apps/backend/<svc>/contracts/openapi.json` (committed springdoc output) | `libs/api-clients/*`, `docs/generated/api/*` | rebuild-and-diff + JSON Schema | service team | ✗ (edit controllers instead) | ✗ | `code→spec` | `oasdiff` blocks removed/renamed ops & shrunk types | freshness diff vs rebuilt spec |
-| Gateway routing | [routes.config.ts](../../../apps/backend/api-gateway/src/config/routes.config.ts) | same (kept) | — | consistency check vs service specs (advisory) | gateway team | ✓ | ✓ | `manual` | manual review | route-vs-spec cross-check |
+| Gateway routing | [routes.config.ts](../../apps/backend/api-gateway/src/config/routes.config.ts) | same (kept) | — | consistency check vs service specs (advisory) | gateway team | ✓ | ✓ | `manual` | manual review | route-vs-spec cross-check |
 | TS API clients | committed generated code | *(derived only)* | — | regenerate-and-diff | shared | ✗ | ✗ | `spec→code` | inherited from spec | freshness diff |
 | Duplicated mobile clients | copies in apps | *(retire → use libs)* | — | — | mobile teams | ✗ | ✗ | `spec→code` | — | flagged for consolidation |
 

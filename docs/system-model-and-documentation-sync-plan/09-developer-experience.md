@@ -31,7 +31,7 @@ pnpm nx run docs:workflows-validate            # anchors resolve
 
 ## VS Code visualization (uses already-recommended extensions)
 
-The repo already curates [.vscode/extensions.json](../../../.vscode/extensions.json). Most needs are
+The repo already curates [.vscode/extensions.json](../../.vscode/extensions.json). Most needs are
 covered; only a couple of *doc* extensions would be added (recommend-only, never auto-install):
 
 | Need | How, in VS Code | Extension |
@@ -46,13 +46,13 @@ covered; only a couple of *doc* extensions would be added (recommend-only, never
 
 **Only 2 new recommendations** (`bierner.markdown-mermaid`, `42crunch.vscode-openapi`), consistent with
 the repo's deliberate minimal-extension policy documented in
-[docs/vscode-monorepo-performance-optimization.md](../../../docs/vscode-monorepo-performance-optimization.md).
+[docs/vscode-monorepo-performance-optimization.md](../../docs/vscode-monorepo-performance-optimization.md).
 
 ## Watch mode (where it helps)
 
 - Workflows/architecture/DB docs: an optional `pnpm nx run docs:workflows --watch` (chokidar on the
   source globs) regenerates on save so the Mermaid preview live-updates. Keep it **opt-in** — the repo's
-  VS Code settings deliberately limit background watchers ([.vscode/settings.json](../../../.vscode/settings.json)
+  VS Code settings deliberately limit background watchers ([.vscode/settings.json](../../.vscode/settings.json)
   `files.watcherExclude`), so watch mode is a foreground dev command, not an always-on service.
 - API clients: not worth watch mode (needs a running/rebuilt service); run `:contract` on demand.
 
@@ -77,7 +77,7 @@ The repo currently has **no git hooks** and **no husky**. Proposed **light** hoo
 ## Operating without AI
 
 Every step above is a documented shell command. The generators are deterministic scripts under
-[tools/](../../../tools); the sources are human-readable (OpenAPI JSON, YAML, DSL, SQL, Markdown). A
+[tools/](../../tools); the sources are human-readable (OpenAPI JSON, YAML, DSL, SQL, Markdown). A
 developer with only VS Code + pnpm + Docker can author sources, regenerate, validate, and read every
 diagram. AI agents are an *accelerator*, never a dependency — which is exactly why the authoritative
 sources are all plain text and the rules live in `AGENTS.md` + headers rather than in a model's head.

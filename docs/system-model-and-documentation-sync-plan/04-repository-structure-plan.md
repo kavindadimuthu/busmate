@@ -4,14 +4,14 @@
 
 ## Guiding rules
 
-- Reuse existing directories ([docs/](../../../docs), [tools/](../../../tools),
-  [apps/backend/<svc>/src/main/resources/db/migration](../../../apps/backend/core-service/src/main/resources/db/migration),
-  [libs/api-clients/*](../../../libs/api-clients)) before inventing new ones.
+- Reuse existing directories ([docs/](../../docs), [tools/](../../tools),
+  [apps/backend/<svc>/src/main/resources/db/migration](../../apps/backend/core-service/src/main/resources/db/migration),
+  [libs/api-clients/*](../../libs/api-clients)) before inventing new ones.
 - **Authoritative** sources live next to the code they describe (service-local) *or* in a single
   cross-cutting home under `docs/`. **Generated** outputs live under `docs/generated/` (single, easy to
   `.gitignore`-or-verify, easy for agents to recognize).
 - Naming: kebab-case dirs, stable IDs, `*.workflow.yaml`, `openapi.json`, `asyncapi.yaml`, `NNNN-*.md`
-  for ADRs. Matches existing conventions in [.github/instructions](../../../.github/instructions).
+  for ADRs. Matches existing conventions in [.github/instructions](../../.github/instructions).
 
 ## New directories & files (proposed)
 
@@ -71,23 +71,23 @@ apps/backend/<svc>/AGENTS.md   # optional service-scoped agent notes
 
 ## Existing files to reuse (not move now)
 
-- [scripts/post-generate-api-client.mjs](../../../scripts/post-generate-api-client.mjs) — kept as the
+- [scripts/post-generate-api-client.mjs](../../scripts/post-generate-api-client.mjs) — kept as the
   client post-processor; called by the new generation orchestrator.
-- [libs/api-clients/*/project.json](../../../libs/api-clients/route-management/project.json) — add a
+- [libs/api-clients/*/project.json](../../libs/api-clients/route-management/project.json) — add a
   `generate` target that reads the **committed** `contracts/openapi.json` (via the existing
   `generate:spec` pattern) instead of a live server.
-- [core-service .../db/migration/V001..V003](../../../apps/backend/core-service/src/main/resources/db/migration)
+- [core-service .../db/migration/V001..V003](../../apps/backend/core-service/src/main/resources/db/migration)
   — become the tail of a proper Flyway history after a `V000` baseline is introduced.
-- [tools/api-usage-analyzer](../../../tools/api-usage-analyzer) — extended for impact analysis.
+- [tools/api-usage-analyzer](../../tools/api-usage-analyzer) — extended for impact analysis.
 - Existing prose docs — kept, but endpoint/role/entity tables converted to links or generated includes.
 
 ## Files that may eventually move (later, not now)
 
 - Duplicated mobile API clients
-  ([passenger-mobile/lib/api-client](../../../apps/frontend/passenger-mobile/lib/api-client),
-  [conductor-mobile/src/lib/api-client](../../../apps/frontend/conductor-mobile/src/lib/api-client)) →
+  ([passenger-mobile/lib/api-client](../../apps/frontend/passenger-mobile/lib/api-client),
+  [conductor-mobile/src/lib/api-client](../../apps/frontend/conductor-mobile/src/lib/api-client)) →
   consolidate onto `libs/api-clients/*`.
-- Dead [core-service schema.sql](../../../apps/backend/core-service/src/main/resources/schema.sql) →
+- Dead [core-service schema.sql](../../apps/backend/core-service/src/main/resources/schema.sql) →
   retired once Flyway baseline exists.
 
 ## Generated-output location policy
@@ -102,7 +102,7 @@ apps/backend/<svc>/AGENTS.md   # optional service-scoped agent notes
 
 - Contracts: `openapi.json` / `asyncapi.yaml` per service; version carried inside the document
   (`info.version`), bumped via existing `conventionalCommits` signal already configured in
-  [nx.json](../../../nx.json) `release`.
+  [nx.json](../../nx.json) `release`.
 - Workflows: `<domain-id>.workflow.yaml`; step IDs `WF-<DOMAIN>-<n>`; never renumber (append/deprecate).
 - ADRs: zero-padded `NNNN-kebab-title.md`, MADR sections, `Status:` line.
 - Flyway: existing `V###__snake_desc.sql`.

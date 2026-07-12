@@ -35,7 +35,7 @@ Every generated file carries a header (see [06](./06-generation-and-synchronizat
 
 ## Validation / drift services (the "gate layer")
 
-Implemented as **plain scripts under [tools/](../../../tools)** invoked by Nx targets and CI:
+Implemented as **plain scripts under [tools/](../../tools)** invoked by Nx targets and CI:
 
 - `tools/contracts/check-openapi-fresh` — rebuild spec, diff vs committed; fail on mismatch.
 - `oasdiff` — breaking-change detection between the PR's spec and `main`'s spec.
@@ -48,9 +48,9 @@ Implemented as **plain scripts under [tools/](../../../tools)** invoked by Nx ta
 
 ## Impact analysis
 
-Reuse and extend [tools/api-usage-analyzer](../../../tools/api-usage-analyzer): given a changed
+Reuse and extend [tools/api-usage-analyzer](../../tools/api-usage-analyzer): given a changed
 endpoint/event/entity, list consuming projects (frontends, gateway routes in
-[routes.config.ts](../../../apps/backend/api-gateway/src/config/routes.config.ts), other services).
+[routes.config.ts](../../apps/backend/api-gateway/src/config/routes.config.ts), other services).
 Nx `affected --graph` provides the coarse project-level blast radius; the analyzer provides the
 fine-grained symbol-level one. Output is a Markdown PR comment.
 
@@ -80,6 +80,28 @@ No AI required. See [09-developer-experience.md](./09-developer-experience.md).
 Root `AGENTS.md` (new) tells agents: where authoritative sources live, which paths are generated
 (never edit), which command to run after touching a source, and how to file a reverse-change proposal.
 Detail in [08-ai-agent-operating-model.md](./08-ai-agent-operating-model.md).
+
+## Frontend applications in this system
+
+The 5 frontends — `management-portal` (Next.js), `new-react-portal` (Vite), `passenger-web`
+(Next.js), `conductor-mobile` + `passenger-mobile` (Expo) — participate as **consumers and
+verification targets**, not as owners of authoritative sources. The heavy source/generator machinery
+(OpenAPI freeze, AsyncAPI, Flyway, Structurizr, workflow YAML) is **backend-anchored** because that is
+where the facts originate in this repo. Frontends fit in five concrete ways:
+
+| Role | What it means for frontends | Where in this plan |
+|------|-----------------------------|--------------------|
+| **Contract consumers** | Import generated clients from [libs/api-clients/*](../../libs/api-clients); the duplicated copies in [passenger-mobile/lib/api-client](../../apps/frontend/passenger-mobile/lib/api-client) and [conductor-mobile/src/lib/api-client](../../apps/frontend/conductor-mobile/src/lib/api-client) are consolidated onto the libs in **Phase 10** | [03](./03-source-of-truth-matrix.md), [10](./10-implementation-roadmap.md) |
+| **Impact-analysis targets** | The breaking-API/event gates + `api-usage-analyzer` exist mainly to answer "which frontend breaks?"; Nx `affected` scopes their builds/tests/lint | [07](./07-ci-cd-and-quality-gates.md) |
+| **Architecture participants** | All 5 appear as containers in the Structurizr container view (acceptance criterion AC15) | [10 Phase 6](./10-implementation-roadmap.md) |
+| **Workflow actors** | Workflow YAML `ui:` anchors point at real frontend paths (the Trip pilot references `management-portal` + `conductor-mobile`); anchors must resolve or CI fails | [05](./05-workflow-and-perspective-model.md) |
+| **Convention-governed** | Existing [.github/instructions/*.instructions.md](../../.github/instructions) naming rules for `management-portal` and `libs/ui` are kept, not replaced | [08](./08-ai-agent-operating-model.md) |
+
+**Explicitly out of scope for frontends** (see [12](./12-open-questions-and-decisions.md)): no frontend
+is an authoritative contract/schema source, and **no frontend-specific generation** (component/prop
+contracts, Storybook-as-contract, route-manifest modeling) is introduced. Frontends consume specs and
+are protected by the gates — they do not define the model. This keeps the toolset small and puts the
+authority where the facts actually live.
 
 ## Human review boundaries
 
