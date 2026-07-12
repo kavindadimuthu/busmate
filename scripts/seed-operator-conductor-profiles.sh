@@ -26,36 +26,33 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
-# user-service's database — loaded from the repo root .env, same as dev:user-service.
-if [ -f "$REPO_ROOT/.env" ]; then
+# All secrets come from the central config/secrets/.env — the single source of
+# truth for backend services (same file dev:user-service / dev:core-service load).
+if [ -f "$REPO_ROOT/config/secrets/.env" ]; then
   set -a
   # shellcheck disable=SC1091
-  source "$REPO_ROOT/.env"
+  source "$REPO_ROOT/config/secrets/.env"
   set +a
 fi
-: "${SPRING_DATASOURCE_USERNAME:?SPRING_DATASOURCE_USERNAME must be set (see repo root .env)}"
-: "${SPRING_DATASOURCE_PASSWORD:?SPRING_DATASOURCE_PASSWORD must be set (see repo root .env)}"
-: "${SUPABASE_URL:?SUPABASE_URL must be set (see repo root .env)}"
-: "${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY must be set (see repo root .env)}"
+: "${USER_DB_USERNAME:?USER_DB_USERNAME must be set (see config/secrets/.env)}"
+: "${USER_DB_PASSWORD:?USER_DB_PASSWORD must be set (see config/secrets/.env)}"
+: "${SUPABASE_URL:?SUPABASE_URL must be set (see config/secrets/.env)}"
+: "${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY must be set (see config/secrets/.env)}"
 
 USER_DB_HOST="aws-0-ap-southeast-1.pooler.supabase.com"
 USER_DB_PORT="6543"
-USER_DB_CONN="postgresql://${SPRING_DATASOURCE_USERNAME}:${SPRING_DATASOURCE_PASSWORD}@${USER_DB_HOST}:${USER_DB_PORT}/postgres?sslmode=require"
+USER_DB_CONN="postgresql://${USER_DB_USERNAME}:${USER_DB_PASSWORD}@${USER_DB_HOST}:${USER_DB_PORT}/postgres?sslmode=require"
 
-# core-service has its OWN database — distinct from the one above (see
-# apps/backend/core-service/src/main/resources/application.yml). Its dev script
-# (pnpm run dev:core-service) does not load the repo root .env, so these default
-# to core-service's own application.yml fallbacks. Override with real
-# CORE_SERVICE_DB_* env vars if your core-service is configured differently.
-CORE_DB_USER="${CORE_SERVICE_DB_USERNAME:-postgres.bixiyzllxffxqwutthmk}"
-CORE_DB_PASSWORD="${CORE_SERVICE_DB_PASSWORD:-root}"
-CORE_DB_CONN="postgresql://${CORE_DB_USER}:${CORE_DB_PASSWORD}@${USER_DB_HOST}:${USER_DB_PORT}/postgres?sslmode=require"
+# core-service has its OWN database — distinct from the one above. Its credentials
+# (CORE_DB_*) also live in config/secrets/.env, sourced above.
+CORE_DB_USER="${CORE_DB_USERNAME:-postgres.bixiyzllxffxqwutthmk}"
+CORE_DB_PW="${CORE_DB_PASSWORD:-root}"
+CORE_DB_CONN="postgresql://${CORE_DB_USER}:${CORE_DB_PW}@${USER_DB_HOST}:${USER_DB_PORT}/postgres?sslmode=require"
 
 CORE_SERVICE_URL="${CORE_SERVICE_URL:-http://localhost:9010}"
-# Matches core-service's application.yml fallback (internal.api-key) — core-service's
-# dev script doesn't load repo root .env, so it's running with this default unless you
-# set INTERNAL_API_KEY in core-service's own environment.
-CORE_INTERNAL_API_KEY="${CORE_SERVICE_INTERNAL_API_KEY:-dev-only-internal-api-key-change-me}"
+# INTERNAL_API_KEY is also in config/secrets/.env (sourced above); fall back to the
+# application.yml dev placeholder if it isn't set.
+CORE_INTERNAL_API_KEY="${INTERNAL_API_KEY:-dev-only-internal-api-key-change-me}"
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 

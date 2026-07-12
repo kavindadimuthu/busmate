@@ -13,13 +13,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    # Secrets come from the central file; topology (ports, internal URLs) is set
+    # inline here and overrides the local-dev URLs from the file.
+    env_file:
+      - config/secrets/.env
     environment:
       - PORT=8080
-      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
       - USER_SERVICE_URL=http://user-service:9020
       - CORE_SERVICE_URL=http://core-service:9010
       - TICKETING_SERVICE_URL=http://ticketing-service:9030
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - NODE_ENV=production
     depends_on:
       user-service:
@@ -34,16 +36,10 @@ services:
     build:
       context: apps/backend/user-service
       dockerfile: Dockerfile
+    env_file:
+      - config/secrets/.env
     environment:
       - SERVER_PORT=9020
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - CORE_SERVICE_URL=http://core-service:9010
     expose:
       - "9020"
@@ -53,9 +49,10 @@ services:
     build:
       context: apps/backend/core-service
       dockerfile: Dockerfile
+    env_file:
+      - config/secrets/.env
     environment:
       - SERVER_PORT=9010
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
     expose:
       - "9010"
     restart: unless-stopped
@@ -64,6 +61,8 @@ services:
     build:
       context: apps/backend/ticketing-service
       dockerfile: Dockerfile
+    env_file:
+      - config/secrets/.env
     environment:
       - SERVER_PORT=9030
     expose:
