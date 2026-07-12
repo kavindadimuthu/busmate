@@ -1,14 +1,14 @@
 # BusMate System Capability Audit & Improvement Workflow
 
-> **What this document is.** A repeatable *method* for (1) capturing what BusMate can do today,
-> (2) identifying its limitations, gaps and improvement candidates, (3) prioritising them, and
-> (4) selecting items to fix or build — by humans or AI agents — and then feeding the outcome back
-> into the captured state so it never goes stale.
+> **What this is.** A repeatable *method* for (1) **capturing** what each part of BusMate can do
+> today (with diagrams), (2) **identifying** its limitations and gaps, (3) **analyzing** them into
+> improvement candidates, (4) **prioritizing** them, and (5) **managing a backlog** per section —
+> so that later, feature/fix work can be pulled from those backlogs and run through a full
+> development lifecycle that **feeds its outcome back into the captured state**.
 >
-> This is the **playbook**, not the inventory itself. The inventory it produces lives under
-> `docs/system-capability-audit/sections/` (see [The living inventory](#5-the-living-inventory)).
-> Much of the raw material already exists across the repo's doc sets — this method organises it
-> into one continuously-maintained picture.
+> This is the **playbook**. The living inventory it produces lives in per-section directories under
+> `sections/`. This initialization deliberately covers **structure + workflow only** — no fixes or
+> features are implemented yet.
 
 ---
 
@@ -16,47 +16,40 @@
 
 1. [Why this exists](#1-why-this-exists)
 2. [How we section the system](#2-how-we-section-the-system)
-3. [Source material map — files & diagrams per section](#3-source-material-map--files--diagrams-per-section)
-4. [The capture format (what we record per capability)](#4-the-capture-format-what-we-record-per-capability)
-5. [The living inventory](#5-the-living-inventory)
-6. [Prioritisation model](#6-prioritisation-model)
-7. [The end-to-end workflow](#7-the-end-to-end-workflow)
-8. [Human vs. AI-agent execution](#8-human-vs-ai-agent-execution)
-9. [Keeping the captured state current](#9-keeping-the-captured-state-current)
-10. [Quick start](#10-quick-start)
+3. [Folder & file structure](#3-folder--file-structure)
+4. [The five capture stages → which file each lives in](#4-the-five-capture-stages--which-file-each-lives-in)
+5. [Source material map — files & diagrams per section](#5-source-material-map--files--diagrams-per-section)
+6. [ID scheme & traceability](#6-id-scheme--traceability)
+7. [Prioritisation model](#7-prioritisation-model)
+8. [Backlogs: per-section vs. global](#8-backlogs-per-section-vs-global)
+9. [The later development lifecycle](#9-the-later-development-lifecycle)
+10. [Human vs. AI-agent execution](#10-human-vs-ai-agent-execution)
+11. [Keeping the captured state current](#11-keeping-the-captured-state-current)
+12. [Quick start / current progress](#12-quick-start--current-progress)
 
 ---
 
 ## 1. Why this exists
 
-BusMate already has excellent *point-in-time* evaluations — `transit-workflow-evaluation/`,
-`route-network-and-operations/`, `passenger-information/`, the `architecture-review/` set, and the
-`docs/ui/` refactoring plan. What is missing is a **single, continuously-maintained map** that:
-
-- covers **the whole system** (not one domain at a time) at a consistent altitude,
-- records each capability with the *same* fields (what it does, how, limits, gaps, priority),
-- links each gap to a concrete **improvement item** with an owner (human or AI agent) and a status,
-- and is **updated as part of doing the work**, so the map reflects reality after every change.
-
-The existing docs become the *primary sources* this map indexes and summarises — we do not throw
-them away, we point at them.
+BusMate already has excellent *point-in-time* evaluations (`transit-workflow-evaluation/`,
+`route-network-and-operations/`, `passenger-information/`, `architecture-review/`, `docs/ui/`).
+What is missing is a **single, continuously-maintained, whole-system map** where every section is
+captured to the same depth (current-state diagrams + capability inventory), every gap is traced to
+an analyzed improvement, and every improvement is a managed backlog item — kept in sync as work is
+done. The existing docs become *primary sources* this map indexes; we don't discard them.
 
 ---
 
 ## 2. How we section the system
 
-We slice BusMate into **capability domains** (bounded contexts), not by app or by repo folder.
-A domain is a coherent set of capabilities a stakeholder would recognise. This matches how the
-existing docs are already organised and keeps each section small enough to audit in one sitting.
-
-The proposed sections and their current maturity (starting estimate, to be confirmed during
-capture):
+We slice BusMate into **capability domains** (bounded contexts), not by app or repo folder — small
+enough to audit in one pass, and matching how the existing docs are already organised.
 
 | # | Section | Owns | Maturity today |
 |---|---------|------|----------------|
 | S1 | **Identity, Access & User Management** | Accounts, auth, JWT/BFF sessions, roles, permission engine | 🟢 Rebuilt & mostly verified |
 | S2 | **Network & Service Registry** | Stops, routes, route-stops, schedules, calendars, exceptions | 🟢 Strong registry, 🟡 weak *design* tooling |
-| S3 | **Operations & Trip Execution** | Trip materialisation, day-of-ops, conductor execution | 🟢 Real end-to-end, known bugs |
+| S3 | **Operations & Trip Execution** | Trip materialisation, day-of-ops, conductor execution | 🟢 Real end-to-end, known guard gaps |
 | S4 | **Fleet, Operators & Licensing** | Buses, operators, PSP permits, unified operator lifecycle | 🟢 Core built & verified |
 | S5 | **Ticketing, Booking & Payments** | Seat maps, bookings, validation, (dummy) payment | 🟡 Real flow, payment is a stub |
 | S6 | **Passenger Information** | Find-my-bus, journey querying, passenger apps | 🟢 Correct fundamentals, 🔴 no live ETAs |
@@ -67,272 +60,208 @@ capture):
 
 Legend: 🟢 substantially implemented & verified · 🟡 partial / manual / mid-migration · 🔴 not really implemented (mock or absent)
 
-> These ten map cleanly onto the 8-stage pipeline in `transit-workflow-evaluation/`: S2–S5 are the
-> "middle of the pipeline" that is genuinely built; S7–S8 are the thin, mostly-mock ends. S1, S9,
-> S10 are the cross-cutting platform sections that the stage view doesn't cover.
+Capture progress is tracked in [§12](#12-quick-start--current-progress).
 
 ---
 
-## 3. Source material map — files & diagrams per section
+## 3. Folder & file structure
 
-This is the answer to *"what files and diagrams are a good fit for this process."* For each
-section: the **code roots** to read for ground truth, the **existing docs** to summarise, and the
-**diagrams** worth reusing or regenerating. Capture should always prefer *code + live behaviour*
-over docs, using docs as the map.
-
-### S1 — Identity, Access & User Management
-- **Code:** `apps/backend/user-service/`, `apps/backend/api-gateway/src/` (auth + BFF module)
-- **Docs:** `docs/plans/user-management/` (implementation-plan, redesign, user-management.md)
-- **Diagrams:** the 7 Mermaid diagrams in `user-management-redesign.md` and `user-management.md`
-  (auth sequence, permission engine, ER). **Missing/worth adding:** a BFF cookie-session sequence
-  (httpOnly cookie flow for portals) — currently only in memory notes.
-
-### S2 — Network & Service Registry
-- **Code:** `core-service/.../routeschedule/network/`, `.../scheduling/`
-- **Docs:** `docs/route-network-and-operations/` — `stops.md`, `routes.md`, `schedules.md`,
-  and `gaps-and-improvements.md`
-- **Diagrams:** the **domain ER diagram** in `route-network-and-operations/README.md`; the
-  **sequence diagrams** in `workflows/stops-workflows.md`, `routes-workflows.md`,
-  `schedules-workflows.md`; the **effort-vs-impact quadrant** in `gaps-and-improvements.md`
-
-### S3 — Operations & Trip Execution
-- **Code:** `core-service/.../operations/` (trips + `ConductorController`)
-- **Docs:** `docs/route-network-and-operations/trips.md` + `workflows/trips-workflows.md` (10 seq
-  diagrams); `transit-workflow-evaluation/06-operations-execution.md`
-- **Diagrams:** trip-lifecycle sequences in `trips-workflows.md`; reuse for state-machine capture
-
-### S4 — Fleet, Operators & Licensing
-- **Code:** `core-service/.../fleet/`, `.../licensing/`; operator sync client in `user-service`
-- **Docs:** `docs/plans/Unified-Operator-Lifecycle-Management-Plan.md`
-- **Diagrams:** the 4 Mermaid diagrams in that plan (operator lifecycle + outbox/REST sync flow)
-
-### S5 — Ticketing, Booking & Payments
-- **Code:** `apps/backend/ticketing-service/`
-- **Docs:** `docs/architecture-review/ticketing-service-overview.md` (6 diagrams) +
-  `ticketing-service-redesign-plan.md` (8 diagrams);
-  `docs/plans/Conductor-Journey-Tickets-Bookings-SeatLayout-Plan.md`
-- **Diagrams:** overview ER + booking/validation sequences; the seat-map merge flow
-
-### S6 — Passenger Information
-- **Code:** `core-service/.../passengerinfo/`; `apps/frontend/passenger-mobile/`, `passenger-web/`
-- **Docs:** `docs/passenger-information/` — `README.md`, `journey-querying.md`,
-  `apis-and-frontends.md`, `gaps-and-improvements.md`
-- **Diagrams:** find-my-bus query sequence in `journey-querying.md`; gap quadrants in the gaps doc
-
-### S7 — Real-time Monitoring & Tracking
-- **Code:** search for `data/tracking/**` and `data/timekeeper/**` mock generators in the portals;
-  `libs/api-clients/location-tracking/` (client exists, backend does not)
-- **Docs:** `transit-workflow-evaluation/07-monitoring.md`
-- **Diagrams:** **none yet** — this section needs a *target-state* diagram (position ping → SSE
-  fan-out) since it is mostly greenfield
-
-### S8 — Analytics, Reporting & Feedback
-- **Docs:** `transit-workflow-evaluation/08-analysis-feedback.md` (the "broken feedback loop"
-  analysis)
-- **Diagrams:** **none yet** — needs a data-flow diagram showing where real ticket/trip data sits
-  today vs. where analytics reads mock data
-
-### S9 — Frontend & UX Platform
-- **Code:** `apps/frontend/*`, `libs/ui/` (`@busmate/ui`)
-- **Docs:** the full `docs/ui/` set (00–09), especially `00-ai-agent-execution-guide.md` and
-  `08-step-by-step-refactoring-roadmap.md`; `docs/plans/RouteWorkspace-Refactoring-Plan.md`;
-  `docs/mobile-apk-build-guide.md`
-- **Diagrams:** design-system architecture diagrams in `docs/ui/02` and `04`
-
-### S10 — Platform, Integration & Ops
-- **Code:** `api-gateway/src/config/routes.config.ts`, `docker-compose*.yml`, `Makefile`,
-  `scripts/`, `.env.example`
-- **Docs:** `docs/busmate-platform-run-guide.md`, `docs/database-reset-and-seed-guide.md`
-- **Diagrams:** **worth adding** a system context / deployment diagram (services, ports, DBs, Kafka)
-  — the single most useful missing diagram for onboarding
-
-### Diagram types this repo already uses (reuse these conventions)
-
-| Type | Use it for | Example in repo |
-|------|-----------|-----------------|
-| Mermaid **ER** | Domain data model per section | `route-network-and-operations/README.md` |
-| Mermaid **sequence** | How a workflow runs across services | `workflows/*-workflows.md` |
-| Mermaid **quadrant** (effort×impact) | Prioritising the gap list | `gaps-and-improvements.md` |
-| Maturity legend 🟢🟡🔴 | Section/capability status at a glance | `transit-workflow-evaluation/README.md` |
-| Ranked gap table w/ ✅/🔎 markers | Verified-in-code vs. design-level findings | `passenger-information/gaps-and-improvements.md` |
-
----
-
-## 4. The capture format (what we record per capability)
-
-Each section file records a set of **capabilities**. A capability is one thing the system does (or
-should do) that a stakeholder cares about — e.g. "Operator assigns a bus to their own trip".
-For each capability, record exactly these fields (keep it terse — link to code/docs for depth):
-
-```markdown
-### C-S3-04 · Operator assigns a bus & conductor to their own trip
-
-- **What it does:** An operator picks one of their vehicles + a conductor for a specific dated trip.
-- **How it works:** `POST /api/trips/{id}/assign` → `TripServiceImpl` derives operatorId from the
-  JWT, ownership-checks the trip, validates the bus/conductor belong to the operator.
-  (`core-service/.../operations/TripServiceImpl.java`)
-- **Maturity:** 🟢 live-verified via gateway login
-- **Limitations:** no conflict check — same bus/conductor can be double-booked on overlapping trips.
-- **Gaps:** 🔎 no notification to the assigned conductor.
-- **Improvement candidates:** [I-S3-11] overlap validation · [I-S3-12] assignment notification
-- **Evidence:** ✅ code-read + ✅ live-verified 2026-07-09
-```
-
-Rules:
-- **ID scheme:** capabilities `C-S{section}-{n}`, improvements `I-S{section}-{n}`. Stable IDs let
-  the backlog and the inventory cross-reference without churn.
-- **Maturity** uses the same 🟢🟡🔴 legend as §2.
-- **Evidence markers:** ✅ verified-in-code / live-verified · 🔎 design-level observation only.
-  Never mark 🟢 without ✅ evidence.
-- **Every gap should spawn (or link to) an improvement item.** A gap with no improvement item is
-  either accepted-as-is (say so) or unfinished capture.
-
----
-
-## 5. The living inventory
+Each section is a **directory** of focused files (a "mixed-file approach" — split further only when
+a file gets large, e.g. promote `workflows.md` to a `workflows/` folder):
 
 ```
 docs/system-capability-audit/
-├── README.md                 ← this playbook
-├── backlog.md                ← the single ranked improvement backlog (all sections)
-├── template.md               ← copy this to start a new section
+├── README.md                      ← this playbook
+├── backlog.md                     ← GLOBAL roll-up backlog (cross-cutting + escalated only)
+├── _template/                     ← copy this directory to start a new section
+│   ├── README.md
+│   ├── current-state.md
+│   ├── workflows.md
+│   ├── capabilities.md
+│   ├── gaps-and-improvements.md
+│   └── backlog.md
 └── sections/
-    ├── S1-identity-access.md
-    ├── S2-network-registry.md
-    ├── S3-operations-trips.md
-    ├── S4-fleet-operators.md
-    ├── S5-ticketing-payments.md
-    ├── S6-passenger-information.md
-    ├── S7-monitoring-tracking.md
-    ├── S8-analytics-feedback.md
-    ├── S9-frontend-ux.md
-    └── S10-platform-ops.md
+    ├── S3-operations-trips/       ← one directory per captured section
+    │   ├── README.md              · index: scope, maturity, code roots, links, progress
+    │   ├── current-state.md       · class diagram, data model/ER, state machine, API surface
+    │   ├── workflows.md           · one sequence diagram per current workflow
+    │   ├── capabilities.md        · capability inventory (C-Sn-xx: what / how / maturity / evidence)
+    │   ├── gaps-and-improvements.md· gaps (G-Sn-xx) → analyzed improvements (I-Sn-xx)
+    │   └── backlog.md             · section-local ranked, status-tracked backlog
+    └── S{n}-.../
 ```
 
-- **Section files** hold capabilities (the §4 format), a per-section maturity summary, and a
-  section-local Mermaid diagram (ER/sequence/context as appropriate).
-- **`backlog.md`** is the *one* place all `I-*` improvement items are ranked together (§6). Section
-  files link *into* it; they don't re-rank locally. This avoids ten competing priority lists.
-- **`template.md`** keeps every section consistent.
-
-> This mirrors the existing `route-network-and-operations/` shape (README index + per-domain docs +
-> one consolidated `gaps-and-improvements.md`) — deliberately, so it feels native to the repo.
+Why six files: each maps to one stage of the workflow (next section), so a contributor always knows
+where a given kind of content belongs, and diffs stay small and reviewable.
 
 ---
 
-## 6. Prioritisation model
+## 4. The five capture stages → which file each lives in
 
-Rank every improvement item on two axes, then bucket. Reuse the repo's existing **effort-vs-impact
-quadrant** Mermaid chart per section, and roll a global order into `backlog.md`.
+| Stage | Question it answers | File(s) | Key artifacts |
+|-------|--------------------|---------|---------------|
+| **1. Capture** | What exists & how is it built/run? | `current-state.md`, `workflows.md`, `capabilities.md` | **class diagram**, **ER/data model**, **state machine**, **sequence diagrams**, capability inventory |
+| **2. Identify** | What's missing / weak / wrong? | `gaps-and-improvements.md` (Gaps section) | `G-Sn-xx` gap list w/ evidence, affected capability |
+| **3. Analyze** | Why, how bad, what's the fix, what does it depend on? | `gaps-and-improvements.md` (Improvements section) | `I-Sn-xx` candidates w/ root-cause, impact, dependencies, rough effort |
+| **4. Prioritize** | What order? | `backlog.md` (scoring + quadrant) | Impact×Effort, P0–P3 bucket, rank |
+| **5. Manage** | What's selected / in-progress / done? | `backlog.md` (status + done log) + root `backlog.md` | status lifecycle, ownership, escalation |
 
-**Score each item:**
-- **Impact** (1–5): user/stakeholder value + how many other items it unblocks (a feedback-loop
-  item that unblocks analytics scores high on the second term).
-- **Effort** (1–5): engineering size, including verification cost.
-- **Risk/Confidence:** is the gap ✅ verified or 🔎 speculative? Unverified items get a *spike*
-  (investigation) before they get a build slot.
-
-**Priority buckets** (from the quadrant):
-- **P0 — Correctness bugs.** Anything that produces wrong data or crashes (e.g. the trip-generation
-  calendar bug). These jump the queue regardless of impact/effort score.
-- **P1 — Do first** (high impact, low–mid effort): the "Do these first" quadrant.
-- **P2 — Plan carefully** (high impact, high effort): needs a design step.
-- **P3 — Nice to have / Trim or defer.**
-
-`backlog.md` columns: `ID · Section · Title · Impact · Effort · Bucket · Owner (human/AI) · Status · Links`.
+**Capture rule:** prefer **code + live behaviour** over docs; use docs as the map. Never mark a
+capability 🟢 without ✅ evidence. Mark design-level observations 🔎.
 
 ---
 
-## 7. The end-to-end workflow
+## 5. Source material map — files & diagrams per section
+
+Ground-truth **code roots**, **existing docs** to summarise, and **diagrams** to reuse/regenerate.
+
+- **S1 Identity/Access** — code `apps/backend/user-service/`, `api-gateway/src/` (auth+BFF); docs
+  `docs/plans/user-management/`; diagrams: 7 Mermaid in the redesign docs (auth seq, permission
+  engine, ER). *Missing:* BFF cookie-session sequence.
+- **S2 Network/Registry** — code `core-service/.../network/`, `.../scheduling/`; docs
+  `docs/route-network-and-operations/{stops,routes,schedules}.md`; diagrams: domain ER +
+  `workflows/*` sequences + effort/impact quadrant.
+- **S3 Operations/Trips** — code `core-service/.../operations/`; docs `route-network-and-operations/trips.md`,
+  `workflows/trips-workflows.md`, `transit-workflow-evaluation/06-*`; diagrams: trip-lifecycle
+  sequences. *(Captured — see `sections/S3-operations-trips/`.)*
+- **S4 Fleet/Operators/Licensing** — code `core-service/.../fleet/`, `.../licensing/`,
+  user-service operator sync; docs `docs/plans/Unified-Operator-Lifecycle-Management-Plan.md`
+  (4 diagrams).
+- **S5 Ticketing/Payments** — code `apps/backend/ticketing-service/`; docs
+  `architecture-review/ticketing-service-{overview,redesign-plan}.md` (14 diagrams),
+  `plans/Conductor-Journey-Tickets-Bookings-SeatLayout-Plan.md`.
+- **S6 Passenger Info** — code `core-service/.../passengerinfo/`, `passenger-mobile/`, `passenger-web/`;
+  docs `docs/passenger-information/*`; diagrams: find-my-bus query sequence + gap quadrants.
+- **S7 Monitoring/Tracking** — code `data/tracking/**`, `data/timekeeper/**` mock generators,
+  `libs/api-clients/location-tracking/`; docs `transit-workflow-evaluation/07-*`. *Missing:*
+  target-state position-ping → SSE diagram.
+- **S8 Analytics/Feedback** — docs `transit-workflow-evaluation/08-*`. *Missing:* real-data vs.
+  mock-read data-flow diagram.
+- **S9 Frontend/UX** — code `apps/frontend/*`, `libs/ui/`; docs full `docs/ui/` set +
+  `plans/RouteWorkspace-Refactoring-Plan.md`, `mobile-apk-build-guide.md`.
+- **S10 Platform/Ops** — code `api-gateway/src/config/routes.config.ts`, `docker-compose*.yml`,
+  `Makefile`, `scripts/`; docs `busmate-platform-run-guide.md`, `database-reset-and-seed-guide.md`.
+  *Missing:* system-context / deployment diagram (single most useful gap).
+
+### Diagram types this repo already uses (reuse these conventions)
+
+| Type | Use for | File it belongs in |
+|------|---------|--------------------|
+| Mermaid **classDiagram** | Entities + service/controller/repo structure | `current-state.md` |
+| Mermaid **ER** | Domain data model | `current-state.md` |
+| Mermaid **stateDiagram** | Lifecycle/status machine | `current-state.md` |
+| Mermaid **sequenceDiagram** | How a workflow runs across services | `workflows.md` |
+| Mermaid **quadrantChart** (effort×impact) | Prioritising the backlog | `backlog.md` |
+| Maturity legend 🟢🟡🔴 + ✅/🔎 markers | Status / evidence at a glance | everywhere |
+
+---
+
+## 6. ID scheme & traceability
+
+Stable IDs let the map, the backlog, and (later) branches/PRs cross-reference without churn:
+
+- `C-S{n}-{nn}` — a **capability** (in `capabilities.md`)
+- `G-S{n}-{nn}` — a **gap/limitation** (in `gaps-and-improvements.md`)
+- `I-S{n}-{nn}` — an **improvement item**, the backlog unit (raised in `gaps-and-improvements.md`,
+  tracked in `backlog.md`)
+
+**Traceability chain:** `C-Sn-xx` ← affected by → `G-Sn-xx` ← addressed by → `I-Sn-xx` ← tracked in
+→ backlog row ← implemented by → branch/PR ← closes → updates the capability's maturity. Each link is
+a plain markdown reference; the chain is what makes "update captured state after a fix" mechanical.
+
+---
+
+## 7. Prioritisation model
+
+Score each `I-*` item on two axes, then bucket (reuse the effort×impact **quadrantChart** in each
+`backlog.md`):
+
+- **Impact** (1–5): stakeholder value + how many *other* items it unblocks.
+- **Effort** (1–5): engineering size incl. verification cost.
+- **Confidence:** ✅ verified vs. 🔎 speculative — speculative items get an investigation spike first.
+
+**Buckets:** **P0** correctness/security bugs (jump the queue) · **P1** high-impact/low–mid effort ·
+**P2** high-impact/high effort (design first) · **P3** nice-to-have / defer.
+
+---
+
+## 8. Backlogs: per-section vs. global
+
+- **Section `backlog.md` is the working list.** Every `I-*` for that section is ranked and
+  status-tracked there. This is where day-to-day selection happens.
+- **Root `backlog.md` is a thin roll-up**, not a copy of everything. It holds only:
+  1. **Cross-cutting items** whose work spans multiple sections (e.g. per-stop actuals touch
+     S3/S6/S7/S8; a notification service touches many) — these get a `X-` (cross) ID and link to the
+     section items they subsume.
+  2. **The current escalated top-N** — the highest-priority item from each section, for an
+     at-a-glance program view.
+
+A section never re-ranks against other sections locally; cross-section arbitration happens only in
+the root roll-up.
+
+---
+
+## 9. The later development lifecycle
+
+Once backlogs exist, pulling an item runs this loop (this is the part deferred until after
+initialization):
 
 ```mermaid
-flowchart TD
-    A["1 · CAPTURE<br/>read code + live behaviour + source docs<br/>fill section file in §4 format"] --> B["2 · IDENTIFY<br/>limitations, gaps → improvement items (I-*)"]
-    B --> C["3 · PRIORITISE<br/>impact × effort → bucket P0–P3 in backlog.md"]
-    C --> D{"4 · SELECT<br/>pick an item"}
-    D --> E{"5 · ROUTE<br/>human or AI agent?"}
-    E -->|"well-scoped, verifiable"| F["AI agent executes<br/>(brief from the item)"]
-    E -->|"ambiguous / design / risky"| G["human executes or designs first"]
-    F --> H["6 · VERIFY<br/>drive the real flow, not just tests"]
-    G --> H
-    H --> I["7 · UPDATE STATE<br/>capability maturity ↑, mark item Done,<br/>add ✅ evidence + date"]
-    I --> D
-    I -.new gaps found.-> B
+flowchart LR
+    A["SELECT<br/>from section backlog<br/>(P0 first)"] --> B["ROUTE<br/>human / AI / both<br/>(§10)"]
+    B --> C["BRANCH & IMPLEMENT"]
+    C --> D["VERIFY<br/>drive the real flow<br/>(/verify)"]
+    D --> E["UPDATE STATE<br/>bump capability maturity,<br/>mark item Done + ✅ + date"]
+    E -.new gaps found.-> F["raise new G-/I-"]
+    E --> A
 ```
 
-**Stage detail:**
-
-1. **Capture** — one section at a time. Read the code roots in §3, exercise the live behaviour
-   where possible (this repo values live-verification over "it compiles"), and write capabilities in
-   the §4 format. Summarise, don't duplicate, the source docs.
-2. **Identify** — every limitation/gap becomes an `I-*` item (or is explicitly accepted).
-3. **Prioritise** — score and bucket into `backlog.md` (§6).
-4. **Select** — normally the top of a bucket; P0 bugs first.
-5. **Route** — decide human vs AI agent (§8).
-6. **Execute** — implement. AI agents get the item as a self-contained brief plus the relevant
-   §3 source files as context (the pattern already proven in `docs/ui/00-ai-agent-execution-guide.md`).
-7. **Verify** — drive the actual flow end-to-end (gateway login, real DB), matching the repo's
-   existing bar. Use the `/verify` skill.
-8. **Update state** — this is the step that keeps the map alive: bump the capability's maturity,
-   flip the item to `Done` with a date and ✅ evidence, and if execution surfaced new gaps, loop them
-   back to step 2. **A change is not "done" until the inventory reflects it.**
+**Definition of Done includes the inventory:** an item isn't closed until (a) its `backlog.md` row is
+`Done` with a date + ✅ evidence, (b) the affected `C-*` maturity in `capabilities.md` (and the
+section `README.md` table) is updated, and (c) any diagram it invalidated is refreshed.
 
 ---
 
-## 8. Human vs. AI-agent execution
-
-Route each item deliberately — this is what the user asked the workflow to support.
+## 10. Human vs. AI-agent execution
 
 | Prefer an **AI agent** when… | Prefer a **human** when… |
 |---|---|
-| Scope is well-defined & self-contained | Requirements are ambiguous or need stakeholder input |
-| A clear verification exists (drive-the-flow or tests) | Design/architecture decision is needed first |
-| Pattern-following change (CRUD endpoint, wire a real API behind an existing mock UI, add a guard) | Cross-cutting change touching many services with subtle coupling |
-| Low blast radius / easily reverted | Security-sensitive, data-migration, or irreversible ops |
-| Mechanical refactor with a roadmap (cf. `docs/ui/08`) | Novel domain modelling (new bounded context) |
+| Scope is well-defined & self-contained | Requirements ambiguous / need stakeholder input |
+| A clear verification exists (drive-the-flow or tests) | A design/architecture decision comes first |
+| Pattern-following (CRUD, wire real API behind a mock UI, add a guard) | Cross-cutting change with subtle coupling |
+| Low blast radius / easily reverted | Security-sensitive, data-migration, irreversible ops |
+| Mechanical refactor with a roadmap | Novel domain modelling (new bounded context) |
 
-**AI-agent brief = the `I-*` item + its section's §3 source files + the verification method.** The
-`docs/ui/00-ai-agent-execution-guide.md` conventions (small batches, verify after each, attach the
-relevant docs, be specific about the step) apply directly.
-
-**Design-then-build split:** P2 items should be handed to a human (or an architect/Plan agent) for
-a short design note *before* an AI agent implements — mirroring how the repo already pairs a
-`*-plan.md` with execution.
+`AI+Human` = human writes a short design note, AI implements (mirrors how the repo pairs a `*-plan.md`
+with execution; cf. `docs/ui/00-ai-agent-execution-guide.md`). An AI brief = the `I-*` item + its
+section's `current-state.md`/`workflows.md` + the verification method.
 
 ---
 
-## 9. Keeping the captured state current
+## 11. Keeping the captured state current
 
-The audit is worthless the moment it drifts from the code. Guardrails:
-
-- **Definition of Done includes the inventory.** No item is closed until its capability entry and
-  `backlog.md` status are updated (step 7). Bake this into PR review / the `/code-review` habit.
-- **Every capability carries an evidence date.** Entries older than ~1 release are "re-verify"
-  candidates; a quick pass re-drives the flow and refreshes the date.
-- **New gaps loop back, not sideways.** When execution reveals a new limitation, it becomes a new
-  `I-*` item immediately — never a silent TODO.
-- **One section re-audit per cycle.** Rotate through S1–S10 so the whole map is refreshed on a
-  predictable cadence rather than all-at-once.
-- **Memory ↔ inventory sync.** The assistant's project memory already tracks per-feature state;
-  when a memory records a "not live-verified" or "technical-debt marker", that should have a
-  matching `I-*` item here. The inventory is the durable, human-readable counterpart.
+- **DoD includes the inventory** (§9) — enforce in `/code-review`.
+- **Every capability carries an evidence date;** entries older than ~1 release are re-verify
+  candidates.
+- **New gaps loop back** as `G-/I-` items immediately — never silent TODOs.
+- **One section re-audit per cycle**, rotating S1→S10.
+- **Memory ↔ inventory sync** — an assistant memory noting "not live-verified" / "tech-debt marker"
+  should have a matching `I-*` here.
 
 ---
 
-## 10. Quick start
+## 12. Quick start / current progress
 
-1. Create `template.md` and `backlog.md` in this folder (skeletons from §4 and §6).
-2. **Pick the highest-value section to capture first.** Recommended: **S8 Analytics & Feedback**
-   or **S7 Monitoring** — the 🔴 sections where the gap between UI and reality is largest, so the
-   audit yields the most actionable backlog. Alternatively start with a 🟢 section (S3/S4) to
-   calibrate the format on well-understood ground.
-3. Fill that section from its §3 sources (code first, then docs), in the §4 format.
-4. Move its gaps into `backlog.md`, score them, pick one P0/P1 item.
-5. Route it (§8), execute, verify, and update state (§7).
-6. Repeat, rotating sections (§9).
+**To capture a new section:** `cp -r _template sections/S{n}-{slug}` → fill from its §5 sources
+(code first) → raise `G-/I-` items → seed its `backlog.md` → surface anything cross-cutting into the
+root `backlog.md`.
 
-> **Suggested first end-to-end pass:** capture **S3 Operations** (well-understood, has 10 ready
-> sequence diagrams), which will surface the known P0 trip-generation calendar bug already
-> documented in `route-network-and-operations/gaps-and-improvements.md`. Running that single bug
-> through the full loop (capture → backlog → AI-agent fix → live-verify → update state) validates
-> the whole workflow on a real, high-value item before scaling to the other nine sections.
+**Capture progress:**
+
+| Section | State | Notes |
+|---------|-------|-------|
+| S3 Operations & Trips | ✅ **Captured** | reference implementation; 9 capabilities, 12 gaps→improvements, backlog seeded |
+| S1, S2, S4–S10 | ⏳ Not started | rotate next; 🔴 S7/S8 yield the most actionable backlog |
+
+> This initialization intentionally stops after **structure + workflow + one worked section (S3)**.
+> No fixes/features implemented yet — those come later via §9 against the backlogs.
