@@ -1,3 +1,5 @@
+name: busmate
+
 # Covers the backend services currently exposed through api-gateway.
 # api-gateway is the main entry point on 8080. Downstream services also publish
 # their standard development ports for direct debugging and OpenAPI generation.
@@ -5,7 +7,37 @@
 # user-service's Dockerfile expects a pre-built jar (COPY target/*.jar app.jar) — run
 # `./mvnw -f apps/backend/user-service package` before `docker compose up --build`.
 # core-service's Dockerfile expects a pre-built jar under apps/backend/core-service/target/.
+#
+# Backend services run with SPRING_PROFILES_ACTIVE=dev against the local `postgres`
+# service below (one instance, one database per service — see
+# scripts/postgres/init-dev-dbs.sql). Production Supabase credentials from
+# config/secrets/.env are not used here even though env_file loads them; the
+# SPRING_DATASOURCE_* overrides below take precedence. See docker-compose.production.yml
+# for the prod profile, which does use those Supabase values.
+#
+# Host port is 5433 (not 5432) to avoid clashing with a Postgres install you may
+# already be running locally. If you already have local Postgres on 5432, you can
+# skip this container entirely and just `createdb` the three databases below —
+# application-dev.yml's defaults already point at localhost:5432.
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: busmate-dev-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - busmate_dev_postgres_data:/var/lib/postgresql/data
+      - ./scripts/postgres/init-dev-dbs.sql:/docker-entrypoint-initdb.d/init-dev-dbs.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   api-gateway:
     build:
       context: apps/backend/api-gateway
@@ -46,6 +78,14 @@ services:
     environment:
       - SERVER_PORT=9020
       - CORE_SERVICE_URL=http://core-service:9010
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_user
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   core-service:
     build:
       context: apps/backend/core-service
@@ -57,6 +97,13 @@ services:
       - config/secrets/.env
     environment:
       - SERVER_PORT=9010
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_core
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   ticketing-service:
     build:
@@ -66,5 +113,15 @@ services:
       - config/secrets/.env
     environment:
       - SERVER_PORT=9030
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_ticketing
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
     ports:
       - "9030:9030"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  busmate_dev_postgres_data:

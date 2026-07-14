@@ -72,7 +72,7 @@ spring:
       mode: never # Disable to avoid duplicate data and connection issues
       continue-on-error: true # Continue if some SQL statements fail
   profiles:
-    active: production # Enable production profile for Swagger UI testing
+    active: dev # Safe local default (local Postgres); override via SPRING_PROFILES_ACTIVE=prod in production deploys
 
 server:
   port: ${SERVER_PORT:9030}

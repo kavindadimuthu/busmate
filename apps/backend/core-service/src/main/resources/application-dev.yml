@@ -1,0 +1,14 @@
+# Local development: standard self-hosted Postgres (see docker-compose.yml's
+# `postgres` service). Not secret — safe to commit. Override any of these with
+# SPRING_DATASOURCE_URL/USERNAME/PASSWORD env vars if you run against something else.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/busmate_core
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.busmate.routeschedule: DEBUG

@@ -1,0 +1,8 @@
+# Production: Supabase-hosted Postgres. Values come from config/secrets/.env
+# (USER_DB_*) — no local fallback here, so a missing secret fails startup loudly
+# instead of silently connecting to the wrong place.
+spring:
+  datasource:
+    url: ${USER_DB_URL}
+    username: ${USER_DB_USERNAME}
+    password: ${USER_DB_PASSWORD}

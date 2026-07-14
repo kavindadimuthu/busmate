@@ -1,0 +1,8 @@
+# Production: Supabase-hosted Postgres. Values come from config/secrets/.env
+# (TICKETING_DB_*) — no local fallback here, so a missing secret fails startup loudly
+# instead of silently connecting to the wrong place.
+spring:
+  datasource:
+    url: ${TICKETING_DB_URL}
+    username: ${TICKETING_DB_USERNAME}
+    password: ${TICKETING_DB_PASSWORD}
