@@ -1,5 +1,9 @@
 const path = require('path');
-const { getDefaultConfig } = require('expo/metro-config');
+// Drop-in replacement for expo/metro-config's getDefaultConfig that additionally wires
+// Metro's serializer to emit Sentry debug IDs, so uploaded source maps (Phase 5
+// observability) actually match release bundles. Accepts the same config shape —
+// everything below is unchanged from before Sentry was added.
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../../..');
@@ -7,7 +11,7 @@ const workspaceRoot = path.resolve(projectRoot, '../../..');
 const resolveFromProject = (packageName) =>
   path.dirname(require.resolve(`${packageName}/package.json`, { paths: [projectRoot] }));
 
-const config = getDefaultConfig(projectRoot);
+const config = getSentryExpoConfig(projectRoot);
 
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [

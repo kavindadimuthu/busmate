@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
@@ -9,7 +10,22 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 4000,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+    // Uploads source maps to Sentry so stack traces de-minify. No-ops (and prints a
+    // notice instead of failing the build) until SENTRY_AUTH_TOKEN/ORG/PROJECT are set
+    // — see config/observability/README.md.
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      disable: !process.env.SENTRY_AUTH_TOKEN,
+    }),
+  ].filter(Boolean),
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     // Force all packages (including pre-bundled deps like @tanstack/react-query)
     // to resolve React from this app's own node_modules (React 18).

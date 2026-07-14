@@ -18,6 +18,7 @@
 
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-react';
+import * as Sentry from '@sentry/react';
 
 // ============================================================================
 // TYPES
@@ -54,10 +55,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log to the console for developer visibility.
-    // In production this is where you'd forward to an error tracking service
-    // (e.g. Sentry, Datadog RUM) via a simple `fetch` to a logging endpoint.
     console.error('[ErrorBoundary] Uncaught error:', error, errorInfo.componentStack);
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   reset(): void {

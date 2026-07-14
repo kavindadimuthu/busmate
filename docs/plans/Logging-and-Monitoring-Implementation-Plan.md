@@ -6,7 +6,7 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 > Not to be confused with `docs/transit-workflow-evaluation/07-monitoring.md`, which is about
 > *transit* monitoring (vehicle AVL/tracking). This document is about **operating the software**.
 
-**Status:** Phases 1–4 implemented & verified (2026-07-14). Phases 5–6 proposed.
+**Status:** Phases 1–5 implemented & verified (2026-07-14/15). Phase 6 proposed.
 **Target deployment model:** Docker Compose, self-hosted, small team.
 
 > **Implementation status**
@@ -28,6 +28,16 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 >   all 4 app containers went down mid-session, Prometheus correctly showed `up=0`, all 4
 >   "Service down" alerts fired, and all 4 auto-resolved once the containers came back and were
 >   re-scraped — the full fire→resolve loop confirmed on genuine (not synthetic) downtime.
+> - **Phase 5 (frontend/mobile error tracking) — DONE.** Sentry SDKs installed + initialized in
+>   all 5 frontend apps (new-react-portal, passenger-web, management-portal, conductor-mobile,
+>   passenger-mobile), disabled by default (no DSN → SDK loads but drops everything) since no
+>   Sentry account/hosting decision had been made — user chose "wire code now, configure DSN
+>   later". Each app: global-error capture, existing `ErrorBoundary`/root-wrapper hooked to
+>   `Sentry.captureException`, source-map upload plugins wired but gated on `SENTRY_AUTH_TOKEN`,
+>   and a fetch patch that tags every Sentry event with the backend's `X-Request-Id` response
+>   header for cross-referencing a Sentry issue to the exact Loki log line. Verified: all 5 apps
+>   build/typecheck clean (found and fixed one real pre-existing-pattern bug: RN's `global.fetch`
+>   type needed an `as typeof fetch` cast that the DOM `fetch` type didn't).
 > - See [`config/observability/README.md`](../../config/observability/README.md) to run it and
 >   [`config/observability/RUNBOOK.md`](../../config/observability/RUNBOOK.md) for what to do when
 >   an alert fires.

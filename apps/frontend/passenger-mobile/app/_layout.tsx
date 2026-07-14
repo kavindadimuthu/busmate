@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
@@ -14,8 +15,11 @@ import {
 import { AuthProvider } from '@/context/AuthContext';
 import { BookingProvider } from '@/context/BookingContext';
 import { initializeApiClients } from '@/lib/api-client/apiConfig';
+import { initSentry } from '@/lib/sentry';
 
-export default function RootLayout() {
+initSentry();
+
+function RootLayout() {
   const [appIsReady, setAppIsReady] = useState(false);
   useFrameworkReady();
 
@@ -85,3 +89,7 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+// Sentry.wrap adds automatic navigation-aware breadcrumbs/tracing and root-level crash
+// capture, on top of the manual init() above.
+export default Sentry.wrap(RootLayout);

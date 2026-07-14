@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 import { resolve } from "node:path";
 
 const workspaceRoot = resolve(__dirname, "../../..");
@@ -42,4 +43,13 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+// Wraps the config to upload source maps to Sentry so stack traces de-minify.
+// No-ops (build proceeds normally without upload) until SENTRY_AUTH_TOKEN/ORG/PROJECT
+// are set — see config/observability/README.md.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  disableSentryWebpackConfig: !process.env.SENTRY_AUTH_TOKEN,
+});

@@ -1,8 +1,8 @@
-# BusMate Observability (Phase 1 + 2 + 3 + 4)
+# BusMate Observability (Phase 1 + 2 + 3 + 4 + 5)
 
 Structured logging with correlation IDs (Phase 1), centralised log aggregation via the
-Grafana + Loki stack (Phase 2), metrics via Prometheus + Grafana (Phase 3), and alerting +
-uptime monitoring (Phase 4). See
+Grafana + Loki stack (Phase 2), metrics via Prometheus + Grafana (Phase 3), alerting +
+uptime monitoring (Phase 4), and frontend/mobile error tracking via Sentry (Phase 5). See
 [`docs/plans/Logging-and-Monitoring-Implementation-Plan.md`](../../docs/plans/Logging-and-Monitoring-Implementation-Plan.md)
 for the full roadmap and [`RUNBOOK.md`](RUNBOOK.md) for what to do when an alert fires.
 
@@ -165,6 +165,59 @@ declarative/file-based config, so set it up once by hand:
 3. (Optional) **Settings → Notifications** to add the same Slack/Discord webhook as above,
    then attach it to each monitor.
 4. (Optional) **Status Pages → New Status Page** to publish a public page showing all four.
+
+## Frontend & mobile error tracking (Phase 5)
+
+Sentry SDKs are installed and initialized in all five frontend apps, but **disabled by
+default** — each `Sentry.init()` runs with `dsn: undefined` when no DSN env var is set, so
+the SDK loads and every `Sentry.captureException`/error-boundary call site still works
+without throwing, it just drops events instead of sending them. Nothing will show up in
+Sentry until you complete the one-time setup below.
+
+| App | Init file | DSN env var |
+|---|---|---|
+| new-react-portal | `src/lib/sentry.ts` (called from `main.tsx`) | `VITE_SENTRY_DSN` |
+| passenger-web | `src/lib/sentry.ts` (called from `main.tsx`) | `VITE_SENTRY_DSN` |
+| management-portal | `instrumentation-client.ts` (client), `instrumentation.ts` (server/edge) | `NEXT_PUBLIC_SENTRY_DSN` (client), `SENTRY_DSN` (server) |
+| conductor-mobile | `src/lib/sentry.ts` (called from `src/app/_layout.tsx`) | `EXPO_PUBLIC_SENTRY_DSN` |
+| passenger-mobile | `lib/sentry.ts` (called from `app/_layout.tsx`) | `EXPO_PUBLIC_SENTRY_DSN` |
+
+**What's wired in each app:**
+- Unhandled errors/rejections are captured automatically (Sentry's global handlers, set up
+  by `Sentry.init()`).
+- React render errors: hooked into the existing `ErrorBoundary` component's
+  `componentDidCatch` (new-react-portal, management-portal) or Sentry's own root wrapper
+  (`Sentry.wrap(RootLayout)` — conductor-mobile, passenger-mobile).
+- **Correlation with backend logs**: every app patches its global `fetch` to read the
+  `X-Request-Id` response header (the same one the API gateway generates/echoes for Phase 1)
+  and attaches it as a `request_id` tag on the next Sentry event. Given a Sentry issue, pivot
+  to the exact backend request with:
+  ```logql
+  {job="docker"} | json | requestId="<the request_id tag value>"
+  ```
+- Source maps: `@sentry/vite-plugin` (Vite apps), `withSentryConfig` (management-portal), and
+  `getSentryExpoConfig` in each Expo app's `metro.config.js` are all wired to upload source
+  maps on build, but **disabled** (`disable`/`disableSentryWebpackConfig: true`) until you set
+  `SENTRY_AUTH_TOKEN` — builds succeed normally either way, just without de-minified stack
+  traces until then.
+
+### One-time setup once you have a Sentry project
+
+1. Sign up free at [sentry.io](https://sentry.io) (or use an existing org) and create one
+   project per app (or one shared project — your call).
+2. Copy each project's DSN into `config/secrets/.env` (or the app's local `.env` for
+   frontend-only dev) using the env var names in the table above.
+3. For source-map upload, also set (once, shared across apps): `SENTRY_ORG`,
+   `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` (create one at
+   sentry.io → Settings → Auth Tokens, scope `project:releases`).
+4. If you skipped `pnpm approve-builds` during install, run it now so `@sentry/cli`'s
+   postinstall can download its binary (required for source-map upload, not for the SDKs
+   themselves):
+   ```bash
+   pnpm approve-builds
+   ```
+5. Rebuild. Trigger a test error (e.g. throw in a component) and confirm it appears in
+   Sentry with a `request_id` tag matching a Loki entry.
 
 ## Notes / hardening
 

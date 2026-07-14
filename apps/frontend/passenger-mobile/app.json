@@ -21,7 +21,8 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "./plugins/withNetworkSecurityConfig"
+      "./plugins/withNetworkSecurityConfig",
+      "@sentry/react-native/expo"
     ],
     "experiments": {
       "typedRoutes": true

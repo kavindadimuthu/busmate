@@ -62,6 +62,9 @@
         {
           "faceIDPermission": "Allow BusMate to use Face ID for secure authentication."
         }
+      ],
+      [
+        "@sentry/react-native/expo"
       ]
     ],
     "experiments": {

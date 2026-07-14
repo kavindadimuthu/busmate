@@ -1,12 +1,15 @@
+import * as Sentry from '@sentry/react-native';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { EmployeeScheduleProvider } from '@/contexts/EmployeeScheduleContext';
 import { TicketProvider } from '@/contexts/TicketContext';
 import { initializeApiClients } from '@/lib/api-client/apiConfig';
+import { initSentry } from '@/lib/sentry';
 import { Stack } from 'expo-router';
 
+initSentry();
 initializeApiClients();
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <AuthProvider>
       <EmployeeScheduleProvider>
@@ -24,3 +27,7 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+// Sentry.wrap adds automatic navigation-aware breadcrumbs/tracing and root-level crash
+// capture, on top of the manual init() above.
+export default Sentry.wrap(RootLayout);
