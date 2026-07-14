@@ -1,0 +1,22 @@
+apiVersion: 1
+
+# Generic webhook contact point (Phase 4). Points at $ALERT_WEBHOOK_URL, set on the
+# Grafana container's environment in docker-compose.observability.yml. Defaults to a
+# localhost address nothing listens on, so alerts still fire/resolve visibly in
+# Grafana's Alerting UI even before you configure real delivery.
+#
+# To wire up real delivery: set ALERT_WEBHOOK_URL in config/secrets/.env to a Slack
+# incoming-webhook URL, a Discord channel webhook (append "/slack" to a Discord webhook
+# URL to get Slack-compatible payloads Grafana already knows how to send), or any HTTP
+# endpoint that accepts a POST. Then `docker compose -f docker-compose.observability.yml
+# up -d --force-recreate grafana`. See README.md for step-by-step instructions.
+contactPoints:
+  - orgId: 1
+    name: busmate-webhook
+    receivers:
+      - uid: busmate-webhook-receiver
+        type: webhook
+        settings:
+          url: $ALERT_WEBHOOK_URL
+          httpMethod: POST
+        disableResolveMessage: false

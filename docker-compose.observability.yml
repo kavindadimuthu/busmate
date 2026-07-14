@@ -112,6 +112,11 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_AUTH_ANONYMOUS_ENABLED=false
+      # Contact point webhook URL (Phase 4). Defaults to an address nothing listens on —
+      # alert rules still evaluate and show Firing/Resolved in the Alerting UI, but
+      # notification *delivery* will fail (logged in Grafana's own log) until you point
+      # this at a real Slack/Discord/etc. webhook. See config/observability/README.md.
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-http://localhost:9999/configure-me}
     volumes:
       - ./config/observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./config/observability/grafana/dashboards:/etc/grafana/dashboards:ro
@@ -119,6 +124,24 @@ services:
     depends_on:
       loki:
         condition: service_healthy
+      prometheus:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- Alerting & uptime (Phase 4) ---
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: busmate-uptime-kuma
+    ports:
+      - "3001:3001"
+    # Lets Uptime Kuma reach the app services published on the host in dev (same
+    # approach as Prometheus above). Monitors are set up once by hand in its UI — Uptime
+    # Kuma (OSS) has no declarative/file-based config — see README for the exact steps.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - busmate_uptime_kuma_data:/app/data
     restart: unless-stopped
 
 volumes:
@@ -126,3 +149,4 @@ volumes:
   busmate_alloy_data:
   busmate_prometheus_data:
   busmate_grafana_data:
+  busmate_uptime_kuma_data:

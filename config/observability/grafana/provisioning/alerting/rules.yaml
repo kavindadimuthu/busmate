@@ -1,0 +1,322 @@
+apiVersion: 1
+
+# Alert rules as code (Phase 4). Each rule follows the standard 3-node pattern Grafana's
+# own "New alert rule" wizard generates: A = the real query, B = reduce(A) to a scalar,
+# C = threshold(B) — condition points at C. Kept explicit here (rather than a bare
+# instant query) so every rule is portable across Grafana versions.
+#
+# All rules query Prometheus/Loki directly (no shared "recording rules" yet — traffic
+# is low enough that raw queries are cheap). Revisit if evaluation load grows.
+groups:
+  - orgId: 1
+    name: busmate-availability
+    folder: BusMate
+    interval: 1m
+    rules:
+      - uid: busmate-service-down
+        title: "Service down"
+        condition: C
+        # `up` is always present (0 or 1) for a statically configured scrape target, so
+        # NoData here means the target itself vanished from prometheus.yml — worth flagging.
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} has been unreachable for 2+ minutes"
+          description: >
+            Prometheus could not scrape {{ $labels.job }} (instance {{ $labels.instance }}).
+            Check `docker ps` / `docker logs` for that service.
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 120, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: 'up{job=~"api-gateway|core-service|user-service|ticketing-service"}'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 120, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 120, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+              refId: C
+
+  - orgId: 1
+    name: busmate-performance
+    folder: BusMate
+    interval: 1m
+    rules:
+      - uid: busmate-gateway-5xx-rate
+        title: "Gateway: high 5xx rate"
+        condition: C
+        # No data = no traffic in the window, which is not a problem worth alerting on.
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "api-gateway 5xx error ratio is {{ $values.B }} (>5% of traffic)"
+          description: "Check `docker logs busmate-api-gateway-1` and the downstream services' health."
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: >-
+                sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+                /
+                sum(rate(http_requests_total[5m]))
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [0.05] }
+              refId: C
+
+      - uid: busmate-spring-5xx-rate
+        title: "Spring services: high 5xx rate"
+        condition: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "A Spring backend's 5xx error ratio is {{ $values.B }} (>5% of traffic)"
+          description: "Check which service via the 'Top endpoints' panel on the Spring Services dashboard, then its logs."
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: >-
+                sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+                /
+                sum(rate(http_server_requests_seconds_count[5m]))
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [0.05] }
+              refId: C
+
+      - uid: busmate-gateway-p95-latency
+        title: "Gateway: high p95 latency"
+        condition: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "api-gateway p95 latency is {{ $values.B }}s (>1s)"
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: 'histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [1] }
+              refId: C
+
+  - orgId: 1
+    name: busmate-saturation
+    folder: BusMate
+    interval: 1m
+    rules:
+      - uid: busmate-jvm-heap-high
+        title: "Spring service: JVM heap near capacity"
+        condition: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} heap usage is {{ $values.B }} (>85% of max)"
+          description: "Sustained high heap risks GC pauses/OOM. Check the JVM panels on the Spring Services dashboard."
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: >-
+                sum by (job) (jvm_memory_used_bytes{area="heap"})
+                /
+                sum by (job) (jvm_memory_max_bytes{area="heap"})
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [0.85] }
+              refId: C
+
+      - uid: busmate-host-memory-low
+        title: "Host: memory running low"
+        condition: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host available memory is {{ $values.B }} of total (<15%)"
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: 'node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: lt, params: [0.15] }
+              refId: C
+
+  - orgId: 1
+    name: busmate-logs
+    folder: BusMate
+    interval: 1m
+    rules:
+      - uid: busmate-error-log-spike
+        title: "Error log spike"
+        condition: C
+        # No data = zero ERROR lines in the window, i.e. the healthy case.
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $values.B }} ERROR-level log lines in the last 5 minutes"
+          description: "Open the Logs dashboard, set level=ERROR, and check which service is producing them."
+        data:
+          - refId: A
+            datasourceUid: busmate-loki
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: loki, uid: busmate-loki }
+              expr: 'sum(count_over_time({job="docker"} | json | level=~"ERROR|error" [5m]))'
+              queryType: instant
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [10] }
+              refId: C

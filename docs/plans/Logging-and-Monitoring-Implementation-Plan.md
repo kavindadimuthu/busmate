@@ -6,7 +6,7 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 > Not to be confused with `docs/transit-workflow-evaluation/07-monitoring.md`, which is about
 > *transit* monitoring (vehicle AVL/tracking). This document is about **operating the software**.
 
-**Status:** Phases 1–3 implemented & verified (2026-07-14). Phases 4–6 proposed.
+**Status:** Phases 1–4 implemented & verified (2026-07-14). Phases 5–6 proposed.
 **Target deployment model:** Docker Compose, self-hosted, small team.
 
 > **Implementation status**
@@ -21,7 +21,16 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 >   Spring services; `prom-client` `/metrics` on the gateway; Prometheus + cAdvisor + node-exporter
 >   added; 2 metrics dashboards. Verified: Prometheus scrapes gateway + core-service (`up=1`) and
 >   metrics are queryable.
-> - See [`config/observability/README.md`](../../config/observability/README.md) to run it.
+> - **Phase 4 (alerting + uptime) — DONE.** 6 alert rules provisioned as code (service down,
+>   gateway/Spring 5xx rate, gateway p95 latency, JVM heap, host memory, error-log spike) routed
+>   through a generic webhook contact point (delivery destination left for the user to configure —
+>   see README); Uptime Kuma added for black-box `/health` checks. Verified on a **real** incident:
+>   all 4 app containers went down mid-session, Prometheus correctly showed `up=0`, all 4
+>   "Service down" alerts fired, and all 4 auto-resolved once the containers came back and were
+>   re-scraped — the full fire→resolve loop confirmed on genuine (not synthetic) downtime.
+> - See [`config/observability/README.md`](../../config/observability/README.md) to run it and
+>   [`config/observability/RUNBOOK.md`](../../config/observability/RUNBOOK.md) for what to do when
+>   an alert fires.
 
 ---
 
