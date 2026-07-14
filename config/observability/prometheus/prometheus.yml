@@ -1,0 +1,48 @@
+# Prometheus scrape config (Phase 3).
+#
+# App services are reached over host.docker.internal because the dev stack
+# (docker-compose.yml) publishes every service port to the host. In production —
+# where only api-gateway is published — point these targets at the app's Docker
+# network instead: attach this Prometheus to the external `busmate_default` network
+# and use service names (api-gateway:8080, core-service:9010, ...). See
+# config/observability/README.md.
+#
+# cAdvisor and node-exporter share this stack's network, so they resolve by name.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: busmate
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: api-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+
+  - job_name: core-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:9010']
+
+  - job_name: user-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:9020']
+
+  - job_name: ticketing-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:9030']
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']

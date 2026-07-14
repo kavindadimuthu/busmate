@@ -44,6 +44,24 @@
 			<artifactId>springboot3-dotenv</artifactId>
 			<version>5.1.0</version>
 		</dependency>
+
+		<!-- Structured (JSON) logging encoder for Logback — used by logback-spring.xml
+		     in the prod/e2e profiles so logs ship to Loki as JSON. Not managed by the
+		     Spring Boot BOM, so the version is pinned explicitly (8.0 targets logback 1.5,
+		     which Spring Boot 3.5 provides). -->
+		<dependency>
+			<groupId>net.logstash.logback</groupId>
+			<artifactId>logstash-logback-encoder</artifactId>
+			<version>8.0</version>
+		</dependency>
+
+		<!-- Micrometer → Prometheus registry (Phase 3). Exposes /actuator/prometheus for
+		     Prometheus to scrape. Version managed by the Spring Boot BOM. Actuator itself
+		     is already a dependency of this service. -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
 		<!-- Spring Boot Starters -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

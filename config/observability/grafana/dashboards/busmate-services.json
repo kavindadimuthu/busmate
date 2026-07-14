@@ -1,0 +1,94 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["busmate", "metrics", "jvm"],
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "Service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+        "definition": "label_values(http_server_requests_seconds_count, job)",
+        "query": { "query": "label_values(http_server_requests_seconds_count, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery" },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".+",
+        "current": { "text": "All", "value": "$__all" },
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "BusMate — Spring Services (RED + JVM)",
+  "uid": "busmate-services",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1, "title": "Request rate (req/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$job\"}[5m]))", "legendFormat": "{{job}}" } ]
+    },
+    {
+      "id": 2, "title": "Error rate — 5xx (req/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20 } }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"$job\", status=~\"5..\"}[5m]))", "legendFormat": "{{job}}" } ]
+    },
+    {
+      "id": 3, "title": "p95 latency (s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "histogram_quantile(0.95, sum by (job, le) (rate(http_server_requests_seconds_bucket{job=~\"$job\"}[5m])))", "legendFormat": "{{job}}" } ]
+    },
+    {
+      "id": 4, "title": "Top endpoints by rate (uri)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "topk(10, sum by (uri, method) (rate(http_server_requests_seconds_count{job=~\"$job\"}[5m])))", "legendFormat": "{{method}} {{uri}}" } ]
+    },
+    {
+      "id": 5, "title": "HikariCP connections (active / pending)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum by (job) (hikaricp_connections_active{job=~\"$job\"})", "legendFormat": "{{job}} active" },
+        { "refId": "B", "expr": "sum by (job) (hikaricp_connections_pending{job=~\"$job\"})", "legendFormat": "{{job}} pending" }
+      ]
+    },
+    {
+      "id": 6, "title": "JVM heap used", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 14 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (job) (jvm_memory_used_bytes{job=~\"$job\", area=\"heap\"})", "legendFormat": "{{job}}" } ]
+    },
+    {
+      "id": 7, "title": "GC pause rate (s/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 14 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (job) (rate(jvm_gc_pause_seconds_sum{job=~\"$job\"}[5m]))", "legendFormat": "{{job}}" } ]
+    },
+    {
+      "id": 8, "title": "Live threads", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 14 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (job) (jvm_threads_live_threads{job=~\"$job\"})", "legendFormat": "{{job}}" } ]
+    }
+  ]
+}

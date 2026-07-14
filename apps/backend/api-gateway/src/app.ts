@@ -5,6 +5,7 @@ import { corsMiddleware } from './middleware/cors.middleware';
 import { rateLimiter, authRateLimiter } from './middleware/rateLimiter.middleware';
 import { authMiddleware } from './middleware/auth.middleware';
 import { requestLogger } from './middleware/requestLogger.middleware';
+import { metricsMiddleware, metricsHandler } from './middleware/metrics.middleware';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { createProxy } from './proxy/serviceProxy';
 import { routes } from './config/routes.config';
@@ -19,6 +20,12 @@ export function createApp() {
   app.use(corsMiddleware);
   app.use(cookieParser());
   app.use(requestLogger);
+  app.use(metricsMiddleware);
+
+  // Prometheus scrape endpoint — registered before the rate limiter so monitoring is
+  // never throttled, and before auth so scrapers don't need a token.
+  app.get('/metrics', metricsHandler);
+
   app.use(rateLimiter);
 
   // Block all /internal/** routes — never expose to clients

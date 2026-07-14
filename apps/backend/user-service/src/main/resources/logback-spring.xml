@@ -21,7 +21,7 @@
     <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <includeMdcKeyName>requestId</includeMdcKeyName>
-            <customFields>{"service":"core-service"}</customFields>
+            <customFields>{"service":"user-service"}</customFields>
         </encoder>
     </appender>
 

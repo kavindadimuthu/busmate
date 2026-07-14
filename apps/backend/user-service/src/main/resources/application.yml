@@ -152,7 +152,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,hikaricp
+        include: health,info,metrics,hikaricp,prometheus
       base-path: /actuator
   endpoint:
     health:
@@ -165,6 +165,10 @@ management:
     db:
       enabled: true
   metrics:
+    distribution:
+      # Emit histogram buckets for HTTP server timings so Prometheus can derive p95/p99.
+      percentiles-histogram:
+        "[http.server.requests]": true
     export:
       simple:
         enabled: true

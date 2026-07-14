@@ -31,7 +31,7 @@ public class SecurityConfig {
                         // an authenticated caller, matching the API gateway's own public/protected split.
                         // /internal/** is exempt from the JWT flow entirely — InternalApiKeyFilter is its
                         // only gate, and it's never reachable through the API gateway in the first place.
-                        .requestMatchers("/public/**", "/swagger-ui/**",
+                        .requestMatchers("/public/**", "/swagger-ui/**", "/actuator/**",
                                 "/swagger-ui.html", "/v3/api-docs/**", "/internal/**",
                                 "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/forgot-password", "/api/auth/reset-password", "/api/auth/verify-email")

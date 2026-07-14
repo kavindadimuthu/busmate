@@ -1,5 +1,6 @@
 package com.busmatelk.backend.kafka;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,9 @@ public class OperatorProducer {
 
     public void publishOperatorCreated(String operatorJson) {
         logger.info("Publishing operator event to Kafka: {}", operatorJson);
-        kafkaTemplate.send("operator-events", operatorJson);
+        ProducerRecord<String, String> record = new ProducerRecord<>("operator-events", operatorJson);
+        KafkaCorrelation.stamp(record);
+        kafkaTemplate.send(record);
     }
 
     private static final Logger logger = LoggerFactory.getLogger(OperatorProducer.class);

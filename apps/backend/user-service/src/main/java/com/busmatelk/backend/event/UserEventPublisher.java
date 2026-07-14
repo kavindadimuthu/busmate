@@ -1,9 +1,11 @@
 package com.busmatelk.backend.event;
 
+import com.busmatelk.backend.kafka.KafkaCorrelation;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -107,7 +109,9 @@ public class UserEventPublisher {
 
     private void send(String key, UserEvent event) {
         try {
-            kafkaTemplate.send(TOPIC, key, event);
+            ProducerRecord<String, UserEvent> record = new ProducerRecord<>(TOPIC, key, event);
+            KafkaCorrelation.stamp(record);
+            kafkaTemplate.send(record);
         } catch (Exception e) {
             // Best-effort — a Kafka hiccup should never fail the write that already succeeded.
             log.warn("Failed to publish user event {} for key {}: {}", event.eventType(), key, e.getMessage());

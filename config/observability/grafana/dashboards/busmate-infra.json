@@ -1,0 +1,84 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["busmate", "metrics", "gateway", "infra"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "BusMate — Gateway & Infrastructure",
+  "uid": "busmate-infra",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1, "title": "Gateway — request rate by route (req/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (route) (rate(http_request_duration_seconds_count[5m]))", "legendFormat": "{{route}}" } ]
+    },
+    {
+      "id": 2, "title": "Gateway — p95 latency (s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))", "legendFormat": "p95" } ]
+    },
+    {
+      "id": 3, "title": "Gateway — responses by status", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (status_code) (rate(http_requests_total[5m]))", "legendFormat": "{{status_code}}" } ]
+    },
+    {
+      "id": 4, "title": "Gateway — Node event-loop lag (s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "nodejs_eventloop_lag_seconds{service=\"api-gateway\"}", "legendFormat": "event-loop lag" } ]
+    },
+    {
+      "id": 5, "title": "Gateway — Node heap used (bytes)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "nodejs_heap_size_used_bytes{service=\"api-gateway\"}", "legendFormat": "heap used" } ]
+    },
+    {
+      "id": 6, "title": "Containers — CPU (cores)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 14 },
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\"busmate.*\"}[5m]))", "legendFormat": "{{name}}" } ]
+    },
+    {
+      "id": 7, "title": "Containers — memory (bytes)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 14 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "sum by (name) (container_memory_usage_bytes{name=~\"busmate.*\"})", "legendFormat": "{{name}}" } ]
+    },
+    {
+      "id": 8, "title": "Host — CPU utilisation", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 21 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1, "min": 0 }, "overrides": [] },
+      "targets": [ { "refId": "A", "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))", "legendFormat": "cpu busy" } ]
+    },
+    {
+      "id": 9, "title": "Host — memory available", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 21 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "node_memory_MemAvailable_bytes", "legendFormat": "available" },
+        { "refId": "B", "expr": "node_memory_MemTotal_bytes", "legendFormat": "total" }
+      ]
+    }
+  ]
+}

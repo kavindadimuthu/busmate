@@ -1,0 +1,128 @@
+# Observability stack (Phase 2) — centralised log aggregation.
+#
+#   Loki    : stores logs, 14-day retention (config/observability/loki/loki-config.yml)
+#   Alloy   : discovers BusMate containers via the Docker socket, reads their stdout,
+#             parses the JSON, and pushes to Loki (config/observability/alloy/config.alloy)
+#   Grafana : one UI to search logs; datasource + a logs dashboard are auto-provisioned
+#
+# Runs independently of the app stack — Alloy collects logs through the Docker API, not
+# the network, so no shared Docker network is required. Bring it up alongside the app:
+#
+#   docker compose -f docker-compose.observability.yml up -d
+#
+# Then open Grafana at http://localhost:3000 (default login admin / admin — override with
+# GRAFANA_ADMIN_PASSWORD). It scrapes any container whose Compose project name starts with
+# "busmate" (the app stack sets `name: busmate`), so run the app stack too to see its logs.
+#
+# Logs are JSON only in the prod/e2e Spring profiles and NODE_ENV=production for the
+# gateway; in local `dev` they are pretty-printed text and will still appear in Grafana,
+# just without parsed `level`/`service` labels.
+name: busmate-observability
+
+services:
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: busmate-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - busmate_loki_data:/loki
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 -O- http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  alloy:
+    image: grafana/alloy:v1.7.5
+    container_name: busmate-alloy
+    # Root is the simplest way to grant access to the Docker socket on a dev host.
+    # Tighten with the host's docker gid in a hardened deployment.
+    user: root
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./config/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - busmate_alloy_data:/var/lib/alloy/data
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- Metrics (Phase 3) ---
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: busmate-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    # Lets Prometheus reach the app services published on the host in dev.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./config/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - busmate_prometheus_data:/prometheus
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: busmate-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    container_name: busmate-node-exporter
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: busmate-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - ./config/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/observability/grafana/dashboards:/etc/grafana/dashboards:ro
+      - busmate_grafana_data:/var/lib/grafana
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  busmate_loki_data:
+  busmate_alloy_data:
+  busmate_prometheus_data:
+  busmate_grafana_data:

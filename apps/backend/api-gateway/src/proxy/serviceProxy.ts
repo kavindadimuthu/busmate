@@ -1,5 +1,6 @@
 import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 import { env } from '../config/env';
+import { logger } from '../config/logger';
 
 const serviceUrls: Record<string, string> = {
   USER_SERVICE: env.USER_SERVICE_URL,
@@ -22,7 +23,10 @@ export function createProxy(serviceName: string, pathFilter: string) {
     pathFilter,
     on: {
       error: (err, req, res: any) => {
-        console.error(`[PROXY ERROR] ${serviceName}:`, err.message);
+        logger.error(
+          { err, service: serviceName, requestId: (req as { id?: string }).id },
+          `Proxy error reaching ${serviceName}`,
+        );
         res.status(502).json({ error: { code: 'SERVICE_UNAVAILABLE', message: `${serviceName} is unavailable` } });
       },
     },

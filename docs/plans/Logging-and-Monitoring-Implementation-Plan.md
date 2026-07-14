@@ -6,8 +6,22 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 > Not to be confused with `docs/transit-workflow-evaluation/07-monitoring.md`, which is about
 > *transit* monitoring (vehicle AVL/tracking). This document is about **operating the software**.
 
-**Status:** Proposed. **Target deployment model:** Docker Compose, self-hosted, small team.
-**Date:** 2026-07-14.
+**Status:** Phases 1–3 implemented & verified (2026-07-14). Phases 4–6 proposed.
+**Target deployment model:** Docker Compose, self-hosted, small team.
+
+> **Implementation status**
+> - **Phase 1 (structured logs + correlation IDs) — DONE.** Gateway on `pino`/`pino-http`
+>   (JSON, `X-Request-Id` gen+reuse+redaction, verified at runtime); all 3 Spring services on
+>   `logstash-logback-encoder` with a profile-aware `logback-spring.xml` + `RequestIdFilter`
+>   (MDC `requestId`); user-service stamps `requestId` on Kafka producer records.
+> - **Phase 2 (Loki aggregation) — DONE.** `docker-compose.observability.yml` + `config/observability/`
+>   (Loki 3.4, Alloy, Grafana). Verified: Alloy ships `busmate-*` container logs to Loki; Grafana
+>   auto-provisions the datasource + "BusMate — Logs" dashboard.
+> - **Phase 3 (Prometheus metrics) — DONE.** Actuator+Micrometer `/actuator/prometheus` on all 3
+>   Spring services; `prom-client` `/metrics` on the gateway; Prometheus + cAdvisor + node-exporter
+>   added; 2 metrics dashboards. Verified: Prometheus scrapes gateway + core-service (`up=1`) and
+>   metrics are queryable.
+> - See [`config/observability/README.md`](../../config/observability/README.md) to run it.
 
 ---
 

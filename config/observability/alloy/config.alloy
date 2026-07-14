@@ -1,0 +1,78 @@
+// Grafana Alloy — log collection for the BusMate platform.
+//
+// Discovers containers from the "busmate*" Docker Compose projects, reads their
+// stdout/stderr through the Docker API, parses the JSON logs the services emit in
+// prod, promotes a couple of low-cardinality fields to Loki labels, and pushes the
+// result to Loki. Correlation is preserved because `requestId` travels inside the log
+// line (searchable) rather than as a label (which would explode cardinality).
+
+logging {
+  level  = "warn"
+  format = "logfmt"
+}
+
+// 1. Discover all containers on the host's Docker daemon.
+discovery.docker "busmate" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "10s"
+}
+
+// 2. Keep only BusMate containers and derive stable labels from Compose metadata.
+discovery.relabel "busmate" {
+  targets = []
+
+  // Keep containers whose Compose project starts with "busmate"
+  // (the app stack: `name: busmate`; this stack: `name: busmate-observability`).
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "busmate.*"
+    action        = "keep"
+  }
+
+  // service = compose service name (api-gateway, user-service, core-service, ...).
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  // container = docker container name without the leading slash.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+// 3. Read the container logs.
+loki.source.docker "busmate" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.busmate.targets
+  relabel_rules = discovery.relabel.busmate.rules
+  labels        = { job = "docker" }
+  forward_to    = [loki.process.busmate.receiver]
+}
+
+// 4. Parse the JSON body and promote `level` to a label. `service` is already a label
+//    from Compose metadata above; non-JSON lines (dev pretty-print) pass through as-is.
+loki.process "busmate" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.json {
+    expressions = {
+      level = "level",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+}
+
+// 5. Ship to Loki.
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
