@@ -82,18 +82,18 @@ export default function BookingScreen() {
             </View>
             <View style={styles.tripRow}>
               <Calendar size={16} color="#004CFF" />
-              <Text style={styles.tripText}>{formatDate(bookingData.tripData.scheduledDeparture)}</Text>
+              <Text style={styles.tripText}>{formatDate(bookingData.tripDate)}</Text>
             </View>
             <View style={styles.tripRow}>
               <Clock size={16} color="#004CFF" />
               <Text style={styles.tripText}>
-                {formatTime(bookingData.tripData.scheduledDeparture)} - {formatTime(bookingData.tripData.scheduledArrival)}
+                {formatTime(bookingData.scheduledDepartureTime)} - {formatTime(bookingData.scheduledArrivalTime)}
               </Text>
             </View>
           </View>
           <View style={styles.operatorInfo}>
-            <Text style={styles.operatorName}>{bookingData.tripData.operator?.name || 'Bus Operator'}</Text>
-            <Text style={styles.routeNumber}>{bookingData.tripData.routeName || 'Route'}</Text>
+            <Text style={styles.operatorName}>{bookingData.operatorName || 'Bus Operator'}</Text>
+            <Text style={styles.routeNumber}>{bookingData.routeName || 'Route'}</Text>
           </View>
         </View>
 
@@ -136,29 +136,18 @@ export default function BookingScreen() {
           </Text>
         </View>
 
-        {/* Price Summary */}
+        {/* Price Summary - the real fare calculated on the previous screen; no fictional
+            service/seat fees since nothing charges those amounts on the backend. */}
         <View style={styles.priceCard}>
           <Text style={styles.sectionTitle}>Price Summary</Text>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Base fare (1 passenger)</Text>
+            <Text style={styles.priceLabel}>Fare (1 passenger)</Text>
             <Text style={styles.priceValue}>{formatFare(bookingData.fareAmount)}</Text>
           </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Service fee</Text>
-            <Text style={styles.priceValue}>LKR 25</Text>
-          </View>
-          {selectedSeat && (
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Seat reservation</Text>
-              <Text style={styles.priceValue}>LKR 50</Text>
-            </View>
-          )}
           <View style={styles.divider} />
           <View style={styles.priceRow}>
             <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>
-              {formatFare(bookingData.fareAmount + 25 + (selectedSeat ? 50 : 0))}
-            </Text>
+            <Text style={styles.totalValue}>{formatFare(bookingData.fareAmount)}</Text>
           </View>
         </View>
       </ScrollView>

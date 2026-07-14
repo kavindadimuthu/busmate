@@ -2,6 +2,9 @@
 
 import * as React from "react";
 import { cn } from "../../lib/utils";
+import type { AppLinkComponent } from "../../lib/link";
+
+export type { AppLinkComponent } from "../../lib/link";
 
 export interface HeaderBreadcrumb {
   label: string;
@@ -15,6 +18,12 @@ export interface HeaderProps {
   breadcrumbs?: HeaderBreadcrumb[];
   actions?: React.ReactNode;
   className?: string;
+  /**
+   * Router-aware link component (e.g. react-router's Link) used for
+   * breadcrumb links so navigation goes through client-side routing instead
+   * of a full page reload. Falls back to a plain <a> when not provided.
+   */
+  linkComponent?: AppLinkComponent;
 }
 
 export function Header({
@@ -23,6 +32,7 @@ export function Header({
   breadcrumbs,
   actions,
   className,
+  linkComponent: LinkComponent,
 }: HeaderProps) {
   return (
     <div className={cn("px-6 py-4", className)}>
@@ -48,12 +58,18 @@ export function Header({
             <React.Fragment key={i}>
               <span className="text-muted-foreground/40">/</span>
               {crumb.href ? (
-                <a
-                  href={crumb.href}
-                  className="hover:text-foreground transition-colors"
-                >
-                  {crumb.label}
-                </a>
+                LinkComponent ? (
+                  <LinkComponent href={crumb.href} className="hover:text-foreground transition-colors">
+                    {crumb.label}
+                  </LinkComponent>
+                ) : (
+                  <a
+                    href={crumb.href}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {crumb.label}
+                  </a>
+                )
               ) : (
                 <span className="text-foreground font-medium">{crumb.label}</span>
               )}

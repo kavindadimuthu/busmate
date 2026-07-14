@@ -13,6 +13,12 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_GATEWAY_URL": "http://192.168.8.181:8080",
+        "EXPO_PUBLIC_USER_MANAGEMENT_API_URL": "http://192.168.8.181:8080",
+        "EXPO_PUBLIC_ROUTE_MANAGEMENT_API_URL": "http://192.168.8.181:8080",
+        "EXPO_PUBLIC_TICKETING_MANAGEMENT_API_URL": "http://192.168.8.181:8080"
       }
     },
     "production": {

@@ -6,6 +6,8 @@ import type { RouteResponse } from './RouteResponse';
 export type RouteGroupResponse = {
     id?: string;
     name?: string;
+    nameSinhala?: string;
+    nameTamil?: string;
     description?: string;
     routes?: Array<RouteResponse>;
     createdAt?: string;

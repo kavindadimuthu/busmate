@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { PageScheduleResponse } from '../models/PageScheduleResponse';
 import type { ScheduleCalendarRequest } from '../models/ScheduleCalendarRequest';
+import type { ScheduleCsvImportResponse } from '../models/ScheduleCsvImportResponse';
 import type { ScheduleExceptionRequest } from '../models/ScheduleExceptionRequest';
 import type { ScheduleExceptionResponse } from '../models/ScheduleExceptionResponse';
 import type { ScheduleRequest } from '../models/ScheduleRequest';
@@ -252,29 +253,120 @@ export class ScheduleManagementService {
         });
     }
     /**
-     * Import schedules from file
-     * Import multiple schedules from a CSV or Excel file. The file should contain schedule metadata, calendar settings, and stop timings.
+     * Import schedules from CSV file
+     * Import multiple schedules with their associated stops from a CSV file.
+     *
+     * **CSV Format:**
+     * Each row represents one stop within a schedule. Rows with the same schedule_name + route_id + effective_start_date
+     * are grouped together to create a single schedule with multiple stops.
+     *
+     * **Required Columns:**
+     * - schedule_name: Name of the schedule
+     * - route_id: UUID of the route this schedule belongs to
+     * - effective_start_date: Date when schedule becomes effective (YYYY-MM-DD)
+     * - route_stop_id: UUID of the route stop (from route_stop table)
+     * - stop_order: Order of the stop in the schedule
+     *
+     * **Optional Columns:**
+     * - schedule_type: REGULAR or SPECIAL (defaults to REGULAR)
+     * - effective_end_date: End date (YYYY-MM-DD)
+     * - status: PENDING, ACTIVE, INACTIVE, CANCELLED (defaults to ACTIVE)
+     * - description: Schedule description
+     * - arrival_time: Stop arrival time (HH:mm:ss)
+     * - departure_time: Stop departure time (HH:mm:ss)
+     *
+     * **Duplicate Handling Strategies:**
+     * - SKIP: Skip schedule if it already exists
+     * - UPDATE: Update existing schedule with new data
+     * - CREATE_WITH_SUFFIX: Create new schedule with suffix to avoid duplicate
+     *
+     * @param scheduleDuplicateStrategy Strategy for handling duplicate schedules
+     * @param scheduleStopDuplicateStrategy Strategy for handling duplicate schedule stops
+     * @param validateRouteExists Validate that route_id exists in the system
+     * @param validateRouteStopExists Validate that route_stop_id exists and belongs to the route
+     * @param continueOnError Continue processing remaining rows when encountering errors
+     * @param allowPartialStops Allow partial schedule creation when some stops fail
+     * @param generateTrips Generate trips automatically for imported schedules
+     * @param defaultStatus Default status for schedules without status specified
+     * @param defaultScheduleType Default schedule type when not specified in CSV
+     * @param validateTimeSequence Validate arrival time is before or equal to departure time
+     * @param validateStopOrder Validate stop order sequence within each schedule
      * @param formData
-     * @returns ScheduleResponse Schedules imported successfully
+     * @returns ScheduleCsvImportResponse Import completed (check response for success/failure details)
      * @throws ApiError
      */
-    public static importSchedules(
+    public static importSchedulesFromCsv(
+        scheduleDuplicateStrategy?: 'SKIP' | 'UPDATE' | 'CREATE_WITH_SUFFIX',
+        scheduleStopDuplicateStrategy?: 'SKIP' | 'UPDATE',
+        validateRouteExists: boolean = true,
+        validateRouteStopExists: boolean = true,
+        continueOnError: boolean = true,
+        allowPartialStops: boolean = true,
+        generateTrips: boolean = false,
+        defaultStatus?: 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'CANCELLED',
+        defaultScheduleType?: 'REGULAR' | 'SPECIAL',
+        validateTimeSequence: boolean = true,
+        validateStopOrder: boolean = true,
         formData?: {
             /**
-             * CSV or Excel file containing schedule data
+             * CSV file containing schedule data
              */
             file: Blob;
         },
-    ): CancelablePromise<Array<ScheduleResponse>> {
+    ): CancelablePromise<ScheduleCsvImportResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/schedules/import',
+            query: {
+                'scheduleDuplicateStrategy': scheduleDuplicateStrategy,
+                'scheduleStopDuplicateStrategy': scheduleStopDuplicateStrategy,
+                'validateRouteExists': validateRouteExists,
+                'validateRouteStopExists': validateRouteStopExists,
+                'continueOnError': continueOnError,
+                'allowPartialStops': allowPartialStops,
+                'generateTrips': generateTrips,
+                'defaultStatus': defaultStatus,
+                'defaultScheduleType': defaultScheduleType,
+                'validateTimeSequence': validateTimeSequence,
+                'validateStopOrder': validateStopOrder,
+            },
             formData: formData,
             mediaType: 'multipart/form-data',
             errors: {
                 400: `Invalid file format or data`,
                 401: `Unauthorized`,
             },
+        });
+    }
+    /**
+     * Download CSV import template
+     * Download a sample CSV template for schedule import.
+     *
+     * The template includes:
+     * - All required and optional column headers
+     * - Example rows showing how to format data
+     * - Multiple schedules with multiple stops each
+     *
+     * **Column Descriptions:**
+     * - schedule_name: Unique name for the schedule within the route
+     * - route_id: UUID of the route (must exist in system)
+     * - schedule_type: REGULAR or SPECIAL
+     * - effective_start_date: Start date (YYYY-MM-DD format)
+     * - effective_end_date: End date (optional, YYYY-MM-DD format)
+     * - status: PENDING, ACTIVE, INACTIVE, or CANCELLED
+     * - description: Optional description text
+     * - route_stop_id: UUID of the route stop
+     * - stop_order: Integer order of the stop (1, 2, 3, ...)
+     * - arrival_time: Time format HH:mm:ss (e.g., 08:30:00)
+     * - departure_time: Time format HH:mm:ss (e.g., 08:35:00)
+     *
+     * @returns string Template downloaded successfully
+     * @throws ApiError
+     */
+    public static getScheduleImportTemplate(): CancelablePromise<string> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/schedules/import/template',
         });
     }
     /**
@@ -287,31 +379,6 @@ export class ScheduleManagementService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/schedules/statistics',
-        });
-    }
-    /**
-     * Validate schedule import file
-     * Validate a schedule import file without actually importing the data. Returns validation errors and warnings.
-     * @param formData
-     * @returns any File validation completed
-     * @throws ApiError
-     */
-    public static validateScheduleImport(
-        formData?: {
-            /**
-             * CSV or Excel file to validate
-             */
-            file: Blob;
-        },
-    ): CancelablePromise<Array<Record<string, any>>> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/schedules/validate',
-            formData: formData,
-            mediaType: 'multipart/form-data',
-            errors: {
-                400: `Invalid file format`,
-            },
         });
     }
     /**

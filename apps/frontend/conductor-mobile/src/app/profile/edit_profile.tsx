@@ -142,12 +142,12 @@ export default function EditProfileScreen() {
             )}
           </View>
           
-          {/* Conductor ID */}
+          {/* Username */}
           <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>Conductor ID</Text>
+            <Text style={styles.inputLabel}>Username</Text>
             <TextInput
               style={[styles.input, styles.disabledInput]}
-              value={user?.employeeId || ''}
+              value={user?.username || ''}
               editable={false}
             />
           </View>

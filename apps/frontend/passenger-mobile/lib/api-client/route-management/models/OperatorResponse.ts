@@ -8,6 +8,7 @@ export type OperatorResponse = {
     operatorType?: string;
     region?: string;
     status?: string;
+    userId?: string;
     createdAt?: string;
     updatedAt?: string;
     createdBy?: string;

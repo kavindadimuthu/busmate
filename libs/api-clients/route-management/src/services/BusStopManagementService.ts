@@ -20,13 +20,16 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class BusStopManagementService {
     /**
-     * Get all stops with pagination, sorting, and search
-     * Retrieve all stops with optional pagination, sorting, and multi-column search. Search is performed across name, address, city, and state columns. Default: page=0, size=10, sort=name
+     * Get all stops with pagination, sorting, search and server-side filtering
+     * Retrieve all stops with optional pagination, sorting, multi-column search, and server-side filtering. Search is performed across name, address, city, and state columns. Filters (state, city, isAccessible) narrow results server-side, eliminating the need for client-side filtering. Default: page=0, size=10, sort=name
      * @param page Page number (0-based)
      * @param size Page size (max 100)
-     * @param sortBy Sort by field name (name, createdAt, updatedAt, city, state)
+     * @param sortBy Sort by field (name, nameSinhala, nameTamil, location.city, location.state, isAccessible, createdAt, updatedAt)
      * @param sortDir Sort direction (asc or desc)
      * @param search Search text to filter stops by name, address, city, or state
+     * @param state Filter by state/province (exact match)
+     * @param city Filter by city (exact match)
+     * @param isAccessible Filter by accessibility status
      * @returns PageStopResponse Stops retrieved successfully
      * @throws ApiError
      */
@@ -36,6 +39,9 @@ export class BusStopManagementService {
         sortBy: string = 'name',
         sortDir: string = 'asc',
         search?: string,
+        state?: string,
+        city?: string,
+        isAccessible?: boolean,
     ): CancelablePromise<PageStopResponse> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -46,9 +52,12 @@ export class BusStopManagementService {
                 'sortBy': sortBy,
                 'sortDir': sortDir,
                 'search': search,
+                'state': state,
+                'city': city,
+                'isAccessible': isAccessible,
             },
             errors: {
-                400: `Invalid pagination or sorting parameters`,
+                400: `Invalid pagination, sorting, or filtering parameters`,
             },
         });
     }
@@ -70,6 +79,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid input data`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 409: `Stop already exists in the same city`,
             },
         });
@@ -104,6 +114,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid input data`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
             },
         });
     }
@@ -186,6 +197,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid export request parameters`,
                 401: `Unauthorized - authentication required`,
+                403: `Forbidden - requires MOT role`,
                 500: `Internal server error during export processing`,
             },
         });
@@ -230,6 +242,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid file format or content`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
             },
         });
     }
@@ -294,6 +307,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid file format or request parameters`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 413: `File too large`,
                 415: `Unsupported file type`,
             },
@@ -422,6 +436,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid input data`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 404: `Stop not found`,
                 409: `Stop name already exists in the same city`,
             },
@@ -446,6 +461,7 @@ export class BusStopManagementService {
             errors: {
                 400: `Invalid UUID format`,
                 401: `Unauthorized`,
+                403: `Forbidden - requires MOT role`,
                 404: `Stop not found`,
             },
         });

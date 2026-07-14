@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MapPin } from 'lucide-react-native';
-import { PassengerApIsService, PassengerStopResponse } from '../lib/api-client/route-management';
+import { PassengerQueryService, PassengerStopResponse } from '../lib/api-client/route-management';
 
 interface StopSearchInputProps {
   label: string;
@@ -75,7 +75,7 @@ export default function StopSearchInput({
   const searchStops = async (searchText: string) => {
     try {
       setLoading(true);
-      const response = await PassengerApIsService.searchStops(
+      const response = await PassengerQueryService.searchStops(
         undefined, // name
         undefined, // city
         searchText, // searchText

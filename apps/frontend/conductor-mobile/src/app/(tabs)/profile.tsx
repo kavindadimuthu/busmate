@@ -45,9 +45,9 @@ export default function ProfileScreen() {
   // Use auth context data with ongoing trip data and fallbacks
   const userInfo = {
     fullName: user?.fullName || user?.name || "Conductor Name",
-    conductorId: user?.employeeId || "CON-2024-001",
-    email: user?.email || "conductor@busmate.lk",
-    contactNumber: user?.contactNumber || "+94 77 123 4567",
+    username: user?.username || "Not set",
+    email: user?.email || "Not set",
+    contactNumber: user?.contactNumber || "Not set",
     role: user?.role || "conductor",
     busId: ongoingTrip?.busPlateNumber || ongoingTrip?.busId || user?.busId || "NB-2845",
     route: ongoingTrip?.routeName || 
@@ -112,10 +112,10 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.infoSection}>
-            <Text style={styles.fieldLabel}>Conductor ID</Text>
+            <Text style={styles.fieldLabel}>Username</Text>
             <View style={styles.fieldContainer}>
               <Ionicons name="card" size={22} color="#999" style={styles.fieldIcon} />
-              <Text style={styles.fieldText}>{userInfo.conductorId}</Text>
+              <Text style={styles.fieldText}>{userInfo.username}</Text>
             </View>
           </View>
           

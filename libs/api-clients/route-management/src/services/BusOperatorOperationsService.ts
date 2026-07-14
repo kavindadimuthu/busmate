@@ -447,4 +447,112 @@ export class BusOperatorOperationsService {
             },
         });
     }
+    /**
+     * Assign one of the operator's own buses to a trip
+     * Assigns a vehicle to a trip. The bus must belong to this operator.
+     * @param operatorId Operator ID
+     * @param tripId Trip ID
+     * @param busId Bus ID (must belong to this operator)
+     * @returns TripResponse Bus assigned successfully
+     * @throws ApiError
+     */
+    public static assignBusToTrip(
+        operatorId: string,
+        tripId: string,
+        busId: string,
+    ): CancelablePromise<TripResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bus-operator/{operatorId}/trips/{tripId}/assign-bus',
+            path: {
+                'operatorId': operatorId,
+                'tripId': tripId,
+            },
+            query: {
+                'busId': busId,
+            },
+            errors: {
+                400: `Bus does not belong to this operator, or trip already has a bus`,
+                404: `Trip or bus not found`,
+            },
+        });
+    }
+    /**
+     * Assign a conductor to one of the operator's trips
+     * Assigns a conductor (user-service userId) to a trip owned by this operator. Ownership of the conductor account is enforced by the caller (the operator dashboard only offers its own conductors) - core-service has no cross-service validation for this.
+     * @param operatorId Operator ID
+     * @param tripId Trip ID
+     * @param conductorId Conductor's user-service userId
+     * @returns TripResponse Conductor assigned successfully
+     * @throws ApiError
+     */
+    public static assignConductorToTrip(
+        operatorId: string,
+        tripId: string,
+        conductorId: string,
+    ): CancelablePromise<TripResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bus-operator/{operatorId}/trips/{tripId}/assign-conductor',
+            path: {
+                'operatorId': operatorId,
+                'tripId': tripId,
+            },
+            query: {
+                'conductorId': conductorId,
+            },
+            errors: {
+                400: `Trip already has a conductor assigned`,
+                404: `Trip not found or doesn't belong to operator`,
+            },
+        });
+    }
+    /**
+     * Unassign the vehicle from one of the operator's trips
+     * Removes the currently assigned bus from a trip owned by this operator.
+     * @param operatorId Operator ID
+     * @param tripId Trip ID
+     * @returns TripResponse Bus removed successfully
+     * @throws ApiError
+     */
+    public static removeBusFromTrip(
+        operatorId: string,
+        tripId: string,
+    ): CancelablePromise<TripResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bus-operator/{operatorId}/trips/{tripId}/remove-bus',
+            path: {
+                'operatorId': operatorId,
+                'tripId': tripId,
+            },
+            errors: {
+                404: `Trip not found or doesn't belong to operator`,
+            },
+        });
+    }
+    /**
+     * Unassign the conductor from one of the operator's trips
+     * Removes the currently assigned conductor from a trip owned by this operator.
+     * @param operatorId Operator ID
+     * @param tripId Trip ID
+     * @returns TripResponse Conductor removed successfully
+     * @throws ApiError
+     */
+    public static removeConductorFromTrip(
+        operatorId: string,
+        tripId: string,
+    ): CancelablePromise<TripResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bus-operator/{operatorId}/trips/{tripId}/remove-conductor',
+            path: {
+                'operatorId': operatorId,
+                'tripId': tripId,
+            },
+            errors: {
+                404: `Trip not found or doesn't belong to operator`,
+            },
+        });
+    }
 }

@@ -2,13 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Filter } from 'lucide-react-native';
+import { Filter, Bus, MapPin, ArrowRight } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
-import BusRouteCard from '../../components/BusRouteCard';
 import RouteFilterModal from '../../components/modals/NewRouteFilterModal';
 import AppHeader from '../../components/ui/AppHeader';
-import { PassengerApIsService, PassengerTripResponse } from '../../lib/api-client/route-management';
+import { PassengerQueryService, BusResult } from '../../lib/api-client/route-management';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
+
+function formatTime(time?: string): string {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${m} ${ampm}`;
+}
 
 interface FilterOptionsType {
   travelDate: Date;
@@ -25,7 +33,7 @@ export default function SearchResultsScreen() {
   const params = useLocalSearchParams();
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [trips, setTrips] = useState<PassengerTripResponse[]>([]);
+  const [trips, setTrips] = useState<BusResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const safeAreaStyle = useSafeAreaContainerStyles();
@@ -91,37 +99,30 @@ export default function SearchResultsScreen() {
 
       setLoading(true);
       setError(null);
-      
+
       try {
-        const response = await PassengerApIsService.searchTrips(
+        const [hours, minutes] = (filterOptions.departureTimeFrom || '00:00').split(':');
+        const response = await PassengerQueryService.findMyBus(
           fromStopId,
           toStopId,
-          undefined, // routeId
-          filterOptions.travelDate.toISOString().split('T')[0], // travelDate in YYYY-MM-DD format
-          filterOptions.departureTimeFrom, // departureTimeFrom
-          filterOptions.departureTimeTo, // departureTimeTo
-          filterOptions.operatorType, // operatorType
-          filterOptions.operatorId, // operatorId
-          filterOptions.status, // status
-          0, // page
-          50 // size
+          filterOptions.travelDate.toISOString().split('T')[0],
+          filterOptions.departureTimeFrom ? `${hours}:${minutes}:00` : undefined,
+          undefined, // routeNumber
+          undefined, // roadType
+          'DEFAULT',
         );
 
-        let fetchedTrips = response.content || [];
+        let fetchedTrips = response.results || [];
 
-        // Apply sorting based on selected filter
+        // Apply sorting based on selected filter. "cheapest"/"highest-rated" have no real
+        // backend field yet (no fare-preview or rating endpoint) - fall back to departure order.
         switch (selectedFilter) {
-          case 'cheapest':
-            fetchedTrips.sort((a, b) => (a.fare || 0) - (b.fare || 0));
-            break;
           case 'fastest':
-            fetchedTrips.sort((a, b) => (a.duration || 0) - (b.duration || 0));
-            break;
-          case 'highest-rated':
-            // Rating might not be available in trip response, skip for now
+            fetchedTrips = [...fetchedTrips].sort(
+              (a, b) => (a.estimatedDurationMinutes || 0) - (b.estimatedDurationMinutes || 0),
+            );
             break;
           default:
-            // Keep original order
             break;
         }
 
@@ -142,14 +143,19 @@ export default function SearchResultsScreen() {
     setFilterOptions(newFilters);
   };
 
-  const handleTripPress = (trip: PassengerTripResponse) => {
+  const handleTripPress = (trip: BusResult) => {
     router.push({
       pathname: '/search/schedule',
       params: {
+        scheduleId: trip.scheduleId || '',
         tripId: trip.tripId || '',
+        fromStopId,
+        toStopId,
         fromStopName,
         toStopName,
-        passengers: passengers.toString()
+        travelDate: filterOptions.travelDate.toISOString().split('T')[0],
+        passengers: passengers.toString(),
+        busId: trip.busId || '',
       }
     });
   };
@@ -229,13 +235,50 @@ export default function SearchResultsScreen() {
                 </Text>
               </View>
             ) : (
-              trips.map((trip) => (
-                <BusRouteCard 
-                  key={trip.tripId}
-                  trip={trip} 
+              trips.map((trip, index) => (
+                <TouchableOpacity
+                  key={trip.scheduleId || index}
+                  style={styles.resultCard}
                   onPress={() => handleTripPress(trip)}
-                  showAmenities={false}
-                />
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.resultCardHeader}>
+                    <View style={styles.resultRouteBadge}>
+                      <Bus size={14} color="#004CFF" />
+                      <Text style={styles.resultRouteName}>{trip.routeName || trip.scheduleName || 'Route'}</Text>
+                    </View>
+                    {trip.operatorName && <Text style={styles.resultOperator}>{trip.operatorName}</Text>}
+                  </View>
+
+                  <View style={styles.resultTimesRow}>
+                    <View style={styles.resultStop}>
+                      <Text style={styles.resultTime}>{formatTime(trip.departureAtOrigin)}</Text>
+                      <Text style={styles.resultStopName} numberOfLines={1}>{fromStopName}</Text>
+                    </View>
+                    <ArrowRight size={16} color="#6B7280" />
+                    <View style={styles.resultStop}>
+                      <Text style={styles.resultTime}>{formatTime(trip.arrivalAtDestination)}</Text>
+                      <Text style={styles.resultStopName} numberOfLines={1}>{toStopName}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.resultFooter}>
+                    <View style={styles.resultFooterItem}>
+                      <MapPin size={12} color="#6B7280" />
+                      <Text style={styles.resultFooterText}>
+                        {trip.distanceKm ? `${trip.distanceKm.toFixed(0)}km` : '—'}
+                      </Text>
+                    </View>
+                    {trip.busPlateNumber ? (
+                      <Text style={styles.resultFooterText}>{trip.busPlateNumber}</Text>
+                    ) : (
+                      <Text style={styles.resultFooterTextMuted}>Bus not yet assigned</Text>
+                    )}
+                    {trip.alreadyDeparted && (
+                      <Text style={styles.resultDepartedText}>Already departed</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
               ))
             )}
           </>
@@ -356,5 +399,82 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  resultCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  resultCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  resultRouteBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resultRouteName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 6,
+  },
+  resultOperator: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  resultTimesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  resultStop: {
+    flex: 1,
+  },
+  resultTime: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  resultStopName: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  resultFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  resultFooterItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  resultFooterText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  resultFooterTextMuted: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  resultDepartedText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: '500',
   },
 });

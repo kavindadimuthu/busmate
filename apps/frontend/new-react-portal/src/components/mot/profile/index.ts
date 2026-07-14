@@ -1,0 +1,1 @@
+export { MotProfile } from './MotProfile';

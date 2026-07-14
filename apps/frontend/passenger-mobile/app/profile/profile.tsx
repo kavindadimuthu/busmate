@@ -12,22 +12,22 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
-import { PassengerControllerService, PassengerDTO } from '@/lib/api-client/user-management';
+import { UsersControllerService, UserResponse } from '@/lib/api-client/user-management';
 
 export default function ProfileInfoScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const [profileData, setProfileData] = useState<PassengerDTO | null>(null);
+  const [userDetails, setUserDetails] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch profile data from API
+  // Fetch profile data from user-service (via the API gateway)
   const fetchProfileData = async () => {
     if (!user?.id) return;
-    
+
     try {
       setIsLoading(true);
-      const response = await PassengerControllerService.getPassengerById(user.id);
-      setProfileData(response);
+      const response = await UsersControllerService.getUser(user.id);
+      setUserDetails(response);
     } catch (error: any) {
       console.error('Error fetching profile data:', error);
       Alert.alert(
@@ -58,7 +58,7 @@ export default function ProfileInfoScreen() {
   }
 
   // Fallback if user is not loaded or profile data is not available
-  if (!user || !profileData) {
+  if (!user || !userDetails) {
     return (
       <SafeAreaView style={styles.container}>
         <AppHeader title="Profile Information" />
@@ -75,9 +75,11 @@ export default function ProfileInfoScreen() {
   };
 
   // Format member since date for display
-  const formatMemberSince = (memberSince: string) => {
-    if (!memberSince) return 'Recently';
-    return memberSince;
+  const formatMemberSince = (createdAt: string | undefined) => {
+    if (!createdAt) return 'Recently';
+    const date = new Date(createdAt);
+    if (isNaN(date.getTime())) return 'Recently';
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   };
 
   return (
@@ -87,14 +89,14 @@ export default function ProfileInfoScreen() {
       <ScrollView style={styles.content}>
         {/* Profile Image Section */}
         <View style={styles.photoSection}>
-          <Image 
+          <Image
             source={getProfileImage(user?.profileImage)}
-            style={styles.profileImage} 
+            style={styles.profileImage}
           />
-          <Text style={styles.nameText}>{profileData.fullName || profileData.username || 'Unknown'}</Text>
+          <Text style={styles.nameText}>{userDetails.fullName || userDetails.username || 'Unknown'}</Text>
           <Text style={styles.memberSinceText}>
-            {profileData.accountStatus === 'ACTIVE' ? 'Active Member' : 'Member'} 
-            {profileData.isVerified && ' • Verified'}
+            Member since {formatMemberSince(userDetails.createdAt)}
+            {userDetails.isEmailVerified && ' • Verified'}
           </Text>
         </View>
 
@@ -109,7 +111,7 @@ export default function ProfileInfoScreen() {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Full Name</Text>
-                <Text style={styles.infoValue}>{profileData.fullName || 'Not provided'}</Text>
+                <Text style={styles.infoValue}>{userDetails.fullName || 'Not provided'}</Text>
               </View>
             </View>
 
@@ -119,7 +121,7 @@ export default function ProfileInfoScreen() {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Username</Text>
-                <Text style={styles.infoValue}>{profileData.username || 'Not provided'}</Text>
+                <Text style={styles.infoValue}>{userDetails.username || 'Not provided'}</Text>
               </View>
             </View>
 
@@ -129,7 +131,17 @@ export default function ProfileInfoScreen() {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email Address</Text>
-                <Text style={styles.infoValue}>{profileData.email || 'Not provided'}</Text>
+                <Text style={styles.infoValue}>{userDetails.email || 'Not provided'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoItem}>
+              <View style={styles.infoIconContainer}>
+                <Phone size={20} color="#004CFF" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Phone Number</Text>
+                <Text style={styles.infoValue}>{userDetails.phoneNumber || 'Not provided'}</Text>
               </View>
             </View>
 
@@ -138,8 +150,8 @@ export default function ProfileInfoScreen() {
                 <User size={20} color="#004CFF" />
               </View>
               <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Role</Text>
-                <Text style={styles.infoValue}>{profileData.role || 'Passenger'}</Text>
+                <Text style={styles.infoLabel}>Account Type</Text>
+                <Text style={styles.infoValue}>{userDetails.userType || 'Passenger'}</Text>
               </View>
             </View>
 
@@ -149,8 +161,8 @@ export default function ProfileInfoScreen() {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Account Status</Text>
-                <Text style={[styles.infoValue, {color: profileData.accountStatus === 'ACTIVE' ? '#10B981' : '#EF4444'}]}>
-                  {profileData.accountStatus || 'Unknown'}
+                <Text style={[styles.infoValue, {color: userDetails.accountStatus === 'active' ? '#10B981' : '#EF4444'}]}>
+                  {userDetails.accountStatus || 'Unknown'}
                 </Text>
               </View>
             </View>
@@ -161,25 +173,8 @@ export default function ProfileInfoScreen() {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email Verified</Text>
-                <Text style={[styles.infoValue, {color: profileData.isVerified ? '#10B981' : '#EF4444'}]}>
-                  {profileData.isVerified ? 'Verified' : 'Not Verified'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Notification Preferences Card */}
-          <View style={styles.infoCard}>
-            <Text style={styles.sectionTitle}>Preferences</Text>
-
-            <View style={styles.infoItem}>
-              <View style={styles.infoIconContainer}>
-                <Mail size={20} color="#004CFF" />
-              </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Notification Preferences</Text>
-                <Text style={styles.infoValue}>
-                  {profileData.notification_preferences || 'Default settings'}
+                <Text style={[styles.infoValue, {color: userDetails.isEmailVerified ? '#10B981' : '#EF4444'}]}>
+                  {userDetails.isEmailVerified ? 'Verified' : 'Not Verified'}
                 </Text>
               </View>
             </View>

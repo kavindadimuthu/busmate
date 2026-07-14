@@ -6,6 +6,8 @@ import type { LocationDto } from './LocationDto';
 export type StopResponse = {
     id?: string;
     name?: string;
+    nameSinhala?: string;
+    nameTamil?: string;
     description?: string;
     location?: LocationDto;
     isAccessible?: boolean;

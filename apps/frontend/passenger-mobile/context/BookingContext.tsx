@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { PassengerTripResponse } from '@/lib/api-client/route-management';
-import type { BusResponse } from '@/lib/api-client/route-management';
 import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management';
 
+// Flat, real-data shape - populated from search/schedule.tsx's FindMyBusDetailsResponse.trip,
+// not a fictional nested tripData/busData pair (those DTOs never existed against the real
+// backend contract).
 export interface BookingData {
   tripId: string;
-  tripData: PassengerTripResponse;
-  busData: BusResponse;
+  busId: string;
+  busPlateNumber?: string;
   fromStopId: string;
   toStopId: string;
   fromStopName: string;
@@ -15,11 +16,20 @@ export interface BookingData {
   fareAmount: number;
   selectedSeatNumber?: string;
   passengerId: string;
+  // Display-only fields carried over from schedule.tsx so downstream booking screens don't
+  // need to re-fetch trip details just to show a summary.
+  routeName?: string;
+  operatorName?: string;
+  tripDate?: string;
+  scheduledDepartureTime?: string;
+  scheduledArrivalTime?: string;
 }
 
 export interface PaymentData {
-  transactionRef: string;
-  paymentMethod: string;
+  /** The ticketing-service ticket id created by bookTicket(); confirmPayment() acts on this. */
+  ticketId: number;
+  /** Opaque payment-gateway reference returned by bookTicket(). */
+  paymentReference: string;
   amount: number;
 }
 

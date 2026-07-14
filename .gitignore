@@ -9,6 +9,7 @@ build/
 target/
 *.class
 *.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 *.war
 
 # Nx cache
@@ -16,12 +17,15 @@ target/
 .nx/workspace-data
 
 # Environment variables
+# Central backend secrets live in config/secrets/.env (gitignored below via
+# the .env / *.env patterns). Its committed template is config/secrets/.env.example.
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 *.env
+!*.env.example
 
 # Logs
 *.log

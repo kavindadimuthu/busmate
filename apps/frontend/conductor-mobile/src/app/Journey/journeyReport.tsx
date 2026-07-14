@@ -82,7 +82,7 @@ export default function TripReportScreen() {
             style={styles.backToSchedulesButton}
             onPress={() => router.push('/Journey/schedules')}
           >
-            <Text style={styles.backToSchedulesText}>View Schedules</Text>
+            <Text style={styles.backToSchedulesText}>View Journeys</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

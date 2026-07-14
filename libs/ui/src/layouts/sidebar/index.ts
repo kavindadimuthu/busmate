@@ -6,4 +6,5 @@ export type {
   NavigationConfig,
   SidebarNavItem,
   SidebarNavGroup,
+  AppLinkComponent,
 } from "./sidebar";

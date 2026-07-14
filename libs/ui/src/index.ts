@@ -379,6 +379,7 @@ export type {
   NavigationConfig,
   SidebarNavItem,
   SidebarNavGroup,
+  AppLinkComponent,
 } from "./layouts/sidebar";
 
 // Header

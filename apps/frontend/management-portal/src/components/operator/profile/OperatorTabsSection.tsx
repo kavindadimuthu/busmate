@@ -18,7 +18,7 @@ import {
   Activity
 } from 'lucide-react';
 import Link from 'next/link';
-import type { OperatorResponse, BusResponse } from '@busmate/api-client-route';
+import type { OperatorResponse, BusResponse, PassengerServicePermitResponse } from '@busmate/api-client-route';
 
 interface TabType {
   id: string;
@@ -31,30 +31,34 @@ interface OperatorTabsSectionProps {
   operator: OperatorResponse;
   buses: BusResponse[];
   busesLoading: boolean;
+  permits: PassengerServicePermitResponse[];
+  permitsLoading: boolean;
   onRefresh: () => Promise<void>;
 }
 
-export function OperatorTabsSection({ 
-  operator, 
-  buses, 
+export function OperatorTabsSection({
+  operator,
+  buses,
   busesLoading,
-  onRefresh 
+  permits,
+  permitsLoading,
+  onRefresh
 }: OperatorTabsSectionProps) {
   const [activeTab, setActiveTab] = useState<string>('buses');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const tabs: TabType[] = [
-    { 
-      id: 'buses', 
-      label: 'Fleet Management', 
-      icon: <Bus className="w-4 h-4" />, 
-      count: buses.length 
+    {
+      id: 'buses',
+      label: 'Fleet Management',
+      icon: <Bus className="w-4 h-4" />,
+      count: buses.length
     },
-    { 
-      id: 'permits', 
-      label: 'Service Permits', 
+    {
+      id: 'permits',
+      label: 'Service Permits',
       icon: <FileText className="w-4 h-4" />,
-      count: 0 // TODO: Get from API
+      count: permits.length
     },
     { 
       id: 'trips', 
@@ -259,6 +263,98 @@ export function OperatorTabsSection({
     </div>
   );
 
+  const renderPermitsTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Service Permits</h3>
+          <p className="text-sm text-muted-foreground">
+            Passenger service permits held by {operator.name}
+          </p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing || permitsLoading}
+          className="flex items-center gap-2 px-3 py-2 text-muted-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {permitsLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2 text-muted-foreground">Loading permits...</span>
+        </div>
+      ) : permits.length === 0 ? (
+        <div className="text-center py-12 bg-muted rounded-lg border-2 border-dashed border-border">
+          <FileText className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Permits Found</h3>
+          <p className="text-muted-foreground">
+            This operator doesn't have any passenger service permits registered yet.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                    Permit
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                    Route Group
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                    Type & Max Buses
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                    Issued / Expires
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-card divide-y divide-gray-200">
+                {permits.map((permit) => (
+                  <tr key={permit.id} className="hover:bg-muted">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-foreground">{permit.permitNumber || 'N/A'}</div>
+                      <div className="text-sm text-muted-foreground">ID: {permit.id?.slice(-8) || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-foreground">{permit.routeGroupName || 'Not specified'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-foreground">{permit.permitType || 'N/A'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {permit.maximumBusAssigned ?? 0} buses max
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-foreground">{formatDate(permit.issueDate)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {permit.expiryDate ? formatDate(permit.expiryDate) : 'No expiry'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={getStatusBadge(permit.status)}>
+                        {permit.status ? permit.status.charAt(0).toUpperCase() + permit.status.slice(1) : 'Unknown'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderPlaceholderTab = (
     title: string, 
     description: string, 
@@ -316,17 +412,7 @@ export function OperatorTabsSection({
       <div className="p-6">
         {activeTab === 'buses' && renderBusesTab()}
         
-        {activeTab === 'permits' && renderPlaceholderTab(
-          'Service Permits Management',
-          '🔌 API Integration Point: Implement service permits functionality',
-          <FileText className="w-16 h-16" />,
-          [
-            'View all passenger service permits',
-            'Track permit validity and renewals',
-            'Manage permit assignments to buses',
-            'Handle permit applications and approvals'
-          ]
-        )}
+        {activeTab === 'permits' && renderPermitsTab()}
 
         {activeTab === 'trips' && renderPlaceholderTab(
           'Trips & Schedules',

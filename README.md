@@ -8,13 +8,13 @@ A monorepo managed with [Nx](https://nx.dev) containing the BusMate platform app
 |---|---|---|---|
 | `management-portal` | `apps/frontend/management-portal` | Next.js | Operations & fleet management dashboard |
 | `passenger-web` | `apps/frontend/passenger-web` | Vite + React | Passenger-facing web app |
-| `api-core` | `apps/backend/api-core` | Spring Boot (Java 21) | Route & schedule microservice |
+| `api-core` | `apps/backend/api-core` | Spring Boot (Java 17) | Route & schedule microservice |
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js >= 20
-- Java 21 + Maven (for `api-core`)
+- Java 17 + Maven (for backend services)
 
 ### Install root dependencies (Nx)
 ```bash

@@ -1,4 +1,5 @@
 import { RouteStop, Trip } from '../../types/journey';
+import { BusInfo } from '../../types/seatMap';
 import { apiClient } from '../apiClient';
 
 export const journeyApi = {
@@ -33,7 +34,7 @@ export const journeyApi = {
   // Get route stops with order and distance - Schedule Management Service
   getRouteStops: async (routeId: string): Promise<RouteStop[]> => {
     console.log(' Making API call to: /stops/route/' + routeId);
-    console.log('Full URL will be: http://18.140.161.237:8080/api/stops/route/' + routeId);
+    console.log('Full URL will use the configured schedule service base URL + /stops/route/' + routeId);
     
     try {
       return await apiClient.authenticatedRequest<RouteStop[]>(`/stops/route/${routeId}`, {}, 'schedule');
@@ -52,14 +53,14 @@ export const journeyApi = {
   // Get stops for a schedule with timings - Schedule Management Service
   getScheduleStops: async (scheduleId: string): Promise<any[]> => {
     console.log(' Making API call to: /stops/schedule/' + scheduleId);
-    console.log('  Full URL will be: http://18.140.161.237:8080/api/stops/schedule/' + scheduleId);
+    console.log('Full URL will use the configured schedule service base URL + /stops/schedule/' + scheduleId);
     
     return apiClient.authenticatedRequest<any[]>(`/stops/schedule/${scheduleId}`, {}, 'schedule');
   },
 
-  // Get seat layout - Schedule Management Service
-  getSeatLayout: async (busId: string): Promise<any> => {
-    return apiClient.authenticatedRequest<any>(`/buses/${busId}/seats`, {}, 'schedule');
+  // Get a bus (incl. its real seatLayout) from core-service via the gateway.
+  getBusById: async (busId: string): Promise<BusInfo> => {
+    return apiClient.authenticatedRequest<BusInfo>(`/buses/${busId}`, {}, 'schedule');
   },
 
   // Get trips by conductor - Trip Management Service

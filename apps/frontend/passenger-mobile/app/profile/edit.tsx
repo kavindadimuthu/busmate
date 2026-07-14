@@ -2,52 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { 
-  Camera, 
-  User, 
-  Mail, 
+import {
+  Camera,
+  User,
   Phone,
-  Calendar,
-  MapPin,
-  Check,
-  ChevronRight
+  Check
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
-import { PassengerControllerService, PassengerDTO, PassengerUpdateDTO } from '@/lib/api-client/user-management';
+import { UsersControllerService, UserResponse, UpdateUserRequest } from '@/lib/api-client/user-management';
+import { extractErrorMessage } from '@/lib/auth/errorMessage';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const { user, updateUserProfile } = useAuth();
-  const [profileData, setProfileData] = useState<PassengerDTO | null>(null);
+  const { user, refreshUser, updateUserProfile } = useAuth();
+  const [userDetails, setUserDetails] = useState<UserResponse | null>(null);
   const safeAreaStyle = useSafeAreaContainerStyles();
-  
+
   // Initialize form with empty defaults - will be populated from API
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
     phoneNumber: '',
-    notification_preferences: '',
   });
 
-  // Fetch current profile data
+  // Fetch current profile data from user-service (via the API gateway)
   const fetchProfileData = async () => {
     if (!user?.id) return;
-    
+
     try {
       setIsLoadingProfile(true);
-      const response = await PassengerControllerService.getPassengerById(user.id);
-      setProfileData(response);
-      
+      const response = await UsersControllerService.getUser(user.id);
+      setUserDetails(response);
+
       // Populate form with API data
       setFormData({
         fullName: response.fullName || '',
         username: response.username || '',
-        phoneNumber: '', // phoneNumber is not returned by getPassengerById, will be handled in update
-        notification_preferences: response.notification_preferences || '',
+        phoneNumber: response.phoneNumber || '',
       });
     } catch (error: any) {
       console.error('Error fetching profile data:', error);
@@ -75,53 +70,39 @@ export default function EditProfileScreen() {
       return;
     }
 
+    if (!formData.fullName.trim() || !formData.username.trim()) {
+      Alert.alert('Error', 'Full name and username cannot be empty.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
-      // Prepare update data according to PassengerUpdateDTO
-      const updateData: PassengerUpdateDTO = {
-        fullName: formData.fullName.trim() || undefined,
-        phoneNumber: formData.phoneNumber.trim() || undefined,
-        username: formData.username.trim() || undefined,
-        notification_preferences: formData.notification_preferences.trim() || undefined,
+
+      const updateData: UpdateUserRequest = {
+        fullName: formData.fullName.trim(),
+        username: formData.username.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
       };
 
-      // Remove empty fields
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key as keyof PassengerUpdateDTO] === undefined || updateData[key as keyof PassengerUpdateDTO] === '') {
-          delete updateData[key as keyof PassengerUpdateDTO];
-        }
+      // Call the real API through the gateway, then re-fetch the
+      // authenticated user so the rest of the app (header, menu, etc.)
+      // reflects the change immediately.
+      await UsersControllerService.updateUser(user.id, updateData);
+      await refreshUser();
+      await updateUserProfile({
+        name: updateData.fullName,
+        phone: updateData.phoneNumber,
       });
 
-      // Call the API
-      const response = await PassengerControllerService.updatePassenger(user.id, updateData);
-      
-      // Update the user profile in AuthContext with the updated data
-      await updateUserProfile({
-        name: updateData.fullName || user.name,
-        phone: updateData.phoneNumber || user.phone,
-        // Note: email and other fields are not updated as they're not part of the update API
-      });
-      
       Alert.alert(
         "Profile Updated",
         "Your profile has been updated successfully.",
         [{ text: "OK", onPress: () => router.back() }]
       );
-      
+
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      let errorMessage = 'Failed to update profile. Please try again.';
-      
-      if (error.status === 400) {
-        errorMessage = 'Invalid profile data. Please check your inputs.';
-      } else if (error.status === 404) {
-        errorMessage = 'Profile not found. Please contact support.';
-      } else if (error.status === 401) {
-        errorMessage = 'You are not authorized to update this profile.';
-      }
-      
-      Alert.alert('Error', errorMessage);
+      Alert.alert('Error', extractErrorMessage(error, 'Failed to update profile. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -216,20 +197,6 @@ export default function EditProfileScreen() {
                 value={formData.phoneNumber}
                 onChangeText={(text) => handleChange('phoneNumber', text)}
                 keyboardType="phone-pad"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Notification Preferences</Text>
-            <View style={styles.inputContainer}>
-              <Mail size={20} color="#6B7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter your notification preferences"
-                value={formData.notification_preferences}
-                onChangeText={(text) => handleChange('notification_preferences', text)}
-                multiline
               />
             </View>
           </View>

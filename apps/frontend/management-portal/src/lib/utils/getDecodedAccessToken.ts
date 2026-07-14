@@ -1,24 +1,21 @@
 'use server';
 
-import { IdTokenPayload } from "@/types/IdTokenPayload";
-import { asgardeo } from "@asgardeo/nextjs/server";
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+import { AccessTokenPayload } from '@/types/AccessTokenPayload';
+import { ACCESS_TOKEN_COOKIE, getJwtSecret } from '@/lib/auth/session';
 
-export async function getDecodedAccessToken(): Promise<IdTokenPayload | null> {
-  const client = await asgardeo();
-  try{
-    const sessionId = await client.getSessionId();
-    if (!sessionId) {
+export async function getDecodedAccessToken(): Promise<AccessTokenPayload | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
+    if (!token) {
       return null;
     }
-    const accessToken = await client.getAccessToken(sessionId as string);
 
-    const decodedToken = JSON.parse(
-      Buffer.from(accessToken.split('.')[1], 'base64').toString('utf-8')
-    );
-    
-    return decodedToken as IdTokenPayload;
+    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AccessTokenPayload;
   } catch (error) {
-    console.error("Error fetching or decoding token:", error);
+    console.error("Error verifying access token:", error);
     return null;
   }
 }

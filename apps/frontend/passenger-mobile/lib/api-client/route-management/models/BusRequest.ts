@@ -10,6 +10,7 @@ export type BusRequest = {
     capacity?: number;
     model?: string;
     facilities?: JsonNode;
+    seatLayout?: JsonNode;
     status?: string;
 };
 

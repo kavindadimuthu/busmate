@@ -1,7 +1,6 @@
 import { useTicket } from '@/contexts/TicketContext';
 import { formatDate, formatTime } from '@/hooks/employee/useNextTrip';
 import { useOngoingTrip } from '@/hooks/employee/useOngoingTrip';
-import { useSeatView } from '@/hooks/Journey/useSeatView';
 import { EmployeeSchedule } from '@/types/employee';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -26,7 +25,6 @@ import { ticketApi } from '../../services/api/ticket';
 // Component for ongoing trip view
 function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; refreshTrigger?: number }) {
   const { endTrip, endingTrip } = useOngoingTrip();
-  const { stats, tripData } = useSeatView();
   const { qrScanLogs, getQRScanLogsForTrip, cashTicketLogs, getCashTicketLogsForTrip } = useTicket();
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);

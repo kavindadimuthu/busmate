@@ -15,14 +15,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, User, Phone, Check } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, User, AtSign, Phone, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/context/AuthContext';
 
 const { height } = Dimensions.get('window');
 
 export default function SignUpScreen() {
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     email: '',
     phone: '',
     password: '',
@@ -34,6 +36,7 @@ export default function SignUpScreen() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { register } = useAuth();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -44,32 +47,42 @@ export default function SignUpScreen() {
       Alert.alert('Error', 'Please enter your full name');
       return false;
     }
-    
+
+    if (!formData.username.trim() || formData.username.trim().length < 3) {
+      Alert.alert('Error', 'Please enter a username of at least 3 characters');
+      return false;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) {
+      Alert.alert('Error', 'Username can only contain letters, numbers, and underscores');
+      return false;
+    }
+
     if (!formData.email || !formData.email.includes('@')) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
-    
+
     if (!formData.phone || formData.phone.length < 10) {
       Alert.alert('Error', 'Please enter a valid phone number');
       return false;
     }
-    
-    if (!formData.password || formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
+
+    if (!formData.password || formData.password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters long');
       return false;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return false;
     }
-    
+
     if (!acceptTerms) {
       Alert.alert('Error', 'Please accept the Terms of Service and Privacy Policy');
       return false;
     }
-    
+
     return true;
   };
 
@@ -77,22 +90,31 @@ export default function SignUpScreen() {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      Alert.alert(
-        'Success', 
-        'Account created successfully! Please check your email to verify your account.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/auth/login')
-          }
-        ]
-      );
-    } catch (error) {
+      const result = await register({
+        fullName: formData.name.trim(),
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        phoneNumber: formData.phone.trim(),
+        password: formData.password,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          'Success',
+          'Account created successfully! Please check your email to verify your account, then log in.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/auth/login')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Sign Up Failed', result.error || 'Failed to create account. Please try again.');
+      }
+    } catch {
       Alert.alert('Error', 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
@@ -206,6 +228,27 @@ export default function SignUpScreen() {
                       placeholderTextColor="#9CA3AF"
                       autoCapitalize="words"
                       onFocus={() => setFocusedField('name')}
+                      onBlur={() => setFocusedField('')}
+                      style={styles.textInput}
+                    />
+                  </View>
+                </View>
+
+                {/* Username Input */}
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={styles.inputLabel}>Username</Text>
+                  <View style={[
+                    styles.inputWrapper,
+                    focusedField === 'username' && styles.inputWrapperFocused
+                  ]}>
+                    <AtSign size={20} color={focusedField === 'username' ? '#004CFF' : '#9CA3AF'} />
+                    <TextInput
+                      value={formData.username}
+                      onChangeText={(value) => handleInputChange('username', value)}
+                      placeholder="Choose a username"
+                      placeholderTextColor="#9CA3AF"
+                      autoCapitalize="none"
+                      onFocus={() => setFocusedField('username')}
                       onBlur={() => setFocusedField('')}
                       style={styles.textInput}
                     />

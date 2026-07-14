@@ -1,0 +1,196 @@
+# Loads secrets from the central config/secrets/.env (via spring-dotenv).
+# Resolved relative to the working directory (apps/backend/user-service).
+# No-ops if the file is absent (e.g. in Docker, where env comes from env_file).
+springdotenv:
+  directory: ../../../config/secrets
+
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    # Credentials come from config/secrets/.env (USER_DB_*). The fallbacks are
+    # obvious placeholders — never real secrets. Set the env vars for real use.
+    url: ${USER_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${USER_DB_USERNAME:postgres}
+    password: ${USER_DB_PASSWORD:changeme}
+    driver-class-name: org.postgresql.Driver
+    
+    # HikariCP Connection Pool Configuration for Supabase
+    hikari:
+      # Connection pool sizing - conservative for pooler
+      minimum-idle: 2
+      maximum-pool-size: 8
+      
+      # Connection timeout settings
+      connection-timeout: 15000          # 15 seconds to get connection from pool
+      idle-timeout: 300000              # 5 minutes idle before eviction
+      max-lifetime: 900000              # 15 minutes max connection age
+      
+      # Validation and keep-alive
+      validation-timeout: 5000          # 5 seconds for connection validation
+      connection-test-query: SELECT 1   # Simple query to validate connections
+      leak-detection-threshold: 60000   # 1 minute leak detection
+      
+      # Pool behavior for intermittent connectivity
+      initialization-fail-timeout: 30000 # 30 seconds to retry failed initialization
+      
+      # Connection pool name for logging
+      pool-name: BusMateUserHikariPool
+      
+      # Important: Disable auto-commit for transaction management
+      auto-commit: false
+      
+  jpa:
+    hibernate:
+      # Change to update to avoid connection issues on startup
+      ddl-auto: update
+    show-sql: false  # Reduce logging overhead
+    properties:
+      hibernate:
+        format_sql: false  # Reduce logging overhead
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+        # Connection and transaction optimization
+        jdbc:
+          time_zone: UTC
+          batch_size: 25
+          batch_versioned_data: true
+        
+        # Query optimization for pooled connections
+        connection:
+          provider_disables_autocommit: true
+          
+        # Statement caching
+        query:
+          plan_cache_max_size: 128
+          
+    defer-datasource-initialization: true
+    
+    # Database initialization mode
+    database-platform: postgresql
+  sql:
+    init:
+      # Set to never to avoid connection issues during SQL execution
+      mode: never  # Disable to avoid duplicate data and connection issues
+      continue-on-error: true  # Continue if some SQL statements fail
+      
+  profiles:
+    active: production  # Enable production profile
+    
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    template:
+      default-topic: operator-events
+    consumer:
+      group-id: busmate-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  address: 0.0.0.0
+  port: ${SERVER_PORT:9020}
+
+# CORS Configuration
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:4000,https://busmate-web-frontend.vercel.app
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH
+  allowed-headers: "*"
+  allow-credentials: true
+  max-age: 3600
+
+supabase:
+  # url and anon-key aren't sensitive on their own — the anon key is designed to be a
+  # public, client-safe key (same idea as a Firebase client config), so its fallback is the
+  # real value. jwt.secret and api.key (the service-role key) are genuinely sensitive — the
+  # former lets anyone forge valid JWTs, the latter grants full admin API access — so both
+  # fall back to an obvious placeholder instead. Set SUPABASE_JWT_SECRET and
+  # SUPABASE_SERVICE_ROLE_KEY for real use.
+  url: ${SUPABASE_URL:https://gvxbzcxjueghvrtsfdxc.supabase.co}
+  anon-key: ${SUPABASE_ANON_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg}
+  jwt:
+    secret: ${SUPABASE_JWT_SECRET:dev-only-placeholder-jwt-secret-change-me}
+  api:
+    key: ${SUPABASE_SERVICE_ROLE_KEY:dev-only-placeholder-service-role-key-change-me}
+
+# Shared secret other backend services use to call /internal/** directly (never routed
+# through the API gateway, which blocks /internal/** entirely). Override via env var in
+# every real environment — this fallback is an obvious local-dev-only placeholder.
+internal:
+  api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
+
+# core-service's own base URL, called directly by OperatorSyncClient (never through the API
+# gateway — same rationale as internal.api-key above). Matches the CORE_SERVICE_URL already
+# used for this purpose in api-gateway's config.
+core-service:
+  url: ${CORE_SERVICE_URL:http://localhost:9010}
+
+# How often OperatorSyncRetryJob polls operator_sync_outbox for due PENDING rows.
+operator-sync:
+  retry-interval-ms: ${OPERATOR_SYNC_RETRY_INTERVAL_MS:30000}
+
+logging:
+  level:
+    com.busmate: INFO  # Reduce debug logging for busmate packages
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: DEBUG  # Enable HikariCP logging for monitoring
+    org.springframework.jdbc: WARN
+    org.postgresql: WARN
+    org.apache.kafka: WARN  # Reduce Kafka logging noise
+    
+  # Configure connection pool logging
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,hikaricp
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    hikaricp:
+      enabled: true  # Enable HikariCP metrics endpoint
+  health:
+    db:
+      enabled: true
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+# Connection retry and resilience configuration
+resilience4j:
+  retry:
+    instances:
+      database:
+        max-attempts: 3
+        wait-duration: 2s
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.net.SocketTimeoutException
+          - org.postgresql.util.PSQLException
+          - org.springframework.dao.DataAccessResourceFailureException
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    cache-disabled: true  # Disable caching to always show latest API
+    tags-sorter: alpha
+    operations-sorter: operationId
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  show-actuator: false

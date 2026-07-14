@@ -7,9 +7,8 @@ import { StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
 import { TicketControllerService } from '@/lib/api-client/ticketing-management/services/TicketControllerService';
-import { PassengerApIsService } from '@/lib/api-client/route-management/services/PassengerApIsService';
+import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
 import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management/models/ConductorLogTicketDTO';
-import type { PassengerStopResponse } from '@/lib/api-client/route-management/models/PassengerStopResponse';
 
 // Updated interface to match API response exactly
 interface Ticket extends ConductorLogTicketDTO {}
@@ -31,7 +30,7 @@ export default function TicketsScreen() {
   // Function to fetch stop details
   const fetchStopName = async (locationId: string): Promise<string> => {
     try {
-      const stopDetails = await PassengerApIsService.getStopDetails(locationId);
+      const stopDetails = await BusStopManagementService.getStopById(locationId);
       return stopDetails.name || locationId;
     } catch (err) {
       console.warn(`Failed to fetch stop details for ${locationId}:`, err);

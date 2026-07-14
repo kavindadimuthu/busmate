@@ -1,7 +1,13 @@
 packages:
   # Frontend applications
   - "apps/frontend/management-portal"
+  - "apps/frontend/new-react-portal"
+  - "apps/frontend/conductor-mobile"
+  - "apps/frontend/passenger-mobile"
   - "apps/frontend/passenger-web"
+
+  # Backend services (Node.js only — Spring Boot services are Maven-managed)
+  - "apps/backend/api-gateway"
 
   # Shared libraries
   - "libs/ui"

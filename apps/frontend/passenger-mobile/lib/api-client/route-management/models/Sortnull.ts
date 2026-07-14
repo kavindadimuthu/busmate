@@ -4,7 +4,7 @@
 /* eslint-disable */
 export type Sortnull = {
     sorted?: boolean;
-    empty?: boolean;
     unsorted?: boolean;
+    empty?: boolean;
 };
 

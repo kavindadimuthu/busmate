@@ -7,18 +7,18 @@ import { StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
 import { TicketControllerService } from '@/lib/api-client/ticketing-management/services/TicketControllerService';
-import { PassengerApIsService } from '@/lib/api-client/route-management/services/PassengerApIsService';
+import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
 import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management/models/ConductorLogTicketDTO';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
-import type { PassengerStopResponse } from '@/lib/api-client/route-management/models/PassengerStopResponse';
+import type { StopResponse } from '@/lib/api-client/route-management/models/StopResponse';
 
 export default function TicketDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [selectedTab, setSelectedTab] = useState('details');
   const [ticket, setTicket] = useState<ConductorLogTicketDTO | null>(null);
-  const [startStop, setStartStop] = useState<PassengerStopResponse | null>(null);
-  const [endStop, setEndStop] = useState<PassengerStopResponse | null>(null);
+  const [startStop, setStartStop] = useState<StopResponse | null>(null);
+  const [endStop, setEndStop] = useState<StopResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -43,7 +43,7 @@ export default function TicketDetailScreen() {
         // Fetch stop details if location IDs are available
         if (ticketData.startLocationId) {
           try {
-            const startStopData = await PassengerApIsService.getStopDetails(ticketData.startLocationId);
+            const startStopData = await BusStopManagementService.getStopById(ticketData.startLocationId);
             setStartStop(startStopData);
           } catch (err) {
             console.warn('Failed to fetch start stop details:', err);
@@ -52,7 +52,7 @@ export default function TicketDetailScreen() {
 
         if (ticketData.endLocationId) {
           try {
-            const endStopData = await PassengerApIsService.getStopDetails(ticketData.endLocationId);
+            const endStopData = await BusStopManagementService.getStopById(ticketData.endLocationId);
             setEndStop(endStopData);
           } catch (err) {
             console.warn('Failed to fetch end stop details:', err);
@@ -71,28 +71,21 @@ export default function TicketDetailScreen() {
   }, [id]);
 
   const handleCancelTicket = () => {
-    Alert.alert(
-      'Cancel Ticket',
-      'Are you sure you want to cancel this ticket? This action cannot be undone.',
-      [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
-          style: 'destructive',
-          onPress: () => router.push('/tickets/cancel')
-        }
-      ]
-    );
+    router.push(`/tickets/cancel?ticketId=${ticket?.ticketId}`);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'COMPLETED': return '#1DD724';
-      case 'PENDING': return '#004CFF';
+      case 'CONFIRMED': return '#1DD724';
+      case 'BOARDED': return '#1DD724';
+      case 'PENDING_PAYMENT': return '#004CFF';
       case 'CANCELLED': return '#FF3831';
+      case 'PAYMENT_FAILED': return '#FF3831';
       default: return '#6B7280';
     }
   };
+
+  const isCancellable = (status?: string) => status === 'PENDING_PAYMENT' || status === 'CONFIRMED';
 
   const formatDate = (dateString: string) => {
     try {
@@ -149,20 +142,7 @@ export default function TicketDetailScreen() {
         </View>
       </SafeAreaView>
     );
-  } {
-    Alert.alert(
-      'Cancel Ticket',
-      'Are you sure you want to cancel this ticket? This action cannot be undone.',
-      [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
-          style: 'destructive',
-          onPress: () => router.push('/tickets/cancel')
-        }
-      ]
-    );
-  };
+  }
 
   return (
     <SafeAreaView style={safeAreaStyle}>
@@ -192,9 +172,9 @@ export default function TicketDetailScreen() {
                 <Text style={styles.routeNumber}>Seat {ticket.seatNumber || 'N/A'}</Text>
               </View>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(ticket.paymentStatus || 'PENDING')}15` }]}>
-              <Text style={[styles.statusText, { color: getStatusColor(ticket.paymentStatus || 'PENDING') }]}>
-                {ticket.paymentStatus || 'PENDING'}
+            <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(ticket.bookingStatus)}15` }]}>
+              <Text style={[styles.statusText, { color: getStatusColor(ticket.bookingStatus || '') }]}>
+                {ticket.bookingStatus || 'UNKNOWN'}
               </Text>
             </View>
           </View>
@@ -301,8 +281,8 @@ export default function TicketDetailScreen() {
                   <Text style={styles.detailValue}>
                     {startStop?.name || ticket.startLocationId || 'Unknown'}
                   </Text>
-                  {startStop?.city && (
-                    <Text style={styles.detailSubValue}>{startStop.city}</Text>
+                  {startStop?.description && (
+                    <Text style={styles.detailSubValue}>{startStop.description}</Text>
                   )}
                 </View>
               </View>
@@ -313,8 +293,8 @@ export default function TicketDetailScreen() {
                   <Text style={styles.detailValue}>
                     {endStop?.name || ticket.endLocationId || 'Unknown'}
                   </Text>
-                  {endStop?.city && (
-                    <Text style={styles.detailSubValue}>{endStop.city}</Text>
+                  {endStop?.description && (
+                    <Text style={styles.detailSubValue}>{endStop.description}</Text>
                   )}
                 </View>
               </View>
@@ -381,8 +361,8 @@ export default function TicketDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Cancel Button - Only show for pending tickets */}
-        {ticket.paymentStatus === 'PENDING' && (
+        {/* Cancel Button - only for tickets that haven't boarded or already been cancelled */}
+        {isCancellable(ticket.bookingStatus) && (
           <TouchableOpacity
             onPress={handleCancelTicket}
             style={styles.cancelButton}

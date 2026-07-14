@@ -347,20 +347,30 @@ export const ticketApi = {
   }> => {
     try {
       console.log('📊 Fetching trip summary for trip ID:', tripId);
-      
-      // Get all tickets for the trip
-      const tickets = await ticketApi.getTicketsByTripId(tripId);
-      
-      // Calculate statistics from the tickets
-      const physicalTickets = tickets.filter(ticket => ticket.paymentStatus === 'CONDUCTOR');
-      const onlineTickets = tickets.filter(ticket => ticket.paymentStatus === 'ONLINE');
-      
-      const totalPassengers = tickets.reduce((total, ticket) => total + ticket.passengerCount, 0);
-      const totalRevenue = tickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
-      
-      const physicalTicketRevenue = physicalTickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
-      const onlineTicketRevenue = onlineTickets.reduce((total, ticket) => total + ticket.fareAmount, 0);
-      
+
+      // Authoritative totals come from the real backend summary endpoint; the online/cash
+      // split (which that endpoint doesn't provide) is derived from the ticket list. Fetch
+      // both in parallel. Tickets may be empty for a trip with no passengers yet.
+      const [backendSummary, tickets] = await Promise.all([
+        apiClient.authenticatedRequest<any>(`/v1/tickets/trip/${tripId}/summary`, {}, 'ticket')
+          .catch(() => null),
+        ticketApi.getTicketsByTripId(tripId).catch(() => [] as TicketLog[]),
+      ]);
+
+      const isOnline = (t: TicketLog) =>
+        String(t.issueMethod || t.paymentStatus).toUpperCase() === 'ONLINE';
+      const physicalTickets = tickets.filter(t => !isOnline(t));
+      const onlineTickets = tickets.filter(t => isOnline(t));
+
+      const physicalTicketRevenue = physicalTickets.reduce((total, t) => total + t.fareAmount, 0);
+      const onlineTicketRevenue = onlineTickets.reduce((total, t) => total + t.fareAmount, 0);
+
+      // Prefer authoritative backend numbers; fall back to summing the ticket list.
+      const totalPassengers = backendSummary?.totalTickets
+        ?? tickets.reduce((total, t) => total + t.passengerCount, 0);
+      const totalRevenue = Number(backendSummary?.totalFareAmount)
+        || tickets.reduce((total, t) => total + t.fareAmount, 0);
+
       const summary = {
         totalPassengers,
         totalRevenue,
@@ -369,8 +379,8 @@ export const ticketApi = {
         physicalTicketRevenue,
         onlineTicketRevenue
       };
-      
-      console.log('✅ Trip summary calculated:', summary);
+
+      console.log('✅ Trip summary:', summary);
       return summary;
       
     } catch (error: any) {
@@ -422,12 +432,15 @@ export const ticketApi = {
           
           seatNumbers.forEach(seatNum => {
             if (seatMap[seatNum]) {
+              // Use the authoritative validationStatus (VALID/NOT_VALID) — paymentStatus was
+              // historically overloaded with the issue method, so 'VALIDATED' never matched.
+              const isValidated = String(ticket.validationStatus).toUpperCase() === 'VALID';
               seatMap[seatNum] = {
                 seatNumber: seatNum,
-                status: ticket.paymentStatus === 'VALIDATED' ? 'validated' : 'booked',
+                status: isValidated ? 'validated' : 'booked',
                 passengerName: ticket.passengerId || 'Unknown Passenger',
                 ticketId: ticket.ticketId?.toString(),
-                paymentStatus: ticket.paymentStatus,
+                paymentStatus: ticket.issueMethod || ticket.paymentStatus,
                 fareAmount: ticket.fareAmount
               };
             }

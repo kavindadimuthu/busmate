@@ -47,7 +47,12 @@
     }
   },
   "release": {
-    "projects": ["management-portal", "passenger-web"],
+    "projects": [
+      "conductor-mobile",
+      "management-portal",
+      "passenger-mobile",
+      "passenger-web"
+    ],
     "version": {
       "conventionalCommits": true
     }

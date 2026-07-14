@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import { resolve } from "node:path";
+
+const workspaceRoot = resolve(__dirname, "../../..");
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: workspaceRoot,
   transpilePackages: [
     '@busmate/ui',
     '@busmate/api-client-route',
@@ -9,12 +13,10 @@ const nextConfig: NextConfig = {
     '@busmate/api-client-user',
   ],
   turbopack: {
-    rules: {
-      '*.woff2': ['file-loader'],
-      '*.woff': ['file-loader'],
-      '*.ttf': ['file-loader'],
-      '*.eot': ['file-loader'],
-    }
+    root: workspaceRoot,
+  },
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
   },
 
   // ✅ Ignore TS errors during build (only for deployment)

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import {AsgardeoProvider} from '@asgardeo/nextjs/server';
 import ApiSetup from '@/components/ApiSetup';
 import { ThemeProvider } from "next-themes";
 import { ThemePersonalityProvider } from "@busmate/ui";
@@ -28,16 +27,7 @@ export default function RootLayout({
         >
           <ThemePersonalityProvider>
           <ApiSetup />
-          <AsgardeoProvider
-            preferences={{
-              theme: {
-                inheritFromBranding: false,
-                mode: "light"
-              }
-            }}
-          >
-            {children as any}
-          </AsgardeoProvider>
+          {children}
           </ThemePersonalityProvider>
         </ThemeProvider>
       </body>

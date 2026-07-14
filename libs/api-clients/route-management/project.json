@@ -9,7 +9,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "npx openapi-typescript-codegen --input http://localhost:8080/v3/api-docs --output libs/api-clients/route-management/src",
+          "npx openapi-typescript-codegen --input http://localhost:9010/v3/api-docs --output libs/api-clients/route-management/src",
           "node scripts/post-generate-api-client.mjs libs/api-clients/route-management/src/core/OpenAPI.ts"
         ],
         "parallel": false
@@ -19,7 +19,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "npx openapi-typescript-codegen --input http://18.140.161.237:8080/v3/api-docs --output libs/api-clients/route-management/src",
+          "npx openapi-typescript-codegen --input http://18.140.161.237:9010/v3/api-docs --output libs/api-clients/route-management/src",
           "node scripts/post-generate-api-client.mjs libs/api-clients/route-management/src/core/OpenAPI.ts"
         ],
         "parallel": false
@@ -38,7 +38,7 @@
     "fetch-spec:local": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "mkdir -p libs/api-clients/route-management/specs && curl -s http://localhost:8080/v3/api-docs -o libs/api-clients/route-management/specs/openapi.json"
+        "command": "mkdir -p libs/api-clients/route-management/specs && curl -s http://localhost:9010/v3/api-docs -o libs/api-clients/route-management/specs/openapi.json"
       }
     }
   }

@@ -22,8 +22,8 @@ import { useAuth } from '@/context/AuthContext';
 const { height } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('kavinda@gmail.com'); // Remove pre-filled demo values
-  const [password, setPassword] = useState('123456'); // Remove pre-filled demo values
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -309,32 +309,6 @@ export default function LoginScreen() {
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* Demo Credentials Info */}
-              {/* <View style={{
-                backgroundColor: '#E0F2FE',
-                borderRadius: 12,
-                padding: 16,
-                marginBottom: 24,
-                borderLeftWidth: 4,
-                borderLeftColor: '#0891B2'
-              }}>
-                <Text style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: '#0F172A',
-                  marginBottom: 4
-                }}>
-                  Demo Account
-                </Text>
-                <Text style={{
-                  fontSize: 13,
-                  color: '#475569',
-                  lineHeight: 18
-                }}>
-                  Use the pre-filled credentials to explore the app, or create your own account below.
-                </Text>
-              </View> */}
-
               {/* Sign Up Link */}
               <View style={{
                 flexDirection: 'row',
@@ -347,7 +321,7 @@ export default function LoginScreen() {
                   fontSize: 16,
                   fontWeight: '500'
                 }}>
-                  Don't have an account? 
+                  Don&apos;t have an account?
                 </Text>
                 <TouchableOpacity 
                   onPress={() => router.push('/auth/signup')}

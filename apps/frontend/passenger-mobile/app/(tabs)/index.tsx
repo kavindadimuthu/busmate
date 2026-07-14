@@ -15,12 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Search,
   MapPin,
-  Star,
   ArrowRight,
   Bell,
   AlertTriangle,
   Clock,
-  Bus,
   Ticket,
   Navigation,
   Settings,
@@ -29,14 +27,8 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { PassengerApIsService } from '@/lib/api-client/route-management';
-import { PassengerControllerService } from '@/lib/api-client/user-management';
-import type { 
-  PassengerRouteResponse,
-  PassengerNearbyStopsResponse,
-  PassengerTripResponse,
-  PassengerStopResponse
-} from '@/lib/api-client/route-management';
+import { PassengerQueryService, RouteManagementService } from '@/lib/api-client/route-management';
+import type { RouteResponse } from '@/lib/api-client/route-management';
 
 // Interface definitions
 interface QuickAction {
@@ -72,8 +64,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [nearbyStops, setNearbyStops] = useState<NearbyStop[]>([]);
-  const [recentRoutes, setRecentRoutes] = useState<PassengerRouteResponse[]>([]);
-  const [upcomingTrips, setUpcomingTrips] = useState<PassengerTripResponse[]>([]);
+  const [recentRoutes, setRecentRoutes] = useState<RouteResponse[]>([]);
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
@@ -122,24 +113,20 @@ export default function HomeScreen() {
   };
 
   // API Integration functions
-  const fetchNearbyStops = async (latitude: number, longitude: number) => {
+  // No geo-based "nearby stops" endpoint exists in core-service yet - this shows real stops
+  // (not fabricated ones) but isn't actually distance-sorted from userLocation.
+  const fetchNearbyStops = async () => {
     try {
-      const response = await PassengerApIsService.findNearbyStops(
-        latitude, 
-        longitude, 
-        5, // 5km radius
-        10, // limit to 10 stops
-        true // include routes
-      );
-      
-      const stops: NearbyStop[] = response.stops?.map(stop => ({
+      const response = await PassengerQueryService.searchStops(undefined, undefined, undefined, undefined, 0, 10);
+
+      const stops: NearbyStop[] = response.content?.map(stop => ({
         id: stop.stopId || '',
         name: stop.name || 'Unknown Stop',
-        distance: stop.distance ? `${stop.distance.toFixed(1)}km` : 'Unknown',
+        distance: '',
         routeCount: stop.routeCount || 0,
         nextArrival: stop.upcomingTrips?.[0]?.departureTime || undefined
       })) || [];
-      
+
       setNearbyStops(stops);
     } catch (error) {
       console.error('Error fetching nearby stops:', error);
@@ -148,35 +135,10 @@ export default function HomeScreen() {
 
   const fetchRecentRoutes = async () => {
     try {
-      const response = await PassengerApIsService.getAllRoutes(
-        undefined, // direction
-        undefined, // searchText
-        0, // page
-        5 // size - get 5 popular routes
-      );
-      
+      const response = await RouteManagementService.getAllRoutes(0, 5, 'name', 'asc');
       setRecentRoutes(response.content || []);
     } catch (error) {
       console.error('Error fetching routes:', error);
-    }
-  };
-
-  const fetchUpcomingTrips = async () => {
-    try {
-      const response = await PassengerApIsService.getActiveTrips(
-        undefined, // routeId
-        undefined, // operatorType
-        undefined, // operatorId
-        userLocation?.lat,
-        userLocation?.lng,
-        10, // 10km radius
-        0, // page
-        3 // limit to 3 trips
-      );
-      
-      setUpcomingTrips(response.content || []);
-    } catch (error) {
-      console.error('Error fetching upcoming trips:', error);
     }
   };
 
@@ -207,9 +169,8 @@ export default function HomeScreen() {
 
     try {
       await Promise.all([
-        fetchNearbyStops(mockLocation.lat, mockLocation.lng),
+        fetchNearbyStops(),
         fetchRecentRoutes(),
-        fetchUpcomingTrips()
       ]);
     } catch (error) {
       console.error('Error initializing data:', error);
@@ -237,7 +198,7 @@ export default function HomeScreen() {
     router.push('/search');
   };
 
-  const handleRoutePress = (route: PassengerRouteResponse) => {
+  const handleRoutePress = (route: RouteResponse) => {
     router.push('/search');
   };
 
@@ -395,68 +356,8 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Active/Upcoming Trips Section */}
-        {upcomingTrips.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Active Trips</Text>
-              <TouchableOpacity onPress={() => router.push('/tickets')}>
-                <Text style={styles.seeAllText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-              {upcomingTrips.slice(0, 3).map(trip => (
-                <TouchableOpacity
-                  key={trip.tripId}
-                  style={styles.tripCard}
-                  onPress={() => router.push('/search')}
-                  activeOpacity={0.9}
-                >
-                  <View style={styles.tripCardHeader}>
-                    <View style={styles.routeBadge}>
-                      <Bus size={14} color="#004CFF" />
-                      <Text style={styles.routeName}>{trip.routeName}</Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: '#1DD72415' }]}>
-                      <Text style={[styles.statusText, { color: '#1DD724' }]}>Active</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.tripRouteContainer}>
-                    <View style={styles.stopInfo}>
-                      <Text style={styles.stopNameText} numberOfLines={1}>
-                        {trip.departureStop?.name || 'Departure'}
-                      </Text>
-                      <Text style={styles.stopTime}>
-                        {trip.scheduledDeparture ? new Date(trip.scheduledDeparture).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
-                      </Text>
-                    </View>
-                    <View style={styles.routeLineContainer}>
-                      <ArrowRight size={16} color="#6B7280" />
-                    </View>
-                    <View style={styles.stopInfo}>
-                      <Text style={styles.stopNameText} numberOfLines={1}>
-                        {trip.arrivalStop?.name || 'Arrival'}
-                      </Text>
-                      <Text style={styles.stopTime}>
-                        {trip.scheduledArrival ? new Date(trip.scheduledArrival).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.tripFooter}>
-                    <Text style={styles.fareText}>
-                      {trip.fare ? `LKR ${trip.fare.toFixed(2)}` : 'Fare: TBA'}
-                    </Text>
-                    <Text style={styles.durationText}>
-                      {trip.duration ? `${trip.duration}min` : '~45min'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        {/* "Active Trips" section removed - core-service has no passenger-facing
+            "active trips near me" endpoint yet. Real upcoming trips are shown in My Tickets. */}
 
         {/* Popular Routes Section */}
         {recentRoutes.length > 0 && (
@@ -470,32 +371,31 @@ export default function HomeScreen() {
             
             <View style={styles.routesContainer}>
               {recentRoutes.slice(0, 3).map((route, index) => (
-                <TouchableOpacity 
-                  key={route.routeId || index} 
+                <TouchableOpacity
+                  key={route.id || index}
                   style={styles.routeCard}
                   activeOpacity={0.9}
                   onPress={() => handleRoutePress(route)}
                 >
                   <View style={styles.routeHeader}>
                     <View style={styles.routeInfo}>
-                      <Text style={styles.routeTitle}>{route.routeName || `Route ${index + 1}`}</Text>
+                      <Text style={styles.routeTitle}>{route.name || `Route ${index + 1}`}</Text>
                       <Text style={styles.routeDistance}>
-                        {route.distance ? `${route.distance}km` : '~25km'} • 
-                        {route.estimatedDuration ? ` ${route.estimatedDuration}min` : ' ~45min'}
+                        {route.distanceKm ? `${route.distanceKm}km` : '—'} •
+                        {route.estimatedDurationMinutes ? ` ${route.estimatedDurationMinutes}min` : ' —'}
                       </Text>
                     </View>
-                    <View style={styles.routeRating}>
-                      <Star size={14} color="#FFB800" fill="#FFB800" />
-                      <Text style={styles.ratingText}>
-                        {route.popularity || (4.5 - index * 0.2).toFixed(1)}
-                      </Text>
-                    </View>
+                    {route.routeNumber && (
+                      <View style={styles.routeRating}>
+                        <Text style={styles.ratingText}>#{route.routeNumber}</Text>
+                      </View>
+                    )}
                   </View>
 
                   <View style={styles.routeStops}>
                     <View style={styles.stopPoint}>
                       <Text style={styles.stopNameText} numberOfLines={1}>
-                        {route.fromStop?.name || 'Origin Stop'}
+                        {route.startStopName || 'Origin Stop'}
                       </Text>
                     </View>
                     <View style={styles.routeArrow}>
@@ -503,18 +403,9 @@ export default function HomeScreen() {
                     </View>
                     <View style={styles.stopPoint}>
                       <Text style={styles.stopNameText} numberOfLines={1}>
-                        {route.toStop?.name || 'Destination Stop'}
+                        {route.endStopName || 'Destination Stop'}
                       </Text>
                     </View>
-                  </View>
-
-                  <View style={styles.routeFooter}>
-                    <Text style={styles.fareInfo}>
-                      {route.fareInfo?.minimumFare ? `From LKR ${route.fareInfo.minimumFare}` : 'From LKR 50'}
-                    </Text>
-                    <Text style={styles.scheduleCount}>
-                      {route.scheduleCount || 12} trips/day
-                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}

@@ -1,0 +1,70 @@
+# Covers the backend services currently exposed through api-gateway.
+# api-gateway is the main entry point on 8080. Downstream services also publish
+# their standard development ports for direct debugging and OpenAPI generation.
+#
+# user-service's Dockerfile expects a pre-built jar (COPY target/*.jar app.jar) — run
+# `./mvnw -f apps/backend/user-service package` before `docker compose up --build`.
+# core-service's Dockerfile expects a pre-built jar under apps/backend/core-service/target/.
+services:
+  api-gateway:
+    build:
+      context: apps/backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    # Secrets come from the central file; topology (ports, internal URLs) is set
+    # inline here and overrides the local-dev URLs from the file.
+    env_file:
+      - config/secrets/.env
+    environment:
+      - PORT=8080
+      - USER_SERVICE_URL=http://user-service:9020
+      - CORE_SERVICE_URL=http://core-service:9010
+      - TICKETING_SERVICE_URL=http://ticketing-service:9030
+      - NODE_ENV=production
+    depends_on:
+      user-service:
+        condition: service_started
+      core-service:
+        condition: service_started
+      ticketing-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-service:
+    build:
+      context: apps/backend/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "9020:9020"
+    env_file:
+      - config/secrets/.env
+    environment:
+      - SERVER_PORT=9020
+      - CORE_SERVICE_URL=http://core-service:9010
+  core-service:
+    build:
+      context: apps/backend/core-service
+      dockerfile: Dockerfile
+    # Runs internally on 9010 so api-gateway can own public host port 8080.
+    ports:
+      - "9010:9010"
+    env_file:
+      - config/secrets/.env
+    environment:
+      - SERVER_PORT=9010
+
+  ticketing-service:
+    build:
+      context: apps/backend/ticketing-service
+      dockerfile: Dockerfile
+    env_file:
+      - config/secrets/.env
+    environment:
+      - SERVER_PORT=9030
+    ports:
+      - "9030:9030"

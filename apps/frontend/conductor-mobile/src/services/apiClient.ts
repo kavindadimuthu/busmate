@@ -1,13 +1,19 @@
 import { API_CONFIG, ServiceType } from '@/config/apiConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resolveAccessToken } from '@/lib/auth/tokenStore';
 
 class ApiClient {
   private timeout = 10000;
   private activeRequests = new Map<string, Promise<any>>();
 
+  // The real session (written by AuthContext.login() via tokenStore.saveSession) lives under
+  // tokenStore's own namespaced AsyncStorage keys, not a plain 'authToken' key - this used to
+  // read a key nothing ever wrote to, silently sending an empty/stale token on every
+  // schedule/ticket/notification request. resolveAccessToken() also transparently refreshes a
+  // near-expiry token, same as the generated user-management client does.
   private async getAuthToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem('authToken');
+      const token = await resolveAccessToken();
+      return token || null;
     } catch (error) {
       console.error('Failed to get auth token:', error);
       return null;

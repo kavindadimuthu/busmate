@@ -1,8 +1,8 @@
 import Image from 'next/image';
-import { SignInButton, SignedIn, SignOutButton, SignedOut } from '@asgardeo/nextjs';
 import { getUserData } from '@/lib/utils/getUserData';
 import { getRoleRedirectPath } from '@/lib/utils/getRoleRedirectPath';
 import { redirect } from 'next/navigation';
+import { LoginForm } from '@/components/auth/LoginForm';
 
 export default async function Home() {
   const userData = await getUserData();
@@ -51,15 +51,8 @@ export default async function Home() {
         </div>
 
         {/* Login Form */}
-        <div className='flex w-full pt-0 pb-4 justify-center'>
-          <SignedOut>
-            <SignInButton>
-              Sign In with Asgardeo
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <SignOutButton />
-          </SignedIn>
+        <div className='w-full pt-0 pb-4'>
+          <LoginForm />
         </div>
       </div>
     </div>

@@ -1,9 +1,16 @@
+# Loads secrets from the central config/secrets/.env (via spring-dotenv).
+# Resolved relative to the working directory (apps/backend/ticketing-service).
+# No-ops if the file is absent (e.g. in Docker, where env comes from env_file).
+springdotenv:
+  directory: ../../../config/secrets
+
 spring:
   datasource:
-    # Change from direct connection to transaction pooler with optimized settings
-    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?connectTimeout=10&socketTimeout=30&loginTimeout=10&prepareThreshold=0&preparedStatementCacheQueries=0&reWriteBatchedInserts=true&tcpKeepAlive=true&autoCommit=false
-    username: postgres.jexvdkdlncxygdisjwqo
-    password: root
+    # Credentials come from config/secrets/.env (TICKETING_DB_*). The fallbacks
+    # are obvious placeholders — never real secrets. Set the env vars for real use.
+    url: ${TICKETING_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${TICKETING_DB_USERNAME:postgres}
+    password: ${TICKETING_DB_PASSWORD:changeme}
     driver-class-name: org.postgresql.Driver
 
     # HikariCP Connection Pool Configuration for Supabase
@@ -68,7 +75,7 @@ spring:
     active: production # Enable production profile for Swagger UI testing
 
 server:
-  port: 8083
+  port: ${SERVER_PORT:9030}
 
 # Ensure Swagger UI is properly configured and cached correctly
 springdoc:
@@ -81,12 +88,15 @@ springdoc:
     path: /v3/api-docs
 
 supabase:
+  # From config/secrets/.env. api.key is the public anon key; auth.url is not
+  # sensitive — real fallbacks are fine. jwt.secret IS sensitive, so it falls
+  # back to an obvious placeholder — set SUPABASE_JWT_SECRET for real use.
   api:
-    key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg
+    key: ${TICKETING_SUPABASE_API_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg}
   auth:
-    url: https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1
+    url: ${TICKETING_SUPABASE_AUTH_URL:https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1}
   jwt:
-    secret: v7dyiu735nxybSzPS41oWmOtOLwZyaJOApdGaFqWpTNGYkmL7yWP6fnKPG2FWSxr5AB5kSdFiRiT78YcB7vT5w==
+    secret: ${SUPABASE_JWT_SECRET:dev-only-placeholder-jwt-secret-change-me}
 
 logging:
   level:

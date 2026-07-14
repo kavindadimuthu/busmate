@@ -1,17 +1,26 @@
 import { OpenAPI as RouteAPI } from '@busmate/api-client-route';
 import { OpenAPI as TicketingAPI } from '@busmate/api-client-ticketing';
 import { OpenAPI as LocationAPI } from '@busmate/api-client-location';
+import { OpenAPI as UserManagementAPI } from '@busmate/api-client-user';
 
-RouteAPI.BASE = process.env.NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL || 'http://localhost:8080';
-TicketingAPI.BASE = process.env.NEXT_PUBLIC_TICKETING_API_URL || 'http://localhost:8083';
+const gatewayBaseUrl =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_USER_MANAGEMENT_API_URL ||
+  'http://localhost:8080';
+
+RouteAPI.BASE = process.env.NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL || gatewayBaseUrl;
+TicketingAPI.BASE = process.env.NEXT_PUBLIC_TICKETING_API_URL || gatewayBaseUrl;
 LocationAPI.BASE = (process.env.NEXT_PUBLIC_LOCATION_TRACKING_API_URL || 'http://localhost:4000') + '/api';
+// Goes through api-gateway (not straight to user-management) — same as every other
+// browser-facing call to this service. See lib/api/adminUsers.ts for the admin CRUD layer.
+UserManagementAPI.BASE = gatewayBaseUrl;
 
 // Cache the token to avoid fetching on every API call.
 // The token is refreshed when a fetch fails (returns 401) or after expiry.
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
-async function fetchAccessToken(): Promise<string> {
+export async function fetchAccessToken(): Promise<string> {
   const now = Date.now();
   if (cachedToken && now < tokenExpiresAt) {
     return cachedToken;
@@ -45,3 +54,4 @@ const tokenResolver = () => fetchAccessToken();
 RouteAPI.TOKEN = tokenResolver;
 TicketingAPI.TOKEN = tokenResolver;
 LocationAPI.TOKEN = tokenResolver;
+UserManagementAPI.TOKEN = tokenResolver;

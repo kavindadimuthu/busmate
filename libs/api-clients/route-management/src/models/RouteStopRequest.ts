@@ -3,7 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type RouteStopRequest = {
-    id?: string;
     stopId: string;
     stopOrder: number;
     distanceFromStartKm?: number;
