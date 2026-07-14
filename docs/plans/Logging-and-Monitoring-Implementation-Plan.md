@@ -6,7 +6,7 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 > Not to be confused with `docs/transit-workflow-evaluation/07-monitoring.md`, which is about
 > *transit* monitoring (vehicle AVL/tracking). This document is about **operating the software**.
 
-**Status:** Phases 1–5 implemented & verified (2026-07-14/15). Phase 6 proposed.
+**Status:** All 6 phases implemented & verified (2026-07-14/15).
 **Target deployment model:** Docker Compose, self-hosted, small team.
 
 > **Implementation status**
@@ -38,6 +38,19 @@ metrics, tracing, error tracking, alerting, and uptime — across dev and produc
 >   header for cross-referencing a Sentry issue to the exact Loki log line. Verified: all 5 apps
 >   build/typecheck clean (found and fixed one real pre-existing-pattern bug: RN's `global.fetch`
 >   type needed an `as typeof fetch` cast that the DOM `fetch` type didn't).
+> - **Phase 6 (distributed tracing) — DONE.** Grafana Tempo added to the observability stack;
+>   all 3 Spring services instrumented via the OpenTelemetry Java agent (zero code, added to
+>   each Dockerfile); the gateway via `@opentelemetry/sdk-node` + auto-instrumentations
+>   (`src/tracing.ts`, must load first — see file comment for why no `--require` flag is
+>   needed with this codebase's CommonJS setup). `trace_id`/`span_id` injected into every
+>   service's structured logs (Java agent -> SLF4J MDC; gateway -> pino `mixin`), and Grafana's
+>   Loki/Tempo datasources are cross-linked so a log line jumps to its trace and vice versa.
+>   Deliberately skipped Tempo's metrics-generator (service-graph metrics) as out of scope for
+>   the stated goal. **Verified on a real request, not synthetic**: `GET /api/health` through
+>   the gateway produced one Tempo trace with `core-service`'s span correctly parented under
+>   the gateway's outbound call (proving W3C traceparent propagation across the network hop),
+>   and a separately triggered real error produced a log line with both `req:` and `trace:`
+>   IDs, where the `trace:` ID resolved to a real trace in Tempo.
 > - See [`config/observability/README.md`](../../config/observability/README.md) to run it and
 >   [`config/observability/RUNBOOK.md`](../../config/observability/RUNBOOK.md) for what to do when
 >   an alert fires.

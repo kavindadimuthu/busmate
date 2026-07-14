@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Observability Phase 1: profile-aware logging.
+  Observability Phase 1 + 6: profile-aware logging.
 
   - dev / test / default : human-readable console, including the correlation id
-    (requestId) that RequestIdFilter places in the SLF4J MDC.
+    (requestId) that RequestIdFilter places in the SLF4J MDC, plus trace_id when a
+    trace is active (OTel Java agent injects trace_id/span_id into MDC — Phase 6).
   - prod / e2e           : single-line JSON (logstash-logback-encoder) on stdout so
-    Grafana Alloy can ship it to Loki. MDC requestId is included automatically and the
-    constant "service" field lets one Loki query span all services + the gateway.
+    Grafana Alloy can ship it to Loki. MDC requestId/trace_id/span_id are included
+    automatically; trace_id is what Grafana's Loki<->Tempo derived-field link matches
+    on (see config/observability/grafana/provisioning/datasources/datasources.yml).
+    The constant "service" field lets one Loki query span all services + the gateway.
 
   Log *levels* are still tuned per package via logging.level.* in application*.yml —
   that is applied on top of the <root> level defined here.
@@ -14,13 +17,15 @@
 <configuration>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [req:%X{requestId:-}] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [req:%X{requestId:-} trace:%X{trace_id:-}] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>trace_id</includeMdcKeyName>
+            <includeMdcKeyName>span_id</includeMdcKeyName>
             <customFields>{"service":"user-service"}</customFields>
         </encoder>
     </appender>

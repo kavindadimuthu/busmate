@@ -19,5 +19,28 @@ datasources:
     isDefault: false
     jsonData:
       maxLines: 1000
-      # Correlate logs → metrics: a requestId/trace can pivot by the `service` label.
-      derivedFields: []
+      # Logs -> traces (Phase 6): a `trace_id` field in a JSON log line (injected into
+      # MDC by the OTel Java agent / Node SDK) becomes a clickable link straight to the
+      # matching Tempo trace.
+      derivedFields:
+        - datasourceUid: busmate-tempo
+          matcherRegex: '"trace_id":"(\w+)"'
+          name: TraceID
+          url: '$${__value.raw}'
+
+  - name: Tempo
+    uid: busmate-tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: false
+    jsonData:
+      # Traces -> logs (Phase 6): jump from a span straight to the matching log lines.
+      tracesToLogsV2:
+        datasourceUid: busmate-loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        filterByTraceID: false
+        filterBySpanID: false
+        customQuery: true
+        query: '{job="docker"} | json | trace_id="${__trace.traceId}"'

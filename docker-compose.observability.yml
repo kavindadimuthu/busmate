@@ -128,6 +128,25 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # --- Distributed tracing (Phase 6) ---
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    container_name: busmate-tempo
+    # The image's default non-root user can't write to a fresh named volume (Docker
+    # creates it root-owned). Root is the simplest fix for a self-hosted dev host —
+    # same tradeoff already made for Alloy above.
+    user: root
+    command: ["-config.file=/etc/tempo/tempo-config.yml"]
+    ports:
+      - "3200:3200"   # Tempo query API (Grafana talks to this)
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+    volumes:
+      - ./config/observability/tempo/tempo-config.yml:/etc/tempo/tempo-config.yml:ro
+      - busmate_tempo_data:/tmp/tempo
+    restart: unless-stopped
+
   # --- Alerting & uptime (Phase 4) ---
 
   uptime-kuma:
@@ -150,3 +169,4 @@ volumes:
   busmate_prometheus_data:
   busmate_grafana_data:
   busmate_uptime_kuma_data:
+  busmate_tempo_data:

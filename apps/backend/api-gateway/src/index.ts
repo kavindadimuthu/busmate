@@ -1,3 +1,4 @@
+import './tracing'; // Phase 6 — must be the first import, see tracing.ts
 import { createApp } from './app';
 import { env } from './config/env';
 import { logger } from './config/logger';

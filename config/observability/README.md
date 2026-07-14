@@ -1,8 +1,9 @@
-# BusMate Observability (Phase 1 + 2 + 3 + 4 + 5)
+# BusMate Observability (Phase 1 + 2 + 3 + 4 + 5 + 6)
 
 Structured logging with correlation IDs (Phase 1), centralised log aggregation via the
 Grafana + Loki stack (Phase 2), metrics via Prometheus + Grafana (Phase 3), alerting +
-uptime monitoring (Phase 4), and frontend/mobile error tracking via Sentry (Phase 5). See
+uptime monitoring (Phase 4), frontend/mobile error tracking via Sentry (Phase 5), and
+distributed tracing via OpenTelemetry + Tempo (Phase 6). See
 [`docs/plans/Logging-and-Monitoring-Implementation-Plan.md`](../../docs/plans/Logging-and-Monitoring-Implementation-Plan.md)
 for the full roadmap and [`RUNBOOK.md`](RUNBOOK.md) for what to do when an alert fires.
 
@@ -13,7 +14,8 @@ for the full roadmap and [`RUNBOOK.md`](RUNBOOK.md) for what to do when an alert
 | `loki/loki-config.yml` | Single-binary Loki, filesystem storage, 14-day retention |
 | `alloy/config.alloy` | Grafana Alloy — discovers `busmate*` containers via the Docker socket, parses JSON logs, ships to Loki |
 | `prometheus/prometheus.yml` | Prometheus scrape config — the 4 app services + cAdvisor + node-exporter |
-| `grafana/provisioning/datasources/` | Auto-provisioned Prometheus + Loki datasources |
+| `tempo/tempo-config.yml` | Single-binary Tempo, filesystem storage, 3-day retention, OTLP receiver |
+| `grafana/provisioning/datasources/` | Auto-provisioned Prometheus + Loki + Tempo datasources (with trace<->log linking) |
 | `grafana/provisioning/dashboards/` | Dashboard provider config |
 | `grafana/provisioning/alerting/` | Alert rules, contact point, and notification policy — all as code |
 | `grafana/dashboards/busmate-logs.json` | "BusMate — Logs" (volume-by-level, error rate, searchable log stream) |
@@ -28,6 +30,7 @@ for the full roadmap and [`RUNBOOK.md`](RUNBOOK.md) for what to do when an alert
 | Grafana | http://localhost:3000 |
 | Prometheus | http://localhost:9090 (targets: `/targets`) |
 | Loki | http://localhost:3100 |
+| Tempo | http://localhost:3200 (query API; browse traces via Grafana, not directly) |
 | Alloy UI | http://localhost:12345 |
 | Uptime Kuma | http://localhost:3001 |
 
@@ -218,6 +221,53 @@ Sentry until you complete the one-time setup below.
    ```
 5. Rebuild. Trigger a test error (e.g. throw in a component) and confirm it appears in
    Sentry with a `request_id` tag matching a Loki entry.
+
+## Distributed tracing (Phase 6)
+
+Every backend service exports OpenTelemetry traces to **Tempo**, giving a flame-graph
+view of one request as it crosses the gateway and into whichever Spring service(s) it
+touches — verified live: a real `GET /api/health` request through the gateway produced a
+single Tempo trace with `core-service`'s span correctly parented under the gateway's
+outbound HTTP call, proving W3C trace-context propagation works across the network hop
+with zero manual header plumbing.
+
+**How each service is instrumented:**
+
+| Service | Mechanism | Notes |
+|---|---|---|
+| core/user/ticketing-service | OpenTelemetry **Java agent** (`-javaagent`, in each Dockerfile) | Zero code changes — auto-instruments Spring MVC, JDBC, HikariCP, Kafka, outbound HTTP |
+| api-gateway | `@opentelemetry/sdk-node` + `auto-instrumentations-node`, `src/tracing.ts` | Must be the *first* thing `index.ts` imports — see the comment in `tracing.ts` for why no `--require` CLI flag is needed |
+
+**Trace <-> log correlation:** the OTel Java agent injects `trace_id`/`span_id` into
+SLF4J's MDC automatically; the gateway's pino logger does the same via a `mixin` reading
+the active span. Both land in Loki under the same field names, so:
+- **From a log line** (in Grafana Explore, Loki): click the auto-detected "TraceID" link
+  next to any line containing `trace_id` to jump straight into that trace in Tempo.
+- **From a trace** (in Grafana Explore, Tempo): click "Logs for this span" on any span to
+  jump to the matching Loki lines (`{job="docker"} | json | trace_id="<id>"`).
+- Verified directly: triggering a real error produced a log line reading
+  `[req:trace6-verify-999 trace:c356c09d931405e08d55c164035f0467]`, and that exact
+  `trace_id` resolved to a real, browsable trace in Tempo.
+
+**What's NOT wired (deliberately, to stay in scope):** Tempo's metrics-generator
+(service-graph / span-metrics -> Prometheus) is not enabled — it's a real feature but
+adds a second write path into Prometheus for a benefit beyond this phase's actual goal
+(trace visualization + trace-to-log correlation). Revisit if service-graph dashboards
+become worth the added complexity.
+
+**Retention:** Tempo keeps 3 days of traces (`block_retention: 72h` in
+`tempo/tempo-config.yml`) — traces are large and short-lived compared to logs/metrics;
+raise it if you need longer trace history and have the disk for it.
+
+**Dev vs. production networking:** exactly the same `host.docker.internal` pattern
+already used for Prometheus/Uptime Kuma (see "Metrics scraping" above) — each app service
+in `docker-compose.yml` has `OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318`
++ `extra_hosts: host.docker.internal:host-gateway`. In production, switch this to Tempo's
+real service name on the shared network, same as the Prometheus scrape-target change.
+
+**If Tempo isn't running:** every service's OTLP export just fails silently in the
+background (visible only in that service's own debug-level agent/SDK logs) — no impact
+on the app itself, so it's safe to run the app stack without the observability stack up.
 
 ## Notes / hardening
 

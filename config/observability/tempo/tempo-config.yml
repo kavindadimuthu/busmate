@@ -1,0 +1,36 @@
+# Single-binary Tempo, filesystem storage, short retention — right-sized for a
+# self-hosted Compose host with limited disk (traces are high-volume; keep them brief).
+# Not for horizontal scale; point at Grafana Cloud Tempo later via the same OTLP protocol
+# if you outgrow this.
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 72h        # 3 days — traces are large and short-lived compared to logs/metrics
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
+    wal:
+      path: /tmp/tempo/wal
+
+# Deliberately not wiring Tempo's metrics-generator (service-graphs/span-metrics ->
+# Prometheus remote_write) — that's a real feature but adds a second write path into
+# Prometheus for a benefit beyond this phase's actual goal (trace visualization +
+# trace-to-log correlation). Revisit if/when service-graph views become worth the
+# added complexity.
