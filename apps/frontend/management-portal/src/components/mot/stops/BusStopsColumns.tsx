@@ -3,7 +3,7 @@
 import * as React from "react";
 import { MapPin, Navigation2, CheckCircle2, XCircle } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
-import type { StopResponse } from "@busmate/api-client-route";
+import type { StopResponse } from "@busmate/api-client-core";
 
 // ── Helpers ───────────────────────────────────────────────────────
 

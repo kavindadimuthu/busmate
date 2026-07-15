@@ -7,7 +7,7 @@ import {
   ScheduleResponse,
   ScheduleManagementService,
   RouteManagementService,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import { useDataTable, useDialog } from '@busmate/ui';
 
 import type { ScheduleFilters } from '@/components/mot/schedules/SchedulesFilterBar';

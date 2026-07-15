@@ -4,7 +4,7 @@ import * as React from "react";
 import { Eye, Calendar } from "lucide-react";
 import { DataTable, Button } from "@busmate/ui";
 import type { DataTableProps } from "@busmate/ui";
-import type { TripResponse } from "@busmate/api-client-route";
+import type { TripResponse } from "@busmate/api-client-core";
 import { tripColumns } from "./tripColumns";
 
 interface TripTableProps

@@ -738,7 +738,7 @@ Feature components are domain-specific. They:
 import { DataTable, type DataTableColumn, type SortState, StatusBadge } from "@busmate/ui";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@busmate/ui";
-import type { RouteGroupResponseDTO } from "@busmate/api-client-route";
+import type { RouteGroupResponseDTO } from "@busmate/api-client-core";
 
 interface RoutesTableProps {
   data: RouteGroupResponseDTO[];

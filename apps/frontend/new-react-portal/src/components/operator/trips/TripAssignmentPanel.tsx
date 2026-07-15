@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Bus, Users, X, Loader2 } from 'lucide-react';
-import type { TripResponse, BusResponse } from '@busmate/api-client-route';
+import type { TripResponse, BusResponse } from '@busmate/api-client-core';
 import type { AdminUser } from '@/data/admin/users';
 import { getUserDisplayName } from '@/data/admin/users';
 

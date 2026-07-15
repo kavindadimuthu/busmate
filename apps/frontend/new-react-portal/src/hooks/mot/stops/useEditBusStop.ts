@@ -3,7 +3,7 @@ import React from 'react';
 import { useRouter, useSearchParams } from '@/lib/router';
 import { ArrowLeft } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 
 interface UseEditBusStopParams {
   params: { busStopId: string };

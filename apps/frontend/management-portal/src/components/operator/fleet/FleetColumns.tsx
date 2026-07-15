@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Bus, CheckCircle, XCircle, Clock, XOctagon } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
-import type { BusResponse } from "@busmate/api-client-route";
+import type { BusResponse } from "@busmate/api-client-core";
 
 // ── Helpers ───────────────────────────────────────────────────────
 // Matches core-service's real Bus.status values (pending/active/inactive/cancelled) —

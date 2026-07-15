@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import BusStopForm from '@/components/mot/stops/BusStopForm';
-import { StopResponse } from '@busmate/api-client-route';
+import { StopResponse } from '@busmate/api-client-core';
 
 export default function AddNewBusStopPage() {
   const router = useRouter();

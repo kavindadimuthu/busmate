@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BusStopManagementService } from '@busmate/api-client-route';
-import type { StopFilterOptionsResponse } from '@busmate/api-client-route';
+import { BusStopManagementService } from '@busmate/api-client-core';
+import type { StopFilterOptionsResponse } from '@busmate/api-client-core';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

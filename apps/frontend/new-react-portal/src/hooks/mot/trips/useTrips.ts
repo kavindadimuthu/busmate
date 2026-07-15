@@ -8,7 +8,7 @@ import {
   PageTripResponse,
   TripStatisticsResponse,
   TripFilterOptionsResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
 import type { TripFilters } from '../../../components/mot/trips/TripsFilterBar';

@@ -4,7 +4,7 @@ import * as React from "react";
 import { Eye, Bus } from "lucide-react";
 import { DataTable, Button } from "@busmate/ui";
 import type { DataTableProps } from "@busmate/ui";
-import type { BusResponse } from "@busmate/api-client-route";
+import type { BusResponse } from "@busmate/api-client-core";
 import { fleetColumns } from "./FleetColumns";
 
 // ── Types ─────────────────────────────────────────────────────────

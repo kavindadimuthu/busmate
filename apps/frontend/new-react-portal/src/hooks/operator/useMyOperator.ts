@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { OperatorResponse } from '@busmate/api-client-route';
+import type { OperatorResponse } from '@busmate/api-client-core';
 import { useCurrentUserId } from '@/hooks/useCurrentUserId';
 import { getMyOperator, OperatorSelfLookupError } from '@/lib/api/operatorSelf';
 

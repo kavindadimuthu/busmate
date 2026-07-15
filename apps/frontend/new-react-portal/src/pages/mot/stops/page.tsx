@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from '@/lib/router';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 import { ConfirmDialog } from '@busmate/ui';
 
 import { BusStopsStatsCards } from '@/components/mot/stops/BusStopsStatsCards';

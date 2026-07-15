@@ -4,7 +4,7 @@ import * as React from "react";
 import { Eye, Edit2, Trash2, MapPin } from "lucide-react";
 import { DataTable, Button, EmptyState } from "@busmate/ui";
 import type { DataTableProps } from "@busmate/ui";
-import type { StopResponse } from "@busmate/api-client-route";
+import type { StopResponse } from "@busmate/api-client-core";
 import { busStopsColumns } from "./BusStopsColumns";
 
 // ── Types ─────────────────────────────────────────────────────────

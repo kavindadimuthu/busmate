@@ -1,4 +1,4 @@
-import { PassengerServicePermitResponse } from '@busmate/api-client-route';
+import { PassengerServicePermitResponse } from '@busmate/api-client-core';
 
 interface EditPermitInfoBannerProps {
   permit: PassengerServicePermitResponse;

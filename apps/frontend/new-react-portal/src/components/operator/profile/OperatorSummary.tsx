@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Link2,
 } from 'lucide-react';
-import type { BusResponse } from '@busmate/api-client-route';
+import type { BusResponse } from '@busmate/api-client-core';
 import type { UserResponse } from '@busmate/api-client-user';
 import type { OperatorResponseWithLink } from '@/types/operator';
 

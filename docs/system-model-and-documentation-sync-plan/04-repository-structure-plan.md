@@ -73,7 +73,7 @@ apps/backend/<svc>/AGENTS.md   # optional service-scoped agent notes
 
 - [scripts/post-generate-api-client.mjs](../../scripts/post-generate-api-client.mjs) — kept as the
   client post-processor; called by the new generation orchestrator.
-- [libs/api-clients/*/project.json](../../libs/api-clients/route-management/project.json) — add a
+- [libs/api-clients/*/project.json](../../libs/api-clients/core-service/project.json) — add a
   `generate` target that reads the **committed** `contracts/openapi.json` (via the existing
   `generate:spec` pattern) instead of a live server.
 - [core-service .../db/migration/V001..V003](../../apps/backend/core-service/src/main/resources/db/migration)

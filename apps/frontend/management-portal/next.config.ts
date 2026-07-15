@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: workspaceRoot,
   transpilePackages: [
     '@busmate/ui',
-    '@busmate/api-client-route',
+    '@busmate/api-client-core',
     '@busmate/api-client-ticketing',
     '@busmate/api-client-location',
     '@busmate/api-client-user',

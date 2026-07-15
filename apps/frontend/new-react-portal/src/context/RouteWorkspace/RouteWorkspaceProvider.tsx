@@ -11,7 +11,7 @@ import {
   AutoGenerationOptions,
   RouteAutoGenerationResult
 } from '@/services/routeAutoGeneration';
-import { RouteManagementService, BusStopManagementService } from '@busmate/api-client-route';
+import { RouteManagementService, BusStopManagementService } from '@busmate/api-client-core';
 import {
   validateRouteGroupApiResponse,
   validateStopDetailsApiResponse,

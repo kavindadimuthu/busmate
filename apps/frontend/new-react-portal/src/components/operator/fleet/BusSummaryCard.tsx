@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Bus, CheckCircle, XCircle, Clock, XOctagon, Users, Building2 } from 'lucide-react';
-import type { BusResponse } from '@busmate/api-client-route';
+import type { BusResponse } from '@busmate/api-client-core';
 
 interface BusSummaryCardProps {
   bus: BusResponse;

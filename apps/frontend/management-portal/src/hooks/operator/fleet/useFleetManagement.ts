@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDataTable } from '@busmate/ui';
-import { BusOperatorOperationsService } from '@busmate/api-client-route';
-import type { BusResponse } from '@busmate/api-client-route';
+import { BusOperatorOperationsService } from '@busmate/api-client-core';
+import type { BusResponse } from '@busmate/api-client-core';
 import { useMyOperator } from '@/hooks/operator/useMyOperator';
 
 export type BusStatus = 'pending' | 'active' | 'inactive' | 'cancelled';

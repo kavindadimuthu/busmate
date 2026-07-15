@@ -9,7 +9,7 @@ import {
   OperatorResponse,
   TripManagementService,
   TripResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 export function useBusDetails() {
   const router = useRouter();

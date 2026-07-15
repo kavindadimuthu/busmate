@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, X } from 'lucide-react';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 import CopyableField from './CopyableField';
 
 interface BusStopBasicInfoProps {

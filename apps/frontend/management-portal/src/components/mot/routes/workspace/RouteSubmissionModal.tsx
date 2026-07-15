@@ -8,7 +8,7 @@ import {
   applyBulkSearchResultsToRouteStops,
   BulkStopExistenceSearchResult 
 } from '@/services/routeWorkspaceValidation';
-import { BusStopManagementService, StopRequest, StopBatchCreateRequest, RouteManagementService, RouteGroupRequest, RouteRequest } from '@busmate/api-client-route';
+import { BusStopManagementService, StopRequest, StopBatchCreateRequest, RouteManagementService, RouteGroupRequest, RouteRequest } from '@busmate/api-client-core';
 import { 
   RouteGroup, 
   Route, 

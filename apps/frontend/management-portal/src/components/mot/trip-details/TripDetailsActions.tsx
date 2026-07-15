@@ -2,7 +2,7 @@
 
 import { ArrowLeft, RefreshCw, Edit2, Trash2, Play, Square, CheckCircle } from 'lucide-react';
 import { Button } from '@busmate/ui';
-import type { TripResponse } from '@busmate/api-client-route';
+import type { TripResponse } from '@busmate/api-client-core';
 
 interface TripDetailsActionsProps {
   trip: TripResponse | null;

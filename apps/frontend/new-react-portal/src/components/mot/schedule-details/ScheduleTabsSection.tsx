@@ -9,7 +9,7 @@ import {
   Plus,
   RefreshCw
 } from 'lucide-react';
-import { ScheduleResponse, RouteResponse, TripResponse } from '@busmate/api-client-route';
+import { ScheduleResponse, RouteResponse, TripResponse } from '@busmate/api-client-core';
 import { 
   ScheduleStopsTab,
   ScheduleCalendarTab,

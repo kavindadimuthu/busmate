@@ -10,7 +10,7 @@ import {
   Navigation,
   ExternalLink
 } from 'lucide-react';
-import type { TripResponse, RouteResponse } from '@busmate/api-client-route';
+import type { TripResponse, RouteResponse } from '@busmate/api-client-core';
 
 interface TripRouteTabProps {
   trip: TripResponse;

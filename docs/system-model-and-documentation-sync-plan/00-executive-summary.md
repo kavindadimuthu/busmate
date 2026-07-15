@@ -36,7 +36,7 @@ What already exists and can be **reused as a foundation**:
   → `libs/api-clients/*`, post-processed by
   [scripts/post-generate-api-client.mjs](../../scripts/post-generate-api-client.mjs). Nx targets
   `generate:local|cloud|spec` and `fetch-spec:local` exist per client
-  ([route-management/project.json](../../libs/api-clients/route-management/project.json)).
+  ([route-management/project.json](../../libs/api-clients/core-service/project.json)).
 - **Nx project graph + tags** (`scope:*`, `type:*`, `framework:*`, `lang:*`) — a ready-made
   service/dependency model and `affected` engine.
 - **Extensive prose docs** under [docs/](../../docs) (system-capability-audit, transit-workflow-evaluation,

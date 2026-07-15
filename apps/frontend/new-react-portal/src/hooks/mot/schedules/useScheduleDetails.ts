@@ -9,7 +9,7 @@ import {
   ScheduleResponse,
   RouteResponse,
   TripResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import { toast } from 'sonner';
 
 export function useScheduleDetails() {

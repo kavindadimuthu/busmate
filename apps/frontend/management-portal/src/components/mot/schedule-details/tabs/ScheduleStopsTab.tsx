@@ -9,7 +9,7 @@ import {
   Edit,
   Eye
 } from 'lucide-react';
-import { ScheduleResponse, RouteResponse } from '@busmate/api-client-route';
+import { ScheduleResponse, RouteResponse } from '@busmate/api-client-core';
 import { useRouter } from 'next/navigation';
 
 interface ScheduleStopsTabProps {

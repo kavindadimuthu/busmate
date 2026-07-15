@@ -7,14 +7,14 @@ import {
   TripManagementService,
   PermitManagementService,
   ScheduleManagementService,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import type {
   RouteGroupResponse,
   PassengerServicePermitResponse,
   TripResponse,
   ScheduleResponse,
   BulkPspAssignmentRequest,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 // Workspace Sections
 import { PlanningPanel } from './components/PlanningPanel';

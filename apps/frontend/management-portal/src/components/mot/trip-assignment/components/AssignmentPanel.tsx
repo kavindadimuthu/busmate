@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Settings, Users, CheckSquare, Square, Send, AlertCircle, CheckCircle } from 'lucide-react';
 import type { WorkspaceState } from '../TripAssignmentWorkspace';
-import type { BulkPspAssignmentRequest, PspTripAssignment } from '@busmate/api-client-route';
+import type { BulkPspAssignmentRequest, PspTripAssignment } from '@busmate/api-client-core';
 
 interface AssignmentPanelProps {
   workspace: WorkspaceState;

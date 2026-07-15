@@ -1,0 +1,13 @@
+{
+  "name": "@busmate/api-client-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generated OpenAPI client for the core-service backend service.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false
+}

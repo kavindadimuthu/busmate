@@ -3,7 +3,7 @@
 import React from 'react';
 import { Navigation } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@busmate/ui';
-import type { RouteResponse } from '@busmate/api-client-route';
+import type { RouteResponse } from '@busmate/api-client-core';
 
 interface RouteSelectorProps {
   routes: RouteResponse[];

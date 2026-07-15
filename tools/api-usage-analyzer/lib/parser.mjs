@@ -39,7 +39,7 @@ export function discoverApiClients(searchRoot) {
  *
  * @param {string} clientDir - Absolute path to the API client root
  * @param {string} [tsconfigBasePath] - Optional path to tsconfig.base.json for path alias lookup
- * @returns {string} Package name (e.g. `@busmate/api-client-route`)
+ * @returns {string} Package name (e.g. `@busmate/api-client-core`)
  */
 export function resolvePackageName(clientDir, tsconfigBasePath) {
   // 1. Try package.json
@@ -73,7 +73,7 @@ export function resolvePackageName(clientDir, tsconfigBasePath) {
     }
   }
 
-  // 3. Derive from directory name  (e.g. route-management → @busmate/api-client-route-management)
+  // 3. Derive from directory name  (e.g. route-management → @busmate/api-client-core-management)
   const dirName = basename(clientDir);
   return `@busmate/api-client-${dirName}`;
 }

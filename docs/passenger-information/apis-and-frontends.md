@@ -56,7 +56,7 @@ intermediateStopCount, distanceKm, resolved departure/arrival + sources, estimat
 
 ## Front-end A — passenger-web (React + Vite)
 
-Client: `@busmate/api-client-route` → `PassengerQueryService`. Relevant screens:
+Client: `@busmate/api-client-core` → `PassengerQueryService`. Relevant screens:
 
 ```
 HomePage ──search──▶ FindMyBusPage (/findmybus) ──select──▶ FindMyBusDetailPage (/findmybus/detail)

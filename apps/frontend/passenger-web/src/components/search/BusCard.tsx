@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BusFront, Clock, ArrowRight, Route, CheckCircle, AlertCircle, Calculator } from "lucide-react";
-import type { BusResult } from "@busmate/api-client-route";
+import type { BusResult } from "@busmate/api-client-core";
 
 interface BusCardProps {
   bus: BusResult;

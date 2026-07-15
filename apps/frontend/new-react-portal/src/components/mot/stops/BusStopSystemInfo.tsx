@@ -1,7 +1,7 @@
 'use client';
 
 import { Clock, User } from 'lucide-react';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 
 interface BusStopSystemInfoProps {
   busStop: StopResponse;

@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { CSVData } from '@/components/tools/csv-editor/types';
 import { useToast } from '@/hooks/use-toast';
-import { RouteManagementService } from '@busmate/api-client-route';
+import { RouteManagementService } from '@busmate/api-client-core';
 
 export function useRoutesImport() {
   const router = useRouter();

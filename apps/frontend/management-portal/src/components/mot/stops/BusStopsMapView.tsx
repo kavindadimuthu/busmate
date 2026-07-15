@@ -9,7 +9,7 @@ import {
   Locate,
   AlertTriangle,
 } from 'lucide-react';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 // import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 

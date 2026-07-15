@@ -62,7 +62,7 @@ EXAMPLES
 
   # Analyze a specific client only
   node tools/api-usage-analyzer/analyzer.mjs \\
-    --client libs/api-clients/route-management
+    --client libs/api-clients/core-service
 
   # Analyze against a specific app
   node tools/api-usage-analyzer/analyzer.mjs \\
@@ -70,8 +70,8 @@ EXAMPLES
 
   # Multiple clients + apps, custom output
   node tools/api-usage-analyzer/analyzer.mjs \\
-    --client libs/api-clients/route-management \\
-    --client libs/api-clients/ticketing-management \\
+    --client libs/api-clients/core-service \\
+    --client libs/api-clients/ticketing-service \\
     --app apps/frontend/management-portal \\
     --app apps/frontend/passenger-web \\
     --output reports/api-usage \\

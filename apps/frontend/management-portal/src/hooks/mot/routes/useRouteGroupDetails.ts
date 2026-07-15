@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { RouteGroupActionButtons } from '@/components/mot/routes/route-group-view';
-import { RouteManagementService } from '@busmate/api-client-route';
-import type { RouteGroupResponse, RouteResponse } from '@busmate/api-client-route';
+import { RouteManagementService } from '@busmate/api-client-core';
+import type { RouteGroupResponse, RouteResponse } from '@busmate/api-client-core';
 
 export function useRouteGroupDetails() {
   const router = useRouter();

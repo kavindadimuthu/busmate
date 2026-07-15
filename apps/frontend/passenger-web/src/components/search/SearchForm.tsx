@@ -3,8 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, ArrowRight, Loader2, ArrowRightLeftIcon, Calendar, Calendar1, CalendarDays } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { PassengerQueryService } from "@busmate/api-client-route";
-import type { PassengerStopResponse } from "@busmate/api-client-route";
+import { PassengerQueryService } from "@busmate/api-client-core";
+import type { PassengerStopResponse } from "@busmate/api-client-core";
 
 interface SearchFormProps {
   // Optional initial values (used when navigating to the search page via URL or location.state)

@@ -3,8 +3,8 @@
 // Resolves the logged-in operator's own core-service Operator record (the business
 // entity — buses/permits attach to this id, not to the user-service userId) via the
 // unified operator lifecycle link. See docs/plans/Unified-Operator-Lifecycle-Management-Plan.md.
-import { OpenAPI as RouteAPI } from '@busmate/api-client-route';
-import type { OperatorResponse } from '@busmate/api-client-route';
+import { OpenAPI as RouteAPI } from '@busmate/api-client-core';
+import type { OperatorResponse } from '@busmate/api-client-core';
 import { fetchAccessToken } from './setup';
 
 export class OperatorSelfLookupError extends Error {

@@ -10,11 +10,11 @@ import Navbar from "@/components/layout/Navbar";
 import SearchForm from "@/components/search/SearchForm";
 import FilterSidebar from "@/components/search/FilterSidebar";
 import BusCard from "@/components/search/BusCard";
-import { PassengerQueryService } from "@busmate/api-client-route";
+import { PassengerQueryService } from "@busmate/api-client-core";
 import type {
   BusResult,
   FindMyBusResponse
-} from "@busmate/api-client-route";
+} from "@busmate/api-client-core";
 
 interface FilterState {
   departureTimeFrom: string;

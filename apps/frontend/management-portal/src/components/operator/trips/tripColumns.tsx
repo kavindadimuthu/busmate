@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Calendar, MapPin, Bus, FileText, CheckCircle, XCircle, Clock, AlertTriangle, Navigation2, Users } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
-import type { TripResponse } from "@busmate/api-client-route";
+import type { TripResponse } from "@busmate/api-client-core";
 
 function formatDate(dateString?: string): string {
   if (!dateString) return "—";

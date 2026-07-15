@@ -8,7 +8,7 @@ import {
   BusResponse,
   OperatorManagementService,
   OperatorResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 export function useEditBus() {
   const router = useRouter();

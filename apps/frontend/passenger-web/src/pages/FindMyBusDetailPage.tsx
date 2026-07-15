@@ -27,8 +27,8 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
-import { PassengerQueryService } from "@busmate/api-client-route";
-import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-route";
+import { PassengerQueryService } from "@busmate/api-client-core";
+import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type StopViewMode = 'timings' | 'arrival-departure' | 'all';

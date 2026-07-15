@@ -9,7 +9,7 @@ import {
   BarChart3,
   Route as RouteIcon,
 } from 'lucide-react';
-import type { RouteResponse } from '@busmate/api-client-route';
+import type { RouteResponse } from '@busmate/api-client-core';
 import { RouteOverviewTab } from './tabs/RouteOverviewTab';
 import { RouteStopsTab } from './tabs/RouteStopsTab';
 import { RouteMapTab } from './tabs/RouteMapTab';

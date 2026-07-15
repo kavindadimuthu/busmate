@@ -1,7 +1,7 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/libs/api-clients/route-management"
+    "outDir": "../../../dist/libs/api-clients/core-service"
   },
   "include": ["src/**/*.ts"]
 }

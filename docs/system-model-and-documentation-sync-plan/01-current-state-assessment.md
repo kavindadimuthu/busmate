@@ -23,7 +23,7 @@
 | conductor-mobile | [apps/frontend/conductor-mobile](../../apps/frontend/conductor-mobile) | Expo/React Native | — |
 | passenger-mobile | [apps/frontend/passenger-mobile](../../apps/frontend/passenger-mobile) | Expo/React Native | — |
 | ui | [libs/ui](../../libs/ui) | shadcn component lib | `scope:shared,type:lib,lang:typescript` |
-| api-client-route/user/ticketing/location | [libs/api-clients/*](../../libs/api-clients) | generated TS clients | `scope:shared,type:lib,lang:typescript` |
+| api-client-core/user/ticketing/location | [libs/api-clients/*](../../libs/api-clients) | generated TS clients | `scope:shared,type:lib,lang:typescript` |
 
 **Runtime topology:** [docker-compose.yml](../../docker-compose.yml) runs `api-gateway`,
 `user-service`, `core-service`, `ticketing-service`. Prod variant

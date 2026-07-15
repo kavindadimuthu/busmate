@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { MoreVertical, UserPlus, UserMinus, Eye, Edit, Trash2 } from 'lucide-react';
-import type { TripResponse, PassengerServicePermitResponse } from '@busmate/api-client-route';
+import type { TripResponse, PassengerServicePermitResponse } from '@busmate/api-client-core';
 
 interface TripContextMenuProps {
   trip: TripResponse;

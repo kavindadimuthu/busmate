@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { AlertCircle, RotateCcw, Maximize2, ExternalLink, Maximize } from 'lucide-react';
-import type { RouteResponse, LocationDto } from '@busmate/api-client-route';
+import type { RouteResponse, LocationDto } from '@busmate/api-client-core';
 import { RouteMapFullscreen } from './RouteMapFullscreen';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 

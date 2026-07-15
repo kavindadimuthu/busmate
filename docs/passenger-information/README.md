@@ -42,7 +42,7 @@ flowchart LR
     C[core-service<br/>PassengerQueryController]
     DB[(Postgres/Supabase<br/>route, route_stop, schedule,<br/>schedule_stop, schedule_calendar,<br/>schedule_exception, trip, bus, operator, psp)]
 
-    W -->|@busmate/api-client-route| G
+    W -->|@busmate/api-client-core| G
     M -->|lib/api-client/route-management| G
     G -->|proxy, requiresAuth:false| C
     C --> DB

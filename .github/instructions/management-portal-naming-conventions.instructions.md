@@ -523,7 +523,7 @@ import { Button } from "../../../components/ui/button";    ❌
 ### 14.1 External package aliases
 | Package alias | Purpose |
 |---------------|---------|
-| `@busmate/api-client-route` | Route management API client |
+| `@busmate/api-client-core` | Route management API client |
 | `@busmate/api-client-ticketing` | Ticketing management API client |
 | `@busmate/ui` | Shared UI component library |
 

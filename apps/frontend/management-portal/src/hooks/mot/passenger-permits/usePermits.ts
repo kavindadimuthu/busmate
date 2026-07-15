@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   PermitManagementService,
   type PassengerServicePermitResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';
 

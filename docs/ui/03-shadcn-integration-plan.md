@@ -618,12 +618,12 @@ The UI library (`libs/ui/`) must be domain-agnostic:
 ```tsx
 // ❌ WRONG — domain logic in UI library
 // libs/ui/src/patterns/route-table.tsx
-import { RouteManagementService } from "@busmate/api-client-route";
+import { RouteManagementService } from "@busmate/api-client-core";
 
 // ✅ RIGHT — domain logic in app feature component
 // apps/frontend/management-portal/src/components/features/routes/routes-table.tsx
 import { DataTable } from "@busmate/ui";
-import { RouteManagementService } from "@busmate/api-client-route";
+import { RouteManagementService } from "@busmate/api-client-core";
 ```
 
 ---

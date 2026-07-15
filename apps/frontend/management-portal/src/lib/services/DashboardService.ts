@@ -8,7 +8,7 @@ import {
   ScheduleManagementService,
   TripManagementService,
   BusStopManagementService,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 export interface DashboardMetrics {
   totalBuses: number;

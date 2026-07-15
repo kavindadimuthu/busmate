@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { usePageContext } from '@/context/PageContext';
-import { BusOperatorOperationsService } from '@busmate/api-client-route';
-import type { BusResponse } from '@busmate/api-client-route';
+import { BusOperatorOperationsService } from '@busmate/api-client-core';
+import type { BusResponse } from '@busmate/api-client-core';
 import { useMyOperator } from '@/hooks/operator/useMyOperator';
 
 export function useBusDetail() {

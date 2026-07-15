@@ -9,8 +9,8 @@ import {
     processStopExistenceResult,
     canSearchStop
 } from "@/services/routeWorkspaceValidation";
-import { BusStopManagementService } from '@busmate/api-client-route';
-import type { StopRequest } from '@busmate/api-client-route';
+import { BusStopManagementService } from '@busmate/api-client-core';
+import type { StopRequest } from '@busmate/api-client-core';
 
 import {
     Input,

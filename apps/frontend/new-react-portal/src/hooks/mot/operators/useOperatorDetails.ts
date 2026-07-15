@@ -7,7 +7,7 @@ import {
   BusOperatorOperationsService,
   BusResponse,
   PassengerServicePermitResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import { UsersControllerService } from '@busmate/api-client-user';
 import type { UserResponse } from '@busmate/api-client-user';
 import type { OperatorResponseWithLink } from '@/types/operator';

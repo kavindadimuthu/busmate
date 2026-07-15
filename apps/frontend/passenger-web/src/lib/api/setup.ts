@@ -1,4 +1,4 @@
-import { OpenAPI as RouteAPI } from '@busmate/api-client-route';
+import { OpenAPI as RouteAPI } from '@busmate/api-client-core';
 import { OpenAPI as TicketingAPI } from '@busmate/api-client-ticketing';
 import { OpenAPI as LocationAPI } from '@busmate/api-client-location';
 import { OpenAPI as UserAPI } from '@busmate/api-client-user';

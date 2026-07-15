@@ -7,13 +7,13 @@ import {
   OperatorManagementService,
   RouteManagementService,
   BusManagementService,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import type {
   PassengerServicePermitResponse,
   OperatorResponse,
   RouteGroupResponse,
   BusResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 export function usePermitDetails() {
   const router = useRouter();

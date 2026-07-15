@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { OperatorManagementService } from '@busmate/api-client-route';
+import { OperatorManagementService } from '@busmate/api-client-core';
 import { UsersControllerService } from '@busmate/api-client-user';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { useToast } from '@/hooks/use-toast';

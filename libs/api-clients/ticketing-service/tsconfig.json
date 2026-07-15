@@ -1,7 +1,7 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/libs/api-clients/location-tracking"
+    "outDir": "../../../dist/libs/api-clients/ticketing-service"
   },
   "include": ["src/**/*.ts"]
 }

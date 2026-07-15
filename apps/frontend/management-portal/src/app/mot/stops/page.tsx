@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 import { ConfirmDialog } from '@busmate/ui';
 
 import { BusStopsStatsCards } from '@/components/mot/stops/BusStopsStatsCards';

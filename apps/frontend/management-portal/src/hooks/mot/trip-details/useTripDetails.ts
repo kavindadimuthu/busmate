@@ -7,13 +7,13 @@ import {
   RouteManagementService,
   ScheduleManagementService,
   PermitManagementService,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 import type {
   TripResponse,
   RouteResponse,
   ScheduleResponse,
   PassengerServicePermitResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 export function useTripDetails() {
   const router = useRouter();

@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar, Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
-import { ScheduleResponse } from '@busmate/api-client-route';
+import { ScheduleResponse } from '@busmate/api-client-core';
 
 interface ScheduleCalendarTabProps {
   schedule: ScheduleResponse;

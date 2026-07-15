@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { StopResponse, BusStopManagementService } from '@busmate/api-client-route';
+import { StopResponse, BusStopManagementService } from '@busmate/api-client-core';
 import { useToast } from '@/hooks/use-toast';
 import React from 'react';
 import {

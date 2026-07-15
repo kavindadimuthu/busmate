@@ -1,7 +1,7 @@
 'use client';
 
 import { Navigation, ExternalLink } from 'lucide-react';
-import type { StopResponse } from '@busmate/api-client-route';
+import type { StopResponse } from '@busmate/api-client-core';
 import BusStopMiniMap from './BusStopMiniMap';
 import CopyableField from './CopyableField';
 

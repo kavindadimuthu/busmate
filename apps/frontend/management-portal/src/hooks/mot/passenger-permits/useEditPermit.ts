@@ -10,7 +10,7 @@ import {
   PassengerServicePermitResponse,
   OperatorResponse,
   RouteGroupResponse,
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 export function useEditPermit() {
   const router = useRouter();

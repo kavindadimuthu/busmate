@@ -1,7 +1,7 @@
 import { TicketControllerService } from '@busmate/api-client-ticketing';
-import { BusOperatorOperationsService } from '@busmate/api-client-route';
+import { BusOperatorOperationsService } from '@busmate/api-client-core';
 import type { TripSummaryDTO, ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
-import type { BusResponse } from '@busmate/api-client-route';
+import type { BusResponse } from '@busmate/api-client-core';
 
 export interface BusRevenueData {
     busId: string;

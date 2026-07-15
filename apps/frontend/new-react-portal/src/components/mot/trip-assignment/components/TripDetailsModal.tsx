@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Calendar, Clock, MapPin, User, Bus, Settings, CheckCircle, AlertCircle } from 'lucide-react';
-import type { TripResponse } from '@busmate/api-client-route';
+import type { TripResponse } from '@busmate/api-client-core';
 
 interface TripDetailsModalProps {
   trip: TripResponse | null;

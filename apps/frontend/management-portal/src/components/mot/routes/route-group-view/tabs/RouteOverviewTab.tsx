@@ -10,7 +10,7 @@ import {
   Route as RouteIcon,
   Navigation2,
 } from 'lucide-react';
-import type { RouteResponse } from '@busmate/api-client-route';
+import type { RouteResponse } from '@busmate/api-client-core';
 
 // ── Types ─────────────────────────────────────────────────────────
 

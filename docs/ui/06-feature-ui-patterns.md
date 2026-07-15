@@ -432,7 +432,7 @@ export function DataTable<TData>({
 import { DataTable, type ColumnDef } from "@busmate/ui";
 import { StatusBadge } from "@busmate/ui";
 import { RowActions } from "./routes-row-actions";
-import type { Route } from "@busmate/api-client-route";
+import type { Route } from "@busmate/api-client-core";
 
 const columns: ColumnDef<Route>[] = [
   {
@@ -818,7 +818,7 @@ import { FormWrapper, FormSection, FormGrid } from "@busmate/ui";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@busmate/ui";
 import { Input } from "@busmate/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@busmate/ui";
-import type { BusStop } from "@busmate/api-client-route";
+import type { BusStop } from "@busmate/api-client-core";
 
 const busStopSchema = z.object({
   stopName: z.string().min(1, "Stop name is required"),

@@ -24,7 +24,7 @@ import type {
   OperatorResponse, 
   RouteGroupResponse,
   BusResponse 
-} from '@busmate/api-client-route';
+} from '@busmate/api-client-core';
 
 interface TabType {
   id: string;

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { TicketControllerService } from '@busmate/api-client-ticketing';
 import type { ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
-import { BusOperatorOperationsService } from '@busmate/api-client-route';
+import { BusOperatorOperationsService } from '@busmate/api-client-core';
 import { useMyOperator } from '@/hooks/operator/useMyOperator';
 import type { TicketFilters } from '@/components/shared/tickets';
 import type { TicketStatistics } from '@/components/shared/tickets';

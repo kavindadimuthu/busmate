@@ -210,7 +210,7 @@ import {
 } from "@busmate/ui";
 
 // API client imports
-import { type Route, RoutesService } from "@busmate/api-client-route";
+import { type Route, RoutesService } from "@busmate/api-client-core";
 
 // Local feature imports
 import { routeColumns } from "./routes-columns";

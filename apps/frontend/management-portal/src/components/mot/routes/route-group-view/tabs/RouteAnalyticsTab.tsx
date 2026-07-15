@@ -12,7 +12,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { StatsCard, StatsCardGrid } from '@busmate/ui';
-import type { RouteResponse } from '@busmate/api-client-route';
+import type { RouteResponse } from '@busmate/api-client-core';
 
 // ── Types ─────────────────────────────────────────────────────────
 
