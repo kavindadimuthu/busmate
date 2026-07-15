@@ -28,8 +28,6 @@ class ApiClient {
         return API_CONFIG.SCHEDULE_MANAGEMENT;
       case 'ticket':
         return API_CONFIG.TICKET_MANAGEMENT;
-      case 'notification':
-        return API_CONFIG.NOTIFICATION_MANAGEMENT;
       default:
         return API_CONFIG.USER_MANAGEMENT;
     }

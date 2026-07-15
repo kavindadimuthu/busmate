@@ -33,7 +33,6 @@ const withNetworkSecurityConfig = (config) => {
         <domain includeSubdomains="false">18.140.161.237</domain>
         <domain includeSubdomains="false">54.91.217.117</domain>
         <domain includeSubdomains="false">47.128.250.151</domain>
-        <domain includeSubdomains="false">13.51.177.104</domain>
         <domain includeSubdomains="false">192.168.8.181</domain>
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>

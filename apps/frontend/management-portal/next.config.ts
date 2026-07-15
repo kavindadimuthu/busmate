@@ -33,10 +33,6 @@ const nextConfig: NextConfig = {
       {
         source: '/api/route-management/:path*',
         destination: 'http://18.140.161.237:8080/:path*'
-      },
-      {
-        source: '/api/notification-management/:path*',
-        destination: 'http://13.51.177.104:8080/:path*'
       }
     ]
   }
