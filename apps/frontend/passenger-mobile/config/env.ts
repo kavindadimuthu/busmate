@@ -54,10 +54,6 @@ export const ENV = {
       process.env.EXPO_PUBLIC_API_GATEWAY_URL ||
       process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
       `http://${devHostOrLocalhost}:8080`,
-    LOCATION_SERVICE:
-      process.env.EXPO_PUBLIC_LOCATION_TRACKING_API_URL ||
-      process.env.NEXT_PUBLIC_LOCATION_TRACKING_API_URL ||
-      'http://47.128.250.151:4000',
   },
 
   // Timeouts and other config

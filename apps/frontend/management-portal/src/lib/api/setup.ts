@@ -1,6 +1,5 @@
 import { OpenAPI as RouteAPI } from '@busmate/api-client-core';
 import { OpenAPI as TicketingAPI } from '@busmate/api-client-ticketing';
-import { OpenAPI as LocationAPI } from '@busmate/api-client-location';
 import { OpenAPI as UserManagementAPI } from '@busmate/api-client-user';
 
 const gatewayBaseUrl =
@@ -10,7 +9,6 @@ const gatewayBaseUrl =
 
 RouteAPI.BASE = process.env.NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL || gatewayBaseUrl;
 TicketingAPI.BASE = process.env.NEXT_PUBLIC_TICKETING_API_URL || gatewayBaseUrl;
-LocationAPI.BASE = (process.env.NEXT_PUBLIC_LOCATION_TRACKING_API_URL || 'http://localhost:4000') + '/api';
 // Goes through api-gateway (not straight to user-management) — same as every other
 // browser-facing call to this service. See lib/api/adminUsers.ts for the admin CRUD layer.
 UserManagementAPI.BASE = gatewayBaseUrl;
@@ -53,5 +51,4 @@ const tokenResolver = () => fetchAccessToken();
 
 RouteAPI.TOKEN = tokenResolver;
 TicketingAPI.TOKEN = tokenResolver;
-LocationAPI.TOKEN = tokenResolver;
 UserManagementAPI.TOKEN = tokenResolver;

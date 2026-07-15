@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
     '@busmate/ui',
     '@busmate/api-client-core',
     '@busmate/api-client-ticketing',
-    '@busmate/api-client-location',
     '@busmate/api-client-user',
   ],
   turbopack: {

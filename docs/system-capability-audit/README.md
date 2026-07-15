@@ -132,9 +132,10 @@ Ground-truth **code roots**, **existing docs** to summarise, and **diagrams** to
   `plans/Conductor-Journey-Tickets-Bookings-SeatLayout-Plan.md`.
 - **S6 Passenger Info** — code `core-service/.../passengerinfo/`, `passenger-mobile/`, `passenger-web/`;
   docs `docs/passenger-information/*`; diagrams: find-my-bus query sequence + gap quadrants.
-- **S7 Monitoring/Tracking** — code `data/tracking/**`, `data/timekeeper/**` mock generators,
-  `libs/api-clients/location-tracking-service/`; docs `transit-workflow-evaluation/07-*`. *Missing:*
-  target-state position-ping → SSE diagram.
+- **S7 Monitoring/Tracking** — code `data/tracking/**`, `data/timekeeper/**` mock generators;
+  docs `transit-workflow-evaluation/07-*`. *Missing:* location-tracking backend service +
+  shared API client (removed — no location service currently exists), target-state
+  position-ping → SSE diagram.
 - **S8 Analytics/Feedback** — docs `transit-workflow-evaluation/08-*`. *Missing:* real-data vs.
   mock-read data-flow diagram.
 - **S9 Frontend/UX** — code `apps/frontend/*`, `libs/ui/`; docs full `docs/ui/` set +

@@ -16,7 +16,6 @@
     "analyze-pages:file": "node scripts/analyze-pages.js --file"
   },
   "dependencies": {
-    "@busmate/api-client-location": "workspace:*",
     "@busmate/api-client-core": "workspace:*",
     "@busmate/api-client-ticketing": "workspace:*",
     "@busmate/api-client-user": "workspace:*",

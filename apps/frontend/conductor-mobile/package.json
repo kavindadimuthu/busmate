@@ -15,7 +15,6 @@
     "generate:api-user:local": "openapi --input http://localhost:9020/v3/api-docs --output ./src/lib/api-client/user-management"
   },
   "dependencies": {
-    "@busmate/api-client-location": "workspace:*",
     "@busmate/api-client-core": "workspace:*",
     "@busmate/api-client-ticketing": "workspace:*",
     "@busmate/api-client-user": "workspace:*",

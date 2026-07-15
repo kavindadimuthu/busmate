@@ -29,7 +29,6 @@ export default defineConfig({
       { find: /^@busmate\/ui\/(.*)$/, replacement: path.resolve(__dirname, '../../../libs/ui/src/$1') },
       { find: /^@busmate\/api-client-core$/, replacement: path.resolve(__dirname, '../../../libs/api-clients/core-service/src/index.ts') },
       { find: /^@busmate\/api-client-ticketing$/, replacement: path.resolve(__dirname, '../../../libs/api-clients/ticketing-service/src/index.ts') },
-      { find: /^@busmate\/api-client-location$/, replacement: path.resolve(__dirname, '../../../libs/api-clients/location-tracking-service/src/index.ts') },
       { find: /^@busmate\/api-client-user$/, replacement: path.resolve(__dirname, '../../../libs/api-clients/user-service/src/index.ts') },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],

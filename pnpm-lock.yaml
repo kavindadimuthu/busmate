@@ -105,9 +105,6 @@ importers:
 
   apps/frontend/conductor-mobile:
     dependencies:
-      '@busmate/api-client-location':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/location-tracking-service
       '@busmate/api-client-core':
         specifier: workspace:*
         version: link:../../../libs/api-clients/core-service
@@ -313,9 +310,6 @@ importers:
 
   apps/frontend/management-portal:
     dependencies:
-      '@busmate/api-client-location':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/location-tracking-service
       '@busmate/api-client-core':
         specifier: workspace:*
         version: link:../../../libs/api-clients/core-service
@@ -578,9 +572,6 @@ importers:
 
   apps/frontend/new-react-portal:
     dependencies:
-      '@busmate/api-client-location':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/location-tracking-service
       '@busmate/api-client-core':
         specifier: workspace:*
         version: link:../../../libs/api-clients/core-service
@@ -708,9 +699,6 @@ importers:
 
   apps/frontend/passenger-mobile:
     dependencies:
-      '@busmate/api-client-location':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/location-tracking-service
       '@busmate/api-client-core':
         specifier: workspace:*
         version: link:../../../libs/api-clients/core-service
@@ -853,9 +841,6 @@ importers:
 
   apps/frontend/passenger-web:
     dependencies:
-      '@busmate/api-client-location':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/location-tracking-service
       '@busmate/api-client-core':
         specifier: workspace:*
         version: link:../../../libs/api-clients/core-service
@@ -1079,8 +1064,6 @@ importers:
       vite:
         specifier: ^5.4.19
         version: 5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0)
-
-  libs/api-clients/location-tracking-service: {}
 
   libs/api-clients/core-service: {}
 

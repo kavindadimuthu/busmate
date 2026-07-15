@@ -40,7 +40,6 @@ export default defineConfig(({ mode }) => ({
       "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
       "@busmate/api-client-core": path.resolve(__dirname, "../../../libs/api-clients/core-service/src/index.ts"),
       "@busmate/api-client-ticketing": path.resolve(__dirname, "../../../libs/api-clients/ticketing-service/src/index.ts"),
-      "@busmate/api-client-location": path.resolve(__dirname, "../../../libs/api-clients/location-tracking-service/src/index.ts"),
       "@busmate/api-client-user": path.resolve(__dirname, "../../../libs/api-clients/user-service/src/index.ts"),
       "@": path.resolve(__dirname, "./src"),
     },
