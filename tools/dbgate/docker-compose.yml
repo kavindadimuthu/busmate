@@ -1,0 +1,59 @@
+# DbGate Community — local-only DB GUI for the dev Postgres started by the root
+# `docker-compose.yml` (`postgres` service, host port 5433, databases busmate_user /
+# busmate_core / busmate_ticketing — see scripts/postgres/init-dev-dbs.sql).
+#
+# Independent Compose project (like docker-compose.observability.yml): it does not join
+# the app stack's network, it reaches dev Postgres via the host's published port using
+# the same host.docker.internal + extra_hosts trick already used elsewhere in this repo.
+# That means dev Postgres must already be published on the host (`pnpm db:dev:up`) —
+# DbGate does not start it.
+#
+# Run from repo root:
+#   pnpm db:dev:gui        # docker compose -f tools/dbgate/docker-compose.yml up -d
+#   pnpm db:dev:gui:logs
+#   pnpm db:dev:gui:down
+#
+# See README.md in this directory for ports, security notes, and troubleshooting.
+#
+# SECURITY: dev-only. Never add this file (or a Supabase/production connection) to
+# docker-compose.production.yml or any CI/CD pipeline. The pre-wired connection below
+# uses only the throwaway dev Postgres credentials already hardcoded in the root
+# docker-compose.yml — no config/secrets/.env values are read here.
+name: busmate-dbgate
+
+services:
+  dbgate:
+    image: dbgate/dbgate:7.2.1
+    container_name: busmate-dbgate
+    restart: unless-stopped
+    ports:
+      # Bind to localhost only — this UI has no auth by default (see README "Enabling
+      # login" section). Port 3002: 3000 clashes with Grafana (docker-compose.observability.yml)
+      # and 3001 clashes with Uptime Kuma.
+      - "127.0.0.1:3002:3000"
+    environment:
+      # Connection ID must be alphanumeric only — DbGate's env-var parser does not
+      # reliably recognize hyphens/underscores in the ID segment (verified empirically:
+      # a hyphenated ID logged "Invalid CONNECTIONS configuration, missing ENGINE for
+      # connection ID" even though ENGINE_<id> was set correctly in the container env).
+      CONNECTIONS: devpostgres
+      LABEL_devpostgres: BusMate Dev Postgres
+      SERVER_devpostgres: host.docker.internal
+      PORT_devpostgres: 5433
+      USER_devpostgres: postgres
+      PASSWORD_devpostgres: postgres
+      ENGINE_devpostgres: postgres@dbgate-plugin-postgres
+      # Uncomment to require a login (see README "Enabling login"). Values come from
+      # tools/dbgate/.env (gitignored) — copy tools/dbgate/.env.example first.
+      # LOGIN: ${DBGATE_LOGIN}
+      # PASSWORD: ${DBGATE_PASSWORD}
+    # env_file:
+    #   - path: .env
+    #     required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - busmate_dbgate_data:/root/.dbgate
+
+volumes:
+  busmate_dbgate_data:

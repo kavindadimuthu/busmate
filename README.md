@@ -102,3 +102,10 @@ Nx caches the results of `build`, `test`, and `lint` targets automatically. Cach
 ```bash
 npx nx build management-portal --skip-nx-cache
 ```
+
+## Local Dev Tooling
+
+| Tool | Path | Purpose |
+|---|---|---|
+| Observability stack (Grafana/Loki/Prometheus/Tempo) | `config/observability/README.md` | Logs, metrics, traces, alerting |
+| DbGate | `tools/dbgate/README.md` | GUI for the local dev Postgres (`pnpm db:dev:gui`) |

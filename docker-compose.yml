@@ -28,6 +28,7 @@ name: busmate
 # running, the OTLP exports just fail silently in the background — no impact on the
 # app itself. See config/observability/README.md.
 services:
+  # Optional GUI for this database: tools/dbgate/README.md (`pnpm db:dev:gui`).
   postgres:
     image: postgres:16-alpine
     container_name: busmate-dev-postgres
