@@ -6,9 +6,9 @@ import { TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import AppHeader from '@/components/ui/AppHeader';
 import { useAuth } from '@/context/AuthContext';
-import { TicketControllerService } from '@/lib/api-client/ticketing-management/services/TicketControllerService';
-import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
-import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management/models/ConductorLogTicketDTO';
+import { TicketControllerService } from '@busmate/api-client-ticketing';
+import { BusStopManagementService } from '@busmate/api-client-core';
+import type { ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 export default function CancelTicketScreen() {

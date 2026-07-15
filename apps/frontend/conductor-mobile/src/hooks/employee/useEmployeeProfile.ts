@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/auth/useAuth';
-import { UsersControllerService } from '@/lib/api-client/user-management';
+import { UsersControllerService } from '@busmate/api-client-user';
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 import { useCallback, useState } from 'react';
 

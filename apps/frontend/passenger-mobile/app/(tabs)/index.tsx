@@ -27,8 +27,8 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { PassengerQueryService, RouteManagementService } from '@/lib/api-client/route-management';
-import type { RouteResponse } from '@/lib/api-client/route-management';
+import { PassengerQueryService, RouteManagementService } from '@busmate/api-client-core';
+import type { RouteResponse } from '@busmate/api-client-core';
 
 // Interface definitions
 interface QuickAction {

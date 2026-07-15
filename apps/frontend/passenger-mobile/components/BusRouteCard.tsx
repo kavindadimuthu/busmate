@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Snowflake, Wifi, Zap, ArrowRight } from 'lucide-react-native';
 
-import { PassengerTripResponse } from '../lib/api-client/route-management';
+import { PassengerTripResponse } from '@busmate/api-client-core';
 
 interface BusRouteCardProps {
   trip: PassengerTripResponse;

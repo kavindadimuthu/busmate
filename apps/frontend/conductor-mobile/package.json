@@ -11,12 +11,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint",
-    "generate:api-user:local": "openapi --input http://localhost:9020/v3/api-docs --output ./src/lib/api-client/user-management"
+    "lint": "expo lint"
   },
   "dependencies": {
-    "@busmate/api-client-core": "workspace:*",
-    "@busmate/api-client-ticketing": "workspace:*",
     "@busmate/api-client-user": "workspace:*",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",

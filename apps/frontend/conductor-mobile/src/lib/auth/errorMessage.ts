@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api-client/user-management';
+import { ApiError } from '@busmate/api-client-user';
 
 export function extractErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError && error.body && typeof error.body === 'object' && 'error' in error.body) {

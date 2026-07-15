@@ -6,11 +6,11 @@ import { QrCode, Download, Share, Calendar, Clock, MapPin, User, Phone, MessageC
 import { StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
-import { TicketControllerService } from '@/lib/api-client/ticketing-management/services/TicketControllerService';
-import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
-import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management/models/ConductorLogTicketDTO';
+import { TicketControllerService } from '@busmate/api-client-ticketing';
+import { BusStopManagementService } from '@busmate/api-client-core';
+import type { ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
-import type { StopResponse } from '@/lib/api-client/route-management/models/StopResponse';
+import type { StopResponse } from '@busmate/api-client-core';
 
 export default function TicketDetailScreen() {
   const router = useRouter();

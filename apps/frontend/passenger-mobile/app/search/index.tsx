@@ -13,7 +13,7 @@ import { Search, ArrowUpDown, Filter, MapPin, Clock } from 'lucide-react-native'
 import AppHeader from '../../components/ui/AppHeader';
 import RouteFilterModal from '../../components/modals/NewRouteFilterModal';
 import StopSearchInput from '../../components/StopSearchInput';
-import { PassengerStopResponse, PassengerQueryService } from '../../lib/api-client/route-management';
+import { PassengerStopResponse, PassengerQueryService } from '@busmate/api-client-core';
 
 interface FilterOptionsType {
   travelDate: Date;

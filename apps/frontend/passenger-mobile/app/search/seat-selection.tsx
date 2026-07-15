@@ -7,8 +7,8 @@ import { StyleSheet } from 'react-native';
 import AppHeader from '../../components/ui/AppHeader';
 import { useBooking } from '../../context/BookingContext';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
-import { BusManagementService } from '../../lib/api-client/route-management';
-import { TicketControllerService } from '../../lib/api-client/ticketing-management';
+import { BusManagementService } from '@busmate/api-client-core';
+import { TicketControllerService } from '@busmate/api-client-ticketing';
 
 interface Seat {
   id: string;

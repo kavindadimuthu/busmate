@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthControllerService, OpenAPI as UserAPI } from '@/lib/api-client/user-management';
-import { OpenAPI as RouteAPI } from '@/lib/api-client/route-management';
-import { OpenAPI as TicketingAPI } from '@/lib/api-client/ticketing-management';
+import { AuthControllerService, OpenAPI as UserAPI } from '@busmate/api-client-user';
+import { OpenAPI as RouteAPI } from '@busmate/api-client-core';
+import { OpenAPI as TicketingAPI } from '@busmate/api-client-ticketing';
 
 const ACCESS_TOKEN_KEY = 'busmate.auth.accessToken';
 const REFRESH_TOKEN_KEY = 'busmate.auth.refreshToken';

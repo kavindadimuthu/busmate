@@ -1,4 +1,4 @@
-import { AuthControllerService, type AuthMeResponse } from '@/lib/api-client/user-management';
+import { AuthControllerService, type AuthMeResponse } from '@busmate/api-client-user';
 import { clearSession, getAccessToken, hasStoredSession, saveSession } from '@/lib/auth/tokenStore';
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 import { BiometricAuthResult, User } from '@/types/auth';

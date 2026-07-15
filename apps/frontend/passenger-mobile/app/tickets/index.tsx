@@ -6,9 +6,9 @@ import { Calendar, Clock, MapPin, QrCode, MoveVertical as MoreVertical, Filter }
 import { StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
-import { TicketControllerService } from '@/lib/api-client/ticketing-management/services/TicketControllerService';
-import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
-import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management/models/ConductorLogTicketDTO';
+import { TicketControllerService } from '@busmate/api-client-ticketing';
+import { BusStopManagementService } from '@busmate/api-client-core';
+import type { ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
 
 // Updated interface to match API response exactly
 interface Ticket extends ConductorLogTicketDTO {}

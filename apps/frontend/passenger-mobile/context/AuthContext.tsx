@@ -3,7 +3,7 @@ import {
   AuthControllerService,
   type AuthMeResponse,
   type RegisterRequest,
-} from '@/lib/api-client/user-management';
+} from '@busmate/api-client-user';
 import { clearSession, getAccessToken, hasStoredSession, saveSession } from '@/lib/auth/tokenStore';
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 

@@ -6,8 +6,8 @@ import { CreditCard, CheckCircle } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import AppHeader from '@/components/ui/AppHeader';
 import { useBooking } from '@/context/BookingContext';
-import { TicketControllerService } from '@/lib/api-client/ticketing-management';
-import type { BookingRequestDTO } from '@/lib/api-client/ticketing-management';
+import { TicketControllerService } from '@busmate/api-client-ticketing';
+import type { BookingRequestDTO } from '@busmate/api-client-ticketing';
 import { formatFare, validateBookingData } from '@/utils/bookingUtils';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 

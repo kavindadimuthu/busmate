@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MapPin } from 'lucide-react-native';
-import { PassengerQueryService, PassengerStopResponse } from '../lib/api-client/route-management';
+import { PassengerQueryService, PassengerStopResponse } from '@busmate/api-client-core';
 
 interface StopSearchInputProps {
   label: string;

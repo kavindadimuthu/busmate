@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management';
+import type { ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
 
 // Flat, real-data shape - populated from search/schedule.tsx's FindMyBusDetailsResponse.trip,
 // not a fictional nested tripData/busData pair (those DTOs never existed against the real

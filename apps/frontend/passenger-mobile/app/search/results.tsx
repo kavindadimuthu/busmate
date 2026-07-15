@@ -6,7 +6,7 @@ import { Filter, Bus, MapPin, ArrowRight } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import RouteFilterModal from '../../components/modals/NewRouteFilterModal';
 import AppHeader from '../../components/ui/AppHeader';
-import { PassengerQueryService, BusResult } from '../../lib/api-client/route-management';
+import { PassengerQueryService, BusResult } from '@busmate/api-client-core';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 function formatTime(time?: string): string {

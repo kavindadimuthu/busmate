@@ -105,12 +105,6 @@ importers:
 
   apps/frontend/conductor-mobile:
     dependencies:
-      '@busmate/api-client-core':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/core-service
-      '@busmate/api-client-ticketing':
-        specifier: workspace:*
-        version: link:../../../libs/api-clients/ticketing-service
       '@busmate/api-client-user':
         specifier: workspace:*
         version: link:../../../libs/api-clients/user-service

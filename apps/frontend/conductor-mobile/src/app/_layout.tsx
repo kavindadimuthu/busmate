@@ -2,12 +2,12 @@ import * as Sentry from '@sentry/react-native';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { EmployeeScheduleProvider } from '@/contexts/EmployeeScheduleContext';
 import { TicketProvider } from '@/contexts/TicketContext';
-import { initializeApiClients } from '@/lib/api-client/apiConfig';
+import { configureApiClients } from '@/lib/api/setup';
 import { initSentry } from '@/lib/sentry';
 import { Stack } from 'expo-router';
 
 initSentry();
-initializeApiClients();
+configureApiClients();
 
 function RootLayout() {
   return (

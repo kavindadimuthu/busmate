@@ -14,7 +14,7 @@ import {
 } from '@expo-google-fonts/inter';
 import { AuthProvider } from '@/context/AuthContext';
 import { BookingProvider } from '@/context/BookingContext';
-import { initializeApiClients } from '@/lib/api-client/apiConfig';
+import { configureApiClients } from '@/lib/api/setup';
 import { initSentry } from '@/lib/sentry';
 
 initSentry();
@@ -43,7 +43,7 @@ function RootLayout() {
     async function prepare() {
       try {
         // Initialize API clients with proper base URLs
-        initializeApiClients();
+        configureApiClients();
         
         // Wait for fonts to load
         if (fontsLoaded || fontError) {

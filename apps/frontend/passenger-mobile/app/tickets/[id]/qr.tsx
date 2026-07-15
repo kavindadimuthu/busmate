@@ -7,9 +7,9 @@ import { StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import AppHeader from '@/components/ui/AppHeader';
 import { useBooking } from '@/context/BookingContext';
-import { TicketControllerService, ConductorLogTicketDTO } from '@/lib/api-client/ticketing-management';
-import { BusStopManagementService } from '@/lib/api-client/route-management';
-import type { StopResponse } from '@/lib/api-client/route-management';
+import { TicketControllerService, ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
+import { BusStopManagementService } from '@busmate/api-client-core';
+import type { StopResponse } from '@busmate/api-client-core';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
 export default function QRCodeScreen() {

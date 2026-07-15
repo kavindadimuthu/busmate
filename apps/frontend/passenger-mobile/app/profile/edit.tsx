@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/ui/AppHeader';
-import { UsersControllerService, UserResponse, UpdateUserRequest } from '@/lib/api-client/user-management';
+import { UsersControllerService, UserResponse, UpdateUserRequest } from '@busmate/api-client-user';
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
 
