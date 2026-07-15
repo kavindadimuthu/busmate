@@ -3,9 +3,8 @@
 // Resolves the logged-in operator's own core-service Operator record (the business
 // entity — buses/permits attach to this id, not to the user-service userId) via the
 // unified operator lifecycle link. See docs/plans/Unified-Operator-Lifecycle-Management-Plan.md.
-import { OpenAPI as RouteAPI } from '@busmate/api-client-core';
+import { ApiError, OperatorManagementService } from '@busmate/api-client-core';
 import type { OperatorResponse } from '@busmate/api-client-core';
-import { fetchAccessToken } from './setup';
 
 export class OperatorSelfLookupError extends Error {
   status: number;
@@ -18,28 +17,19 @@ export class OperatorSelfLookupError extends Error {
 }
 
 /**
- * GET /api/operators/by-user/{userId} — permitAll on the backend (same as every other
- * core-service GET), so this doesn't strictly need a token, but one is sent anyway for
- * consistency with every other call in this app.
+ * GET /api/operators/by-user/{userId} via the shared core-service client
+ * (OperatorManagementService.getOperatorByUserId). Auth is applied centrally by the
+ * client's TOKEN resolver wired in ./setup.ts; the endpoint is a public GET on the
+ * backend, so it resolves the same fields getOperatorById does.
  */
 export async function getMyOperator(userId: string): Promise<OperatorResponse> {
-  let token: string | null = null;
   try {
-    token = await fetchAccessToken();
-  } catch {
-    // Fall through — the endpoint is public, so a missing/expired token isn't fatal here.
-  }
-
-  const res = await fetch(`${RouteAPI.BASE}/api/operators/by-user/${userId}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
-
-  if (!res.ok) {
-    if (res.status === 404) {
+    return await OperatorManagementService.getOperatorByUserId(userId);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
       throw new OperatorSelfLookupError(404, 'No operator record is linked to your account yet.');
     }
-    throw new OperatorSelfLookupError(res.status, `Failed to load your operator profile (${res.status}).`);
+    const status = error instanceof ApiError ? error.status : 0;
+    throw new OperatorSelfLookupError(status, `Failed to load your operator profile (${status}).`);
   }
-
-  return res.json();
 }

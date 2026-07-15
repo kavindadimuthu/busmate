@@ -7,4 +7,23 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    // Enforce the unified API-client approach: reach backend services only
+    // through the shared @busmate/api-client-{core,ticketing,user} packages
+    // (configured once in src/lib/api/setup.ts) — never a per-app generated copy.
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/lib/api-client/**', '**/generated/api-client/**'],
+              message:
+                'Import backend service clients from the shared @busmate/api-client-{core,ticketing,user} packages (wired in src/lib/api/setup.ts), not a local or generated copy.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

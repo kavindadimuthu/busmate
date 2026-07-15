@@ -58,7 +58,6 @@
     "ag-grid-community": "^35.0.0",
     "ag-grid-react": "^35.0.0",
     "autoprefixer": "^10.4.20",
-    "axios": "^1.10.0",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
