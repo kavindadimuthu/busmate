@@ -38,11 +38,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorizationHeader) {
-        String accessToken = authorizationHeader.startsWith("Bearer ")
-                ? authorizationHeader.substring(7)
-                : authorizationHeader;
-        authService.logout(accessToken);
+    public ResponseEntity<Void> logout(Authentication authentication) {
+        UUID userId = UUID.fromString((String) authentication.getPrincipal());
+        authService.logout(userId);
         return ResponseEntity.noContent().build();
     }
 

@@ -44,6 +44,7 @@ public class AuthService {
 
     private final CredentialService credentialService;
     private final TokenService tokenService;
+    private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final UserProfileRepository userProfileRepository;
@@ -168,22 +169,37 @@ public class AuthService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        return toLoginResponse(user);
+        return startSession(user);
     }
 
-    public void logout(String accessToken) {
-        // Phase 1: access and refresh tokens are both stateless JWTs, so there is nothing to
-        // revoke server-side yet — the gateway clears its own session cookies on logout. Real
-        // server-side revocation (invalidating a stored refresh-token family) arrives in Phase 2.
-    }
-
+    /**
+     * Revokes every live refresh-token session for the caller. This is a "log out everywhere":
+     * without the refresh token in hand (the gateway only forwards the access token here) a single
+     * family can't be singled out, and revoking all sessions is the safe choice. Requires an
+     * authenticated caller — an expired access token can't reach this, which is fine because the
+     * gateway clears its own cookies regardless.
+     */
     @Transactional
+    public void logout(UUID userId) {
+        refreshTokenService.revokeAllForUser(userId);
+    }
+
+    // Deliberately NOT @Transactional: rotate() and revokeAllForUser() each own their transaction
+    // and must commit independently of the DisabledException below (an ambient transaction here
+    // would roll their writes back on that throw).
     public LoginResponse refresh(String refreshToken) {
-        UUID userId = tokenService.parseRefreshToken(refreshToken);
-        User user = userRepository.findById(userId)
+        RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
+        User user = userRepository.findById(rotation.userId())
                 .orElseThrow(() -> new InvalidTokenException("Account for this refresh token no longer exists"));
-        ensureLoginAllowed(user);
-        return toLoginResponse(user);
+
+        if (LOGIN_BLOCKED_STATUSES.contains(user.getAccountStatus())) {
+            // The account was blocked mid-session — kill every session, including the one we just
+            // rotated into, rather than hand back a working token.
+            refreshTokenService.revokeAllForUser(user.getUserId());
+            throw new DisabledException("Account is " + user.getAccountStatus());
+        }
+
+        return buildSession(user, rotation.newRefreshToken());
     }
 
     // TODO(Phase 3): forgot/reset/verify still call Supabase GoTrue. Once the local one-time-token
@@ -224,6 +240,8 @@ public class AuthService {
             throw new BadCredentialsException("Current password is incorrect");
         }
         credentialService.updatePassword(callerId, newPassword);
+        // A password change invalidates every existing session — force re-login everywhere.
+        refreshTokenService.revokeAllForUser(callerId);
     }
 
     public AuthMeResponse getCurrentUserWithPermissions(UUID userId) {
@@ -248,12 +266,18 @@ public class AuthService {
         }
     }
 
-    private LoginResponse toLoginResponse(User user) {
-        TokenService.IssuedTokens tokens = tokenService.issueTokens(user);
+    /** Opens a fresh session (new refresh-token family) for a just-authenticated user. */
+    private LoginResponse startSession(User user) {
+        return buildSession(user, refreshTokenService.issue(user.getUserId()));
+    }
+
+    /** Pairs a newly minted access token with an already-issued refresh token. */
+    private LoginResponse buildSession(User user, String refreshToken) {
+        TokenService.AccessToken accessToken = tokenService.issueAccessToken(user);
         return new LoginResponse(
-                tokens.accessToken(),
-                tokens.refreshToken(),
-                tokens.expiresIn(),
+                accessToken.value(),
+                refreshToken,
+                accessToken.expiresIn(),
                 user.getUserId().toString(),
                 user.getUserType().getName()
         );

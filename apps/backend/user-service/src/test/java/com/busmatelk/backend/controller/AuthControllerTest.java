@@ -167,6 +167,84 @@ class AuthControllerTest {
     }
 
     @Test
+    void refreshRotatesTokenAndDetectsReuse() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("rotate@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Sup3rSecret!");
+
+        String firstRefresh = jsonField(login("rotate@example.com", "Sup3rSecret!"), "refreshToken");
+
+        // A refresh rotates: 200 with a brand-new, different refresh token.
+        String secondRefresh = mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", firstRefresh))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+        String rotated = jsonField(secondRefresh, "refreshToken");
+        assertThat(rotated).isNotEqualTo(firstRefresh);
+
+        // Replaying the now-rotated first token is rejected AND burns the whole family...
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", firstRefresh))))
+                .andExpect(status().isUnauthorized());
+
+        // ...so the legitimately rotated successor is now dead too.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", rotated))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutRevokesRefreshTokens() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("logout@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Sup3rSecret!");
+
+        String session = login("logout@example.com", "Sup3rSecret!");
+        String accessToken = jsonField(session, "accessToken");
+        String refreshToken = jsonField(session, "refreshToken");
+
+        mockMvc.perform(post("/api/auth/logout").header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNoContent());
+
+        // The refresh token no longer works after logout.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", refreshToken))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private String login(String email, String password) throws Exception {
+        return mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", password))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    private String jsonField(String json, String field) throws Exception {
+        return objectMapper.readTree(json).get(field).asText();
+    }
+
+    @Test
     void meReturnsEffectivePermissions() throws Exception {
         UUID userId = UUID.randomUUID();
         UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();

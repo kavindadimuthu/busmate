@@ -4,8 +4,29 @@
 while keeping RBAC/permissions/profile (already built there) unchanged and preserving the external
 API contract the api-gateway already depends on.
 
-**Status:** Phase 1 complete (local password auth + credential store, behind the existing
-HS256 token scheme). Phases 2–7 pending.
+**Status:** Phase 1 complete (local password auth + credential store). Phase **2a** complete
+(stored, rotating, reuse-detected refresh tokens + revocation). Phase **2b** (RS256/JWKS verifier
+switch) and Phases 3–7 pending.
+
+> **Phase 2a as-built notes (2026-07-16):**
+> - Split Phase 2 by decision: the self-contained refresh-token hardening shipped now; the RS256 +
+>   JWKS access-token switch (**2b**) is deferred because it must flip verifiers in **three apps at
+>   once** — user-service (`JwtAuthFilter` + `InternalService.validateToken`), api-gateway
+>   (`auth.middleware.ts` + `bff/session.ts`), and the management-portal Next.js app
+>   (`getJwtSecret()` in `proxy.ts` / `token/route.ts` / `getDecodedAccessToken.ts`). Access tokens
+>   remain HS256 for now, so nothing downstream changed.
+> - Added table `refresh_tokens` (opaque token stored only as a SHA-256 hash, `family_id` lineage).
+>   New `RefreshTokenService`; `TokenService` slimmed to access-token issuance only.
+> - Refresh tokens are opaque random 256-bit strings (never JWTs), **rotated on every `/refresh`**;
+>   replay of a rotated token burns the whole family (`noRollbackFor` so the burn survives its own
+>   throw). `logout` and `changePassword` revoke all of a user's live sessions.
+> - **Known limitation:** `logout` is "log out everywhere" — the gateway forwards only the access
+>   token, so a single family can't be singled out. Per-session logout needs the gateway to forward
+>   the refresh token (or a `sid` claim), a small future enhancement.
+>
+> **Phase 2b (still to do):** RSA keypair + `GET /public/jwks.json`, sign access tokens RS256 with a
+> `kid`, and flip all the verifiers above — ideally with a dual-accept (RS256‖HS256) grace window
+> per §6 so live sessions survive the cutover.
 
 > **Phase 1 as-built notes (2026-07-16):**
 > - Added tables `auth_credentials` and `user_identities` (Hibernate `ddl-auto: update`); the
