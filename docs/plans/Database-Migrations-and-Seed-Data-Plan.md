@@ -5,7 +5,10 @@ lifecycle — schema migrations plus seed data — that works on **plain Postgre
 Supabase-specific features) so any service can run against local Postgres, Supabase, RDS, Neon,
 Cloud SQL, or any other Postgres provider without change.
 
-**Status:** Phases 0–3 complete (2026-07-17). Phases 4–5 pending.
+**Status:** Phases 0–5 complete (2026-07-17), with a short list of explicitly-deferred follow-ups
+(see **§9 Remaining work / hand-back** at the end) — production/Supabase baselining, pushing the new
+CI workflow, and two pre-existing core-service test-behavior decisions surfaced (not caused) by
+Phase 4.
 
 **Scope:** The three JVM services that own a database — `apps/backend/user-service`,
 `apps/backend/core-service`, `apps/backend/ticketing-service`. `api-gateway` (Node, no database) is
@@ -16,7 +19,8 @@ out of scope.
 are **stale**. This plan is grounded in the *current* entity models, not those files, and
 supersedes them. `data.sql` was removed in Phase 3 (superseded by the real `seed/dev` migrations
 there; it was already inert — `spring.sql.init.mode: never`). `schema.sql` (trigger definitions,
-unrelated to seed data) is unaffected and still slated for removal in Phase 5. `core-service`'s
+unrelated to seed data) was removed in Phase 5 — it had been equally inert (`sql.init: never`) since
+Phase 1; see the Phase 5 as-built notes and §9. `core-service`'s
 three old `db/migration/V00x` files (aspirational Flyway-naming, never actually run) were retired
 in Phase 1 instead, ahead of schedule — see the
 Phase 1 as-built notes below for why.
@@ -384,7 +388,7 @@ out the pre-Phase-3 commit and re-running the same suites. Pre-existing, out of 
 user-service's suite (218 tests) is unaffected and green throughout — its test config was already
 corrected in Phase 2.
 
-### Phase 4 — Tests & CI
+### Phase 4 — Tests & CI — ✅ complete (2026-07-17)
 
 1. Switch integration tests to **Testcontainers Postgres** so Flyway migrations (Tiers 1 and 2) run
    against a real Postgres in CI — this validates every migration on every PR and removes the H2/
@@ -393,7 +397,50 @@ corrected in Phase 2.
 3. Add a CI gate: a clean-database `flyway migrate` + `flyway validate` to catch edited or
    out-of-order migrations before merge.
 
-### Phase 5 — Rollout & cleanup
+**As-built:**
+
+- **Testcontainers pattern (all three services).** Each service got an
+  `AbstractPostgresIntegrationTest` base class that starts one shared, static `postgres:16-alpine`
+  container for the whole suite and wires the datasource via `@DynamicPropertySource`. Every
+  `@SpringBootTest` extends it. Test config now uses `ddl-auto: validate` + real Flyway (same as
+  prod) instead of H2 + `create-drop`, so tests exercise the exact schema path production uses.
+  - `user-service`: dropped the H2 dependency; test `application.yml` runs Flyway
+    `db/migration,db/reference` (Tier 1 + 2). **218 tests green.**
+  - `ticketing-service`: added a test `application.yml` (the default profile — *not* `dev`, so the
+    Tier 3 demo seed never loads); Flyway `db/migration` only. **1 test green.**
+  - `core-service`: rewrote `application-test.yml` (it previously hard-coded a personal machine's
+    Postgres — `localhost:5432/test_routes`, user `kavinda` — which is why the suite only ever
+    errored out here); both test classes now run under `@ActiveProfiles("test")` against the
+    container. See the core-service note below.
+- **Phase 4.2 (data.sql).** `user-service/src/test/resources/data.sql` (which duplicated the RBAC
+  rows in H2 dialect) was **deleted** — the reference tier (`R__001–003`) now supplies that data via
+  Flyway, so tests assert against the same reference data prod ships. No separate test-specific seed
+  was needed; the few tests that need domain rows create them through the service layer.
+- **Phase 4.3 (CI).** Added `.github/workflows/backend-ci.yml` with two gates per service:
+  (a) `flyway-migrate-validate` — runs the Flyway CLI `migrate` then `validate` against a fresh
+  Postgres service container (catches edited / out-of-order / missing migrations); (b) `test` —
+  `mvn verify` with Testcontainers. **This workflow is committed but not yet pushed/run on GitHub**
+  (see §9) — validated locally via the equivalent paths (the Testcontainers suites already run
+  `flyway migrate` + Spring's startup `validate` on clean DBs).
+- **core-service — 4 pre-existing test bugs fixed, 2 behavioural failures left for you (not forced
+  green).** Moving core onto a real DB made `StopControllerIntegrationTest` actually *run* for the
+  first time (it could never connect before), which surfaced 6 failures — all HTTP-layer, none
+  caused by the migration change. Fixed the four that were unambiguous:
+  - Three used `@WithMockUser(roles = "USER")` against endpoints annotated
+    `@PreAuthorize("hasAnyRole('ADMIN','MOT')")` → always 403. Corrected the fixture role to `ADMIN`.
+  - One (`shouldHandleInvalidSortParameters`) expected `200` for an invalid sort field, but the API
+    correctly returns `400`; the test also swallowed the assertion in a `catch (Exception)` that
+    never catches `AssertionError`. Rewrote it to assert `400`.
+  - Malformed-JSON handling returned `500`; added an `HttpMessageNotReadableException → 400` handler
+    to `GlobalExceptionHandler` (the existing code already mapped other bad-JSON cases to 400 — this
+    just covers the parse-error case it missed). This is the one small app-code change in Phase 4.
+  - The **two left failing** (documented in §9) are genuine behavioural questions, not clear bugs:
+    (1) unauthenticated request returns `403`, the test wants `401` — a service-wide security-contract
+    choice; (2) the create response has null `createdAt/createdBy` — the entity uses Hibernate
+    `@CreationTimestamp` (set on flush) and has no `@CreatedBy`/`@EnableJpaAuditing` at all, so the
+    audit-user assertions test a feature that isn't implemented. Both are yours to decide.
+
+### Phase 5 — Rollout & cleanup — ✅ complete (2026-07-17), except deferred prod baselining (§9)
 
 1. **Local dev:** `docker compose down -v && docker compose up` yields a fully migrated + reference +
    demo-seeded stack, reproducibly, every time. `scripts/postgres/init-dev-dbs.sql` stays (it only
@@ -404,6 +451,62 @@ corrected in Phase 2.
    (`core-service/data.sql` and the `db/migration/README.md`/`V00x` files were already removed in
    Phases 1 and 3). Update or retire the stale `docs/database-management-guide.md` /
    `docs/database-reset-and-seed-guide.md`.
+
+**As-built:**
+
+- **5.1 fresh-stack.** Verified that `docker compose down -v` (drops the Postgres volume) followed by
+  `docker compose up` recreates the three databases from `scripts/postgres/init-dev-dbs.sql` and each
+  service migrates itself clean on boot: Tier 1 (`V001`…) → Tier 2 (`R__` reference, user-service) →
+  Tier 3 (`db/seed/dev` demo data, dev profile). Each service's fresh-DB migrate path was also
+  re-proven independently by the Phase 4 Testcontainers suites. `init-dev-dbs.sql` was kept as-is.
+- **5.3 stale artifacts.**
+  - **Deleted `core-service/src/main/resources/schema.sql`** (6 auto-calc PL/pgSQL functions + 4
+    triggers, an old "Path 3" experiment). Safe: it was loaded only via `spring.sql.init`, which has
+    been `mode: never` since Phase 1 — so it has been **inert for the whole plan**, and the entire
+    dev stack + every test has run correctly without it. ⚠️ This does remove DB-level
+    auto-calculation of `route_stop` distances / `schedule_stop` times; it's dormant today (the demo
+    seed pre-computes those values and the app writes them through the service layer), but if you
+    ever want that logic back it should return as a proper versioned migration, not a `sql.init`
+    file. The definitions remain in git history. Flagged in §9.
+  - **Removed all `spring.sql.init` config** from the three main `application.yml` files (it only
+    ever pointed at the now-deleted `schema.sql`/`data.sql`; against Postgres, `sql.init` is a no-op
+    by default anyway). Left the `mode: never` line in `core-service/application-e2e.yml` untouched —
+    the e2e profile is a separate concern outside this plan.
+  - **Retired the stale docs** with prominent "superseded / partially-outdated" banners rather than
+    deleting them (they're linked from other docs and have historical value):
+    `docs/database-reset-and-seed-guide.md` (described the old Supabase-only dev with no local DB) and
+    `docs/database-management-guide.md` (still claimed Supabase Auth, pre-dated Flyway). Both now
+    point to this plan, `dev-seed-credentials.md`, and `dev-seed-contract.md`.
+
+---
+
+## 9. Remaining work / hand-back
+
+These are the deliberately-deferred items — each needs a human decision or an outward-facing action
+I don't take unattended. None blocks local development, which is fully working end-to-end.
+
+1. **Production / Supabase baselining (Phase 5.2).** Baseline each production database at `V001` once
+   (as in Phase 1 for local), then migrations apply on deploy. This touches live databases and is
+   higher-stakes — do it deliberately, per service, with a backup. Not run here.
+2. **Push the CI workflow.** `.github/workflows/backend-ci.yml` is committed but has never executed on
+   GitHub Actions. Push a branch / open a PR to see it run, then confirm: the `redgate/flyway:11`
+   image tag resolves, and the runner Java version (17) matches. Minor tweaks may be needed on first
+   run. (The migrate/validate logic itself is already proven locally via the Testcontainers suites.)
+3. **core-service — two behavioural decisions** surfaced by Phase 4 (see the Phase 4 as-built notes),
+   both currently failing tests left intentionally un-forced:
+   - **Unauthenticated → `401` vs `403`.** `StopControllerIntegrationTest.shouldReturn401WhenCreatingStopWithoutAuth`
+     expects `401`; the service returns `403` for anonymous callers uniformly. Decide the intended
+     contract; if `401`, add an `authenticationEntryPoint` to `SecurityConfig` (a service-wide change
+     — check the api-gateway's expectations first).
+   - **Audit fields on create.** `shouldCreateStopWithValidDataAndAuth` asserts `createdAt`,
+     `updatedAt`, `createdBy = "testuser"`, `updatedBy = "testuser"` in the create response.
+     `createdBy/updatedBy` are never populated (no `@CreatedBy`/`@EnableJpaAuditing`), and
+     `createdAt/updatedAt` are Hibernate `@CreationTimestamp`/`@UpdateTimestamp` set on flush. Either
+     implement JPA auditing (with an `AuditorAware` reading the security principal) or adjust the test
+     to the intended behaviour.
+4. **core-service auto-calc triggers.** Decide whether the removed `schema.sql` trigger logic
+   (`route_stop` distance / `schedule_stop` time auto-calculation) is still wanted. If yes, add it as
+   a versioned Flyway migration; if no, nothing to do (it's already dormant).
 
 ---
 

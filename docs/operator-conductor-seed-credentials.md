@@ -1,5 +1,10 @@
 # Operator & Conductor Seed Credentials
 
+> **⚠️ Superseded (2026-07-17) — historical reference only.** This describes the old Supabase-era
+> seed script and Supabase Auth accounts. Dev accounts are now created by user-service's own Flyway
+> demo seed (self-hosted auth, no script). Current login list:
+> [`docs/dev-seed-credentials.md`](dev-seed-credentials.md).
+
 Created by [`scripts/seed-operator-conductor-profiles.sh`](../scripts/seed-operator-conductor-profiles.sh) (`pnpm run seed:operators`). These are real Supabase Auth accounts on the dev project — log in through any frontend's normal login form (management-portal's operator dashboard, conductor-mobile, etc.) or `POST /api/auth/login` via api-gateway.
 
 Every account here is fully aligned with the unified operator lifecycle (see [`docs/plans/Unified-Operator-Lifecycle-Management-Plan.md`](plans/Unified-Operator-Lifecycle-Management-Plan.md)): each operator's core-service `Operator` row was created through the real `/internal/operators` sync endpoint and carries a `userId` link back to its account — not raw seed SQL pretending to be linked.

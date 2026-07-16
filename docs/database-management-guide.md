@@ -1,5 +1,15 @@
 # Database Management Guide (Dev / Prod Profiles)
 
+> **⚠️ Partially outdated (2026-07-17).** Two things changed after this was written:
+> 1. **Authentication is now self-hosted** in user-service (in-house JWT issuance + JWKS); it is no
+>    longer Supabase Auth / GoTrue. Every "Auth stays Supabase" statement below is obsolete.
+> 2. **Schema, reference data, and demo seed are now Flyway-managed** — not Hibernate `ddl-auto`
+>    plus manual `schema.sql`/`data.sql`. See
+>    [`docs/plans/Database-Migrations-and-Seed-Data-Plan.md`](plans/Database-Migrations-and-Seed-Data-Plan.md).
+>
+> The dev-profile (local Postgres) vs prod-profile (hosted Postgres) split described below is still
+> broadly accurate — read the rest with the two corrections above in mind.
+
 How BusMate's three JVM backend services (`user-service`, `core-service`, `ticketing-service`) manage their databases across a **local development** profile (standard self-hosted PostgreSQL) and a **production** profile (Supabase-hosted PostgreSQL) — and how to start, reset, and reason about either one.
 
 Authentication is unaffected by any of this: Supabase Auth (GoTrue) stays the identity provider in every environment. Only the business-data Postgres connections switch. See [`docs/busmate-platform-run-guide.md`](busmate-platform-run-guide.md) for how to run the platform end-to-end, and [`docs/database-reset-and-seed-guide.md`](database-reset-and-seed-guide.md) for operator/conductor seed data (that guide predates this change and still describes the old Supabase-only dev setup — for local dev, wipe/reseed against your local Postgres instead, or point the script at Supabase manually if you specifically need cloud dev data).

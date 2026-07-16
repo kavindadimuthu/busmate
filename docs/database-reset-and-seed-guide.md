@@ -1,5 +1,17 @@
 # Database Reset & Operator/Conductor Seed Guide
 
+> **⚠️ Superseded (2026-07-17) — kept for historical reference only.**
+> This guide describes the old Supabase-only dev setup and a manual reset/seed script that no
+> longer apply. Local dev now uses a disposable local Postgres whose schema, reference data, and
+> demo seed are all **Flyway-managed** — no manual seed script, no Supabase for dev business data,
+> and no "there is no local database" caveat. To reset, just `docker compose down -v && docker
+> compose up`; everything re-migrates and re-seeds automatically. See instead:
+> - [`docs/dev-seed-credentials.md`](dev-seed-credentials.md) — current demo login accounts
+> - [`docs/plans/Database-Migrations-and-Seed-Data-Plan.md`](plans/Database-Migrations-and-Seed-Data-Plan.md) — the migration & seed-data approach
+> - [`docs/dev-seed-contract.md`](dev-seed-contract.md) — cross-service demo UUID registry
+>
+> Do not follow the steps below for current development.
+
 How to wipe stale operator/conductor test data and reseed a small, known set of Sri-Lankan-context operator and conductor profiles — reproducibly, with a single command, after restarting the platform's services.
 
 Login list for the resulting accounts: [`docs/operator-conductor-seed-credentials.md`](operator-conductor-seed-credentials.md).

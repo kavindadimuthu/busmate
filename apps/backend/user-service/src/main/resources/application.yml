@@ -80,12 +80,6 @@ spring:
     locations: classpath:db/migration,classpath:db/reference
     baseline-on-migrate: true
     baseline-version: 1
-  sql:
-    init:
-      # Set to never to avoid connection issues during SQL execution
-      mode: never  # Disable to avoid duplicate data and connection issues
-      continue-on-error: true  # Continue if some SQL statements fail
-      
   profiles:
     active: dev  # Safe local default (local Postgres); override via SPRING_PROFILES_ACTIVE=prod in production deploys
     
