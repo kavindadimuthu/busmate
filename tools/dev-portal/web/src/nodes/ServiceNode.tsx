@@ -3,19 +3,13 @@ import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { ServiceNodeData, EnvStatus } from '../types';
 
 function chipClass(e: EnvStatus | undefined): string {
-  if (!e) return 'chip off';
-  if (e.proc === 'starting') return 'chip pending';
-  if (e.proc === 'failed') return 'chip failed';
-  if (e.running) return e.source === 'docker' ? 'chip on docker' : 'chip on';
-  return 'chip off';
+  if (!e || !e.running) return 'chip off';
+  return e.source === 'docker' ? 'chip on docker' : 'chip on';
 }
 
 function chipTitle(env: string, e: EnvStatus | undefined): string {
-  if (!e) return `${env}: not running`;
-  if (e.proc === 'starting') return `${env}: starting…`;
-  if (e.proc === 'failed') return `${env}: failed`;
-  if (e.running) return `${env}: running via ${e.source}${e.detail ? ` (${e.detail})` : ''}`;
-  return `${env}: not running`;
+  if (!e || !e.running) return `${env}: not running`;
+  return `${env}: running via ${e.source}${e.detail ? ` (${e.detail})` : ''}`;
 }
 
 function ServiceNodeImpl({ data }: NodeProps<Node<ServiceNodeData>>) {

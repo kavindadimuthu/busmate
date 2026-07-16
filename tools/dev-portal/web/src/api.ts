@@ -14,10 +14,3 @@ export async function runAction(id: string, env: string, verb: 'start' | 'stop')
   });
   return res.json().catch(() => ({ ok: res.ok, message: res.ok ? 'OK' : `HTTP ${res.status}` }));
 }
-
-export async function getLogs(id: string, env: string): Promise<string[]> {
-  const res = await fetch(`/api/services/${encodeURIComponent(id)}/${encodeURIComponent(env)}/logs`);
-  if (!res.ok) return [];
-  const body = await res.json();
-  return body.logs ?? [];
-}

@@ -28,14 +28,17 @@ export const groups = [
 const port = (name, fallback) => Number(process.env[name] || fallback);
 
 // ── Action descriptors ──────────────────────────────────────────────────────
-// An `actions` entry maps an environment name to how that instance is launched.
-// The server derives BOTH start and stop from the descriptor:
-//   pnpm    → long-lived managed process (spawned, tracked, killed by tree)
+// An `actions` entry maps an environment name to how that instance is controlled.
+// The portal controls ONLY containerized services — every action is a Docker
+// Compose command, which is stateless (the daemon owns the lifecycle):
 //   compose → `docker compose [-f file] up -d [--build] <service>` / `stop <service>`
-const pnpm = (script) => ({ kind: 'pnpm', script });
+//
+// The `local` environment (a service run directly via `pnpm dev`) is intentionally
+// NOT controllable here — it's monitor-only. You start/stop those in the terminal
+// you ran them in; the portal just shows whether they're up. So `local` never gets
+// an action entry.
 const compose = (service, opts = {}) => ({ kind: 'compose', service, file: opts.file ?? null, build: !!opts.build });
 
-const DEV_COMPOSE = null; // default docker-compose.yml
 const PROD_COMPOSE = 'docker-compose.production.yml';
 const OBS_COMPOSE = 'docker-compose.observability.yml';
 const DBGATE_COMPOSE = 'tools/dbgate/docker-compose.yml';
@@ -47,35 +50,30 @@ export const services = [
     stack: 'Next.js · staff', envs: ['local'], pos: { x: 22, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('MGMT_PORTAL_PORT', 3000), path: '/' },
-    actions: { local: pnpm('dev:management-portal') },
   },
   {
     id: 'new-react-portal', label: 'new-react-portal', group: 'client',
     stack: 'Vite · staff', envs: ['local'], pos: { x: 228, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('NEW_PORTAL_PORT', 5173), path: '/' },
-    actions: { local: pnpm('dev:new-react-portal') },
   },
   {
     id: 'passenger-web', label: 'passenger-web', group: 'client',
     stack: 'Vite · React', envs: ['local'], pos: { x: 434, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('PASSENGER_WEB_PORT', 4000), path: '/' },
-    actions: { local: pnpm('dev:passenger-web') },
   },
   {
     id: 'passenger-mobile', label: 'passenger-mobile', group: 'client',
     stack: 'Expo · Metro', envs: ['local'], pos: { x: 640, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('EXPO_PASSENGER_PORT', 8081), path: '/status' },
-    actions: { local: pnpm('dev:passenger-mobile') },
   },
   {
     id: 'conductor-mobile', label: 'conductor-mobile', group: 'client',
     stack: 'Expo · Metro', envs: ['local'], pos: { x: 846, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('EXPO_CONDUCTOR_PORT', 8082), path: '/status' },
-    actions: { local: pnpm('dev:conductor-mobile') },
   },
 
   // ── Edge ─────────────────────────────────────────────────────────────────
@@ -86,7 +84,6 @@ export const services = [
     dependsOn: ['core-service', 'user-service', 'ticketing-service'],
     probe: { type: 'http', host: 'localhost', port: port('API_GATEWAY_PORT', 8080), path: '/health' },
     actions: {
-      local: pnpm('dev:api-gateway'),
       dev: compose('api-gateway', { build: true }),
       prod: compose('api-gateway', { file: PROD_COMPOSE, build: true }),
     },
@@ -99,7 +96,6 @@ export const services = [
     pos: { x: 22, y: 52 }, dockerService: 'core-service', dependsOn: ['postgres'],
     probe: { type: 'http', host: 'localhost', port: port('CORE_SERVICE_PORT', 9010), path: '/actuator/health' },
     actions: {
-      local: pnpm('dev:core-service'),
       dev: compose('core-service', { build: true }),
       prod: compose('core-service', { file: PROD_COMPOSE, build: true }),
     },
@@ -110,7 +106,6 @@ export const services = [
     pos: { x: 228, y: 52 }, dockerService: 'user-service', dependsOn: ['postgres', 'core-service'],
     probe: { type: 'http', host: 'localhost', port: port('USER_SERVICE_PORT', 9020), path: '/actuator/health' },
     actions: {
-      local: pnpm('dev:user-service'),
       dev: compose('user-service', { build: true }),
       prod: compose('user-service', { file: PROD_COMPOSE, build: true }),
     },
@@ -121,7 +116,6 @@ export const services = [
     pos: { x: 434, y: 52 }, dockerService: 'ticketing-service', dependsOn: ['postgres'],
     probe: { type: 'http', host: 'localhost', port: port('TICKETING_SERVICE_PORT', 9030), path: '/actuator/health' },
     actions: {
-      local: pnpm('dev:ticketing-service'),
       dev: compose('ticketing-service', { build: true }),
       prod: compose('ticketing-service', { file: PROD_COMPOSE, build: true }),
     },

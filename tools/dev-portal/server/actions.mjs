@@ -1,17 +1,18 @@
-// Executes start/stop for a service+environment, dispatching on the action
-// descriptor's `kind` (see services.config.mjs):
-//   pnpm    → managed long-lived process (processManager)
-//   compose → `docker compose [-f file] up -d [--build] <service>` / `stop <service>`
+// Executes start/stop for a service+environment.
+//
+// The portal controls only containerized services, so every action is a Docker
+// Compose command — `docker compose [-f file] up -d [--build] <service>` to start,
+// `docker compose [-f file] stop <service>` to stop. There's no process to track:
+// the Docker daemon owns the lifecycle, which keeps this server stateless.
 //
 // Safety: commands are built ONLY from the registry descriptor and the requested
 // env — never from raw request input. The service id/env are validated against the
-// registry before we get here. `docker compose` runs are fire-and-forget with a
-// bounded timeout so a hung build can't wedge the portal.
+// registry before we get here. Runs are bounded by a timeout so a hung build can't
+// wedge the portal.
 
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { services, REPO_ROOT } from '../services.config.mjs';
-import { startProcess, stopProcess } from './processManager.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -22,7 +23,9 @@ function resolve(serviceId, env) {
   if (!svc) return { error: `Unknown service "${serviceId}"` };
   if (!svc.envs.includes(env)) return { error: `"${serviceId}" has no "${env}" environment` };
   const action = svc.actions?.[env];
-  if (!action) return { error: `No start/stop action configured for ${serviceId} · ${env}` };
+  if (!action) {
+    return { error: `${serviceId} · ${env} is monitor-only — start/stop it where you ran it.` };
+  }
   return { svc, action };
 }
 
@@ -51,24 +54,16 @@ async function runCompose(action, verb) {
   }
 }
 
-/** Start a service in an environment. */
+/** Start a service in an environment (Docker Compose). */
 export async function startService(serviceId, env) {
   const r = resolve(serviceId, env);
   if (r.error) return { ok: false, message: r.error };
-
-  if (r.action.kind === 'pnpm') {
-    return startProcess({ serviceId, env, script: r.action.script, cwd: REPO_ROOT });
-  }
   return runCompose(r.action, 'up');
 }
 
-/** Stop a service in an environment. */
+/** Stop a service in an environment (Docker Compose). */
 export async function stopService(serviceId, env) {
   const r = resolve(serviceId, env);
   if (r.error) return { ok: false, message: r.error };
-
-  if (r.action.kind === 'pnpm') {
-    return stopProcess({ serviceId, env });
-  }
   return runCompose(r.action, 'stop');
 }

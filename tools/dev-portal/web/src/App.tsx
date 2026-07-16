@@ -276,7 +276,7 @@ function Flow() {
           />
         )}
         <div className="rf-note">
-          click a component for details &amp; run/stop · drag to rearrange · chip lit = running, blue = Docker, amber = starting
+          click a component for details &amp; run/stop · drag to rearrange · chip lit = running, blue = Docker
         </div>
         {toast && <div className={`toast ${toast.ok ? 'ok' : 'err'}`}>{toast.text}</div>}
       </div>

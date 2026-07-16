@@ -9,11 +9,8 @@ type Props = {
 };
 
 function envLine(e: EnvStatus | undefined): { label: string; cls: string } {
-  if (!e) return { label: 'not running', cls: 'down' };
-  if (e.proc === 'starting') return { label: 'starting…', cls: 'starting' };
-  if (e.proc === 'failed') return { label: 'failed', cls: 'failed' };
-  if (e.running) return { label: `running · ${e.source}${e.detail ? ` · ${e.detail}` : ''}`, cls: 'up' };
-  return { label: 'not running', cls: 'down' };
+  if (!e || !e.running) return { label: 'not running', cls: 'down' };
+  return { label: `running · ${e.source}${e.detail ? ` · ${e.detail}` : ''}`, cls: 'up' };
 }
 
 export function DetailPanel({ service, group, pending, onAction, onClose }: Props) {
@@ -61,7 +58,7 @@ export function DetailPanel({ service, group, pending, onAction, onClose }: Prop
             const line = envLine(e);
             const kind = s.actions?.[env];
             const controllable = Boolean(kind);
-            const isRunning = Boolean(e?.running) || e?.proc === 'starting' || e?.proc === 'running';
+            const isRunning = Boolean(e?.running);
             const isPending = pending[`${s.id}:${env}`];
             return (
               <div className="dp-env-row" key={env}>
@@ -73,7 +70,9 @@ export function DetailPanel({ service, group, pending, onAction, onClose }: Prop
                   <div className={`dp-env-state ${line.cls}`}>{line.label}</div>
                 </div>
                 {!controllable ? (
-                  <span className="dp-env-note">status only</span>
+                  <span className="dp-env-note" title="Not controlled from the portal — start/stop it in your terminal">
+                    monitor only
+                  </span>
                 ) : isPending ? (
                   <button className="dp-btn working" disabled>
                     working…

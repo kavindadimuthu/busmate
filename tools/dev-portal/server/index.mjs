@@ -2,22 +2,20 @@
 //
 //   GET  /api/ping                               liveness
 //   GET  /api/status                             live status for the whole registry
-//   POST /api/services/:id/:env/start            start a service in an environment
+//   POST /api/services/:id/:env/start            start a service in an environment (Docker)
 //   POST /api/services/:id/:env/stop             stop it
-//   GET  /api/services/:id/:env/logs             recent output of a managed pnpm process
 //   (everything else) → the built Vite app in web/dist
 //
-// Bound to localhost only — it can start/stop processes and containers, so it must
-// never be exposed on a routable interface. Run with `pnpm dev-portal`.
+// Bound to localhost only — it can start/stop containers, so it must never be
+// exposed on a routable interface. Run with `pnpm dev-portal`.
 
 import express from 'express';
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { services, groups, softEdges } from '../services.config.mjs';
 import { buildStatus } from './probe.mjs';
 import { startService, stopService } from './actions.mjs';
-import { processLogs, killAll } from './processManager.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const WEB_DIST = join(__dirname, '..', 'web', 'dist');
@@ -72,14 +70,6 @@ app.post('/api/services/:id/:env/stop', requireServiceEnv, async (req, res) => {
   res.status(result.ok ? 200 : 409).json(result);
 });
 
-app.get('/api/services/:id/:env/logs', requireServiceEnv, (req, res) => {
-  const logs = processLogs(req.params.id, req.params.env);
-  if (logs === null) {
-    return res.status(404).json({ ok: false, message: 'No managed process (Docker services log via `docker compose logs`).' });
-  }
-  res.json({ ok: true, logs });
-});
-
 // ── Static Vite build ──────────────────────────────────────────────────────
 if (existsSync(WEB_DIST)) {
   app.use(express.static(WEB_DIST));
@@ -93,12 +83,7 @@ if (existsSync(WEB_DIST)) {
       .send('<pre>UI not built yet. Run:  pnpm --filter @busmate/dev-portal build\n(or use `pnpm dev-portal` which builds first)</pre>'));
 }
 
-const server = app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, () => {
   // eslint-disable-next-line no-console
   console.log(`\n  BusMate dev-portal  →  http://localhost:${PORT}\n`);
 });
-
-// Clean up any pnpm processes we spawned when the portal is stopped.
-function shutdown() { killAll(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500); }
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);

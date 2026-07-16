@@ -2,7 +2,6 @@ export type EnvStatus = {
   running: boolean;
   source: 'docker' | 'process' | null;
   detail: string | null;
-  proc: 'starting' | 'running' | 'exited' | 'failed' | null;
 };
 
 export type ServiceStatus = {
