@@ -11,9 +11,11 @@ import {
   type Edge,
   type NodeTypes,
   type OnNodeDrag,
+  type NodeMouseHandler,
 } from '@xyflow/react';
 import { ServiceNode } from './nodes/ServiceNode';
 import { GroupNode } from './nodes/GroupNode';
+import { DetailPanel } from './DetailPanel';
 import { usePersistedPositions } from './usePersistedPositions';
 import { getStatus, runAction } from './api';
 import type { StatusPayload, ServiceNodeData, GroupNodeData } from './types';
@@ -63,6 +65,7 @@ function Flow() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [pending, setPending] = useState<Pending>({});
   const [toast, setToast] = useState<Toast>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { positions, savePosition, reset, hasOverrides } = usePersistedPositions();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<ServiceNodeData | GroupNodeData>>([]);
@@ -136,8 +139,6 @@ function Flow() {
         const position = forceLayout
           ? positions[s.id] ?? s.pos
           : prevPos.get(s.id) ?? positions[s.id] ?? s.pos;
-        const nodePending: Record<string, boolean> = {};
-        for (const env of s.envs) if (pending[`${s.id}:${env}`]) nodePending[env] = true;
         return {
           id: s.id,
           type: 'service',
@@ -150,11 +151,9 @@ function Flow() {
             label: s.label,
             stack: s.stack,
             envs: s.envs,
-            actions: s.actions,
             status: s.status,
             groupColor: colorOf[s.group],
-            onAction,
-            pending: nodePending,
+            selected: selectedId === s.id,
           },
         };
       });
@@ -162,7 +161,7 @@ function Flow() {
     });
     appliedLayout.current = layoutVersion;
     setEdges(buildEdges(payload));
-  }, [payload, pending, layoutVersion, positions, onAction, setNodes, setEdges]);
+  }, [payload, layoutVersion, positions, selectedId, setNodes, setEdges]);
 
   const onNodeDragStop: OnNodeDrag<Node<ServiceNodeData | GroupNodeData>> = useCallback(
     (_evt, node) => {
@@ -170,6 +169,14 @@ function Flow() {
     },
     [savePosition],
   );
+
+  // Clicking a service selects it and opens the detail card; clicking empty
+  // canvas deselects and closes it.
+  const onNodeClick: NodeMouseHandler<Node<ServiceNodeData | GroupNodeData>> = useCallback((_evt, node) => {
+    if (node.type === 'service') setSelectedId(node.id);
+  }, []);
+  const onPaneClick = useCallback(() => setSelectedId(null), []);
+  const closePanel = useCallback(() => setSelectedId(null), []);
 
   const onReset = useCallback(() => {
     reset();
@@ -188,6 +195,15 @@ function Flow() {
     if (!payload) return { up: 0, total: 0 };
     return { up: payload.services.filter((s) => s.status?.running).length, total: payload.services.length };
   }, [payload]);
+
+  // Re-read the selected service from the latest payload so the card live-updates
+  // (status/env transitions) while it's open. Clears itself if the id disappears.
+  const selected = useMemo(() => {
+    if (!payload || !selectedId) return null;
+    const service = payload.services.find((s) => s.id === selectedId);
+    if (!service) return null;
+    return { service, group: payload.groups.find((g) => g.id === service.group) };
+  }, [payload, selectedId]);
 
   return (
     <div className="app">
@@ -231,6 +247,8 @@ function Flow() {
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onNodeDragStop={onNodeDragStop}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
           fitView
           minZoom={0.3}
           maxZoom={1.6}
@@ -248,8 +266,17 @@ function Flow() {
             style={{ background: '#0d141b', border: '1px solid #253340' }}
           />
         </ReactFlow>
+        {selected && (
+          <DetailPanel
+            service={selected.service}
+            group={selected.group}
+            pending={pending}
+            onAction={onAction}
+            onClose={closePanel}
+          />
+        )}
         <div className="rf-note">
-          drag components to rearrange · <b>⋯</b> menu = run/stop per environment · chip lit = running, blue = Docker, amber = starting
+          click a component for details &amp; run/stop · drag to rearrange · chip lit = running, blue = Docker, amber = starting
         </div>
         {toast && <div className={`toast ${toast.ok ? 'ok' : 'err'}`}>{toast.text}</div>}
       </div>

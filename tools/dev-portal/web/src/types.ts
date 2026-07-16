@@ -43,17 +43,16 @@ export type StatusPayload = {
   services: Service[];
 };
 
-// Data carried on each ReactFlow node.
+// Data carried on each ReactFlow node. The node is purely presentational now —
+// clicking it selects the service, which opens the detail card (see DetailPanel).
 export type ServiceNodeData = {
+  id: string;
   label: string;
   stack: string;
   envs: string[];
-  actions: Record<string, 'pnpm' | 'compose'>;
   status: ServiceStatus;
   groupColor: string;
-  onAction: (id: string, env: string, verb: 'start' | 'stop') => void;
-  pending: Record<string, boolean>; // key `${env}` → in-flight
-  id: string;
+  selected: boolean;
 };
 
 export type GroupNodeData = {
