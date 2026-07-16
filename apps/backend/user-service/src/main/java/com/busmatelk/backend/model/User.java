@@ -20,7 +20,7 @@ import java.util.UUID;
 public class User {
     @Id
     @Column(name = "user_id")
-    private UUID userId;  // NOT auto-generated — set from Supabase Auth UID
+    private UUID userId;  // NOT auto-generated — assigned by AuthService at creation time
 
     @Column(unique = true, nullable = false)
     private String email;

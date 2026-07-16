@@ -1,7 +1,6 @@
 package com.busmatelk.backend.service;
 
 import com.busmatelk.backend.client.SupabaseAuthClient;
-import com.busmatelk.backend.client.dto.SupabaseSignupResponse;
 import com.busmatelk.backend.client.dto.SupabaseTokenResponse;
 import com.busmatelk.backend.dto.request.CreateUserRequest;
 import com.busmatelk.backend.dto.request.LoginRequestDTO;
@@ -11,14 +10,18 @@ import com.busmatelk.backend.dto.response.LoginResponse;
 import com.busmatelk.backend.dto.response.RegisterResponse;
 import com.busmatelk.backend.event.UserEventPublisher;
 import com.busmatelk.backend.model.User;
+import com.busmatelk.backend.model.UserIdentity;
 import com.busmatelk.backend.model.UserProfile;
 import com.busmatelk.backend.model.UserType;
 import com.busmatelk.backend.operator.OperatorSyncService;
+import com.busmatelk.backend.repository.UserIdentityRepository;
 import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,65 +29,73 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final SupabaseAuthClient supabaseAuthClient;
+    /** Provider name recorded for email/password logins in {@code user_identities}. */
+    private static final String LOCAL_PROVIDER = "local";
+
+    /** Account statuses that block a login/refresh outright (the gateway also 403s on "suspended"). */
+    private static final Set<String> LOGIN_BLOCKED_STATUSES = Set.of("suspended", "deactivated", "deleted");
+
+    private final CredentialService credentialService;
+    private final TokenService tokenService;
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final UserProfileRepository userProfileRepository;
+    private final UserIdentityRepository userIdentityRepository;
     private final PermissionService permissionService;
     private final UserEventPublisher userEventPublisher;
     private final ProfileSchemaValidator profileSchemaValidator;
     private final OperatorSyncService operatorSyncService;
 
+    // Still backs the email flows (forgot/reset/verify) until Phase 3 brings them in-house.
+    private final SupabaseAuthClient supabaseAuthClient;
+
     /**
-     * Self-registration flow — always creates a "passenger", pending verification.
+     * Self-registration flow — always creates a "passenger", pending verification. The user row,
+     * its password credential, the local identity, and the profile are all written in one
+     * transaction, so a failure anywhere rolls the whole thing back. (This is what retires the old
+     * Supabase dual-write and its orphaned-user compensation: there is no second system to keep in
+     * sync anymore.)
      */
     @Transactional
     public RegisterResponse registerPassenger(RegisterRequest request) {
         UserType passengerType = userTypeRepository.findByName("passenger")
                 .orElseThrow(() -> new IllegalStateException("'passenger' user type is not seeded"));
 
-        SupabaseSignupResponse signup = supabaseAuthClient.signup(request.getEmail(), request.getPassword());
-        String userIdString = signup.userId();
-        if (userIdString == null) {
-            throw new IllegalStateException("Supabase signup response did not include a user id");
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("An account with this email already exists");
         }
 
-        try {
-            supabaseAuthClient.updateUserAppMetadata(userIdString, Map.of(
-                    "user_type", "passenger",
-                    "account_status", "pending"
-            ));
+        UUID userId = UUID.randomUUID();
+        User user = User.builder()
+                .userId(userId)
+                .email(request.getEmail())
+                .fullName(request.getFullName())
+                .username(request.getUsername())
+                .phoneNumber(request.getPhoneNumber())
+                .userType(passengerType)
+                .accountStatus("pending")
+                .isEmailVerified(false)
+                .build();
+        user = userRepository.save(user);
 
-            User user = User.builder()
-                    .userId(UUID.fromString(userIdString))
-                    .email(request.getEmail())
-                    .fullName(request.getFullName())
-                    .username(request.getUsername())
-                    .phoneNumber(request.getPhoneNumber())
-                    .userType(passengerType)
-                    .accountStatus("pending")
-                    .isEmailVerified(false)
-                    .build();
-            user = userRepository.save(user);
+        credentialService.createCredential(userId, request.getPassword());
+        saveLocalIdentity(userId, request.getEmail());
 
-            UserProfile profile = UserProfile.builder()
-                    .user(user)
-                    .profileData(new HashMap<>())
-                    .build();
-            userProfileRepository.save(profile);
-            userEventPublisher.publishUserCreated(user);
+        UserProfile profile = UserProfile.builder()
+                .user(user)
+                .profileData(new HashMap<>())
+                .build();
+        userProfileRepository.save(profile);
+        userEventPublisher.publishUserCreated(user);
 
-            return new RegisterResponse(user.getUserId(), user.getEmail(), "passenger", user.getAccountStatus());
-        } catch (RuntimeException e) {
-            rollBackOrphanedSupabaseUser(userIdString);
-            throw e;
-        }
+        return new RegisterResponse(user.getUserId(), user.getEmail(), "passenger", user.getAccountStatus());
     }
 
     /**
@@ -101,94 +112,83 @@ public class AuthService {
         UserType targetType = userTypeRepository.findByName(request.getUserType())
                 .orElseThrow(() -> new IllegalArgumentException("Unknown user type: " + request.getUserType()));
 
-        // Validated up front, before the Supabase signup call, so an incomplete profile
-        // (e.g. an operator missing organization_name/operator_type/region — required since
-        // the unified operator lifecycle sync needs them) never leaves an orphaned Supabase
-        // Auth user behind.
+        // Validated up front, before any row is written, so an incomplete profile (e.g. an
+        // operator missing organization_name/operator_type/region — required since the unified
+        // operator lifecycle sync needs them) fails fast rather than half-creating the account.
         Map<String, Object> profileData = request.getProfileData() != null
                 ? new HashMap<>(request.getProfileData())
                 : new HashMap<>();
         profileSchemaValidator.validate(request.getUserType(), profileData);
 
-        SupabaseSignupResponse signup = supabaseAuthClient.signup(request.getEmail(), request.getPassword());
-        String userIdString = signup.userId();
-        if (userIdString == null) {
-            throw new IllegalStateException("Supabase signup response did not include a user id");
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("An account with this email already exists");
         }
 
-        try {
-            supabaseAuthClient.updateUserAppMetadata(userIdString, Map.of(
-                    "user_type", request.getUserType(),
-                    "account_status", "active"
-            ));
+        UUID userId = UUID.randomUUID();
+        User creator = userRepository.findById(callerId).orElseThrow();
 
-            User creator = userRepository.findById(callerId).orElseThrow();
+        User user = User.builder()
+                .userId(userId)
+                .email(request.getEmail())
+                .fullName(request.getFullName())
+                .username(request.getUsername())
+                .phoneNumber(request.getPhoneNumber())
+                .userType(targetType)
+                .accountStatus("active")
+                .isEmailVerified(false)
+                .createdBy(creator)
+                .build();
+        user = userRepository.save(user);
 
-            User user = User.builder()
-                    .userId(UUID.fromString(userIdString))
-                    .email(request.getEmail())
-                    .fullName(request.getFullName())
-                    .username(request.getUsername())
-                    .phoneNumber(request.getPhoneNumber())
-                    .userType(targetType)
-                    .accountStatus("active")
-                    .isEmailVerified(false)
-                    .createdBy(creator)
-                    .build();
-            user = userRepository.save(user);
+        credentialService.createCredential(userId, request.getPassword());
+        saveLocalIdentity(userId, request.getEmail());
 
-            UserProfile profile = UserProfile.builder()
-                    .user(user)
-                    .profileData(profileData)
-                    .build();
-            userProfileRepository.save(profile);
-            userEventPublisher.publishUserCreated(user);
-            operatorSyncService.syncCreate(user.getUserId(), request.getUserType(), profileData, user.getAccountStatus());
+        UserProfile profile = UserProfile.builder()
+                .user(user)
+                .profileData(profileData)
+                .build();
+        userProfileRepository.save(profile);
+        userEventPublisher.publishUserCreated(user);
+        operatorSyncService.syncCreate(user.getUserId(), request.getUserType(), profileData, user.getAccountStatus());
 
-            return new RegisterResponse(user.getUserId(), user.getEmail(), request.getUserType(), user.getAccountStatus());
-        } catch (RuntimeException e) {
-            rollBackOrphanedSupabaseUser(userIdString);
-            throw e;
-        }
+        return new RegisterResponse(user.getUserId(), user.getEmail(), request.getUserType(), user.getAccountStatus());
     }
 
+    @Transactional
     public LoginResponse login(LoginRequestDTO request) {
-        SupabaseTokenResponse token = supabaseAuthClient.loginWithPassword(request.getEmail(), request.getPassword());
-        SupabaseTokenResponse.SupabaseUser supaUser = token.getUser();
-        if (supaUser == null || supaUser.getId() == null) {
-            throw new IllegalStateException("Supabase login response did not include user info");
+        // A missing user and a wrong password fail identically — no account-enumeration signal.
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+
+        if (!credentialService.verifyPassword(user.getUserId(), request.getPassword())) {
+            throw new BadCredentialsException("Invalid email or password");
         }
+        ensureLoginAllowed(user);
 
-        userRepository.findById(UUID.fromString(supaUser.getId())).ifPresent(user -> {
-            user.setLastLoginAt(Instant.now());
-            userRepository.save(user);
-        });
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
 
-        return new LoginResponse(
-                token.getAccessToken(),
-                token.getRefreshToken(),
-                token.getExpiresIn(),
-                supaUser.getId(),
-                userTypeOf(supaUser)
-        );
+        return toLoginResponse(user);
     }
 
     public void logout(String accessToken) {
-        supabaseAuthClient.logout(accessToken);
+        // Phase 1: access and refresh tokens are both stateless JWTs, so there is nothing to
+        // revoke server-side yet — the gateway clears its own session cookies on logout. Real
+        // server-side revocation (invalidating a stored refresh-token family) arrives in Phase 2.
     }
 
+    @Transactional
     public LoginResponse refresh(String refreshToken) {
-        SupabaseTokenResponse token = supabaseAuthClient.refreshToken(refreshToken);
-        SupabaseTokenResponse.SupabaseUser supaUser = token.getUser();
-        return new LoginResponse(
-                token.getAccessToken(),
-                token.getRefreshToken(),
-                token.getExpiresIn(),
-                supaUser != null ? supaUser.getId() : null,
-                userTypeOf(supaUser)
-        );
+        UUID userId = tokenService.parseRefreshToken(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidTokenException("Account for this refresh token no longer exists"));
+        ensureLoginAllowed(user);
+        return toLoginResponse(user);
     }
 
+    // TODO(Phase 3): forgot/reset/verify still call Supabase GoTrue. Once the local one-time-token
+    // + email pipeline lands, these move in-house; until then they only work for users that still
+    // exist in Supabase, not for accounts created through the local registration path above.
     public void forgotPassword(String email) {
         supabaseAuthClient.sendRecoveryEmail(email);
     }
@@ -215,18 +215,15 @@ public class AuthService {
     }
 
     /**
-     * Verifies currentPassword by performing a real Supabase login with it (doubling as
-     * re-authentication), then applies newPassword using the session that login just returned.
-     * No separate "current password" check is needed against the local DB — Supabase Auth is
-     * the sole source of truth for credentials, this service never stores a password hash.
+     * Re-authenticates against the current password (verified locally against auth_credentials)
+     * before applying the new one. Supabase is no longer in this path.
      */
+    @Transactional
     public void changePassword(UUID callerId, String currentPassword, String newPassword) {
-        User user = userRepository.findById(callerId).orElseThrow();
-        SupabaseTokenResponse session = supabaseAuthClient.loginWithPassword(user.getEmail(), currentPassword);
-        if (session.getAccessToken() == null) {
-            throw new IllegalStateException("Password verification did not return a session");
+        if (!credentialService.verifyPassword(callerId, currentPassword)) {
+            throw new BadCredentialsException("Current password is incorrect");
         }
-        supabaseAuthClient.updateUserPassword(session.getAccessToken(), newPassword);
+        credentialService.updatePassword(callerId, newPassword);
     }
 
     public AuthMeResponse getCurrentUserWithPermissions(UUID userId) {
@@ -245,23 +242,29 @@ public class AuthService {
         );
     }
 
-    private String userTypeOf(SupabaseTokenResponse.SupabaseUser supaUser) {
-        if (supaUser == null || supaUser.getAppMetadata() == null) {
-            return null;
+    private void ensureLoginAllowed(User user) {
+        if (LOGIN_BLOCKED_STATUSES.contains(user.getAccountStatus())) {
+            throw new DisabledException("Account is " + user.getAccountStatus());
         }
-        Object userType = supaUser.getAppMetadata().get("user_type");
-        return userType != null ? userType.toString() : null;
     }
 
-    /**
-     * Best-effort compensation for the dual-write: if the local DB save fails after the
-     * Supabase Auth user was already created, delete it rather than leave it orphaned.
-     */
-    private void rollBackOrphanedSupabaseUser(String userIdString) {
-        try {
-            supabaseAuthClient.deleteUser(userIdString);
-        } catch (RuntimeException cleanupError) {
-            // Swallow — the original failure is what the caller needs to see.
-        }
+    private LoginResponse toLoginResponse(User user) {
+        TokenService.IssuedTokens tokens = tokenService.issueTokens(user);
+        return new LoginResponse(
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                tokens.expiresIn(),
+                user.getUserId().toString(),
+                user.getUserType().getName()
+        );
+    }
+
+    private void saveLocalIdentity(UUID userId, String email) {
+        userIdentityRepository.save(UserIdentity.builder()
+                .userId(userId)
+                .provider(LOCAL_PROVIDER)
+                .providerUserId(email)
+                .email(email)
+                .build());
     }
 }

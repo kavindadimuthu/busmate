@@ -34,6 +34,16 @@ supabase:
   api:
     key: test-service-role-key
 
+# In-house auth signing config. Shares the same secret as supabase.jwt.secret above so tokens
+# TokenService issues verify with the same key JwtAuthFilter uses (mirrors the main config,
+# where auth.jwt.secret defaults to SUPABASE_JWT_SECRET).
+auth:
+  jwt:
+    secret: test-jwt-secret-for-automated-tests-only
+    access-token-ttl-seconds: 3600
+    refresh-token-ttl-seconds: 2592000
+    issuer: busmate-user-service-test
+
 internal:
   api-key: test-internal-api-key
 

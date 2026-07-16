@@ -4,7 +4,24 @@
 while keeping RBAC/permissions/profile (already built there) unchanged and preserving the external
 API contract the api-gateway already depends on.
 
-**Status:** Draft / not started.
+**Status:** Phase 1 complete (local password auth + credential store, behind the existing
+HS256 token scheme). Phases 2–7 pending.
+
+> **Phase 1 as-built notes (2026-07-16):**
+> - Added tables `auth_credentials` and `user_identities` (Hibernate `ddl-auto: update`); the
+>   `refresh_tokens` / `one_time_tokens` / `auth_audit_log` tables stay deferred to their phases.
+> - `PasswordConfig` (bcrypt via DelegatingPasswordEncoder, Supabase-hash compatible),
+>   `CredentialService`, and `TokenService` (see the deviation below) are new.
+> - `AuthService.registerPassenger` / `createUser` / `login` / `refresh` / `changePassword` are
+>   fully local — the Supabase dual-write and `rollBackOrphanedSupabaseUser` are gone.
+> - **Deviation from plan:** to keep login working now (rather than waiting for Phase 2), Phase 1
+>   issues HS256 JWTs signed with the existing `auth.jwt.secret` (defaults to `SUPABASE_JWT_SECRET`)
+>   and reproduces GoTrue's `app_metadata` claim shape, so the gateway + `JwtAuthFilter` verify
+>   unchanged. Refresh tokens are stateless JWTs here. Phase 2 still owns the RS256/JWKS upgrade
+>   **and** the opaque, stored, rotating refresh tokens with real revocation.
+> - **Still on Supabase until Phase 3:** `forgot-password` / `reset-password` / `verify-email`
+>   (marked `TODO(Phase 3)` in `AuthService`). `logout` is a documented no-op until Phase 2.
+> - Not started here: rate limiting / lockout (columns exist on `auth_credentials`, unenforced).
 
 ---
 

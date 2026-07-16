@@ -1,12 +1,11 @@
 package com.busmatelk.backend.controller;
 
 import com.busmatelk.backend.client.SupabaseAuthClient;
-import com.busmatelk.backend.client.dto.SupabaseSignupResponse;
-import com.busmatelk.backend.client.dto.SupabaseTokenResponse;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserType;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
+import com.busmatelk.backend.service.CredentialService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -28,8 +27,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -51,7 +48,11 @@ class AuthControllerTest {
     @Autowired
     private UserTypeRepository userTypeRepository;
 
-    // Never hits the real Supabase Auth API — every test stubs exactly the calls it needs.
+    @Autowired
+    private CredentialService credentialService;
+
+    // Auth is fully in-house now; this mock only stands in for the email flows (forgot/reset/
+    // verify) that still call GoTrue until Phase 3. Register/login below never touch it.
     @MockitoBean
     private SupabaseAuthClient supabaseAuthClient;
 
@@ -60,12 +61,6 @@ class AuthControllerTest {
 
     @Test
     void passengerCanSelfRegister() throws Exception {
-        String fakeUserId = UUID.randomUUID().toString();
-        SupabaseSignupResponse signupResponse = new SupabaseSignupResponse();
-        signupResponse.setId(fakeUserId);
-        signupResponse.setEmail("newpassenger@example.com");
-        when(supabaseAuthClient.signup(anyString(), anyString())).thenReturn(signupResponse);
-
         Map<String, Object> requestBody = Map.of(
                 "email", "newpassenger@example.com",
                 "password", "Sup3rSecret!",
@@ -93,12 +88,6 @@ class AuthControllerTest {
         // as the plan's literal test case describes. This verifies that guarantee holds even
         // if a caller sends the field anyway: Jackson silently ignores the unknown property
         // and the user is still created as a passenger, rather than failing at all.
-        String fakeUserId = UUID.randomUUID().toString();
-        SupabaseSignupResponse signupResponse = new SupabaseSignupResponse();
-        signupResponse.setId(fakeUserId);
-        signupResponse.setEmail("wannabeadmin@example.com");
-        when(supabaseAuthClient.signup(anyString(), anyString())).thenReturn(signupResponse);
-
         String requestJson = "{\"email\":\"wannabeadmin@example.com\",\"password\":\"Sup3rSecret!\","
                 + "\"fullName\":\"Sneaky\",\"userType\":\"admin\"}";
 
@@ -107,6 +96,27 @@ class AuthControllerTest {
                         .content(requestJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userType").value("passenger"));
+    }
+
+    @Test
+    void registerRejectsDuplicateEmail() throws Exception {
+        // Seed the pre-existing account directly (no user_profiles row) rather than via a first
+        // /register call: the duplicate-check re-reads the existing user by email, and re-reading
+        // a profile's "{}" JSONB from a fresh persistence context trips the same H2-only
+        // JsonBinaryType bug noted in passengerCanSelfRegister (fine on real Postgres).
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(UUID.randomUUID())
+                .email("dupe@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+
+        String body = "{\"email\":\"dupe@example.com\",\"password\":\"Sup3rSecret!\",\"fullName\":\"Second\"}";
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -120,31 +130,40 @@ class AuthControllerTest {
                 .accountStatus("active")
                 .isEmailVerified(true)
                 .build());
-
-        SupabaseTokenResponse tokenResponse = new SupabaseTokenResponse();
-        tokenResponse.setAccessToken("fake-access-token");
-        tokenResponse.setRefreshToken("fake-refresh-token");
-        tokenResponse.setExpiresIn(3600L);
-        SupabaseTokenResponse.SupabaseUser supaUser = new SupabaseTokenResponse.SupabaseUser();
-        supaUser.setId(existingUserId.toString());
-        supaUser.setEmail("existing@example.com");
-        supaUser.setAppMetadata(Map.of("user_type", "passenger", "account_status", "active"));
-        tokenResponse.setUser(supaUser);
-
-        when(supabaseAuthClient.loginWithPassword("existing@example.com", "whatever")).thenReturn(tokenResponse);
+        credentialService.createCredential(existingUserId, "Sup3rSecret!");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                Map.of("email", "existing@example.com", "password", "whatever"))))
+                                Map.of("email", "existing@example.com", "password", "Sup3rSecret!"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("fake-access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("fake-refresh-token"))
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.userType").value("passenger"))
                 .andExpect(jsonPath("$.userId").value(existingUserId.toString()));
 
         User reloaded = userRepository.findById(existingUserId).orElseThrow();
         assertThat(reloaded.getLastLoginAt()).isNotNull();
+    }
+
+    @Test
+    void loginRejectsWrongPassword() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("wrongpass@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Correct-Password-1");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "wrongpass@example.com", "password", "not-it"))))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

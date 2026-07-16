@@ -118,6 +118,16 @@ supabase:
   api:
     key: ${SUPABASE_SERVICE_ROLE_KEY:dev-only-placeholder-service-role-key-change-me}
 
+# In-house authentication (Phase 1 of the Supabase-auth migration). The signing secret defaults
+# to the existing SUPABASE_JWT_SECRET so tokens this service now issues locally keep verifying in
+# the API gateway and JwtAuthFilter unchanged; Phase 2 swaps this for an RS256 keypair + JWKS.
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET:${SUPABASE_JWT_SECRET:dev-only-placeholder-jwt-secret-change-me}}
+    access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:3600}
+    refresh-token-ttl-seconds: ${AUTH_REFRESH_TOKEN_TTL_SECONDS:2592000}
+    issuer: ${AUTH_JWT_ISSUER:busmate-user-service}
+
 # Shared secret other backend services use to call /internal/** directly (never routed
 # through the API gateway, which blocks /internal/** entirely). Override via env var in
 # every real environment — this fallback is an obvious local-dev-only placeholder.
