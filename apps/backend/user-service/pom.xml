@@ -88,6 +88,16 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- Social login ID-token verification (auth migration Phase 4): NimbusJwtDecoder gives
+		     us JWKS fetch+cache and issuer/audience/expiry validation for Google/Facebook ID
+		     tokens without hand-rolling a JWK client. Only its decoder classes are used here —
+		     the resource-server auto-configuration backs off in favor of our own SecurityConfig
+		     since a SecurityFilterChain bean already exists. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>

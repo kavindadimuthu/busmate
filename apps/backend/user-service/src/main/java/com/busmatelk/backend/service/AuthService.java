@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,6 +51,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final OneTimeTokenService oneTimeTokenService;
     private final EmailService emailService;
+    private final SocialIdentityVerifier socialIdentityVerifier;
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final UserProfileRepository userProfileRepository;
@@ -207,6 +209,43 @@ public class AuthService {
     }
 
     /**
+     * Passenger-only social login (Phase 4): {@code idToken} is the provider's own signed ID
+     * token, already verified by {@link SocialIdentityVerifier} before this method sees it.
+     * Find-or-link: an already-linked identity logs straight in; an unlinked identity whose
+     * email matches an existing account links to it (passenger accounts only — staff/operator
+     * emails are rejected rather than silently linked); anything else creates a brand-new
+     * passenger. The provider already vouches for the email, so the new account starts verified
+     * and active, with no {@code auth_credentials} row at all.
+     */
+    @Transactional
+    public LoginResponse socialLogin(String provider, String idToken) {
+        VerifiedSocialIdentity identity = socialIdentityVerifier.verify(provider.toLowerCase(), idToken);
+
+        Optional<UserIdentity> linkedIdentity = userIdentityRepository
+                .findByProviderAndProviderUserId(identity.provider(), identity.subject());
+        if (linkedIdentity.isPresent()) {
+            User user = userRepository.findById(linkedIdentity.get().getUserId())
+                    .orElseThrow(() -> new InvalidTokenException("Account for this social identity no longer exists"));
+            ensurePassengerAudience(user);
+            ensureLoginAllowed(user);
+            return finishSocialLogin(user);
+        }
+
+        Optional<User> existingUser = userRepository.findByEmail(identity.email());
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            ensurePassengerAudience(user);
+            ensureLoginAllowed(user);
+            linkSocialIdentity(user.getUserId(), identity);
+            return finishSocialLogin(user);
+        }
+
+        User user = createPassengerFromSocialIdentity(identity);
+        linkSocialIdentity(user.getUserId(), identity);
+        return finishSocialLogin(user);
+    }
+
+    /**
      * Always returns normally, whether or not the email belongs to an account — a differing
      * response (404 vs 200) would let a caller enumerate registered emails.
      */
@@ -301,6 +340,55 @@ public class AuthService {
                 .providerUserId(email)
                 .email(email)
                 .build());
+    }
+
+    /** Social login is passenger-only — staff/operator/conductor accounts must use email/password. */
+    private void ensurePassengerAudience(User user) {
+        if (!"passenger".equals(user.getUserType().getName())) {
+            throw new AccessDeniedException("Social login is only available for passenger accounts");
+        }
+    }
+
+    private void linkSocialIdentity(UUID userId, VerifiedSocialIdentity identity) {
+        userIdentityRepository.save(UserIdentity.builder()
+                .userId(userId)
+                .provider(identity.provider())
+                .providerUserId(identity.subject())
+                .email(identity.email())
+                .build());
+    }
+
+    /**
+     * The provider already vouches for this email, so the account is created active and
+     * verified — there's no local password to set up and nothing to email a verification link
+     * to first.
+     */
+    private User createPassengerFromSocialIdentity(VerifiedSocialIdentity identity) {
+        UserType passengerType = userTypeRepository.findByName("passenger")
+                .orElseThrow(() -> new IllegalStateException("'passenger' user type is not seeded"));
+
+        User user = User.builder()
+                .userId(UUID.randomUUID())
+                .email(identity.email())
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(identity.emailVerified())
+                .build();
+        user = userRepository.save(user);
+
+        UserProfile profile = UserProfile.builder()
+                .user(user)
+                .profileData(new HashMap<>())
+                .build();
+        userProfileRepository.save(profile);
+        userEventPublisher.publishUserCreated(user);
+        return user;
+    }
+
+    private LoginResponse finishSocialLogin(User user) {
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+        return startSession(user);
     }
 
     /**

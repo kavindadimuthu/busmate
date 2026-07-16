@@ -50,6 +50,18 @@ auth:
     from: test-no-reply@busmate.test
     reset-password-url: http://localhost:3000/reset-password
     verify-email-url: http://localhost:3000/verify-email
+  # JwtSocialIdentityVerifier is @MockitoBean-replaced in every AuthControllerTest that drives
+  # /api/auth/social/**, so these values only need to satisfy @Value injection at context
+  # startup, not point anywhere real.
+  social:
+    google:
+      client-id: test-google-client-id
+      issuer: https://accounts.google.com
+      jwks-uri: https://accounts.google.com/.well-known/jwks-not-used-in-tests
+    facebook:
+      client-id: test-facebook-client-id
+      issuer: https://www.facebook.com
+      jwks-uri: https://www.facebook.com/.well-known/jwks-not-used-in-tests
 
 internal:
   api-key: test-internal-api-key

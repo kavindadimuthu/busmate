@@ -4,9 +4,12 @@ import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserType;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
+import com.busmatelk.backend.repository.UserIdentityRepository;
 import com.busmatelk.backend.service.CredentialService;
 import com.busmatelk.backend.service.EmailService;
 import com.busmatelk.backend.service.OneTimeTokenService;
+import com.busmatelk.backend.service.SocialIdentityVerifier;
+import com.busmatelk.backend.service.VerifiedSocialIdentity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -31,6 +34,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -58,11 +62,20 @@ class AuthControllerTest {
     @Autowired
     private OneTimeTokenService oneTimeTokenService;
 
+    @Autowired
+    private UserIdentityRepository userIdentityRepository;
+
     // The only external side effect left in the auth flows — mocked so tests never need a real
     // mailbox, but the token issuance/consumption/state-change logic around it is exercised for
     // real (see forgotPassword/resetPassword/verifyEmail tests below).
     @MockitoBean
     private EmailService emailService;
+
+    // Real ID-token signature/issuer/audience verification is covered directly by
+    // JwtSocialIdentityVerifierTest against a local JWKS server; mocked here so these tests
+    // exercise only AuthService's find-or-link/audience-enforcement logic.
+    @MockitoBean
+    private SocialIdentityVerifier socialIdentityVerifier;
 
     @Value("${supabase.jwt.secret}")
     private String jwtSecret;
@@ -466,5 +479,133 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.userType").value("passenger"))
                 .andExpect(jsonPath("$.effectivePermissions",
                         containsInAnyOrder("profile:read:own", "profile:update:own")));
+    }
+
+    @Test
+    void socialLoginCreatesANewPassengerWhenNoAccountMatches() throws Exception {
+        when(socialIdentityVerifier.verify("google", "raw-id-token"))
+                .thenReturn(new VerifiedSocialIdentity("google", "google-subject-new", "newrider@example.com", true));
+
+        mockMvc.perform(post("/api/auth/social/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("idToken", "raw-id-token"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.userType").value("passenger"));
+
+        // Not re-querying the created User here: same H2-only JsonBinaryType re-read issue noted
+        // on passengerCanSelfRegister above (loading a mappedBy OneToOne eagerly resolves the
+        // profile's JSONB column from a fresh persistence context). user_identities has no JSONB
+        // column, so that's the safe thing to assert against instead.
+        assertThat(userIdentityRepository.findByProviderAndProviderUserId("google", "google-subject-new"))
+                .isPresent();
+    }
+
+    @Test
+    void socialLoginLinksToAnExistingPassengerAccountByEmail() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("alreadyregistered@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        when(socialIdentityVerifier.verify("google", "raw-id-token")).thenReturn(
+                new VerifiedSocialIdentity("google", "google-subject-link", "alreadyregistered@example.com", true));
+
+        mockMvc.perform(post("/api/auth/social/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("idToken", "raw-id-token"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId.toString()));
+
+        assertThat(userIdentityRepository.findByProviderAndProviderUserId("google", "google-subject-link")
+                .orElseThrow().getUserId()).isEqualTo(userId);
+    }
+
+    @Test
+    void socialLoginLogsInAnAlreadyLinkedAccountViaTheStoredIdentity() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("returning@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        userIdentityRepository.save(com.busmatelk.backend.model.UserIdentity.builder()
+                .userId(userId)
+                .provider("google")
+                .providerUserId("google-subject-returning")
+                .email("returning@example.com")
+                .build());
+        // Even if the provider now reports a different email (e.g. the user changed it with
+        // Google), the stored (provider, subject) link is what's authoritative.
+        when(socialIdentityVerifier.verify("google", "raw-id-token")).thenReturn(
+                new VerifiedSocialIdentity("google", "google-subject-returning", "changed@example.com", true));
+
+        mockMvc.perform(post("/api/auth/social/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("idToken", "raw-id-token"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId.toString()));
+    }
+
+    @Test
+    void socialLoginRejectsNonPassengerAccounts() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType operatorType = userTypeRepository.findByName("operator").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("staffmember@example.com")
+                .userType(operatorType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        when(socialIdentityVerifier.verify("google", "raw-id-token")).thenReturn(
+                new VerifiedSocialIdentity("google", "google-subject-staff", "staffmember@example.com", true));
+
+        mockMvc.perform(post("/api/auth/social/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("idToken", "raw-id-token"))))
+                .andExpect(status().isForbidden());
+
+        assertThat(userIdentityRepository.findByProviderAndProviderUserId("google", "google-subject-staff"))
+                .isEmpty();
+    }
+
+    @Test
+    void socialLoginRejectsBlockedAccounts() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("suspendedrider@example.com")
+                .userType(passengerType)
+                .accountStatus("suspended")
+                .isEmailVerified(true)
+                .build());
+        when(socialIdentityVerifier.verify("google", "raw-id-token")).thenReturn(
+                new VerifiedSocialIdentity("google", "google-subject-suspended", "suspendedrider@example.com", true));
+
+        mockMvc.perform(post("/api/auth/social/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("idToken", "raw-id-token"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void socialLoginPropagatesAnInvalidTokenAsUnauthorized() throws Exception {
+        when(socialIdentityVerifier.verify(eq("google"), anyString()))
+                .thenThrow(new com.busmatelk.backend.service.InvalidTokenException("bad signature"));
+
+        mockMvc.perform(post("/api/auth/social/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("idToken", "garbage"))))
+                .andExpect(status().isUnauthorized());
     }
 }

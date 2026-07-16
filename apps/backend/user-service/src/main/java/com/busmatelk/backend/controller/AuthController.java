@@ -6,6 +6,7 @@ import com.busmatelk.backend.dto.request.LoginRequestDTO;
 import com.busmatelk.backend.dto.request.RefreshTokenRequest;
 import com.busmatelk.backend.dto.request.RegisterRequest;
 import com.busmatelk.backend.dto.request.ResetPasswordRequest;
+import com.busmatelk.backend.dto.request.SocialLoginRequest;
 import com.busmatelk.backend.dto.request.VerifyEmailRequest;
 import com.busmatelk.backend.dto.response.AuthMeResponse;
 import com.busmatelk.backend.dto.response.LoginResponse;
@@ -47,6 +48,16 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refresh(@RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+    }
+
+    // Passenger-only social login (Phase 4): {provider} is "google" or "facebook", the request
+    // body carries the provider's own ID token, verified server-side against that provider's
+    // JWKS. Staff/operator/conductor accounts are rejected — they're provisioned and must use
+    // email/password.
+    @PostMapping("/social/{provider}")
+    public ResponseEntity<LoginResponse> socialLogin(@PathVariable String provider,
+                                                        @RequestBody SocialLoginRequest request) {
+        return ResponseEntity.ok(authService.socialLogin(provider, request.getIdToken()));
     }
 
     @PostMapping("/forgot-password")

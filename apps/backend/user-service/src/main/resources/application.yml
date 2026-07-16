@@ -152,6 +152,19 @@ auth:
     from: ${AUTH_EMAIL_FROM:no-reply@busmate.lk}
     reset-password-url: ${AUTH_RESET_PASSWORD_URL:http://localhost:3000/reset-password}
     verify-email-url: ${AUTH_VERIFY_EMAIL_URL:http://localhost:3000/verify-email}
+  # Social login (Phase 4) — passenger accounts only. Each provider's ID token is verified
+  # against its own JWKS (issuer + audience + signature + expiry), so no client secret is
+  # needed server-side. client-id blank by default: JwtSocialIdentityVerifier throws a clear
+  # config error the first time that provider is actually invoked, rather than failing startup.
+  social:
+    google:
+      client-id: ${AUTH_SOCIAL_GOOGLE_CLIENT_ID:}
+      issuer: ${AUTH_SOCIAL_GOOGLE_ISSUER:https://accounts.google.com}
+      jwks-uri: ${AUTH_SOCIAL_GOOGLE_JWKS_URI:https://www.googleapis.com/oauth2/v3/certs}
+    facebook:
+      client-id: ${AUTH_SOCIAL_FACEBOOK_CLIENT_ID:}
+      issuer: ${AUTH_SOCIAL_FACEBOOK_ISSUER:https://www.facebook.com}
+      jwks-uri: ${AUTH_SOCIAL_FACEBOOK_JWKS_URI:https://www.facebook.com/.well-known/oauth/openid/jwks/}
 
 # Shared secret other backend services use to call /internal/** directly (never routed
 # through the API gateway, which blocks /internal/** entirely). Override via env var in

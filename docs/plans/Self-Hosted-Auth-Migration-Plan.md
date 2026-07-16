@@ -6,8 +6,47 @@ API contract the api-gateway already depends on.
 
 **Status:** Phase 1 complete (local password auth + credential store). Phase **2a** complete
 (stored, rotating, reuse-detected refresh tokens + revocation). Phase **2b** complete (RS256 +
-JWKS, all verifiers switched). Phase **3** complete (email verify/reset in-house). Phases 4–7
-pending.
+JWKS, all verifiers switched). Phase **3** complete (email verify/reset in-house). Phase **4**
+complete (passenger-only social login, find-or-link). Phases 5–7 pending.
+
+> **Phase 4 as-built notes (2026-07-16):**
+> - New `POST /api/auth/social/{provider}` (`provider` = `google` or `facebook`), permitted
+>   unauthenticated in `SecurityConfig` alongside `/register`/`/login`. Body carries only the
+>   provider's own signed ID token (`SocialLoginRequest.idToken`) — the mobile/SPA app does the
+>   interactive OAuth dance itself and hands this service the result.
+> - `SocialIdentityVerifier` / `JwtSocialIdentityVerifier` verify that token against the
+>   provider's *own* JWKS (`NimbusJwtDecoder`, from the new `spring-boot-starter-oauth2-resource-server`
+>   dependency — only its decoder classes are used; the resource-server auto-configuration backs
+>   off because a `SecurityFilterChain` bean already exists), checking signature + issuer + audience
+>   + expiry, then extracts `sub`/`email`/`email_verified`. One decoder built lazily per provider
+>   and cached, so an unconfigured provider never triggers a JWKS fetch at startup.
+> - `AuthService.socialLogin` find-or-link, in order: (1) an existing `user_identities` row for
+>   `(provider, subject)` logs straight in; (2) otherwise a `users` row matching the token's email
+>   gets a new identity linked to it; (3) otherwise a brand-new **passenger** account is created —
+>   active and email-verified immediately (the provider already vouches for the email), with no
+>   `auth_credentials` row at all. Reused `startSession`/`ensureLoginAllowed` from the password
+>   login path so blocked accounts (suspended/deactivated/deleted) are rejected the same way.
+> - **Audience enforcement:** `ensurePassengerAudience` rejects (403) any match against a
+>   non-passenger account — staff/operator/conductor accounts are provisioned and must keep using
+>   email/password; social login can never silently link to one of them via a shared email.
+> - Config: `auth.social.{google,facebook}.{client-id,issuer,jwks-uri}`; `client-id` defaults blank,
+>   in which case that provider's endpoint throws a clear config error the first time it's actually
+>   called rather than failing app startup. `issuer`/`jwks-uri` default to each provider's real
+>   well-known endpoints (Google's OIDC issuer/JWKS; Facebook's Limited-Login OIDC JWKS — Facebook's
+>   *classic* Graph API access tokens are opaque, not JWTs, so this assumes the client uses
+>   Facebook's OIDC-flavored login, matching the plan's "verify against the provider's JWKS" design).
+> - Tests: `JwtSocialIdentityVerifierTest` runs the verifier against a real local JWKS endpoint
+>   (JDK's `com.sun.net.httpserver.HttpServer`, same rationale as the gateway's jose-v4 JWKS tests in
+>   Phase 2b — a mocked HTTP client wouldn't exercise `NimbusJwtDecoder`'s actual fetch path) —
+>   covers accept, wrong-audience, wrong-issuer, expired, unsupported-provider, and
+>   unconfigured-provider. `AuthControllerTest` mocks `SocialIdentityVerifier` itself and covers the
+>   find-or-link/audience/blocked-account business logic end-to-end: new-passenger creation,
+>   linking-by-email, returning via a stored identity, rejecting a non-passenger match, rejecting a
+>   blocked account, and propagating a bad token as 401.
+> - **Not done:** no admin-facing "list/unlink my social identities" endpoint yet; no test/support
+>   for a passenger having multiple identities of the *same* provider (not a real scenario) or
+>   converting a social-only account to add a password later (`CredentialService.updatePassword`
+>   already supports it — creating the missing `auth_credentials` row — just nothing calls it yet).
 
 > **Phase 3 as-built notes (2026-07-16):**
 > - Added table `one_time_tokens` (`OneTimeToken`/`OneTimeTokenType`/`OneTimeTokenRepository`) —
