@@ -4,6 +4,7 @@ import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserType;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
+import com.busmatelk.backend.repository.AuthAuditLogRepository;
 import com.busmatelk.backend.repository.UserIdentityRepository;
 import com.busmatelk.backend.service.CredentialService;
 import com.busmatelk.backend.service.EmailService;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -64,6 +66,9 @@ class AuthControllerTest {
 
     @Autowired
     private UserIdentityRepository userIdentityRepository;
+
+    @Autowired
+    private AuthAuditLogRepository auditLogRepository;
 
     // The only external side effect left in the auth flows — mocked so tests never need a real
     // mailbox, but the token issuance/consumption/state-change logic around it is exercised for
@@ -224,6 +229,13 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("refreshToken", rotated))))
                 .andExpect(status().isUnauthorized());
+
+        // The family-burn write survives the very exception it raises (AuditLogService's
+        // REQUIRES_NEW, mirroring RefreshTokenService.rotate's own noRollbackFor). userId is null
+        // here — AuthService.refresh only learns which account a bad/reused token belonged to
+        // after successfully rotating it, which by definition never happens on this path.
+        assertThat(auditLogRepository.findTopByOrderByCreatedAtDesc().orElseThrow().getAction())
+                .isEqualTo("refresh.failure");
     }
 
     @Test
@@ -251,6 +263,36 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("refreshToken", refreshToken))))
                 .andExpect(status().isUnauthorized());
+
+        assertThat(latestAuditAction(userId)).isEqualTo("logout");
+    }
+
+    @Test
+    void loginWritesAnAuditEntryOnSuccessAndOnFailure() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("audited@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Sup3rSecret!");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "audited@example.com", "password", "not-it"))))
+                .andExpect(status().isUnauthorized());
+        assertThat(latestAuditAction(userId)).isEqualTo("login.failure");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "audited@example.com", "password", "Sup3rSecret!"))))
+                .andExpect(status().isOk());
+        assertThat(latestAuditAction(userId)).isEqualTo("login.success");
     }
 
     private String login(String email, String password) throws Exception {
@@ -259,6 +301,11 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(Map.of("email", email, "password", password))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
+    }
+
+    private String latestAuditAction(UUID userId) {
+        return auditLogRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 1))
+                .getContent().get(0).getAction();
     }
 
     private String jsonField(String json, String field) throws Exception {
@@ -300,6 +347,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk());
 
         assertThat(userRepository.findById(userId).orElseThrow().getIsEmailVerified()).isTrue();
+        assertThat(latestAuditAction(userId)).isEqualTo("email.verified");
 
         // Single-use: the same token doesn't work twice.
         mockMvc.perform(post("/api/auth/verify-email")
@@ -388,6 +436,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(
                                 Map.of("token", rawToken, "newPassword", "New-Password-2"))))
                 .andExpect(status().isOk());
+        assertThat(latestAuditAction(userId)).isEqualTo("password.reset");
 
         // Old password no longer works, new one does.
         mockMvc.perform(post("/api/auth/login")
@@ -436,6 +485,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(
                                 Map.of("currentPassword", "Old-Password-1", "newPassword", "New-Password-2"))))
                 .andExpect(status().isOk());
+        assertThat(latestAuditAction(userId)).isEqualTo("password.change");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -498,8 +548,9 @@ class AuthControllerTest {
         // on passengerCanSelfRegister above (loading a mappedBy OneToOne eagerly resolves the
         // profile's JSONB column from a fresh persistence context). user_identities has no JSONB
         // column, so that's the safe thing to assert against instead.
-        assertThat(userIdentityRepository.findByProviderAndProviderUserId("google", "google-subject-new"))
-                .isPresent();
+        UUID createdUserId = userIdentityRepository.findByProviderAndProviderUserId("google", "google-subject-new")
+                .orElseThrow().getUserId();
+        assertThat(latestAuditAction(createdUserId)).isEqualTo("social_login.success");
     }
 
     @Test
@@ -576,6 +627,7 @@ class AuthControllerTest {
 
         assertThat(userIdentityRepository.findByProviderAndProviderUserId("google", "google-subject-staff"))
                 .isEmpty();
+        assertThat(latestAuditAction(userId)).isEqualTo("social_login.rejected");
     }
 
     @Test

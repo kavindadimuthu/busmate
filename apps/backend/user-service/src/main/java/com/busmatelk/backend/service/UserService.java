@@ -1,6 +1,5 @@
 package com.busmatelk.backend.service;
 
-import com.busmatelk.backend.client.SupabaseAuthClient;
 import com.busmatelk.backend.dto.request.UpdateUserRequest;
 import com.busmatelk.backend.dto.response.OverrideResponse;
 import com.busmatelk.backend.dto.response.UserPermissionsResponse;
@@ -9,6 +8,8 @@ import com.busmatelk.backend.event.UserEventPublisher;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
 import com.busmatelk.backend.operator.OperatorSyncService;
+import com.busmatelk.backend.repository.AuthCredentialRepository;
+import com.busmatelk.backend.repository.UserIdentityRepository;
 import com.busmatelk.backend.repository.UserPermissionOverrideRepository;
 import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,11 +33,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
 
+    /** Statuses account-status transitions can leave a user in — mirrors AuthService's own set. */
+    private static final Set<String> TERMINAL_STATUSES = Set.of("deleted");
+
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserPermissionOverrideRepository overrideRepository;
+    private final AuthCredentialRepository credentialRepository;
+    private final UserIdentityRepository userIdentityRepository;
     private final PermissionService permissionService;
-    private final SupabaseAuthClient supabaseAuthClient;
+    private final RefreshTokenService refreshTokenService;
+    private final AuditLogService auditLogService;
     private final UserEventPublisher userEventPublisher;
     private final OperatorSyncService operatorSyncService;
 
@@ -119,6 +127,33 @@ public class UserService {
         return toUserResponse(target);
     }
 
+    /**
+     * Suspends the account: blocks login/refresh (AuthService checks {@code accountStatus}
+     * against the same blocked set) and kills every live session immediately, but keeps all
+     * data — meant for a reversible, usually temporary, enforcement action.
+     */
+    @Transactional
+    public UserResponse suspendUser(UUID callerId, UUID targetUserId) {
+        return transitionAccountStatus(callerId, targetUserId, "suspended", "account.suspended");
+    }
+
+    /**
+     * Deactivates the account: same login-blocking/session-revocation effect as suspend, kept as
+     * a distinct status/action so audit logs and any future policy can tell "we suspended them"
+     * apart from "they (or we) deactivated the account" — the plan's Phase 5 distinction.
+     */
+    @Transactional
+    public UserResponse deactivateUser(UUID callerId, UUID targetUserId) {
+        return transitionAccountStatus(callerId, targetUserId, "deactivated", "account.deactivated");
+    }
+
+    /**
+     * Soft-deletes the account: blocks login/refresh, revokes every session, and purges
+     * {@code auth_credentials}/{@code user_identities} so there is no longer any way to
+     * authenticate as this user at all — unlike suspend/deactivate, this is not meant to be
+     * reversed by {@link #reactivateUser}. (A hard-delete/erasure job is out of scope here — see
+     * the plan's Phase 5 notes.)
+     */
     @Transactional
     public void deleteUser(UUID callerId, UUID targetUserId) {
         User target = findUserOrThrow(targetUserId);
@@ -127,33 +162,57 @@ public class UserService {
             throw new AccessDeniedException("Permission denied: " + permission);
         }
 
-        // Ban in Supabase Auth first — the security-critical step. Only flip the local
-        // status once that's confirmed, so a failed ban never leaves a false "inactive"
-        // record for a user who could still authenticate.
-        supabaseAuthClient.banUser(target.getUserId().toString());
-
-        target.setAccountStatus("inactive");
-        userRepository.save(target);
+        // saveAndFlush for the same reason as transitionAccountStatus below — the bulk deletes
+        // and revocation that follow all clear the persistence context.
+        target.setAccountStatus("deleted");
+        userRepository.saveAndFlush(target);
+        credentialRepository.deleteByUserId(targetUserId);
+        userIdentityRepository.deleteByUserId(targetUserId);
+        refreshTokenService.revokeAllForUser(targetUserId);
         userEventPublisher.publishUserDeleted(targetUserId);
-        operatorSyncService.syncStatus(targetUserId, target.getUserType().getName(), "inactive");
+        operatorSyncService.syncStatus(targetUserId, target.getUserType().getName(), "deleted");
+        auditLogService.record(targetUserId, callerId, "account.deleted", null);
     }
 
     /**
-     * Reverses deleteUser() — unbans in Supabase Auth first (the security-critical step,
-     * same ordering rationale as deleteUser), then flips the local status back to active.
-     * Gated on :update rather than :delete since this restores rather than removes access.
+     * Reverses suspend/deactivate. Gated on :update rather than :delete since this restores
+     * rather than removes access. A deleted account can't be reactivated — its credentials and
+     * identities are already gone, so there's nothing to restore access to.
      */
     @Transactional
     public UserResponse reactivateUser(UUID callerId, UUID targetUserId) {
         User target = findUserOrThrow(targetUserId);
         requireUpdateAccess(callerId, targetUserId, target.getUserType().getName());
-
-        supabaseAuthClient.unbanUser(target.getUserId().toString());
+        if (TERMINAL_STATUSES.contains(target.getAccountStatus())) {
+            throw new IllegalArgumentException("A deleted account cannot be reactivated");
+        }
 
         target.setAccountStatus("active");
         target = userRepository.save(target);
         userEventPublisher.publishUserUpdated(targetUserId, List.of("accountStatus"));
         operatorSyncService.syncStatus(targetUserId, target.getUserType().getName(), "active");
+        auditLogService.record(targetUserId, callerId, "account.reactivated", null);
+        return toUserResponse(target);
+    }
+
+    /** Shared body for suspend/deactivate: same permission, same effect, different label. */
+    private UserResponse transitionAccountStatus(UUID callerId, UUID targetUserId, String status, String auditAction) {
+        User target = findUserOrThrow(targetUserId);
+        requireUpdateAccess(callerId, targetUserId, target.getUserType().getName());
+        if (TERMINAL_STATUSES.contains(target.getAccountStatus())) {
+            throw new IllegalArgumentException("A deleted account cannot change status");
+        }
+
+        // saveAndFlush, not save: revokeAllForUser's bulk @Modifying(clearAutomatically = true)
+        // query clears the persistence context right after it runs, which would otherwise
+        // silently discard this still-unflushed status change (the exact bug CredentialService
+        // hit in Phase 3 — see its updatePassword doc comment).
+        target.setAccountStatus(status);
+        target = userRepository.saveAndFlush(target);
+        refreshTokenService.revokeAllForUser(targetUserId);
+        userEventPublisher.publishUserUpdated(targetUserId, List.of("accountStatus"));
+        operatorSyncService.syncStatus(targetUserId, target.getUserType().getName(), status);
+        auditLogService.record(targetUserId, callerId, auditAction, null);
         return toUserResponse(target);
     }
 

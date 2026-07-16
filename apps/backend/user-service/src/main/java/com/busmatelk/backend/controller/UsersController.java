@@ -62,6 +62,16 @@ public class UsersController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{userId}/suspend")
+    public ResponseEntity<UserResponse> suspendUser(Authentication authentication, @PathVariable UUID userId) {
+        return ResponseEntity.ok(userService.suspendUser(callerId(authentication), userId));
+    }
+
+    @PostMapping("/{userId}/deactivate")
+    public ResponseEntity<UserResponse> deactivateUser(Authentication authentication, @PathVariable UUID userId) {
+        return ResponseEntity.ok(userService.deactivateUser(callerId(authentication), userId));
+    }
+
     @PostMapping("/{userId}/reactivate")
     public ResponseEntity<UserResponse> reactivateUser(Authentication authentication, @PathVariable UUID userId) {
         return ResponseEntity.ok(userService.reactivateUser(callerId(authentication), userId));

@@ -7,7 +7,69 @@ API contract the api-gateway already depends on.
 **Status:** Phase 1 complete (local password auth + credential store). Phase **2a** complete
 (stored, rotating, reuse-detected refresh tokens + revocation). Phase **2b** complete (RS256 +
 JWKS, all verifiers switched). Phase **3** complete (email verify/reset in-house). Phase **4**
-complete (passenger-only social login, find-or-link). Phases 5–7 pending.
+complete (passenger-only social login, find-or-link). Phase **5** complete (account management +
+audit log; `SupabaseAuthClient` no longer called from anywhere in user-service). Phases 6–7 pending.
+
+> **Phase 5 as-built notes (2026-07-16):**
+> - **Account status transitions are now fully local.** `UserService.suspendUser`/`deactivateUser`/
+>   `deleteUser`/`reactivateUser` no longer call `SupabaseAuthClient.banUser`/`unbanUser` at all —
+>   that was the last remaining Supabase touchpoint anywhere in `AuthService`/`UserService`.
+>   `SupabaseAuthClient` itself is untouched (still compiles, still has its own DTOs/config) but is
+>   now dead code — full removal is Phase 7's decommission, not this phase's.
+> - **Vocabulary change:** `deleteUser` used to set `account_status = "inactive"`, a status
+>   `AuthService`'s `LOGIN_BLOCKED_STATUSES` set (`suspended`/`deactivated`/`deleted`) never actually
+>   included — so a "deleted" user could still log in with their password the whole time. Now it
+>   sets `"deleted"`, closing that gap. New `suspendUser`/`deactivateUser` set `"suspended"`/
+>   `"deactivated"` respectively; both are reversible via `reactivateUser`, `"deleted"` is not
+>   (its credentials/identities are already purged — see below).
+> - **Suspend vs. deactivate** are functionally identical today (block login/refresh, revoke every
+>   live session, keep all data) — kept as distinct statuses/audit actions per the plan's wording
+>   so audit logs and any future policy can tell the two apart, even though nothing currently
+>   branches on which one a user is in beyond "not active."
+> - **Delete purges auth data**, not just the user row: `AuthCredentialRepository.deleteByUserId` /
+>   `UserIdentityRepository.deleteByUserId` (new bulk `@Modifying` deletes, not `deleteById` — a
+>   Phase 4 social-only account has no credential row at all, and `deleteById` throws when nothing
+>   matches) remove the password hash and every linked identity, so there is no way to authenticate
+>   as a deleted user ever again. No hard-delete/erasure job — out of scope, noted in the plan.
+> - **Bug found and fixed, same class as Phase 3:** the first pass of `suspendUser`/`deactivateUser`/
+>   `deleteUser` used `userRepository.save(target)` before calling
+>   `refreshTokenService.revokeAllForUser(...)` — whose bulk `@Modifying(clearAutomatically = true)`
+>   query clears the persistence context and silently discarded the still-unflushed status change,
+>   exactly like `CredentialService.updatePassword` before its Phase 3 fix. `UserServiceTest` caught
+>   it immediately (asserted the persisted status, got back `"active"`). Fixed the same way:
+>   `saveAndFlush` instead of `save`.
+> - **New `auth_audit_log` table** (`AuthAuditLog`/`AuthAuditLogRepository`/`AuditLogService`):
+>   append-only, `userId` (who the event is about) + `actorId` (who performed it — differs from
+>   `userId` for admin-initiated actions), an action string (e.g. `login.success`,
+>   `refresh.blocked`, `account.suspended`), free-form `details` (deliberately plain text, not
+>   JSON — sidesteps the H2/hypersistence JSONB issues hit repeatedly in earlier phases), and a
+>   timestamp. `AuditLogService.record(...)` always runs in `REQUIRES_NEW` so a failed-login or
+>   refresh-reuse audit entry survives the very exception the caller is about to throw and roll
+>   back on (mirrors `RefreshTokenService.rotate`'s `noRollbackFor`, but here the caller's exception
+>   must still propagate, so a nested transaction is the correct tool instead of `noRollbackFor`);
+>   write failures are caught and logged rather than breaking the auth flow they're observing.
+> - **Wired into:** `login` (success/failure — a wrong password and a missing email both write
+>   `login.failure` with no other distinguishing detail, preserving the existing no-enumeration
+>   guarantee), `refresh` (success/blocked/failure — failure covers both an ordinary bad/expired
+>   token and a detected-reuse family-burn, distinguished only by the carried-over exception
+>   message, since the account isn't known at that point either way), `logout`, `forgotPassword`
+>   (request-issued, not send-succeeded), `resetPassword`, `changePassword` (success and
+>   wrong-current-password failure), `verifyEmail`, and `socialLogin` (success with provider, and
+>   audience-rejection for a non-passenger match). Account-status transitions record `actorId`
+>   distinctly from `userId`; every self-service flow above records them equal.
+> - **Activity tracking** deliberately reuses the existing `UserEventPublisher` (Kafka) rather than
+>   adding new event types — `suspendUser`/`deactivateUser`/`reactivateUser` publish
+>   `user.updated` (`accountStatus` changed) and `deleteUser` publishes the existing `user.deleted`,
+>   the same events `updateUser`/`reactivateUser` already emitted.
+> - **New endpoints:** `POST /api/users/{userId}/suspend`, `POST /api/users/{userId}/deactivate`
+>   (both gated on `user.{type}:update`, same as the existing `reactivate`); `DELETE
+>   /api/users/{userId}` unchanged at the HTTP layer (still gated on `:delete`), only its internals
+>   changed.
+> - **Not done:** no read endpoint over `auth_audit_log` yet (the plan didn't ask for one;
+>   `AuthAuditLogRepository.findByUserIdOrderByCreatedAtDesc` exists and is exercised by tests, so
+>   an admin-facing "activity/audit history" endpoint is a small addition whenever needed); rate
+>   limiting/lockout (plan §3, still pending, same as every prior phase's note); hard-delete/erasure
+>   job for deleted accounts.
 
 > **Phase 4 as-built notes (2026-07-16):**
 > - New `POST /api/auth/social/{provider}` (`provider` = `google` or `facebook`), permitted

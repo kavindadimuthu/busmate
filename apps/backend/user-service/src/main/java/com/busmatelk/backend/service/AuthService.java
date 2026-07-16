@@ -52,6 +52,7 @@ public class AuthService {
     private final OneTimeTokenService oneTimeTokenService;
     private final EmailService emailService;
     private final SocialIdentityVerifier socialIdentityVerifier;
+    private final AuditLogService auditLogService;
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final UserProfileRepository userProfileRepository;
@@ -164,16 +165,18 @@ public class AuthService {
     @Transactional
     public LoginResponse login(LoginRequestDTO request) {
         // A missing user and a wrong password fail identically — no account-enumeration signal.
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
-
-        if (!credentialService.verifyPassword(user.getUserId(), request.getPassword())) {
+        Optional<User> maybeUser = userRepository.findByEmail(request.getEmail());
+        if (maybeUser.isEmpty() || !credentialService.verifyPassword(maybeUser.get().getUserId(), request.getPassword())) {
+            auditLogService.record(maybeUser.map(User::getUserId).orElse(null), "login.failure",
+                    "email=" + request.getEmail());
             throw new BadCredentialsException("Invalid email or password");
         }
-        ensureLoginAllowed(user);
+        User user = maybeUser.get();
+        ensureLoginAllowed(user, "login");
 
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
+        auditLogService.record(user.getUserId(), "login.success", null);
 
         return startSession(user);
     }
@@ -188,13 +191,23 @@ public class AuthService {
     @Transactional
     public void logout(UUID userId) {
         refreshTokenService.revokeAllForUser(userId);
+        auditLogService.record(userId, "logout", null);
     }
 
     // Deliberately NOT @Transactional: rotate() and revokeAllForUser() each own their transaction
     // and must commit independently of the DisabledException below (an ambient transaction here
     // would roll their writes back on that throw).
     public LoginResponse refresh(String refreshToken) {
-        RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
+        RefreshTokenService.Rotation rotation;
+        try {
+            rotation = refreshTokenService.rotate(refreshToken);
+        } catch (InvalidTokenException e) {
+            // Covers both an ordinary invalid/expired token and reuse-of-an-already-rotated one
+            // (rotate() burns the whole family for the latter before throwing) — e's own message
+            // distinguishes which, so it's carried straight into the audit trail.
+            auditLogService.record(null, "refresh.failure", e.getMessage());
+            throw e;
+        }
         User user = userRepository.findById(rotation.userId())
                 .orElseThrow(() -> new InvalidTokenException("Account for this refresh token no longer exists"));
 
@@ -202,9 +215,11 @@ public class AuthService {
             // The account was blocked mid-session — kill every session, including the one we just
             // rotated into, rather than hand back a working token.
             refreshTokenService.revokeAllForUser(user.getUserId());
+            auditLogService.record(user.getUserId(), "refresh.blocked", "status=" + user.getAccountStatus());
             throw new DisabledException("Account is " + user.getAccountStatus());
         }
 
+        auditLogService.record(user.getUserId(), "refresh.success", null);
         return buildSession(user, rotation.newRefreshToken());
     }
 
@@ -227,22 +242,22 @@ public class AuthService {
             User user = userRepository.findById(linkedIdentity.get().getUserId())
                     .orElseThrow(() -> new InvalidTokenException("Account for this social identity no longer exists"));
             ensurePassengerAudience(user);
-            ensureLoginAllowed(user);
-            return finishSocialLogin(user);
+            ensureLoginAllowed(user, "social_login");
+            return finishSocialLogin(user, identity.provider());
         }
 
         Optional<User> existingUser = userRepository.findByEmail(identity.email());
         if (existingUser.isPresent()) {
             User user = existingUser.get();
             ensurePassengerAudience(user);
-            ensureLoginAllowed(user);
+            ensureLoginAllowed(user, "social_login");
             linkSocialIdentity(user.getUserId(), identity);
-            return finishSocialLogin(user);
+            return finishSocialLogin(user, identity.provider());
         }
 
         User user = createPassengerFromSocialIdentity(identity);
         linkSocialIdentity(user.getUserId(), identity);
-        return finishSocialLogin(user);
+        return finishSocialLogin(user, identity.provider());
     }
 
     /**
@@ -253,6 +268,7 @@ public class AuthService {
     public void forgotPassword(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
             String rawToken = oneTimeTokenService.issuePasswordResetToken(user.getUserId());
+            auditLogService.record(user.getUserId(), "password.reset_requested", null);
             try {
                 emailService.sendPasswordResetEmail(user.getEmail(), rawToken);
             } catch (RuntimeException e) {
@@ -269,6 +285,7 @@ public class AuthService {
         credentialService.updatePassword(userId, newPassword);
         // A reset invalidates every existing session — force re-login everywhere.
         refreshTokenService.revokeAllForUser(userId);
+        auditLogService.record(userId, "password.reset", null);
     }
 
     @Transactional
@@ -277,6 +294,7 @@ public class AuthService {
         userRepository.findById(userId).ifPresent(user -> {
             user.setIsEmailVerified(true);
             userRepository.save(user);
+            auditLogService.record(userId, "email.verified", null);
         });
     }
 
@@ -287,11 +305,13 @@ public class AuthService {
     @Transactional
     public void changePassword(UUID callerId, String currentPassword, String newPassword) {
         if (!credentialService.verifyPassword(callerId, currentPassword)) {
+            auditLogService.record(callerId, "password.change_failed", null);
             throw new BadCredentialsException("Current password is incorrect");
         }
         credentialService.updatePassword(callerId, newPassword);
         // A password change invalidates every existing session — force re-login everywhere.
         refreshTokenService.revokeAllForUser(callerId);
+        auditLogService.record(callerId, "password.change", null);
     }
 
     public AuthMeResponse getCurrentUserWithPermissions(UUID userId) {
@@ -310,8 +330,9 @@ public class AuthService {
         );
     }
 
-    private void ensureLoginAllowed(User user) {
+    private void ensureLoginAllowed(User user, String action) {
         if (LOGIN_BLOCKED_STATUSES.contains(user.getAccountStatus())) {
+            auditLogService.record(user.getUserId(), action + ".blocked", "status=" + user.getAccountStatus());
             throw new DisabledException("Account is " + user.getAccountStatus());
         }
     }
@@ -345,6 +366,7 @@ public class AuthService {
     /** Social login is passenger-only — staff/operator/conductor accounts must use email/password. */
     private void ensurePassengerAudience(User user) {
         if (!"passenger".equals(user.getUserType().getName())) {
+            auditLogService.record(user.getUserId(), "social_login.rejected", "reason=non_passenger_account");
             throw new AccessDeniedException("Social login is only available for passenger accounts");
         }
     }
@@ -385,9 +407,10 @@ public class AuthService {
         return user;
     }
 
-    private LoginResponse finishSocialLogin(User user) {
+    private LoginResponse finishSocialLogin(User user, String provider) {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
+        auditLogService.record(user.getUserId(), "social_login.success", "provider=" + provider);
         return startSession(user);
     }
 
