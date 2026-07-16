@@ -70,7 +70,7 @@ const server = http.createServer(async (req, res) => {
         softEdges,
         services: services.map((s) => ({
           id: s.id, label: s.label, group: s.group, stack: s.stack,
-          envs: s.envs, position: s.position, dependsOn: s.dependsOn, self: !!s.self,
+          envs: s.envs, pos: s.pos, dependsOn: s.dependsOn, self: !!s.self,
           status: live.status[s.id],
         })),
       });

@@ -43,17 +43,52 @@ function ServiceNode({ data }) {
     </div>`;
 }
 
-const nodeTypes = { service: ServiceNode };
+// ── Group container node (labelled "swimlane" box) ─────────────────────────
+function GroupNode({ data }) {
+  return html`
+    <div class="group-box" style=${{ '--gc': data.color }}>
+      <div class="group-head">
+        <span class="group-dot"></span>${data.label}
+        <span class="group-count">${data.up}/${data.total} up</span>
+      </div>
+    </div>`;
+}
+
+const nodeTypes = { service: ServiceNode, group: GroupNode };
 
 // ── Graph builders ────────────────────────────────────────────────────────
 function buildNodes(payload) {
   const colorOf = Object.fromEntries(payload.groups.map((g) => [g.id, g.color]));
-  return payload.services.map((s) => ({
+
+  // Per-group running tallies for the container header.
+  const tally = {};
+  for (const s of payload.services) {
+    const t = (tally[s.group] ||= { up: 0, total: 0 });
+    t.total += 1;
+    if (s.status?.running) t.up += 1;
+  }
+
+  // Group containers first so their children render on top of them.
+  const groupNodes = payload.groups.map((g) => ({
+    id: `group:${g.id}`,
+    type: 'group',
+    position: { x: g.frame.x, y: g.frame.y },
+    style: { width: g.frame.width, height: g.frame.height },
+    draggable: false,
+    selectable: false,
+    data: { label: g.label, color: g.color, up: tally[g.id]?.up ?? 0, total: tally[g.id]?.total ?? 0 },
+  }));
+
+  const serviceNodes = payload.services.map((s) => ({
     id: s.id,
     type: 'service',
-    position: s.position,
+    parentId: `group:${s.group}`,
+    extent: 'parent',
+    position: s.pos,
     data: { label: s.label, stack: s.stack, envs: s.envs, status: s.status, groupColor: colorOf[s.group] },
   }));
+
+  return [...groupNodes, ...serviceNodes];
 }
 
 function edgeStyle(up, soft) {
@@ -156,7 +191,8 @@ function App() {
             <${Background} color="#22303c" gap=${22} size=${1} />
             <${Controls} showInteractive=${false} />
             <${MiniMap} pannable zoomable
-              nodeColor=${(n) => (n.data?.status?.running ? '#46c07f' : '#3a4653')}
+              nodeColor=${(n) => (n.type === 'group' ? 'transparent' : n.data?.status?.running ? '#46c07f' : '#3a4653')}
+              nodeStrokeColor=${(n) => (n.type === 'group' ? '#33414f' : 'transparent')}
               maskColor="#0a1016cc" style=${{ background: '#0d141b', border: '1px solid #253340' }} />
           <//>
         <//>
