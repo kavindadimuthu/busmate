@@ -20,6 +20,13 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
     defer-datasource-initialization: true
+  # Flyway is on the classpath (see docs/plans/Database-Migrations-and-Seed-Data-Plan.md) but its
+  # migrations are plain Postgres SQL (uuid, jsonb, gen_random_uuid()) and this test datasource is
+  # H2 — explicitly disabled here so ddl-auto=create-drop + sql.init below keep doing schema/seed
+  # for tests unchanged. Moving tests onto a real Postgres (Testcontainers) so they exercise the
+  # actual Flyway migrations is Phase 4's job, not this one.
+  flyway:
+    enabled: false
   sql:
     init:
       mode: always

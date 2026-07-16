@@ -5,7 +5,7 @@ lifecycle — schema migrations plus seed data — that works on **plain Postgre
 Supabase-specific features) so any service can run against local Postgres, Supabase, RDS, Neon,
 Cloud SQL, or any other Postgres provider without change.
 
-**Status:** Phases 0–1 complete (2026-07-16). Phases 2–5 pending.
+**Status:** Phases 0–2 complete (2026-07-16). Phases 3–5 pending.
 
 **Scope:** The three JVM services that own a database — `apps/backend/user-service`,
 `apps/backend/core-service`, `apps/backend/ticketing-service`. `api-gateway` (Node, no database) is
@@ -266,17 +266,59 @@ Tables today were built by `ddl-auto`, so there is no Flyway history table. Per 
 
 Do this one service at a time; verify each boots clean against both a fresh DB and an existing one.
 
-### Phase 2 — Extract reference data (Tier 2)
+### Phase 2 — Extract reference data (Tier 2) — ✅ complete (2026-07-16)
 
 Do **user-service first** — its RBAC gates every login on the platform.
 
-1. Author `R__` repeatable migrations for `user_types`, `permissions`, and
-   `user_type_permissions`, using `INSERT … ON CONFLICT (<natural key>) DO UPDATE`. Idempotent and
-   safe on every boot, in every environment. This replaces the ad-hoc/test-only RBAC data with a
-   real, versioned bootstrap.
-2. ticketing-service: base/route fare reference tables as `R__` migrations if they are required for
-   the service to compute fares.
-3. core-service: likely needs none (enums are string-valued in the entities, no lookup tables).
+1. ~~Author `R__` repeatable migrations for `user_types`, `permissions`, and
+   `user_type_permissions`~~ Done:
+   [`R__001_user_types.sql`](../../apps/backend/user-service/src/main/resources/db/reference/R__001_user_types.sql),
+   `R__002_permissions.sql`, `R__003_user_type_permissions.sql`, all `INSERT … ON CONFLICT
+   (<natural key>) DO UPDATE`. Content was **not invented** — cross-checked against two independent
+   sources that agreed exactly: `src/test/resources/data.sql` (which states it "mirrors Phase 2's
+   real Supabase migrations 001/004/005 exactly") and every literal `@RequiresPermission("...")`
+   string actually used across `UserTypesController`, `PermissionsController`, and
+   `UserPermissionOverridesController`. Result: 6 user types, 28 permissions, 56
+   user-type↔permission grants, matching the test fixture's counts exactly.
+   - `user_types.name` and `permissions.name` already had unique constraints (confirmed in Phase
+     1's baseline dump), so those two upserts had a natural conflict target immediately.
+     `user_type_permissions` did not — the entity only declares a surrogate `id` primary key — so
+     a real schema migration, `V002__add_user_type_permissions_unique_constraint.sql`, adds
+     `UNIQUE (user_type_id, permission_id)` first (with a defensive dedupe `DELETE` before the
+     `ADD CONSTRAINT`, in case any real environment ever inserted a duplicate pair before the
+     constraint existed). Flyway always runs every pending versioned migration before any
+     repeatable one, so `R__003`'s `ON CONFLICT (user_type_id, permission_id)` is guaranteed to
+     have that constraint in place.
+   - `admin`'s row grants **every** permission (28/28) — carried over faithfully from the source
+     fixture's unconditional `(ut.name = 'admin')` clause with no permission filter.
+   - `spring.flyway.locations` for user-service became `classpath:db/migration,classpath:db/reference`
+     (base `application.yml`, so this tier loads in every environment, dev and prod alike).
+2. **ticketing-service: investigated and confirmed not required**, contrary to the plan's
+   conditional wording. `base_fare`/`route_fare_section` have no bootstrap loader anywhere in the
+   codebase — `BaseFareServiceIMPL.saveSection`/`RouteFareServiceIMPL.saveRouteFare` are the only
+   writers, both plain admin-facing CRUD endpoints. Nothing in the service requires these tables
+   to be non-empty to start or to serve any other request; they're operator-entered configuration,
+   not platform-required reference data like RBAC. Also avoided the alternative of hardcoding
+   government NTC fare figures I have no verified-current source for into a migration that would
+   run in every environment including production. No `R__` migrations added for ticketing-service.
+3. core-service: confirmed, as predicted — no lookup tables, all enums are Postgres `CHECK`
+   constraints on string columns. No `R__` migrations added.
+4. **A real regression surfaced and was fixed**: enabling Flyway's `db/reference` location broke
+   user-service's entire test suite (`UserManagementApplicationTests` and everything downstream of
+   it — 31 cascading errors). Root cause: `src/test/resources/application.yml` fully replaces the
+   main config for the test classpath and had no `spring.flyway` override; Flyway defaults to
+   enabled once its dependency is on the classpath, and it tried to run the plain-Postgres
+   migrations (`uuid`, `jsonb`, `gen_random_uuid()`) against the H2 in-memory test database. Tests
+   still use `ddl-auto: create-drop` + `spring.sql.init` + their own `data.sql` — moving them onto
+   real Postgres via Testcontainers so they exercise the actual Flyway migrations is Phase 4's job,
+   not this one — so the fix here was narrowly `spring.flyway.enabled: false` in the test
+   `application.yml`, leaving the existing H2 test setup untouched. Full suite verified green
+   afterward: 218 tests, 0 failures, 0 errors.
+5. **Verified** (packaged jar, both scenarios): a second boot with no changes left counts
+   unchanged (6/28/56) and Flyway skipped the repeatables entirely (unchanged checksum, no
+   "Migrating schema" log lines) — confirming idempotency both structurally (`ON CONFLICT`) and via
+   Flyway's own skip logic. A fully fresh, empty `busmate_user` database ran the complete chain
+   (`V001` → `V002` → `R__001` → `R__002` → `R__003`) in one boot and produced identical counts.
 
 ### Phase 3 — Rebuild demo seed (Tier 3)
 
