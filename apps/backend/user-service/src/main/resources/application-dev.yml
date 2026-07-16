@@ -3,7 +3,7 @@
 # SPRING_DATASOURCE_URL/USERNAME/PASSWORD env vars if you run against something else.
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/busmate_user
+    url: jdbc:postgresql://localhost:5433/busmate_user
     username: postgres
     password: postgres
   jpa:

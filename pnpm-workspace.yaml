@@ -13,5 +13,8 @@ packages:
   - "libs/ui"
   - "libs/api-clients/*"
 
+  # Internal tools
+  - "tools/dev-portal"
+
   # E2E tests
   - "tests/e2e"

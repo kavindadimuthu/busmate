@@ -1,90 +1,16 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BusMate · Live Topology</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚦</text></svg>" />
-  <link rel="stylesheet" href="https://esm.sh/reactflow@11.11.4/dist/style.css" />
-  <style>
-    :root {
-      --paper: #0d141b; --panel: #131c25; --panel-2: #17222d;
-      --ink: #e7edf3; --ink-soft: #c3ccd6; --muted: #7b8a99; --line: #253340;
-      --accent: #e6a244; --up: #46c07f; --down: #59697a; --docker: #4a9bd4;
-      --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-      --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    html, body, #root { height: 100%; margin: 0; }
-    body { background: var(--paper); color: var(--ink); font-family: var(--sans); }
-    .app { display: flex; flex-direction: column; height: 100%; }
-
-    header.bar {
-      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-      padding: 12px 18px; border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #16212c, #111a22);
-    }
-    .brand { display: flex; align-items: baseline; gap: 10px; }
-    .brand b { font-size: 15px; letter-spacing: -.01em; }
-    .brand span { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-    .spacer { flex: 1; }
-    .stat { font-family: var(--mono); font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
-    .stat b { color: var(--ink); font-weight: 600; }
-    .stat .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
-    .legend { display: flex; gap: 6px; flex-wrap: wrap; }
-    .lg { font-family: var(--mono); font-size: 10.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px;
-      border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; }
-    .banner { padding: 7px 18px; font-family: var(--mono); font-size: 11.5px;
-      background: #3a2a12; color: #e6c07a; border-bottom: 1px solid #4a3818; }
-    .flow-wrap { flex: 1; position: relative; }
-
-    /* Custom node */
-    .snode { width: 186px; border-radius: 11px; background: var(--panel);
-      border: 1px solid var(--line); box-shadow: 0 8px 22px -14px #000;
-      border-left: 4px solid var(--g, var(--accent)); overflow: hidden;
-      font-family: var(--sans); transition: opacity .2s, box-shadow .2s; }
-    .snode.down { opacity: .5; }
-    .snode.up { box-shadow: 0 0 0 1px color-mix(in srgb, var(--up) 45%, transparent), 0 8px 22px -12px #000; }
-    .snode .top { display: flex; align-items: center; gap: 8px; padding: 9px 11px 6px; }
-    .snode .status-dot { width: 10px; height: 10px; border-radius: 50%; flex: none;
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--dotc) 25%, transparent); background: var(--dotc); }
-    .snode .name { font-weight: 640; font-size: 13px; letter-spacing: -.01em; line-height: 1.1; }
-    .snode .stack { font-family: var(--mono); font-size: 9.5px; color: var(--muted); padding: 0 11px 8px; }
-    .snode .envs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 10px 10px; }
-    .chip { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .05em;
-      padding: 2px 6px; border-radius: 5px; font-weight: 700; border: 1px solid transparent; }
-    .chip.on { color: #08120c; background: var(--up); }
-    .chip.on.docker { color: #041018; background: var(--docker); }
-    .chip.off { color: var(--muted); background: transparent; border-color: var(--line); }
-
-    /* Group container ("swimlane") */
-    .react-flow__node-group { pointer-events: none; }
-    .group-box {
-      width: 100%; height: 100%; border-radius: 14px;
-      border: 1.5px dashed color-mix(in srgb, var(--gc) 55%, transparent);
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--gc) 9%, transparent), color-mix(in srgb, var(--gc) 3%, transparent));
-    }
-    .group-head {
-      position: absolute; top: -13px; left: 16px; display: flex; align-items: center; gap: 8px;
-      font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
-      color: color-mix(in srgb, var(--gc) 72%, var(--ink));
-      background: var(--paper); padding: 2px 10px; border-radius: 999px;
-      border: 1px solid color-mix(in srgb, var(--gc) 40%, var(--line));
-    }
-    .group-dot { width: 8px; height: 8px; border-radius: 3px; background: var(--gc); }
-    .group-count { font-size: 9.5px; letter-spacing: .04em; color: var(--muted); font-weight: 600;
-      padding-left: 6px; margin-left: 4px; border-left: 1px solid var(--line); }
-
-    .react-flow__attribution { display: none; }
-    .rf-note { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 5;
-      font-family: var(--mono); font-size: 10.5px; color: var(--muted);
-      background: #101922cc; border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="./app.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BusMate · Live Topology</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚦</text></svg>"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

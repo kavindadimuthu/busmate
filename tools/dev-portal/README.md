@@ -1,62 +1,74 @@
-# dev-portal — live topology dashboard
+# dev-portal — live topology & control dashboard
 
-A local, zero-build developer dashboard that shows **which BusMate components are
-running right now, in which environment, and how they connect** — laid out like an
-architecture diagram (labelled tiers + a request-flow spine).
+A local developer dashboard that shows **which BusMate components are running, in which
+environment, and how they connect** — laid out like an architecture diagram — and lets
+you **start/stop them from the page** and **drag them into your own layout**.
 
 ```bash
-pnpm dev-portal          # → http://localhost:4321
+pnpm dev-portal          # builds the UI, then serves it at http://localhost:4321
 ```
 
-Open the URL; the graph auto-refreshes every 5 seconds.
+The graph auto-refreshes every 5 seconds.
 
-## What it shows
+## Features
 
-Six tier containers arranged as a top-to-bottom request flow, with observability as a
-side rail:
+- **Tiered topology** — components grouped into labelled containers (Clients → Edge →
+  Backend services → Data, plus Observability and Internal tools), with dependency edges.
+- **Live status** — each node shows one chip per environment: **green** = running (health/
+  port probe), **blue** = running in Docker (`dev`/`prod`/`e2e`/`obs`), **amber** =
+  starting, **dim** = down.
+- **Run / stop menus** — the **⋯** button on a node opens a per-environment menu. `local`
+  starts the service via its `pnpm dev:*` script (a managed process); `dev`/`prod`/`obs`
+  start it via `docker compose`. Stop works for both.
+- **Draggable layout + reset** — drag any component to rearrange; positions persist in
+  `localStorage`. **Reset layout** returns everything to the registry default.
 
-```
-Client applications  ─►  Edge (api-gateway)  ─►  Backend services  ─►  Data stores
-                                                                        Internal tools
-                                                            Observability (side rail)
-```
+## Tech stack
 
-Each node shows a status dot, its stack/port, and one **environment chip per env** it
-can run in:
+| Layer | Tech |
+|---|---|
+| Server | **Express** (Node, ESM) — status, lifecycle & log endpoints; serves the built UI |
+| Detection | `docker ps`/`inspect` + HTTP/TCP health probes |
+| Process control | `child_process` process manager (spawn, track, **tree-kill** via process groups) for `pnpm` services; `docker compose up/stop` for containers |
+| UI | **Vite + React 19 + TypeScript + @xyflow/react** (ReactFlow), bundled locally — no CDN, works offline |
 
-- **lit green chip** — running (detected by a direct health/port probe → `local`)
-- **lit blue chip** — running in a Docker container, labelled `dev` / `prod` / `e2e`
-  / `obs` from the container's `SPRING_PROFILES_ACTIVE` / compose project
-- **dim chip** — that environment is not running
+## How start/stop works
 
-Edges are solid animated green when both ends are up, and dashed/grey when down or for
-observability (OTLP / scrape) paths.
+`services.config.mjs` gives each service an `actions` map of `env → descriptor`:
 
-## How status is detected
+- `pnpm('dev:core-service')` → the server spawns `pnpm run dev:core-service` as a managed,
+  tracked process. **Stop** kills the whole process group (`pnpm → nx → vite`/`mvnw → java`),
+  so nothing is orphaned. Managed-process state is in-memory: if you restart the portal
+  itself, previously spawned services keep running but are no longer tracked.
+- `compose('core-service', { file, build })` → the server runs
+  `docker compose [-f file] up -d [--build] <service>` / `stop <service>`. Docker owns the
+  lifecycle; the portal is stateless for these.
 
-Two signals are merged (see [`server/probe.mjs`](server/probe.mjs)):
+Commands are built **only** from the registry descriptor and a registry-validated
+`:id/:env` — never from raw request input. The server binds to **127.0.0.1 only**, since
+it can start/stop processes and containers.
 
-1. **Docker** — `docker ps` + `docker inspect` finds containers and reads their env so
-   dev/prod/e2e can be told apart even when they share a host port. Degrades gracefully
-   (a banner) when the Docker daemon isn't reachable.
-2. **Health/port probe** — a direct HTTP/TCP hit on each component's conventional dev
-   port. Catches anything started with `pnpm dev` / `nx dev` outside a container.
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `pnpm dev-portal` | Build UI + start server on :4321 (the normal way to use it) |
+| `pnpm dev-portal:web` | Vite dev server on :5174 with HMR (proxies `/api` → :4321) for developing the portal itself; run the server separately with `pnpm --filter @busmate/dev-portal start` |
+| `pnpm --filter @busmate/dev-portal typecheck` | Type-check the UI |
 
 ## Configuration
 
-The registry — nodes, ports, canvas layout, environments, and dependency edges — lives
-in [`services.config.mjs`](services.config.mjs). Every port can be overridden with an
-env var without editing code, e.g.:
-
-```bash
-MGMT_PORTAL_PORT=3100 DEV_PORTAL_PORT=4400 pnpm dev-portal
-```
+Node identity, canvas layout, environments, ports, dependency edges, and start/stop
+actions all live in [`services.config.mjs`](services.config.mjs). Ports can be overridden
+with env vars, e.g. `MGMT_PORTAL_PORT=3100 DEV_PORTAL_PORT=4400 pnpm dev-portal`.
 
 ## Layout
 
-| File | Role |
+| Path | Role |
 |---|---|
-| `services.config.mjs` | Registry: tier frames, nodes, ports, envs, edges |
-| `server/probe.mjs` | Docker + health/port detection |
-| `server/index.mjs` | Zero-dependency HTTP server (`/api/status`, static UI) |
-| `web/` | ReactFlow dashboard (React + ReactFlow via esm.sh — no build step) |
+| `services.config.mjs` | Registry: tiers, nodes, ports, envs, edges, **actions** |
+| `server/index.mjs` | Express app: `/api/status`, start/stop/logs endpoints, static UI |
+| `server/probe.mjs` | Docker + health/port detection (overlays managed-process state) |
+| `server/processManager.mjs` | Spawn / track / tree-kill managed `pnpm` processes |
+| `server/actions.mjs` | Dispatches start/stop to pnpm vs docker compose |
+| `web/` | Vite + React + TS app (`src/`, built to `web/dist`) |

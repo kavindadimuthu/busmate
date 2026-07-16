@@ -11,7 +11,7 @@ export const rateLimiter = rateLimit({
 
 // Stricter limiter for auth endpoints (prevent brute force)
 export const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minute
   max: 10,
   message: { error: { code: 'RATE_LIMITED', message: 'Too many auth attempts' } },
 });

@@ -1,14 +1,13 @@
-// Registry of every runnable BusMate component the dev-portal knows how to probe.
+// Registry of every runnable BusMate component the dev-portal knows how to probe
+// and control.
 //
-// This is the single source of truth for the topology dashboard: node identity,
-// where it lives on the canvas, which environments it can run in, how to detect
-// whether it's up (Docker container match + health/port probe), and which other
-// components it talks to (edges).
+// Single source of truth for the dashboard: node identity, canvas position,
+// which environments it can run in, how to detect whether it's up (Docker match +
+// health/port probe), which components it connects to (edges), and — new — how to
+// START / STOP it per environment (`actions`).
 //
-// Ports here are the conventional dev ports (see each app's project.json / compose
-// file). Override any of them without editing code via env vars, e.g.
-//   MGMT_PORTAL_PORT=3100 pnpm dev-portal
-// The `envOverride` field on a probe names the env var that wins if set.
+// Ports are the conventional dev ports (see each app's project.json / compose file)
+// and can be overridden with env vars, e.g. MGMT_PORTAL_PORT=3100 pnpm dev-portal.
 
 /** @typedef {'http'|'tcp'} ProbeType */
 
@@ -28,46 +27,69 @@ export const groups = [
 
 const port = (name, fallback) => Number(process.env[name] || fallback);
 
+// ── Action descriptors ──────────────────────────────────────────────────────
+// An `actions` entry maps an environment name to how that instance is launched.
+// The server derives BOTH start and stop from the descriptor:
+//   pnpm    → long-lived managed process (spawned, tracked, killed by tree)
+//   compose → `docker compose [-f file] up -d [--build] <service>` / `stop <service>`
+const pnpm = (script) => ({ kind: 'pnpm', script });
+const compose = (service, opts = {}) => ({ kind: 'compose', service, file: opts.file ?? null, build: !!opts.build });
+
+const DEV_COMPOSE = null; // default docker-compose.yml
+const PROD_COMPOSE = 'docker-compose.production.yml';
+const OBS_COMPOSE = 'docker-compose.observability.yml';
+const DBGATE_COMPOSE = 'tools/dbgate/docker-compose.yml';
+
 export const services = [
-  // ── Client applications ────────────────────────────────────────────────
+  // ── Client applications (run locally via pnpm dev) ──────────────────────
   {
     id: 'management-portal', label: 'management-portal', group: 'client',
     stack: 'Next.js · staff', envs: ['local'], pos: { x: 22, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('MGMT_PORTAL_PORT', 3000), path: '/' },
+    actions: { local: pnpm('dev:management-portal') },
   },
   {
     id: 'new-react-portal', label: 'new-react-portal', group: 'client',
     stack: 'Vite · staff', envs: ['local'], pos: { x: 228, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('NEW_PORTAL_PORT', 5173), path: '/' },
+    actions: { local: pnpm('dev:new-react-portal') },
   },
   {
     id: 'passenger-web', label: 'passenger-web', group: 'client',
     stack: 'Vite · React', envs: ['local'], pos: { x: 434, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('PASSENGER_WEB_PORT', 4000), path: '/' },
+    actions: { local: pnpm('dev:passenger-web') },
   },
   {
     id: 'passenger-mobile', label: 'passenger-mobile', group: 'client',
     stack: 'Expo · Metro', envs: ['local'], pos: { x: 640, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('EXPO_PASSENGER_PORT', 8081), path: '/status' },
+    actions: { local: pnpm('dev:passenger-mobile') },
   },
   {
     id: 'conductor-mobile', label: 'conductor-mobile', group: 'client',
     stack: 'Expo · Metro', envs: ['local'], pos: { x: 846, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('EXPO_CONDUCTOR_PORT', 8082), path: '/status' },
+    actions: { local: pnpm('dev:conductor-mobile') },
   },
 
-  // ── Edge ───────────────────────────────────────────────────────────────
+  // ── Edge ─────────────────────────────────────────────────────────────────
   {
     id: 'api-gateway', label: 'api-gateway', group: 'edge',
     stack: 'Node · Express · :8080', envs: ['dev', 'prod', 'e2e', 'local'],
     pos: { x: 22, y: 52 }, dockerService: 'api-gateway',
     dependsOn: ['core-service', 'user-service', 'ticketing-service'],
     probe: { type: 'http', host: 'localhost', port: port('API_GATEWAY_PORT', 8080), path: '/health' },
+    actions: {
+      local: pnpm('dev:api-gateway'),
+      dev: compose('api-gateway', { build: true }),
+      prod: compose('api-gateway', { file: PROD_COMPOSE, build: true }),
+    },
   },
 
   // ── Backend services ───────────────────────────────────────────────────
@@ -76,18 +98,33 @@ export const services = [
     stack: 'Spring Boot · :9010', envs: ['dev', 'prod', 'e2e', 'local'],
     pos: { x: 22, y: 52 }, dockerService: 'core-service', dependsOn: ['postgres'],
     probe: { type: 'http', host: 'localhost', port: port('CORE_SERVICE_PORT', 9010), path: '/actuator/health' },
+    actions: {
+      local: pnpm('dev:core-service'),
+      dev: compose('core-service', { build: true }),
+      prod: compose('core-service', { file: PROD_COMPOSE, build: true }),
+    },
   },
   {
     id: 'user-service', label: 'user-service', group: 'service',
     stack: 'Spring Boot · :9020', envs: ['dev', 'prod', 'e2e', 'local'],
     pos: { x: 228, y: 52 }, dockerService: 'user-service', dependsOn: ['postgres', 'core-service'],
     probe: { type: 'http', host: 'localhost', port: port('USER_SERVICE_PORT', 9020), path: '/actuator/health' },
+    actions: {
+      local: pnpm('dev:user-service'),
+      dev: compose('user-service', { build: true }),
+      prod: compose('user-service', { file: PROD_COMPOSE, build: true }),
+    },
   },
   {
     id: 'ticketing-service', label: 'ticketing-service', group: 'service',
     stack: 'Spring Boot · :9030', envs: ['dev', 'prod', 'e2e', 'local'],
     pos: { x: 434, y: 52 }, dockerService: 'ticketing-service', dependsOn: ['postgres'],
     probe: { type: 'http', host: 'localhost', port: port('TICKETING_SERVICE_PORT', 9030), path: '/actuator/health' },
+    actions: {
+      local: pnpm('dev:ticketing-service'),
+      dev: compose('ticketing-service', { build: true }),
+      prod: compose('ticketing-service', { file: PROD_COMPOSE, build: true }),
+    },
   },
 
   // ── Data ───────────────────────────────────────────────────────────────
@@ -96,6 +133,7 @@ export const services = [
     stack: 'PostgreSQL 16 · :5433 (dev) · Supabase (prod)', envs: ['dev', 'e2e', 'local'],
     pos: { x: 22, y: 52 }, dockerService: 'postgres', dependsOn: [],
     probe: { type: 'tcp', host: 'localhost', port: port('POSTGRES_PORT', 5433) },
+    actions: { dev: compose('postgres') },
   },
 
   // ── Observability (separate compose: busmate-observability) ─────────────
@@ -104,30 +142,35 @@ export const services = [
     stack: 'dashboards · :3000', envs: ['obs'], pos: { x: 22, y: 52 },
     dockerService: 'grafana', dependsOn: ['loki', 'prometheus', 'tempo'],
     probe: { type: 'http', host: 'localhost', port: port('GRAFANA_PORT', 3000), path: '/api/health' },
+    actions: { obs: compose('grafana', { file: OBS_COMPOSE }) },
   },
   {
     id: 'prometheus', label: 'Prometheus', group: 'observability',
     stack: 'metrics · :9090', envs: ['obs'], pos: { x: 22, y: 180 },
     dockerService: 'prometheus', dependsOn: ['api-gateway'],
     probe: { type: 'http', host: 'localhost', port: port('PROMETHEUS_PORT', 9090), path: '/-/healthy' },
+    actions: { obs: compose('prometheus', { file: OBS_COMPOSE }) },
   },
   {
     id: 'loki', label: 'Loki', group: 'observability',
     stack: 'logs · :3100', envs: ['obs'], pos: { x: 22, y: 308 },
     dockerService: 'loki', dependsOn: [],
     probe: { type: 'http', host: 'localhost', port: port('LOKI_PORT', 3100), path: '/ready' },
+    actions: { obs: compose('loki', { file: OBS_COMPOSE }) },
   },
   {
     id: 'tempo', label: 'Tempo', group: 'observability',
     stack: 'traces · :3200', envs: ['obs'], pos: { x: 22, y: 436 },
     dockerService: 'tempo', dependsOn: [],
     probe: { type: 'http', host: 'localhost', port: port('TEMPO_PORT', 3200), path: '/ready' },
+    actions: { obs: compose('tempo', { file: OBS_COMPOSE }) },
   },
   {
     id: 'uptime-kuma', label: 'Uptime Kuma', group: 'observability',
     stack: 'uptime · :3001', envs: ['obs'], pos: { x: 22, y: 564 },
     dockerService: 'uptime-kuma', dependsOn: [],
     probe: { type: 'http', host: 'localhost', port: port('UPTIME_KUMA_PORT', 3001), path: '/' },
+    actions: { obs: compose('uptime-kuma', { file: OBS_COMPOSE }) },
   },
 
   // ── Internal tools ─────────────────────────────────────────────────────
@@ -136,12 +179,14 @@ export const services = [
     stack: 'DB GUI · :3002', envs: ['local'], pos: { x: 22, y: 52 },
     dockerService: 'dbgate', dependsOn: ['postgres'],
     probe: { type: 'http', host: 'localhost', port: port('DBGATE_PORT', 3002), path: '/' },
+    actions: { local: compose('dbgate', { file: DBGATE_COMPOSE }) },
   },
   {
     id: 'dev-portal', label: 'dev-portal', group: 'tool',
     stack: 'this dashboard', envs: ['local'], pos: { x: 228, y: 52 },
     dockerService: null, dependsOn: [], self: true,
     probe: { type: 'http', host: 'localhost', port: port('DEV_PORTAL_PORT', 4321), path: '/api/ping' },
+    // No actions: the portal doesn't start/stop itself.
   },
 ];
 
@@ -157,3 +202,8 @@ export const softEdges = [
   { source: 'grafana', target: 'prometheus' },
   { source: 'grafana', target: 'tempo' },
 ];
+
+// Absolute path to the repo root — actions run their commands from here.
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+export const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');

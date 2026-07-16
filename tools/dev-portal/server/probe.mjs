@@ -15,6 +15,7 @@
 import { execFile } from 'node:child_process';
 import net from 'node:net';
 import { promisify } from 'node:util';
+import { managedState } from './processManager.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -100,19 +101,20 @@ const probe = (p) => (p.type === 'tcp' ? probeTcp(p) : probeHttp(p));
  */
 export async function buildStatus(services) {
   const docker = await getDockerContainers();
+  const managed = managedState(); // portal-spawned pnpm processes, keyed `${id}:${env}`
 
   const results = await Promise.all(services.map(async (svc) => {
     // Start with every declared environment marked "down".
     const envs = {};
-    for (const e of svc.envs) envs[e] = { running: false, source: null, detail: null };
+    for (const e of svc.envs) envs[e] = { running: false, source: null, detail: null, proc: null };
 
     // 1. Docker signal.
     if (svc.dockerService) {
       const matches = docker.containers.filter((c) => c.service === svc.dockerService);
       for (const c of matches) {
         const envName = svc.envs.includes(c.env) ? c.env : c.env;
-        if (!envs[envName]) envs[envName] = { running: false, source: null, detail: null };
-        envs[envName] = { running: true, source: 'docker', detail: c.status || c.names };
+        if (!envs[envName]) envs[envName] = { running: false, source: null, detail: null, proc: null };
+        envs[envName] = { running: true, source: 'docker', detail: c.status || c.names, proc: null };
       }
     }
 
@@ -123,8 +125,21 @@ export async function buildStatus(services) {
     if (svc.probe) {
       probedUp = await probe(svc.probe);
       if (probedUp && !claimedByDocker) {
-        if (!envs.local) envs.local = { running: false, source: null, detail: null };
-        envs.local = { running: true, source: 'process', detail: `port ${svc.probe.port}` };
+        if (!envs.local) envs.local = { running: false, source: null, detail: null, proc: null };
+        envs.local = { running: true, source: 'process', detail: `port ${svc.probe.port}`, proc: null };
+      }
+    }
+
+    // 3. Managed-process overlay — surfaces transient states the probe can't see:
+    //    a spawned pnpm server that hasn't opened its port yet (starting) or one
+    //    that crashed (failed). If its port is already up, the probe above wins.
+    for (const [env, e] of Object.entries(envs)) {
+      const m = managed[`${svc.id}:${env}`];
+      if (!m) continue;
+      e.proc = m.state;
+      if (!e.running && (m.state === 'starting' || m.state === 'running')) {
+        e.source = 'process';
+        e.detail = `starting (pid ${m.pid})`;
       }
     }
 
