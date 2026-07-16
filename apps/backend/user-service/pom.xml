@@ -73,6 +73,17 @@
 			<artifactId>hypersistence-utils-hibernate-63</artifactId>
 			<version>3.9.0</version>
 		</dependency>
+		<!-- Flyway: owns schema/reference/seed migrations (db/migration, db/reference, db/seed/dev).
+		     See docs/plans/Database-Migrations-and-Seed-Data-Plan.md. Version managed by the
+		     spring-boot-starter-parent BOM. -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>

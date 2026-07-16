@@ -46,6 +46,11 @@ spring:
       # Change to update to avoid connection issues on startup
       ddl-auto: update
     show-sql: false  # Reduce logging overhead
+  # Flyway dependency landed (Phase 0 of the migrations/seed-data plan) but is not wired up yet —
+  # explicitly disabled until Phase 1 lands a baseline migration and flips ddl-auto to validate.
+  # See docs/plans/Database-Migrations-and-Seed-Data-Plan.md.
+  flyway:
+    enabled: false
     properties:
       hibernate:
         format_sql: false  # Reduce logging overhead

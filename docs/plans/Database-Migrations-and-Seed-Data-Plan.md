@@ -5,7 +5,7 @@ lifecycle — schema migrations plus seed data — that works on **plain Postgre
 Supabase-specific features) so any service can run against local Postgres, Supabase, RDS, Neon,
 Cloud SQL, or any other Postgres provider without change.
 
-**Status:** Proposed — not yet implemented.
+**Status:** Phase 0 complete (2026-07-16). Phases 1–5 pending.
 
 **Scope:** The three JVM services that own a database — `apps/backend/user-service`,
 `apps/backend/core-service`, `apps/backend/ticketing-service`. `api-gateway` (Node, no database) is
@@ -173,13 +173,25 @@ allocated there first, then referenced from the service migrations.
 
 ## 6. Implementation plan (phased)
 
-### Phase 0 — Foundation (shared, no behavior change)
+### Phase 0 — Foundation (shared, no behavior change) — ✅ complete
 
-1. Add `flyway-core` and `flyway-database-postgresql` (Flyway 10+) to a shared parent POM (or each
-   service POM if there is no parent).
-2. Land this plan and `docs/dev-seed-contract.md` (the canonical UUID registry — start it empty with
-   the allocation convention).
-3. No config flip yet — this phase only makes Flyway available.
+1. ~~Add `flyway-core` and `flyway-database-postgresql` (Flyway 10+) to a shared parent POM (or each
+   service POM if there is no parent).~~ Done: no shared parent POM exists (each service parents
+   directly off `spring-boot-starter-parent`, at slightly different versions — 3.5.3 for
+   user-service/core-service, 3.5.4 for ticketing-service), so both dependencies were added
+   individually to all three service POMs. Version is unmanaged (inherited from the Spring Boot
+   BOM) and resolved to **Flyway 11.7.2** in all three, confirmed via `mvn dependency:tree`.
+2. ~~Land this plan and `docs/dev-seed-contract.md`~~ Done: this plan and
+   [`docs/dev-seed-contract.md`](../dev-seed-contract.md) (the canonical UUID registry, empty except
+   for the allocation convention) are both landed.
+3. ~~No config flip yet~~ Done, but with one addition beyond the original plan text: since Flyway
+   auto-configures itself the moment it's on the classpath (Spring Boot will otherwise try to run it
+   against `classpath:db/migration` on next boot, creating a `flyway_schema_history` table even
+   with zero migration files present — a real side effect this phase was meant to avoid), each
+   service's `application.yml` explicitly sets `spring.flyway.enabled: false` with a comment
+   pointing at Phase 1, which is where it gets switched on for real. `ddl-auto` is untouched
+   (`update`, unchanged) — that flip is Phase 1's job, gated on the baseline migration existing.
+   Verified all three services still `mvn compile` cleanly with Flyway on the classpath.
 
 ### Phase 1 — Baseline each existing database (the fiddly part)
 
