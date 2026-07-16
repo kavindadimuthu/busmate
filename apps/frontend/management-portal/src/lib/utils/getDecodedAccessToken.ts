@@ -1,9 +1,9 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
 import { AccessTokenPayload } from '@/types/AccessTokenPayload';
-import { ACCESS_TOKEN_COOKIE, getJwtSecret } from '@/lib/auth/session';
+import { ACCESS_TOKEN_COOKIE } from '@/lib/auth/session';
+import { verifyAccessToken } from '@/lib/auth/tokenVerifier';
 
 export async function getDecodedAccessToken(): Promise<AccessTokenPayload | null> {
   try {
@@ -13,7 +13,7 @@ export async function getDecodedAccessToken(): Promise<AccessTokenPayload | null
       return null;
     }
 
-    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AccessTokenPayload;
+    return await verifyAccessToken(token);
   } catch (error) {
     console.error("Error verifying access token:", error);
     return null;

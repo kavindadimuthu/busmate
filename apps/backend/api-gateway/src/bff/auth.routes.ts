@@ -58,7 +58,7 @@ bffAuthRouter.post('/logout', async (req, res) => {
 bffAuthRouter.get('/me', async (req, res) => {
   let accessToken = getAccessTokenCookie(req);
 
-  if (!accessToken || !isAccessTokenValid(accessToken)) {
+  if (!accessToken || !(await isAccessTokenValid(accessToken))) {
     const refreshToken = getRefreshTokenCookie(req);
     if (!refreshToken) {
       clearSessionCookies(res);
@@ -95,7 +95,7 @@ bffAuthRouter.get('/me', async (req, res) => {
 bffAuthRouter.get('/token', async (req, res) => {
   const accessToken = getAccessTokenCookie(req);
 
-  if (accessToken && isAccessTokenValid(accessToken)) {
+  if (accessToken && (await isAccessTokenValid(accessToken))) {
     res.json({ accessToken });
     return;
   }

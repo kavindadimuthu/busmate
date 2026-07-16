@@ -1,13 +1,12 @@
 package com.busmatelk.backend.config;
 
+import com.busmatelk.backend.service.AccessTokenVerifier;
+import com.busmatelk.backend.service.InvalidTokenException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,17 +14,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final String supabaseSecret;
+    private final AccessTokenVerifier accessTokenVerifier;
 
-    public JwtAuthFilter(@Value("${supabase.jwt.secret}") String supabaseSecret) {
-        this.supabaseSecret = supabaseSecret;
+    public JwtAuthFilter(AccessTokenVerifier accessTokenVerifier) {
+        this.accessTokenVerifier = accessTokenVerifier;
     }
 
     @Override
@@ -40,19 +38,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String jwt = authHeader.substring(7);
 
             try {
-                Claims claims = Jwts.parser()
-                        .setSigningKey(supabaseSecret.getBytes(StandardCharsets.UTF_8))
-                        .parseClaimsJws(jwt)
-                        .getBody();
+                Claims claims = accessTokenVerifier.verify(jwt);
 
-                // Principal is the Supabase user_id (sub claim, a UUID string) so it lines up
-                // with PermissionCheckAspect and PermissionService, which key everything off userId.
+                // Principal is the user id (sub claim, a UUID string) so it lines up with
+                // PermissionCheckAspect and PermissionService, which key everything off userId.
                 String userId = claims.getSubject();
 
                 Map<String, Object> appMetadata = claims.get("app_metadata", Map.class);
                 String userType = appMetadata != null ? (String) appMetadata.get("user_type") : null;
 
-                // 📌 Create an Authentication object and put it in the context
                 var auth = new UsernamePasswordAuthenticationToken(
                         userId,                   // principal
                         null,                     // credentials (none)
@@ -60,10 +54,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 );
                 auth.setDetails(userType);
                 SecurityContextHolder.getContext().setAuthentication(auth);
-
-                System.out.println("✅ Supabase‑authenticated user: " + userId);
-
-            } catch (JwtException e) {
+            } catch (InvalidTokenException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return; // stop filter chain
             }

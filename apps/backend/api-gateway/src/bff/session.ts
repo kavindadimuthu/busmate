@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
+import { verifyAccessToken } from '../auth/tokenVerifier';
 
 // Talks to user-service directly rather than looping back through this same
 // gateway's own /api/auth/* proxy routes.
@@ -92,9 +92,9 @@ export async function logoutUpstream(accessToken: string): Promise<void> {
   }
 }
 
-export function isAccessTokenValid(token: string): boolean {
+export async function isAccessTokenValid(token: string): Promise<boolean> {
   try {
-    jwt.verify(token, env.SUPABASE_JWT_SECRET, { algorithms: ['HS256'] });
+    await verifyAccessToken(token);
     return true;
   } catch {
     return false;

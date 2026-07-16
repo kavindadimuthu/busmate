@@ -6,6 +6,9 @@ export interface RouteConfig {
 
 // Routes are evaluated in order — first match wins
 export const routes: RouteConfig[] = [
+  // JWKS document (auth migration Phase 2b) — lets the management portal (which only knows this
+  // gateway's URL, never user-service's) fetch the RSA public key to verify access tokens itself.
+  { pathPrefix: '/public/jwks.json', target: 'USER_SERVICE', requiresAuth: false },
   // Public auth routes
   { pathPrefix: '/api/auth/login', target: 'USER_SERVICE', requiresAuth: false },
   { pathPrefix: '/api/auth/register', target: 'USER_SERVICE', requiresAuth: false },

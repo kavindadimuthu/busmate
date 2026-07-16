@@ -118,15 +118,22 @@ supabase:
   api:
     key: ${SUPABASE_SERVICE_ROLE_KEY:dev-only-placeholder-service-role-key-change-me}
 
-# In-house authentication (Phase 1 of the Supabase-auth migration). The signing secret defaults
-# to the existing SUPABASE_JWT_SECRET so tokens this service now issues locally keep verifying in
-# the API gateway and JwtAuthFilter unchanged; Phase 2 swaps this for an RS256 keypair + JWKS.
+# In-house authentication (Supabase-auth migration). Access tokens are RS256-signed with the
+# rsa.* keypair below (Phase 2b) and carry a kid published at GET /public/jwks.json; auth.jwt.secret
+# is now only the legacy HS256 verification path AccessTokenVerifier accepts for tokens issued
+# before that cutover (see docs/plans/Self-Hosted-Auth-Migration-Plan.md).
 auth:
   jwt:
     secret: ${AUTH_JWT_SECRET:${SUPABASE_JWT_SECRET:dev-only-placeholder-jwt-secret-change-me}}
     access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:3600}
     refresh-token-ttl-seconds: ${AUTH_REFRESH_TOKEN_TTL_SECONDS:2592000}
     issuer: ${AUTH_JWT_ISSUER:busmate-user-service}
+    rsa:
+      # Left unset, JwtKeyConfig generates an ephemeral in-process keypair (fine for a single
+      # local-dev instance only — see its class comment). Set both via env vars everywhere else.
+      private-key: ${AUTH_JWT_RSA_PRIVATE_KEY:}
+      public-key: ${AUTH_JWT_RSA_PUBLIC_KEY:}
+      kid: ${AUTH_JWT_RSA_KID:busmate-user-service-key-1}
 
 # Shared secret other backend services use to call /internal/** directly (never routed
 # through the API gateway, which blocks /internal/** entirely). Override via env var in

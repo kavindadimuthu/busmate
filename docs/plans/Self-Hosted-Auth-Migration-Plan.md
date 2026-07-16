@@ -5,28 +5,47 @@ while keeping RBAC/permissions/profile (already built there) unchanged and prese
 API contract the api-gateway already depends on.
 
 **Status:** Phase 1 complete (local password auth + credential store). Phase **2a** complete
-(stored, rotating, reuse-detected refresh tokens + revocation). Phase **2b** (RS256/JWKS verifier
-switch) and Phases 3–7 pending.
+(stored, rotating, reuse-detected refresh tokens + revocation). Phase **2b** complete (RS256 +
+JWKS, all verifiers switched). Phases 3–7 pending.
 
-> **Phase 2a as-built notes (2026-07-16):**
-> - Split Phase 2 by decision: the self-contained refresh-token hardening shipped now; the RS256 +
->   JWKS access-token switch (**2b**) is deferred because it must flip verifiers in **three apps at
->   once** — user-service (`JwtAuthFilter` + `InternalService.validateToken`), api-gateway
->   (`auth.middleware.ts` + `bff/session.ts`), and the management-portal Next.js app
->   (`getJwtSecret()` in `proxy.ts` / `token/route.ts` / `getDecodedAccessToken.ts`). Access tokens
->   remain HS256 for now, so nothing downstream changed.
-> - Added table `refresh_tokens` (opaque token stored only as a SHA-256 hash, `family_id` lineage).
->   New `RefreshTokenService`; `TokenService` slimmed to access-token issuance only.
-> - Refresh tokens are opaque random 256-bit strings (never JWTs), **rotated on every `/refresh`**;
->   replay of a rotated token burns the whole family (`noRollbackFor` so the burn survives its own
->   throw). `logout` and `changePassword` revoke all of a user's live sessions.
-> - **Known limitation:** `logout` is "log out everywhere" — the gateway forwards only the access
->   token, so a single family can't be singled out. Per-session logout needs the gateway to forward
->   the refresh token (or a `sid` claim), a small future enhancement.
->
-> **Phase 2b (still to do):** RSA keypair + `GET /public/jwks.json`, sign access tokens RS256 with a
-> `kid`, and flip all the verifiers above — ideally with a dual-accept (RS256‖HS256) grace window
-> per §6 so live sessions survive the cutover.
+> **Phase 2b as-built notes (2026-07-16):**
+> - **user-service:** `JwtKeyConfig`/`RsaKeyMaterial` load an RSA keypair from
+>   `AUTH_JWT_RSA_PRIVATE_KEY`/`AUTH_JWT_RSA_PUBLIC_KEY` (PEM), or generate an **ephemeral** one if
+>   unset — fine for a single local-dev instance, but every multi-instance/production environment
+>   MUST set real keys (see the loud startup WARN and `.env.example`), or different instances mint
+>   tokens no one else can verify. `TokenService` now signs RS256 with a `kid` header.
+>   `GET /public/jwks.json` (new `JwksController`) publishes the public half.
+> - **New shared `AccessTokenVerifier`** (used by both `JwtAuthFilter` and
+>   `InternalService.validateToken`): resolves the verification key from the JWT header's
+>   algorithm via a jjwt `SigningKeyResolver` — RS256 → the RSA public key, HS256 → the legacy
+>   `auth.jwt.secret`. This **is** the dual-accept grace window from §6, not a separate flag.
+> - **api-gateway:** new `src/auth/tokenVerifier.ts` does the same dual-algorithm verification
+>   (via `jose`'s `createRemoteJWKSet` against `${USER_SERVICE_URL}/public/jwks.json` for RS256,
+>   `jsonwebtoken` + the shared secret for legacy HS256). `auth.middleware.ts` and
+>   `bff/session.ts`'s `isAccessTokenValid` both became **async** to support the JWKS fetch — their
+>   two callers in `bff/auth.routes.ts` were already inside async handlers, so this was a
+>   non-breaking signature change. Added a new gateway route, `/public/jwks.json` → USER_SERVICE
+>   (unauthenticated) — the management portal never talks to user-service directly, only to this
+>   gateway, so it needs a passthrough to reach the JWKS document at all.
+> - **management-portal:** new `src/lib/auth/tokenVerifier.ts`, same dual-algorithm approach,
+>   fetching JWKS through the gateway's new passthrough route. `proxy.ts`, `token/route.ts`, and
+>   `getDecodedAccessToken.ts` now call it instead of raw `jwt.verify`.
+> - **Dependency note:** `jose` v5+ dropped CommonJS support (ESM-only), but both the gateway
+>   (ts-jest/tsc → CommonJS) and the portal need a `require()`-able build — pinned both to
+>   **`jose@^4.15.9`**, the last version with a genuine dual CJS/ESM build, rather than converting
+>   either app's module system to ESM.
+> - **Tests:** user-service gained `AccessTokenVerifierTest` (RS256 accept, legacy HS256 accept,
+>   wrong-secret reject, expired reject, garbage reject) and `JwksControllerTest` (proves the
+>   published JWK actually verifies a real login-issued token — reconstructs an `RSAPublicKey` from
+>   the endpoint's `n`/`e` and checks its `kid` matches the token header). The gateway's
+>   `auth.middleware.test.ts` now covers both RS256 (current) and HS256 (legacy) tokens, using a
+>   real local HTTP server to stand in for user-service's JWKS endpoint — `jose@4`'s remote-JWKS
+>   fetcher uses Node's `http`/`https` modules directly (it predates Node's Fetch API), so mocking
+>   `global.fetch` doesn't intercept it; a real listener is both simpler and more faithful.
+> - **Not done / left for a real cutover:** no dual-window *time limit* is enforced — the HS256
+>   branch simply stays until someone removes it once satisfied no HS256 tokens remain (one
+>   `access-token-ttl-seconds` window after every environment has real RSA keys configured and has
+>   redeployed). `logout`'s "log out everywhere" limitation from Phase 2a is unchanged.
 
 > **Phase 1 as-built notes (2026-07-16):**
 > - Added tables `auth_credentials` and `user_identities` (Hibernate `ddl-auto: update`); the

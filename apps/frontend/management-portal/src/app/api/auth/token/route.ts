@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   clearSessionCookies,
-  getJwtSecret,
   refreshSession,
   setSessionCookies,
 } from '@/lib/auth/session';
+import { verifyAccessToken } from '@/lib/auth/tokenVerifier';
 
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
 
   if (accessToken) {
     try {
-      jwt.verify(accessToken, getJwtSecret(), { algorithms: ['HS256'] });
+      await verifyAccessToken(accessToken);
       return NextResponse.json({ accessToken });
     } catch {
       // Expired or invalid — fall through and try to refresh below.

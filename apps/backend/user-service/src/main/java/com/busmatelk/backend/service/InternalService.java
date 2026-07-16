@@ -8,13 +8,9 @@ import com.busmatelk.backend.repository.UserPermissionOverrideRepository;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypePermissionRepository;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -28,9 +24,7 @@ public class InternalService {
     private final UserRepository userRepository;
     private final UserPermissionOverrideRepository overrideRepository;
     private final UserTypePermissionRepository typePermissionRepository;
-
-    @Value("${supabase.jwt.secret}")
-    private String jwtSecret;
+    private final AccessTokenVerifier accessTokenVerifier;
 
     public InternalUserResponse getUser(UUID userId) {
         User user = userRepository.findById(userId)
@@ -63,22 +57,15 @@ public class InternalService {
     }
 
     public InternalUserResponse validateToken(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(jwtSecret.getBytes(StandardCharsets.UTF_8))
-                    .parseClaimsJws(token)
-                    .getBody();
+        Claims claims = accessTokenVerifier.verify(token);
 
-            String userId = claims.getSubject();
-            String email = claims.get("email", String.class);
-            Map<String, Object> appMetadata = claims.get("app_metadata", Map.class);
-            String userType = appMetadata != null ? (String) appMetadata.get("user_type") : null;
-            String accountStatus = appMetadata != null ? (String) appMetadata.get("account_status") : null;
+        String userId = claims.getSubject();
+        String email = claims.get("email", String.class);
+        Map<String, Object> appMetadata = claims.get("app_metadata", Map.class);
+        String userType = appMetadata != null ? (String) appMetadata.get("user_type") : null;
+        String accountStatus = appMetadata != null ? (String) appMetadata.get("account_status") : null;
 
-            return new InternalUserResponse(UUID.fromString(userId), email, userType, accountStatus);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new InvalidTokenException("Invalid or expired token");
-        }
+        return new InternalUserResponse(UUID.fromString(userId), email, userType, accountStatus);
     }
 
     private InternalUserResponse toResponse(User user) {

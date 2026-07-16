@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   clearSessionCookies,
-  getJwtSecret,
   refreshSession,
   setSessionCookies,
 } from '@/lib/auth/session';
+import { verifyAccessToken } from '@/lib/auth/tokenVerifier';
 
 const PROTECTED_PREFIXES = ['/mot', '/operator', '/timekeeper', '/admin'];
 
@@ -32,7 +31,7 @@ export default async function proxy(req: NextRequest) {
 
   if (accessToken) {
     try {
-      jwt.verify(accessToken, getJwtSecret(), { algorithms: ['HS256'] });
+      await verifyAccessToken(accessToken);
       hasValidSession = true;
     } catch {
       hasValidSession = false;

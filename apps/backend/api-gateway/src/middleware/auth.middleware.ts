@@ -1,18 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
+import { verifyAccessToken } from '../auth/tokenVerifier';
 
-interface SupabaseJwtPayload {
-  sub: string;
-  email: string;
-  app_metadata?: {
-    user_type?: string;
-    account_status?: string;
-  };
-  exp: number;
-}
-
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ error: { code: 'MISSING_TOKEN', message: 'Authorization header required' } });
@@ -21,7 +10,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
   const token = authHeader.slice(7);
   try {
-    const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET, { algorithms: ['HS256'] }) as SupabaseJwtPayload;
+    const decoded = await verifyAccessToken(token);
 
     if (decoded.app_metadata?.account_status === 'suspended') {
       res.status(403).json({ error: { code: 'ACCOUNT_SUSPENDED', message: 'Account is suspended' } });
