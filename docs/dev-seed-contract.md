@@ -43,44 +43,87 @@ in each service's own `db/reference` migrations and don't need cross-service IDs
 
 ## Registry
 
-_No entries yet — this file is created in Phase 0 of the migrations/seed-data plan, ahead of
-Phase 3 ("Rebuild demo seed"), which is where entries get allocated as the actual demo dataset is
-authored._
+Allocated in Phase 3 ("Rebuild demo seed") of the migrations/seed-data plan. The scenario: three
+Sri Lankan bus operators, each running one route (with buses, a permit, a schedule, and a demo
+conductor), plus a shared pool of demo passengers who book/ride across all three. Full detail
+(fares, ticket numbers, exact times) lives in the migration files themselves — this table only
+records the identifiers other services need to stay in sync.
 
 ### Demo operators (users)
 
-| UUID | Name | Notes |
-|---|---|---|
-| _(none yet)_ | | |
+The `users.user_id` and core-service `operator.id` are deliberately **different** UUIDs — in the
+real unified-operator-lifecycle sync (`InternalOperatorServiceImpl.createOrGetOperator`),
+`Operator.id` is a fresh `UUID.randomUUID()`, never the linked `userId`. Reusing the same value
+for both would misrepresent that relationship, so each operator gets two entries here.
+
+| `users.user_id` | core-service `operator.id` | Name | Notes |
+|---|---|---|---|
+| `00000000-0000-0000-0000-000000000101` | `00000000-0000-0000-0000-000000010501` | Nimal Perera | Lanka Suwaseriya Travels (Pvt) Ltd — PRIVATE, Western Province. Runs the Colombo–Kandy line. |
+| `00000000-0000-0000-0000-000000000102` | `00000000-0000-0000-0000-000000010502` | Kumari Wijesinghe | Southern Comfort Express (Pvt) Ltd — PRIVATE, Southern Province. Runs the Colombo–Galle expressway line. |
+| `00000000-0000-0000-0000-000000000103` | `00000000-0000-0000-0000-000000010503` | Sunil Rathnayake | Sri Lanka Transport Board – Central Province — CTB, Central Province. Runs the Colombo–Negombo line. |
 
 ### Demo passengers (users)
 
 | UUID | Name | Notes |
 |---|---|---|
-| _(none yet)_ | | |
+| `00000000-0000-0000-0000-000000000201` | Dilani Perera | Books an online ticket on the Colombo–Kandy line. |
+| `00000000-0000-0000-0000-000000000202` | Kasun Mendis | Books an online ticket on the Colombo–Galle line. |
+| `00000000-0000-0000-0000-000000000203` | Ishara Gunawardena | Books an online ticket on the Colombo–Negombo line. |
 
 ### Demo conductors (users)
 
 | UUID | Name | Notes |
 |---|---|---|
+| `00000000-0000-0000-0000-000000000301` | Saman Kumara | Assigned to Lanka Suwaseriya Travels (Colombo–Kandy). |
+| `00000000-0000-0000-0000-000000000302` | Nirosha Fernando | Assigned to Southern Comfort Express (Colombo–Galle). |
+| `00000000-0000-0000-0000-000000000303` | Ranjith Silva | Assigned to SLTB – Central Province (Colombo–Negombo). |
 
 ### Demo routes
 
 | UUID | Name | Owning service | Notes |
 |---|---|---|---|
-| _(none yet)_ | | core-service | |
+| `00000000-0000-0000-0000-000000010101` | Colombo Fort → Kandy | core-service | OUTBOUND, NORMALWAY, route group "Colombo - Kandy". |
+| `00000000-0000-0000-0000-000000010102` | Kandy → Colombo Fort | core-service | INBOUND counterpart of the above. |
+| `00000000-0000-0000-0000-000000010103` | Colombo Fort → Galle | core-service | OUTBOUND, EXPRESSWAY (Southern Expressway), route group "Colombo - Galle". |
+| `00000000-0000-0000-0000-000000010104` | Galle → Colombo Fort | core-service | INBOUND counterpart of the above. |
+| `00000000-0000-0000-0000-000000010105` | Colombo Fort → Negombo | core-service | OUTBOUND, NORMALWAY, route group "Colombo - Negombo". |
+| `00000000-0000-0000-0000-000000010106` | Negombo → Colombo Fort | core-service | INBOUND counterpart of the above. |
 
 ### Demo stops
 
 | UUID | Name | Owning service | Notes |
 |---|---|---|---|
+| `00000000-0000-0000-0000-000000010201` | Colombo Fort (Central Bus Stand) | core-service | Shared origin/terminus for all three lines. |
+| `00000000-0000-0000-0000-000000010202` | Kadawatha | core-service | Colombo–Kandy intermediate stop. |
+| `00000000-0000-0000-0000-000000010203` | Kegalle | core-service | Colombo–Kandy intermediate stop. |
+| `00000000-0000-0000-0000-000000010204` | Kandy (Goods Shed Bus Stand) | core-service | Colombo–Kandy terminus. |
+| `00000000-0000-0000-0000-000000010205` | Kalutara | core-service | Colombo–Galle intermediate stop. |
+| `00000000-0000-0000-0000-000000010206` | Ambalangoda | core-service | Colombo–Galle intermediate stop. |
+| `00000000-0000-0000-0000-000000010207` | Galle (Bus Stand) | core-service | Colombo–Galle terminus. |
+| `00000000-0000-0000-0000-000000010208` | Wattala | core-service | Colombo–Negombo intermediate stop. |
+| `00000000-0000-0000-0000-000000010209` | Negombo (Bus Stand) | core-service | Colombo–Negombo terminus. |
 
 ### Demo buses
 
 | UUID | Plate / label | Owning service | Notes |
 |---|---|---|---|
+| `00000000-0000-0000-0000-000000010301` | WP CAA-4521 — TATA LP 1613 | core-service | Lanka Suwaseriya Travels. |
+| `00000000-0000-0000-0000-000000010302` | WP CAB-7734 — Ashok Leyland Viking | core-service | Lanka Suwaseriya Travels. |
+| `00000000-0000-0000-0000-000000010303` | SP CAA-2210 — Rosa Coaster | core-service | Southern Comfort Express. |
+| `00000000-0000-0000-0000-000000010304` | SP CAB-9981 — Yutong ZK6122 | core-service | Southern Comfort Express. |
+| `00000000-0000-0000-0000-000000010305` | CP NA-1123 — TATA LP 1613 (SLTB) | core-service | SLTB – Central Province. |
+| `00000000-0000-0000-0000-000000010306` | CP NA-1187 — TATA LP 1613 (SLTB) | core-service | SLTB – Central Province. |
 
 ### Demo schedules / trips
 
 | UUID | Description | Owning service | Notes |
 |---|---|---|---|
+| `00000000-0000-0000-0000-000000010401` | Schedule: Colombo–Kandy Morning Express | core-service | Daily, route `...010101`. |
+| `00000000-0000-0000-0000-000000010402` | Schedule: Kandy–Colombo Afternoon Express | core-service | Daily, route `...010102`. |
+| `00000000-0000-0000-0000-000000010403` | Schedule: Colombo–Galle Expressway Luxury | core-service | Daily, route `...010103`. |
+| `00000000-0000-0000-0000-000000010404` | Schedule: Galle–Colombo Expressway Luxury | core-service | Daily, route `...010104`. |
+| `00000000-0000-0000-0000-000000010405` | Schedule: Colombo–Negombo Local | core-service | Daily, route `...010105`. |
+| `00000000-0000-0000-0000-000000010406` | Schedule: Negombo–Colombo Local | core-service | Daily, route `...010106`. |
+| `00000000-0000-0000-0000-000000010407` | Trip: Colombo–Kandy, today | core-service | The specific trip ticketing-service's demo tickets A/B reference (as text, no FK). |
+| `00000000-0000-0000-0000-000000010408` | Trip: Colombo–Galle, today | core-service | Referenced by demo tickets C/D. |
+| `00000000-0000-0000-0000-000000010409` | Trip: Colombo–Negombo, today | core-service | Referenced by demo tickets E/F. |

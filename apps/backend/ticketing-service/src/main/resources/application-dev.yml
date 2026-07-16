@@ -8,6 +8,11 @@ spring:
     password: postgres
   jpa:
     show-sql: true
+  # Tier 3 demo data (docs/plans/Database-Migrations-and-Seed-Data-Plan.md §3, §5) — dev profile
+  # only. Overrides (not appends to) the base locations list, so it must repeat db/migration
+  # alongside the new db/seed/dev. No db/reference here — ticketing-service needed none (Phase 2).
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed/dev
 
 logging:
   level:

@@ -5,7 +5,7 @@ lifecycle — schema migrations plus seed data — that works on **plain Postgre
 Supabase-specific features) so any service can run against local Postgres, Supabase, RDS, Neon,
 Cloud SQL, or any other Postgres provider without change.
 
-**Status:** Phases 0–2 complete (2026-07-16). Phases 3–5 pending.
+**Status:** Phases 0–3 complete (2026-07-17). Phases 4–5 pending.
 
 **Scope:** The three JVM services that own a database — `apps/backend/user-service`,
 `apps/backend/core-service`, `apps/backend/ticketing-service`. `api-gateway` (Node, no database) is
@@ -14,9 +14,11 @@ out of scope.
 **Author's note on stale artifacts:** The existing `core-service/src/main/resources/data.sql`,
 `schema.sql`, and older `docs/database-*-guide.md` docs predate the self-hosted auth migration and
 are **stale**. This plan is grounded in the *current* entity models, not those files, and
-supersedes them; `data.sql`/`schema.sql` are removed in Phase 5 (they were already inert —
-`spring.sql.init.mode: never`). `core-service`'s three old `db/migration/V00x` files (aspirational
-Flyway-naming, never actually run) were retired in Phase 1 instead, ahead of schedule — see the
+supersedes them. `data.sql` was removed in Phase 3 (superseded by the real `seed/dev` migrations
+there; it was already inert — `spring.sql.init.mode: never`). `schema.sql` (trigger definitions,
+unrelated to seed data) is unaffected and still slated for removal in Phase 5. `core-service`'s
+three old `db/migration/V00x` files (aspirational Flyway-naming, never actually run) were retired
+in Phase 1 instead, ahead of schedule — see the
 Phase 1 as-built notes below for why.
 
 ---
@@ -320,16 +322,67 @@ Do **user-service first** — its RBAC gates every login on the platform.
    Flyway's own skip logic. A fully fresh, empty `busmate_user` database ran the complete chain
    (`V001` → `V002` → `R__001` → `R__002` → `R__003`) in one boot and produced identical counts.
 
-### Phase 3 — Rebuild demo seed (Tier 3)
+### Phase 3 — Rebuild demo seed (Tier 3) — ✅ complete (2026-07-17)
 
-1. **Discard** the stale 394-line `core-service/data.sql`. Rewrite the Sri Lankan demo dataset from
-   the *current* entities as `seed/dev` migrations, using the fixed UUIDs from
-   `docs/dev-seed-contract.md`.
-2. Ordering across services: user-service demo users/operators → core-service
-   operators/routes/schedules → ticketing fares/demo tickets.
-3. Make each migration idempotent (`ON CONFLICT DO NOTHING`) so re-runs and partial states are safe.
-4. Keep the resulting login list documented (successor to
-   `docs/operator-conductor-seed-credentials.md`).
+1. ~~Discard the stale 394-line `core-service/data.sql`~~ Done — removed (`git rm`); it was
+   already inert (`spring.sql.init.mode: never`). `core-service/schema.sql` (triggers) is left
+   alone — unrelated to seed data, still slated for Phase 5.
+   Rewrote the Sri Lankan demo dataset from the *current* entities: three real bus operators
+   (Lanka Suwaseriya Travels — PRIVATE, Western Province; Southern Comfort Express — PRIVATE,
+   Southern Province; SLTB – Central Province — CTB), each running one of three real routes
+   (Colombo Fort ↔ Kandy, ↔ Galle via the Southern Expressway, ↔ Negombo) across 9 real Sri Lankan
+   stops with realistic distances/timetables, 6 buses (real models: TATA LP 1613, Ashok Leyland
+   Viking, Rosa Coaster, Yutong ZK6122), permits, daily schedules, and trips (yesterday/today,
+   `CURRENT_DATE`-relative so the data never goes stale); plus the admin/MOT/timekeeper/conductor/
+   passenger accounts needed to exercise every RBAC role from Phase 2, and demo fares/tickets/
+   transactions in ticketing-service. Reused names/plates/permit numbers from the pre-Flyway
+   `scripts/seed-operator-conductor-profiles.sh` and its credentials doc where they overlapped,
+   for continuity. All UUIDs allocated in `docs/dev-seed-contract.md` first, per its own rule.
+   Password hashes are real bcrypt (10 rounds, generated to match `PasswordConfig`'s
+   `BCryptPasswordEncoder`) — every demo account logs in for real, verified via actual
+   `POST /api/auth/login` calls against a running instance (success cases *and* a wrong-password
+   401), not just inspected in the database.
+2. Ordering across services (user-service demo users/operators → core-service
+   operators/routes/schedules → ticketing fares/demo tickets) held as designed — core-service's
+   `operator.user_id` and ticketing-service's loosely-coupled `bus_id`/`trip_id`/`passenger_id`/
+   `conductor_id` text columns all reference the contract's shared UUIDs correctly.
+3. ~~Make each migration idempotent (`ON CONFLICT DO NOTHING`)~~ Done, but with an important
+   correction to the tier's own file-naming convention for any service that has **both** a
+   reference tier and a seed tier: **Flyway always applies every pending versioned (`V`) migration
+   across all configured locations before any repeatable (`R`) one, regardless of version
+   number.** A versioned `V900__demo_users.sql` in user-service therefore ran *before*
+   `R__001_user_types.sql` populated the very `user_types` lookup its `user_type_id` subqueries
+   depend on — caught the hard way ("null value in column user_type_id violates not-null
+   constraint" against a genuinely empty database). Fixed by authoring user-service's three demo
+   files as **repeatable** (`R__900_demo_users.sql`, `R__901_demo_credentials.sql`,
+   `R__902_demo_user_profiles.sql`) instead, so they sort into the same repeatable batch after
+   `R__001`–`003` by filename. core-service and ticketing-service have no reference tier, so their
+   `V900+` demo files never hit this hazard and were kept versioned as originally planned. Two
+   more real gaps found the same way: `user_type_permissions` had no natural-key unique
+   constraint for its `ON CONFLICT` target (fixed with a proper schema migration,
+   `V002__add_user_type_permissions_unique_constraint.sql`, in Phase 2 territory but only surfaced
+   once Phase 3 tried to insert against it) and `auth_credentials.failed_attempts` has only a
+   Java-side `@Builder.Default`, no DB-level `DEFAULT`, so the raw SQL insert had to supply `0`
+   explicitly.
+   Verified for all three services with a packaged jar: a completely fresh, empty database runs
+   the full chain in the correct order and produces the exact expected row counts (12 users/12
+   credentials/12 profiles; 3 operators/9 stops/3 route groups/6 routes/22 route stops/6 buses/3
+   permits/6 assignments/6 schedules/6 calendars/22 schedule stops/12 trips; 5 base fares/6 route
+   fares/6 transactions/3 cash/3 online/6 tickets), and a second no-op boot leaves every count
+   unchanged (Flyway skips already-applied versioned migrations and unchanged-checksum repeatables
+   — confirmed idempotent both structurally, via `ON CONFLICT`, and via Flyway's own skip logic).
+4. ~~Keep the resulting login list documented~~ Done:
+   [`docs/dev-seed-credentials.md`](../dev-seed-credentials.md), successor to
+   `docs/operator-conductor-seed-credentials.md` (kept for history).
+
+**Also checked (not a regression):** the full test suites for core-service (18 errors) and
+ticketing-service (1 error) fail identically with or without this phase's changes — their
+`application-test.yml`/equivalent hardcodes a personal machine's local Postgres
+(`localhost:5432`, user `kavinda`) that doesn't exist in this environment, confirmed by checking
+out the pre-Phase-3 commit and re-running the same suites. Pre-existing, out of scope here; Phase
+4 ("Switch integration tests to Testcontainers Postgres") is where this gets fixed for real.
+user-service's suite (218 tests) is unaffected and green throughout — its test config was already
+corrected in Phase 2.
 
 ### Phase 4 — Tests & CI
 
@@ -347,9 +400,10 @@ Do **user-service first** — its RBAC gates every login on the platform.
    `CREATE DATABASE`s the three DBs; Flyway owns everything inside each).
 2. **Production (Supabase or any provider):** baseline once (Phase 1), then migrations apply on
    deploy. Tier 2 flows automatically; Tier 3 never loads (not in prod's `locations`).
-3. **Delete stale artifacts:** `core-service/schema.sql`, `core-service/data.sql`,
-   `core-service/db/migration/README.md` + `V00x` files, and all `spring.sql.init` config. Update or
-   retire the stale `docs/database-management-guide.md` / `docs/database-reset-and-seed-guide.md`.
+3. **Delete remaining stale artifacts:** `core-service/schema.sql` and all `spring.sql.init` config
+   (`core-service/data.sql` and the `db/migration/README.md`/`V00x` files were already removed in
+   Phases 1 and 3). Update or retire the stale `docs/database-management-guide.md` /
+   `docs/database-reset-and-seed-guide.md`.
 
 ---
 
