@@ -1,0 +1,11 @@
+{
+  "name": "@busmate/dev-portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Live topology dashboard — shows which BusMate services are running, in which environment, and how they connect.",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node server/index.mjs"
+  }
+}

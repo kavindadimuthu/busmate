@@ -17,6 +17,7 @@
     "dev:user-service:jar": "SPRINGDOTENV_DIRECTORY=config/secrets java -jar apps/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar",
     "dev:ticketing-service:jar": "SPRINGDOTENV_DIRECTORY=config/secrets java -jar apps/backend/ticketing-service/target/ticketing-service-0.0.1-SNAPSHOT.jar",
     "dev:backend": "docker compose up --build",
+    "dev-portal": "node tools/dev-portal/server/index.mjs",
     "db:dev:up": "docker compose up -d postgres",
     "db:dev:down": "docker compose stop postgres",
     "db:dev:logs": "docker compose logs -f postgres",
