@@ -1,7 +1,5 @@
 package com.busmatelk.backend.service;
 
-import com.busmatelk.backend.client.SupabaseAuthClient;
-import com.busmatelk.backend.client.dto.SupabaseTokenResponse;
 import com.busmatelk.backend.dto.request.CreateUserRequest;
 import com.busmatelk.backend.dto.request.LoginRequestDTO;
 import com.busmatelk.backend.dto.request.RegisterRequest;
@@ -9,6 +7,7 @@ import com.busmatelk.backend.dto.response.AuthMeResponse;
 import com.busmatelk.backend.dto.response.LoginResponse;
 import com.busmatelk.backend.dto.response.RegisterResponse;
 import com.busmatelk.backend.event.UserEventPublisher;
+import com.busmatelk.backend.model.OneTimeTokenType;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserIdentity;
 import com.busmatelk.backend.model.UserProfile;
@@ -19,6 +18,8 @@ import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -36,6 +37,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     /** Provider name recorded for email/password logins in {@code user_identities}. */
     private static final String LOCAL_PROVIDER = "local";
 
@@ -45,6 +48,8 @@ public class AuthService {
     private final CredentialService credentialService;
     private final TokenService tokenService;
     private final RefreshTokenService refreshTokenService;
+    private final OneTimeTokenService oneTimeTokenService;
+    private final EmailService emailService;
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final UserProfileRepository userProfileRepository;
@@ -53,9 +58,6 @@ public class AuthService {
     private final UserEventPublisher userEventPublisher;
     private final ProfileSchemaValidator profileSchemaValidator;
     private final OperatorSyncService operatorSyncService;
-
-    // Still backs the email flows (forgot/reset/verify) until Phase 3 brings them in-house.
-    private final SupabaseAuthClient supabaseAuthClient;
 
     /**
      * Self-registration flow — always creates a "passenger", pending verification. The user row,
@@ -95,6 +97,7 @@ public class AuthService {
                 .build();
         userProfileRepository.save(profile);
         userEventPublisher.publishUserCreated(user);
+        sendVerificationEmailBestEffort(user);
 
         return new RegisterResponse(user.getUserId(), user.getEmail(), "passenger", user.getAccountStatus());
     }
@@ -151,6 +154,7 @@ public class AuthService {
         userProfileRepository.save(profile);
         userEventPublisher.publishUserCreated(user);
         operatorSyncService.syncCreate(user.getUserId(), request.getUserType(), profileData, user.getAccountStatus());
+        sendVerificationEmailBestEffort(user);
 
         return new RegisterResponse(user.getUserId(), user.getEmail(), request.getUserType(), user.getAccountStatus());
     }
@@ -202,29 +206,36 @@ public class AuthService {
         return buildSession(user, rotation.newRefreshToken());
     }
 
-    // TODO(Phase 3): forgot/reset/verify still call Supabase GoTrue. Once the local one-time-token
-    // + email pipeline lands, these move in-house; until then they only work for users that still
-    // exist in Supabase, not for accounts created through the local registration path above.
+    /**
+     * Always returns normally, whether or not the email belongs to an account — a differing
+     * response (404 vs 200) would let a caller enumerate registered emails.
+     */
+    @Transactional
     public void forgotPassword(String email) {
-        supabaseAuthClient.sendRecoveryEmail(email);
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String rawToken = oneTimeTokenService.issuePasswordResetToken(user.getUserId());
+            try {
+                emailService.sendPasswordResetEmail(user.getEmail(), rawToken);
+            } catch (RuntimeException e) {
+                // Best-effort: a transient SMTP failure shouldn't turn into a 500 that could hint
+                // an account exists. The token is already issued — the user can just ask again.
+                log.warn("Failed to send password reset email to {}", user.getEmail(), e);
+            }
+        });
     }
 
+    @Transactional
     public void resetPassword(String token, String newPassword) {
-        SupabaseTokenResponse session = supabaseAuthClient.verifyOtp("recovery", token);
-        if (session.getAccessToken() == null) {
-            throw new IllegalStateException("Recovery token verification did not return a session");
-        }
-        supabaseAuthClient.updateUserPassword(session.getAccessToken(), newPassword);
+        UUID userId = oneTimeTokenService.consume(token, OneTimeTokenType.PASSWORD_RESET);
+        credentialService.updatePassword(userId, newPassword);
+        // A reset invalidates every existing session — force re-login everywhere.
+        refreshTokenService.revokeAllForUser(userId);
     }
 
     @Transactional
     public void verifyEmail(String token) {
-        SupabaseTokenResponse session = supabaseAuthClient.verifyOtp("signup", token);
-        SupabaseTokenResponse.SupabaseUser supaUser = session.getUser();
-        if (supaUser == null || supaUser.getId() == null) {
-            throw new IllegalStateException("Signup token verification did not return user info");
-        }
-        userRepository.findById(UUID.fromString(supaUser.getId())).ifPresent(user -> {
+        UUID userId = oneTimeTokenService.consume(token, OneTimeTokenType.EMAIL_VERIFY);
+        userRepository.findById(userId).ifPresent(user -> {
             user.setIsEmailVerified(true);
             userRepository.save(user);
         });
@@ -290,5 +301,19 @@ public class AuthService {
                 .providerUserId(email)
                 .email(email)
                 .build());
+    }
+
+    /**
+     * Best-effort: a signup should still succeed even if the verification email fails to send
+     * (transient SMTP issue) — the user can request it again later once that lands (not built
+     * yet; today a failed send just means they stay unverified until support intervenes).
+     */
+    private void sendVerificationEmailBestEffort(User user) {
+        try {
+            String rawToken = oneTimeTokenService.issueEmailVerificationToken(user.getUserId());
+            emailService.sendVerificationEmail(user.getEmail(), rawToken);
+        } catch (RuntimeException e) {
+            log.warn("Failed to send verification email to {}", user.getEmail(), e);
+        }
     }
 }

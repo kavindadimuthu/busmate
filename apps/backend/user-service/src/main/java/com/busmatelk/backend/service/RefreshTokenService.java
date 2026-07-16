@@ -2,17 +2,13 @@ package com.busmatelk.backend.service;
 
 import com.busmatelk.backend.model.RefreshToken;
 import com.busmatelk.backend.repository.RefreshTokenRepository;
+import com.busmatelk.backend.security.OpaqueTokenGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -27,9 +23,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
-
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-    private static final Base64.Encoder URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -57,7 +50,7 @@ public class RefreshTokenService {
      */
     @Transactional(noRollbackFor = InvalidTokenException.class)
     public Rotation rotate(String rawRefreshToken) {
-        RefreshToken current = refreshTokenRepository.findByTokenHash(hash(rawRefreshToken))
+        RefreshToken current = refreshTokenRepository.findByTokenHash(OpaqueTokenGenerator.hash(rawRefreshToken))
                 .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
         if (current.getRevokedAt() != null) {
@@ -83,31 +76,14 @@ public class RefreshTokenService {
     }
 
     private String mint(UUID userId, UUID familyId) {
-        String rawToken = generateRawToken();
+        String rawToken = OpaqueTokenGenerator.generate();
         RefreshToken token = RefreshToken.builder()
                 .userId(userId)
-                .tokenHash(hash(rawToken))
+                .tokenHash(OpaqueTokenGenerator.hash(rawToken))
                 .familyId(familyId)
                 .expiresAt(Instant.now().plusSeconds(refreshTtlSeconds))
                 .build();
         refreshTokenRepository.save(token);
         return rawToken;
-    }
-
-    private static String generateRawToken() {
-        byte[] bytes = new byte[32];
-        SECURE_RANDOM.nextBytes(bytes);
-        return URL_ENCODER.encodeToString(bytes);
-    }
-
-    private static String hash(String rawToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashed = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            return URL_ENCODER.encodeToString(hashed);
-        } catch (NoSuchAlgorithmException e) {
-            // SHA-256 is mandated on every JVM — this is unreachable.
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
     }
 }

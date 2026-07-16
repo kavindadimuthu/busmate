@@ -43,6 +43,13 @@ auth:
     access-token-ttl-seconds: 3600
     refresh-token-ttl-seconds: 2592000
     issuer: busmate-user-service-test
+  # spring.mail.host is left unset below, so EmailService always takes its "log instead of send"
+  # path in tests — no test ever touches a real mailbox. Tests that need to observe an email
+  # "sent" mock EmailService itself rather than relying on that log line.
+  email:
+    from: test-no-reply@busmate.test
+    reset-password-url: http://localhost:3000/reset-password
+    verify-email-url: http://localhost:3000/verify-email
 
 internal:
   api-key: test-internal-api-key

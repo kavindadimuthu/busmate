@@ -1,11 +1,12 @@
 package com.busmatelk.backend.controller;
 
-import com.busmatelk.backend.client.SupabaseAuthClient;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserType;
 import com.busmatelk.backend.repository.UserRepository;
 import com.busmatelk.backend.repository.UserTypeRepository;
 import com.busmatelk.backend.service.CredentialService;
+import com.busmatelk.backend.service.EmailService;
+import com.busmatelk.backend.service.OneTimeTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,6 +28,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -51,10 +55,14 @@ class AuthControllerTest {
     @Autowired
     private CredentialService credentialService;
 
-    // Auth is fully in-house now; this mock only stands in for the email flows (forgot/reset/
-    // verify) that still call GoTrue until Phase 3. Register/login below never touch it.
+    @Autowired
+    private OneTimeTokenService oneTimeTokenService;
+
+    // The only external side effect left in the auth flows — mocked so tests never need a real
+    // mailbox, but the token issuance/consumption/state-change logic around it is exercised for
+    // real (see forgotPassword/resetPassword/verifyEmail tests below).
     @MockitoBean
-    private SupabaseAuthClient supabaseAuthClient;
+    private EmailService emailService;
 
     @Value("${supabase.jwt.secret}")
     private String jwtSecret;
@@ -242,6 +250,195 @@ class AuthControllerTest {
 
     private String jsonField(String json, String field) throws Exception {
         return objectMapper.readTree(json).get(field).asText();
+    }
+
+    @Test
+    void registerSendsAVerificationEmail() throws Exception {
+        String body = "{\"email\":\"verifyme@example.com\",\"password\":\"Sup3rSecret!\",\"fullName\":\"Verify Me\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated());
+
+        verify(emailService).sendVerificationEmail(eq("verifyme@example.com"), anyString());
+    }
+
+    @Test
+    void verifyEmailMarksTheAccountVerified() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        User user = userRepository.save(User.builder()
+                .userId(userId)
+                .email("toverify@example.com")
+                .userType(passengerType)
+                .accountStatus("pending")
+                .isEmailVerified(false)
+                .build());
+        credentialService.createCredential(userId, "Sup3rSecret!");
+
+        // Drive verifyEmail() directly with a real token from OneTimeTokenService rather than
+        // capturing one out of a register call — keeps this test independent of registration's
+        // own email-sending behavior.
+        String rawToken = oneTimeTokenService.issueEmailVerificationToken(userId);
+
+        mockMvc.perform(post("/api/auth/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("token", rawToken))))
+                .andExpect(status().isOk());
+
+        assertThat(userRepository.findById(userId).orElseThrow().getIsEmailVerified()).isTrue();
+
+        // Single-use: the same token doesn't work twice.
+        mockMvc.perform(post("/api/auth/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("token", rawToken))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void forgotPasswordAlwaysReturns200ButOnlyEmailsRealAccounts() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("hasaccount@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Old-Password-1");
+
+        mockMvc.perform(post("/api/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "hasaccount@example.com"))))
+                .andExpect(status().isOk());
+        verify(emailService).sendPasswordResetEmail(eq("hasaccount@example.com"), anyString());
+
+        // An email with no account behind it gets the identical 200 — no enumeration signal —
+        // and (implicitly) no email is sent for it since sendPasswordResetEmail was verified
+        // exactly once above, for the real account only.
+        mockMvc.perform(post("/api/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "nobody@example.com"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void requestingPasswordResetTwiceInvalidatesTheFirstLink() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("tworesets@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Some-Password-1");
+
+        String firstToken = oneTimeTokenService.issuePasswordResetToken(userId);
+        String secondToken = oneTimeTokenService.issuePasswordResetToken(userId);
+
+        // The first (now-superseded) link is dead...
+        mockMvc.perform(post("/api/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("token", firstToken, "newPassword", "Wont-Apply-1"))))
+                .andExpect(status().isUnauthorized());
+
+        // ...only the most recently requested one works.
+        mockMvc.perform(post("/api/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("token", secondToken, "newPassword", "Applied-2"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void resetPasswordChangesThePasswordAndRevokesSessions() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("willreset@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Old-Password-1");
+
+        String refreshToken = jsonField(login("willreset@example.com", "Old-Password-1"), "refreshToken");
+
+        String rawToken = oneTimeTokenService.issuePasswordResetToken(userId);
+        mockMvc.perform(post("/api/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("token", rawToken, "newPassword", "New-Password-2"))))
+                .andExpect(status().isOk());
+
+        // Old password no longer works, new one does.
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "willreset@example.com", "password", "Old-Password-1"))))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "willreset@example.com", "password", "New-Password-2"))))
+                .andExpect(status().isOk());
+
+        // The session that existed before the reset is dead.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", refreshToken))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void changePasswordActuallyPersistsAndRevokesSessions() throws Exception {
+        // Regression test: changePassword() follows updatePassword() with a refresh-token-family
+        // revocation, the same ordering that silently lost the reset-password write above (an
+        // unflushed AuthCredential change getting wiped by RefreshTokenRepository's
+        // @Modifying(clearAutomatically = true) bulk query) before CredentialService started
+        // flushing immediately.
+        UUID userId = UUID.randomUUID();
+        UserType passengerType = userTypeRepository.findByName("passenger").orElseThrow();
+        userRepository.save(User.builder()
+                .userId(userId)
+                .email("changepw@example.com")
+                .userType(passengerType)
+                .accountStatus("active")
+                .isEmailVerified(true)
+                .build());
+        credentialService.createCredential(userId, "Old-Password-1");
+
+        String session = login("changepw@example.com", "Old-Password-1");
+        String refreshToken = jsonField(session, "refreshToken");
+        String accessToken = jsonField(session, "accessToken");
+
+        mockMvc.perform(post("/api/auth/change-password")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("currentPassword", "Old-Password-1", "newPassword", "New-Password-2"))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "changepw@example.com", "password", "Old-Password-1"))))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("email", "changepw@example.com", "password", "New-Password-2"))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", refreshToken))))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

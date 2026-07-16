@@ -28,7 +28,7 @@ public class CredentialService {
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .passwordUpdatedAt(Instant.now())
                 .build();
-        credentialRepository.save(credential);
+        credentialRepository.saveAndFlush(credential);
     }
 
     /**
@@ -47,6 +47,12 @@ public class CredentialService {
      * Sets a new password, creating the credential row if the user didn't have one yet (e.g. a
      * social-only account adding a password). Callers are responsible for re-authenticating the
      * user first where that's required.
+     *
+     * <p>Flushes immediately (rather than leaving Hibernate to flush at commit) because every
+     * caller follows this with a {@code RefreshTokenService} revocation, whose bulk
+     * {@code @Modifying(clearAutomatically = true)} query clears the persistence context — which,
+     * without an explicit flush first, silently discards this still-pending change before it ever
+     * reaches the database.
      */
     @Transactional
     public void updatePassword(UUID userId, String newRawPassword) {
@@ -54,6 +60,6 @@ public class CredentialService {
                 .orElseGet(() -> AuthCredential.builder().userId(userId).build());
         credential.setPasswordHash(passwordEncoder.encode(newRawPassword));
         credential.setPasswordUpdatedAt(Instant.now());
-        credentialRepository.save(credential);
+        credentialRepository.saveAndFlush(credential);
     }
 }

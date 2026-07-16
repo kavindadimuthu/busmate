@@ -1,6 +1,5 @@
 package com.busmatelk.backend.controller;
 
-import com.busmatelk.backend.client.SupabaseAuthClient;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserType;
 import com.busmatelk.backend.repository.UserRepository;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigInteger;
@@ -54,9 +52,6 @@ class JwksControllerTest {
 
     @Autowired
     private CredentialService credentialService;
-
-    @MockitoBean
-    private SupabaseAuthClient supabaseAuthClient;
 
     @Test
     void publishesTheKeyThatSignsRealAccessTokens() throws Exception {

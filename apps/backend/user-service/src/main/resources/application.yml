@@ -92,6 +92,16 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
+  # Password-reset / email-verification delivery (auth migration Phase 3). Read directly by
+  # MailConfig (which builds the JavaMailSender bean itself — see its class comment for why).
+  # When host is blank, EmailService logs the would-be email instead of sending, so local dev/CI
+  # work without real SMTP — set these via env vars for any environment that should actually send.
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+
 server:
   address: 0.0.0.0
   port: ${SERVER_PORT:9020}
@@ -134,6 +144,14 @@ auth:
       private-key: ${AUTH_JWT_RSA_PRIVATE_KEY:}
       public-key: ${AUTH_JWT_RSA_PUBLIC_KEY:}
       kid: ${AUTH_JWT_RSA_KID:busmate-user-service-key-1}
+  # Password-reset / email-verification delivery (Phase 3). SMTP transport config lives under
+  # spring.mail.* above; reset-password-url and verify-email-url point at frontend pages that
+  # don't exist yet in any app — pick whichever frontend(s) end up owning these flows and override
+  # accordingly; ?token=<raw token> is appended automatically.
+  email:
+    from: ${AUTH_EMAIL_FROM:no-reply@busmate.lk}
+    reset-password-url: ${AUTH_RESET_PASSWORD_URL:http://localhost:3000/reset-password}
+    verify-email-url: ${AUTH_VERIFY_EMAIL_URL:http://localhost:3000/verify-email}
 
 # Shared secret other backend services use to call /internal/** directly (never routed
 # through the API gateway, which blocks /internal/** entirely). Override via env var in

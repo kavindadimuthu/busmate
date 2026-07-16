@@ -6,7 +6,45 @@ API contract the api-gateway already depends on.
 
 **Status:** Phase 1 complete (local password auth + credential store). Phase **2a** complete
 (stored, rotating, reuse-detected refresh tokens + revocation). Phase **2b** complete (RS256 +
-JWKS, all verifiers switched). Phases 3–7 pending.
+JWKS, all verifiers switched). Phase **3** complete (email verify/reset in-house). Phases 4–7
+pending.
+
+> **Phase 3 as-built notes (2026-07-16):**
+> - Added table `one_time_tokens` (`OneTimeToken`/`OneTimeTokenType`/`OneTimeTokenRepository`) —
+>   same pattern as `refresh_tokens`: the raw token is never stored, only its SHA-256 hash;
+>   single-use via `consumedAt`. New `OneTimeTokenService` issues (30 min TTL for password-reset,
+>   24 h for email-verify) and consumes them, and burns any still-usable token of the same type
+>   before issuing a new one — a second "forgot password" click kills the first email's link.
+> - Extracted `security/OpaqueTokenGenerator` (generate + SHA-256 hash) out of `RefreshTokenService`
+>   so `OneTimeTokenService` doesn't duplicate that logic; `RefreshTokenService` itself now delegates
+>   to it too (behavior-preserving refactor, still covered by its existing Phase 2a tests).
+> - New `EmailService` (`spring-boot-starter-mail`) sends the two auth emails. When
+>   `spring.mail.host` is blank (the default), it logs the would-be email instead of sending, so
+>   local dev/CI need zero setup. Because Spring Boot's own mail autoconfiguration only registers a
+>   `JavaMailSender` bean once `spring.mail.host` is *non-blank*, a new `MailConfig` constructs the
+>   bean unconditionally itself — otherwise `EmailService`'s constructor injection fails to start at
+>   all whenever no SMTP is configured.
+> - `AuthService.forgotPassword` / `resetPassword` / `verifyEmail` are now fully local (no more
+>   Supabase calls in `AuthService` at all — `SupabaseAuthClient` remains only for `UserService`'s
+>   suspend/unsuspend calls, Phase 5's territory). `registerPassenger` and `createUser` now send a
+>   verification email; email failures during registration/forgot-password are caught and logged,
+>   never surfaced as a 500 (registration must still succeed, and forgot-password must always
+>   return 200 regardless, for the no-enumeration guarantee).
+> - **Link targets are a placeholder:** `auth.email.reset-password-url` / `verify-email-url`
+>   default to `http://localhost:3000/{reset-password,verify-email}` — no frontend actually has
+>   these pages yet in any app. Override via env vars once one does; `?token=<raw token>` is
+>   appended automatically.
+> - **Bug found and fixed, pre-existing since Phase 1/2a:** `CredentialService.updatePassword`
+>   left its change unflushed in the persistence context; every caller (`changePassword`, and now
+>   `resetPassword`) follows it with a `RefreshTokenService` revocation, whose bulk
+>   `@Modifying(clearAutomatically = true)` query calls `entityManager.clear()` — which, without an
+>   explicit flush first, silently discarded the still-pending password change before it ever
+>   reached the database. `changePassword` had this exact latent bug since Phase 1 with no test
+>   catching it. Fixed by having `CredentialService` use `saveAndFlush`; added a regression test for
+>   both flows (`resetPasswordChangesThePasswordAndRevokesSessions`,
+>   `changePasswordActuallyPersistsAndRevokesSessions`).
+> - **Not done:** rate limiting on `/forgot-password` (plan §3, still pending); `auth_audit_log`
+>   writes for these flows (explicitly Phase 5's scope).
 
 > **Phase 2b as-built notes (2026-07-16):**
 > - **user-service:** `JwtKeyConfig`/`RsaKeyMaterial` load an RSA keypair from
