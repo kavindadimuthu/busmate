@@ -34,7 +34,7 @@ import com.busmate.routeschedule.network.entity.Stop;
 @Transactional // This ensures each test runs in its own transaction and rolls back
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD) // Reset context after each test
 @DisplayName("Stop Controller Integration Tests")
-class StopControllerIntegrationTest {
+class StopControllerIntegrationTest extends com.busmate.routeschedule.AbstractPostgresIntegrationTest {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -169,20 +169,16 @@ class StopControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should handle invalid sort parameters gracefully")
+        @DisplayName("Should reject an invalid sort field with 400 Bad Request")
         void shouldHandleInvalidSortParameters() throws Exception {
-            // This might pass or fail depending on Spring Data JPA configuration
-            // It's more of a documentation test to see how the system behaves
-            try {
-                mockMvc.perform(get("/api/stops")
-                                .param("sortBy", "invalidField")
-                                .param("sortDir", "asc"))
-                        .andDo(print())
-                        .andExpect(status().isOk()); // Default sort might be applied
-            } catch (Exception e) {
-                // If it fails, that's also acceptable behavior
-                System.out.println("Invalid sort field was rejected as expected: " + e.getMessage());
-            }
+            // The controller validates sortBy against the allowed set and rejects an unknown
+            // field with 400 (rather than silently falling back to a default sort), so an
+            // invalid sort field is a client error, not a 200.
+            mockMvc.perform(get("/api/stops")
+                            .param("sortBy", "invalidField")
+                            .param("sortDir", "asc"))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -194,7 +190,7 @@ class StopControllerIntegrationTest {
 
         @Test
         @DisplayName("Should successfully create a new stop with valid data and authentication")
-        @WithMockUser(username = "testuser", roles = "USER")
+        @WithMockUser(username = "testuser", roles = "ADMIN")
         void shouldCreateStopWithValidDataAndAuth() throws Exception {
             StopRequest validRequest = createValidStopRequest();
 
@@ -230,7 +226,7 @@ class StopControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 400 Bad Request for invalid stop data")
-        @WithMockUser(username = "testuser", roles = "USER")
+        @WithMockUser(username = "testuser", roles = "ADMIN")
         void shouldReturn400ForInvalidStopData() throws Exception {
             StopRequest invalidRequest = createInvalidStopRequest();
 
@@ -243,7 +239,7 @@ class StopControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 400 Bad Request for empty request body")
-        @WithMockUser(username = "testuser", roles = "USER")
+        @WithMockUser(username = "testuser", roles = "ADMIN")
         void shouldReturn400ForEmptyRequestBody() throws Exception {
             mockMvc.perform(post("/api/stops")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -254,7 +250,7 @@ class StopControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 400 Bad Request for malformed JSON")
-        @WithMockUser(username = "testuser", roles = "USER")
+        @WithMockUser(username = "testuser", roles = "ADMIN")
         void shouldReturn400ForMalformedJson() throws Exception {
             mockMvc.perform(post("/api/stops")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -265,7 +261,7 @@ class StopControllerIntegrationTest {
 
         @Test
         @DisplayName("Should handle duplicate stop creation in same city")
-        @WithMockUser(username = "testuser", roles = "USER")
+        @WithMockUser(username = "testuser", roles = "ADMIN")
         void shouldHandleDuplicateStopCreation() throws Exception {
             StopRequest request = createValidStopRequest();
 
@@ -339,7 +335,7 @@ class StopControllerIntegrationTest {
 
         @Test
         @DisplayName("Should create a stop and then retrieve it in paginated and non-paginated lists")
-        @WithMockUser(username = "integrationtestuser", roles = "USER")
+        @WithMockUser(username = "integrationtestuser", roles = "ADMIN")
         void shouldCreateStopAndRetrieveInBothEndpoints() throws Exception {
             // Step 1: Create a unique stop
             StopRequest request = createValidStopRequest();

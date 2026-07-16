@@ -2,9 +2,11 @@ package com.busmate.routeschedule;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-class BusRouteScheduleServiceApplicationTests {
+@ActiveProfiles("test")
+class BusRouteScheduleServiceApplicationTests extends AbstractPostgresIntegrationTest {
 
 	@Test
 	void contextLoads() {

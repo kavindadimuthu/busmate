@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * All other 26 of 28 permission rows match the design doc exactly.
  */
 @SpringBootTest
-class PermissionMatrixTest {
+class PermissionMatrixTest extends AbstractPostgresIntegrationTest {
 
     private static final List<String> ROLES =
             List.of("admin", "mot", "timekeeper", "operator", "conductor", "passenger");

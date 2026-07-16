@@ -1,35 +1,35 @@
 # Test-only config. This file fully replaces src/main/resources/application.yml for the test
 # classpath (Spring Boot resolves the first "application.yml" it finds; test-classes precedes
 # classes on the test classpath) — so nothing here inherits from main, and no test ever touches
-# the real Supabase Postgres or the real Supabase Auth API. SupabaseAuthClient itself is always
+# a real Postgres or the real Supabase Auth API. SupabaseAuthClient itself is always
 # @MockBean-replaced in tests that need it, so the supabase.* values below just need to satisfy
 # @Value injection at context startup, not point anywhere real.
+#
+# The datasource url/username/password are supplied at runtime by AbstractPostgresIntegrationTest's
+# Testcontainers @DynamicPropertySource — the values here are only a fallback so the context can
+# resolve placeholders; every @SpringBootTest extends that base class and gets the real container.
 spring:
   application:
     name: User_management
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      # Flyway (below) owns the schema; Hibernate only validates the entities match it — same as
+      # the main/prod config, so tests catch entity/migration drift instead of hiding it (Phase 4).
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-    defer-datasource-initialization: true
-  # Flyway is on the classpath (see docs/plans/Database-Migrations-and-Seed-Data-Plan.md) but its
-  # migrations are plain Postgres SQL (uuid, jsonb, gen_random_uuid()) and this test datasource is
-  # H2 — explicitly disabled here so ddl-auto=create-drop + sql.init below keep doing schema/seed
-  # for tests unchanged. Moving tests onto a real Postgres (Testcontainers) so they exercise the
-  # actual Flyway migrations is Phase 4's job, not this one.
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  # Real Flyway against real Postgres: Tier 1 (schema) + Tier 2 (RBAC reference data). The dev-only
+  # Tier 3 demo seed (classpath:db/seed/dev) is deliberately NOT included — tests get a clean,
+  # reference-only database and create whatever domain rows they need themselves.
   flyway:
-    enabled: false
-  sql:
-    init:
-      mode: always
+    enabled: true
+    locations: classpath:db/migration,classpath:db/reference
+    baseline-on-migrate: true
+    baseline-version: 1
   kafka:
     bootstrap-servers: localhost:9092
 

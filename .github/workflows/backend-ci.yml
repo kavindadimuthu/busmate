@@ -1,0 +1,86 @@
+# Backend CI — database migrations & tests.
+#
+# Two gates, per backend service (see docs/plans/Database-Migrations-and-Seed-Data-Plan.md, Phase 4):
+#
+#   1. flyway-migrate-validate — runs Flyway `migrate` then `validate` against a brand-new Postgres
+#      for each service, proving every migration applies cleanly and in order on an empty database
+#      and that no already-applied migration was edited after the fact. This is the migration gate.
+#
+#   2. test — runs each service's Maven test suite. The suites boot a real Postgres via
+#      Testcontainers (AbstractPostgresIntegrationTest) and run the actual Flyway migrations, so the
+#      tests exercise the same schema path production uses (no more H2/Hibernate-DDL divergence).
+#
+# NOTE: This workflow has been validated locally (the Flyway gate against a local Postgres, and each
+# service's `mvn verify` against Testcontainers) but has NOT yet run on GitHub Actions — it is
+# committed unpushed for review. Push to a branch and open a PR to see it execute. The Flyway CLI
+# image tag (redgate/flyway:11) and the runner Java version (17) may need a small tweak on first run.
+name: Backend CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  flyway-migrate-validate:
+    name: Flyway migrate + validate (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # user-service ships Tier 1 (schema) + Tier 2 (RBAC reference) migrations.
+          - service: user-service
+            locations: filesystem:/repo/apps/backend/user-service/src/main/resources/db/migration,filesystem:/repo/apps/backend/user-service/src/main/resources/db/reference
+          # ticketing-service and core-service ship Tier 1 only (no reference tier).
+          - service: ticketing-service
+            locations: filesystem:/repo/apps/backend/ticketing-service/src/main/resources/db/migration
+          - service: core-service
+            locations: filesystem:/repo/apps/backend/core-service/src/main/resources/db/migration
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: busmate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flyway migrate + validate on a clean database
+        # The DB is empty, so baselineOnMigrate is a no-op here and V001 runs for real (baseline
+        # only kicks in against a pre-existing, historyless schema — see the app configs). We mirror
+        # the app's baseline settings so CI and runtime resolve migrations identically.
+        run: |
+          docker run --rm --network host \
+            -v "${{ github.workspace }}:/repo" \
+            redgate/flyway:11 \
+            -url="jdbc:postgresql://localhost:5432/busmate" \
+            -user=postgres -password=postgres \
+            -locations="${{ matrix.locations }}" \
+            -baselineOnMigrate=true -baselineVersion=1 \
+            migrate validate
+
+  test:
+    name: Tests (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [ user-service, ticketing-service, core-service ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Run tests (Testcontainers Postgres exercises the real Flyway migrations)
+        working-directory: apps/backend/${{ matrix.service }}
+        run: mvn -B clean verify

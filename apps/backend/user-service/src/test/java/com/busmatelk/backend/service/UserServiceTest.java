@@ -1,5 +1,6 @@
 package com.busmatelk.backend.service;
 
+import com.busmatelk.backend.AbstractPostgresIntegrationTest;
 import com.busmatelk.backend.dto.response.UserResponse;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserType;
@@ -27,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * covers at the HTTP-agnostic layer this mirrors.
  */
 @SpringBootTest
-class UserServiceTest {
+class UserServiceTest extends AbstractPostgresIntegrationTest {
 
     @Autowired
     private UserService userService;

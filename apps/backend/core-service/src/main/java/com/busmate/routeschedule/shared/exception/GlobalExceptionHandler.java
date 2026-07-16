@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
@@ -102,6 +103,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleJsonMappingException(Exception ex) {
         log.error("JSON mapping error: {}", ex.getMessage(), ex);
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid JSON format: " + ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    // A syntactically malformed or unparseable request body (e.g. "{ invalid json }") surfaces as
+    // HttpMessageNotReadableException before the controller runs. That's a client error (400), not
+    // an unexpected server fault — without this it would fall through to the generic handler as 500.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.warn("Unreadable/malformed request body: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Malformed or unreadable request body");
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 

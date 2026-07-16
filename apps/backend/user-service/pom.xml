@@ -120,9 +120,17 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Integration tests run against a real Postgres via Testcontainers (see
+		     AbstractPostgresIntegrationTest) so they exercise the actual Flyway migrations,
+		     Tiers 1 (schema) + 2 (reference/RBAC). Versions come from the Spring Boot BOM. -->
 		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
