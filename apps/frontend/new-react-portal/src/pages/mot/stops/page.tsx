@@ -1,26 +1,31 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from '@/lib/router';
 import type { StopResponse } from '@busmate/api-client-core';
-import { ConfirmDialog } from '@busmate/ui';
+import {
+  ConfirmDialog,
+  ResourceStats,
+  ResourceFilters,
+  ResourceTable,
+  useResource,
+} from '@busmate/ui';
 
-import { BusStopsStatsCards } from '@/components/mot/stops/BusStopsStatsCards';
-import { BusStopsFilterBar } from '@/components/mot/stops/BusStopsFilterBar';
-import { BusStopsTable } from '@/components/mot/stops/BusStopsTable';
 import { BusStopsMapView } from '@/components/mot/stops/BusStopsMapView';
 import { ViewTabs } from '@/components/mot/stops/ViewTabs';
 import { BusStopActionButtons } from '@/components/mot/stops/BusStopActionButtons';
-import { useBusStops } from '@/hooks/mot/stops/useBusStops';
 import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
+import { stopsResource } from '@/resources/mot/stops.resource';
 
+/**
+ * L2 composition: uses the resource controller + Stats/Filters/Table blocks, but
+ * hand-composes the table/map view toggle — an example of dropping one rung down
+ * the granularity ladder for a screen the config-driven L3 view can't express.
+ */
 export default function BusStopsPage() {
   const router = useRouter();
-
-  const {
-    currentView, setCurrentView, state, setPage, setPageSize, setSort, setSearch,
-    setFilters, clearFilters, filteredTableData, isLoading, stats, filterOptions,
-    activeFilterCount, deleteDialog, isDeleting, handleDeleteConfirm, handleView, handleEdit,
-  } = useBusStops();
+  const controller = useResource(stopsResource);
+  const [currentView, setCurrentView] = useState<'table' | 'map'>('table');
 
   useSetPageMetadata({
     title: 'Bus Stops',
@@ -34,59 +39,39 @@ export default function BusStopsPage() {
     <BusStopActionButtons
       onAddBusStop={() => router.push('/mot/stops/create')}
       onImportBusStops={() => router.push('/mot/stops/import')}
-      isLoading={isLoading}
+      isLoading={controller.isLoading}
     />,
   );
 
   return (
     <div className="space-y-6">
-      <BusStopsStatsCards stats={stats} />
-
-      <BusStopsFilterBar
-        searchValue={state.searchQuery}
-        onSearchChange={setSearch}
-        filters={state.filters}
-        onFiltersChange={setFilters}
-        onClearAll={clearFilters}
-        filterOptions={filterOptions}
-        activeFilterCount={activeFilterCount}
-      />
-
+      <ResourceStats resource={stopsResource} controller={controller} className="lg:grid-cols-5" />
+      <ResourceFilters resource={stopsResource} controller={controller} />
       <ViewTabs activeView={currentView} onViewChange={setCurrentView} />
 
       {currentView === 'table' ? (
-        <BusStopsTable
-          data={filteredTableData.data}
-          totalItems={filteredTableData.totalItems}
-          page={state.page}
-          pageSize={state.pageSize}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          sortColumn={state.sortColumn}
-          sortDirection={state.sortDirection}
-          onSort={setSort}
-          loading={isLoading}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={deleteDialog.open}
+        <ResourceTable
+          resource={stopsResource}
+          controller={controller}
+          rowActions={(stop) => stopsResource.rowActions!({ row: stop, controller, navigate: router.push })}
         />
       ) : (
         <BusStopsMapView
-          busStops={filteredTableData.data}
-          loading={isLoading}
-          onDelete={(stop: StopResponse) => deleteDialog.open(stop)}
+          busStops={controller.rows}
+          loading={controller.isLoading}
+          onDelete={(stop: StopResponse) => controller.deleteDialog.open(stop)}
         />
       )}
 
       <ConfirmDialog
-        open={deleteDialog.isOpen}
-        onOpenChange={deleteDialog.setOpen}
+        open={controller.deleteDialog.isOpen}
+        onOpenChange={controller.deleteDialog.setOpen}
         title="Delete Bus Stop"
-        description={`Are you sure you want to delete "${deleteDialog.data?.name}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${controller.deleteDialog.data?.name}"? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="destructive"
-        onConfirm={handleDeleteConfirm}
-        loading={isDeleting}
+        onConfirm={controller.handleDeleteConfirm}
+        loading={controller.isDeleting}
       />
     </div>
   );

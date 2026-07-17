@@ -363,6 +363,25 @@ export type {
 // Dashboard
 export { DashboardGrid } from "./patterns/dashboard";
 
+// ── Resource layer (config-driven CRUD screens) ────────────
+export {
+  defineResource,
+  useResource,
+  ResourceStats,
+  ResourceFilters,
+  ResourceTable,
+  ResourceListView,
+} from "./resource";
+export type {
+  ResourceConfig,
+  ResourceController,
+  ResourceListQuery,
+  ResourcePage,
+  StatItem,
+  FilterFieldDef,
+  ResourceMessages,
+} from "./resource";
+
 // ── Layouts ───────────────────────────────────────────────
 
 // App Shell

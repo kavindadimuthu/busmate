@@ -1,8 +1,33 @@
 # 10 — Scalable & Convenient UI Development Approach (new-react-portal)
 
-> **Status:** Proposal / implementation plan
+> **Status:** ✅ Implemented (Phase 0–2 done) — see "Implementation status" below.
 > **Scope:** `apps/frontend/new-react-portal` first; the layer is built inside `libs/ui` (`@busmate/ui`) so it can later serve other clients.
 > **Relationship to prior docs:** This is the *next layer up* from the design system described in `02`–`06`. Those docs delivered primitives + patterns. This doc adds a **resource layer** on top of them, plus a **granularity ladder** so we keep full control while removing repeated wiring.
+
+## Implementation status (as built)
+
+The resource layer lives in `libs/ui/src/resource/` and is exported from `@busmate/ui`:
+`defineResource`, `useResource`, `ResourceListView` (L3), and `ResourceStats` / `ResourceFilters` / `ResourceTable` (L2 blocks), plus `renderExtraFilters` (config escape hatch for date/number/bespoke controls) and `deleteConfirm` (dynamic title/label/variant).
+
+**Migrated & verified end-to-end** (logged in as MOT against the live backend — stats, filters, table, row actions, delete dialog all confirmed, zero console errors):
+
+| Entity | Level | Notes |
+|---|---|---|
+| Buses | L3 | `<ResourceListView>` one-liner |
+| Operators | L3 | delete-vs-deactivate branch (`userId`), region client-filter in `api.list` |
+| Routes | L3 | distance/duration range filters via `renderExtraFilters` |
+| Passenger Permits | L3 | operator/route-group filter by name, client-side search slice |
+| Policies | L3 | client-side mock data |
+| Schedules | L3 | 3 parallel filter-option calls, date-range filters |
+| Trips | L3 | 10 select filters + date range; option dedupe |
+| Bus Stops | **L2** | table/map view toggle — blocks + custom map |
+| Staff | **L2** | staff-type tabs + client-side mock data |
+
+**Kept intentionally bespoke** (tabbed composite screens — forcing them into the layer would add coupling, not remove duplication; consistent with §2 non-goals):
+- **Fares** — Fare Matrix (custom stage grid) + Amendments tabs, shared stats row.
+- **Notifications** — Received/Sent tabs with different data sources and columns.
+
+**Per entity, this removed** the 3–4 hand-written list files (`*StatsCards`, `*FilterBar`, `*Table`) **and** the orchestration hook (`useX`), replacing them with one `*.resource.tsx` config + a ~15–35 line page. Rich `*Columns.tsx` cell renderers and `*ActionButtons.tsx` were kept (legitimate per-entity UI). Net: 9 entities × ~4 files deleted, ~36 files → 9 config files.
 
 ---
 

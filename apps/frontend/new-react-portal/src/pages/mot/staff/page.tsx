@@ -1,39 +1,38 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useRouter } from '@/lib/router';
-import { ConfirmDialog } from '@busmate/ui';
+import { ConfirmDialog, ResourceStats, ResourceFilters, ResourceTable, useResource } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { StaffStatsCards } from '@/components/mot/staff/StaffStatsCards';
-import { StaffFilterBar } from '@/components/mot/staff/StaffFilterBar';
-import { StaffTable } from '@/components/mot/staff/StaffTable';
 import { StaffTypeTabs, StaffActionButtons } from '@/components/mot/staff';
-import { useStaffManagement } from '@/hooks/mot/staff/useStaffManagement';
+import { getStaffMembers } from '@/data/mot/staff';
+import { staffResource } from '@/resources/mot/staff.resource';
 
+type TabValue = 'all' | 'timekeeper' | 'inspector';
+
+/**
+ * L2 composition: resource controller + blocks, plus a custom staff-type tab that
+ * drives the `staffType` filter. Tab counts come straight from the mock dataset.
+ */
 export default function StaffManagementPage() {
   const router = useRouter();
-  const {
-    paginatedStaff,
-    totalItems,
-    state,
-    setPage,
-    setPageSize,
-    setSort,
-    setSearch,
-    setFilters,
-    clearFilters,
-    stats,
-    filterOptions,
-    activeFilterCount,
-    activeTab,
-    handleTabChange,
-    tabCounts,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    handleExportAll,
-    handleView,
-    handleEdit,
-  } = useStaffManagement();
+  const controller = useResource(staffResource);
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
+
+  const tabCounts = useMemo(() => {
+    const all = getStaffMembers();
+    return {
+      all: all.length,
+      timekeeper: all.filter((s) => s.staffType === 'timekeeper').length,
+      inspector: all.filter((s) => s.staffType === 'inspector').length,
+    };
+  }, []);
+
+  const handleTabChange = (tab: TabValue) => {
+    setActiveTab(tab);
+    controller.setFilters({ staffType: tab === 'all' ? '__all__' : tab });
+    controller.setPage(1);
+  };
 
   useSetPageMetadata({
     title: 'Staff Management',
@@ -46,55 +45,30 @@ export default function StaffManagementPage() {
   useSetPageActions(
     <StaffActionButtons
       onAddStaff={() => router.push('/mot/staff/create')}
-      onExportAll={handleExportAll}
+      onExportAll={() => controller.handleExportAll?.()}
     />,
   );
 
   return (
     <div className="space-y-6">
-      <StaffStatsCards stats={stats} />
-
-      <StaffTypeTabs
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        counts={tabCounts}
-      />
-
-      <StaffFilterBar
-        searchValue={state.searchQuery}
-        onSearchChange={setSearch}
-        filters={state.filters}
-        onFiltersChange={setFilters}
-        onClearAll={clearFilters}
-        filterOptions={filterOptions}
-        activeFilterCount={activeFilterCount}
-      />
-
-      <StaffTable
-        data={paginatedStaff}
-        totalItems={totalItems}
-        page={state.page}
-        pageSize={state.pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        sortColumn={state.sortColumn}
-        sortDirection={state.sortDirection}
-        onSort={setSort}
-        loading={false}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={deleteDialog.open}
+      <ResourceStats resource={staffResource} controller={controller} className="lg:grid-cols-6" />
+      <StaffTypeTabs activeTab={activeTab} onTabChange={handleTabChange} counts={tabCounts} />
+      <ResourceFilters resource={staffResource} controller={controller} />
+      <ResourceTable
+        resource={staffResource}
+        controller={controller}
+        rowActions={(s) => staffResource.rowActions!({ row: s, controller, navigate: router.push })}
       />
 
       <ConfirmDialog
-        open={deleteDialog.isOpen}
-        onOpenChange={deleteDialog.setOpen}
+        open={controller.deleteDialog.isOpen}
+        onOpenChange={controller.deleteDialog.setOpen}
         title="Delete Staff Member"
-        description={`Are you sure you want to delete "${deleteDialog.data?.fullName}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${controller.deleteDialog.data?.fullName}"? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="destructive"
-        onConfirm={handleDeleteConfirm}
-        loading={isDeleting}
+        onConfirm={controller.handleDeleteConfirm}
+        loading={controller.isDeleting}
       />
     </div>
   );

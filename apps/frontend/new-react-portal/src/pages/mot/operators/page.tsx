@@ -1,35 +1,15 @@
 'use client';
 
-import { ConfirmDialog } from '@busmate/ui';
-
-import { OperatorsStatsCards } from '@/components/mot/operators/OperatorsStatsCards';
-import { OperatorsFilterBar } from '@/components/mot/operators/OperatorsFilterBar';
-import { OperatorsTable } from '@/components/mot/operators/OperatorsTable';
-import { OperatorActionButtons } from '@/components/mot/operators';
+import { useRouter } from '@/lib/router';
+import { ResourceListView, useResource } from '@busmate/ui';
 import { useSetPageActions, useSetPageMetadata } from '@/context/PageContext';
-import { useOperators } from '@/hooks/mot/operators/useOperators';
+
+import { OperatorActionButtons } from '@/components/mot/operators';
+import { operatorsResource } from '@/resources/mot/operators.resource';
 
 export default function OperatorsPage() {
-  const {
-    filteredTableData,
-    isLoading,
-    state,
-    setPage,
-    setPageSize,
-    setSort,
-    setSearch,
-    setFilters,
-    clearFilters,
-    stats,
-    filterOptions,
-    activeFilterCount,
-    deleteDialog,
-    isDeleting,
-    handleDeleteConfirm,
-    handleExportAll,
-    handleView,
-    handleEdit,
-  } = useOperators();
+  const router = useRouter();
+  const controller = useResource(operatorsResource);
 
   useSetPageMetadata({
     title: 'Operators',
@@ -40,56 +20,15 @@ export default function OperatorsPage() {
   });
 
   useSetPageActions(
-    <OperatorActionButtons
-      onExportAll={handleExportAll}
-      isLoading={isLoading}
-    />,
+    <OperatorActionButtons onExportAll={() => controller.handleExportAll?.()} isLoading={controller.isLoading} />,
   );
 
   return (
-    <div className="space-y-6">
-      <OperatorsStatsCards stats={stats} />
-
-      <OperatorsFilterBar
-        searchValue={state.searchQuery}
-        onSearchChange={setSearch}
-        filters={state.filters}
-        onFiltersChange={setFilters}
-        onClearAll={clearFilters}
-        filterOptions={filterOptions}
-        activeFilterCount={activeFilterCount}
-      />
-
-      <OperatorsTable
-        data={filteredTableData.data}
-        totalItems={filteredTableData.totalItems}
-        page={state.page}
-        pageSize={state.pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        sortColumn={state.sortColumn}
-        sortDirection={state.sortDirection}
-        onSort={setSort}
-        loading={isLoading}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={deleteDialog.open}
-      />
-
-      <ConfirmDialog
-        open={deleteDialog.isOpen}
-        onOpenChange={deleteDialog.setOpen}
-        title={deleteDialog.data?.userId ? 'Deactivate Operator' : 'Delete Operator'}
-        description={
-          deleteDialog.data?.userId
-            ? `Deactivate "${deleteDialog.data?.name}"? This account will lose access until reactivated from the Admin dashboard.`
-            : `Are you sure you want to delete "${deleteDialog.data?.name}"? This action cannot be undone.`
-        }
-        confirmLabel={deleteDialog.data?.userId ? 'Deactivate' : 'Delete'}
-        variant="destructive"
-        onConfirm={handleDeleteConfirm}
-        loading={isDeleting}
-      />
-    </div>
+    <ResourceListView
+      resource={operatorsResource}
+      controller={controller}
+      navigate={router.push}
+      statsClassName="lg:grid-cols-6"
+    />
   );
 }
