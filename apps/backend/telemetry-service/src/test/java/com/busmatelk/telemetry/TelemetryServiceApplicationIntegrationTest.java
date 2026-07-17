@@ -41,11 +41,13 @@ class TelemetryServiceApplicationIntegrationTest extends AbstractPostgresIntegra
     private KafkaAdmin kafkaAdmin;
 
     @Test
-    void flywayBaselineIsApplied() {
+    void allMigrationsAreAppliedWithNonePending() {
+        // Deliberately not pinned to a specific version (V001, V002, …) — new migrations land as
+        // the registry grows (Phase 1+); this only asserts Flyway actually ran everything on the
+        // classpath against a real Postgres and left nothing pending.
         assertThat(flyway.info().applied()).isNotEmpty();
+        assertThat(flyway.info().pending()).isEmpty();
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion())
-                .isEqualTo(org.flywaydb.core.api.MigrationVersion.fromVersion("1"));
         assertThat(flyway.info().current().getState().isApplied()).isTrue();
     }
 

@@ -29,6 +29,7 @@ in each service's own `db/reference` migrations and don't need cross-service IDs
   | Demo stop | `00000000-0000-0000-0000-0000000102xx` |
   | Demo bus | `00000000-0000-0000-0000-0000000103xx` |
   | Demo schedule / trip | `00000000-0000-0000-0000-0000000104xx` |
+  | Demo IoT device | `00000000-0000-0000-0000-0000000106xx` |
 
   `xx` is a two-digit sequence number (`01`, `02`, …) within that kind, allocated in order as demo
   entities are added — never reused, never renumbered.
@@ -127,3 +128,19 @@ for both would misrepresent that relationship, so each operator gets two entries
 | `00000000-0000-0000-0000-000000010407` | Trip: Colombo–Kandy, today | core-service | The specific trip ticketing-service's demo tickets A/B reference (as text, no FK). |
 | `00000000-0000-0000-0000-000000010408` | Trip: Colombo–Galle, today | core-service | Referenced by demo tickets C/D. |
 | `00000000-0000-0000-0000-000000010409` | Trip: Colombo–Negombo, today | core-service | Referenced by demo tickets E/F. |
+
+### Demo IoT devices
+
+Allocated in Phase 1 ("Device registry") of the IoT Platform Layer plan
+([`docs/plans/IoT-Platform-Layer-Plan.md`](plans/IoT-Platform-Layer-Plan.md) §4). One GPS tracker
+per demo bus, assigned 1:1. `device.id` is telemetry-service's own primary key (not referenced
+elsewhere), listed here only so the pairing with the demo bus is stable across re-seeds.
+
+| UUID | Serial / label | Owning service | Assigned to bus |
+|---|---|---|---|
+| `00000000-0000-0000-0000-000000010601` | GPS-DEMO-4521 — WP CAA-4521 dashboard tracker | telemetry-service | `...010301` |
+| `00000000-0000-0000-0000-000000010602` | GPS-DEMO-7734 — WP CAB-7734 dashboard tracker | telemetry-service | `...010302` |
+| `00000000-0000-0000-0000-000000010603` | GPS-DEMO-2210 — SP CAA-2210 dashboard tracker | telemetry-service | `...010303` |
+| `00000000-0000-0000-0000-000000010604` | GPS-DEMO-9981 — SP CAB-9981 dashboard tracker | telemetry-service | `...010304` |
+| `00000000-0000-0000-0000-000000010605` | GPS-DEMO-1123 — CP NA-1123 dashboard tracker | telemetry-service | `...010305` |
+| `00000000-0000-0000-0000-000000010606` | GPS-DEMO-1187 — CP NA-1187 dashboard tracker | telemetry-service | `...010306` |

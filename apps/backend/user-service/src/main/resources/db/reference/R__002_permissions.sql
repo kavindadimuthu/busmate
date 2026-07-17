@@ -41,7 +41,13 @@ VALUES
     (gen_random_uuid(), 'user.passenger:delete',  'user.passenger',  'delete', 'any', 'Delete passenger'),
 
     (gen_random_uuid(), 'user-type:manage',       'user-type',       'manage', 'any', 'Manage user types'),
-    (gen_random_uuid(), 'permission:manage',      'permission',      'manage', 'any', 'Manage permissions')
+    (gen_random_uuid(), 'permission:manage',      'permission',      'manage', 'any', 'Manage permissions'),
+
+    -- IoT device registry (telemetry-service — IoT Platform Layer plan, Phase 1). Enforcement at
+    -- the service is role-based today (ADMIN/MOT via the gateway's x-user-type header); these rows
+    -- keep the catalog authoritative and ready for permission-level checks.
+    (gen_random_uuid(), 'device:read',            'device',          'read',   'any', 'View IoT devices and assignments'),
+    (gen_random_uuid(), 'device:manage',          'device',          'manage', 'any', 'Register, disable, and assign IoT devices')
 ON CONFLICT (name) DO UPDATE SET
     resource    = EXCLUDED.resource,
     action      = EXCLUDED.action,

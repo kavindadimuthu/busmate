@@ -17,6 +17,7 @@ import {
   Bus,
   DollarSign,
   Ticket,
+  Radio,
 } from "lucide-react";
 import type { NavigationConfig } from "@busmate/ui";
 
@@ -78,6 +79,12 @@ export const motNavigation: NavigationConfig = {
           label: "Buses",
           icon: Bus,
           href: "/mot/buses",
+        },
+        {
+          id: "devices",
+          label: "IoT Devices",
+          icon: Radio,
+          href: "/mot/devices",
         },
         {
           id: "staff",

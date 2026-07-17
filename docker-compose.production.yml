@@ -22,6 +22,7 @@ services:
       - USER_SERVICE_URL=http://user-service:9020
       - CORE_SERVICE_URL=http://core-service:9010
       - TICKETING_SERVICE_URL=http://ticketing-service:9030
+      - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
       - NODE_ENV=production
     depends_on:
       user-service:
@@ -29,6 +30,8 @@ services:
       core-service:
         condition: service_started
       ticketing-service:
+        condition: service_started
+      telemetry-service:
         condition: service_started
     restart: unless-stopped
 

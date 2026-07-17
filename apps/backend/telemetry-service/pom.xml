@@ -57,6 +57,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+		<!-- Bean Validation (jakarta.validation) for request DTOs — not pulled in transitively by
+		     starter-web in Boot 3. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<!-- Method-level security (@PreAuthorize) + the gateway-header/dev auth filters. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- JSONB support for Hibernate — telemetry payloads and device metadata are stored as
 		     jsonb (used from Phase 1 onward). -->

@@ -37,6 +37,10 @@ export const routes: RouteConfig[] = [
   { pathPrefix: '/api/v1/conductor', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/stops', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/routes', target: 'CORE_SERVICE', requiresAuth: true },
+  // Telemetry / IoT device registry (IoT Platform Layer plan, Phase 1) — staff-only admin API;
+  // the service itself enforces ADMIN/MOT roles from the forwarded x-user-type header.
+  { pathPrefix: '/api/devices', target: 'TELEMETRY', requiresAuth: true },
+  { pathPrefix: '/api/device-types', target: 'TELEMETRY', requiresAuth: true },
   // Ticketing
   { pathPrefix: '/api/tickets', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/tickets', target: 'TICKETING', requiresAuth: true },

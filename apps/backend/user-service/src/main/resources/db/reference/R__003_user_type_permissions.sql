@@ -27,6 +27,7 @@ WHERE (ut.name = 'admin')
                                               'user.timekeeper:update', 'user.timekeeper:delete',
                                               'user.operator:create', 'user.operator:read',
                                               'user.operator:update', 'user.operator:delete',
-                                              'user.conductor:read', 'user.passenger:read'))
+                                              'user.conductor:read', 'user.passenger:read',
+                                              'device:read', 'device:manage'))
 ON CONFLICT (user_type_id, permission_id) DO UPDATE SET
     is_granted = EXCLUDED.is_granted;

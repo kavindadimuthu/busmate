@@ -248,10 +248,21 @@ flowchart LR
 
 **Next (Phase 1):** device registry tables (`V002+`), `device_type` reference data in `db/reference`, provisioning/assignment APIs, and management-portal admin screens behind RBAC.
 
-### Phase 1 — Device registry & provisioning
-- Flyway migrations for the §4 tables; CRUD APIs (register device → returns one-time token; assign/unassign to bus; disable/revoke).
-- Admin screens in management-portal (device list, register, assign to bus) behind existing RBAC (new permission(s) in user-service's RBAC reference data).
-- Route through api-gateway like the other services.
+### Phase 1 — Device registry & provisioning  ✅ COMPLETE (2026-07-17)
+- ✅ Flyway `V002__device_registry.sql`: `device`, `device_credential`, `device_assignment` (partial-unique-indexed to enforce at most one open assignment per device/per bus), `bus_live_state`; `device_type` lookup + `R__001_device_types.sql` reference data (`GPS_TRACKER`, `CONDUCTOR_APP`, `SIMULATOR`).
+- ✅ `DeviceService` + `DeviceController` (`/api/devices`, `/api/device-types`): register (returns a one-time `bmt_…` token — SHA-256 hashed at rest via `DeviceTokens`, never persisted/logged in plaintext), rotate-token, disable/enable, assign/unassign (with conflict checks both directions), assignment history. `GlobalExceptionHandler` maps domain exceptions to the `{error:{code,message}}` shape the gateway/portals expect.
+- ✅ Security: `GatewayAuthenticationFilter` (trusts the gateway's `x-user-id`/`x-user-type` headers, prod) + `MockJwtAuthenticationFilter` (dev), `SecurityConfig`/`CorsConfig` mirroring the other services; `@PreAuthorize("hasAnyRole('ADMIN','MOT')")` per-method on both controllers.
+- ✅ RBAC: `device:read`/`device:manage` added to user-service's `R__002_permissions.sql`, granted to `admin` (blanket) and `mot` in `R__003_user_type_permissions.sql`.
+- ✅ Routed through api-gateway: `/api/devices` + `/api/device-types` → `TELEMETRY` target; `TELEMETRY_SERVICE_URL` wired in both compose files.
+- ✅ Admin screen: `management-portal` **`/mot/devices`** (list, register with one-time-token dialog, assign/unassign via a bus-select populated from `core-service`'s `getAllBusesAsList()`, disable/enable, rotate token), added to the MOT sidebar nav.
+- ✅ Demo seed: "Demo IoT device" UUID prefix (`…0106xx`) allocated in `dev-seed-contract.md`; one `GPS_TRACKER` per demo bus (`R__900`/`R__901`/`R__902`), each with a **real, working** dev bearer token — see `docs/dev-iot-device-credentials.md` (mirrors `dev-seed-credentials.md`'s pattern).
+- ✅ `DeviceControllerIntegrationTest` — **10/10 passing** against Testcontainers Postgres + embedded Kafka: register + token shape, duplicate-serial conflict, unknown-type rejection, assign/double-assign-conflict/unassign/reassign, disable-revokes-then-enable, unauthenticated (403 — see note below), wrong-role (403). `mvn compile`/`test-compile` clean; frontend changes typecheck clean (0 errors touching the new files, confirmed against the monorepo's existing 846 pre-existing/unrelated errors).
+
+**Note on 401 vs 403:** unlike core-service's tests, an unauthenticated request here gets **403**, not 401 — this service has no `httpBasic()`/oauth2-resource-server config, so Spring Security's default `Http403ForbiddenEntryPoint` applies instead of whatever entry point core-service's stack resolves to. Cosmetic only: in the real deployment the api-gateway is what a browser actually talks to, and it already returns a proper 401 (`MISSING_TOKEN`/`INVALID_TOKEN`) before a request ever reaches telemetry-service.
+
+**Correction to the Phase 0 readiness note:** that note said the management-portal's old `location-tracking` page was "removed as dead code." Building this phase's screen surfaced that a **live, current `/mot/tracking` page already exists** (`TrackingMap.tsx`, Google Maps, mock-data route simulation) — it's the resurrected/renamed successor, not gone. Phase 3's live map work plugs real telemetry into *that* existing page, not a rebuild from scratch.
+
+**Next (Phase 2):** HTTPS ingestion (`POST /ingest/v1/{eventType}`) authenticating against `device_credential.secret_hash`, enrichment (busId/tripId), Kafka publish + `bus_live_state` upsert, conductor-app GPS wiring, and the device simulator tool.
 
 ### Phase 2 — HTTPS ingestion (first real telemetry)
 - `POST /ingest/v1/{eventType}` with per-device bearer token auth (hashed at rest), rate-limited per device. Route through api-gateway (which already owns bearer-token auth for conductor-mobile).
@@ -260,7 +271,7 @@ flowchart LR
 - Build a **device simulator** script (replays a route's stop coordinates at bus speed) in `tools/` — this is your load-test and demo rig, worth the investment. Seed it from the demo route/stop UUIDs in `docs/dev-seed-contract.md` so it lines up with existing dev data.
 
 ### Phase 3 — First consumers (the payoff)
-- api-gateway (Node/Express) consumes `iot.telemetry.v1` with a Kafka client and pushes **SSE** streams (`/live/buses?routeId=…`) to passenger-web and management-portal. SSE lives here — Express supports `text/event-stream` natively, the gateway is already the single browser-facing entry point, and it keeps long-lived connections out of the Spring services. The management-portal **location-tracking screen that previously existed** (removed as dead code) is the natural home for the operator/MoT live map — rebuild it against this stream.
+- api-gateway (Node/Express) consumes `iot.telemetry.v1` with a Kafka client and pushes **SSE** streams (`/live/buses?routeId=…`) to passenger-web and management-portal. SSE lives here — Express supports `text/event-stream` natively, the gateway is already the single browser-facing entry point, and it keeps long-lived connections out of the Spring services. **Correction (found during Phase 1):** management-portal already has a live `/mot/tracking` page (`TrackingMap.tsx`, Google Maps) driven by mock route-simulation data (`data/mot/tracking-mock/locationTrackingSimulation.ts`) — it was not removed. Phase 3 swaps that mock data source for the real SSE stream; no page rebuild needed.
 - core-service passengerinfo: use live position to produce **real ETAs** in FindMyBus — this is where the existing `TimeSourceEnum` (`VERIFIED/CALCULATED/…`) finally gets a live-data source. Fall back to schedule-based estimates when no telemetry (which stays the common case for a long time).
 - Fleet health: scheduled job flags devices silent > N minutes → `device-status` event → management-portal indicator.
 

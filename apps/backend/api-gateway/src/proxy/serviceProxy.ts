@@ -6,6 +6,7 @@ const serviceUrls: Record<string, string> = {
   USER_SERVICE: env.USER_SERVICE_URL,
   CORE_SERVICE: env.CORE_SERVICE_URL,
   TICKETING: env.TICKETING_SERVICE_URL,
+  TELEMETRY: env.TELEMETRY_SERVICE_URL,
 };
 
 export function createProxy(serviceName: string, pathFilter: string) {
