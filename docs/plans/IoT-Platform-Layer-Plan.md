@@ -1,8 +1,34 @@
 # IoT Platform Layer — Analysis & Implementation Plan
 
-**Status:** Proposed
-**Date:** 2026-07-17
+**Status:** Ready to implement (reverified against codebase 2026-07-17)
+**Original draft:** committed `4cff9d07`
 **Scope:** Add a device-ingestion layer (telemetry) to the BusMate platform, feeding real-time data (initially GPS) into existing services.
+
+---
+
+## 0. Readiness Assessment (verified against current codebase, 2026-07-17)
+
+**Verdict: yes — you are in a good position to start. Begin with Phase 0.** Nothing blocks it, and one dependency (the database-migration foundation) that the plan leans on is now fully in place. The core architecture below survived reverification unchanged; the edits are refinements, not a redesign.
+
+### What changed since the plan was drafted, and why it helps
+
+| Area | State now | Impact on this plan |
+|---|---|---|
+| **DB migration & seed foundation** | The full Database-Migrations-and-Seed-Data-Plan is **complete** (Phases 0–5): every service has `db/migration` + `db/reference` + `db/seed/dev`, integration tests run on **Testcontainers Postgres with a CI gate**, and stale `schema.sql`/`data.sql` are gone. | This is the biggest de-risk. `telemetry-service` now has a **proven, repeatable template** to copy for standing up a new Flyway-managed Spring service with reference data, dev seed, and CI-gated integration tests. Phase 0/1 scaffolding is now mechanical. |
+| **Mobile GPS capability** | Both `conductor-mobile` and `passenger-mobile` (Expo/React Native) **already depend on `expo-location`** (`~19.0.7`) — but it is not yet wired to any position streaming. | Phase 2's "conductor app is the first device" is lighter than estimated: the dependency and permission plumbing exist; you wire `watchPositionAsync` → POST, not add a GPS stack. |
+| **Prior location-tracking code** | A generated `location-tracking-service` **API client** and a management-portal `location-tracking/page.tsx` **both existed and have been removed as dead code** (`202b8850`, and the page is gone on this branch). | Confirms greenfield — no half-built pipeline to reconcile — but note the **product intent already existed**. There was a MoT "location-tracking" screen; Phase 3's live map revives that surface with real data. |
+| **RBAC** | user-service RBAC is now **Flyway reference data** (`fbe5ce57`). | Phase 1's new device-management permissions slot straight into that reference-data mechanism. |
+| **Cross-service seed contract** | `docs/dev-seed-contract.md` is a **fixed-UUID registry** for demo entities crossing service boundaries (operator, route, stop, bus, trip…). | telemetry-service's `device → bus` assignment seed **must** reference the registry's demo **bus** UUIDs, and you should allocate a new **"Demo device"** UUID prefix there. See §4 note. |
+
+### What did **not** change (plan assumptions still hold)
+
+- **No message broker in any compose file** (`docker-compose*.yml`) — confirmed. user-service's Kafka producer still points at a `localhost:9092` that doesn't exist in dev. Phase 0's Redpanda container both unblocks that producer and serves the IoT pipeline.
+- **`telemetry-service` does not exist** and `libs/` holds only `api-clients` + `ui` — no `iot-schemas` yet. Greenfield as planned.
+- **`api-gateway` is Node/Express** with **no SSE/WebSocket** today — it is a pure auth/proxy/BFF. This sharpens where Phase 3 streaming lives (see refined Phase 3): SSE belongs in the Express gateway, not the Spring services.
+
+### First concrete step
+
+Phase 0, task 1: add a Redpanda service to `docker-compose.yml`. It is the smallest, highest-leverage move — it unblocks the already-shipped user-service producer *and* lays the pipeline substrate, with zero coupling to the rest of the plan if you pause after it.
 
 ---
 
@@ -192,6 +218,8 @@ erDiagram
 
 Assignment history (not just current) matters: it's how you answer "which device produced this bus's track last Tuesday" and how you handle trackers moved between buses. `bus_id` is a soft reference across service databases — same convention you already use between services.
 
+> **Seed-contract note:** `device_assignment.bus_id` must reference the **fixed demo bus UUIDs** in `docs/dev-seed-contract.md` (prefix `00000000-0000-0000-0000-0000000103xx`), not freshly invented ones — otherwise the dev seed won't line up with core-service's buses. Allocate a new **"Demo device"** UUID prefix in that registry (e.g. `…0000000105xx`) when you write telemetry-service's `db/seed/dev` migration.
+
 ---
 
 ## 5. Implementation Phases
@@ -210,8 +238,8 @@ flowchart LR
 **Value milestone: end of Phase 3 = live buses on the passenger map and schedule-independent ETAs, with no hardware purchased.**
 
 ### Phase 0 — Foundations
-- Add **Redpanda** to `docker-compose.yml` (dev) — this also unblocks user-service's existing producer locally.
-- Scaffold `apps/backend/telemetry-service` (Spring Boot, Java 17, Flyway, OTel wiring, dev seed contract — copy the conventions from core-service; register in Nx and compose files).
+- Add **Redpanda** to `docker-compose.yml` (dev) — this also unblocks user-service's existing producer locally (which currently has no broker to reach). Add to `docker-compose.production.yml` topology as well, or point at managed Kafka there.
+- Scaffold `apps/backend/telemetry-service` (Spring Boot, Java 17) by **copying the now-established service template**: `db/migration` + `db/reference` + `db/seed/dev` Flyway layout, OTel wiring, `project.json` for Nx, a `Dockerfile` expecting a pre-built jar, entries in both compose files, and **Testcontainers integration tests wired into the existing CI gate** (Database-Migrations plan Phases 4–5). Own database `busmate_telemetry` in `scripts/postgres/init-dev-dbs.sql`.
 - Define envelope + `location`/`device-status` v1 JSON Schemas in `libs/iot-schemas/` with a validation test suite.
 - Topics: `iot.telemetry.v1`, `iot.device-status.v1`, `iot.telemetry.dlq.v1`.
 
@@ -221,13 +249,13 @@ flowchart LR
 - Route through api-gateway like the other services.
 
 ### Phase 2 — HTTPS ingestion (first real telemetry)
-- `POST /ingest/v1/{eventType}` with per-device bearer token auth (hashed at rest), rate-limited per device.
+- `POST /ingest/v1/{eventType}` with per-device bearer token auth (hashed at rest), rate-limited per device. Route through api-gateway (which already owns bearer-token auth for conductor-mobile).
 - Validate → enrich (busId, active tripId via core-service data) → publish to Kafka → upsert `bus_live_state`. Reject to DLQ with reason.
-- **Conductor app posts GPS while a trip is active** — the first production "device".
-- Build a **device simulator** script (replays a route's stop coordinates at bus speed) in `tools/` — this is your load-test and demo rig, worth the investment.
+- **Conductor app posts GPS while a trip is active** — the first production "device". `expo-location` is **already a dependency** in `conductor-mobile`; the work is wiring `watchPositionAsync` (coarse interval, only while a trip is active) to the ingest endpoint, plus the foreground-location permission prompt — not adding a GPS stack. The conductor's active-trip context already exists in the journey screens.
+- Build a **device simulator** script (replays a route's stop coordinates at bus speed) in `tools/` — this is your load-test and demo rig, worth the investment. Seed it from the demo route/stop UUIDs in `docs/dev-seed-contract.md` so it lines up with existing dev data.
 
 ### Phase 3 — First consumers (the payoff)
-- api-gateway: consume `iot.telemetry.v1`, push **SSE** streams (`/live/buses?routeId=…`) to passenger-web and management-portal; live map in both.
+- api-gateway (Node/Express) consumes `iot.telemetry.v1` with a Kafka client and pushes **SSE** streams (`/live/buses?routeId=…`) to passenger-web and management-portal. SSE lives here — Express supports `text/event-stream` natively, the gateway is already the single browser-facing entry point, and it keeps long-lived connections out of the Spring services. The management-portal **location-tracking screen that previously existed** (removed as dead code) is the natural home for the operator/MoT live map — rebuild it against this stream.
 - core-service passengerinfo: use live position to produce **real ETAs** in FindMyBus — this is where the existing `TimeSourceEnum` (`VERIFIED/CALCULATED/…`) finally gets a live-data source. Fall back to schedule-based estimates when no telemetry (which stays the common case for a long time).
 - Fleet health: scheduled job flags devices silent > N minutes → `device-status` event → management-portal indicator.
 
