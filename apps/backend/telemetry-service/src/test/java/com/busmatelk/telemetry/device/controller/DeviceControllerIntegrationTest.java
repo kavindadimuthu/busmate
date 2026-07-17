@@ -3,6 +3,7 @@ package com.busmatelk.telemetry.device.controller;
 import com.busmatelk.telemetry.AbstractPostgresIntegrationTest;
 import com.busmatelk.telemetry.device.dto.AssignDeviceRequest;
 import com.busmatelk.telemetry.device.dto.RegisterDeviceRequest;
+import com.busmatelk.telemetry.device.repository.DeviceRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -50,6 +52,9 @@ class DeviceControllerIntegrationTest extends AbstractPostgresIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private DeviceRepository deviceRepository;
 
     private MockMvc mockMvc;
 
@@ -176,6 +181,66 @@ class DeviceControllerIntegrationTest extends AbstractPostgresIntegrationTest {
         mockMvc.perform(post("/api/devices/{id}/enable", deviceId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PROVISIONED"));
+    }
+
+    // The three tests below deliberately do NOT use @WithMockUser: this endpoint's own
+    // @RequestHeader("x-user-id") binding means the request must carry an x-user-id header, and
+    // GatewayAuthenticationFilter (active in the "test" profile, same as prod — MockJwtAuthenticationFilter
+    // is dev-only) treats the presence of that header as "derive identity from gateway headers",
+    // overwriting whatever @WithMockUser put in the SecurityContext with a role built from
+    // x-user-type (defaulting to ROLE_USER if absent — silently NOT the role the test intended).
+    // Setting x-user-type explicitly, the way the real gateway does, is what makes these tests
+    // exercise the actual production auth path instead of fighting it.
+
+    @Test
+    @DisplayName("self-provisions a CONDUCTOR_APP device on first call, tied to the caller's user id (Phase 4)")
+    void provisionsConductorDeviceOnFirstCall() throws Exception {
+        UUID ownerUserId = UUID.randomUUID();
+
+        String responseJson = mockMvc.perform(post("/api/devices/provision-conductor")
+                        .header("x-user-id", ownerUserId.toString())
+                        .header("x-user-type", "conductor"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.device.deviceTypeCode").value("CONDUCTOR_APP"))
+                .andExpect(jsonPath("$.token").value(org.hamcrest.Matchers.startsWith("bmt_")))
+                .andReturn().getResponse().getContentAsString();
+
+        UUID deviceId = UUID.fromString(objectMapper.readTree(responseJson).at("/device/id").asText());
+        assertThat(deviceRepository.findById(deviceId).orElseThrow().getOwnerUserId()).isEqualTo(ownerUserId);
+    }
+
+    @Test
+    @DisplayName("re-provisioning the same conductor reuses their existing device with a rotated token")
+    void reProvisioningReusesExistingDeviceWithFreshToken() throws Exception {
+        UUID ownerUserId = UUID.randomUUID();
+
+        String firstResponse = mockMvc.perform(post("/api/devices/provision-conductor")
+                        .header("x-user-id", ownerUserId.toString())
+                        .header("x-user-type", "conductor"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        UUID firstDeviceId = UUID.fromString(objectMapper.readTree(firstResponse).at("/device/id").asText());
+        String firstToken = objectMapper.readTree(firstResponse).at("/token").asText();
+
+        String secondResponse = mockMvc.perform(post("/api/devices/provision-conductor")
+                        .header("x-user-id", ownerUserId.toString())
+                        .header("x-user-type", "conductor"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        UUID secondDeviceId = UUID.fromString(objectMapper.readTree(secondResponse).at("/device/id").asText());
+        String secondToken = objectMapper.readTree(secondResponse).at("/token").asText();
+
+        assertThat(secondDeviceId).isEqualTo(firstDeviceId);
+        assertThat(secondToken).isNotEqualTo(firstToken);
+    }
+
+    @Test
+    @DisplayName("forbids staff roles from the conductor self-provisioning endpoint")
+    void forbidsStaffFromConductorProvisioning() throws Exception {
+        mockMvc.perform(post("/api/devices/provision-conductor")
+                        .header("x-user-id", UUID.randomUUID().toString())
+                        .header("x-user-type", "admin"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -39,6 +39,14 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:9030']
 
+  # IoT telemetry pipeline (IoT Platform Layer plan, Phase 0/4) — was missing from this file since
+  # Phase 0 added the service; added here as part of Phase 4's Grafana dashboard, whose panels
+  # need this scrape target to have any data.
+  - job_name: telemetry-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:9040']
+
   - job_name: cadvisor
     static_configs:
       - targets: ['cadvisor:8080']

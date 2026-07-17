@@ -15,6 +15,15 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     Optional<Device> findBySerialNumber(String serialNumber);
 
+    /** Backs the Phase 4 fleet-by-status Grafana gauge — evaluated at scrape time, so this stays cheap. */
+    long countByStatus(DeviceStatus status);
+
+    /** Backs the Phase 4 "silent devices" Grafana gauge. */
+    long countBySilenceFlaggedAtIsNotNull();
+
+    /** Per-conductor self-provisioning (Phase 4): find the CONDUCTOR_APP device this user already owns, if any. */
+    Optional<Device> findByOwnerUserId(UUID ownerUserId);
+
     /** ACTIVE devices gone quiet past the threshold, not yet flagged — candidates to flag silent. */
     List<Device> findByStatusAndLastSeenAtBeforeAndSilenceFlaggedAtIsNull(DeviceStatus status, Instant threshold);
 

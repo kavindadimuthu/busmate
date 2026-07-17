@@ -1,5 +1,6 @@
 import { AuthControllerService, type AuthMeResponse } from '@busmate/api-client-user';
 import { clearSession, getAccessToken, hasStoredSession, saveSession } from '@/lib/auth/tokenStore';
+import { clearDeviceToken } from '@/services/telemetry/deviceProvisioning';
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 import { BiometricAuthResult, User } from '@/types/auth';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -109,6 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void> => {
     const token = await getAccessToken();
     await clearSession();
+    // A different conductor may log in next on the same phone — their fixes must report under
+    // their own device identity, not the previous conductor's (IoT Platform Layer plan, Phase 4).
+    await clearDeviceToken();
     setUser(null);
 
     if (token) {

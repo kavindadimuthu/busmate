@@ -58,6 +58,17 @@ public class Device {
     @Column(name = "silence_flagged_at")
     private Instant silenceFlaggedAt;
 
+    /** Highest location-fix sequenceNo accepted so far (Phase 4 idempotency) — see
+     * {@code IngestService}'s dedup check. Null = no sequenced fix seen yet. */
+    @Column(name = "last_sequence_no")
+    private Long lastSequenceNo;
+
+    /** Soft reference to user-service's user.id (Phase 4 self-provisioning) — set only for
+     * CONDUCTOR_APP devices created via {@code POST /api/devices/provision-conductor}, letting a
+     * conductor's own login resolve back to their own device. Null for every other device type. */
+    @Column(name = "owner_user_id")
+    private UUID ownerUserId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

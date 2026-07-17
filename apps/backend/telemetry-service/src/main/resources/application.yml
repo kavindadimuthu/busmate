@@ -86,6 +86,13 @@ telemetry:
       telemetry: iot.telemetry.v1
       device-status: iot.device-status.v1
       dlq: iot.telemetry.dlq.v1
+    # Retention/downsampling policy (Phase 4): raw telemetry is a bridge to live consumers, not a
+    # historical store (bus_live_state in Postgres already serves "latest position"), so it's kept
+    # short. The DLQ is low-volume and worth a human looking at, so it's kept much longer.
+    retention-ms:
+      telemetry: ${TELEMETRY_KAFKA_RETENTION_MS:86400000}      # 24h
+      device-status: ${TELEMETRY_DEVICE_STATUS_RETENTION_MS:604800000}  # 7d — low volume, useful for fleet-health history
+      dlq: ${TELEMETRY_DLQ_RETENTION_MS:1209600000}            # 14d — low volume, needs human review
   # HTTPS ingestion (Phase 2). Rate limit is a single-instance, in-memory token bucket
   # (DeviceRateLimiter) — fine at this scale; move to a shared store (Redis) if telemetry-service
   # is ever scaled to more than one instance, since each instance would otherwise track its own
@@ -102,6 +109,22 @@ telemetry:
   fleet-health:
     check-interval-ms: ${TELEMETRY_FLEET_HEALTH_CHECK_INTERVAL_MS:60000}
     silence-threshold-minutes: ${TELEMETRY_FLEET_HEALTH_SILENCE_MINUTES:5}
+  # MQTT ingestion (Phase 4) — the second protocol adapter, for hardware GPS trackers that speak
+  # MQTT natively rather than HTTPS. Disabled by default (tests, and any dev box without EMQX
+  # running, boot cleanly with it off); enabled explicitly in application-dev.yml and by env var in
+  # the compose files. See config/mqtt/emqx.conf for the broker-side auth wiring.
+  mqtt:
+    enabled: ${TELEMETRY_MQTT_ENABLED:false}
+    broker-url: ${TELEMETRY_MQTT_BROKER_URL:tcp://localhost:1883}
+    client-id: ${TELEMETRY_MQTT_CLIENT_ID:telemetry-service-consumer}
+    username: ${TELEMETRY_MQTT_USERNAME:telemetry-service-consumer}
+    # This subscriber authenticates to EMQX through the same device-credential HTTP-hook as any
+    # real device (config/mqtt/emqx.conf, MqttAuthController) — password must be a real bmt_ token
+    # for a device row of type MQTT_CONSUMER (see db/seed/dev/R__900/R__901 for the dev one; a
+    # production deployment registers its own via POST /api/devices, same as any other device, and
+    # sets this env var to the returned token — see docs/iot-pilot-runbook.md). The fallback below
+    # is an obvious non-token placeholder, not a real secret.
+    password: ${TELEMETRY_MQTT_PASSWORD:changeme}
 
 # Base URL for the internal, unauthenticated (GET /api/** is permitAll there) calls this service
 # makes to resolve a device's active trip during ingest enrichment. Same env var name the other

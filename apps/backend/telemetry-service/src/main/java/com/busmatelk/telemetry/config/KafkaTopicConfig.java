@@ -23,6 +23,11 @@ import org.springframework.kafka.config.TopicBuilder;
  *   <li>{@code iot.device-status.v1} — device lifecycle/health events (online, silent, disabled).</li>
  *   <li>{@code iot.telemetry.dlq.v1} — messages that failed validation/enrichment, with a reason.</li>
  * </ul>
+ *
+ * <p>Retention (Phase 4 hardening): high-volume raw telemetry is downsampled by time, not kept
+ * forever — {@code bus_live_state} (Postgres) is already the durable "latest position" read model,
+ * so the topic only needs to bridge live consumers, not serve as a historical store. The DLQ is
+ * kept longer since it's low-volume and each message is something a human should look at.
  */
 @Configuration
 public class KafkaTopicConfig {
@@ -42,11 +47,21 @@ public class KafkaTopicConfig {
     @Value("${telemetry.kafka.replication-factor}")
     private short replicationFactor;
 
+    @Value("${telemetry.kafka.retention-ms.telemetry}")
+    private String telemetryRetentionMs;
+
+    @Value("${telemetry.kafka.retention-ms.device-status}")
+    private String deviceStatusRetentionMs;
+
+    @Value("${telemetry.kafka.retention-ms.dlq}")
+    private String dlqRetentionMs;
+
     @Bean
     public NewTopic telemetryTopic() {
         return TopicBuilder.name(telemetryTopic)
                 .partitions(partitions)
                 .replicas(replicationFactor)
+                .config("retention.ms", telemetryRetentionMs)
                 .build();
     }
 
@@ -55,6 +70,7 @@ public class KafkaTopicConfig {
         return TopicBuilder.name(deviceStatusTopic)
                 .partitions(partitions)
                 .replicas(replicationFactor)
+                .config("retention.ms", deviceStatusRetentionMs)
                 .build();
     }
 
@@ -63,6 +79,7 @@ public class KafkaTopicConfig {
         return TopicBuilder.name(dlqTopic)
                 .partitions(partitions)
                 .replicas(replicationFactor)
+                .config("retention.ms", dlqRetentionMs)
                 .build();
     }
 }

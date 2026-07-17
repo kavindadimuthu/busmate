@@ -1,19 +1,16 @@
 import * as Location from 'expo-location';
 import { API_GATEWAY_URL } from '@/config/apiConfig';
+import { getOrProvisionDeviceToken } from './deviceProvisioning';
 
 // GPS reporting while a trip is active (IoT Platform Layer plan, Phase 2) — the conductor app is
 // the platform's first production "device". expo-location was already a dependency and its
 // permission plugin already configured (app.json); this module is the wiring: watchPositionAsync
 // while a trip is ongoing, POSTing each fix to the ingest endpoint.
 //
-// Device provisioning is a known simplification for now: this uses one shared, dev-seeded
-// CONDUCTOR_APP device credential (see docs/dev-iot-device-credentials.md) rather than a
-// per-conductor self-service registration flow. Every conductor's phone reports as the same
-// device, distinguished only by whichever tripId it's currently sending — fine for proving the
-// pipeline end to end, but a real rollout needs each phone provisioned as its own device (a
-// natural Phase 4 hardening item, alongside the hardware-tracker rollout that phase already covers).
-const DEVICE_TOKEN =
-  process.env.EXPO_PUBLIC_CONDUCTOR_DEVICE_TOKEN || 'bmt_devseed_07_e04d83705b012955cb56e8f5';
+// Device identity (Phase 4): each install gets its own device token via
+// deviceProvisioning.getOrProvisionDeviceToken() — closing Phase 2's known simplification, where
+// every conductor-mobile install shared one hardcoded dev device credential and was
+// indistinguishable except by whichever tripId it reported.
 
 // Coarse interval — this is a phone in someone's pocket for a whole shift, not a dedicated
 // tracker; battery cost matters more than second-by-second precision. 20m distance filter avoids
@@ -24,7 +21,7 @@ const DISTANCE_INTERVAL_M = 20;
 let watchSubscription: Location.LocationSubscription | null = null;
 let sequenceNo = 0;
 
-async function postFix(tripId: string, location: Location.LocationObject): Promise<void> {
+async function postFix(tripId: string, deviceToken: string, location: Location.LocationObject): Promise<void> {
   const { latitude, longitude, speed, heading, accuracy } = location.coords;
 
   const body = {
@@ -45,7 +42,7 @@ async function postFix(tripId: string, location: Location.LocationObject): Promi
   try {
     const res = await fetch(`${API_GATEWAY_URL}/ingest/v1/location`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${DEVICE_TOKEN}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${deviceToken}` },
       body: JSON.stringify(body),
     });
     if (!res.ok) {
@@ -68,6 +65,17 @@ export async function startReporting(tripId: string): Promise<void> {
     return;
   }
 
+  let deviceToken: string;
+  try {
+    deviceToken = await getOrProvisionDeviceToken();
+  } catch (error) {
+    // Best-effort: no device identity yet (offline on first-ever run, gateway hiccup) means no
+    // fixes can be sent this trip — the conductor's own workflow (ticketing, trip status) is
+    // unaffected, and the next trip's startReporting() call tries provisioning again.
+    console.warn('[locationReporting] failed to provision device token — GPS reporting disabled for this trip:', error);
+    return;
+  }
+
   sequenceNo = 0;
   watchSubscription = await Location.watchPositionAsync(
     {
@@ -76,7 +84,7 @@ export async function startReporting(tripId: string): Promise<void> {
       distanceInterval: DISTANCE_INTERVAL_M,
     },
     (location) => {
-      postFix(tripId, location);
+      postFix(tripId, deviceToken, location);
     },
   );
 }

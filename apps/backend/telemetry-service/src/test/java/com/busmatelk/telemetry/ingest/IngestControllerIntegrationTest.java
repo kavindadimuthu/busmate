@@ -139,6 +139,19 @@ class IngestControllerIntegrationTest extends AbstractPostgresIntegrationTest {
         return objectMapper.writeValueAsString(body);
     }
 
+    private String locationBodyFull(double lat, double lng, Long sequenceNo, Instant deviceTimestamp, UUID tripId) throws Exception {
+        var payload = new java.util.HashMap<String, Object>();
+        payload.put("lat", lat);
+        payload.put("lng", lng);
+
+        var body = new java.util.HashMap<String, Object>();
+        body.put("deviceTimestamp", deviceTimestamp.toString());
+        if (sequenceNo != null) body.put("sequenceNo", sequenceNo);
+        if (tripId != null) body.put("tripId", tripId.toString());
+        body.put("payload", payload);
+        return objectMapper.writeValueAsString(body);
+    }
+
     private Consumer<String, String> newConsumer(String... topics) {
         Map<String, Object> props = KafkaTestUtils.consumerProps("test-group-" + UUID.randomUUID(), "true", embeddedKafkaBroker);
         props.put("key.deserializer", StringDeserializer.class);
@@ -228,6 +241,64 @@ class IngestControllerIntegrationTest extends AbstractPostgresIntegrationTest {
 
             assertThat(recordsForThisDevice(main, telemetryTopic)).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("rejects a duplicate/out-of-order sequenceNo as a DLQ-routed duplicate (Phase 4 idempotency)")
+    void rejectsDuplicateSequenceNo() throws Exception {
+        try (var main = newConsumer(telemetryTopic); var dlq = newConsumer(dlqTopic)) {
+            mockMvc.perform(post("/ingest/v1/location")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(locationBodyFull(6.9271, 79.8612, 5L, Instant.now(), null)))
+                    .andExpect(status().isAccepted())
+                    .andExpect(jsonPath("$.status").value("accepted"));
+
+            // Re-delivery of the same sequenceNo (MQTT QoS 1 redelivery, a retried HTTP POST) must
+            // be rejected — routed to the DLQ, not reprocessed onto the main topic or live-state.
+            mockMvc.perform(post("/ingest/v1/location")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(locationBodyFull(6.9271, 79.8612, 5L, Instant.now(), null)))
+                    .andExpect(status().isAccepted())
+                    .andExpect(jsonPath("$.status").value("flagged"))
+                    .andExpect(jsonPath("$.reason").value(org.hamcrest.Matchers.containsString("duplicate")));
+
+            assertThat(recordsForThisDevice(main, telemetryTopic)).hasSize(1);
+            assertThat(recordsForThisDevice(dlq, dlqTopic)).hasSize(1);
+        }
+    }
+
+    @Test
+    @DisplayName("ignores a stale fix that would regress live-state to an older position (Phase 4 late-data policy)")
+    void ignoresStaleLiveStateUpdate() throws Exception {
+        UUID tripId = UUID.randomUUID();
+        UUID busId = UUID.randomUUID();
+        when(coreServiceClient.getTripById(tripId))
+                .thenReturn(Optional.of(new CoreServiceClient.TripSummary(tripId, busId, LocalDate.now(), "active")));
+
+        Instant newer = Instant.now();
+        Instant older = newer.minusSeconds(60);
+
+        mockMvc.perform(post("/ingest/v1/location")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(locationBodyFull(10.0, 10.0, null, newer, tripId)))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status").value("accepted"));
+
+        // A stale (older-timestamped) fix for the same bus arrives after the newer one — still
+        // "accepted" (the request itself is valid), but must not overwrite live-state backwards.
+        mockMvc.perform(post("/ingest/v1/location")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(locationBodyFull(20.0, 20.0, null, older, tripId)))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status").value("accepted"));
+
+        var liveState = liveStateRepository.findById(busId).orElseThrow();
+        assertThat(liveState.getLat()).isEqualTo(10.0);
+        assertThat(liveState.getLng()).isEqualTo(10.0);
     }
 
     @Test

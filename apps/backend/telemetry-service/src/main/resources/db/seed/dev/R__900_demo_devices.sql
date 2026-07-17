@@ -20,5 +20,10 @@ VALUES
     ('00000000-0000-0000-0000-000000010606', 'GPS-DEMO-1187', 'GPS_TRACKER', 'CP NA-1187 dashboard tracker', 'ACTIVE'),
     -- conductor-mobile's own GPS reporting (Phase 2) — no static bus assignment; it resolves the
     -- bus from whichever tripId it reports alongside each fix (see IngestService.resolveBusAndTrip).
-    ('00000000-0000-0000-0000-000000010607', 'CONDUCTOR-APP-DEMO-001', 'CONDUCTOR_APP', 'conductor-mobile demo device', 'ACTIVE')
+    ('00000000-0000-0000-0000-000000010607', 'CONDUCTOR-APP-DEMO-001', 'CONDUCTOR_APP', 'conductor-mobile demo device', 'ACTIVE'),
+    -- telemetry-service's own MQTT subscriber (Phase 4, MqttIngestAdapter) — authenticates to EMQX
+    -- through the exact same device-credential webhook as a real tracker (see config/mqtt/emqx.conf),
+    -- not a special-cased bypass. TELEMETRY_MQTT_USERNAME/PASSWORD in application.yml must match
+    -- this device's serial/token pair — see docs/dev-iot-device-credentials.md.
+    ('00000000-0000-0000-0000-000000010608', 'MQTT-CONSUMER-INTERNAL', 'MQTT_CONSUMER', 'telemetry-service MQTT subscriber', 'ACTIVE')
 ON CONFLICT (id) DO NOTHING;

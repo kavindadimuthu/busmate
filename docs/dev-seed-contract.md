@@ -145,3 +145,4 @@ elsewhere), listed here only so the pairing with the demo bus is stable across r
 | `00000000-0000-0000-0000-000000010605` | GPS-DEMO-1123 — CP NA-1123 dashboard tracker | telemetry-service | `...010305` |
 | `00000000-0000-0000-0000-000000010606` | GPS-DEMO-1187 — CP NA-1187 dashboard tracker | telemetry-service | `...010306` |
 | `00000000-0000-0000-0000-000000010607` | CONDUCTOR-APP-DEMO-001 — conductor-mobile's own GPS reporting | telemetry-service | None (resolves bus from the tripId it reports, not a static assignment — see IoT Platform Layer plan §Phase 2 enrichment). |
+| `00000000-0000-0000-0000-000000010608` | MQTT-CONSUMER-INTERNAL — telemetry-service's own MQTT subscriber (Phase 4) | telemetry-service | None — not a fleet device; authenticates to EMQX through the same device-credential mechanism as any tracker (see `config/mqtt/emqx.conf`). |

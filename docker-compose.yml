@@ -84,6 +84,28 @@ services:
       retries: 12
       start_period: 20s
 
+  # MQTT broker for hardware GPS trackers (IoT Platform Layer plan, Phase 4) — the second
+  # protocol adapter alongside the HTTPS ingest path. Device auth delegates to telemetry-service's
+  # own registry via an HTTP webhook (config/mqtt/emqx.conf), so there's one device-credential
+  # store regardless of which transport a tracker uses. 1883 is host-mapped for real hardware /
+  # local MQTT clients (mosquitto_pub, an MQTT Explorer) to connect to during the Phase 4 pilot;
+  # 18083 is EMQX's own dashboard (default login admin/public).
+  emqx:
+    image: emqx/emqx:5.8.0
+    container_name: busmate-dev-emqx
+    ports:
+      - "1883:1883"   # MQTT
+      - "18083:18083" # EMQX dashboard
+    volumes:
+      - ./config/mqtt/emqx.conf:/opt/emqx/etc/emqx.conf:ro
+      - busmate_dev_emqx_data:/opt/emqx/data
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   api-gateway:
     build:
       context: apps/backend/api-gateway
@@ -226,6 +248,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - CORE_SERVICE_URL=http://core-service:9010
+      - TELEMETRY_MQTT_BROKER_URL=tcp://emqx:1883
       - OTEL_SERVICE_NAME=telemetry-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -242,7 +265,10 @@ services:
         condition: service_started
       core-service:
         condition: service_started
+      emqx:
+        condition: service_started
 
 volumes:
   busmate_dev_postgres_data:
   busmate_dev_redpanda_data:
+  busmate_dev_emqx_data:

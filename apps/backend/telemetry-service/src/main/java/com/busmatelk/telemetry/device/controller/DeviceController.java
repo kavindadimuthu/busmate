@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,6 +46,17 @@ public class DeviceController {
     @PostMapping
     public ResponseEntity<DeviceRegisteredResponse> register(@Valid @RequestBody RegisterDeviceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(deviceService.register(request));
+    }
+
+    @Operation(summary = "Self-provision (or re-provision) the caller's own conductor-app device",
+            description = "IoT Platform Layer plan, Phase 4 — closes Phase 2's shared-credential " +
+                    "simplification. Called by conductor-mobile itself (staff JWT, role CONDUCTOR), " +
+                    "not by MOT/admin staff. Idempotent per user: returns a freshly-rotated token " +
+                    "for the caller's existing device, or creates one on first call.")
+    @PreAuthorize("hasRole('CONDUCTOR')")
+    @PostMapping("/provision-conductor")
+    public DeviceRegisteredResponse provisionConductor(@RequestHeader("x-user-id") UUID ownerUserId) {
+        return deviceService.provisionForConductor(ownerUserId);
     }
 
     @Operation(summary = "List devices with their current bus assignment")

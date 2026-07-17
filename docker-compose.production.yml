@@ -99,6 +99,19 @@ services:
       - busmate_prod_redpanda_data:/var/lib/redpanda/data
     restart: unless-stopped
 
+  # MQTT broker for hardware GPS trackers (IoT Platform Layer plan, Phase 4). Not published to the
+  # host by default — see docs/iot-pilot-runbook.md for how to expose 1883 for a real hardware
+  # pilot (e.g. a temporary port mapping, or a VPN/firewall rule scoped to the tracker's network).
+  emqx:
+    image: emqx/emqx:5.8.0
+    volumes:
+      - ./config/mqtt/emqx.conf:/opt/emqx/etc/emqx.conf:ro
+      - busmate_prod_emqx_data:/opt/emqx/data
+    expose:
+      - "1883"
+      - "18083"
+    restart: unless-stopped
+
   telemetry-service:
     build:
       context: apps/backend/telemetry-service
@@ -110,6 +123,11 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - CORE_SERVICE_URL=http://core-service:9010
+      - TELEMETRY_MQTT_ENABLED=true
+      - TELEMETRY_MQTT_BROKER_URL=tcp://emqx:1883
+      # TELEMETRY_MQTT_PASSWORD must be set in config/secrets/.env to a real device token before
+      # this connects — provision the MQTT_CONSUMER device the same way as any other (POST
+      # /api/devices) and use the token it returns. See docs/iot-pilot-runbook.md.
     expose:
       - "9040"
     depends_on:
@@ -117,7 +135,10 @@ services:
         condition: service_started
       core-service:
         condition: service_started
+      emqx:
+        condition: service_started
     restart: unless-stopped
 
 volumes:
   busmate_prod_redpanda_data:
+  busmate_prod_emqx_data:

@@ -61,6 +61,42 @@ public class DeviceService {
                 .build();
     }
 
+    /**
+     * Per-conductor self-provisioning (IoT Platform Layer plan, Phase 4) — closes Phase 2's
+     * shared-credential simplification, where every conductor-mobile install reported through one
+     * hardcoded demo device. Idempotent per user: a conductor who already owns a device gets a
+     * freshly-rotated token for that same device (their previous install's token, if any, stops
+     * working — acceptable, since re-provisioning only happens on a fresh install/logout-login);
+     * a conductor with no device yet gets one created and tied to their user id.
+     */
+    @Transactional
+    public DeviceRegisteredResponse provisionForConductor(UUID ownerUserId) {
+        Device device = deviceRepository.findByOwnerUserId(ownerUserId).orElse(null);
+
+        if (device == null) {
+            device = deviceRepository.save(Device.builder()
+                    .serialNumber("CONDUCTOR-APP-" + ownerUserId)
+                    .deviceTypeCode("CONDUCTOR_APP")
+                    .label("Conductor app (self-provisioned)")
+                    .ownerUserId(ownerUserId)
+                    .status(DeviceStatus.PROVISIONED)
+                    .build());
+        } else if (device.getStatus() == DeviceStatus.RETIRED) {
+            throw new ConflictException("Your device has been retired — contact MOT/admin");
+        } else if (device.getStatus() == DeviceStatus.DISABLED) {
+            device.setStatus(DeviceStatus.PROVISIONED);
+            device = deviceRepository.save(device);
+        }
+
+        credentialRepository.revokeActiveForDevice(device.getId(), Instant.now());
+        String token = issueToken(device.getId());
+        return DeviceRegisteredResponse.builder()
+                .device(DeviceResponse.of(device,
+                        assignmentRepository.findByDeviceIdAndUnassignedAtIsNull(device.getId()).orElse(null)))
+                .token(token)
+                .build();
+    }
+
     @Transactional(readOnly = true)
     public List<DeviceResponse> list() {
         return deviceRepository.findAll().stream()

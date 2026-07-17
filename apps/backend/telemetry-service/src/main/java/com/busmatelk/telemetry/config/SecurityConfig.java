@@ -56,6 +56,10 @@ public class SecurityConfig {
                         // core-service and api-gateway — same "public GET" convention core-service
                         // itself uses for non-sensitive read APIs.
                         .requestMatchers(HttpMethod.GET, "/api/live/**").permitAll()
+                        // Phase 4: MQTT broker auth webhook — reachable only from EMQX on the
+                        // Docker-internal network (api-gateway hard-blocks /internal/** from ever
+                        // reaching here through it), so there is no user-service JWT to check.
+                        .requestMatchers("/internal/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/ingest/**").authenticated()
                         .anyRequest().authenticated()

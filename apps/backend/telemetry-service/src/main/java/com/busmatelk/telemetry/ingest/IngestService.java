@@ -11,6 +11,9 @@ import com.busmatelk.telemetry.ingest.dto.LocationIngestRequest;
 import com.busmatelk.telemetry.livestate.entity.BusLiveState;
 import com.busmatelk.telemetry.livestate.repository.BusLiveStateRepository;
 import com.busmatelk.telemetry.shared.exception.NotFoundException;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -42,13 +45,16 @@ public class IngestService {
 
     private static final int ENVELOPE_VERSION = 1;
     private static final int SCHEMA_VERSION = 1;
-    private static final String ADAPTER = "https";
+    /** Default adapter for the HTTPS ingest path (Phase 2); the MQTT adapter (Phase 4) passes its own. */
+    public static final String ADAPTER_HTTPS = "https";
+    public static final String ADAPTER_MQTT = "mqtt";
 
     private final DeviceRepository deviceRepository;
     private final DeviceAssignmentRepository assignmentRepository;
     private final BusLiveStateRepository liveStateRepository;
     private final CoreServiceClient coreServiceClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final MeterRegistry meterRegistry;
 
     private final String telemetryTopic;
     private final String deviceStatusTopic;
@@ -63,6 +69,7 @@ public class IngestService {
             BusLiveStateRepository liveStateRepository,
             CoreServiceClient coreServiceClient,
             KafkaTemplate<String, Object> kafkaTemplate,
+            MeterRegistry meterRegistry,
             @Value("${telemetry.kafka.topics.telemetry}") String telemetryTopic,
             @Value("${telemetry.kafka.topics.device-status}") String deviceStatusTopic,
             @Value("${telemetry.kafka.topics.dlq}") String dlqTopic,
@@ -73,6 +80,7 @@ public class IngestService {
         this.liveStateRepository = liveStateRepository;
         this.coreServiceClient = coreServiceClient;
         this.kafkaTemplate = kafkaTemplate;
+        this.meterRegistry = meterRegistry;
         this.telemetryTopic = telemetryTopic;
         this.deviceStatusTopic = deviceStatusTopic;
         this.dlqTopic = dlqTopic;
@@ -82,29 +90,46 @@ public class IngestService {
     }
 
     public IngestAcceptedResponse ingestLocation(UUID deviceId, LocationIngestRequest request) {
+        return ingestLocation(deviceId, request, ADAPTER_HTTPS);
+    }
+
+    public IngestAcceptedResponse ingestLocation(UUID deviceId, LocationIngestRequest request, String adapter) {
         Device device = requireDevice(deviceId);
         BusTripResolution resolution = resolveBusAndTrip(deviceId, request.getTripId());
         Instant now = Instant.now();
         UUID eventId = UUID.randomUUID();
+
+        String dedupReason = duplicateOrOutOfOrderReason(device, request.getSequenceNo());
+        if (dedupReason != null) {
+            publish(dlqTopic, deviceId, new DlqRecord(
+                    eventId, "location", deviceId, resolution.busId(), resolution.tripId(),
+                    dedupReason, request.getDeviceTimestamp(), now, request.getPayload()));
+            touchDeviceLiveness(device, null);
+            recordIngestOutcome("location", adapter, "duplicate");
+            return IngestAcceptedResponse.builder().eventId(eventId).status("flagged").reason(dedupReason).build();
+        }
 
         String flagReason = plausibilityIssue(request);
         EventEnvelope envelope = new EventEnvelope(
                 ENVELOPE_VERSION, eventId, "location", SCHEMA_VERSION,
                 deviceId, resolution.busId(), resolution.tripId(),
                 request.getDeviceTimestamp(), now, request.getSequenceNo(),
-                new EventEnvelope.Source(ADAPTER, gatewayId),
+                new EventEnvelope.Source(adapter, gatewayId),
                 request.getPayload());
 
         if (flagReason != null) {
             publish(dlqTopic, deviceId, new DlqRecord(
                     eventId, "location", deviceId, resolution.busId(), resolution.tripId(),
                     flagReason, request.getDeviceTimestamp(), now, request.getPayload()));
-            touchDeviceLiveness(device);
+            touchDeviceLiveness(device, request.getSequenceNo());
+            recordIngestOutcome("location", adapter, "flagged");
             return IngestAcceptedResponse.builder().eventId(eventId).status("flagged").reason(flagReason).build();
         }
 
         publish(telemetryTopic, deviceId, envelope);
-        touchDeviceLiveness(device);
+        touchDeviceLiveness(device, request.getSequenceNo());
+        recordIngestOutcome("location", adapter, "accepted");
+        recordIngestLatency(request.getDeviceTimestamp(), now);
 
         if (resolution.busId() != null) {
             upsertLiveState(resolution.busId(), deviceId, resolution.tripId(), request, now);
@@ -114,6 +139,10 @@ public class IngestService {
     }
 
     public IngestAcceptedResponse ingestDeviceStatus(UUID deviceId, DeviceStatusIngestRequest request) {
+        return ingestDeviceStatus(deviceId, request, ADAPTER_HTTPS);
+    }
+
+    public IngestAcceptedResponse ingestDeviceStatus(UUID deviceId, DeviceStatusIngestRequest request, String adapter) {
         Device device = requireDevice(deviceId);
         BusTripResolution resolution = resolveBusAndTrip(deviceId, request.getTripId());
         Instant now = Instant.now();
@@ -123,11 +152,12 @@ public class IngestService {
                 ENVELOPE_VERSION, eventId, "device-status", SCHEMA_VERSION,
                 deviceId, resolution.busId(), resolution.tripId(),
                 request.getDeviceTimestamp(), now, null,
-                new EventEnvelope.Source(ADAPTER, gatewayId),
+                new EventEnvelope.Source(adapter, gatewayId),
                 request.getPayload());
 
         publish(deviceStatusTopic, deviceId, envelope);
-        touchDeviceLiveness(device);
+        touchDeviceLiveness(device, null);
+        recordIngestOutcome("device-status", adapter, "accepted");
 
         return IngestAcceptedResponse.builder().eventId(eventId).status("accepted").build();
     }
@@ -176,9 +206,23 @@ public class IngestService {
         return null;
     }
 
+    /**
+     * Late-data policy (Phase 4 hardening): a fix that arrived out of order (e.g. buffered while
+     * offline, or re-delivered by a flaky MQTT/cellular link) must not regress bus_live_state to an
+     * older position than one already recorded. Only compares deviceTimestamp against the row's
+     * current one — a bus with no live-state row yet always accepts its first fix.
+     */
     private void upsertLiveState(UUID busId, UUID deviceId, UUID tripId, LocationIngestRequest request, Instant now) {
         var payload = request.getPayload();
         BusLiveState state = liveStateRepository.findById(busId).orElseGet(() -> BusLiveState.builder().busId(busId).build());
+
+        if (state.getDeviceTimestamp() != null && request.getDeviceTimestamp() != null
+                && request.getDeviceTimestamp().isBefore(state.getDeviceTimestamp())) {
+            log.debug("Ignoring stale live-state update for bus {}: fix={} is older than current={}",
+                    busId, request.getDeviceTimestamp(), state.getDeviceTimestamp());
+            return;
+        }
+
         state.setDeviceId(deviceId);
         state.setTripId(tripId);
         state.setLat(payload.getLat());
@@ -190,10 +234,30 @@ public class IngestService {
         liveStateRepository.save(state);
     }
 
-    private void touchDeviceLiveness(Device device) {
+    /**
+     * Idempotency (Phase 4 hardening): rejects a location fix whose sequenceNo is not strictly
+     * greater than the last one accepted for this device — a re-delivery (MQTT QoS 1, a retried
+     * HTTP POST after a dropped response) or a fix that arrived out of order. A fix with no
+     * sequenceNo (the device doesn't send one) always passes — dedup is opt-in per device.
+     */
+    private String duplicateOrOutOfOrderReason(Device device, Long sequenceNo) {
+        if (sequenceNo == null || device.getLastSequenceNo() == null) {
+            return null;
+        }
+        if (sequenceNo <= device.getLastSequenceNo()) {
+            return "duplicate or out-of-order sequenceNo %d (last accepted: %d)"
+                    .formatted(sequenceNo, device.getLastSequenceNo());
+        }
+        return null;
+    }
+
+    private void touchDeviceLiveness(Device device, Long sequenceNo) {
         device.setLastSeenAt(Instant.now());
         if (device.getStatus() == DeviceStatus.PROVISIONED) {
             device.setStatus(DeviceStatus.ACTIVE);
+        }
+        if (sequenceNo != null && (device.getLastSequenceNo() == null || sequenceNo > device.getLastSequenceNo())) {
+            device.setLastSequenceNo(sequenceNo);
         }
         deviceRepository.save(device);
     }
@@ -204,6 +268,34 @@ public class IngestService {
         } catch (Exception e) {
             throw new IngestException("Failed to publish to " + topic, e);
         }
+    }
+
+    /** Ingest outcome counter (Phase 4 observability) — feeds the Grafana IoT dashboard's ingest
+     * and DLQ rate panels, broken down by event type, adapter (https/mqtt), and outcome. */
+    private void recordIngestOutcome(String eventType, String adapter, String outcome) {
+        Counter.builder("telemetry.ingest.events")
+                .description("Count of ingest attempts by event type, adapter, and outcome")
+                .tag("eventType", eventType)
+                .tag("adapter", adapter)
+                .tag("outcome", outcome)
+                .register(meterRegistry)
+                .increment();
+    }
+
+    /** End-to-end latency (deviceTimestamp -> ingestedAt) for accepted location fixes — feeds the
+     * Grafana dashboard's latency panel. Skips fixes with a clearly-skewed (future) device clock
+     * rather than recording a negative duration, which Micrometer's Timer rejects. */
+    private void recordIngestLatency(Instant deviceTimestamp, Instant ingestedAt) {
+        if (deviceTimestamp == null) return;
+        long millis = java.time.Duration.between(deviceTimestamp, ingestedAt).toMillis();
+        if (millis < 0) return;
+        Timer.builder("telemetry.ingest.latency")
+                .description("Time between a device's own fix timestamp and when it was ingested")
+                // Histogram buckets (not just count/sum) so Grafana can compute p50/p95 via
+                // histogram_quantile — same convention as http.server.requests in application.yml.
+                .publishPercentileHistogram()
+                .register(meterRegistry)
+                .record(java.time.Duration.ofMillis(millis));
     }
 
     private static String resolveGatewayId() {

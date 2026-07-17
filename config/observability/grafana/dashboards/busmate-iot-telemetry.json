@@ -1,0 +1,95 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["busmate", "iot", "telemetry"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "BusMate — IoT Telemetry Pipeline",
+  "uid": "busmate-iot-telemetry",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1, "title": "Ingest rate by outcome (events/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum by (outcome) (rate(telemetry_ingest_events_total[5m]))", "legendFormat": "{{outcome}}" }
+      ]
+    },
+    {
+      "id": 2, "title": "Ingest rate by adapter (events/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum by (adapter) (rate(telemetry_ingest_events_total[5m]))", "legendFormat": "{{adapter}}" }
+      ]
+    },
+    {
+      "id": 3, "title": "DLQ rate — flagged + duplicate (events/s)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "fillOpacity": 20 } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum by (eventType, outcome) (rate(telemetry_ingest_events_total{outcome=~\"flagged|duplicate|parse_error\"}[5m]))", "legendFormat": "{{eventType}} — {{outcome}}" }
+      ]
+    },
+    {
+      "id": 4, "title": "End-to-end ingest latency (device fix → ingested)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "histogram_quantile(0.50, sum(rate(telemetry_ingest_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "expr": "histogram_quantile(0.95, sum(rate(telemetry_ingest_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "refId": "C", "expr": "histogram_quantile(0.99, sum(rate(telemetry_ingest_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 5, "title": "Device fleet by status", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 15, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "telemetry_devices_by_status", "legendFormat": "{{status}}" }
+      ]
+    },
+    {
+      "id": 6, "title": "Devices currently flagged silent", "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 4, "x": 8, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 5 }
+      ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "background" },
+      "targets": [
+        { "refId": "A", "expr": "telemetry_devices_silent" }
+      ]
+    },
+    {
+      "id": 7, "title": "Rate-limited requests (429s, /ingest/**)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(http_server_requests_seconds_count{job=\"telemetry-service\", uri=~\"/ingest/.*\", status=\"429\"}[5m]))", "legendFormat": "429s" }
+      ]
+    },
+    {
+      "id": 8, "title": "telemetry-service request rate / errors (RED)", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "busmate-prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(http_server_requests_seconds_count{job=\"telemetry-service\"}[5m]))", "legendFormat": "requests/s" },
+        { "refId": "B", "expr": "sum(rate(http_server_requests_seconds_count{job=\"telemetry-service\", status=~\"5..\"}[5m]))", "legendFormat": "5xx/s" }
+      ]
+    }
+  ]
+}

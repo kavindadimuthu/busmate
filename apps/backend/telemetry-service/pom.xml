@@ -101,6 +101,16 @@
 			<version>3.3.3</version>
 		</dependency>
 
+		<!-- MQTT adapter (IoT Platform Layer plan, Phase 4): subscribes to devices/{deviceId}/telemetry/{eventType}
+		     on the EMQX broker and feeds the same IngestService pipeline the HTTPS path uses. Eclipse
+		     Paho is the standard, dependency-light Java MQTT client (used here synchronously, off the
+		     request thread — see MqttIngestAdapter). -->
+		<dependency>
+			<groupId>org.eclipse.paho</groupId>
+			<artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+			<version>1.2.5</version>
+		</dependency>
+
 		<!-- OpenAPI/Swagger UI, matching the other services. -->
 		<dependency>
 			<groupId>org.springdoc</groupId>

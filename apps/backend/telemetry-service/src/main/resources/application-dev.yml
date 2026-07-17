@@ -14,6 +14,20 @@ spring:
   flyway:
     locations: classpath:db/migration,classpath:db/reference,classpath:db/seed/dev
 
+# EMQX runs alongside the app stack in dev (docker-compose.yml), so the MQTT adapter (Phase 4) is
+# on by default here even though it's off in the base application.yml. broker-url still honors
+# TELEMETRY_MQTT_BROKER_URL so Docker Compose can point it at the emqx service name while a bare
+# `mvn spring-boot:run` on the host defaults to EMQX's host-mapped port.
+telemetry:
+  mqtt:
+    enabled: true
+    broker-url: ${TELEMETRY_MQTT_BROKER_URL:tcp://localhost:1883}
+    # Matches the MQTT_CONSUMER device seeded in db/seed/dev/R__900/R__901 — a real, working dev
+    # credential (not a placeholder), same convention as the other demo device tokens documented
+    # in docs/dev-iot-device-credentials.md.
+    username: MQTT-CONSUMER-INTERNAL
+    password: ${TELEMETRY_MQTT_PASSWORD:bmt_UUdpLfnE2mf18jyV8Shc4RklxGmsmcrwg8gUxssk7bU}
+
 logging:
   level:
     com.busmatelk.telemetry: DEBUG
