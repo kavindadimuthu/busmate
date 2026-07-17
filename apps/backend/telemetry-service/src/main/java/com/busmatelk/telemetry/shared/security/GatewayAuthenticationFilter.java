@@ -35,6 +35,14 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        // /ingest/** authenticates devices, not staff — DeviceTokenAuthenticationFilter owns it
+        // entirely. Skipping explicitly here (rather than relying on filter order) means exactly
+        // one of the two mechanisms ever applies to a given request, regardless of bean order.
+        if (request.getRequestURI().startsWith("/ingest/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String userId = request.getHeader("x-user-id");
         String userType = request.getHeader("x-user-type");
 

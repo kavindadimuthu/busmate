@@ -1,5 +1,6 @@
 package com.busmatelk.telemetry.shared.exception;
 
+import com.busmatelk.telemetry.ingest.IngestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -37,6 +38,11 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("Validation failed");
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", message);
+    }
+
+    @ExceptionHandler(IngestException.class)
+    public ResponseEntity<Map<String, Object>> ingestFailed(IngestException e) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, "INGEST_UNAVAILABLE", e.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String code, String message) {

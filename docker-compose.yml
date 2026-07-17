@@ -224,6 +224,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - CORE_SERVICE_URL=http://core-service:9010
       - OTEL_SERVICE_NAME=telemetry-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -237,6 +238,8 @@ services:
       postgres:
         condition: service_healthy
       redpanda:
+        condition: service_started
+      core-service:
         condition: service_started
 
 volumes:

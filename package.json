@@ -68,6 +68,7 @@
     "ui:storybook": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx storybook ui",
     "ui:storybook:build": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build-storybook ui",
     "seed:operators": "bash scripts/seed-operator-conductor-profiles.sh",
+    "simulate:device": "node tools/device-simulator/simulate.mjs",
     "apk:conductor": "pnpm --filter busmatelkconductorapp run build:android",
     "apk:conductor:production": "pnpm --filter busmatelkconductorapp run build:android:production",
     "apk:passenger": "pnpm --filter smart-bus-sri-lanka run build:android",

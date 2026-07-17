@@ -17,5 +17,8 @@ VALUES
     ('00000000-0000-0000-0000-000000010603', 'GPS-DEMO-2210', 'GPS_TRACKER', 'SP CAA-2210 dashboard tracker', 'ACTIVE'),
     ('00000000-0000-0000-0000-000000010604', 'GPS-DEMO-9981', 'GPS_TRACKER', 'SP CAB-9981 dashboard tracker', 'ACTIVE'),
     ('00000000-0000-0000-0000-000000010605', 'GPS-DEMO-1123', 'GPS_TRACKER', 'CP NA-1123 dashboard tracker', 'ACTIVE'),
-    ('00000000-0000-0000-0000-000000010606', 'GPS-DEMO-1187', 'GPS_TRACKER', 'CP NA-1187 dashboard tracker', 'ACTIVE')
+    ('00000000-0000-0000-0000-000000010606', 'GPS-DEMO-1187', 'GPS_TRACKER', 'CP NA-1187 dashboard tracker', 'ACTIVE'),
+    -- conductor-mobile's own GPS reporting (Phase 2) — no static bus assignment; it resolves the
+    -- bus from whichever tripId it reports alongside each fix (see IngestService.resolveBusAndTrip).
+    ('00000000-0000-0000-0000-000000010607', 'CONDUCTOR-APP-DEMO-001', 'CONDUCTOR_APP', 'conductor-mobile demo device', 'ACTIVE')
 ON CONFLICT (id) DO NOTHING;

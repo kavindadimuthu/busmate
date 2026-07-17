@@ -20,6 +20,7 @@ import {
   View
 } from 'react-native';
 import { ticketApi } from '../../services/api/ticket';
+import { startReporting, stopReporting } from '@/services/telemetry/locationReporting';
 
 
 // Component for ongoing trip view
@@ -84,7 +85,16 @@ function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; ref
 
     fetchTripSummary();
   }, [trip.id, refreshTrigger]); // Refresh only when trip changes or manual refresh triggered
-  
+
+  // Report GPS fixes to the IoT platform for the duration of this ongoing trip (IoT Platform
+  // Layer plan, Phase 2). Starts when this view mounts for a trip, stops on unmount/trip change —
+  // OngoingTripView is only ever rendered while trip.status === 'ongoing' (see the switch in
+  // JourneyScreen below), so its mount lifecycle already matches "trip is active".
+  useEffect(() => {
+    startReporting(trip.id);
+    return () => stopReporting();
+  }, [trip.id]);
+
   // Calculate dynamic trip statistics using backend data
   const dynamicStats = {
     totalPassengers: tripSummary.totalPassengers,

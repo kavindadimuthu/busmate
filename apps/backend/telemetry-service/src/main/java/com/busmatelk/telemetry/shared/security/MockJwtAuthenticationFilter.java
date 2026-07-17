@@ -29,6 +29,14 @@ public class MockJwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // /ingest/** authenticates devices via DeviceTokenAuthenticationFilter — this mock must
+        // not treat a device's bmt_ token as a staff Bearer token (dev is the default active
+        // profile, so this filter is exactly what a local curl against /ingest would otherwise hit).
+        if (request.getRequestURI().startsWith("/ingest/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             UserDetails userDetails = new UserPrincipal("dev-user", "ROLE_ADMIN,ROLE_USER");

@@ -86,6 +86,24 @@ telemetry:
       telemetry: iot.telemetry.v1
       device-status: iot.device-status.v1
       dlq: iot.telemetry.dlq.v1
+  # HTTPS ingestion (Phase 2). Rate limit is a single-instance, in-memory token bucket
+  # (DeviceRateLimiter) — fine at this scale; move to a shared store (Redis) if telemetry-service
+  # is ever scaled to more than one instance, since each instance would otherwise track its own
+  # bucket per device.
+  ingest:
+    rate-limit:
+      capacity: ${TELEMETRY_INGEST_RATE_CAPACITY:10}
+      refill-per-second: ${TELEMETRY_INGEST_RATE_REFILL:2}
+    plausibility:
+      max-speed-kmh: ${TELEMETRY_INGEST_MAX_SPEED_KMH:150}
+      max-accuracy-m: ${TELEMETRY_INGEST_MAX_ACCURACY_M:500}
+
+# Base URL for the internal, unauthenticated (GET /api/** is permitAll there) calls this service
+# makes to resolve a device's active trip during ingest enrichment. Same env var name the other
+# services already use for this — see docker-compose.yml.
+core:
+  service:
+    url: ${CORE_SERVICE_URL:http://localhost:9010}
 
 server:
   address: 0.0.0.0
