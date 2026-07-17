@@ -1,6 +1,6 @@
 -- Tier 3 demo data, dev profile only (see application-dev.yml's flyway.locations). One GPS
 -- tracker per demo bus from docs/dev-seed-contract.md's "Demo IoT devices" section, so the
--- management-portal device list and Phase 2's ingest simulator have something real to show
+-- new-react-portal device list and Phase 2's ingest simulator have something real to show
 -- against the existing demo fleet (core-service's V904__demo_buses.sql).
 --
 -- Named R__ (repeatable), not V900__ (versioned): this service has both a db/reference tier and
