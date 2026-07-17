@@ -44,7 +44,6 @@ flowchart TB
 
     subgraph frontends["Frontends"]
         NRP["new-react-portal<br/>(MOT/Admin/Operator — primary portal)"]
-        MP["management-portal<br/>(deprecated, still runnable)"]
         PW["passenger-web"]
         PM["passenger-mobile"]
     end
@@ -254,8 +253,7 @@ curl -s http://localhost:8080/api/devices -H "Authorization: Bearer $TOKEN" | py
 ## 8. Start the frontends
 
 ```bash
-pnpm run dev:new-react-portal    # Vite :5173 — MOT/Admin/Operator/Timekeeper portal (all new work lands here)
-pnpm run dev:management-portal   # Next.js — same audience, deprecated, kept running for reference only
+pnpm run dev:new-react-portal    # Vite :5173 — MOT/Admin/Operator/Timekeeper portal
 pnpm run dev:passenger-web       # Vite :4000 — passenger-facing web app
 pnpm run dev:passenger-mobile    # Expo — scan the printed QR with Expo Go
 pnpm run dev:conductor-mobile    # Expo — scan the printed QR with Expo Go (use your phone, see step 4)

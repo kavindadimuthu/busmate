@@ -83,7 +83,7 @@ Detail in [08-ai-agent-operating-model.md](./08-ai-agent-operating-model.md).
 
 ## Frontend applications in this system
 
-The 5 frontends — `management-portal` (Next.js), `new-react-portal` (Vite), `passenger-web`
+The 4 frontends — `new-react-portal` (Vite), `passenger-web`
 (Next.js), `conductor-mobile` + `passenger-mobile` (Expo) — participate as **consumers and
 verification targets**, not as owners of authoritative sources. The heavy source/generator machinery
 (OpenAPI freeze, AsyncAPI, Flyway, Structurizr, workflow YAML) is **backend-anchored** because that is
@@ -94,8 +94,8 @@ where the facts originate in this repo. Frontends fit in five concrete ways:
 | **Contract consumers** | Import generated clients from [libs/api-clients/*](../../libs/api-clients); the duplicated copies in [passenger-mobile/lib/api-client](../../apps/frontend/passenger-mobile/lib/api-client) and [conductor-mobile/src/lib/api-client](../../apps/frontend/conductor-mobile/src/lib/api-client) are consolidated onto the libs in **Phase 10** | [03](./03-source-of-truth-matrix.md), [10](./10-implementation-roadmap.md) |
 | **Impact-analysis targets** | The breaking-API/event gates + `api-usage-analyzer` exist mainly to answer "which frontend breaks?"; Nx `affected` scopes their builds/tests/lint | [07](./07-ci-cd-and-quality-gates.md) |
 | **Architecture participants** | All 5 appear as containers in the Structurizr container view (acceptance criterion AC15) | [10 Phase 6](./10-implementation-roadmap.md) |
-| **Workflow actors** | Workflow YAML `ui:` anchors point at real frontend paths (the Trip pilot references `management-portal` + `conductor-mobile`); anchors must resolve or CI fails | [05](./05-workflow-and-perspective-model.md) |
-| **Convention-governed** | Existing [.github/instructions/*.instructions.md](../../.github/instructions) naming rules for `management-portal` and `libs/ui` are kept, not replaced | [08](./08-ai-agent-operating-model.md) |
+| **Workflow actors** | Workflow YAML `ui:` anchors point at real frontend paths (the Trip pilot references `new-react-portal` + `conductor-mobile`); anchors must resolve or CI fails | [05](./05-workflow-and-perspective-model.md) |
+| **Convention-governed** | Existing [.github/instructions/*.instructions.md](../../.github/instructions) naming rules for `libs/ui` are kept, not replaced | [08](./08-ai-agent-operating-model.md) |
 
 **Explicitly out of scope for frontends** (see [12](./12-open-questions-and-decisions.md)): no frontend
 is an authoritative contract/schema source, and **no frontend-specific generation** (component/prop

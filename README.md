@@ -10,7 +10,7 @@ A monorepo managed with [Nx](https://nx.dev) containing the BusMate platform app
 
 | Project | Path | Stack | Description |
 |---|---|---|---|
-| `management-portal` | `apps/frontend/management-portal` | Next.js | Operations & fleet management dashboard |
+| `new-react-portal` | `apps/frontend/new-react-portal` | Vite + React | Operations & fleet management dashboard (MOT / operator / admin / timekeeper) |
 | `passenger-web` | `apps/frontend/passenger-web` | Vite + React | Passenger-facing web app |
 | `api-core` | `apps/backend/api-core` | Spring Boot (Java 17) | Route & schedule microservice |
 
@@ -28,7 +28,7 @@ npm install --no-workspaces
 ### Install app dependencies
 ```bash
 # Frontend apps
-cd apps/frontend/management-portal && npm install
+cd apps/frontend/new-react-portal && npm install
 cd apps/frontend/passenger-web && npm install  # or bun install
 ```
 
@@ -39,9 +39,9 @@ cd apps/frontend/passenger-web && npm install  # or bun install
 npx nx <target> <project>
 
 # Examples
-npx nx dev management-portal
+npx nx dev new-react-portal
 npx nx dev passenger-web
-npx nx build management-portal
+npx nx build new-react-portal
 npx nx build passenger-web
 npx nx serve api-core          # Spring Boot default profile
 npx nx serve:local api-core    # Spring Boot with local DB
@@ -69,9 +69,9 @@ npx nx graph
 
 ### API client generation
 ```bash
-# management-portal
-npx nx generate:api-route:local management-portal
-npx nx generate:api-ticketing:local management-portal
+# new-react-portal
+npx nx generate:api-route:local new-react-portal
+npx nx generate:api-ticketing:local new-react-portal
 
 # passenger-web
 npx nx generate:api-route:local passenger-web
@@ -89,10 +89,9 @@ Projects are tagged for fine-grained control:
 
 | Tag | Projects |
 |---|---|
-| `scope:frontend` | `management-portal`, `passenger-web` |
+| `scope:frontend` | `new-react-portal`, `passenger-web` |
 | `scope:backend` | `api-core` |
-| `framework:next` | `management-portal` |
-| `framework:vite` | `passenger-web` |
+| `framework:vite` | `new-react-portal`, `passenger-web` |
 | `framework:spring-boot` | `api-core` |
 
 Run only frontend apps:
@@ -104,7 +103,7 @@ npx nx run-many -t build --projects=tag:scope:frontend
 
 Nx caches the results of `build`, `test`, and `lint` targets automatically. Cached outputs are stored in `.nx/cache`. To skip cache:
 ```bash
-npx nx build management-portal --skip-nx-cache
+npx nx build new-react-portal --skip-nx-cache
 ```
 
 ## Local Dev Tooling

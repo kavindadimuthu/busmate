@@ -2,7 +2,7 @@ import { type Page, type Locator, expect } from '@playwright/test';
 
 /**
  * Component object for the DeleteConfirmationModal.
- * Matches: apps/frontend/management-portal/src/components/mot/confirmation-modals.tsx
+ * Matches: apps/frontend/new-react-portal/src/components/mot/stops/DeleteBusStopModal.tsx
  *
  * The modal overlay uses `fixed inset-0` positioning with a white card inside.
  */

@@ -2,7 +2,7 @@
 
 Task-by-task sequence diagrams for route groups, routes and route-stop sequences.
 
-Common participants: **MOT** (management-portal `app/mot/routes/`), **GW** (api-gateway,
+Common participants: **MOT** (new-react-portal `src/pages/mot/routes/`), **GW** (api-gateway,
 `/api/routes` JWT-protected), **CS** (core-service `RouteController → RouteService /
 RouteGroupService / RouteImportExportService`), **DB** (Postgres `route_group`, `route`,
 `route_stop`). The auth hop (gateway proxy → core-service JWT filter → `userId`) is identical to

@@ -14,7 +14,7 @@ Frontend applications should normally call `api-gateway` at `http://localhost:80
 ```mermaid
 flowchart LR
   subgraph Frontend
-    MP[management-portal]
+    MP[new-react-portal]
     PW[passenger-web]
     PM[passenger-mobile]
     CM[conductor-mobile]
@@ -113,7 +113,7 @@ it.
 Run frontend apps separately from backend services:
 
 ```bash
-pnpm run dev:management-portal
+pnpm run dev:new-react-portal
 pnpm run dev:passenger-web
 pnpm run dev:passenger-mobile
 pnpm run dev:conductor-mobile

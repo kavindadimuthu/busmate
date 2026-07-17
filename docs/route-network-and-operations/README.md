@@ -33,7 +33,7 @@ Traffic reaches core-service through the **api-gateway** (`apps/backend/api-gate
 
 Frontends:
 
-- **management-portal** (Next.js) — MOT (Ministry of Transport) pages for stops/routes/schedules/trips,
+- **new-react-portal** (Vite + React) — MOT (Ministry of Transport) pages for stops/routes/schedules/trips,
   operator trip pages, timekeeper trip pages
 - **passenger-mobile** (Expo) — search/find-my-bus, trip details, booking (via ticketing-service)
 - **conductor-mobile** (Expo) — assigned journeys, start/complete trips, ticket validation
@@ -139,7 +139,7 @@ performs each step:
 
 ```mermaid
 flowchart TD
-    subgraph MOT["MOT (Ministry) — management-portal"]
+    subgraph MOT["MOT (Ministry) — new-react-portal"]
         A[Create / import Stops] --> B[Create Route Group + directional Routes]
         B --> C[Order Route Stops with distances]
         C --> D[Create Schedule in workspace<br/>form / textual / AI mode]
@@ -149,7 +149,7 @@ flowchart TD
         G --> H[Assign PSP permits to trips<br/>single or bulk]
     end
 
-    subgraph OP["Operator — management-portal"]
+    subgraph OP["Operator — new-react-portal"]
         H --> I[View own trips via PSP link]
         I --> J[Assign Bus to trip]
         J --> K[Assign Conductor to trip]

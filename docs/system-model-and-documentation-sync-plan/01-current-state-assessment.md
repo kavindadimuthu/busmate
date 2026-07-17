@@ -17,7 +17,6 @@
 | user-service | [apps/backend/user-service](../../apps/backend/user-service) | Spring Boot / Java / Maven | (same family) |
 | ticketing-service | [apps/backend/ticketing-service](../../apps/backend/ticketing-service) | Spring Boot / Java / Maven | (same family) |
 | api-gateway | [apps/backend/api-gateway](../../apps/backend/api-gateway) | Node/Express/TS | pnpm workspace member |
-| management-portal | [apps/frontend/management-portal](../../apps/frontend/management-portal) | Next.js | — |
 | new-react-portal | [apps/frontend/new-react-portal](../../apps/frontend/new-react-portal) | Vite/React | `@busmate/new-react-portal` |
 | passenger-web | [apps/frontend/passenger-web](../../apps/frontend/passenger-web) | Next.js | — |
 | conductor-mobile | [apps/frontend/conductor-mobile](../../apps/frontend/conductor-mobile) | Expo/React Native | — |

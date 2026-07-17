@@ -6,7 +6,7 @@ The route network layer: which stops a bus line serves, in what order, in which 
   (`RouteController`, `RouteService(Impl)`, `RouteGroupService(Impl)`, `RouteImportExportService(Impl)`;
   entities `RouteGroup`, `Route`, `RouteStop`)
 - **API prefix**: `/api/routes` (route groups live under `/api/routes/groups`)
-- **Frontend**: management-portal `app/mot/routes/` — list page, group detail (`[routeGroupId]`),
+- **Frontend**: new-react-portal `src/pages/mot/routes/` — list page, group detail (`[routeGroupId]`),
   import page, and the **Route Workspace** (`workspace/`) with three editing modes.
 
 ## The model: group → directional routes → ordered stops
@@ -46,9 +46,9 @@ flowchart LR
 Operators get a read-only slice via `GET /api/v1/bus-operator/{operatorId}/routes` — the routes
 reachable through their permits.
 
-## The Route Workspace (management-portal)
+## The Route Workspace (new-react-portal)
 
-The standout UI feature. `app/mot/routes/workspace/page.tsx` mounts a `RouteWorkspaceProvider` and
+The standout UI feature. `src/pages/mot/routes/workspace/page.tsx` mounts a `RouteWorkspaceProvider` and
 offers **three editing modes** over the same draft state, with draft recovery (unsaved work is
 restored via `DraftRecoveryBanner`) and a final `RouteSubmissionModal` that persists through the API:
 
@@ -59,7 +59,7 @@ flowchart TD
         TM["Textual mode<br/>paste/edit route as text"]
         AI["AI Studio<br/>prompt → Gemini 2.5 Flash → route draft"]
     end
-    AI -- "POST /api/ai/generate-route<br/>(Next.js server route, GEMINI key server-side)" --> G[(Google Gemini API)]
+    AI -- "POST /api/ai/generate-route<br/>(api-gateway proxy, GEMINI key server-side)" --> G[(Google Gemini API)]
     G --> AI
     FM <--> TM
     AI --> FM
@@ -68,8 +68,8 @@ flowchart TD
     WS -. autosaved draft .-> LS[(localStorage draft recovery)]
 ```
 
-The AI Studio calls a management-portal **server-side** API route
-(`app/api/ai/generate-route/route.ts`) that proxies to Google Gemini (`gemini-2.5-flash` by
+The AI Studio calls the api-gateway's **server-side** `/api/ai/generate-route` proxy
+that forwards to Google Gemini (`gemini-2.5-flash` by
 default), keeping the API key off the client. It produces a structured route draft (stops, order,
 distances) that the user then reviews in form mode — AI output is a *draft*, never directly saved.
 

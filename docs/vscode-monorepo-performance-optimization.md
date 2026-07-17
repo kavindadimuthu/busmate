@@ -3,9 +3,9 @@
 ## Why this was needed
 
 busmate is a single repo containing 3 Java/Maven backend services
-(`core-service`, `ticketing-service`, `user-service`) and 5 frontend
-apps (`passenger-web`, `management-portal`, `conductor-mobile`,
-`passenger-mobile`, `new-react-portal`), managed together via
+(`core-service`, `ticketing-service`, `user-service`) and 4 frontend
+apps (`passenger-web`, `conductor-mobile`, `passenger-mobile`,
+`new-react-portal`), managed together via
 Nx + pnpm workspaces.
 
 When the whole repo is opened in VSCode (which the team needs, since
@@ -123,7 +123,7 @@ flowchart TD
     BE --> TS["ticketing-service (pom.xml)"]
     BE --> US["user-service (pom.xml)"]
     FE --> PW["passenger-web"]
-    FE --> MP["management-portal"]
+    FE --> NRP["new-react-portal"]
     FE --> CM["conductor-mobile"]
     FE --> PM["passenger-mobile"]
     FE --> NP["new-react-portal"]

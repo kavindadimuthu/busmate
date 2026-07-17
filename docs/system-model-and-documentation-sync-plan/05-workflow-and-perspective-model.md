@@ -21,7 +21,7 @@ It touches the most surfaces, so it exercises the schema fully:
 - **DB** `Trip` referencing `Schedule` (required), `PassengerServicePermit`, `Bus`, `driverId`,
   `conductorId`.
 - **Downstream** ticketing-service keys bookings/seat-maps/validation off `tripId`.
-- **Frontends** management-portal (`app/mot/trips`, `app/operator/trips`), conductor-mobile journeys,
+- **Frontends** new-react-portal (`src/pages/mot/trips`, `src/pages/operator/trips`), conductor-mobile journeys,
   passenger-mobile booking.
 - **States** (from `Trip` status enum) and **failure paths** (generation ignoring calendar/exceptions —
   a known bug recorded in memory) — good real material.
@@ -50,7 +50,7 @@ anchors:
     startTrip:  { service: core-service, operationId: TripController.start,  method: POST, path: /api/trips/{id}/start }
   events: []                       # trip lifecycle currently emits none (documented gap)
   ui:
-    motTrips:   apps/frontend/management-portal/src/app/mot/trips
+    motTrips:   apps/frontend/new-react-portal/src/pages/mot/trips
 
 # --- states: authoritative for the Trip status machine ---
 states:

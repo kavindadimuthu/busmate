@@ -7,7 +7,7 @@ anchored to stops, so this is the first thing MOT staff populate.
   (`StopController`, `StopService(Impl)`, `StopImportExportService(Impl)`, `Stop` entity, `stop` table)
 - **API prefix**: `/api/stops` (JWT-protected via api-gateway); public search at
   `/api/passenger/query/stops/search`
-- **Frontend**: management-portal `app/mot/stops/` — list page (table **and map** views), create page,
+- **Frontend**: new-react-portal `src/pages/mot/stops/` — list page (table **and map** views), create page,
   detail page (`[busStopId]`), dedicated import and export pages. Covered by Playwright e2e specs
   (`tests/e2e/specs/mot/bus-stops/`).
 

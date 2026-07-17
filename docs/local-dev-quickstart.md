@@ -103,9 +103,8 @@ bcrypt verification — is working.
 Run whichever ones you need, each in its own terminal:
 
 ```bash
-pnpm run dev:management-portal   # Next.js — admin / operator / timekeeper / MOT dashboard
+pnpm run dev:new-react-portal    # Vite — admin / operator / timekeeper / MOT dashboard
 pnpm run dev:passenger-web       # Vite — passenger-facing web app (:4000)
-pnpm run dev:new-react-portal    # Vite — newer portal, in progress
 pnpm run dev:passenger-mobile    # Expo — scan the printed QR with Expo Go
 pnpm run dev:conductor-mobile    # Expo — conductor app, scan the printed QR
 ```
@@ -176,7 +175,7 @@ does **not** duplicate rows (the seed migrations are idempotent).
 | Stop full backend (Docker) | `pnpm run dev:backend:down` |
 | Start one backend service (host) | `pnpm run dev:user-service` / `dev:core-service` / `dev:ticketing-service` / `dev:api-gateway` |
 | Stop one backend service (host) | `Ctrl+C` in its terminal |
-| Start a frontend app | `pnpm run dev:management-portal` / `dev:passenger-web` / `dev:new-react-portal` / `dev:passenger-mobile` / `dev:conductor-mobile` |
+| Start a frontend app | `pnpm run dev:new-react-portal` / `dev:passenger-web` / `dev:passenger-mobile` / `dev:conductor-mobile` |
 | Stop a frontend app | `Ctrl+C` in its terminal |
 | Start Postgres only | `pnpm run db:dev:up` |
 | Stop Postgres only (keeps data) | `pnpm run db:dev:down` |
@@ -237,7 +236,7 @@ TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
 (Inspect one login response to confirm the exact token field name before scripting further calls.)
 
 ### 1. Admin — user & RBAC management
-Login as `admin@busmate.test` in management-portal, or:
+Login as `admin@busmate.test` in new-react-portal, or:
 ```bash
 curl -s http://localhost:8080/api/users       -H "Authorization: Bearer $TOKEN"   # expect 12
 curl -s http://localhost:8080/api/user-types  -H "Authorization: Bearer $TOKEN"   # expect 6
@@ -245,7 +244,7 @@ curl -s http://localhost:8080/api/permissions -H "Authorization: Bearer $TOKEN" 
 ```
 
 ### 2. Operator — fleet, permit & route
-Login as `operator.suwaseriya@busmate.test` in management-portal; expect their 2 buses, permit
+Login as `operator.suwaseriya@busmate.test` in new-react-portal; expect their 2 buses, permit
 `PVT-SUW-2026-001`, and the Colombo Fort ↔ Kandy route.
 ```bash
 curl -s http://localhost:8080/api/operators -H "Authorization: Bearer $TOKEN"

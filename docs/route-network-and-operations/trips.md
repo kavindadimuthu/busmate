@@ -8,7 +8,7 @@ a crew, a permit, tickets and passengers actually attach to.
   operator-scoped trip endpoints in `fleet/controller/BusOperatorController`
 - **API prefixes**: `/api/trips` (MOT), `/api/v1/bus-operator/{operatorId}/trips/...` (operator),
   `/api/v1/conductor/{conductorId}/trips/...` (conductor)
-- **Frontends**: management-portal `app/mot/trips/` (list, detail, assignment page),
+- **Frontends**: new-react-portal `src/pages/mot/trips/` (list, detail, assignment page),
   `app/operator/trips/` (list + detail with assignment panel), `app/timekeeper/trips/` (⚠️ mock);
   conductor-mobile journey screens; passenger-mobile trip details/booking.
 - **Downstream**: ticketing-service keys bookings, seat maps and ticket validation off `tripId`.

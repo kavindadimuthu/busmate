@@ -29,8 +29,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     // Force all packages (including pre-bundled deps like @tanstack/react-query)
     // to resolve React from this app's own node_modules (React 18).
-    // Without this, pnpm hoisting causes the root React 19 (from management-portal)
-    // to be used instead, producing "Invalid hook call" / multiple-React crashes.
+    // Without this, pnpm hoisting causes the root React 19 (from other workspace
+    // apps like new-react-portal) to be used instead, producing "Invalid hook
+    // call" / multiple-React crashes.
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
     alias: {
       // Explicit aliases ensure Vite's dep pre-bundler and runtime both use

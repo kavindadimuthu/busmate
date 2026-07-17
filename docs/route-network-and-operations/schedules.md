@@ -7,7 +7,7 @@ days, and an effective date window.
   (`ScheduleController`, `ScheduleService(Impl)`; entities `Schedule`, `ScheduleStop`,
   `ScheduleCalendar`, `ScheduleException`)
 - **API prefix**: `/api/schedules`
-- **Frontend**: management-portal `app/mot/schedules/` — list page, detail (`[scheduleId]`), and a
+- **Frontend**: new-react-portal `src/pages/mot/schedules/` — list page, detail (`[scheduleId]`), and a
   **Schedule Workspace** (form / textual / AI Studio modes, mirroring the route workspace).
 
 ## The model

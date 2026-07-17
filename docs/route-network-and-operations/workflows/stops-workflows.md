@@ -2,7 +2,7 @@
 
 Task-by-task sequence diagrams for the stops domain. Common participants:
 
-- **MOT** — ministry staff in the management-portal (`app/mot/stops/`)
+- **MOT** — ministry staff in the new-react-portal (`src/pages/mot/stops/`)
 - **GW** — api-gateway (`routes.config.ts`: `/api/stops` requires JWT; `/api/passenger` is public)
 - **CS** — core-service (`JwtAuthenticationFilter` re-validates the JWT, controller reads
   `authentication.getName()` as `userId`, then `StopController → StopService(Impl)`)

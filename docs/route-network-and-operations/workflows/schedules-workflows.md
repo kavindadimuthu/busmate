@@ -2,7 +2,7 @@
 
 Task-by-task sequence diagrams for schedules, calendars and exceptions.
 
-Common participants: **MOT** (management-portal `app/mot/schedules/`), **GW** (api-gateway,
+Common participants: **MOT** (new-react-portal `src/pages/mot/schedules/`), **GW** (api-gateway,
 `/api/schedules` JWT-protected), **CS** (core-service `ScheduleController →
 ScheduleServiceImpl`), **DB** (Postgres `schedule`, `schedule_stop`, `schedule_calendar`,
 `schedule_exception`). Auth hop abbreviated (see [stops-workflows.md](stops-workflows.md)).

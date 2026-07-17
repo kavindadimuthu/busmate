@@ -21,8 +21,7 @@ document is the runbook rather than a script that "does" the pilot.
 
 ## Step 1 — Register the device
 
-Through the MOT portal (`new-react-portal`, `/mot/devices` — **not** `management-portal`, which is
-deprecated) or directly against telemetry-service:
+Through the MOT portal (`new-react-portal`, `/mot/devices`) or directly against telemetry-service:
 
 ```bash
 curl -X POST http://localhost:9040/api/devices \

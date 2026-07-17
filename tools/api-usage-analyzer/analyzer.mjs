@@ -66,13 +66,13 @@ EXAMPLES
 
   # Analyze against a specific app
   node tools/api-usage-analyzer/analyzer.mjs \\
-    --app apps/frontend/management-portal
+    --app apps/frontend/new-react-portal
 
   # Multiple clients + apps, custom output
   node tools/api-usage-analyzer/analyzer.mjs \\
     --client libs/api-clients/core-service \\
     --client libs/api-clients/ticketing-service \\
-    --app apps/frontend/management-portal \\
+    --app apps/frontend/new-react-portal \\
     --app apps/frontend/passenger-web \\
     --output reports/api-usage \\
     --format all

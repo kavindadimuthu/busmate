@@ -25,7 +25,7 @@ BusMate is an **Nx + pnpm** monorepo (`pnpm@10.26.1`, `nx ^21`, [nx.json](../../
   (14 controllers, 14 entities), [user-service](../../apps/backend/user-service) (8 controllers),
   [ticketing-service](../../apps/backend/ticketing-service) (3 controllers).
 - **1 Node/Express TypeScript** [api-gateway](../../apps/backend/api-gateway) with a BFF module.
-- **5 frontends**: `management-portal` (Next.js), `new-react-portal` (Vite), `passenger-web`
+- **4 frontends**: `new-react-portal` (Vite), `passenger-web`
   (Next.js), `conductor-mobile` + `passenger-mobile` (Expo).
 - **Shared libs**: [libs/ui](../../libs/ui) (shadcn), [libs/api-clients/*](../../libs/api-clients)
   (4 generated OpenAPI clients).

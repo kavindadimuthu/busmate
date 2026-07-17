@@ -181,7 +181,6 @@ Sentry until you complete the one-time setup below.
 |---|---|---|
 | new-react-portal | `src/lib/sentry.ts` (called from `main.tsx`) | `VITE_SENTRY_DSN` |
 | passenger-web | `src/lib/sentry.ts` (called from `main.tsx`) | `VITE_SENTRY_DSN` |
-| management-portal | `instrumentation-client.ts` (client), `instrumentation.ts` (server/edge) | `NEXT_PUBLIC_SENTRY_DSN` (client), `SENTRY_DSN` (server) |
 | conductor-mobile | `src/lib/sentry.ts` (called from `src/app/_layout.tsx`) | `EXPO_PUBLIC_SENTRY_DSN` |
 | passenger-mobile | `lib/sentry.ts` (called from `app/_layout.tsx`) | `EXPO_PUBLIC_SENTRY_DSN` |
 
@@ -189,7 +188,7 @@ Sentry until you complete the one-time setup below.
 - Unhandled errors/rejections are captured automatically (Sentry's global handlers, set up
   by `Sentry.init()`).
 - React render errors: hooked into the existing `ErrorBoundary` component's
-  `componentDidCatch` (new-react-portal, management-portal) or Sentry's own root wrapper
+  `componentDidCatch` (new-react-portal) or Sentry's own root wrapper
   (`Sentry.wrap(RootLayout)` — conductor-mobile, passenger-mobile).
 - **Correlation with backend logs**: every app patches its global `fetch` to read the
   `X-Request-Id` response header (the same one the API gateway generates/echoes for Phase 1)
@@ -198,7 +197,7 @@ Sentry until you complete the one-time setup below.
   ```logql
   {job="docker"} | json | requestId="<the request_id tag value>"
   ```
-- Source maps: `@sentry/vite-plugin` (Vite apps), `withSentryConfig` (management-portal), and
+- Source maps: `@sentry/vite-plugin` (Vite apps) and
   `getSentryExpoConfig` in each Expo app's `metro.config.js` are all wired to upload source
   maps on build, but **disabled** (`disable`/`disableSentryWebpackConfig: true`) until you set
   `SENTRY_AUTH_TOKEN` — builds succeed normally either way, just without de-minified stack
