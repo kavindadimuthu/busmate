@@ -2,6 +2,10 @@
 
 A monorepo managed with [Nx](https://nx.dev) containing the BusMate platform applications.
 
+> **New to the project?** [`docs/local-dev-quickstart.md`](docs/local-dev-quickstart.md) walks
+> through running every backend service, the gateway, and the frontend apps locally against a
+> seeded database, plus a set of test scenarios covering the platform's major functionality.
+
 ## Applications
 
 | Project | Path | Stack | Description |
