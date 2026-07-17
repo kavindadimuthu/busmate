@@ -11,6 +11,8 @@ import { createProxy } from './proxy/serviceProxy';
 import { routes } from './config/routes.config';
 import { bffAuthRouter } from './bff/auth.routes';
 import { aiRouter } from './routes/ai.routes';
+import { liveRouter } from './live/live.routes';
+import { requireStaffRole } from './middleware/requireStaffRole.middleware';
 
 export function createApp() {
   const app = express();
@@ -55,6 +57,11 @@ export function createApp() {
   // Requires a valid portal session; same scoped-json-parser reasoning as
   // the BFF above.
   app.use('/api/ai', authMiddleware, express.json(), aiRouter);
+
+  // Live-tracking SSE stream (IoT Platform Layer plan, Phase 3) — staff-only (MOT/admin), fed by
+  // the Kafka consumer started in index.ts. Mounted directly (not via routes.config's proxy loop)
+  // since this is a gateway-owned endpoint, not a proxy to a backend service.
+  app.use('/live', authMiddleware, requireStaffRole(['admin', 'mot']), liveRouter);
 
   // Route registration. Proxies are mounted at the app root (not at
   // route.pathPrefix) and rely on pathFilter internally — see serviceProxy.ts

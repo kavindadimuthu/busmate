@@ -58,6 +58,7 @@ services:
     environment:
       - SERVER_PORT=9010
       - SPRING_PROFILES_ACTIVE=prod
+      - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
     expose:
       - "9010"
     restart: unless-stopped

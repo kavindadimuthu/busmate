@@ -166,6 +166,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_core
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
+      - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
       - OTEL_SERVICE_NAME=core-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf

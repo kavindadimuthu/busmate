@@ -27,6 +27,9 @@ public class DeviceResponse {
     private DeviceStatus status;
     private Instant lastSeenAt;
 
+    @Schema(description = "Set when FleetHealthMonitorJob (Phase 3) has flagged this device silent; null if healthy")
+    private Instant silenceFlaggedAt;
+
     @Schema(description = "Bus this device is currently assigned to (core-service bus id), or null")
     private UUID currentBusId;
 
@@ -44,6 +47,7 @@ public class DeviceResponse {
                 .label(device.getLabel())
                 .status(device.getStatus())
                 .lastSeenAt(device.getLastSeenAt())
+                .silenceFlaggedAt(device.getSilenceFlaggedAt())
                 .currentBusId(currentAssignment != null ? currentAssignment.getBusId() : null)
                 .assignedAt(currentAssignment != null ? currentAssignment.getAssignedAt() : null)
                 .createdAt(device.getCreatedAt())

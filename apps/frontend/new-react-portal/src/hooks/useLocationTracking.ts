@@ -19,6 +19,7 @@ import {
   DEFAULT_MAP_ZOOM,
   AUTO_REFRESH_INTERVAL,
 } from '@/data/mot/tracking-mock/locationTracking';
+import { subscribeLiveTracking, type LiveBusPosition, type LiveDeviceStatus } from '@/services/telemetry/liveStream';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -207,6 +208,51 @@ export function useLocationTracking(
   const lastDataTimestampRef = useRef<number>(0);
   const animFrameRef = useRef<number | null>(null);
 
+  // Live telemetry overlay (IoT Platform Layer plan, Phase 3): api-gateway's SSE stream reports
+  // real GPS fixes for whichever demo buses actually have a device reporting (see
+  // tools/device-simulator) — those buses' simulated position is replaced by the real one; buses
+  // with no live data yet keep showing the simulation, so the page always renders something.
+  const livePositionsRef = useRef<Map<string, LiveBusPosition>>(new Map());
+  const liveDeviceStatusRef = useRef<Map<string, LiveDeviceStatus>>(new Map());
+
+  useEffect(() => {
+    const unsubscribe = subscribeLiveTracking({
+      onSnapshot: (snapshot) => {
+        livePositionsRef.current = new Map(snapshot.buses.map((b) => [b.busId, b]));
+        liveDeviceStatusRef.current = new Map(snapshot.devices.map((d) => [d.deviceId, d]));
+      },
+      onBusPosition: (position) => {
+        livePositionsRef.current.set(position.busId, position);
+      },
+      onDeviceStatus: (status) => {
+        liveDeviceStatusRef.current.set(status.deviceId, status);
+      },
+    });
+    return unsubscribe;
+  }, []);
+
+  const overlayLiveData = useCallback((busList: TrackedBus[]): TrackedBus[] => {
+    if (livePositionsRef.current.size === 0) return busList;
+    return busList.map((bus) => {
+      const live = livePositionsRef.current.get(bus.bus.id);
+      if (!live) return bus;
+      const speed = live.speedKmh ?? bus.location.speed;
+      return {
+        ...bus,
+        location: {
+          ...bus.location,
+          location: { type: 'Point', coordinates: [live.lng, live.lat] },
+          speed,
+          heading: live.headingDeg ?? bus.location.heading,
+          timestamp: live.ingestedAt,
+        },
+        deviceStatus: 'online',
+        movementStatus: speed > 5 ? 'moving' : speed > 0 ? 'idle' : 'stopped',
+        lastUpdate: live.ingestedAt,
+      };
+    });
+  }, []);
+
   // Capture position snapshots from bus data
   const captureSnapshots = useCallback(
     (busList: TrackedBus[]): Map<string, BusPositionSnapshot> => {
@@ -239,7 +285,7 @@ export function useLocationTracking(
         // Minimal delay for smooth UI updates (simulation is instant)
         await new Promise((resolve) => setTimeout(resolve, 50));
 
-        const loadedBuses = getTrackedBuses(forceRefresh);
+        const loadedBuses = overlayLiveData(getTrackedBuses(forceRefresh));
         const loadedStats = getTrackingStats();
         const loadedMetrics = getTrackingStatsMetrics();
         const loadedFilterOptions = getTrackingFilterOptions();
@@ -271,7 +317,7 @@ export function useLocationTracking(
         setIsLoading(false);
       }
     },
-    [lastUpdate, selectedBus, captureSnapshots]
+    [lastUpdate, selectedBus, captureSnapshots, overlayLiveData]
   );
 
   // Interpolation animation loop

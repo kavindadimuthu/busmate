@@ -2,6 +2,7 @@ package com.busmate.routeschedule.passengerinfo.service.impl;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collections;
@@ -40,6 +41,7 @@ import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResp
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.JourneySummary;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.OperatorInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.PspInfo;
+import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.RealTimeInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.RouteDetails;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.RouteGroupInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.RouteScheduleStop;
@@ -48,6 +50,8 @@ import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResp
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.ScheduleExceptionInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.StopInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.TripDetails;
+import com.busmate.routeschedule.passengerinfo.client.LiveBusStateClient;
+import com.busmate.routeschedule.passengerinfo.client.LiveEtaProperties;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusResponse;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusResponse.BusResult;
 import com.busmate.routeschedule.passengerinfo.dto.response.PassengerPaginatedResponse;
@@ -86,6 +90,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     private final StopRepository stopRepository;
     private final ScheduleRepository scheduleRepository;
     private final TripRepository tripRepository;
+    private final LiveBusStateClient liveBusStateClient;
+    private final LiveEtaProperties liveEtaProperties;
 
     @Override
     public FindMyBusResponse findMyBus(FindMyBusRequest request) {
@@ -632,7 +638,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
             Optional<Trip> tripOpt = tripRepository.findById(request.getTripId());
             if (tripOpt.isPresent()) {
                 Trip trip = tripOpt.get();
-                tripDetails = buildTripDetails(trip);
+                tripDetails = buildTripDetails(trip, route, scheduleStops,
+                        request.getFromStopId(), request.getToStopId());
             }
         }
 
@@ -837,7 +844,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     /**
      * Build trip details from Trip entity.
      */
-    private TripDetails buildTripDetails(Trip trip) {
+    private TripDetails buildTripDetails(Trip trip, Route route, List<ScheduleStopDetailsProjection> scheduleStops,
+                                          UUID fromStopId, UUID toStopId) {
         BusInfo busInfo = null;
         OperatorInfo operatorInfo = null;
         PspInfo pspInfo = null;
@@ -882,6 +890,10 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
             delayMinutes = (int) Duration.between(trip.getScheduledDepartureTime(), trip.getActualDepartureTime()).toMinutes();
         }
 
+        RealTimeInfo realTimeInfo = trip.getBus() != null
+                ? buildRealTimeInfo(trip.getBus().getId(), route, scheduleStops, fromStopId, toStopId)
+                : null;
+
         return TripDetails.builder()
                 .tripId(trip.getId())
                 .tripDate(trip.getTripDate())
@@ -894,7 +906,157 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .bus(busInfo)
                 .operator(operatorInfo)
                 .psp(pspInfo)
+                .realTime(realTimeInfo)
                 .build();
+    }
+
+    /**
+     * Real-time position + ETA (IoT Platform Layer plan, Phase 3) — the first live-data source
+     * {@link TimeSourceEnum}'s schedule-based times get. Best-effort throughout: any missing or
+     * stale live fix (no telemetry yet, or older than {@code telemetry.live-eta.max-staleness-
+     * seconds}) simply returns null, and the caller's existing schedule-based times stand
+     * unchanged — this never replaces a working schedule estimate with a broken live one.
+     *
+     * <p><b>Known approximation:</b> without the route's road polyline (only stop coordinates are
+     * modeled), "where along the route is the bus" is approximated as the nearest stop to its raw
+     * GPS fix by straight-line distance, and ETAs are straight-line-distance / speed rather than
+     * road-distance / speed. Good enough to be directionally useful now; a polyline-aware version
+     * is future hardening, not a Phase 3 requirement.
+     */
+    private RealTimeInfo buildRealTimeInfo(UUID busId, Route route, List<ScheduleStopDetailsProjection> scheduleStops,
+                                           UUID fromStopId, UUID toStopId) {
+        Optional<LiveBusStateClient.LiveBusState> liveStateOpt = liveBusStateClient.getLiveState(busId);
+        if (liveStateOpt.isEmpty()) {
+            return null;
+        }
+        LiveBusStateClient.LiveBusState live = liveStateOpt.get();
+        if (live.lat() == null || live.lng() == null || live.ingestedAt() == null) {
+            return null;
+        }
+        long ageSeconds = Duration.between(live.ingestedAt(), Instant.now()).getSeconds();
+        if (ageSeconds > liveEtaProperties.getMaxStalenessSeconds()) {
+            return null;
+        }
+
+        // Nearest stop to the raw GPS fix stands in for "where along the route the bus is" (see
+        // method javadoc). scheduleStops is already ordered by stopOrder.
+        int nearestIndex = -1;
+        double nearestDistanceKm = Double.MAX_VALUE;
+        for (int i = 0; i < scheduleStops.size(); i++) {
+            ScheduleStopDetailsProjection stop = scheduleStops.get(i);
+            if (stop.getStopLatitude() == null || stop.getStopLongitude() == null) continue;
+            double d = haversineKm(live.lat(), live.lng(), stop.getStopLatitude(), stop.getStopLongitude());
+            if (d < nearestDistanceKm) {
+                nearestDistanceKm = d;
+                nearestIndex = i;
+            }
+        }
+        if (nearestIndex == -1) {
+            return null;
+        }
+
+        ScheduleStopDetailsProjection nextStopProj = scheduleStops.get(nearestIndex);
+        double effectiveSpeedKmh = resolveEffectiveSpeedKmh(live.speedKmh(), route);
+        Instant now = Instant.now();
+
+        LocalTime etaNextStop = etaFor(nearestDistanceKm, effectiveSpeedKmh, now);
+
+        Double nextStopDistanceFromStart = resolveDistance(nextStopProj.getDistanceFromStartKm(),
+                nextStopProj.getDistanceFromStartKmUnverified(), nextStopProj.getDistanceFromStartKmCalculated());
+
+        LocalTime etaOrigin = etaForTargetStop(scheduleStops, fromStopId, nearestIndex,
+                nextStopDistanceFromStart, nearestDistanceKm, effectiveSpeedKmh, now);
+        LocalTime etaDestination = etaForTargetStop(scheduleStops, toStopId, nearestIndex,
+                nextStopDistanceFromStart, nearestDistanceKm, effectiveSpeedKmh, now);
+
+        LocationDto nextStopLocation = new LocationDto();
+        nextStopLocation.setLatitude(nextStopProj.getStopLatitude());
+        nextStopLocation.setLongitude(nextStopProj.getStopLongitude());
+        nextStopLocation.setAddress(nextStopProj.getStopAddress());
+        nextStopLocation.setCity(nextStopProj.getStopCity());
+        StopInfo nextStopInfo = StopInfo.builder()
+                .id(nextStopProj.getStopId())
+                .name(nextStopProj.getStopName())
+                .nameSinhala(nextStopProj.getStopNameSinhala())
+                .nameTamil(nextStopProj.getStopNameTamil())
+                .description(nextStopProj.getStopDescription())
+                .location(nextStopLocation)
+                .isAccessible(nextStopProj.getStopIsAccessible())
+                .build();
+
+        return RealTimeInfo.builder()
+                .currentLatitude(live.lat())
+                .currentLongitude(live.lng())
+                .lastUpdated(live.ingestedAt().atZone(java.time.ZoneId.systemDefault()).toLocalTime())
+                .speedKmh(live.speedKmh())
+                .heading(live.headingDeg())
+                .nextStop(nextStopInfo)
+                .etaNextStop(etaNextStop)
+                .etaOrigin(etaOrigin)
+                .etaDestination(etaDestination)
+                .build();
+    }
+
+    /** Distance-based ETA from now, given a straight-line distance and speed. Null if not moving. */
+    private LocalTime etaFor(double distanceKm, double effectiveSpeedKmh, Instant now) {
+        if (effectiveSpeedKmh <= 0) return null;
+        long etaSeconds = Math.round(distanceKm / effectiveSpeedKmh * 3600);
+        return now.plusSeconds(etaSeconds).atZone(java.time.ZoneId.systemDefault()).toLocalTime();
+    }
+
+    /**
+     * ETA to an arbitrary target stop (the user's origin or destination), composed from the
+     * already-computed ETA to the nearest stop plus the remaining distance from there to the
+     * target, using each stop's resolved cumulative distance-from-start. Null if the target stop
+     * isn't found or the bus has already passed it (nothing useful to report).
+     */
+    private LocalTime etaForTargetStop(List<ScheduleStopDetailsProjection> scheduleStops, UUID targetStopId,
+                                       int nearestIndex, Double nearestStopDistanceFromStart,
+                                       double distanceToNearestKm, double effectiveSpeedKmh, Instant now) {
+        if (targetStopId == null || nearestStopDistanceFromStart == null || effectiveSpeedKmh <= 0) return null;
+
+        for (int i = 0; i < scheduleStops.size(); i++) {
+            ScheduleStopDetailsProjection stop = scheduleStops.get(i);
+            if (!targetStopId.equals(stop.getStopId())) continue;
+
+            Double targetDistanceFromStart = resolveDistance(stop.getDistanceFromStartKm(),
+                    stop.getDistanceFromStartKmUnverified(), stop.getDistanceFromStartKmCalculated());
+            if (targetDistanceFromStart == null) return null;
+
+            double remainingKm = targetDistanceFromStart - nearestStopDistanceFromStart;
+            if (i < nearestIndex || remainingKm < 0) {
+                // Already at/past this stop along the route — no forward ETA to report.
+                return null;
+            }
+            double totalKm = distanceToNearestKm + remainingKm;
+            return etaFor(totalKm, effectiveSpeedKmh, now);
+        }
+        return null;
+    }
+
+    /** Live speed if the bus is actually moving; else the route's historical average; else a
+     * configured floor — never zero, so a temporarily-stopped bus still gets an ETA. */
+    private double resolveEffectiveSpeedKmh(Double liveSpeedKmh, Route route) {
+        if (liveSpeedKmh != null && liveSpeedKmh > 3.0) {
+            return liveSpeedKmh;
+        }
+        if (route.getDistanceKm() != null && route.getEstimatedDurationMinutes() != null
+                && route.getEstimatedDurationMinutes() > 0) {
+            return route.getDistanceKm() / (route.getEstimatedDurationMinutes() / 60.0);
+        }
+        return liveEtaProperties.getFallbackSpeedKmh();
+    }
+
+    /** Great-circle distance in km between two lat/lng points (Haversine formula). */
+    private double haversineKm(double lat1, double lng1, double lat2, double lng2) {
+        final double earthRadiusKm = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadiusKm * c;
     }
 
     /**

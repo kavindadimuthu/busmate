@@ -8,6 +8,8 @@ jest.mock('../config/env', () => ({
     USER_SERVICE_URL: 'http://localhost:9020',
     CORE_SERVICE_URL: 'http://localhost:9010',
     TICKETING_SERVICE_URL: 'http://localhost:9030',
+    TELEMETRY_SERVICE_URL: 'http://localhost:9040',
+    KAFKA_BOOTSTRAP_SERVERS: 'localhost:9092',
     NODE_ENV: 'test',
     ALLOWED_ORIGINS: ['http://localhost:3000'],
     RATE_LIMIT_WINDOW_MS: 60000,

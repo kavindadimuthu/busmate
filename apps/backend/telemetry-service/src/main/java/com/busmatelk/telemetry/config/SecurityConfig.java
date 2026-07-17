@@ -52,6 +52,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Phase 0 liveness endpoint — safe to expose (name + topic list only).
                         .requestMatchers(HttpMethod.GET, "/api/telemetry/info").permitAll()
+                        // Phase 3: read-only live-position lookup, consumed server-to-server by
+                        // core-service and api-gateway — same "public GET" convention core-service
+                        // itself uses for non-sensitive read APIs.
+                        .requestMatchers(HttpMethod.GET, "/api/live/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/ingest/**").authenticated()
                         .anyRequest().authenticated()

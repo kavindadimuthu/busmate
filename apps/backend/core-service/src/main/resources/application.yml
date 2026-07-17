@@ -146,3 +146,17 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: operationId
   show-actuator: false
+
+# Base URL for the internal, unauthenticated (GET /api/live/** is permitAll there) calls this
+# service makes to fetch a bus's latest live position for real-time ETAs (IoT Platform Layer plan,
+# Phase 3). Mirrors telemetry-service's own core.service.url convention for the reverse direction.
+telemetry:
+  service:
+    url: ${TELEMETRY_SERVICE_URL:http://localhost:9040}
+  live-eta:
+    # Ignore live position data older than this — a stale fix is worse than no fix (falls back to
+    # schedule-based times instead of a confidently-wrong ETA).
+    max-staleness-seconds: ${TELEMETRY_LIVE_ETA_MAX_STALENESS_SECONDS:600}
+    # Used when the live fix has no usable speed (stopped/null) and the route has no historical
+    # average either — a conservative city-bus cruising speed.
+    fallback-speed-kmh: ${TELEMETRY_LIVE_ETA_FALLBACK_SPEED_KMH:30}

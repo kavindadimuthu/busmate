@@ -97,6 +97,11 @@ telemetry:
     plausibility:
       max-speed-kmh: ${TELEMETRY_INGEST_MAX_SPEED_KMH:150}
       max-accuracy-m: ${TELEMETRY_INGEST_MAX_ACCURACY_M:500}
+  # Fleet health (Phase 3): FleetHealthMonitorJob flags an ACTIVE device silent once it has gone
+  # this long without an ingest call, and un-flags it the next time it reports.
+  fleet-health:
+    check-interval-ms: ${TELEMETRY_FLEET_HEALTH_CHECK_INTERVAL_MS:60000}
+    silence-threshold-minutes: ${TELEMETRY_FLEET_HEALTH_SILENCE_MINUTES:5}
 
 # Base URL for the internal, unauthenticated (GET /api/** is permitAll there) calls this service
 # makes to resolve a device's active trip during ingest enrichment. Same env var name the other

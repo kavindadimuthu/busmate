@@ -21,6 +21,7 @@
     "http-proxy-middleware": "^3.0.3",
     "jose": "^4.15.9",
     "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
     "pino": "^9.6.0",
     "pino-http": "^10.4.0",
     "helmet": "^8.0.0",

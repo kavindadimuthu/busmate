@@ -53,6 +53,11 @@ public class Device {
     @Column(name = "last_seen_at")
     private Instant lastSeenAt;
 
+    /** Set by {@code FleetHealthMonitorJob} (Phase 3) when this device has gone silent too long;
+     * cleared automatically once telemetry resumes. Null = not currently flagged. */
+    @Column(name = "silence_flagged_at")
+    private Instant silenceFlaggedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
