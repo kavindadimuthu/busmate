@@ -114,15 +114,75 @@ Each app's `.env` already points its API base URL at `http://localhost:8080` —
 configuration needed for local dev. Check each terminal's own output for its actual serving URL,
 since Next.js/Vite/Expo pick their own default ports.
 
+## While it's running
+
+Only relevant if you started the backend with **Option A (Docker)** — Option B's services print
+straight to the terminal you launched them in, so their logs/status are just that terminal.
+
+```bash
+pnpm run dev:backend:status   # what's running, ports, health (docker compose ps)
+pnpm run dev:backend:logs     # tail every service's logs (Ctrl+C to stop watching, doesn't stop them)
+```
+
+Add a service name to `dev:backend:logs`'s underlying command to filter to one service, e.g.
+`docker compose logs -f user-service`.
+
+## Stopping everything
+
+**Backend — Option A (Docker):**
+
+```bash
+pnpm run dev:backend:down     # docker compose down — stops & removes the containers
+```
+
+This does **not** delete the Postgres volume, so your seeded data survives — the next
+`dev:backend` picks up right where you left off, no re-seeding needed.
+
+**Backend — Option B (host processes):** `Ctrl+C` in each service's terminal. If a terminal was
+closed instead of `Ctrl+C`'d and a port is still stuck (`address already in use` on your next
+`dev:backend`/`dev:*-service` run), find and stop the orphaned process:
+
+```bash
+lsof -i :9020          # or :9010 / :9030 / :8080 — whichever port is stuck
+kill <PID>
+```
+
+**Frontends:** `Ctrl+C` in each app's terminal — there's no container lifecycle for these in dev
+(Next.js/Vite/Expo run directly for fast hot-reload), so that's the only "down" they need.
+
+**Database only** (leave services running, just stop Postgres):
+
+```bash
+pnpm run db:dev:down    # docker compose stop postgres — keeps the volume, just stops the container
+```
+
 ## Resetting
 
 ```bash
 pnpm run db:dev:reset
 ```
 
-then restart whichever backend services you're running — they'll re-migrate and re-seed a clean
+Then restart whichever backend services you're running — they'll re-migrate and re-seed a clean
 copy automatically. Restarting a service against an *already-seeded* database is also safe and
 does **not** duplicate rows (the seed migrations are idempotent).
+
+## Command reference
+
+| Purpose | Command |
+|---|---|
+| Start full backend (Docker) | `pnpm run dev:backend` |
+| Backend status / ports / health | `pnpm run dev:backend:status` |
+| Tail backend logs | `pnpm run dev:backend:logs` |
+| Stop full backend (Docker) | `pnpm run dev:backend:down` |
+| Start one backend service (host) | `pnpm run dev:user-service` / `dev:core-service` / `dev:ticketing-service` / `dev:api-gateway` |
+| Stop one backend service (host) | `Ctrl+C` in its terminal |
+| Start a frontend app | `pnpm run dev:management-portal` / `dev:passenger-web` / `dev:new-react-portal` / `dev:passenger-mobile` / `dev:conductor-mobile` |
+| Stop a frontend app | `Ctrl+C` in its terminal |
+| Start Postgres only | `pnpm run db:dev:up` |
+| Stop Postgres only (keeps data) | `pnpm run db:dev:down` |
+| Wipe & recreate Postgres (empty) | `pnpm run db:dev:reset` |
+| Open a psql shell | `pnpm run db:dev:psql` |
+| Postgres GUI (DbGate) | `pnpm run db:dev:gui` / `db:dev:gui:down` |
 
 ---
 

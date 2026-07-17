@@ -92,11 +92,21 @@ Equivalent command:
 docker compose up --build
 ```
 
-Stop the stack:
+Check status and tail logs while it's running:
 
 ```bash
-pnpm run compose:down
+pnpm run dev:backend:status   # docker compose ps — containers, ports, health
+pnpm run dev:backend:logs     # docker compose logs -f — all services
 ```
+
+Stop the stack (containers only — the Postgres volume, and therefore the seeded data, is kept):
+
+```bash
+pnpm run dev:backend:down
+```
+
+`compose:down` is the same command under an older alias, kept for anything that still references
+it.
 
 ### Run Frontend Apps
 
