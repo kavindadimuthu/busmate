@@ -46,12 +46,6 @@ const DBGATE_COMPOSE = 'tools/dbgate/docker-compose.yml';
 export const services = [
   // ── Client applications (run locally via pnpm dev) ──────────────────────
   {
-    id: 'management-portal', label: 'management-portal', group: 'client',
-    stack: 'Next.js · staff', envs: ['local'], pos: { x: 22, y: 52 },
-    dockerService: null, dependsOn: ['api-gateway'],
-    probe: { type: 'http', host: 'localhost', port: port('MGMT_PORTAL_PORT', 3000), path: '/' },
-  },
-  {
     id: 'new-react-portal', label: 'new-react-portal', group: 'client',
     stack: 'Vite · staff', envs: ['local'], pos: { x: 228, y: 52 },
     dockerService: null, dependsOn: ['api-gateway'],

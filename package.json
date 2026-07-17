@@ -5,7 +5,6 @@
   "packageManager": "pnpm@10.26.1",
   "scripts": {
     "dev:conductor-mobile": "pnpm --filter busmatelkconductorapp dev",
-    "dev:management-portal": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx dev management-portal",
     "dev:passenger-mobile": "pnpm --filter smart-bus-sri-lanka dev",
     "dev:passenger-web": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx dev passenger-web",
     "dev:api-gateway": "pnpm --filter api-gateway dev",
@@ -31,7 +30,6 @@
     "db:dev:gui:down": "docker compose -f tools/dbgate/docker-compose.yml down",
     "db:dev:gui:logs": "docker compose -f tools/dbgate/docker-compose.yml logs -f dbgate",
     "build": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx run-many -t build",
-    "build:management-portal": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build management-portal",
     "build:passenger-web": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx build passenger-web",
     "build:core-service": "NX_DAEMON=false NX_ISOLATE_PLUGINS=false nx run core-service:package",
     "build:user-service": "cd apps/backend/user-service && ./mvnw clean package -DskipTests",

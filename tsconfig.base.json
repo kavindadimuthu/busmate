@@ -22,7 +22,6 @@
       "@busmate/api-client-core": ["libs/api-clients/core-service/src/index.ts"],
       "@busmate/api-client-ticketing": ["libs/api-clients/ticketing-service/src/index.ts"],
       "@busmate/api-client-user": ["libs/api-clients/user-service/src/index.ts"],
-      "@busmate/management-portal/*": ["apps/frontend/management-portal/src/*"],
       "@busmate/passenger-web/*": ["apps/frontend/passenger-web/src/*"]
     }
   },
