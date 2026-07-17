@@ -12,6 +12,7 @@ packages:
   # Shared libraries
   - "libs/ui"
   - "libs/api-clients/*"
+  - "libs/iot-schemas"
 
   # Internal tools
   - "tools/dev-portal"

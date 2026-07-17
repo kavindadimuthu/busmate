@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://busmate.lk/iot-schemas/device-status.v1.json",
+  "title": "Device Status Payload v1",
+  "description": "payload for an envelope with eventType='device-status', schemaVersion=1. Device lifecycle / health transitions, including the fleet-health monitor's 'went silent' signal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": {
+      "description": "Current device status.",
+      "type": "string",
+      "enum": ["PROVISIONED", "ONLINE", "SILENT", "OFFLINE", "DISABLED"]
+    },
+    "reason": {
+      "description": "Human-readable context for the transition (e.g. 'no telemetry for 5m', 'disabled by operator').",
+      "type": "string"
+    },
+    "lastSeenAt": {
+      "description": "When telemetry was last received from this device, if known.",
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

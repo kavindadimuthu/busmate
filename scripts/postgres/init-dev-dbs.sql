@@ -5,3 +5,5 @@
 CREATE DATABASE busmate_user;
 CREATE DATABASE busmate_core;
 CREATE DATABASE busmate_ticketing;
+-- telemetry-service owns device registry + live-state (IoT Platform Layer plan, Phase 0).
+CREATE DATABASE busmate_telemetry;

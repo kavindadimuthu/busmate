@@ -1,0 +1,20 @@
+{
+  "name": "@busmate/iot-schemas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Versioned JSON Schemas for the BusMate IoT event envelope and payloads (the internal event contract on iot.*.v1 topics).",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./schemas/*": "./schemas/*",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

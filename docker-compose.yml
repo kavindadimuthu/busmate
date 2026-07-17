@@ -47,6 +47,43 @@ services:
       retries: 10
       start_period: 10s
 
+  # Kafka-compatible event broker for the IoT/telemetry pipeline (IoT Platform Layer plan,
+  # Phase 0) and the general backend event bus. Redpanda is a single binary — no ZooKeeper,
+  # no JVM — so one lightweight container gives dev a real Kafka API. It also finally gives
+  # user-service's existing Kafka producer (operator-events / user events) a broker to reach
+  # locally; before this there was none in dev.
+  #
+  # Two listeners: containers on this Compose network connect to redpanda:9092 (INTERNAL);
+  # processes on the host (a service run straight from the jar, rpk, Kafka UIs) connect to
+  # localhost:9092, which maps to the EXTERNAL listener advertised as localhost. This is why
+  # backend services set KAFKA_BOOTSTRAP_SERVERS=redpanda:9092 below while the app configs'
+  # host-dev default is localhost:9092.
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    container_name: busmate-dev-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092
+      - --advertise-kafka-addr=INTERNAL://redpanda:9092,EXTERNAL://localhost:9092
+    ports:
+      - "9092:19092"   # host access (EXTERNAL listener)
+      - "9644:9644"    # Redpanda admin API
+    volumes:
+      - busmate_dev_redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   api-gateway:
     build:
       context: apps/backend/api-gateway
@@ -95,6 +132,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_user
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - OTEL_SERVICE_NAME=user-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -107,6 +145,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redpanda:
+        condition: service_started
 
   core-service:
     build:
@@ -163,5 +203,39 @@ services:
       postgres:
         condition: service_healthy
 
+  # IoT / device telemetry ingestion service (IoT Platform Layer plan, Phase 0). Owns the
+  # device registry, protocol adapters, and the live-state store; publishes normalized events
+  # to Redpanda for the rest of the platform to consume. Internal port 9040.
+  telemetry-service:
+    build:
+      context: apps/backend/telemetry-service
+      dockerfile: Dockerfile
+    ports:
+      - "9040:9040"
+    env_file:
+      - config/secrets/.env
+    environment:
+      - SERVER_PORT=9040
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_telemetry
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - OTEL_SERVICE_NAME=telemetry-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_INSTRUMENTATION_LOGBACK_MDC_ENABLED=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+
 volumes:
   busmate_dev_postgres_data:
+  busmate_dev_redpanda_data:

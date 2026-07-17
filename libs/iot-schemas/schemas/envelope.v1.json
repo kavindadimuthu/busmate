@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://busmate.lk/iot-schemas/envelope.v1.json",
+  "title": "IoT Event Envelope v1",
+  "description": "Common envelope every normalized device event carries on the internal event bus (iot.*.v1 topics). Protocol-specific logic stays at the edge; everything inside the platform consumes this shape. See docs/plans/IoT-Platform-Layer-Plan.md §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "envelopeVersion",
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "deviceId",
+    "deviceTimestamp",
+    "ingestedAt",
+    "source",
+    "payload"
+  ],
+  "properties": {
+    "envelopeVersion": {
+      "description": "Version of this envelope shape. Bumped only on a breaking change to the envelope itself (not the payload).",
+      "const": 1
+    },
+    "eventId": {
+      "description": "Unique id generated at ingest. Downstream consumers use it as the idempotency/dedup key.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "description": "Discriminator selecting the payload schema. Each value maps to a <eventType>.v<schemaVersion>.json payload schema.",
+      "type": "string",
+      "enum": ["location", "device-status", "alert"]
+    },
+    "schemaVersion": {
+      "description": "Version of the payload schema for this eventType. Lets payloads evolve independently of the envelope.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "deviceId": {
+      "description": "Device registry id of the emitting device — NOT the bus id.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "busId": {
+      "description": "Bus the device was assigned to at ingest, resolved from the registry. Null when the device is unassigned.",
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "tripId": {
+      "description": "Active trip for the bus at the event time, if one was resolved. Null otherwise.",
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "deviceTimestamp": {
+      "description": "When the device says the event occurred (device clock — may be wrong or late).",
+      "type": "string",
+      "format": "date-time"
+    },
+    "ingestedAt": {
+      "description": "When the platform received the event (server clock, authoritative for ordering-by-arrival).",
+      "type": "string",
+      "format": "date-time"
+    },
+    "sequenceNo": {
+      "description": "Monotonic per-device counter when the device provides one. Combined with deviceId, a secondary dedup/ordering key. Optional — not every source emits it.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "source": {
+      "description": "Where the event entered the platform.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter"],
+      "properties": {
+        "adapter": {
+          "description": "Ingestion adapter that produced this envelope.",
+          "type": "string",
+          "enum": ["https", "mqtt", "tcp"]
+        },
+        "gateway": {
+          "description": "Identifier of the ingesting instance (for tracing/debugging).",
+          "type": "string"
+        }
+      }
+    },
+    "payload": {
+      "description": "Event body. Its shape is defined by the <eventType>.v<schemaVersion> payload schema and validated separately.",
+      "type": "object"
+    }
+  }
+}

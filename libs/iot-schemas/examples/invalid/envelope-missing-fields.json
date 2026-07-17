@@ -1,0 +1,10 @@
+{
+  "envelopeVersion": 1,
+  "eventType": "location",
+  "deviceId": "00000000-0000-0000-0000-000000010501",
+  "source": { "adapter": "carrier-pigeon" },
+  "payload": {
+    "lat": 6.9271,
+    "lng": 79.8612
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "iot-schemas",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "root": "libs/iot-schemas",
+  "sourceRoot": "libs/iot-schemas",
+  "tags": ["scope:shared", "type:lib", "lang:json"],
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node --test",
+        "cwd": "{projectRoot}"
+      },
+      "inputs": [
+        "{projectRoot}/schemas/**/*.json",
+        "{projectRoot}/examples/**/*.json",
+        "{projectRoot}/test/**/*.mjs"
+      ],
+      "cache": true
+    }
+  }
+}

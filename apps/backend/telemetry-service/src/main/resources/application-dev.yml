@@ -1,0 +1,19 @@
+# Local development: self-hosted Postgres (docker-compose.yml's `postgres` service, host port 5433)
+# and Redpanda (host port 9092). Not secret — safe to commit. Override with SPRING_DATASOURCE_* /
+# KAFKA_BOOTSTRAP_SERVERS env vars to point elsewhere.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/busmate_telemetry
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true
+  # Tier 3 demo data (docs/plans/Database-Migrations-and-Seed-Data-Plan.md §3, §5) — dev only.
+  # Overrides (not appends to) the base locations, so it repeats db/migration + db/reference
+  # alongside db/seed/dev.
+  flyway:
+    locations: classpath:db/migration,classpath:db/reference,classpath:db/seed/dev
+
+logging:
+  level:
+    com.busmatelk.telemetry: DEBUG

@@ -1,0 +1,17 @@
+{
+  "envelopeVersion": 1,
+  "eventId": "16fd2706-8baf-433b-82eb-8c7fada847da",
+  "eventType": "device-status",
+  "schemaVersion": 1,
+  "deviceId": "00000000-0000-0000-0000-000000010501",
+  "busId": null,
+  "tripId": null,
+  "deviceTimestamp": "2026-07-17T09:00:00Z",
+  "ingestedAt": "2026-07-17T09:00:01Z",
+  "source": { "adapter": "https" },
+  "payload": {
+    "status": "SILENT",
+    "reason": "no telemetry for 5m",
+    "lastSeenAt": "2026-07-17T08:55:00Z"
+  }
+}

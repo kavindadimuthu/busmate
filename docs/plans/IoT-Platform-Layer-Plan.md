@@ -237,11 +237,16 @@ flowchart LR
 
 **Value milestone: end of Phase 3 = live buses on the passenger map and schedule-independent ETAs, with no hardware purchased.**
 
-### Phase 0 — Foundations
-- Add **Redpanda** to `docker-compose.yml` (dev) — this also unblocks user-service's existing producer locally (which currently has no broker to reach). Add to `docker-compose.production.yml` topology as well, or point at managed Kafka there.
-- Scaffold `apps/backend/telemetry-service` (Spring Boot, Java 17) by **copying the now-established service template**: `db/migration` + `db/reference` + `db/seed/dev` Flyway layout, OTel wiring, `project.json` for Nx, a `Dockerfile` expecting a pre-built jar, entries in both compose files, and **Testcontainers integration tests wired into the existing CI gate** (Database-Migrations plan Phases 4–5). Own database `busmate_telemetry` in `scripts/postgres/init-dev-dbs.sql`.
-- Define envelope + `location`/`device-status` v1 JSON Schemas in `libs/iot-schemas/` with a validation test suite.
-- Topics: `iot.telemetry.v1`, `iot.device-status.v1`, `iot.telemetry.dlq.v1`.
+### Phase 0 — Foundations  ✅ COMPLETE (2026-07-17)
+- ✅ Added **Redpanda** to `docker-compose.yml` (dev, host `localhost:9092` / internal `redpanda:9092`) and `docker-compose.production.yml` (internal, swappable for managed Kafka). Also wired user-service to it (`KAFKA_BOOTSTRAP_SERVERS=redpanda:9092` + `depends_on`), unblocking its previously broker-less producer.
+- ✅ Scaffolded `apps/backend/telemetry-service` (Spring Boot 3.5.3, Java 17, port 9040, pkg `com.busmatelk.telemetry`) from the established service template: `db/migration` + `db/reference` + `db/seed/dev` Flyway layout (`V001__baseline.sql`), OTel agent Dockerfile, actuator/Prometheus, `project.json` for Nx, entries in both compose files, and `busmate_telemetry` added to `scripts/postgres/init-dev-dbs.sql`. Config falls back to `TELEMETRY_DB_*` env (add these to `config/secrets/.env` for prod).
+- ✅ Defined the envelope + `location`/`device-status` v1 JSON Schemas in `libs/iot-schemas/` (draft-07) with valid/invalid fixtures and an ajv validation suite — **4/4 tests pass** (`nx test iot-schemas`). Registered in the pnpm workspace.
+- ✅ Topics `iot.telemetry.v1`, `iot.device-status.v1`, `iot.telemetry.dlq.v1` declared via `KafkaTopicConfig` (auto-created on startup; partitions/replication configurable).
+- ✅ Testcontainers integration test (`TelemetryServiceApplicationIT`: real Postgres + real Flyway + embedded Kafka, asserts context boot, HTTP `/api/telemetry/info`, and topic creation), wired into the Backend CI gate (`backend-ci.yml`) on both the Flyway-validate and test matrices. `mvn compile` is green.
+
+**Verification:** `docker compose config` valid (dev + prod); `nx test iot-schemas` 4/4 green; `telemetry-service` compiles; integration test exercises the full DB+Kafka path.
+
+**Next (Phase 1):** device registry tables (`V002+`), `device_type` reference data in `db/reference`, provisioning/assignment APIs, and management-portal admin screens behind RBAC.
 
 ### Phase 1 — Device registry & provisioning
 - Flyway migrations for the §4 tables; CRUD APIs (register device → returns one-time token; assign/unassign to bus; disable/revoke).

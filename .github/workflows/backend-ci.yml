@@ -37,6 +37,9 @@ jobs:
             locations: filesystem:/repo/apps/backend/ticketing-service/src/main/resources/db/migration
           - service: core-service
             locations: filesystem:/repo/apps/backend/core-service/src/main/resources/db/migration
+          # telemetry-service ships Tier 1 (schema) + Tier 2 (reference) — IoT Platform Layer plan, Phase 0.
+          - service: telemetry-service
+            locations: filesystem:/repo/apps/backend/telemetry-service/src/main/resources/db/migration,filesystem:/repo/apps/backend/telemetry-service/src/main/resources/db/reference
     services:
       postgres:
         image: postgres:16-alpine
@@ -73,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [ user-service, ticketing-service, core-service ]
+        service: [ user-service, ticketing-service, core-service, telemetry-service ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

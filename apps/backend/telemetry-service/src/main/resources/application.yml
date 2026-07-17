@@ -1,0 +1,126 @@
+# Loads secrets from the central config/secrets/.env (via spring-dotenv). Resolved relative to the
+# working directory (apps/backend/telemetry-service). No-ops if the file is absent (e.g. in Docker,
+# where env comes from env_file). Same convention as the other backend services.
+springdotenv:
+  directory: ../../../config/secrets
+
+spring:
+  application:
+    name: telemetry-service
+
+  datasource:
+    # Credentials come from config/secrets/.env (TELEMETRY_DB_*). The fallbacks are obvious
+    # placeholders — never real secrets. Set the env vars for real use.
+    url: ${TELEMETRY_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${TELEMETRY_DB_USERNAME:postgres}
+    password: ${TELEMETRY_DB_PASSWORD:changeme}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 8
+      connection-timeout: 15000
+      idle-timeout: 300000
+      max-lifetime: 900000
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
+      leak-detection-threshold: 60000
+      initialization-fail-timeout: 30000
+      pool-name: BusMateTelemetryHikariPool
+      auto-commit: false
+
+  jpa:
+    hibernate:
+      # Flyway owns the schema (db/migration); Hibernate only validates the entities match it —
+      # same as the other services. See docs/plans/Database-Migrations-and-Seed-Data-Plan.md Phase 1.
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+          batch_size: 25
+          batch_versioned_data: true
+        connection:
+          provider_disables_autocommit: true
+        query:
+          plan_cache_max_size: 128
+    database-platform: postgresql
+
+  # Flyway owns schema lifecycle (db/migration) + required reference data (db/reference). A fresh
+  # database runs V001 for real; baseline-on-migrate adopts it as already-applied on a pre-existing,
+  # historyless schema. Dev demo data (db/seed/dev, Tier 3) is added only in application-dev.yml.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration,classpath:db/reference
+    baseline-on-migrate: true
+    baseline-version: 1
+
+  kafka:
+    # Host-dev default is localhost:9092 (Redpanda's host-mapped EXTERNAL listener — see
+    # docker-compose.yml). In Docker, KAFKA_BOOTSTRAP_SERVERS=redpanda:9092 overrides this.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # Wait for the leader ack only; good balance for high-volume telemetry. Tighten to all
+      # for the device-status/critical topics later if needed.
+      acks: "1"
+    consumer:
+      group-id: telemetry-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  profiles:
+    active: dev  # Safe local default; override via SPRING_PROFILES_ACTIVE=prod in production deploys
+
+# IoT pipeline topics + sizing (IoT Platform Layer plan, Phase 0). replication-factor is 1 for a
+# single-node dev/prod Redpanda; raise it (and override via env) on a multi-broker cluster.
+telemetry:
+  kafka:
+    partitions: ${TELEMETRY_KAFKA_PARTITIONS:3}
+    replication-factor: ${TELEMETRY_KAFKA_REPLICATION_FACTOR:1}
+    topics:
+      telemetry: iot.telemetry.v1
+      device-status: iot.device-status.v1
+      dlq: iot.telemetry.dlq.v1
+
+server:
+  address: 0.0.0.0
+  port: ${SERVER_PORT:9040}
+
+logging:
+  level:
+    com.busmatelk.telemetry: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: operationId
+  show-actuator: false

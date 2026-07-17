@@ -1,0 +1,20 @@
+{
+  "envelopeVersion": 1,
+  "eventId": "6f9619ff-8b86-d011-b42d-00cf4fc964ff",
+  "eventType": "location",
+  "schemaVersion": 1,
+  "deviceId": "00000000-0000-0000-0000-000000010501",
+  "busId": "00000000-0000-0000-0000-000000010301",
+  "tripId": "00000000-0000-0000-0000-000000010401",
+  "deviceTimestamp": "2026-07-17T08:31:02Z",
+  "ingestedAt": "2026-07-17T08:31:05Z",
+  "sequenceNo": 4812,
+  "source": { "adapter": "https", "gateway": "telemetry-service-1" },
+  "payload": {
+    "lat": 6.9271,
+    "lng": 79.8612,
+    "speedKmh": 42.5,
+    "headingDeg": 275.0,
+    "accuracyM": 8.0
+  }
+}

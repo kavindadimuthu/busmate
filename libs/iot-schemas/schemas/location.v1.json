@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://busmate.lk/iot-schemas/location.v1.json",
+  "title": "Location Payload v1",
+  "description": "payload for an envelope with eventType='location', schemaVersion=1. A single GPS fix.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["lat", "lng"],
+  "properties": {
+    "lat": {
+      "description": "Latitude in decimal degrees (WGS84).",
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "lng": {
+      "description": "Longitude in decimal degrees (WGS84).",
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180
+    },
+    "speedKmh": {
+      "description": "Ground speed in km/h, if the device reports it.",
+      "type": "number",
+      "minimum": 0
+    },
+    "headingDeg": {
+      "description": "Heading in degrees clockwise from true north [0, 360).",
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMaximum": 360
+    },
+    "accuracyM": {
+      "description": "Horizontal accuracy radius in metres, if reported. Honored by ingest plausibility checks.",
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}
