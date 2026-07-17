@@ -1,5 +1,5 @@
 {
-  "name": "e2e-management-portal",
+  "name": "e2e-new-react-portal",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "root": "tests/e2e",

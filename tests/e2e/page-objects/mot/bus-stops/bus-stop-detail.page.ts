@@ -3,7 +3,7 @@ import { BasePage } from '../../base.page.js';
 import { DeleteModalComponent } from '../components/delete-modal.component.js';
 
 /**
- * Page object for the Bus Stop detail page: /mot/bus-stops/{id}
+ * Page object for the Bus Stop detail page: /mot/stops/{id}
  *
  * Shows basic info, location details with multilingual tabs,
  * a Google Maps mini-map, and system metadata.
@@ -34,7 +34,7 @@ export class BusStopDetailPage extends BasePage {
 
   constructor(page: Page, busStopId?: string) {
     super(page);
-    this.url = busStopId ? `/mot/bus-stops/${busStopId}` : '/mot/bus-stops';
+    this.url = busStopId ? `/mot/stops/${busStopId}` : '/mot/stops';
     this.deleteModal = new DeleteModalComponent(page);
 
     this.stopName = page.locator('h2, h3').first();
@@ -62,7 +62,7 @@ export class BusStopDetailPage extends BasePage {
   /** Click Edit — navigates to edit page. */
   async clickEdit() {
     await this.editButton.click();
-    await this.page.waitForURL(/\/mot\/bus-stops\/[a-f0-9-]+\/edit/);
+    await this.page.waitForURL(/\/mot\/stops\/[a-f0-9-]+\/edit/);
   }
 
   /** Click Delete — opens the delete confirmation modal. */

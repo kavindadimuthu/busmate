@@ -3,10 +3,10 @@ import { BasePage } from '../../base.page.js';
 
 /**
  * Page object for the Bus Stop create/edit form.
- * Create: /mot/bus-stops/add-new
- * Edit:   /mot/bus-stops/{id}/edit
+ * Create: /mot/stops/create
+ * Edit:   /mot/stops/{id}/edit
  *
- * Matches: apps/frontend/management-portal/src/components/mot/bus-stops/bus-stop-form.tsx
+ * Matches: apps/frontend/new-react-portal/src/components/mot/stops/BusStopForm.tsx
  */
 export class BusStopFormPage extends BasePage {
   readonly url: string;
@@ -37,8 +37,8 @@ export class BusStopFormPage extends BasePage {
     super(page);
     this.isEdit = !!busStopId;
     this.url = busStopId
-      ? `/mot/bus-stops/${busStopId}/edit`
-      : '/mot/bus-stops/add-new';
+      ? `/mot/stops/${busStopId}/edit`
+      : '/mot/stops/create';
 
     // Basic info
     this.nameInput = page.getByPlaceholder('Enter bus stop name');

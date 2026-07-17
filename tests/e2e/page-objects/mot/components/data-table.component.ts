@@ -2,7 +2,10 @@ import { type Page, type Locator, expect } from '@playwright/test';
 
 /**
  * Component object for the shared DataTable component.
- * Matches: apps/frontend/management-portal/src/components/shared/DataTable.tsx
+ * Matches: the shared DataTable pattern in libs/ui/src/patterns/data-table
+ * (consumed by new-react-portal). NOTE: empty-state/loading/row-action selectors
+ * below were written against management-portal's DOM and need verification against
+ * the @busmate/ui DataTable before this suite is fully green.
  */
 export class DataTableComponent {
   readonly page: Page;

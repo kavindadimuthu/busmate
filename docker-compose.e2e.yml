@@ -1,7 +1,7 @@
 # E2E Test Environment — Isolated Docker Compose Stack
 #
 # Provides a dedicated PostgreSQL database and core-service backend for
-# Playwright e2e tests. The Next.js management portal is managed separately
+# Playwright e2e tests. The new-react-portal (Vite) frontend is managed separately
 # by Playwright's webServer configuration.
 #
 # Ports are intentionally offset from the development defaults:

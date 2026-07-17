@@ -6,10 +6,10 @@ import { AdvancedFiltersComponent } from '../components/advanced-filters.compone
 import { DeleteModalComponent } from '../components/delete-modal.component.js';
 
 /**
- * Page object for the Bus Stops list page: /mot/bus-stops
+ * Page object for the Bus Stops list page: /mot/stops
  */
 export class BusStopsListPage extends BasePage {
-  readonly url = '/mot/bus-stops';
+  readonly url = '/mot/stops';
   readonly table: DataTableComponent;
   readonly pagination: DataPaginationComponent;
   readonly filters: AdvancedFiltersComponent;
@@ -51,16 +51,16 @@ export class BusStopsListPage extends BasePage {
     this.tryAgainButton = page.getByRole('button', { name: /try again/i });
   }
 
-  /** Click the Add Bus Stop button — navigates to /mot/bus-stops/add-new. */
+  /** Click the Add Bus Stop button — navigates to /mot/stops/create. */
   async clickAddBusStop() {
     await this.addBusStopButton.click();
-    await this.page.waitForURL(/\/mot\/bus-stops\/add-new/);
+    await this.page.waitForURL(/\/mot\/stops\/create/);
   }
 
-  /** Click the Import button — navigates to /mot/bus-stops/import. */
+  /** Click the Import button — navigates to /mot/stops/import. */
   async clickImport() {
     await this.importButton.click();
-    await this.page.waitForURL(/\/mot\/bus-stops\/import/);
+    await this.page.waitForURL(/\/mot\/stops\/import/);
   }
 
   /** Switch to the map view tab. */
@@ -76,13 +76,13 @@ export class BusStopsListPage extends BasePage {
   /** Click View on a bus stop row. */
   async viewBusStop(name: string) {
     await this.table.clickViewButton(name);
-    await this.page.waitForURL(/\/mot\/bus-stops\/[a-f0-9-]+$/);
+    await this.page.waitForURL(/\/mot\/stops\/[a-f0-9-]+$/);
   }
 
   /** Click Edit on a bus stop row. */
   async editBusStop(name: string) {
     await this.table.clickEditButton(name);
-    await this.page.waitForURL(/\/mot\/bus-stops\/[a-f0-9-]+\/edit/);
+    await this.page.waitForURL(/\/mot\/stops\/[a-f0-9-]+\/edit/);
   }
 
   /** Delete a bus stop via the confirmation modal. */

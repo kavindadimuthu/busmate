@@ -7,12 +7,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 
 // When running against the Docker e2e environment the backend is on port 8081.
 // When running against the local dev environment the backend is on port 8080.
-// The API_URL variable (set in .env) controls which backend the Next.js dev
-// server points to via the NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL env var.
+// The API_URL variable (set in .env) controls which backend the Vite dev
+// server points to via the VITE_API_GATEWAY_URL env var.
 const API_URL = process.env.API_URL || 'http://localhost:8080';
 
 // Set to true when using the Docker e2e environment (pnpm run e2e:docker).
@@ -88,7 +88,7 @@ export default defineConfig({
     }),
   },
 
-  /* Global setup: authenticate once via Asgardeo, save storageState */
+  /* Global setup: authenticate once via the self-hosted login form, save storageState */
   globalSetup: './global-setup.ts',
   globalTeardown: './global-teardown.ts',
 
@@ -118,31 +118,28 @@ export default defineConfig({
     // },
   ],
 
-  /* Start the Next.js dev server before running tests.
+  /* Start the new-react-portal (Vite) dev server before running tests.
    *
    * In Docker e2e mode (E2E_DOCKER=true) the server is always started fresh so
-   * that the NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL env var is guaranteed to point
-   * at the Docker test backend, not a stale dev server on port 8080.
+   * that the VITE_API_GATEWAY_URL env var is guaranteed to point at the Docker
+   * test backend, not a stale dev server on port 8080.
    *
    * In standard dev mode the server is reused if already running (unless on CI).
-   * 
-   * Webpack is used instead of Turbopack in Docker e2e mode to prevent build hangs
-   * and resource exhaustion issues. Memory limits are also set to prevent system lockups.
+   *
+   * --strictPort makes Vite fail loudly if 5173 is taken instead of silently
+   * drifting to 5174 (which would leave Playwright waiting on the wrong URL).
    */
   webServer: {
-    // Use webpack in e2e mode instead of Turbopack to prevent build hangs
-    // Set memory limits to prevent resource exhaustion
-    command: isDockerEnv 
-      ? 'NODE_OPTIONS="--max-old-space-size=4096" pnpm --filter @busmate/management-portal dev -- --webpack'
-      : 'pnpm --filter @busmate/management-portal dev',
+    command: 'pnpm --filter @busmate/new-react-portal dev -- --port 5173 --strictPort',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI && !isDockerEnv,
     timeout: isDockerEnv ? 120_000 : 120_000,  // Increased timeout for Docker cold-start
     cwd: path.resolve(__dirname, '../..'), // monorepo root
     env: {
-      // Forward the test backend URL so the Next.js dev server uses the correct
-      // API endpoint (Docker: http://localhost:8081, dev: http://localhost:8080).
-      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
+      // Forward the test backend URL so the Vite dev server points the portal's
+      // API clients at the correct gateway (Docker: http://localhost:8081,
+      // dev: http://localhost:8080).
+      VITE_API_GATEWAY_URL: API_URL,
     },
   },
 });

@@ -12,7 +12,7 @@ export abstract class BasePage {
     this.toastContainer = page.locator('[data-sonner-toaster], [role="status"]');
   }
 
-  /** The URL path for this page (e.g., '/mot/bus-stops'). */
+  /** The URL path for this page (e.g., '/mot/stops'). */
   abstract readonly url: string;
 
   /** Navigate to this page. */

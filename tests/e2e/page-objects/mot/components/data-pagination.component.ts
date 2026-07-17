@@ -2,7 +2,8 @@ import { type Page, type Locator, expect } from '@playwright/test';
 
 /**
  * Component object for the shared DataPagination component.
- * Matches: apps/frontend/management-portal/src/components/shared/DataPagination.tsx
+ * Matches: the shared DataTable pagination in libs/ui/src/patterns/data-table
+ * (data-table-pagination.tsx), consumed by new-react-portal.
  *
  * Note: Pages are zero-based internally but displayed as 1-based to the user.
  */

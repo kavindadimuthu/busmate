@@ -22,7 +22,7 @@ const e2eDir = path.resolve(__dirname, 'tests/e2e');
 
 dotenv.config({ path: path.resolve(e2eDir, '.env') });
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 
 // When running against the Docker e2e environment the backend is on port 8081.
 // When running against the local dev environment the backend is on port 8080.
@@ -72,17 +72,15 @@ export default defineConfig({
   ],
 
   webServer: {
-    // Use webpack in e2e mode instead of Turbopack to prevent build hangs
-    // Set memory limits to prevent resource exhaustion
-    command: isDockerEnv 
-      ? 'NODE_OPTIONS="--max-old-space-size=4096" pnpm --filter @busmate/management-portal exec next dev --webpack'
-      : 'pnpm --filter @busmate/management-portal dev',
+    // Start the new-react-portal (Vite) dev server. --strictPort makes Vite fail
+    // loudly if 5173 is taken rather than drifting to 5174 and stranding Playwright.
+    command: 'pnpm --filter @busmate/new-react-portal dev -- --port 5173 --strictPort',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI && !isDockerEnv,
     timeout: isDockerEnv ? 90_000 : 120_000,
     cwd: __dirname,
     env: {
-      NEXT_PUBLIC_ROUTE_MANAGEMENT_API_URL: API_URL,
+      VITE_API_GATEWAY_URL: API_URL,
     },
   },
 });
