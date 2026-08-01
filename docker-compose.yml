@@ -5,8 +5,9 @@ name: busmate
 # their standard development ports for direct debugging and OpenAPI generation.
 #
 # user-service's Dockerfile expects a pre-built jar (COPY target/*.jar app.jar) — run
-# `./mvnw -f apps/backend/user-service package` before `docker compose up --build`.
-# core-service's Dockerfile expects a pre-built jar under apps/backend/core-service/target/.
+# `pnpm run build:user-service` before `docker compose up --build`.
+# core-service's Dockerfile expects a pre-built jar under apps/backend/core-service/target/
+# (`pnpm run build:core-service`), and ticketing-service likewise.
 #
 # Backend services run with SPRING_PROFILES_ACTIVE=dev against the local `postgres`
 # service below (one instance, one database per service — see

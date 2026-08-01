@@ -9,14 +9,20 @@ reference), [`docs/dev-seed-credentials.md`](dev-seed-credentials.md) (full logi
 [`docs/plans/Database-Migrations-and-Seed-Data-Plan.md`](plans/Database-Migrations-and-Seed-Data-Plan.md)
 (how the migrations/seed pipeline works under the hood).
 
+Everything here runs the same on **Windows and Linux**. Where a command genuinely differs, both
+forms are given.
+
 ## Prerequisites
 
 - **Node.js ≥ 20**, **pnpm ≥ 10** (`corepack enable` picks up the pinned `pnpm@10.26.1` from
   `package.json`)
-- **Java 17**
+- **Java 17** — the Maven Wrapper bundled with each service fetches Maven itself
 - **Docker** and **Docker Compose**
-- `config/secrets/.env` present (holds `SUPABASE_JWT_SECRET`, `INTERNAL_API_KEY`, etc.) — already
-  committed as safe local-dev defaults; you don't need to create it yourself
+- **Windows only:** Git for Windows, with `C:\Program Files\Git\bin` on `PATH`. The seed and e2e
+  helper scripts are invoked as `bash <script>`; everything else is pure Node and needs no shell.
+- `config/secrets/.env` (holds `SUPABASE_JWT_SECRET`, `INTERNAL_API_KEY`, DB credentials). It is
+  **gitignored** — only `config/secrets/.env.example` is committed, so a fresh clone has to create
+  it. `pnpm run setup` in Step 1 does that for you.
 
 ## Ports at a glance
 
@@ -26,7 +32,7 @@ reference), [`docs/dev-seed-credentials.md`](dev-seed-credentials.md) (full logi
 | `core-service` | `9010` | Routes, schedules, stops, fleet, permits |
 | `user-service` | `9020` | Auth, users, RBAC, profiles |
 | `ticketing-service` | `9030` | Tickets, fares, trip summaries |
-| Postgres (dev) | `5433` | One instance, three databases: `busmate_user`, `busmate_core`, `busmate_ticketing` |
+| Postgres (dev) | `5433` | One instance, four databases: `busmate_user`, `busmate_core`, `busmate_ticketing`, `busmate_telemetry` |
 
 Frontends always talk to the gateway (`http://localhost:8080`), never to a backend service
 directly.
@@ -35,8 +41,29 @@ directly.
 
 ```bash
 cd busmate
-pnpm install
+corepack enable      # pins pnpm 10.26.1 from package.json
+pnpm install         # installs every package in pnpm-workspace.yaml — no per-app install needed
+pnpm run setup       # creates config/secrets/.env from the template, checks your toolchain
 ```
+
+`pnpm run setup` is safe to re-run: it never overwrites an existing `.env` or a value you have
+already filled in. It also
+
+- generates strong random values for `SUPABASE_JWT_SECRET` and `INTERNAL_API_KEY`, which only need
+  to be *some* shared secret locally. Left as the template's `<placeholder>` text they don't fall
+  back to a default — they fail startup (`SUPABASE_JWT_SECRET` is used directly as an HMAC-SHA key
+  and the placeholder is below the 256-bit minimum);
+- lists the remaining placeholders, which are external credentials (Supabase, SMTP, OAuth, Gemini)
+  that only matter for the features that use them — local dev boots without them;
+- checks Java, Docker and, on Windows, `bash`, so a missing prerequisite surfaces here rather than
+  as a confusing runtime error.
+
+Leave `AUTH_JWT_RSA_PRIVATE_KEY` / `AUTH_JWT_RSA_PUBLIC_KEY` **empty** for a single local instance —
+user-service then generates an ephemeral keypair at startup. Set both (never just one) only when
+running multiple instances.
+
+The three Spring Boot services are Maven-managed and sit outside the pnpm workspace — `pnpm install`
+does not touch them, and they resolve their own dependencies on first build.
 
 ## Step 2 — Start the database
 
@@ -142,8 +169,15 @@ closed instead of `Ctrl+C`'d and a port is still stuck (`address already in use`
 `dev:backend`/`dev:*-service` run), find and stop the orphaned process:
 
 ```bash
+# Linux / macOS
 lsof -i :9020          # or :9010 / :9030 / :8080 — whichever port is stuck
 kill <PID>
+```
+
+```powershell
+# Windows (PowerShell)
+Get-NetTCPConnection -LocalPort 9020 -State Listen | Select-Object OwningProcess
+Stop-Process -Id <PID> -Force
 ```
 
 **Frontends:** `Ctrl+C` in each app's terminal — there's no container lifecycle for these in dev
@@ -223,8 +257,13 @@ never goes stale. ticketing-service adds demo fares and six tickets against toda
 
 ## Test scenarios
 
-Each scenario works through the UI or directly against the gateway API. For API calls, get a token
-first:
+Each scenario works through the UI or directly against the gateway API.
+
+> The `curl` snippets below use POSIX shell syntax (`VAR=$(...)`, `\` line continuations). On
+> Windows run them from **Git Bash**, not PowerShell — in PowerShell `curl` is an alias for
+> `Invoke-WebRequest`, which takes entirely different arguments.
+
+For API calls, get a token first:
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \

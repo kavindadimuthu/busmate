@@ -1,0 +1,41 @@
+# Normalise line endings so the repo behaves identically on Windows and Linux.
+#
+# Without this, a Windows clone with core.autocrlf=true rewrites every checked
+# out file to CRLF. That breaks anything executed by a POSIX shell: `mvnw` and
+# the .sh scripts fail with "bad interpreter: /bin/sh^M", and Docker images
+# built from these files inherit the same breakage.
+
+# Default: normalise to LF in the repository, and check out LF everywhere.
+* text=auto eol=lf
+
+# Shell scripts and the Maven Wrapper must stay LF — they run under sh/bash,
+# including inside Linux containers.
+*.sh    text eol=lf
+mvnw    text eol=lf
+gradlew text eol=lf
+
+# Windows batch and PowerShell files need CRLF; cmd.exe mis-parses LF-only
+# batch files with multi-line constructs.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets — never touch these.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.jar  binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+*.keystore binary
+*.apk  binary
+*.aab  binary
+
+# Keep generated lockfiles out of diffs and merge noise.
+pnpm-lock.yaml -diff linguist-generated

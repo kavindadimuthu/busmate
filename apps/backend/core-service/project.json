@@ -9,8 +9,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./mvnw clean compile -DskipTests",
-        "cwd": "{projectRoot}"
+        "command": "node scripts/mvnw.mjs {projectRoot} clean compile -DskipTests"
       },
       "outputs": ["{projectRoot}/target/classes"],
       "inputs": [
@@ -23,8 +22,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./mvnw test",
-        "cwd": "{projectRoot}"
+        "command": "node scripts/mvnw.mjs {projectRoot} test"
       },
       "outputs": ["{projectRoot}/target/surefire-reports"],
       "cache": true
@@ -32,45 +30,27 @@
     "package": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./mvnw clean package -DskipTests",
-        "cwd": "{projectRoot}"
+        "command": "node scripts/mvnw.mjs {projectRoot} clean package -DskipTests"
       },
       "outputs": ["{projectRoot}/target/*.jar"],
       "cache": true
     },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/mvnw.mjs {projectRoot} spring-boot:run"
+      }
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./mvnw spring-boot:run",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "serve:local": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "make run-local",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "serve:prod": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "make run-prod",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "serve:aws": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "make run-aws",
-        "cwd": "{projectRoot}"
+        "command": "node scripts/mvnw.mjs {projectRoot} spring-boot:run"
       }
     },
     "clean": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./mvnw clean",
-        "cwd": "{projectRoot}"
+        "command": "node scripts/mvnw.mjs {projectRoot} clean"
       }
     },
     "docker:build": {

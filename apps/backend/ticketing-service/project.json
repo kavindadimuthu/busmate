@@ -1,9 +1,9 @@
 {
-  "name": "telemetry-service",
+  "name": "ticketing-service",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "root": "apps/backend/telemetry-service",
-  "sourceRoot": "apps/backend/telemetry-service/src",
+  "root": "apps/backend/ticketing-service",
+  "sourceRoot": "apps/backend/ticketing-service/src",
   "tags": ["scope:backend", "type:app", "framework:spring-boot", "lang:java"],
   "targets": {
     "build": {
@@ -56,7 +56,7 @@
     "docker:build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t busmate/telemetry-service:latest .",
+        "command": "docker build -t busmate/ticketing-service:latest .",
         "cwd": "{projectRoot}"
       }
     }
