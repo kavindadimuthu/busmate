@@ -38,8 +38,10 @@ risk_classes:
       - "apps/backend/ticketing-service/**"
 
       # Cross-service fixed-UUID registry. Changing a UUID silently breaks other
-      # services' seed data.
-      - "docs/guides/dev-seed-contract.md"
+      # services' seed data. This path is load-bearing: it is cited by name from
+      # applied Flyway seed migrations, whose comments cannot be edited without
+      # breaking checksum validation. Do not move this file.
+      - "docs/dev-seed-contract.md"
 
       # Deployment and secrets
       - "docker-compose.production.yml"

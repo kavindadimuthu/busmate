@@ -42,6 +42,40 @@ Frontends: `new-react-portal` (Vite — MOT/operator/admin/timekeeper), `passeng
 operations, fleet, licensing, passengerinfo}/{controller, service, repository, entity, dto}`.
 `user-service` uses a flatter `com.busmatelk.backend.*` layout — this divergence is known debt.
 
+## What is actually built
+
+Read this before believing a screen. A polished UI here does not imply a working feature.
+
+**BusMate is a service-registry and day-of-operations execution platform, not a planning platform.**
+The middle of the transit pipeline is genuinely built and wired end to end: network registry,
+timetables with calendars and dated exceptions, trip materialisation, permit-gated operator
+assignment, conductor execution, ticketing. Both ends are thin — there is no planning support
+upstream (no demand data, no design analysis, frequencies implicit in hand-authored timetables), and
+the feedback loop downstream is broken.
+
+Four cross-cutting themes recur almost everywhere, and they explain most of what looks odd:
+
+1. **The feedback loop is the biggest structural gap.** Nothing captures per-stop actual times or
+   vehicle positions, so nothing downstream can inform anything upstream. The
+   `ScheduleStop.*Unverified/*Calculated` columns and the unused `boarding`/`departed`/`delayed` trip
+   statuses show the loop was anticipated in the data model and never built.
+2. **UI-first development left mock shells.** Tracking, analytics, revenue, fares, policies,
+   timekeeper and salaries are complete polished UIs rendering generated data from `data/**/*.ts`.
+   Collectively they overstate real capability — do not treat a screen as evidence of a backend.
+3. **There is no conflict or constraint validation anywhere.** The same bus or conductor can be
+   assigned to overlapping trips; overlapping schedules on a route go undetected; lifecycle
+   transitions are unguarded.
+4. **The decentralised-operator model is deliberate, not accidental.** MOT authors the network and
+   timetables; private operators supply vehicle and crew per trip via PSP permits. Classic
+   centralised optimisation (vehicle blocking, crew rostering) therefore does not apply — the useful
+   improvements are assistance and validation *for* operators, not global optimisers.
+
+Genuine strengths worth preserving: trilingual (EN/Sinhala/Tamil) master data throughout; a GTFS-like
+scheduling model with calendars, dated exceptions and effective windows; role separation enforced at
+the API with ownership checks; public auth-free passenger search that correctly applies stop
+ordering, calendars and exceptions in a single query; and a three-tier time model that surfaces
+partial timetable knowledge honestly instead of faking certainty.
+
 ## Stack
 
 Nx + pnpm monorepo · Java 17 / Spring Boot (Maven Wrapper, outside the pnpm workspace) · Node 20+ /

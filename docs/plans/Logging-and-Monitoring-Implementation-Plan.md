@@ -3,8 +3,8 @@
 **Scope:** System/application observability for the BusMate platform — structured logging,
 metrics, tracing, error tracking, alerting, and uptime — across dev and production.
 
-> Not to be confused with `docs/transit-workflow-evaluation/07-monitoring.md`, which is about
-> *transit* monitoring (vehicle AVL/tracking). This document is about **operating the software**.
+> This is about **operating the software** — not *transit* monitoring (vehicle AVL/tracking), which
+> is a product capability tracked in [`intent/backlog.md`](../../intent/backlog.md).
 
 **Status:** All 6 phases implemented & verified (2026-07-14/15).
 **Target deployment model:** Docker Compose, self-hosted, small team.
