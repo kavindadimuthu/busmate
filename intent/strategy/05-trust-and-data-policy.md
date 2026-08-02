@@ -130,7 +130,7 @@ their review.
 | Area | Commitment |
 |------|-----------|
 | **Data residency** | Data stays in its jurisdiction. Backups included — no cross-border replication |
-| **Tenant isolation** | Enforced at the database, default-deny, plus an automated cross-tenant test suite run on every build ([ADR-005](decisions/ADR-005-tenant-isolation-via-database-rls.md)) |
+| **Tenant isolation** | Enforced at the database, default-deny, plus an automated cross-tenant test suite run on every build ([ADR-005](../decisions/ADR-005-tenant-isolation-via-database-rls.md)) |
 | **Dedicated isolation** | Available as a priced option for customers requiring a separate database |
 | **Encryption** | In transit and at rest; per-jurisdiction key management |
 | **Identity** | Per-jurisdiction; no user accounts span jurisdictions |

@@ -32,9 +32,9 @@ derivable from it: a journey is composed of trips, a fare attaches to a trip, a 
 - The fare and the permit become **layers on top**, not competing bases — the payments and compliance
   businesses stay reachable without being foundational.
 - Scope questions gain a mechanical test: does the proposed thing attach to the trip?
-  ([01 §3](../01-scope-constitution.md))
+  ([01 §3](../strategy/01-scope-constitution.md))
 - Non-scheduled transport (ride-hailing, freight) is excluded by construction, which is intended —
-  see anti-scope, [01 §6](../01-scope-constitution.md).
+  see anti-scope, [01 §6](../strategy/01-scope-constitution.md).
 - The expansion thesis for `AX-3` is limited to scheduled passenger transport: bus, school, staff,
   tourist coach, long-distance van, eventually rail.
 

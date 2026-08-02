@@ -1,0 +1,121 @@
+# HACO risk classes and the autonomy dial, bound to BusMate's actual paths.
+# See haco-methodology.md §7. This is the machine-readable form; the reasoning lives in §7.2-§7.3.
+#
+# Two rules make this real:
+#   1. A change spanning multiple risk classes takes the HIGHEST one.
+#      A UI change that also adjusts a permission check is R3.
+#   2. Autonomy above A2 is earned by test quality, not by confidence. The question is never
+#      "do I trust the agent here?" but "if this were wrong, what would catch it before a user does?"
+#      If the honest answer is "a human reading carefully", it is A2 — whatever this file says.
+
+risk_classes:
+
+  # ---------------------------------------------------------------------------
+  # R3 — Critical. Failure is expensive, irreversible, or invisible until it is
+  # catastrophic. Maximum A2: a human reads every line. Never A3 or A4, including
+  # for "it is just a small change".
+  # ---------------------------------------------------------------------------
+  R3:
+    max_autonomy: A2
+    requires_named_reviewer: true
+    paths:
+      # Authentication and session enforcement
+      - "apps/backend/api-gateway/src/auth/**"
+      - "apps/backend/api-gateway/src/middleware/**"
+      - "apps/backend/user-service/src/main/java/com/busmatelk/backend/security/**"
+
+      # Database schema and reference data. Append-only; an applied migration is
+      # never edited. Canonical irreversible change (HACO §13.3).
+      - "apps/backend/*/src/main/resources/db/migration/**"
+      - "apps/backend/*/src/main/resources/db/reference/**"
+
+      # Contracts consumed by clients we do not control — deployed IoT devices.
+      - "libs/iot-schemas/schemas/**"
+
+      # Money. Payment is a stub today, so this is partly anticipatory —
+      # narrow to the fare/settlement packages at the first calibration review
+      # if it is inflating the Track 2 share past ~20%.
+      - "apps/backend/ticketing-service/**"
+
+      # Cross-service fixed-UUID registry. Changing a UUID silently breaks other
+      # services' seed data.
+      - "docs/guides/dev-seed-contract.md"
+
+      # Deployment and secrets
+      - "docker-compose.production.yml"
+      - "config/secrets/**"
+      - ".github/workflows/**"
+
+  # ---------------------------------------------------------------------------
+  # R2 — Core. Failure is visible and costly but recoverable.
+  # ---------------------------------------------------------------------------
+  R2:
+    default_autonomy: A2
+    max_autonomy: A3
+    # A3 here requires the change to be covered by the Testcontainers integration
+    # suite that backend-ci.yml actually runs. If it is not, stay at A2.
+    paths:
+      - "apps/backend/core-service/**"
+      - "apps/backend/user-service/**"
+      - "apps/backend/telemetry-service/**"
+      - "apps/backend/api-gateway/src/proxy/**"
+      - "apps/backend/api-gateway/src/routes/**"
+      - "apps/backend/api-gateway/src/bff/**"
+      - "apps/backend/api-gateway/src/live/**"
+      # Generated from OpenAPI — never hand-edited. Change the controller and
+      # regenerate; a hand edit here is a contract lie.
+      - "libs/api-clients/**"
+      - "docker-compose.yml"
+      - "docker-compose.e2e.yml"
+      - "docker-compose.observability.yml"
+
+  # ---------------------------------------------------------------------------
+  # R1 — Peripheral. Failure is obvious, cheap, and locally contained.
+  # ---------------------------------------------------------------------------
+  R1:
+    default_autonomy: A3
+    max_autonomy: A4
+    paths:
+      - "libs/ui/**"
+      - "apps/frontend/**"
+      - "tests/**"
+      - "tools/**"
+      - "docs/**"
+      - "intent/**"
+
+# -----------------------------------------------------------------------------
+# Honest override. R1 nominally permits A3-A4, but A4 "requires CI that would
+# actually catch the failure — without it, A4 is just hoping" (HACO §7.3).
+#
+# Today .github/workflows/ contains backend-ci.yml only, and by its own header
+# comment it has never run on GitHub Actions. There is no frontend lint, test or
+# Playwright gate. So for frontend paths the honest answer to "what would catch
+# this?" is "a human reading carefully" — which is A2.
+#
+# Remove this block when frontend CI exists and has demonstrably caught a
+# regression. Not before. Deleting it early is autonomy inflation (HACO §16).
+# -----------------------------------------------------------------------------
+autonomy_ceiling_overrides:
+  - paths: ["apps/frontend/**", "libs/ui/**"]
+    max_autonomy: A2
+    reason: "No frontend CI gate exists. Revisit once lint/test/e2e run on PRs."
+
+# -----------------------------------------------------------------------------
+# The most important list in this file. Short enough to know by heart.
+# It grows only after an incident teaches us something.
+# -----------------------------------------------------------------------------
+always_human:
+  - "Running a migration against any shared or non-local environment"
+  - "Editing a migration that has already been applied anywhere"
+  - "Deleting or altering non-local data"
+  - "Adding a new third-party dependency"
+  - "Relaxing a security control, an RLS policy, or a permission check"
+  - "Changing a published contract without regenerating clients and bumping the version"
+  - "Changing a fixed UUID in the cross-service seed contract"
+  - "Anything that would put us in custody of fare money"
+
+never_worth_a_gate:
+  - "Formatting"
+  - "Lockfile updates from an already-approved dependency change"
+  - "Adding a test that only adds coverage"
+  - "Fixing a broken documentation link"

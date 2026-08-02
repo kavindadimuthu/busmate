@@ -2,7 +2,7 @@
 
 > **What this is.** Where BusMate plays, how it intends to win, and in what order — with explicit gates
 > between phases. Reviewed **quarterly** and whenever a phase gate is passed or missed. The current
-> phase selects work from the [capability-audit backlogs](../system-capability-audit/backlog.md).
+> phase selects work from the [backlog](../backlog.md).
 
 **Status:** Draft, unvalidated 2026-08-02 · **Current phase:** `P-1`, not commercially started
 

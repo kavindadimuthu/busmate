@@ -119,7 +119,7 @@ flowchart LR
 | **Some operators, no authority** | ✅ Works fully. The **default path.** Value is internal — cash control, staff accountability. Needs nobody's permission |
 | **Authority only, no operators** | ✅ Viable govtech business (registry, permits, timetables — the authority's own data). Limit: compliance analytics stay hollow. Risk: single-relationship dependency |
 | **Passenger apps only** | ⚠️ Technically possible, commercially weakest. Permanent manual data cost, no live positions, Google as competitor. Acceptable only if donor- or authority-funded |
-| **Isolated operator, no regional integration** | ✅ Supported at `S-0`. Reference data still syncs inward — see [ADR-006](decisions/ADR-006-reference-data-flows-inward-always.md) |
+| **Isolated operator, no regional integration** | ✅ Supported at `S-0`. Reference data still syncs inward — see [ADR-006](../decisions/ADR-006-reference-data-flows-inward-always.md) |
 | **Operator-branded passenger app** | ✅ As configuration, never a fork. Deliberately weak product (shows one fleet), which is itself the argument for `S-1` |
 
 Isolation is a **permission setting, not an architecture**. Every scenario above is configuration.

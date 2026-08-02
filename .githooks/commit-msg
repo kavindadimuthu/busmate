@@ -1,0 +1,54 @@
+#!/bin/sh
+# HACO anchor enforcement (methodology §4.2, §14 step 1).
+#
+# Every commit must declare which increment it belongs to, via a trailer:
+#
+#     Increment: INC-014
+#
+# Track 0 changes (typos, dep bumps, formatting, local refactors) have no
+# increment file, and declare that explicitly:
+#
+#     Increment: none
+#
+# The trailer is required either way. The point is not bureaucracy — it is that
+# "which increment is this?" becomes a conscious answer rather than silence, and
+# that `git log --grep='Increment: INC-014'` returns a trace that cannot rot.
+#
+# Enable once per clone (already set by `pnpm run setup` if wired there):
+#     git config core.hooksPath .githooks
+#
+# On Windows this runs under Git Bash. Keep it POSIX sh, and keep it LF —
+# .gitattributes enforces LF for *.sh but this file has no extension, so do not
+# let an editor convert it to CRLF.
+
+msg_file="$1"
+
+# Skip machine-generated commits: merges, reverts, fixups, squashes.
+first_line=$(head -n 1 "$msg_file")
+case "$first_line" in
+	Merge\ *|Revert\ *|fixup!\ *|squash!\ *|amend!\ *) exit 0 ;;
+esac
+
+# Ignore comment lines when looking for the trailer.
+body=$(grep -v '^#' "$msg_file")
+
+if printf '%s\n' "$body" | grep -qE '^Increment:[[:space:]]*(INC-[0-9]+|none)[[:space:]]*$'; then
+	exit 0
+fi
+
+cat >&2 <<'EOF'
+
+  ✗ Commit rejected: missing HACO increment anchor.
+
+  Add a trailer as the last line of your commit message:
+
+      Increment: INC-014     ← the increment this work belongs to
+      Increment: none        ← Track 0: typo, dep bump, formatting, local refactor
+
+  Increments live in intent/increments/. Risk classes and the autonomy dial
+  are in intent/policy.yaml. If this change touches auth, money, personal data,
+  migrations, or a published contract, it is R3 — it needs an increment file
+  and a named reviewer, not "none".
+
+EOF
+exit 1

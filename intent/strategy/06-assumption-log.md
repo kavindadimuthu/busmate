@@ -15,7 +15,7 @@
 1. Anything that would **change the plan if false** belongs here, with a named test.
 2. Status: ⏳ untested · 🔬 testing · ✅ validated (with date + evidence) · ❌ falsified · 🔄 revised
 3. **A falsified assumption triggers a revision** of the document it supports, and usually a superseding
-   [decision record](decisions/).
+   [decision record](../decisions/).
 4. Severity 🔴 means the business model does not work if this is false. Test those first, cheapest first.
 
 ## Status summary
@@ -54,7 +54,7 @@ quadrantChart
 
 > **`A-04` is the single largest commercial risk.** If digital fare uptake is slow, `F-1` fails and `F-2`
 > must become primary — which changes pricing, the pilot design, and the argument in
-> [ADR-008](decisions/ADR-008-operator-first-go-to-market.md). Test it as early and as cheaply as possible.
+> [ADR-008](../decisions/ADR-008-operator-first-go-to-market.md). Test it as early and as cheaply as possible.
 
 ## Adoption & behaviour assumptions
 

@@ -5,7 +5,7 @@
 
 ## Context
 
-The passenger layer consumes data it does not generate ([02 §2](../02-business-model.md)). In a region
+The passenger layer consumes data it does not generate ([02 §2](../strategy/02-business-model.md)). In a region
 with low BusMate adoption there are no operators producing trips, yet the passenger app must still be
 useful — that is what creates the pull that brings operators in.
 

@@ -2,7 +2,7 @@
 
 > **What this is.** The technical rules that make the business model in [02](02-business-model.md) and the
 > policy in [05](05-trust-and-data-policy.md) possible. Principles change rarely; the individual decisions
-> that apply them are appended continuously to [decisions/](decisions/) as ADRs.
+> that apply them are appended continuously to [decisions/](../decisions/) as ADRs.
 >
 > Each principle exists because violating it is **expensive or impossible to reverse**. Anything cheap to
 > change later is not a principle and does not belong here.
@@ -36,7 +36,7 @@ They do not align, and there is no reason they should. Almost every domain is us
 product; that density **is** the ecosystem ([01 §5](01-scope-constitution.md)).
 
 > **Trip data has exactly one owner, and that owner cannot be a product** — because five products read
-> and write it. See [ADR-002](decisions/ADR-002-decompose-by-data-not-by-product.md).
+> and write it. See [ADR-002](../decisions/ADR-002-decompose-by-data-not-by-product.md).
 
 ## 3. The three layers
 
@@ -103,7 +103,7 @@ rebuild.
 
 Neither a single global database nor per-customer deployments. **One deployment per jurisdiction,
 multi-tenant inside, from one codebase and one control plane.** See
-[ADR-004](decisions/ADR-004-regional-cells-and-multi-tenancy.md).
+[ADR-004](../decisions/ADR-004-regional-cells-and-multi-tenancy.md).
 
 ```mermaid
 flowchart TB
@@ -164,7 +164,7 @@ The test: **can it be added later without touching every table or every query?**
 | Database-enforced RLS, default-deny | Multi-cell release orchestration |
 | Cross-tenant isolation suite in CI | Jurisdiction policy profiles beyond Sri Lanka's PDPA |
 | Reference data separated from tenant data at schema level | Per-tenant encryption keys |
-| Multi-source ingestion with precedence ([ADR-007](decisions/ADR-007-multi-source-ingestion-with-precedence.md)) | Cross-currency billing |
+| Multi-source ingestion with precedence ([ADR-007](../decisions/ADR-007-multi-source-ingestion-with-precedence.md)) | Cross-currency billing |
 | Infrastructure as code | Anything in `P-3`–`P-5` |
 | Audit log on sensitive reads | |
 
@@ -173,6 +173,6 @@ today, and it is already cell number one.
 
 ## 6. Decision records
 
-Applied decisions live in [decisions/](decisions/README.md). Rules: **never edit, never delete.** When a
+Applied decisions live in [decisions/](../decisions/README.md). Rules: **never edit, never delete.** When a
 decision changes, write a superseding record. Every ADR carries a `Revisit when` trigger, because the
 question six months from now is not *what* was decided but *why*, and whether the reason has expired.

@@ -14,6 +14,10 @@
 mvnw    text eol=lf
 gradlew text eol=lf
 
+# Git hooks have no extension, so name them explicitly. They run under sh
+# (Git Bash on Windows) and fail the same way as any other script if CRLF.
+.githooks/* text eol=lf
+
 # Windows batch and PowerShell files need CRLF; cmd.exe mis-parses LF-only
 # batch files with multi-line constructs.
 *.cmd text eol=crlf

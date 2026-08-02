@@ -112,6 +112,20 @@ if (isWindows) {
   }
 }
 
+// ── Git hooks ──────────────────────────────────────────────────────────────
+// The commit-msg hook enforces the HACO `Increment:` trailer (see CLAUDE.md and
+// haco-methodology.md §4.2). Hooks are not shared by clone, so point git at the
+// committed .githooks/ directory. A convention nobody enforces is a convention
+// nobody follows.
+if (existsSync(resolve(repoRoot, '.githooks/commit-msg'))) {
+  const applied = spawnSync('git', ['config', 'core.hooksPath', '.githooks'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
+  if (applied.status === 0) ok('git hooks enabled (core.hooksPath = .githooks)');
+  else warn('could not set core.hooksPath — run: git config core.hooksPath .githooks');
+}
+
 console.log(
   hasWarnings
     ? '\nSetup finished with warnings — resolve them before running the platform.\n'

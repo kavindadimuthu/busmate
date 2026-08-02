@@ -36,7 +36,7 @@ points where one decision covers 50–500 buses.
   already run 80 buses on this route, here is their on-time performance."
 - **Conductor resistance is the key risk**: the product reduces leakage some crew may currently benefit
   from. The product must give crew something too — faster boarding, less cash handling, proof they are not
-  the one skimming. Tracked as [`A-03`](../06-assumption-log.md).
+  the one skimming. Tracked as [`A-03`](../strategy/06-assumption-log.md).
 - NTC/SLTB relationships are used for **intelligence, not sales**, during this phase — keeping `P-4`
   correctly designed years in advance.
 - Company survival does not depend on any single government relationship.
@@ -46,5 +46,5 @@ points where one decision covers 50–500 buses.
 
 - A funded government or donor programme appears that pays for the registry or passenger layer directly —
   that is contract revenue and should be taken, but it does not change the product bet, or
-- [`A-04`](../06-assumption-log.md) fails and digital fare adoption proves too slow for `F-1`, forcing
+- [`A-04`](../strategy/06-assumption-log.md) fails and digital fare adoption proves too slow for `F-1`, forcing
   `F-2` to become the primary flow.

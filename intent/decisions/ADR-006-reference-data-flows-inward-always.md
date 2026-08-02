@@ -6,7 +6,7 @@
 ## Context
 
 Some operators will be skeptical about sharing data and will adopt only on condition that nothing leaves
-their boundary (`S-0`, see [05](../05-trust-and-data-policy.md)). That must be supported — but even a
+their boundary (`S-0`, see [05](../strategy/05-trust-and-data-policy.md)). That must be supported — but even a
 fully private operator needs stops, routes and schedules.
 
 If such an operator maintains their own private copy of reference data, integrating them into the regional
@@ -49,12 +49,12 @@ Reference data comes **in**, always, for every tenant including the most private
 - **The cost of integrating a customer later is decided today.** With this decision, later integration is
   flipping a switch and signing an addendum — days. Without it, months of reconciliation.
 - Sharing becomes a **permission setting, not an architecture**. Every partial-adoption scenario in
-  [02 §5](../02-business-model.md) reduces to configuration.
+  [02 §5](../strategy/02-business-model.md) reduces to configuration.
 - Reference data must be schema-separated from tenant data, reinforcing
   [ADR-005](ADR-005-tenant-isolation-via-database-rls.md).
 - **Never a separate instance per operator.** Per-operator deployments fragment reference data
   permanently, make the passenger layer impossible, and destroy corridor density — the only real network
-  effect ([03 §4](../03-strategy-and-roadmap.md)). One regional deployment, many tenants.
+  effect ([03 §4](../strategy/03-strategy-and-roadmap.md)). One regional deployment, many tenants.
 - Before an authority adopts, BusMate is de facto steward of the route network — asserting what exists
   without statutory authority. Handled by provenance (`PR-6`,
   [ADR-007](ADR-007-multi-source-ingestion-with-precedence.md)): pre-authority data is labelled *observed*,

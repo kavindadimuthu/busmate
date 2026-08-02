@@ -49,4 +49,4 @@ Four boundary levels: **cell** (hard, physical) → **region** (soft, scopes the
 ## Revisit when
 
 - A second jurisdiction is actually signed — at which point the control plane graduates from a config
-  table to real software, and the deferred items in [04 §5](../04-architecture-principles.md) become due.
+  table to real software, and the deferred items in [04 §5](../strategy/04-architecture-principles.md) become due.

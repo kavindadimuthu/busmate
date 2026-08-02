@@ -2,7 +2,7 @@
 
 > **What this is.** The definition of what BusMate *is*, and therefore what it is not. The slowest-changing
 > document in [`docs/strategy/`](README.md) — review yearly, amend only with a superseding
-> [decision record](decisions/). Everything else in this folder must be consistent with it.
+> [decision record](../decisions/). Everything else in this folder must be consistent with it.
 
 **Status:** Adopted 2026-08-02 · **Review due:** 2027-08
 
@@ -18,7 +18,7 @@ This is the scope boundary. It answers "is X part of BusMate?" more reliably tha
 ## 2. The atomic unit — the trip
 
 Every durable ecosystem is built around one repeated event it becomes the authoritative record of — not
-around a product and not around a user. Four candidates were considered; see [ADR-001](decisions/ADR-001-atomic-unit-is-the-trip.md).
+around a product and not around a user. Four candidates were considered; see [ADR-001](../decisions/ADR-001-atomic-unit-is-the-trip.md).
 
 | Unit | The ecosystem becomes | Ceiling | Call |
 |------|----------------------|---------|------|
@@ -114,7 +114,7 @@ apps sharing a logo.
 | Partners (lenders, planners, researchers) | APIs | Aggregate & derived | `P-5` |
 
 **Products decompose by *who*. Domains decompose by *what*.** These are different decompositions of the
-same system and they are not expected to align — see [ADR-002](decisions/ADR-002-decompose-by-data-not-by-product.md).
+same system and they are not expected to align — see [ADR-002](../decisions/ADR-002-decompose-by-data-not-by-product.md).
 
 ## 6. Anti-scope
 
@@ -140,6 +140,6 @@ exist yet.
 
 ## 8. Amendment
 
-This document changes only by a superseding decision record in [decisions/](decisions/), referencing the
+This document changes only by a superseding decision record in [decisions/](../decisions/), referencing the
 section amended and the evidence that forced it. Amending §1 or §2 means BusMate has become a different
 company — which is permitted, but must be deliberate.

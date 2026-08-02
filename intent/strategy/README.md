@@ -1,10 +1,13 @@
 # BusMate Strategy & Business Documentation
 
-> **What this is.** The business-side counterpart to [`docs/system-capability-audit/`](../system-capability-audit/README.md).
-> That set captures *what the system does*; this set captures *what the company is, who pays for it,
-> and which rules constrain how it may be built*. Six documents, deliberately separated by **how often
-> they change** rather than by topic, so that revising fast-moving work never destabilises the
-> slow-moving decisions underneath it.
+> **What this is.** The slow-moving business layer of the [Intent plane](../../CLAUDE.md). It captures
+> *what the company is, who pays for it, and which rules constrain how it may be built* — while
+> [context.md](../context.md) captures what the system currently is. Six documents, deliberately
+> separated by **how often they change** rather than by topic, so that revising fast-moving work never
+> destabilises the slow-moving decisions underneath it.
+>
+> These are the deep source behind [vision.md](../vision.md). They deliberately sit outside the
+> auto-loaded context budget — read them when shaping strategy, not before every task.
 
 > **Status of this material.** Written 2026-08-02 from a strategy working session. Almost none of it is
 > validated with real customers yet. Everything here is a **reasoned hypothesis**, not a finding —
@@ -20,7 +23,7 @@
 | 01 | [Scope Constitution](01-scope-constitution.md) | What *is* BusMate? What is in and out? | Yearly review | Internal, co-founders |
 | 02 | [Business Model](02-business-model.md) | Who pays whom, for what, at what granularity? | Quarterly | Internal, investors |
 | 03 | [Strategy & Roadmap](03-strategy-and-roadmap.md) | Where do we play, how do we win, in what order? | Quarterly | Internal, investors |
-| 04 | [Architecture Principles](04-architecture-principles.md) | Which technical rules are non-negotiable? | Principles rarely; [decisions/](decisions/) append continuously | Engineering |
+| 04 | [Architecture Principles](04-architecture-principles.md) | Which technical rules are non-negotiable? | Principles rarely; [decisions/](../decisions/) append continuously | Engineering |
 | 05 | [Trust & Data Policy](05-trust-and-data-policy.md) | Who owns, sees and controls which data? | Rarely | **Customer-facing** |
 | 06 | [Assumption & Validation Log](06-assumption-log.md) | What do we believe, and how do we know? | **Weekly** | Internal |
 
@@ -34,7 +37,7 @@ flowchart TD
     AP["04 · Architecture Principles<br/>+ decisions/ ADR log"]
     TD["05 · Trust & Data Policy<br/><i>customer-facing</i>"]
     AL["06 · Assumption Log<br/><i>weekly</i>"]
-    BL["system-capability-audit/<br/>section backlogs"]
+    BL["intent/backlog.md<br/>→ increments"]
 
     C -->|"bounds what may be built"| BM
     C -->|"bounds what may be built"| AP
@@ -61,7 +64,7 @@ the decision that motivated it and the assumption it tests.
 | `F-n` | Value flow (a revenue line) | [02](02-business-model.md) |
 | `P-n` | Phase | [03](03-strategy-and-roadmap.md) |
 | `AX-n` | Expansion axis | [03](03-strategy-and-roadmap.md) |
-| `ADR-nnn` | Decision record (architecture, strategy or commercial) | [decisions/](decisions/) |
+| `ADR-nnn` | Decision record (architecture, strategy or commercial) | [decisions/](../decisions/) |
 | `PR-n` | Architecture principle | [04](04-architecture-principles.md) |
 | `S-n` | Data-sharing tier (operator-facing) | [05](05-trust-and-data-policy.md) |
 | `SRC-n` | Data source tier | [05](05-trust-and-data-policy.md) |
