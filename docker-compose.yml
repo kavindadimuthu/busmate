@@ -107,6 +107,57 @@ services:
       retries: 12
       start_period: 20s
 
+  # Object storage for user- and operator-supplied media — profile photos first,
+  # vehicle images next (ADR-009, INC-003). Self-hosted so that a deployment needs an
+  # account nowhere: this container is the S3 endpoint on a laptop and on a bare VPS
+  # alike, and repointing MEDIA_S3_* at managed S3 or R2 instead is a configuration
+  # change with no code change. That portability is the reason the application talks
+  # the S3 API rather than a vendor client.
+  #
+  # Nothing outside this Compose network needs to reach it: media is proxied through
+  # api-gateway, because invariant 1 says frontends call the gateway only. The ports
+  # published below therefore exist purely for local debugging and the web console,
+  # and docker-compose.production.yml must not publish them.
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: busmate-dev-minio
+    command: server /data --console-address ":9001"
+    env_file:
+      - config/secrets/.env
+    ports:
+      - "9000:9000"   # S3 API — local debugging only
+      - "9001:9001"   # MinIO web console
+    volumes:
+      - busmate_dev_minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # One-shot: create the media bucket and assert that it is not anonymously readable.
+  # Reuses the MinIO image because it already ships `mc`, so there is no second image
+  # to pin, trust or keep updated. Both commands are idempotent, making a restart a
+  # no-op rather than an error. `$$` escapes the interpolation so the variables are
+  # expanded by the shell inside the container, where env_file has actually put them.
+  minio-init:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: busmate-dev-minio-init
+    env_file:
+      - config/secrets/.env
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - |
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+        mc mb --ignore-existing "local/$$MEDIA_S3_BUCKET" &&
+        mc anonymous set none "local/$$MEDIA_S3_BUCKET"
+    restart: "no"
+
   api-gateway:
     build:
       context: apps/backend/api-gateway
@@ -159,6 +210,9 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      # Credentials and bucket come from the central secrets file; only the endpoint
+      # is topology, so only the endpoint is set here.
+      - MEDIA_S3_ENDPOINT=http://minio:9000
       - OTEL_SERVICE_NAME=user-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -173,6 +227,9 @@ services:
         condition: service_healthy
       redpanda:
         condition: service_started
+      # Waits for the bucket to exist, not merely for MinIO to be listening.
+      minio-init:
+        condition: service_completed_successfully
 
   core-service:
     build:
@@ -273,3 +330,4 @@ volumes:
   busmate_dev_postgres_data:
   busmate_dev_redpanda_data:
   busmate_dev_emqx_data:
+  busmate_dev_minio_data:
