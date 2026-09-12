@@ -40,3 +40,4 @@
 | [ADR-006](ADR-006-reference-data-flows-inward-always.md) | Reference data flows inward always | architecture | Accepted |
 | [ADR-007](ADR-007-multi-source-ingestion-with-precedence.md) | Multi-source ingestion resolved by precedence | architecture | Accepted |
 | [ADR-008](ADR-008-operator-first-go-to-market.md) | Operator-first go-to-market | strategy | Accepted |
+| [ADR-009](ADR-009-self-hosted-s3-compatible-media-storage.md) | Media lives in self-hosted, S3-compatible object storage | architecture | Accepted |
