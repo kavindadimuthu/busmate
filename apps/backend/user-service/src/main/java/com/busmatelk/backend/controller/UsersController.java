@@ -6,16 +6,20 @@ import com.busmatelk.backend.dto.response.RegisterResponse;
 import com.busmatelk.backend.dto.response.UserPermissionsResponse;
 import com.busmatelk.backend.dto.response.UserResponse;
 import com.busmatelk.backend.service.AuthService;
+import com.busmatelk.backend.service.ProfilePhotoService;
 import com.busmatelk.backend.service.UserProfileService;
 import com.busmatelk.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,6 +30,7 @@ public class UsersController {
 
     private final UserService userService;
     private final UserProfileService userProfileService;
+    private final ProfilePhotoService profilePhotoService;
     private final AuthService authService;
 
     @GetMapping
@@ -93,6 +98,31 @@ public class UsersController {
     public ResponseEntity<Map<String, Object>> updateProfile(Authentication authentication, @PathVariable UUID userId,
                                                                @RequestBody Map<String, Object> patch) {
         return ResponseEntity.ok(userProfileService.updateProfile(callerId(authentication), userId, patch));
+    }
+
+    /**
+     * The bytes are read here rather than streamed onward because every later step — the size
+     * check, the format check, and the re-encode that strips metadata — needs the whole image,
+     * and the upload limit is what keeps that bounded.
+     */
+    @PutMapping("/{userId}/profile/photo")
+    public ResponseEntity<Void> uploadProfilePhoto(Authentication authentication, @PathVariable UUID userId,
+                                                   @RequestParam("file") MultipartFile file) throws IOException {
+        profilePhotoService.replacePhoto(callerId(authentication), userId, file.getBytes());
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 404 distinguishes "this user has no photo" from a photo that failed to load, so a client
+     * never has to guess whether to show a fallback.
+     */
+    @GetMapping("/{userId}/profile/photo")
+    public ResponseEntity<byte[]> getProfilePhoto(Authentication authentication, @PathVariable UUID userId) {
+        return profilePhotoService.readPhoto(callerId(authentication), userId)
+                .map(photo -> ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(photo.contentType()))
+                        .body(photo.bytes()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{userId}/permissions")

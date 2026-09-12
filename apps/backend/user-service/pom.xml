@@ -30,7 +30,22 @@
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+		<awssdk.version>2.46.7</awssdk.version>
 	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- The AWS SDK ships a large set of co-versioned artifacts; the BOM keeps
+			     them aligned so the s3 dependency below needs no version of its own. -->
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<!-- Loads config/secrets/.env into the Spring environment for local dev.
@@ -210,6 +225,16 @@
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
 			<version>3.3.3</version>
+		</dependency>
+
+		<!-- Media object storage (ADR-009). Deliberately the vendor-neutral AWS SDK
+		     rather than a MinIO client: the S3 API is the portability boundary, and
+		     a deployment swaps MinIO for managed S3 by configuration alone. Stripping
+		     image metadata and validating image bytes need no dependency — decoding
+		     and re-encoding through the JDK's own ImageIO does both. -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
 		</dependency>
 
 	</dependencies>

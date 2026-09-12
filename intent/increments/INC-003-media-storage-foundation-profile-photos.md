@@ -49,8 +49,10 @@ image bucket starts serving HTML.
 **Image metadata is stripped on ingest**, per invariant 8 — a phone photo carries GPS and capture
 time.
 
-**The old object is deleted when a photo is replaced**, so that storage growth is bounded by user
-count rather than by edit count.
+**A replacement overwrites the previous object rather than accumulating alongside it**, so that
+storage grows with the number of users rather than the number of edits. This falls out of deriving
+the key from the user's identifier instead of generating a fresh one per upload, which also means no
+orphaned object can outlive the profile that pointed at it.
 
 **The photo key is stored alongside the other profile attributes rather than in a column of its
 own.** A user's profile is already a validated document rather than a fixed column set, so a
@@ -109,8 +111,15 @@ inherit this, and their increment should expect a migration and the R3 that come
 - Storage credentials belong in the existing central secrets file; this increment does not invent a
   second place for secrets.
 - The upload contract is a published contract — clients are generated, never hand-edited.
-- Keys embed owning tenant and entity, so that an authorisation decision never requires a database
+- Keys embed the owning entity, so that an authorisation decision never requires a database
   round-trip. Getting this wrong is expensive to change once objects exist.
+- **Tenancy is deliberately absent from the key.** ADR-004 and ADR-005 describe logical
+  multi-tenancy, but `user-service` has no tenant column and no tenant-aware code today, so a tenant
+  segment in the key would be inventing a value rather than recording one. The user identifier is
+  globally unique and the existing permission checks already answer "may this caller reach this
+  user", so nothing is lost while tenancy remains unimplemented — but whichever increment introduces
+  a real tenancy model must revisit the key layout while the object count is still small enough for
+  that to be cheap.
 
 ## Open questions
 

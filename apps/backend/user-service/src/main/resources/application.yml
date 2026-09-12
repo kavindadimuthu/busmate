@@ -107,6 +107,14 @@ spring:
     username: ${SMTP_USERNAME:}
     password: ${SMTP_PASSWORD:}
 
+  # Deliberately a little above media.max-upload-bytes, so that an upload merely over the
+  # limit is rejected by our own check with a message naming the limit, while an absurd one
+  # is still cut off by the container before it is buffered.
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 10MB
+
 server:
   address: 0.0.0.0
   port: ${SERVER_PORT:9020}
@@ -186,6 +194,22 @@ core-service:
 # How often OperatorSyncRetryJob polls operator_sync_outbox for due PENDING rows.
 operator-sync:
   retry-interval-ms: ${OPERATOR_SYNC_RETRY_INTERVAL_MS:30000}
+
+# Media object storage (ADR-009). Every value here is S3-generic on purpose: pointing a
+# deployment at managed S3, R2 or any other S3-compatible endpoint is a change to these
+# settings and nothing else. The local default is docker-compose's `minio` service as
+# reached from the host; docker-compose sets MEDIA_S3_ENDPOINT to reach it container-to-
+# container instead. Credentials have no fallback — an unconfigured deployment should
+# fail loudly at startup rather than quietly write nowhere.
+media:
+  s3:
+    endpoint: ${MEDIA_S3_ENDPOINT:http://localhost:9000}
+    bucket: ${MEDIA_S3_BUCKET:busmate-media}
+    region: ${MEDIA_S3_REGION:us-east-1}
+    access-key: ${MEDIA_S3_ACCESS_KEY}
+    secret-key: ${MEDIA_S3_SECRET_KEY}
+  # Rejected above this size before anything is read into memory or written to storage.
+  max-upload-bytes: ${MEDIA_MAX_UPLOAD_BYTES:5242880}
 
 logging:
   level:
