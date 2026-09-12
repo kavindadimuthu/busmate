@@ -1,7 +1,7 @@
 ---
 id: INC-003
 title: Media storage foundation, proven on user profile photos
-state: shaped
+state: active
 track: 2
 risk: R2
 owner: kavinda
@@ -63,23 +63,28 @@ inherit this, and their increment should expect a migration and the R3 that come
 
 ## Acceptance criteria
 
-- [ ] A user who uploads a photo through the gateway and then reads their own profile gets the photo
+- [x] A user who uploads a photo through the gateway and then reads their own profile gets the photo
       back; a user who has never uploaded one gets an unambiguous "no photo" answer rather than a
-      broken or placeholder link.
-- [ ] A user cannot read or overwrite another user's photo, and an unauthenticated request cannot
+      broken or placeholder link. **Holds only for a user who has a profile record — see Discovered
+      during the work.**
+- [x] A user cannot read or overwrite another user's photo, and an unauthenticated request cannot
       reach media at all — including by guessing or replaying an object key.
-- [ ] The stored object cannot be made to serve as anything other than an image, regardless of what
+- [x] The stored object cannot be made to serve as anything other than an image, regardless of what
       the uploader declares the file to be or what it is named.
-- [ ] An upload larger than the configured limit, or that is not a supported image, is rejected with
+- [x] An upload larger than the configured limit, or that is not a supported image, is rejected with
       a message that says which of the two happened — and nothing is written to storage.
-- [ ] A photo containing GPS and timestamp metadata, once uploaded, can be fetched back and shown to
+- [x] A photo containing GPS and timestamp metadata, once uploaded, can be fetched back and shown to
       contain neither.
-- [ ] Replacing a photo leaves exactly one object for that user in storage.
+- [x] Replacing a photo leaves exactly one object for that user in storage.
 - [ ] The whole flow works against a freshly cloned repository with the documented development
       commands and no account on any external service.
-- [ ] Pointing the deployment at a different S3-compatible endpoint changes configuration only — this
-      is verified by an actual run against a second endpoint, not by inspection of the code.
-- [ ] Acceptance tests name INC-003 and run against real storage and a real database, consistent with
+- [x] Pointing the deployment at a different S3-compatible endpoint changes configuration only — this
+      is verified by an actual run against a second endpoint, not by inspection of the code. **Partly
+      met:** the acceptance suite runs the same code against a second, independent endpoint with
+      different credentials and a different bucket, purely by configuration. That is a real second
+      endpoint but the same server software, so it does not yet prove portability across a
+      *different* S3 implementation.
+- [x] Acceptance tests name INC-003 and run against real storage and a real database, consistent with
       the existing Testcontainers convention.
 
 ## Out of scope
@@ -137,6 +142,29 @@ inherit this, and their increment should expect a migration and the R3 that come
   plausibly want to show crew photos, which would change the access rule from "owner only" to
   something the permission engine has to answer. The acceptance criteria above assume owner-only, and
   that assumption is cheap to hold and expensive to guess wrong.
+
+## Discovered during the work
+
+**Self-registration does not leave a profile record, and that blocks this increment's goal for
+exactly the users most likely to set a photo.** `registerPassenger` writes the user, the credential,
+the identity and the profile inside one transaction, yet the profile row is absent afterwards while
+the user row is committed. It reproduces on every self-registration. This is not caused by anything
+here — the pre-existing profile read fails identically for the same user, and nothing in this
+increment touches the registration path — but a newly registered passenger currently cannot upload a
+photo, because there is no profile document to record the key in.
+
+Two consequences, both narrowing rather than expanding this increment:
+
+1. The first acceptance criterion is met only for users that have a profile record. End-to-end
+   verification used a profile created directly in the local development database.
+2. The fix belongs to its own increment, in the registration path rather than in media. Doing it
+   here would mix an auth-path change into a media review, and the cause is not yet understood —
+   a transaction that commits one of its writes and silently drops another deserves an explanation
+   before a fix, because the same shape could affect the credential and identity writes beside it.
+
+**No gateway change was needed.** `/api/users` is already proxied by prefix, and the proxy streams
+bodies rather than parsing them — a global JSON body parser was deliberately avoided there — so
+multipart passes through untouched. This was the risk most likely to cost a day, and it cost none.
 
 ## Decisions
 
