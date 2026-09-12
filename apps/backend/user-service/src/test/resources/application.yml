@@ -79,6 +79,20 @@ internal:
 core-service:
   url: http://localhost:19010
 
+# Media object storage. ProfilePhotoIntegrationTest replaces the endpoint and credentials with a
+# real MinIO container via @DynamicPropertySource; the values here exist only so that every other
+# test's context can resolve the placeholders, since no other test touches storage. The main
+# config deliberately gives the credentials no default so that a misconfigured deployment fails
+# at startup — a test context has to start without a bucket, which is why these are set.
+media:
+  s3:
+    endpoint: http://localhost:19000
+    bucket: test-media
+    region: us-east-1
+    access-key: test-access-key
+    secret-key: test-secret-key
+  max-upload-bytes: 5242880
+
 logging:
   level:
     org.springframework: WARN
