@@ -25,13 +25,13 @@ VALUES
      '{"organization_name": "Sri Lanka Transport Board - Central Province", "registration_id": "SLTB-CP-REG-1979-001", "operator_type": "CTB", "region": "Central Province"}'::jsonb),
 
     (gen_random_uuid(), '00000000-0000-0000-0000-000000000301',
-     '{"employee_id": "EMP-CND-1001", "nic_number": "199045612345", "assign_operator_id": "00000000-0000-0000-0000-000000000101"}'::jsonb),
+     '{"employee_id": "EMP-CND-1001", "nic_number": "199045612345", "assign_operator_id": "00000000-0000-0000-0000-000000010501"}'::jsonb),
 
     (gen_random_uuid(), '00000000-0000-0000-0000-000000000302',
-     '{"employee_id": "EMP-CND-1002", "nic_number": "199267890123", "assign_operator_id": "00000000-0000-0000-0000-000000000102"}'::jsonb),
+     '{"employee_id": "EMP-CND-1002", "nic_number": "199267890123", "assign_operator_id": "00000000-0000-0000-0000-000000010502"}'::jsonb),
 
     (gen_random_uuid(), '00000000-0000-0000-0000-000000000303',
-     '{"employee_id": "EMP-CND-1003", "nic_number": "198834567890", "assign_operator_id": "00000000-0000-0000-0000-000000000103"}'::jsonb),
+     '{"employee_id": "EMP-CND-1003", "nic_number": "198834567890", "assign_operator_id": "00000000-0000-0000-0000-000000010503"}'::jsonb),
 
     (gen_random_uuid(), '00000000-0000-0000-0000-000000000201', '{}'::jsonb),
     (gen_random_uuid(), '00000000-0000-0000-0000-000000000202', '{}'::jsonb),
