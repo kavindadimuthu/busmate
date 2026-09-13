@@ -120,6 +120,18 @@ this.
 
 ## Discovered during the work
 
+**A real reentrancy bug in token refresh, hit for the first time by this increment's overnight
+device-testing gap.** `AuthContext`'s startup effect calls `refreshUser()` whenever a stored
+session exists; every earlier test session had a freshly-issued token (never actually exercising
+the refresh path), so this had never surfaced before. The generated API client calls the token
+resolver for every request, including the `/auth/refresh` request itself; the in-flight-refresh
+guard in `tokenStore.ts` was only set after an `await`, leaving a window where that self-referential
+call still saw no refresh in progress and started a second one recursively - hanging app launch
+indefinitely with no error, whenever a stored token had actually expired. Fixed by setting the
+guard synchronously before any await. Also added a 10s timeout around the whole startup
+session-restore sequence as a safety net, so no future stall of any kind can hang the splash
+screen forever again.
+
 **Real end-to-end device testing found and fixed a genuine backend bug, unrelated to PayHere
 itself.** The demo-data seed migrations (`V900`-`V905`) inserted `transactions`/`tickets`/
 `cash_payments`/`online` rows with explicit primary keys without advancing the IDENTITY sequences

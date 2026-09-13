@@ -31,26 +31,37 @@ export async function getAccessToken(): Promise<string | null> {
   return AsyncStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
-async function refreshAccessToken(): Promise<string> {
-  const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-  if (!refreshToken) {
-    return '';
+function refreshAccessToken(): Promise<string> {
+  // The generated client calls config.TOKEN (resolveAccessToken) to build the Authorization
+  // header for EVERY request, including this refresh call itself - so AuthControllerService
+  // .refresh() recurses straight back into resolveAccessToken() while building its own headers.
+  // pendingRefresh is the guard against that, but it must be assigned synchronously, before any
+  // await: the original code awaited AsyncStorage.getItem() first and only set pendingRefresh
+  // afterwards, leaving a window where the recursive call still saw it as null and started a
+  // second refresh - which itself recursed the same way, hanging the app on launch whenever a
+  // stored session had actually expired (the everyday login path never exercised this, since a
+  // fresh token never needs refreshing).
+  if (pendingRefresh) {
+    return pendingRefresh;
   }
 
-  if (!pendingRefresh) {
-    pendingRefresh = AuthControllerService.refresh({ refreshToken })
-      .then(async (response) => {
-        await saveSession(response.accessToken!, response.refreshToken!, Number(response.expiresIn));
-        return response.accessToken!;
-      })
-      .catch(async (error) => {
-        await clearSession();
-        throw error;
-      })
-      .finally(() => {
-        pendingRefresh = null;
-      });
-  }
+  pendingRefresh = (async () => {
+    const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!refreshToken) {
+      return '';
+    }
+    try {
+      const response = await AuthControllerService.refresh({ refreshToken });
+      await saveSession(response.accessToken!, response.refreshToken!, Number(response.expiresIn));
+      return response.accessToken!;
+    } catch (error) {
+      await clearSession();
+      throw error;
+    }
+  })().finally(() => {
+    pendingRefresh = null;
+  });
+
   return pendingRefresh;
 }
 

@@ -72,7 +72,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     (async () => {
-      try {
+      // A hung network call here (or any other unexpected async stall) must never leave the
+      // conductor staring at the splash screen forever - it has no error state of its own to
+      // recover from, only a timeout. Falls back to "not logged in"; a real session is safely
+      // re-established by simply logging back in.
+      const restoreWork = (async () => {
         await Promise.all([
           (async () => {
             if (await hasStoredSession()) {
@@ -81,6 +85,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           })(),
           checkBiometricSupport(),
         ]);
+      })();
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Session restore timed out')), 10_000)
+      );
+
+      try {
+        await Promise.race([restoreWork, timeout]);
       } catch (error) {
         console.error('Failed to restore session:', error);
         await clearSession();
