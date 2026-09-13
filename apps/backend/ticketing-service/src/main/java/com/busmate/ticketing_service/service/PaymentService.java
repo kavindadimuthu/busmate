@@ -38,6 +38,18 @@ public interface PaymentService {
 
     ConductorLogTicketDTO cancelTicket(Long ticketId, TicketCancelRequestDTO requestDTO);
 
+    /**
+     * Reconciles a conductor-collected card payment (INC-008) against PayHere's own record of
+     * it, driven by the notify_url webhook. The ticket was already issued optimistically when
+     * the conductor's app reported success; this only corrects the Online/Transaction status if
+     * PayHere's authoritative record disagrees - it never un-issues or invalidates the ticket,
+     * since the passenger has already been handed a boarding-valid digital ticket.
+     *
+     * @param orderId    the transactionRef the app generated and sent as PayHere's order_id
+     * @param statusCode PayHere's status_code (2=success, 0=pending, -1=cancelled, -2=failed, -3=chargedback)
+     */
+    void applyPayHereNotification(String orderId, int statusCode);
+
     // Admin (operator/MOT) ticket listing - filterable, paginated
     Page<ConductorLogTicketDTO> getAllTicketsWithFilters(
             List<String> busIds,

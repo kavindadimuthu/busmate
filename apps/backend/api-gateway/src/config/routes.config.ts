@@ -51,4 +51,10 @@ export const routes: RouteConfig[] = [
   { pathPrefix: '/api/v1/tickets', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/routeFare', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/baseFare', target: 'TICKETING', requiresAuth: true },
+  // PayHere (INC-008, conductor-collected card payments). notify is PayHere's own server
+  // calling us directly - it cannot present a BusMate JWT, so it must come before (and thus
+  // win over) the broader authenticated /hash prefix, exactly like /api/auth/login above.
+  // Its own md5sig is the authentication (verified in PayHereController).
+  { pathPrefix: '/api/v1/payments/payhere/notify', target: 'TICKETING', requiresAuth: false },
+  { pathPrefix: '/api/v1/payments/payhere/hash', target: 'TICKETING', requiresAuth: true },
 ];

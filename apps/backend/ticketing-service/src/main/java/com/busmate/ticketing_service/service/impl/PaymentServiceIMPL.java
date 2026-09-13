@@ -22,6 +22,7 @@ import com.busmate.ticketing_service.repository.TransactionsRepo;
 import com.busmate.ticketing_service.service.PaymentService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -34,6 +35,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceIMPL implements PaymentService {
@@ -80,6 +82,36 @@ public class PaymentServiceIMPL implements PaymentService {
                 conductorLogRepo.save(cashPayment);
 
                 // Set ticket details
+                ticket.setStatus(Tickets.Status.VALID);
+                ticket.setIssueMethod(Tickets.IssueMethod.CONDUCTOR);
+                ticket.setTransactions(savedTransaction);
+
+            } else if ("CARD".equalsIgnoreCase(requestDTO.getPaymentMethod())) {
+                // INC-008: conductor collected a card payment via PayHere's in-app SDK. By the
+                // time this request arrives, PayHere's own popup has already returned SUCCESS to
+                // the app (see PayHereController) - this is not a "pending online payment" the
+                // way the ONLINE branch below is, so it's issued the same way CASH is: complete
+                // and boarding-valid immediately, with the money already collected in person.
+                //
+                // Transactions.Method has no CARD value (its DB column is a 0/1 ordinal check
+                // constraint - CASH=0, ONLINE=1 - adding one needs a migration, which is out of
+                // scope here). ONLINE already means "detail lives in the online sub-table", which
+                // is true here too; the actual method (CARD vs a real online redirect) is
+                // recorded precisely by Online.Method below, which already supports CARD.
+                transaction.setPaymentMethod(Transactions.Method.ONLINE);
+                transaction.setStatus(Transactions.Status.COMPLETED);
+                Transactions savedTransaction = transactionsRepo.save(transaction);
+
+                Online cardPayment = new Online();
+                cardPayment.setAmount(requestDTO.getFareAmount());
+                cardPayment.setMethod(Online.Method.CARD);
+                cardPayment.setStatus(Online.Status.SUCCESS);
+                cardPayment.setTransactionRef(requestDTO.getTransactionRef());
+                cardPayment.setCreatedAt(LocalDateTime.now());
+                cardPayment.setTransactions(savedTransaction);
+                cardPayment.setPassengerId(requestDTO.getPassengerId());
+                onlineRepo.save(cardPayment);
+
                 ticket.setStatus(Tickets.Status.VALID);
                 ticket.setIssueMethod(Tickets.IssueMethod.CONDUCTOR);
                 ticket.setTransactions(savedTransaction);
@@ -217,6 +249,49 @@ public class PaymentServiceIMPL implements PaymentService {
 
         boolean confirmed = result.status() == PaymentGateway.PaymentStatus.SUCCESS;
         return new PaymentConfirmResponseDTO(ticketId, result.status().name(), confirmed);
+    }
+
+    @Override
+    @Transactional
+    public void applyPayHereNotification(String orderId, int statusCode) {
+        Online online = onlineRepo.findByTransactionRef(orderId).orElse(null);
+        if (online == null) {
+            // Either a stale/replayed notify, or one that arrived before issueTicket()'s save
+            // committed. Nothing to reconcile against - log and move on rather than fail the
+            // webhook (PayHere would just retry a 200 the same way).
+            log.warn("[PayHere notify] no Online record for orderId {} - nothing to reconcile", orderId);
+            return;
+        }
+
+        // status_code: 2=success, 0=pending, everything else is not a success (PayHere docs).
+        Online.Status newStatus = statusCode == 2 ? Online.Status.SUCCESS : Online.Status.FAILED;
+
+        if (online.getStatus() == newStatus) {
+            return; // already consistent - nothing to do
+        }
+
+        if (online.getStatus() == Online.Status.SUCCESS && newStatus == Online.Status.FAILED) {
+            // The ticket was already issued and handed to the passenger as boarding-valid on the
+            // app's optimistic success callback. PayHere now disagrees after the fact (rare -
+            // e.g. a late issuer decline). Flag the money side for finance reconciliation, but
+            // deliberately do NOT touch ticket.status - a passenger who already boarded on a
+            // shown digital ticket must not have it silently invalidated.
+            log.warn("[PayHere notify] order {} was recorded SUCCESS but PayHere now reports "
+                    + "statusCode={} - ticket stays valid, flagging transaction for manual review",
+                    orderId, statusCode);
+        }
+
+        online.setStatus(newStatus);
+        online.setUpdatedAt(LocalDateTime.now());
+        onlineRepo.save(online);
+
+        Transactions transaction = online.getTransactions();
+        if (transaction != null) {
+            transaction.setStatus(newStatus == Online.Status.SUCCESS
+                    ? Transactions.Status.COMPLETED
+                    : Transactions.Status.FAILED);
+            transactionsRepo.save(transaction);
+        }
     }
 
     @Override

@@ -1,9 +1,14 @@
 import { CashTicketLog, useTicket } from '@/contexts/TicketContext';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { API_GATEWAY_URL } from '@/config/apiConfig';
+import { payhereApi } from '@/services/api/payhere';
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import PayHere from '@payhere/payhere-mobilesdk-reactnative';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
   RefreshControl,
@@ -47,7 +52,8 @@ export default function TicketsScreen() {
   const [phoneNumber, setPhoneNumber] = useState('+94 77 123 4567');
   const [totalFare, setTotalFare] = useState(0);
   const [farePerPassenger, setFarePerPassenger] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Dropdown states
   const [showFromDropdown, setShowFromDropdown] = useState(false);
@@ -205,7 +211,9 @@ export default function TicketsScreen() {
     updateFare(fromLocation, toLocation, newCount);
   };
 
-  const issueTicket = () => {
+  // transactionRef is optional so the CARD flow can pass in the same orderId it already gave
+  // PayHere (INC-008) - the notify webhook reconciles by that reference, so it must match.
+  const issueTicket = (transactionRef?: string) => {
     // Generate ticket ID
     const ticketId = `TK-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
     const currentDate = new Date().toLocaleDateString('en-US', {
@@ -263,7 +271,7 @@ export default function TicketsScreen() {
     endLocationId: toStop?.stopId || 'unknown',
     fareAmount: parseFloat(totalFare.toFixed(2)),
     paymentMethod: paymentMethod,
-    transactionRef: `TXN-${Date.now()}-${ticketId}`
+    transactionRef: transactionRef || `TXN-${Date.now()}-${ticketId}`
   };
 
     console.log(' Backend data validation:', {
@@ -308,6 +316,70 @@ export default function TicketsScreen() {
 
     console.log(' Ticket created with backend data:', backendData);
     console.log(' Cash ticket log added:', cashTicketLog);
+  };
+
+  // INC-008: conductor taps the passenger's card through PayHere's in-app SDK. The ticket is
+  // only created (issueTicket()) after PayHere itself reports SUCCESS - a declined or cancelled
+  // tap never creates a ticket. PayHere requires customer fields (name/email/phone/address) that
+  // don't exist for a walk-up bus passenger paying by tap; generic placeholders are sent since
+  // PayHere doesn't validate their authenticity for this flow - only the card matters.
+  const collectCardPaymentAndIssueTicket = async () => {
+    const orderId = `TXN-${Date.now()}-${ongoingTrip?.id ?? 'trip'}`;
+    const amount = parseFloat(totalFare.toFixed(2));
+
+    setIsProcessingPayment(true);
+    try {
+      const hashResponse = await payhereApi.getHash(orderId, amount);
+
+      PayHere.startPayment(
+        {
+          sandbox: hashResponse.sandbox,
+          merchant_id: hashResponse.merchantId,
+          notify_url: `${API_GATEWAY_URL}/api/v1/payments/payhere/notify`,
+          order_id: hashResponse.orderId,
+          items: `Bus fare: ${fromLocation} to ${toLocation}`,
+          amount: hashResponse.amount.toFixed(2),
+          currency: hashResponse.currency,
+          hash: hashResponse.hash,
+          first_name: 'Bus',
+          last_name: 'Passenger',
+          email: 'passenger@busmate.lk',
+          phone: '0770000000',
+          address: 'N/A',
+          city: 'Colombo',
+          country: 'Sri Lanka',
+        },
+        (paymentId: string) => {
+          // onCompleted - PayHere's own popup already confirmed the card succeeded.
+          setIsProcessingPayment(false);
+          issueTicket(orderId);
+          router.push('/Ticket/ticketPrintingpage');
+        },
+        (error: string) => {
+          // onError
+          setIsProcessingPayment(false);
+          Alert.alert('Card Payment Failed', error || 'The payment could not be completed. No ticket was issued.');
+        },
+        () => {
+          // onDismissed - conductor or passenger closed the payment screen without completing it.
+          setIsProcessingPayment(false);
+          Alert.alert('Payment Cancelled', 'No ticket was issued.');
+        },
+      );
+    } catch (error: any) {
+      setIsProcessingPayment(false);
+      console.error('❌ Failed to start PayHere payment:', error);
+      Alert.alert('Payment Error', 'Could not start the card payment. Please check your connection and try again.');
+    }
+  };
+
+  const handleIssueTicketPress = () => {
+    if (paymentMethod === 'CARD') {
+      collectCardPaymentAndIssueTicket();
+    } else {
+      issueTicket();
+      router.push('/Ticket/ticketPrintingpage');
+    }
   };
 
   return (
@@ -449,16 +521,47 @@ export default function TicketsScreen() {
           </View>
         </View> */}
 
+        {/* Payment Method */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Payment Method</Text>
+          <View style={styles.paymentMethodRow}>
+            <TouchableOpacity
+              style={[styles.paymentMethodOption, paymentMethod === 'CASH' && styles.paymentMethodOptionActive]}
+              onPress={() => setPaymentMethod('CASH')}
+              disabled={isProcessingPayment}
+            >
+              <Ionicons name="cash-outline" size={20} color={paymentMethod === 'CASH' ? '#0066FF' : '#666'} />
+              <Text style={[styles.paymentMethodText, paymentMethod === 'CASH' && styles.paymentMethodTextActive]}>
+                Cash
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.paymentMethodOption, paymentMethod === 'CARD' && styles.paymentMethodOptionActive]}
+              onPress={() => setPaymentMethod('CARD')}
+              disabled={isProcessingPayment}
+            >
+              <Ionicons name="card-outline" size={20} color={paymentMethod === 'CARD' ? '#0066FF' : '#666'} />
+              <Text style={[styles.paymentMethodText, paymentMethod === 'CARD' && styles.paymentMethodTextActive]}>
+                Card
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Issue Ticket Button */}
         <TouchableOpacity
-          style={styles.issueButton}
-          onPress={() => {
-            issueTicket();
-            router.push('/Ticket/ticketPrintingpage');
-          }}
+          style={[styles.issueButton, isProcessingPayment && styles.issueButtonDisabled]}
+          onPress={handleIssueTicketPress}
+          disabled={isProcessingPayment}
         >
-          <FontAwesome5 name="ticket-alt" size={20} color="white" style={styles.ticketIcon} />
-          <Text style={styles.issueButtonText}>Issue Ticket</Text>
+          {isProcessingPayment ? (
+            <ActivityIndicator size="small" color="white" style={styles.ticketIcon} />
+          ) : (
+            <FontAwesome5 name="ticket-alt" size={20} color="white" style={styles.ticketIcon} />
+          )}
+          <Text style={styles.issueButtonText}>
+            {isProcessingPayment ? 'Waiting for card payment...' : 'Issue Ticket'}
+          </Text>
         </TouchableOpacity>
           </>
           </ScrollView>
@@ -745,6 +848,34 @@ const styles = StyleSheet.create({
   phoneIcon: {
     marginLeft: 8,
   },
+  paymentMethodRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  paymentMethodOption: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FAFAFA',
+  },
+  paymentMethodOptionActive: {
+    borderColor: '#0066FF',
+    backgroundColor: '#EAF1FF',
+  },
+  paymentMethodText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  paymentMethodTextActive: {
+    color: '#0066FF',
+  },
   issueButton: {
     backgroundColor: '#22C55E', // Changed to green for better contrast
     borderRadius: 12,
@@ -758,6 +889,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  issueButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
   },
   ticketIcon: {
     marginRight: 8,
