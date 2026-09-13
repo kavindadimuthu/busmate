@@ -17,12 +17,12 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 
     /** Revokes every still-live token in a family — the theft-response when a used token reappears. */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update RefreshToken r set r.revokedAt = :now where r.familyId = :familyId and r.revokedAt is null")
     int revokeFamily(@Param("familyId") UUID familyId, @Param("now") Instant now);
 
     /** Revokes every live session for a user — used by logout and (later) suspend/password-change. */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update RefreshToken r set r.revokedAt = :now where r.userId = :userId and r.revokedAt is null")
     int revokeActiveForUser(@Param("userId") UUID userId, @Param("now") Instant now);
 }

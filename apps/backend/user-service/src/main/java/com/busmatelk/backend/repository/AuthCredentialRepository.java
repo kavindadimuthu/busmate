@@ -17,7 +17,7 @@ public interface AuthCredentialRepository extends JpaRepository<AuthCredential, 
      * credential row at all, and {@code deleteById} throws if the row doesn't exist. A no-op
      * bulk delete is exactly what account deletion needs either way.
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("delete from AuthCredential a where a.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
 }

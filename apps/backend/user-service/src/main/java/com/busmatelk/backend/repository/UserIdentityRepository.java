@@ -17,7 +17,7 @@ public interface UserIdentityRepository extends JpaRepository<UserIdentity, UUID
     List<UserIdentity> findByUserId(UUID userId);
 
     /** Bulk delete — account deletion purges every identity (local + any linked social ones). */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("delete from UserIdentity i where i.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
 }

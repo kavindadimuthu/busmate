@@ -105,6 +105,10 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
 - Complete self-hosted auth Phases 6–7, including decommissioning the dead `SupabaseAuthClient`.
 - **Rate limiting and account lockout are unenforced** — the columns exist on `auth_credentials` but
   nothing writes them, and `/forgot-password` is unthrottled. Security-relevant, R3.
+- **The development seed creates no `user_identities` rows.** Every seeded demo account has a user,
+  credential and profile but no identity, so seeded accounts and registered ones are not the same
+  shape — anything reading identities behaves differently against demo data than against a real
+  signup. Found while fixing INC-004; password login is unaffected, which is why it went unnoticed.
 - **Decide unauthenticated `401` vs `403`.** `StopControllerIntegrationTest` expects 401; the service
   returns 403 uniformly for anonymous callers. A test is failing on purpose pending this decision —
   check the api-gateway's expectations first.

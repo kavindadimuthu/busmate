@@ -203,10 +203,9 @@ public class UserService {
             throw new IllegalArgumentException("A deleted account cannot change status");
         }
 
-        // saveAndFlush, not save: revokeAllForUser's bulk @Modifying(clearAutomatically = true)
-        // query clears the persistence context right after it runs, which would otherwise
-        // silently discard this still-unflushed status change (the exact bug CredentialService
-        // hit in Phase 3 — see its updatePassword doc comment).
+        // saveAndFlush, not save: kept from when revokeAllForUser's bulk query cleared the
+        // persistence context without flushing first and silently discarded this status change.
+        // INC-004 fixed that at the source; this stays as defence in depth.
         target.setAccountStatus(status);
         target = userRepository.saveAndFlush(target);
         refreshTokenService.revokeAllForUser(targetUserId);

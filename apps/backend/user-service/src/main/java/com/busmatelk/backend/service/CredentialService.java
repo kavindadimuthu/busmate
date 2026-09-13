@@ -48,11 +48,10 @@ public class CredentialService {
      * social-only account adding a password). Callers are responsible for re-authenticating the
      * user first where that's required.
      *
-     * <p>Flushes immediately (rather than leaving Hibernate to flush at commit) because every
-     * caller follows this with a {@code RefreshTokenService} revocation, whose bulk
-     * {@code @Modifying(clearAutomatically = true)} query clears the persistence context — which,
-     * without an explicit flush first, silently discards this still-pending change before it ever
-     * reaches the database.
+     * <p>Flushes immediately rather than leaving Hibernate to flush at commit. INC-004 fixed the
+     * underlying hazard — the bulk revocation queries this is defending against now flush before
+     * they clear — so this is belt-and-braces rather than load-bearing, and is kept because an
+     * explicit flush before a revocation is worth stating either way.
      */
     @Transactional
     public void updatePassword(UUID userId, String newRawPassword) {
