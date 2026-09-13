@@ -29,6 +29,11 @@ Delete lines that stop being worth doing rather than marking them abandoned.
 - ✅ **A cancelled trip is indistinguishable from "no trip yet" and renders as available.** The trip
   join omits `cancelled`, so the row silently falls back to the schedule and shows as a normal
   scheduled service. Worst for near-term searches — exactly when passengers trust the result most.
+- **`user.{type}:read` carries no ownership scoping** — any operator can read any conductor's record,
+  including one employed by a different company. Surfaced while checking photo access in INC-003 and
+  deliberately left alone there: the gap is in the permission engine, not in media, and tightening it
+  means adding ownership to permission checks generally. The longer surfaces are built on the current
+  loose behaviour, the harder it gets to change.
 - **No double-booking validation** — the same bus or conductor can be assigned to overlapping trips;
   overlapping schedules on a route are not detected.
 - **Deleting a trip that has tickets is unguarded** — needs a guard or soft delete. Crosses into
@@ -42,6 +47,13 @@ Delete lines that stop being worth doing rather than marking them abandoned.
   `redgate/flyway:11` image tag and the runner Java 17 version are both unconfirmed.
 - **Baseline the production/Supabase databases at `V001`** so migrations apply on deploy. Touches
   live databases — deliberate, per service, with a backup. `always_human`.
+- **Back up and restore the media object store.** Named as a consequence in
+  [ADR-009](decisions/ADR-009-self-hosted-s3-compatible-media-storage.md): "back up Postgres" stopped
+  being a sufficient story the moment bytes started living outside it, and a restore that recovers
+  rows but not objects yields profiles pointing at nothing.
+- **Nothing deletes media when its owner is deleted.** Removing a user leaves their stored object
+  behind — observed directly while cleaning up INC-003's test accounts. Harmless at seven objects,
+  a slow leak and a personal-data retention problem at scale.
 - **Staleness sweeper** (HACO §14 step 2) — scheduled job flagging intent artifacts a diff may have
   invalidated. Advisory only, never blocking.
 - **Policy check in CI** (HACO §14 step 4) — fail when a PR's declared autonomy exceeds what
