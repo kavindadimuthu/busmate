@@ -38,6 +38,9 @@ public class UserProfileService {
         UserProfile profile = findProfileOrThrow(targetUserId);
         Map<String, Object> merged = new HashMap<>(profile.getProfileData());
         merged.putAll(patch);
+        // Server-managed; a client-supplied value is dropped rather than rejected so that clients
+        // echoing back the whole profile document keep working.
+        merged.remove(ProfilePhotoService.RESERVED_PHOTO_KEY_FIELD);
 
         String userTypeName = target.getUserType().getName();
         profileSchemaValidator.validate(userTypeName, merged);

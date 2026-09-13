@@ -126,6 +126,26 @@ class ProfilePhotoIntegrationTest extends AbstractPostgresIntegrationTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    /**
+     * The profile document is editable by its owner, so nothing stored in it can decide which
+     * object a photo read returns. Before this was fixed, writing another user's storage key into
+     * your own profile and then reading your own photo returned theirs — the read access check
+     * passed, because it was checked against your own account, not theirs.
+     */
+    @Test
+    void inc005_editingYourOwnProfileCannotRedirectYourPhotoToSomeoneElses(
+            @Autowired UserProfileService userProfileService) {
+        profilePhotoService.replacePhoto(owner, owner, pngBytes(16, 16, Color.RED));
+
+        Map<String, Object> hijack = new HashMap<>();
+        hijack.put("profile_photo_key", "users/" + owner + "/avatar");
+        userProfileService.updateProfile(otherPassenger, otherPassenger, hijack);
+
+        assertThat(profilePhotoService.readPhoto(otherPassenger, otherPassenger))
+                .as("a user with no photo of their own must not be served another user's photo")
+                .isEmpty();
+    }
+
     @Test
     void inc003_aFileThatIsNotAnImageIsRejectedAndStoresNothing() {
         byte[] html = "<html><script>alert(1)</script></html>".getBytes(StandardCharsets.UTF_8);

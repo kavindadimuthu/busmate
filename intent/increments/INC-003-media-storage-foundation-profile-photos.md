@@ -54,12 +54,15 @@ storage grows with the number of users rather than the number of edits. This fal
 the key from the user's identifier instead of generating a fresh one per upload, which also means no
 orphaned object can outlive the profile that pointed at it.
 
-**The photo key is stored alongside the other profile attributes rather than in a column of its
-own.** A user's profile is already a validated document rather than a fixed column set, so a
-dedicated column would be inconsistent with every other profile attribute, and nothing needs to query
-users by whether they have a photo. This is what keeps the increment free of a schema migration —
-which is a consequence of the existing design, not a reason to prefer it. Vehicle images will not
-inherit this, and their increment should expect a migration and the R3 that comes with it.
+**The photo key is not stored anywhere; it is derived from the user's identifier on every read.**
+*Superseded during [INC-005](INC-005-profile-photos-in-the-portal.md).* This increment originally
+recorded the key inside the profile document and trusted it on read. The profile document is
+editable by its owner, so a user could write another user's key into their own profile and read that
+photo through their own account — the access check passed because it was made against the reader's
+account, not the photo's owner. Nothing a client can write may decide which object a read returns.
+Deriving the key also keeps this increment free of a schema migration. Vehicle images will not be
+able to derive a key from an owner in the same way and should expect a migration, and the R3 that
+comes with it.
 
 ## Acceptance criteria
 
