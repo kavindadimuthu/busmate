@@ -14,5 +14,6 @@ export type UserResponse = {
     lastLoginAt?: string;
     createdAt?: string;
     profileData?: Record<string, any>;
+    operatorSyncStatus?: string;
 };
 

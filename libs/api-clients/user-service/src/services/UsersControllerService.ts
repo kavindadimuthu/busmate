@@ -14,6 +14,44 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class UsersControllerService {
     /**
+     * @param userId
+     * @returns string OK
+     * @throws ApiError
+     */
+    public static getProfilePhoto(
+        userId: string,
+    ): CancelablePromise<string> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/users/{userId}/profile/photo',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
+     * @param userId
+     * @param formData
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static uploadProfilePhoto(
+        userId: string,
+        formData?: {
+            file: Blob;
+        },
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/users/{userId}/profile/photo',
+            path: {
+                'userId': userId,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
      * @param userType
      * @param pageable
      * @param status
@@ -58,12 +96,60 @@ export class UsersControllerService {
      * @returns UserResponse OK
      * @throws ApiError
      */
+    public static suspendUser(
+        userId: string,
+    ): CancelablePromise<UserResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/users/{userId}/suspend',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
+     * @param userId
+     * @returns UserResponse OK
+     * @throws ApiError
+     */
     public static reactivateUser(
         userId: string,
     ): CancelablePromise<UserResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/users/{userId}/reactivate',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
+     * @param userId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static retryOperatorSync(
+        userId: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/users/{userId}/operator-sync/retry',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
+     * @param userId
+     * @returns UserResponse OK
+     * @throws ApiError
+     */
+    public static deactivateUser(
+        userId: string,
+    ): CancelablePromise<UserResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/users/{userId}/deactivate',
             path: {
                 'userId': userId,
             },

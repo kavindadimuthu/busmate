@@ -50,16 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    const accessToken = getAccessToken();
+    if (getAccessToken()) {
+      // Must start before the session is cleared: the client reads the token from storage when it
+      // builds the request, so clearing first sends the logout unauthenticated and the server
+      // session survives. Bounded so a dead network cannot keep the passenger signed in here.
+      const revoke = AuthControllerService.logout().catch(() => undefined);
+      await Promise.race([revoke, new Promise((resolve) => setTimeout(resolve, 3000))]);
+    }
     clearSession();
     setUser(null);
-    if (accessToken) {
-      try {
-        await AuthControllerService.logout(`Bearer ${accessToken}`);
-      } catch {
-        // Best-effort — the local session is already cleared either way.
-      }
-    }
   }, []);
 
   const value = useMemo<AuthContextValue>(

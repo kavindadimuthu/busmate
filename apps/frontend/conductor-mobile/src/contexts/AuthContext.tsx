@@ -108,20 +108,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async (): Promise<void> => {
-    const token = await getAccessToken();
+    if (await getAccessToken()) {
+      // Must start before the session is cleared: the client reads the token from storage when it
+      // builds the request, so clearing first sends the logout unauthenticated and the server
+      // session survives. Bounded so a dead network cannot keep the conductor signed in here.
+      const revoke = AuthControllerService.logout().catch(() => undefined);
+      await Promise.race([revoke, new Promise((resolve) => setTimeout(resolve, 3000))]);
+    }
     await clearSession();
     // A different conductor may log in next on the same phone — their fixes must report under
     // their own device identity, not the previous conductor's (IoT Platform Layer plan, Phase 4).
     await clearDeviceToken();
     setUser(null);
-
-    if (token) {
-      try {
-        await AuthControllerService.logout(`Bearer ${token}`);
-      } catch {
-        // Best-effort — the local session is already cleared either way.
-      }
-    }
   };
 
   // Used after biometric device-level authentication succeeds: restores the

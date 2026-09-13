@@ -104,8 +104,13 @@ public class UsersController {
      * The bytes are read here rather than streamed onward because every later step — the size
      * check, the format check, and the re-encode that strips metadata — needs the whole image,
      * and the upload limit is what keeps that bounded.
+     *
+     * <p>{@code consumes} and {@code produces} are stated explicitly on both photo endpoints
+     * because they cannot be inferred: without them the published contract describes this upload
+     * as JSON and the download as text, and a client generated from that description cannot call
+     * either one. The wire behaviour is unchanged — only its description was wrong.
      */
-    @PutMapping("/{userId}/profile/photo")
+    @PutMapping(value = "/{userId}/profile/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> uploadProfilePhoto(Authentication authentication, @PathVariable UUID userId,
                                                    @RequestParam("file") MultipartFile file) throws IOException {
         profilePhotoService.replacePhoto(callerId(authentication), userId, file.getBytes());
@@ -116,7 +121,8 @@ public class UsersController {
      * 404 distinguishes "this user has no photo" from a photo that failed to load, so a client
      * never has to guess whether to show a fallback.
      */
-    @GetMapping("/{userId}/profile/photo")
+    @GetMapping(value = "/{userId}/profile/photo",
+            produces = { MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE })
     public ResponseEntity<byte[]> getProfilePhoto(Authentication authentication, @PathVariable UUID userId) {
         return profilePhotoService.readPhoto(callerId(authentication), userId)
                 .map(photo -> ResponseEntity.ok()

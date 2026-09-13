@@ -28,6 +28,7 @@ export type { RegisterRequest } from './models/RegisterRequest';
 export type { RegisterResponse } from './models/RegisterResponse';
 export type { ReplacePermissionsRequest } from './models/ReplacePermissionsRequest';
 export type { ResetPasswordRequest } from './models/ResetPasswordRequest';
+export type { SocialLoginRequest } from './models/SocialLoginRequest';
 export type { Sortnull } from './models/Sortnull';
 export type { TypePermissionResponse } from './models/TypePermissionResponse';
 export type { UpdatePermissionRequest } from './models/UpdatePermissionRequest';
@@ -43,6 +44,7 @@ export type { VerifyEmailRequest } from './models/VerifyEmailRequest';
 
 export { AuthControllerService } from './services/AuthControllerService';
 export { InternalControllerService } from './services/InternalControllerService';
+export { JwksControllerService } from './services/JwksControllerService';
 export { PermissionsControllerService } from './services/PermissionsControllerService';
 export { UserPermissionOverridesControllerService } from './services/UserPermissionOverridesControllerService';
 export { UsersControllerService } from './services/UsersControllerService';
