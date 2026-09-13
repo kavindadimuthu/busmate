@@ -100,6 +100,29 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
 - **Relocate the AI Studio Gemini proxy** from a Next.js API route to the api-gateway BFF module; the
   Vite portal split removes the server it currently runs on.
 
+## Media — what the photo work deliberately left undone
+
+The storage foundation ([ADR-009](decisions/ADR-009-self-hosted-s3-compatible-media-storage.md)) and
+profile photos are built and in use; everything below reuses them rather than starting over.
+
+- **Vehicle images.** The largest remaining piece and the only one that is not mostly reuse: buses
+  have no image anywhere, so it needs storage keys for a bus rather than a person, a schema change,
+  rules for who may upload (the owning operator) and who may view, and screens in both the operator
+  and MOT portals. Unlike a profile photo, a bus's key cannot be derived from the viewer, so the
+  access check has to be designed rather than inherited.
+- **Company logos for operators.** MOT's operator rows and detail page currently borrow the linked
+  contact person's photo, labelled as such; a logo would replace it and is what those screens
+  actually want.
+- **Profile photos in passenger-web and passenger-mobile.** Both show initials only. The smallest
+  remaining item: the portal's approach ports directly to passenger-web, and conductor-mobile's to
+  passenger-mobile.
+- **No way to remove a photo once set.** Every surface can add or replace, none can clear. Wanted
+  before real users, and cheap.
+- **Cropping or rotating before upload.** A phone photo is stored as taken, so a portrait shot can
+  sit oddly in a circular avatar.
+- **Photos are re-fetched on every app launch on mobile.** The cache lives for the session only;
+  keeping them on disk would also make the app usable offline.
+
 ## Known debt (from [context.md](context.md))
 
 - Complete self-hosted auth Phases 6–7, including decommissioning the dead `SupabaseAuthClient`.
