@@ -75,11 +75,12 @@ this.
       `ticketing-service`'s config — never in conductor-mobile or any committed file.
 - [x] conductor-mobile type-checks and lints with no new errors (`npx tsc --noEmit`, `npx expo
       lint`) — back to the same 2 pre-existing errors INC-007 already documented.
-- [ ] **Not verifiable here — owed on a device:** an actual PayHere sandbox card payment,
-      end-to-end, on a real or emulated Android device with the SDK's native module linked and
-      running. This includes confirming the SDK works under this app's `newArchEnabled: true`
-      config — the SDK's own docs (`react-native link ...`) predate RN autolinking and say nothing
-      about New Architecture support.
+- [x] Verified on a real Android device by the owner: PayHere's sandbox card screen opens,
+      a sandbox Visa test card completes successfully, and a digital ticket is issued — under
+      this app's `newArchEnabled: true` config, with no native-module linking issues.
+- [x] The issued ticket (CASH or CARD) actually persists and appears in the trip's ticket list —
+      failed on first device test (see Discovered during the work) until V906 fixed it; reverified
+      directly against the running service afterward.
 
 ## Out of scope
 
@@ -118,6 +119,17 @@ this.
   fields (name/email/phone) — unknown until tried against a live sandbox transaction.
 
 ## Discovered during the work
+
+**Real end-to-end device testing found and fixed a genuine backend bug, unrelated to PayHere
+itself.** The demo-data seed migrations (`V900`-`V905`) inserted `transactions`/`tickets`/
+`cash_payments`/`online` rows with explicit primary keys without advancing the IDENTITY sequences
+behind them, so every *new* ticket - CASH or CARD - collided with an existing seeded row
+(`duplicate key value violates unique constraint transactions_pkey`). This is why issued tickets
+never appeared in the trip's ticket list: the app's own follow-up write silently failed after
+showing the success screen. Fixed with `V906__resync_identity_sequences.sql`, added after
+V900-905 (not before - they're what caused the drift). Verified directly: reissued a CASH and a
+CARD ticket against the real trip, both now succeed and appear correctly in
+`GET /v1/tickets/trip/{tripId}` and its summary.
 
 **`main` is 116 commits stale (dated 2026-07-07) relative to the actual active development
 lineage.** This increment's branch was initially created off `main` and was missing the entire
