@@ -112,6 +112,16 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
 - **Decide unauthenticated `401` vs `403`.** `StopControllerIntegrationTest` expects 401; the service
   returns 403 uniformly for anonymous callers. A test is failing on purpose pending this decision —
   check the api-gateway's expectations first.
+- **`user-service` enforces its own browser-origin allowlist behind the gateway**, hardcoded in
+  `CorsConfig`, while the `cors:` block in its `application.yml` is read by nothing. A browser origin
+  the gateway accepts but this list lacks fails as a bodyless `403` that looks exactly like a
+  permission denial. Found in INC-005 when the portal came up on port 5174 because another instance
+  held 5173; the same class of bug hit port 4000 before. Browsers never reach this service directly
+  (invariant 1), so the likely fix is to stop enforcing CORS here, not to extend the list. Pinning the
+  portal's dev port would also stop a second instance drifting onto an unlisted one.
+- **`UserResponseWithSync` in the portal's admin users layer is now redundant.** It widens the
+  generated `UserResponse` with `operatorSyncStatus` to avoid regenerating the client; INC-005
+  regenerated it and the field is now generated.
 - **Decide on JPA auditing.** `createdBy`/`updatedBy` are asserted by a test but never populated (no
   `@EnableJpaAuditing`/`AuditorAware`). Implement it or fix the test.
 - **Decide on the removed `schema.sql` auto-calc triggers** (`route_stop` distance, `schedule_stop`
