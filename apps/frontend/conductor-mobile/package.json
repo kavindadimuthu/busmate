@@ -3,8 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "dev": "node ../../../scripts/with-env.mjs EXPO_NO_TELEMETRY=1 -- node ../../../scripts/expo-lan-ip.mjs -- expo start",
-    "start": "node ../../../scripts/with-env.mjs EXPO_NO_TELEMETRY=1 -- node ../../../scripts/expo-lan-ip.mjs -- expo start",
+    "dev": "node ../../../scripts/with-env.mjs EXPO_NO_TELEMETRY=1 -- node ../../../scripts/expo-lan-ip.mjs -- expo start --dev-client",
+    "start": "node ../../../scripts/with-env.mjs EXPO_NO_TELEMETRY=1 -- node ../../../scripts/expo-lan-ip.mjs -- expo start --dev-client",
     "reset-project": "node ./scripts/reset-project.js",
     "build:android": "eas build --platform android --profile preview",
     "build:android:production": "eas build --platform android --profile production",
