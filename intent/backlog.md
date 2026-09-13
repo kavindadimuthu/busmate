@@ -138,6 +138,11 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
 - Replace the payment stub with a real PSP integration, never taking custody of funds.
 - **Fix the dangling `Unified-Operator-Lifecycle-Management-Plan.md` references** — five frontend
   files cite a plan document that does not exist in `docs/plans/`.
+- **conductor-mobile's committed `.env` names a gateway address that no longer exists**
+  (`10.221.96.234`; this machine is now `192.168.8.181`), so the app cannot reach the backend from a
+  device on this network. Found in INC-007. A LAN address committed to the repository goes stale
+  every time the network changes — worth replacing with something that does not, or documenting that
+  it must be set per machine.
 
 ## Documentation
 
