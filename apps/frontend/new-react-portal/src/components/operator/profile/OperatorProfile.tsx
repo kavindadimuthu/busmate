@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@busmate/ui';
 import { Badge } from '@busmate/ui';
-import { Avatar, AvatarFallback, AvatarImage } from '@busmate/ui';
 import {
   Clock,
   Bus,
@@ -20,7 +19,7 @@ import UserData from '@/types/UserData';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { REQUIRED_PROFILE_FIELDS } from '@/lib/api/adminUsers';
 import { USER_STATUS_CONFIG, timeAgo } from '@/data/admin/users';
-import { ProfileInfoCard, PermissionsCard, ChangePasswordDialog } from '@/components/shared/profile';
+import { ProfileInfoCard, PermissionsCard, ChangePasswordDialog, ProfilePhotoAvatar } from '@/components/shared/profile';
 
 interface OperatorProfileProps {
   userData: UserData | null;
@@ -57,12 +56,12 @@ export function OperatorProfile({ userData }: OperatorProfileProps) {
           <div className="absolute bottom-0 left-1/3 w-48 h-48 rounded-full bg-card transform translate-y-16" />
         </div>
         <div className="relative px-8 py-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <Avatar className="w-24 h-24 ring-4 ring-white/30 shadow-xl shrink-0">
-            <AvatarImage src="/images/placeholder-avatar.png" alt={displayName} />
-            <AvatarFallback className="text-2xl font-bold bg-indigo-500 text-white">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <ProfilePhotoAvatar
+            userId={user?.userId ?? null}
+            displayName={displayName}
+            initials={initials}
+            fallbackClassName="text-2xl font-bold bg-indigo-500 text-white"
+          />
           <div className="text-center sm:text-left">
             <h1 className="text-2xl font-bold text-white">{displayName}</h1>
             <p className="text-indigo-200 mt-1">Fleet Operator</p>
