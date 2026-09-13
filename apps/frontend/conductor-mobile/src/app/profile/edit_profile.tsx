@@ -1,3 +1,4 @@
+import { EditableProfilePhoto } from '@/components/profile/EditableProfilePhoto';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEmployeeProfile } from '@/hooks/employee/useEmployeeProfile';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -119,15 +119,7 @@ export default function EditProfileScreen() {
       >
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
           {/* Profile Picture */}
-          <View style={styles.profileImageContainer}>
-            <Image 
-              source={require('@/assets/images/profilePic.jpg')} 
-              style={styles.profileImage}
-            />
-            <TouchableOpacity style={styles.cameraButton}>
-              <Ionicons name="camera" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
+          <EditableProfilePhoto name={formData.fullName} size={120} containerStyle={styles.profileImageContainer} />
           
           {/* Full Name */}
           <View style={styles.inputSection}>

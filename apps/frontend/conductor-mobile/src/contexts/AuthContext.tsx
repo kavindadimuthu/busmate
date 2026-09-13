@@ -1,5 +1,6 @@
 import { AuthControllerService, type AuthMeResponse } from '@busmate/api-client-user';
 import { clearSession, getAccessToken, hasStoredSession, saveSession } from '@/lib/auth/tokenStore';
+import { clearPhotoCache } from '@/lib/api/photoCache';
 import { clearDeviceToken } from '@/services/telemetry/deviceProvisioning';
 import { extractErrorMessage } from '@/lib/auth/errorMessage';
 import { BiometricAuthResult, User } from '@/types/auth';
@@ -117,8 +118,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     await clearSession();
     // A different conductor may log in next on the same phone — their fixes must report under
-    // their own device identity, not the previous conductor's (IoT Platform Layer plan, Phase 4).
+    // their own device identity, not the previous conductor's (IoT Platform Layer plan, Phase 4),
+    // and they must not be shown the previous conductor's face either.
     await clearDeviceToken();
+    clearPhotoCache();
     setUser(null);
   };
 

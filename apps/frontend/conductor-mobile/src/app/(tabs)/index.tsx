@@ -1,17 +1,20 @@
 import QuickActions from '@/components/Home/QuickActions';
+import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEmployeeProfile } from '@/hooks/employee/useEmployeeProfile';
 import { formatDate, formatTime, useNextTrip } from '@/hooks/employee/useNextTrip';
+import { useMyPhoto } from '@/hooks/profile/useMyPhoto';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Image, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const { photoUri } = useMyPhoto();
   const { fetchProfile, isLoading: profileLoading, error: profileError } = useEmployeeProfile();
   const { refreshSchedules } = useEmployeeScheduleContext();
   
@@ -176,10 +179,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={() => { router.push('/(tabs)/profile'); }}
           >
-            <Image 
-              source={require('@/assets/images/newprofile.webp')} 
-              style={styles.profileImage}
-            />
+            <ProfileAvatar photoUri={photoUri} name={user?.fullName || user?.name} size={32} />
           </TouchableOpacity>
         </View>
       </View>

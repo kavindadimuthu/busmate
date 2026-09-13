@@ -1,3 +1,4 @@
+import { EditableProfilePhoto } from '@/components/profile/EditableProfilePhoto';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useOngoingTrip } from '@/hooks/employee/useOngoingTrip';
 import { Ionicons } from '@expo/vector-icons';
@@ -5,7 +6,6 @@ import { router } from 'expo-router';
 import React from 'react';
 import {
     Alert,
-    Image,
     SafeAreaView,
     ScrollView,
     StatusBar,
@@ -86,15 +86,7 @@ export default function ProfileScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.profileCard}>
           {/* Profile Picture */}
-          <View style={styles.profileImageContainer}>
-            <Image 
-              source={require('@/assets/images/newprofile.webp')} 
-              style={styles.profileImage}
-            />
-            <TouchableOpacity style={styles.cameraButton}>
-              <Ionicons name="camera" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
+          <EditableProfilePhoto name={userInfo.fullName} size={120} containerStyle={styles.profileImageContainer} />
           
           {/* Role Badge */}
           <View style={styles.roleBadge}>
