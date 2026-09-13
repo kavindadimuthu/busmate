@@ -4,6 +4,7 @@ import * as React from "react";
 import { Building, MapPin, Users, CheckCircle, XCircle, Clock, Link2 } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
 import type { OperatorResponseWithLink } from "@/types/operator";
+import { UserPhoto } from "@/components/shared/profile/UserPhoto";
 
 // ── Helpers ───────────────────────────────────────────────────────
 
@@ -48,9 +49,20 @@ export const operatorsColumns: ColumnDef<OperatorResponseWithLink>[] = [
     sortable: true,
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Building className="w-4 h-4 text-primary" />
-        </div>
+        {row.userId ? (
+          <UserPhoto
+            userId={row.userId}
+            name={row.name || "Operator"}
+            title="Photo of this operator's linked contact person"
+            className="shrink-0 w-8 h-8"
+            fallbackClassName="bg-primary/10 text-primary"
+            fallback={<Building className="w-4 h-4" />}
+          />
+        ) : (
+          <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Building className="w-4 h-4 text-primary" />
+          </div>
+        )}
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate leading-tight flex items-center gap-1.5">
             {row.name || "Unnamed Operator"}

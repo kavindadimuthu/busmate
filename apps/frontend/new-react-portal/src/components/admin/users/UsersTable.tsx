@@ -18,6 +18,7 @@ import {
   timeAgo,
 } from '@/data/admin/users';
 import type { AdminUser } from '@/data/admin/users';
+import { UserPhoto } from '@/components/shared/profile/UserPhoto';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -76,9 +77,13 @@ export function UsersTable({
           const initials = `${user.firstName[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '?';
           return (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {initials}
-              </div>
+              <UserPhoto
+                userId={user.id}
+                name={displayName}
+                className="w-8 h-8 shrink-0"
+                fallbackClassName="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold"
+                fallback={initials}
+              />
               <div className="min-w-0">
                 <p className="font-medium text-foreground truncate">
                   {displayName}

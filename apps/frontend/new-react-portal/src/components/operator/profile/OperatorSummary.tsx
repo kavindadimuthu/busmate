@@ -17,6 +17,7 @@ import {
 import type { BusResponse } from '@busmate/api-client-core';
 import type { UserResponse } from '@busmate/api-client-user';
 import type { OperatorResponseWithLink } from '@/types/operator';
+import { UserPhoto } from '@/components/shared/profile/UserPhoto';
 
 interface OperatorSummaryProps {
   operator: OperatorResponseWithLink;
@@ -91,6 +92,16 @@ export function OperatorSummary({ operator, buses, linkedAccount }: OperatorSumm
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
+              {operator.userId && (
+                <UserPhoto
+                  userId={operator.userId}
+                  name={linkedAccount?.fullName || operator.name || 'Contact person'}
+                  title="Photo of this operator's linked contact person"
+                  className="w-10 h-10 shrink-0"
+                  fallbackClassName="bg-primary/10 text-primary"
+                  fallback={<Building2 className="w-5 h-5" />}
+                />
+              )}
               <h1 className="text-2xl font-bold text-foreground">
                 {operator.name || 'Unnamed Operator'}
               </h1>

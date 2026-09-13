@@ -5,6 +5,7 @@ import { CircleDot, Mail, Phone } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
 import type { AdminUser } from "@/data/admin/users";
 import { USER_STATUS_CONFIG, formatDateShort } from "@/data/admin/users";
+import { UserPhoto } from "@/components/shared/profile/UserPhoto";
 
 export const crewColumns: ColumnDef<AdminUser>[] = [
   {
@@ -13,9 +14,13 @@ export const crewColumns: ColumnDef<AdminUser>[] = [
     sortable: true,
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <div className="shrink-0 w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-          <CircleDot className="w-4 h-4 text-success" />
-        </div>
+        <UserPhoto
+          userId={row.id}
+          name={row.fullName}
+          className="shrink-0 w-8 h-8"
+          fallbackClassName="bg-success/10 text-success"
+          fallback={<CircleDot className="w-4 h-4" />}
+        />
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate leading-tight">{row.fullName}</p>
           <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate">@{row.username}</p>

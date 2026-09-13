@@ -32,6 +32,7 @@ import {
 } from '@/data/admin/users';
 import type { AdminUser } from '@/data/admin/users';
 import type { UserPermissionsResponse } from '@/lib/api/adminUsers';
+import { UserPhoto } from '@/components/shared/profile/UserPhoto';
 
 interface UserDetailPanelProps {
   user: AdminUser;
@@ -175,9 +176,13 @@ export function UserDetailPanel({
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full bg-card/20 backdrop-blur-sm flex items-center justify-center text-white text-xl font-bold border-2 border-white/30">
-              {user.firstName[0]}{user.lastName?.[0] ?? ''}
-            </div>
+            <UserPhoto
+              userId={user.id}
+              name={displayName}
+              className="w-16 h-16 shrink-0 border-2 border-white/30"
+              fallbackClassName="bg-card/20 backdrop-blur-sm text-white text-xl font-bold"
+              fallback={`${user.firstName[0]}${user.lastName?.[0] ?? ''}`}
+            />
             <div className="text-white">
               <h2 className="text-xl font-bold">{displayName}</h2>
               <div className="flex items-center gap-3 mt-1">
