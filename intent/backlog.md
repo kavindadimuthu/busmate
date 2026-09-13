@@ -122,6 +122,13 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
 - **`UserResponseWithSync` in the portal's admin users layer is now redundant.** It widens the
   generated `UserResponse` with `operatorSyncStatus` to avoid regenerating the client; INC-005
   regenerated it and the field is now generated.
+- **The portal fetches a fresh access token for every concurrent API call.** `fetchAccessToken`
+  caches the token once it has one but does not share a fetch already in flight, so a burst of
+  parallel calls each asks the BFF for its own. Measured in INC-006: opening the admin users list
+  sends 49 gateway requests — 24 of them token fetches, 22 user-list and count calls, 1 photo — about
+  half the gateway's 100-per-minute per-client limit on a single page view. Photos are not the
+  pressure on that limit; this is. Sharing the in-flight fetch is small; the per-type counts (three
+  list calls for each of six user types) are the other half of the cost.
 - **Decide on JPA auditing.** `createdBy`/`updatedBy` are asserted by a test but never populated (no
   `@EnableJpaAuditing`/`AuditorAware`). Implement it or fix the test.
 - **Decide on the removed `schema.sql` auto-calc triggers** (`route_stop` distance, `schedule_stop`
