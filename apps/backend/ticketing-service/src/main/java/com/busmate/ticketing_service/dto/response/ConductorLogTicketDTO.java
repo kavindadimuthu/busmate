@@ -26,8 +26,14 @@ public class ConductorLogTicketDTO {
     // Kept for backward compatibility (was overloaded to carry different things by different
     // methods); the explicit fields below are authoritative.
     private String paymentStatus;
-    // CONDUCTOR (cash, issued on the bus) vs ONLINE (passenger-booked online).
+    // CONDUCTOR (issued on the bus) vs ONLINE (passenger-booked online). Says WHO issued the
+    // ticket, never HOW it was paid for - a conductor-issued ticket can be CASH or CARD since
+    // INC-008. Use paymentMethod for that.
     private String issueMethod;
+    // How the fare was actually paid: CASH | CARD (conductor-collected via PayHere's in-app
+    // SDK) | PAYHERE (passenger's own online booking). Null only for pre-INC-008 rows whose
+    // transaction has neither a cash nor an online sub-record.
+    private String paymentMethod;
     // VALID (validated / boarded) | NOT_VALID (not yet boarded) | CANCELLED.
     private String validationStatus;
     // Transaction-level payment status (PENDING/COMPLETED/FAILED/REFUNDED/ISSUED), distinct

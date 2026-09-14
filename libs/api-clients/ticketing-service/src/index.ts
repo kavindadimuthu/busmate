@@ -14,6 +14,8 @@ export type { ConductorLogTicketDTO } from './models/ConductorLogTicketDTO';
 export type { FareCalculationRequestDTO } from './models/FareCalculationRequestDTO';
 export type { Pageablenull } from './models/Pageablenull';
 export type { PageConductorLogTicketDTO } from './models/PageConductorLogTicketDTO';
+export type { PayHereHashRequestDTO } from './models/PayHereHashRequestDTO';
+export type { PayHereHashResponseDTO } from './models/PayHereHashResponseDTO';
 export type { PaymentConfirmResponseDTO } from './models/PaymentConfirmResponseDTO';
 export type { PaymentRequestDTO } from './models/PaymentRequestDTO';
 export type { RouteFareDTO } from './models/RouteFareDTO';
@@ -23,5 +25,6 @@ export type { TicketValidationRequestDTO } from './models/TicketValidationReques
 export type { TripSummaryDTO } from './models/TripSummaryDTO';
 
 export { BaseFareControllerService } from './services/BaseFareControllerService';
+export { PayHereControllerService } from './services/PayHereControllerService';
 export { RouteFareControllerService } from './services/RouteFareControllerService';
 export { TicketControllerService } from './services/TicketControllerService';

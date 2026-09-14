@@ -49,8 +49,11 @@ export interface TicketLog {
   passengerCount: number;
   fareAmount: number;
   paymentStatus: string;
-  // CONDUCTOR (cash issued on the bus) vs ONLINE (passenger booked online).
+  // CONDUCTOR (issued on the bus) vs ONLINE (passenger booked online) — who issued it, not
+  // how it was paid for. A conductor-issued ticket can be CASH or CARD since INC-008.
   issueMethod?: 'CONDUCTOR' | 'ONLINE' | string | null;
+  // How the fare was actually paid. Null for pre-INC-008 rows the backend can't classify.
+  paymentMethod?: 'CASH' | 'CARD' | 'PAYHERE' | string | null;
   // VALID (validated / boarded) vs NOT_VALID (booked, not yet validated).
   validationStatus?: 'VALID' | 'NOT_VALID' | string | null;
   issuedAt: string;

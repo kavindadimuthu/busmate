@@ -105,6 +105,22 @@ export default function TicketLogsScreen() {
   const physicalTickets = currentTripTickets.filter((ticket: TicketLog) => !isOnlineTicket(ticket));
   const onlineTickets = currentTripTickets.filter((ticket: TicketLog) => isOnlineTicket(ticket));
 
+  // A conductor-issued ticket is no longer necessarily cash (INC-008 added card collection via
+  // PayHere), so this reads the fare's actual payment method instead of assuming. Anything the
+  // backend can't classify says so rather than silently claiming cash.
+  const paymentMethodBadge = (ticket: TicketLog) => {
+    switch (String(ticket.paymentMethod || '').toUpperCase()) {
+      case 'CASH':
+        return { label: 'Cash', color: '#00CC66', background: '#E6FFF2' };
+      case 'CARD':
+        return { label: 'Card', color: '#0066FF', background: '#E6F0FF' };
+      case 'PAYHERE':
+        return { label: 'Online', color: '#22C55E', background: '#ECFDF5' };
+      default:
+        return { label: 'Unknown', color: '#6B7280', background: '#F3F4F6' };
+    }
+  };
+
   // Helper function to get location name or fallback
   const getLocationName = (locationId: string): string => {
     return stopNames.get(locationId) || 
@@ -230,8 +246,10 @@ export default function TicketLogsScreen() {
                         {formatDate(new Date(ticket.issuedAt))} at {formatTime(new Date(ticket.issuedAt))}
                       </Text>
                     </View>
-                    <View style={styles.statusBadge}>
-                      <Text style={[styles.statusText, { color: '#00CC66' }]}>Cash</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: paymentMethodBadge(ticket).background }]}>
+                      <Text style={[styles.statusText, { color: paymentMethodBadge(ticket).color }]}>
+                        {paymentMethodBadge(ticket).label}
+                      </Text>
                     </View>
                   </View>
                   

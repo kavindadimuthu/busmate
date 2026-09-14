@@ -81,6 +81,10 @@ this.
 - [x] The issued ticket (CASH or CARD) actually persists and appears in the trip's ticket list —
       failed on first device test (see Discovered during the work) until V906 fixed it; reverified
       directly against the running service afterward.
+- [x] A card-paid ticket is visibly distinguishable from a cash one wherever the conductor sees
+      their tickets — the journey ticket log and the seat-map passenger list. Verified against the
+      three real tickets on the test trip: #24 CASH, #25 CARD, #26 CARD (the device-issued PayHere
+      payment).
 
 ## Out of scope
 
@@ -119,6 +123,22 @@ this.
   fields (name/email/phone) — unknown until tried against a live sandbox transaction.
 
 ## Discovered during the work
+
+**Nothing in the system could express "paid by card" — every surface hardcoded cash.** The ticket
+contract had no payment-method field at all: `ConductorLogTicketDTO` carried only `issueMethod`
+(CONDUCTOR/ONLINE), documented as *"CONDUCTOR (cash, issued on the bus)"*, because until this
+increment conductor-issued and cash-paid were the same thing. Three conductor-mobile surfaces
+then hardcoded the label from that assumption, so a real PayHere card payment displayed as "Cash".
+Fixed by deriving the real method server-side from whichever payment sub-record exists (the
+`cash`/`online` row, since `Transactions.paymentMethod` is a CASH/ONLINE ordinal that cannot
+distinguish a conductor card tap from a passenger's online booking), exposing it as
+`paymentMethod`, regenerating the ticketing API client, and reading it in the UI.
+
+**Not fixed, deliberately — the aggregate revenue splits still bucket card under "cash".**
+`tripOverview`'s revenue card, the insights payment breakdown, and the seat-map stats all split
+on issue method while labelling the buckets "Cash" vs "QR"/"Online". Re-bucketing them is a
+product decision about what those tiles should show (three-way Cash/Card/Online, or
+"collected on board" vs "online"), not a mechanical bug fix, so it is left for the owner.
 
 **A real reentrancy bug in token refresh, hit for the first time by this increment's overnight
 device-testing gap.** `AuthContext`'s startup effect calls `refreshUser()` whenever a stored

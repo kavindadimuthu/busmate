@@ -594,8 +594,27 @@ public class PaymentServiceIMPL implements PaymentService {
         Transactions.Status txStatus = transaction != null ? transaction.getStatus() : null;
         dto.setTransactionStatus(txStatus != null ? txStatus.toString() : null);
         dto.setBookingStatus(deriveBookingStatus(ticket, txStatus));
+        dto.setPaymentMethod(derivePaymentMethod(transaction));
 
         return dto;
+    }
+
+    /**
+     * The payment sub-record that actually exists is authoritative, not Transactions.paymentMethod
+     * - that column is a CASH/ONLINE ordinal and cannot distinguish a conductor-collected CARD tap
+     * (INC-008) from a passenger's own online booking, since both are stored as ONLINE.
+     */
+    private String derivePaymentMethod(Transactions transaction) {
+        if (transaction == null) {
+            return null;
+        }
+        if (transaction.getCash() != null) {
+            return Online.Method.CASH.name();
+        }
+        if (transaction.getOnline() != null && transaction.getOnline().getMethod() != null) {
+            return transaction.getOnline().getMethod().name();
+        }
+        return transaction.getPaymentMethod() != null ? transaction.getPaymentMethod().name() : null;
     }
 
     private String deriveBookingStatus(Tickets ticket, Transactions.Status txStatus) {

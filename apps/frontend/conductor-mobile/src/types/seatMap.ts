@@ -32,6 +32,9 @@ export interface SeatCell {
   ticketId?: string;
   passengerId?: string | null;
   issueMethod?: 'CONDUCTOR' | 'ONLINE' | string | null;
+  // How the fare was paid — a conductor-issued ticket is CASH or CARD (INC-008), so this
+  // can't be inferred from issueMethod.
+  paymentMethod?: 'CASH' | 'CARD' | 'PAYHERE' | string | null;
   validationStatus?: 'VALID' | 'NOT_VALID' | string | null;
   fareAmount?: number;
   startLocationId?: string;

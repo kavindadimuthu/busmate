@@ -18,8 +18,20 @@ import {
   View
 } from 'react-native';
 
+// An on-the-bus ticket can be paid by cash or card (INC-008), so this reads the fare's real
+// payment method rather than inferring "not online means cash". Falls back to the issue method
+// only for older rows the backend can't classify.
 function methodLabel(cell: SeatCell): string {
-  return String(cell.issueMethod).toUpperCase() === 'ONLINE' ? 'Online booking' : 'Cash (conductor)';
+  switch (String(cell.paymentMethod || '').toUpperCase()) {
+    case 'CASH':
+      return 'Cash';
+    case 'CARD':
+      return 'Card';
+    case 'PAYHERE':
+      return 'Online';
+    default:
+      return String(cell.issueMethod).toUpperCase() === 'ONLINE' ? 'Online' : 'Unknown';
+  }
 }
 
 export default function SeatViewScreen() {
@@ -136,7 +148,7 @@ export default function SeatViewScreen() {
             <Text style={styles.passengerName}>{item.passengerId || 'Passenger'}</Text>
             <View style={styles.methodRow}>
               <View style={[styles.methodBadge, online ? styles.onlineBadge : styles.cashBadge]}>
-                <Text style={styles.methodBadgeText}>{online ? 'Online' : 'Cash'}</Text>
+                <Text style={styles.methodBadgeText}>{methodLabel(item)}</Text>
               </View>
               <Text style={styles.passengerMobile}>Rs. {item.fareAmount ?? 0}</Text>
             </View>

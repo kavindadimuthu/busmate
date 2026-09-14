@@ -100,6 +100,7 @@ export function useSeatMap(tripId?: string, busId?: string) {
           ticketId: String(ticket.ticketId),
           passengerId: ticket.passengerId,
           issueMethod: ticket.issueMethod,
+          paymentMethod: ticket.paymentMethod,
           validationStatus: ticket.validationStatus,
           fareAmount: ticket.fareAmount,
           startLocationId: ticket.startLocationId,
