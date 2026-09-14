@@ -1,4 +1,5 @@
 import { useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
+import { cashOnHand, digitalSharePercent, presentationFor, type PaymentBreakdownEntry } from '@/lib/payments/paymentMethods';
 import { ticketApi } from '@/services/api/ticket';
 import { EmployeeSchedule } from '@/types/employee';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -15,6 +16,12 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+
+interface TripSummary {
+  totalPassengers: number;
+  totalRevenue: number;
+  paymentBreakdown: PaymentBreakdownEntry[];
+}
 
 // Types for seat booking data
 interface SeatBookingData {
@@ -33,6 +40,7 @@ export default function TripOverviewScreen() {
   
   // State for API data
   const [seatBookingData, setSeatBookingData] = useState<SeatBookingData[]>([]);
+  const [tripSummary, setTripSummary] = useState<TripSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,13 +55,18 @@ export default function TripOverviewScreen() {
     try {
       setError(null);
       console.log('🎯 Fetching trip overview data for trip:', tripSchedule.id);
-      const bookingData = await ticketApi.getSeatBookings(tripSchedule.id);
+      const [bookingData, summary] = await Promise.all([
+        ticketApi.getSeatBookings(tripSchedule.id),
+        ticketApi.getTripSummary(tripSchedule.id),
+      ]);
       setSeatBookingData(bookingData);
+      setTripSummary(summary);
       console.log('✅ Trip overview data loaded:', bookingData.length, 'seats');
     } catch (err: any) {
       console.error('❌ Error fetching trip overview data:', err);
       setError(err.message || 'Failed to fetch trip data');
       setSeatBookingData([]); // Set empty array on error
+      setTripSummary(null);
     } finally {
       setLoading(false);
     }
@@ -75,37 +88,24 @@ export default function TripOverviewScreen() {
     setRefreshing(false);
   };
   
-  // Calculate trip summary data from real API data
+  // Ticket counts and revenue come from the trip summary endpoint, not from the seat map: a
+  // conductor-issued ticket has no seat number, so seat-derived totals silently omitted every
+  // fare collected on the bus (INC-009). The seat map is still the source for occupancy, which
+  // is genuinely a per-seat question.
+  const occupiedSeats = seatBookingData.filter(
+    seat => seat.status === 'booked' || seat.status === 'validated'
+  ).length;
+
   const tripSummaryData = {
-    totalPassengers: seatBookingData.filter(seat => 
-      seat.status === 'booked' || seat.status === 'validated'
-    ).length,
-    totalRevenue: seatBookingData.reduce((total, seat) => {
-      if (seat.status === 'booked' || seat.status === 'validated') {
-        return total + (seat.fareAmount || 0);
-      }
-      return total;
-    }, 0),
-    totalTickets: seatBookingData.filter(seat => 
-      seat.status === 'booked' || seat.status === 'validated'
-    ).length,
+    totalPassengers: tripSummary?.totalPassengers ?? 0,
+    totalRevenue: tripSummary?.totalRevenue ?? 0,
+    totalTickets: tripSummary?.totalPassengers ?? 0,
     validatedTickets: seatBookingData.filter(seat => seat.status === 'validated').length,
     bookedTickets: seatBookingData.filter(seat => seat.status === 'booked').length,
-    // Calculate digital vs cash revenue based on payment status
-    cashRevenue: seatBookingData.reduce((total, seat) => {
-      if ((seat.status === 'booked' || seat.status === 'validated') && 
-          seat.paymentStatus !== 'DIGITAL' && seat.paymentStatus !== 'VALIDATED') {
-        return total + (seat.fareAmount || 0);
-      }
-      return total;
-    }, 0),
-    digitalRevenue: seatBookingData.reduce((total, seat) => {
-      if ((seat.status === 'booked' || seat.status === 'validated') && 
-          (seat.paymentStatus === 'DIGITAL' || seat.paymentStatus === 'VALIDATED')) {
-        return total + (seat.fareAmount || 0);
-      }
-      return total;
-    }, 0),
+    occupiedSeats,
+    // Revenue per payment method, exactly as the backend reported it. Rendered by iterating,
+    // so a payment method added later appears here with no change to this screen (ADR-011).
+    paymentBreakdown: tripSummary?.paymentBreakdown ?? [],
     isUsingRealData: true
   };
 
@@ -337,25 +337,51 @@ export default function TripOverviewScreen() {
             </View>
           </View>
 
-          <View style={styles.revenueRow}>
-            <View style={styles.revenueTypeContainer}>
-              <MaterialIcons name="money" size={18} color="#22C55E" />
-              <Text style={styles.revenueTypeText}>Cash</Text>
+          {tripSummaryData.paymentBreakdown.length === 0 ? (
+            <View style={styles.revenueRow}>
+              <Text style={styles.revenueTypeText}>No fares collected yet</Text>
             </View>
-            <Text style={styles.revenueAmount}>Rs {tripSummaryData.cashRevenue.toLocaleString()}</Text>
-          </View>
-
-          <View style={[styles.revenueRow, styles.revenueRowBorder]}>
-            <View style={styles.revenueTypeContainer}>
-              <Ionicons name="qr-code" size={18} color="#0066FF" />
-              <Text style={styles.revenueTypeText}>Digital (QR)</Text>
-            </View>
-            <Text style={styles.revenueAmount}>Rs {tripSummaryData.digitalRevenue.toLocaleString()}</Text>
-          </View>
+          ) : (
+            tripSummaryData.paymentBreakdown.map((entry, index) => {
+              const presentation = presentationFor(entry.method);
+              return (
+                <View
+                  key={entry.method}
+                  style={index === 0 ? styles.revenueRow : [styles.revenueRow, styles.revenueRowBorder]}
+                >
+                  <View style={styles.revenueTypeContainer}>
+                    <Ionicons name={presentation.icon as any} size={18} color={presentation.color} />
+                    <Text style={styles.revenueTypeText}>{presentation.label}</Text>
+                    <Text style={styles.revenueTicketCount}>
+                      {entry.ticketCount} {entry.ticketCount === 1 ? 'ticket' : 'tickets'}
+                    </Text>
+                  </View>
+                  <Text style={styles.revenueAmount}>Rs {entry.amount.toLocaleString()}</Text>
+                </View>
+              );
+            })
+          )}
 
           <View style={styles.revenueTotalRow}>
             <Text style={styles.revenueTotalText}>Total Revenue</Text>
             <Text style={styles.revenueTotalAmount}>Rs {tripSummaryData.totalRevenue.toLocaleString()}</Text>
+          </View>
+
+          {/* The two figures people actually act on: what the conductor must hand over, and the
+              share that never passed through their hands (BusMate's F-1 metric). */}
+          <View style={styles.custodyRow}>
+            <View style={styles.custodyBox}>
+              <Text style={styles.custodyLabel}>Cash to hand over</Text>
+              <Text style={styles.custodyAmount}>
+                Rs {cashOnHand(tripSummaryData.paymentBreakdown).toLocaleString()}
+              </Text>
+            </View>
+            <View style={styles.custodyBox}>
+              <Text style={styles.custodyLabel}>Collected digitally</Text>
+              <Text style={[styles.custodyAmount, { color: '#0066FF' }]}>
+                {digitalSharePercent(tripSummaryData.paymentBreakdown)}%
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -632,6 +658,33 @@ const styles = StyleSheet.create({
   revenueAmount: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  revenueTicketCount: {
+    fontSize: 12,
+    color: '#888',
+    marginLeft: 6,
+  },
+  custodyRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  custodyBox: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  custodyLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  custodyAmount: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#00A854',
   },
   revenueTotalRow: {
     flexDirection: 'row',

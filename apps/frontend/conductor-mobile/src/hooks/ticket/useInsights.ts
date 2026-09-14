@@ -3,6 +3,7 @@ import { journeyApi } from '../../services/api/journey';
 import { ticketApi } from '../../services/api/ticket';
 import { Trip } from '../../types/journey';
 import { InsightsData, TicketLog } from '../../types/ticket';
+import { breakdownFromTickets, totalRevenue as sumRevenue } from '../../lib/payments/paymentMethods';
 
 type TimeFilter = 'today' | 'lastWeek' | 'lastMonth' | 'custom';
 
@@ -36,28 +37,28 @@ export const useInsights = ({
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
       qrValidations: { value: 0, trend: '', trending: 'same' },
-      paymentBreakdown: { cash: { amount: 0, percentage: 0 }, qr: { amount: 0, percentage: 0 } },
+      paymentBreakdown: [],
     },
     lastWeek: {
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
       qrValidations: { value: 0, trend: '', trending: 'same' },
-      paymentBreakdown: { cash: { amount: 0, percentage: 0 }, qr: { amount: 0, percentage: 0 } },
+      paymentBreakdown: [],
     },
     lastMonth: {
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
       qrValidations: { value: 0, trend: '', trending: 'same' },
-      paymentBreakdown: { cash: { amount: 0, percentage: 0 }, qr: { amount: 0, percentage: 0 } },
+      paymentBreakdown: [],
     },
     custom: {
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
       qrValidations: { value: 0, trend: '', trending: 'same' },
-      paymentBreakdown: { cash: { amount: 0, percentage: 0 }, qr: { amount: 0, percentage: 0 } },
+      paymentBreakdown: [],
     },
   });
   const [loading, setLoading] = useState(false);
@@ -127,18 +128,21 @@ export const useInsights = ({
     const periodTickets = filterTicketsByPeriod(tickets, period);
     const periodTrips = filterTripsByPeriod(trips, period);
     
-    // Separate tickets by payment method based on paymentStatus
-    const cashTickets = periodTickets.filter(ticket => ticket.paymentStatus === 'CONDUCTOR');
-    const onlineTickets = periodTickets.filter(ticket => ticket.paymentStatus === 'ONLINE');
-    
-    // Calculate totals
-    const cashPassengers = cashTickets.reduce((sum, ticket) => sum + ticket.passengerCount, 0);
-    const onlinePassengers = onlineTickets.reduce((sum, ticket) => sum + ticket.passengerCount, 0);
-    const totalPassengers = cashPassengers + onlinePassengers;
-    
-    const cashRevenue = cashTickets.reduce((sum, ticket) => sum + ticket.fareAmount, 0);
-    const onlineRevenue = onlineTickets.reduce((sum, ticket) => sum + ticket.fareAmount, 0);
-    const totalRevenue = cashRevenue + onlineRevenue;
+    // Cancelled fares aren't revenue - matches the backend's trip summary.
+    const revenueTickets = periodTickets.filter(
+      ticket => String(ticket.validationStatus).toUpperCase() !== 'CANCELLED'
+    );
+    // Who issued the ticket (conductor vs passenger online) is a different question from how it
+    // was paid; this split only drives the online-validation count below.
+    const onlineTickets = revenueTickets.filter(
+      ticket => String(ticket.issueMethod || ticket.paymentStatus).toUpperCase() === 'ONLINE'
+    );
+
+    const totalPassengers = revenueTickets.reduce((sum, ticket) => sum + ticket.passengerCount, 0);
+    // Grouped by each ticket's backend-supplied payment method and custody (INC-009) - no
+    // method list lives here, so a new payment method shows up in this breakdown unchanged.
+    const paymentBreakdown = breakdownFromTickets(revenueTickets);
+    const totalRevenue = sumRevenue(paymentBreakdown);
     
     // Use actual trips count from trips API instead of calculated routes
     const tripsCompleted = periodTrips.filter(trip => 
@@ -148,9 +152,6 @@ export const useInsights = ({
     // QR validations are the online payments (when paymentStatus is ONLINE)
     const qrValidations = onlineTickets.length;
     
-    // Calculate payment breakdown percentages
-    const cashPercentage = totalRevenue > 0 ? Math.round((cashRevenue / totalRevenue) * 100) : 0;
-    const onlinePercentage = 100 - cashPercentage;
 
     // Calculate trends (simplified - just showing current values)
     const getTrend = (value: number, label: string) => {
@@ -181,16 +182,7 @@ export const useInsights = ({
         trend: getTrend(qrValidations, period === 'today' ? 'today' : `in ${period}`),
         trending: 'same',
       },
-      paymentBreakdown: {
-        cash: {
-          amount: cashRevenue,
-          percentage: cashPercentage,
-        },
-        qr: {
-          amount: onlineRevenue,
-          percentage: onlinePercentage,
-        },
-      },
+      paymentBreakdown,
     };
   }, [filterTicketsByPeriod, filterTripsByPeriod]);
 

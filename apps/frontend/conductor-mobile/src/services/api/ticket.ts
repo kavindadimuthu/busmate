@@ -1,4 +1,5 @@
 import { TicketLog } from '../../types/ticket';
+import { breakdownFromTickets, type PaymentBreakdownEntry } from '../../lib/payments/paymentMethods';
 import { apiClient } from '../apiClient';
 
 export const ticketApi = {
@@ -344,6 +345,7 @@ export const ticketApi = {
     onlineTickets: number;
     physicalTicketRevenue: number;
     onlineTicketRevenue: number;
+    paymentBreakdown: PaymentBreakdownEntry[];
   }> => {
     try {
       console.log('📊 Fetching trip summary for trip ID:', tripId);
@@ -377,7 +379,13 @@ export const ticketApi = {
         physicalTickets: physicalTickets.length,
         onlineTickets: onlineTickets.length,
         physicalTicketRevenue,
-        onlineTicketRevenue
+        onlineTicketRevenue,
+        // Revenue by payment method comes from the backend, which owns the method-to-custody
+        // classification (INC-009) - deriving it here would mean a second copy to update every
+        // time a payment method is added. Falls back to deriving from the ticket list only if
+        // the summary endpoint itself failed.
+        paymentBreakdown: (backendSummary?.paymentBreakdown as PaymentBreakdownEntry[])
+          ?? breakdownFromTickets(tickets),
       };
 
       console.log('✅ Trip summary:', summary);
@@ -393,7 +401,8 @@ export const ticketApi = {
         physicalTickets: 0,
         onlineTickets: 0,
         physicalTicketRevenue: 0,
-        onlineTicketRevenue: 0
+        onlineTicketRevenue: 0,
+        paymentBreakdown: [],
       };
     }
   },

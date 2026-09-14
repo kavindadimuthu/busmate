@@ -48,5 +48,7 @@ export interface SeatMapStats {
   validated: number;
   blocked: number;
   online: number;
-  cash: number;
+  // Tickets the conductor issued on the bus, however they were paid — not a cash count. How the
+  // money was paid lives in the payment breakdown (INC-009).
+  onBoard: number;
 }

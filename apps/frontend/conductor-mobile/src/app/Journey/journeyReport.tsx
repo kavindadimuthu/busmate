@@ -1,9 +1,11 @@
 import { useTicket } from '@/contexts/TicketContext';
 import { formatDate, formatTime } from '@/hooks/employee/useNextTrip';
 import { useOngoingTrip } from '@/hooks/employee/useOngoingTrip';
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { cashOnHand, digitalSharePercent, presentationFor, type PaymentBreakdownEntry } from '@/lib/payments/paymentMethods';
+import { ticketApi } from '@/services/api/ticket';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -50,22 +52,29 @@ function getStatusDisplayText(status: string): string {
 
 export default function TripReportScreen() {
   const { ongoingTrip, endTrip, endingTrip } = useOngoingTrip();
-  const { qrScanLogs, getQRScanLogsForTrip, cashTicketLogs, getCashTicketLogsForTrip } = useTicket();
+  const { getQRScanLogsForTrip } = useTicket();
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
   const [showAllLogs, setShowAllLogs] = useState(false);
 
-  // Get QR scan logs and cash ticket logs for this trip
+  // QR scan logs are a boarding-validation record, still shown below - they are not revenue.
   const tripQRLogs = getQRScanLogsForTrip();
-  const tripCashTickets = getCashTicketLogsForTrip();
-  
-  // Calculate QR revenue from successful scans
-  const qrRevenue = tripQRLogs
-    .filter(log => log.status === 'success')
-    .reduce((total, log) => total + log.ticketFee, 0);
-    
-  // Calculate cash revenue from physical tickets
-  const cashRevenue = tripCashTickets
-    .reduce((total, ticket) => total + ticket.fareAmount, 0);
+
+  // Revenue comes from the backend trip summary (INC-009). It used to be summed from an
+  // in-memory log that every issued ticket was appended to - card fares included, so card money
+  // was reported as cash on the one screen a conductor hands cash over from - and that log was
+  // lost whenever the app restarted.
+  const [tripSummary, setTripSummary] = useState<{
+    totalPassengers: number;
+    totalRevenue: number;
+    paymentBreakdown: PaymentBreakdownEntry[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!ongoingTrip?.id) return;
+    ticketApi.getTripSummary(String(ongoingTrip.id)).then(setTripSummary);
+  }, [ongoingTrip?.id]);
+
+  const paymentBreakdown = tripSummary?.paymentBreakdown ?? [];
 
   // If no ongoing trip, show message
   if (!ongoingTrip) {
@@ -101,19 +110,13 @@ export default function TripReportScreen() {
       status: ongoingTrip.status
     },
     summary: {
-      totalPassengers: 
-        tripQRLogs.filter(log => log.status === 'success').reduce((total, log) => total + log.passengerCount, 0) +
-        tripCashTickets.reduce((total, ticket) => total + ticket.passengerCount, 0),
-      ticketsIssued: 
-        tripQRLogs.filter(log => log.status === 'success').length + 
-        tripCashTickets.length,
-      qrRevenue: qrRevenue,
-      cashRevenue: cashRevenue,
+      totalPassengers: tripSummary?.totalPassengers ?? 0,
+      ticketsIssued: tripSummary?.totalPassengers ?? 0,
       duration: calculateTripDuration(ongoingTrip.startTime, ongoingTrip.endTime)
     },
     qrLogs: tripQRLogs,
     totalQrLogs: tripQRLogs.length,
-    totalRevenue: cashRevenue + qrRevenue
+    totalRevenue: tripSummary?.totalRevenue ?? 0
   };
 
   // Calculate trip duration
@@ -269,22 +272,45 @@ export default function TripReportScreen() {
               <Text style={styles.statLabel}>Tickets Issued</Text>
             </View>
 
-            {/* QR Revenue */}
-            <View style={[styles.statCard, { backgroundColor: '#FFF8E6' }]}>
-              <MaterialCommunityIcons name="qrcode-scan" size={22} color="#F5A623" />
-              <Text style={styles.statValue}>Rs. {tripData.summary.qrRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-              <Text style={styles.statLabel}>QR Revenue</Text>
+            {/* What the conductor must physically hand over - summed by custody, so it stays
+                right however many payment methods are added (ADR-011). */}
+            <View style={[styles.statCard, { backgroundColor: '#E6FFF2' }]}>
+              <MaterialIcons name="payments" size={22} color="#00A854" />
+              <Text style={styles.statValue}>
+                Rs. {cashOnHand(paymentBreakdown).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+              <Text style={styles.statLabel}>Cash to Hand Over</Text>
             </View>
 
-            {/* Cash Revenue */}
-            <View style={[styles.statCard, { backgroundColor: '#F5EEFF' }]}>
-              <MaterialIcons name="attach-money" size={22} color="#7C3AED" />
-              <Text style={styles.statValue}>
-                Rs. {tripData.summary.cashRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Text>
-              <Text style={styles.statLabel}>Cash Revenue</Text>
+            {/* Share that never passed through the conductor's hands - BusMate's F-1 metric. */}
+            <View style={[styles.statCard, { backgroundColor: '#E6F0FF' }]}>
+              <MaterialIcons name="credit-card" size={22} color="#0066FF" />
+              <Text style={styles.statValue}>{digitalSharePercent(paymentBreakdown)}%</Text>
+              <Text style={styles.statLabel}>Collected Digitally</Text>
             </View>
           </View>
+
+          {/* Revenue per payment method actually used on this trip */}
+          {paymentBreakdown.map((entry) => {
+            const presentation = presentationFor(entry.method);
+            return (
+              <View
+                key={entry.method}
+                style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F0F0F0' }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name={presentation.icon as any} size={18} color={presentation.color} />
+                  <Text style={{ marginLeft: 8, fontSize: 15, color: '#333' }}>{presentation.label}</Text>
+                  <Text style={{ marginLeft: 6, fontSize: 12, color: '#888' }}>
+                    {entry.ticketCount} {entry.ticketCount === 1 ? 'ticket' : 'tickets'}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#333' }}>
+                  Rs. {entry.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </Text>
+              </View>
+            );
+          })}
 
           <View style={styles.durationContainer}>
             <Text style={styles.durationLabel}>Trip Duration</Text>

@@ -16,6 +16,7 @@ export type ConductorLogTicketDTO = {
     paymentStatus?: string;
     issueMethod?: string;
     paymentMethod?: string;
+    custody?: string;
     validationStatus?: string;
     transactionStatus?: string;
     bookingStatus?: string;

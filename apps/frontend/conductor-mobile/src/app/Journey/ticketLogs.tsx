@@ -15,6 +15,7 @@ import { useOngoingTrip } from '../../hooks/employee/useOngoingTrip';
 import { stopsApi } from '../../services/api/stops';
 import { ticketApi } from '../../services/api/ticket';
 import { TicketLog } from '../../types/ticket';
+import { presentationFor } from '../../lib/payments/paymentMethods';
 
 export default function TicketLogsScreen() {
   const authContext = useContext(AuthContext);
@@ -105,21 +106,9 @@ export default function TicketLogsScreen() {
   const physicalTickets = currentTripTickets.filter((ticket: TicketLog) => !isOnlineTicket(ticket));
   const onlineTickets = currentTripTickets.filter((ticket: TicketLog) => isOnlineTicket(ticket));
 
-  // A conductor-issued ticket is no longer necessarily cash (INC-008 added card collection via
-  // PayHere), so this reads the fare's actual payment method instead of assuming. Anything the
-  // backend can't classify says so rather than silently claiming cash.
-  const paymentMethodBadge = (ticket: TicketLog) => {
-    switch (String(ticket.paymentMethod || '').toUpperCase()) {
-      case 'CASH':
-        return { label: 'Cash', color: '#00CC66', background: '#E6FFF2' };
-      case 'CARD':
-        return { label: 'Card', color: '#0066FF', background: '#E6F0FF' };
-      case 'PAYHERE':
-        return { label: 'Online', color: '#22C55E', background: '#ECFDF5' };
-      default:
-        return { label: 'Unknown', color: '#6B7280', background: '#F3F4F6' };
-    }
-  };
+  // Shared presentation (lib/payments/paymentMethods) so every screen labels a method the same
+  // way, and a new method is styled in exactly one place.
+  const paymentMethodBadge = (ticket: TicketLog) => presentationFor(ticket.paymentMethod);
 
   // Helper function to get location name or fallback
   const getLocationName = (locationId: string): string => {

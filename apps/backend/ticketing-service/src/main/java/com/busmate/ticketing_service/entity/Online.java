@@ -13,6 +13,9 @@ import org.apache.kafka.common.protocol.types.Field.Str;
 @Table(name = "online")
 public class Online {
 
+    // The stored form only. A value added here must also exist in payment.PaymentMethod (which
+    // decides who holds the money) and in a Flyway migration widening online_method_check - see
+    // PaymentMethod's Javadoc for the full checklist (INC-009, ADR-011).
     public enum Method { PAYHERE, CASH, CARD }
     public enum Status { PENDING, SUCCESS, FAILED, REFUNDED }
 

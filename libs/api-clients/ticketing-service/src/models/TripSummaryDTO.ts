@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { PaymentBreakdownEntryDTO } from './PaymentBreakdownEntryDTO';
 export type TripSummaryDTO = {
     tripId?: string;
     totalTickets?: number;
@@ -9,5 +10,6 @@ export type TripSummaryDTO = {
     validTickets?: number;
     invalidTickets?: number;
     averageFarePerTicket?: number;
+    paymentBreakdown?: Array<PaymentBreakdownEntryDTO>;
 };
 

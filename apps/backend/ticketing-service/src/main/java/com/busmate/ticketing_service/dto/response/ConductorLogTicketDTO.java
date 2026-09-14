@@ -31,9 +31,15 @@ public class ConductorLogTicketDTO {
     // INC-008. Use paymentMethod for that.
     private String issueMethod;
     // How the fare was actually paid: CASH | CARD (conductor-collected via PayHere's in-app
-    // SDK) | PAYHERE (passenger's own online booking). Null only for pre-INC-008 rows whose
-    // transaction has neither a cash nor an online sub-record.
+    // SDK) | PAYHERE (passenger's own online booking). Open-ended - clients must tolerate codes
+    // they don't recognise. Null only for pre-INC-008 rows whose transaction has neither a cash
+    // nor an online sub-record.
     private String paymentMethod;
+    // Who holds this fare's money: ON_HAND (conductor must hand it over) | SETTLED (reached the
+    // operator's account) | UNKNOWN. Sent per ticket so clients group revenue without keeping
+    // their own copy of the method-to-custody mapping, which would drift the moment a payment
+    // method is added (INC-009, ADR-011).
+    private String custody;
     // VALID (validated / boarded) | NOT_VALID (not yet boarded) | CANCELLED.
     private String validationStatus;
     // Transaction-level payment status (PENDING/COMPLETED/FAILED/REFUNDED/ISSUED), distinct

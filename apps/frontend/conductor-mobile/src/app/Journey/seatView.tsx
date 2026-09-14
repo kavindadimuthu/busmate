@@ -17,21 +17,15 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { presentationFor } from '@/lib/payments/paymentMethods';
 
-// An on-the-bus ticket can be paid by cash or card (INC-008), so this reads the fare's real
-// payment method rather than inferring "not online means cash". Falls back to the issue method
-// only for older rows the backend can't classify.
+// Shared presentation so this screen labels a payment method exactly as the ticket log and
+// revenue views do. Falls back to the issue method only for older rows the backend can't classify.
 function methodLabel(cell: SeatCell): string {
-  switch (String(cell.paymentMethod || '').toUpperCase()) {
-    case 'CASH':
-      return 'Cash';
-    case 'CARD':
-      return 'Card';
-    case 'PAYHERE':
-      return 'Online';
-    default:
-      return String(cell.issueMethod).toUpperCase() === 'ONLINE' ? 'Online' : 'Unknown';
+  if (!cell.paymentMethod && String(cell.issueMethod).toUpperCase() === 'ONLINE') {
+    return 'Online';
   }
+  return presentationFor(cell.paymentMethod).label;
 }
 
 export default function SeatViewScreen() {
@@ -238,7 +232,7 @@ export default function SeatViewScreen() {
             </View>
             <View style={[styles.statsGrid, { marginTop: 12 }]}>
               <View style={styles.statItem}><Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.online}</Text><Text style={styles.statLabel}>Online</Text></View>
-              <View style={styles.statItem}><Text style={[styles.statValue, { color: '#0891B2' }]}>{stats.cash}</Text><Text style={styles.statLabel}>Cash</Text></View>
+              <View style={styles.statItem}><Text style={[styles.statValue, { color: '#0891B2' }]}>{stats.onBoard}</Text><Text style={styles.statLabel}>On bus</Text></View>
             </View>
           </View>
         </ScrollView>

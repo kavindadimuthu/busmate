@@ -6,6 +6,7 @@ import com.busmate.ticketing_service.dto.request.TicketCancelRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.PaymentBreakdownEntryDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.entity.Cash;
@@ -15,6 +16,7 @@ import com.busmate.ticketing_service.entity.Transactions;
 import com.busmate.ticketing_service.exception.BadRequestException;
 import com.busmate.ticketing_service.exception.NotFoundException;
 import com.busmate.ticketing_service.payment.PaymentGateway;
+import com.busmate.ticketing_service.payment.PaymentMethod;
 import com.busmate.ticketing_service.repository.ConductorLogRepo;
 import com.busmate.ticketing_service.repository.OnlineRepo;
 import com.busmate.ticketing_service.repository.TicketRepo;
@@ -29,11 +31,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -390,7 +396,8 @@ public class PaymentServiceIMPL implements PaymentService {
 
             if (tickets.isEmpty()) {
                 // Return empty summary if no tickets found
-                return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0, java.math.BigDecimal.ZERO);
+                return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0,
+                        java.math.BigDecimal.ZERO, List.of());
             }
 
             // Calculate summary statistics
@@ -417,11 +424,13 @@ public class PaymentServiceIMPL implements PaymentService {
                     totalFareAmount,
                     (int) validTickets,
                     invalidTickets,
-                    averageFarePerTicket);
+                    averageFarePerTicket,
+                    buildPaymentBreakdown(tickets));
 
         } catch (Exception e) {
             // Return empty summary in case of error
-            return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0, java.math.BigDecimal.ZERO);
+            return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0,
+                    java.math.BigDecimal.ZERO, List.of());
         }
     }
 
@@ -594,9 +603,46 @@ public class PaymentServiceIMPL implements PaymentService {
         Transactions.Status txStatus = transaction != null ? transaction.getStatus() : null;
         dto.setTransactionStatus(txStatus != null ? txStatus.toString() : null);
         dto.setBookingStatus(deriveBookingStatus(ticket, txStatus));
-        dto.setPaymentMethod(derivePaymentMethod(transaction));
+        String paymentMethod = derivePaymentMethod(transaction);
+        dto.setPaymentMethod(paymentMethod);
+        dto.setCustody(PaymentMethod.custodyOf(paymentMethod).name());
 
         return dto;
+    }
+
+    /**
+     * Revenue grouped by payment method (INC-009). Methods are discovered from the tickets
+     * themselves rather than enumerated here, so a payment method added later shows up with no
+     * change to this method — and one whose code this build doesn't recognise still appears,
+     * classified UNKNOWN, because money must never silently vanish from a revenue total.
+     *
+     * Ordered by PaymentMethod's declaration order (cash first, it's the one a conductor is
+     * accountable for), with unrecognised codes last, so the UI's rows don't reshuffle between
+     * refreshes.
+     */
+    private List<PaymentBreakdownEntryDTO> buildPaymentBreakdown(List<Tickets> tickets) {
+        Map<String, PaymentBreakdownEntryDTO> byMethod = new LinkedHashMap<>();
+
+        for (Tickets ticket : tickets) {
+            if (ticket.getStatus() == Tickets.Status.CANCELLED) {
+                continue; // cancelled fares are not revenue
+            }
+            String method = derivePaymentMethod(ticket.getTransactions());
+            String key = method != null ? method : "UNKNOWN";
+            BigDecimal fare = ticket.getFareAmount() != null ? ticket.getFareAmount() : BigDecimal.ZERO;
+
+            PaymentBreakdownEntryDTO entry = byMethod.computeIfAbsent(key, code ->
+                    new PaymentBreakdownEntryDTO(code, PaymentMethod.custodyOf(code).name(),
+                            BigDecimal.ZERO, 0));
+            entry.setAmount(entry.getAmount().add(fare));
+            entry.setTicketCount(entry.getTicketCount() + 1);
+        }
+
+        return byMethod.values().stream()
+                .sorted(Comparator.comparingInt(entry -> PaymentMethod.resolve(entry.getMethod())
+                        .map(Enum::ordinal)
+                        .orElse(Integer.MAX_VALUE)))
+                .toList();
     }
 
     /**

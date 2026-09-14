@@ -16,6 +16,7 @@ export type { Pageablenull } from './models/Pageablenull';
 export type { PageConductorLogTicketDTO } from './models/PageConductorLogTicketDTO';
 export type { PayHereHashRequestDTO } from './models/PayHereHashRequestDTO';
 export type { PayHereHashResponseDTO } from './models/PayHereHashResponseDTO';
+export type { PaymentBreakdownEntryDTO } from './models/PaymentBreakdownEntryDTO';
 export type { PaymentConfirmResponseDTO } from './models/PaymentConfirmResponseDTO';
 export type { PaymentRequestDTO } from './models/PaymentRequestDTO';
 export type { RouteFareDTO } from './models/RouteFareDTO';

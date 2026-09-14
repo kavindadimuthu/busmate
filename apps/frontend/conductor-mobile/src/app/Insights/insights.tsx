@@ -16,6 +16,7 @@ import {
   View
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { cashOnHand, digitalSharePercent, presentationFor } from '@/lib/payments/paymentMethods';
 import { AuthContext } from '../../contexts/AuthContext';
 import { useInsights } from '../../hooks/ticket/useInsights';
 
@@ -169,42 +170,29 @@ export default function InsightsScreen() {
     });
   };
 
-  // Prepare chart data for payment methods
+  // One slice per payment method actually used in the period, in the order the breakdown
+  // arrives (cash first). Iterating rather than naming methods is what lets a wallet or QR
+  // method added later appear here with no change to this screen (INC-009, ADR-011).
   const getPaymentChartData = () => {
-    const chartData = [];
-    const totalRevenue = currentData.moneyCollected.value;
-    
-    // Always show both payment methods if there's any data
-    if (totalRevenue > 0 || currentData.totalPassengers.value > 0) {
-      // Cash payments
-      chartData.push({
-        name: 'Cash',
-        population: currentData.paymentBreakdown.cash.amount > 0 ? currentData.paymentBreakdown.cash.amount : 0.1,
-        color: currentData.paymentBreakdown.cash.amount > 0 ? '#0066FF' : '#E5E5E5',
-        legendFontColor: currentData.paymentBreakdown.cash.amount > 0 ? '#333' : '#999',
-        legendFontSize: 14,
-      });
-      
-      // QR/Digital payments
-      chartData.push({
-        name: 'QR/Digital',
-        population: currentData.paymentBreakdown.qr.amount > 0 ? currentData.paymentBreakdown.qr.amount : 0.1,
-        color: currentData.paymentBreakdown.qr.amount > 0 ? '#22C55E' : '#E5E5E5',
-        legendFontColor: currentData.paymentBreakdown.qr.amount > 0 ? '#333' : '#999',
-        legendFontSize: 14,
-      });
-    } else {
-      // No data at all
-      chartData.push({
-        name: 'No Data',
-        population: 1,
-        color: '#E5E5E5',
-        legendFontColor: '#999',
-        legendFontSize: 14,
-      });
+    const breakdown = currentData.paymentBreakdown;
+    if (breakdown.length === 0) {
+      return [{ name: 'No Data', population: 1, color: '#E5E5E5', legendFontColor: '#999', legendFontSize: 14 }];
     }
-    
-    return chartData;
+    return breakdown.map((entry) => {
+      const presentation = presentationFor(entry.method);
+      return {
+        name: presentation.label,
+        population: entry.amount > 0 ? entry.amount : 0.1,
+        color: presentation.color,
+        legendFontColor: '#333',
+        legendFontSize: 14,
+      };
+    });
+  };
+
+  const sharePercent = (amount: number) => {
+    const total = currentData.moneyCollected.value;
+    return total > 0 ? Math.round((amount / total) * 100) : 0;
   };
 
   const screenWidth = Dimensions.get('window').width;
@@ -375,30 +363,6 @@ export default function InsightsScreen() {
           </View>
         </View>
         
-        {/* Payment Breakdown */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Breakdown</Text>
-          <View style={styles.paymentBreakdownContainer}>
-            <View style={styles.paymentRow}>
-              <View style={styles.paymentLabelContainer}>
-                <View style={[styles.dot, {backgroundColor: '#0066FF'}]} />
-                <Text style={styles.paymentLabel}>Cash Payments</Text>
-              </View>
-              <Text style={styles.paymentValue}>RS. {currentData.paymentBreakdown.cash.amount} ({currentData.paymentBreakdown.cash.percentage}%)</Text>
-            </View>
-            
-            <View style={styles.paymentRow}>
-              <View style={styles.paymentLabelContainer}>
-                <View style={[styles.dot, {backgroundColor: '#22C55E'}]} />
-                <Text style={styles.paymentLabel}>QR Payments</Text>
-              </View>
-              <Text style={styles.paymentValue}>RS. {currentData.paymentBreakdown.qr.amount} ({currentData.paymentBreakdown.qr.percentage}%)</Text>
-            </View>
-          </View>
-        </View> */}
-        
-       
-        
         {/* Payment Methods */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Methods Distribution</Text>
@@ -427,50 +391,41 @@ export default function InsightsScreen() {
                 </Text>
               </View>
               
-              {/* Enhanced Legend */}
+              {/* Cash in hand vs already settled - the split that stays meaningful however many
+                  payment methods exist, because it is about who holds the money. */}
+              <View style={styles.custodySummary}>
+                <View style={styles.custodyTile}>
+                  <Text style={styles.custodyTileLabel}>Cash handled</Text>
+                  <Text style={styles.custodyTileValue}>
+                    RS. {cashOnHand(currentData.paymentBreakdown).toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.custodyTile}>
+                  <Text style={styles.custodyTileLabel}>Collected digitally</Text>
+                  <Text style={[styles.custodyTileValue, { color: '#0066FF' }]}>
+                    {digitalSharePercent(currentData.paymentBreakdown)}%
+                  </Text>
+                </View>
+              </View>
+
+              {/* One legend row per method actually used */}
               <View style={styles.chartLegend}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, { 
-                    backgroundColor: currentData.paymentBreakdown.cash.amount > 0 ? '#0066FF' : '#E5E5E5' 
-                  }]} />
-                  <View style={styles.legendContent}>
-                    <Text style={styles.legendLabel}>Cash Payments</Text>
-                    <Text style={[
-                      styles.legendAmount, 
-                      currentData.paymentBreakdown.cash.amount === 0 && styles.legendAmountZero
-                    ]}>
-                      RS. {currentData.paymentBreakdown.cash.amount.toFixed(2)}
-                    </Text>
-                    <Text style={[
-                      styles.legendPercent,
-                      currentData.paymentBreakdown.cash.amount === 0 && styles.legendPercentZero
-                    ]}>
-                      {currentData.paymentBreakdown.cash.percentage}% of total revenue
-                      {currentData.paymentBreakdown.cash.amount === 0 && ' (No cash collected)'}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, { 
-                    backgroundColor: currentData.paymentBreakdown.qr.amount > 0 ? '#22C55E' : '#E5E5E5' 
-                  }]} />
-                  <View style={styles.legendContent}>
-                    <Text style={styles.legendLabel}>QR/Digital Payments </Text>
-                    <Text style={[
-                      styles.legendAmount, 
-                      currentData.paymentBreakdown.qr.amount === 0 && styles.legendAmountZero
-                    ]}>
-                      RS. {currentData.paymentBreakdown.qr.amount.toFixed(2)}
-                    </Text>
-                    <Text style={[
-                      styles.legendPercent,
-                      currentData.paymentBreakdown.qr.amount === 0 && styles.legendPercentZero
-                    ]}>
-                      {currentData.paymentBreakdown.qr.percentage}% of total revenue
-                      {currentData.paymentBreakdown.qr.amount === 0 && ' (Free/Zero-amount tickets)'}
-                    </Text>
-                  </View>
-                </View>
+                {currentData.paymentBreakdown.map((entry) => {
+                  const presentation = presentationFor(entry.method);
+                  return (
+                    <View key={entry.method} style={styles.legendItem}>
+                      <View style={[styles.legendColor, { backgroundColor: presentation.color }]} />
+                      <View style={styles.legendContent}>
+                        <Text style={styles.legendLabel}>{presentation.label}</Text>
+                        <Text style={styles.legendAmount}>RS. {entry.amount.toFixed(2)}</Text>
+                        <Text style={styles.legendPercent}>
+                          {sharePercent(entry.amount)}% of total revenue · {entry.ticketCount}{' '}
+                          {entry.ticketCount === 1 ? 'ticket' : 'tickets'}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           ) : (
@@ -649,6 +604,29 @@ const styles = StyleSheet.create({
   activeRoutePassengers: {
     fontSize: 14,
     color: '#666',
+  },
+  custodySummary: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  custodyTile: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  custodyTileLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  custodyTileValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#00A854',
   },
   paymentBreakdownContainer: {
     backgroundColor: '#F9F9F9',
