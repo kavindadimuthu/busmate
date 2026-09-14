@@ -137,8 +137,11 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
 - Passenger self-booking still pays through a dummy gateway; only conductor-collected card payments
   are real (PayHere, [ADR-010](decisions/ADR-010-payhere-for-conductor-card-payments.md)). The
   PayHere `notify_url` webhook is unverified until the backend is publicly reachable.
-- Revenue grouping follows [ADR-011](decisions/ADR-011-revenue-grouped-by-custody-listed-by-method.md);
-  the operator and MOT portal revenue views have not adopted it yet.
+- Revenue grouping follows [ADR-011](decisions/ADR-011-revenue-grouped-by-custody-listed-by-method.md)
+  and ticket categorisation follows
+  [ADR-012](decisions/ADR-012-tickets-grouped-by-sale-stage-listed-by-channel.md) in conductor-mobile
+  only. The staff portal still splits tickets "Cash (Conductor)" vs "Online" from `issueMethod`,
+  which also mislabels card fares as cash.
 - Mobile apps duplicate copies of generated API clients rather than consuming `libs/api-clients`.
 - Passenger live ETAs do not exist; monitoring/analytics surfaces run on mock data.
 

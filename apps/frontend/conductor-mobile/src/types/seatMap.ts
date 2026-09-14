@@ -35,6 +35,8 @@ export interface SeatCell {
   // How the fare was paid — a conductor-issued ticket is CASH or CARD (INC-008), so this
   // can't be inferred from issueMethod.
   paymentMethod?: 'CASH' | 'CARD' | 'PAYHERE' | string | null;
+  // On the bus vs pre-booked, classified by the backend (INC-010).
+  saleStage?: 'ON_BUS' | 'PRE_BOOKED' | 'UNKNOWN' | string | null;
   validationStatus?: 'VALID' | 'NOT_VALID' | string | null;
   fareAmount?: number;
   startLocationId?: string;
@@ -47,8 +49,8 @@ export interface SeatMapStats {
   booked: number;
   validated: number;
   blocked: number;
-  online: number;
-  // Tickets the conductor issued on the bus, however they were paid — not a cash count. How the
-  // money was paid lives in the payment breakdown (INC-009).
+  // Occupied seats by sale stage (INC-010). preBooked: bought before boarding. onBoard: sold by
+  // the conductor on the bus, however it was paid.
+  preBooked: number;
   onBoard: number;
 }

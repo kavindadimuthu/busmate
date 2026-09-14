@@ -43,3 +43,4 @@
 | [ADR-009](ADR-009-self-hosted-s3-compatible-media-storage.md) | Media lives in self-hosted, S3-compatible object storage | architecture | Accepted |
 | [ADR-010](ADR-010-payhere-for-conductor-card-payments.md) | PayHere is the PSP for conductor-collected card payments | architecture | Accepted |
 | [ADR-011](ADR-011-revenue-grouped-by-custody-listed-by-method.md) | Revenue is grouped by custody and listed by payment method | architecture | Accepted |
+| [ADR-012](ADR-012-tickets-grouped-by-sale-stage-listed-by-channel.md) | Tickets are grouped by sale stage and listed by sale channel | architecture | Accepted |

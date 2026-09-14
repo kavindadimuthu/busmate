@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
  * journeyApi.getBusById) with the **dynamic per-trip bookings** (ticketing-service, via
  * ticketApi.getTicketsByTripId): each seat becomes available / booked / validated / blocked.
  * A ticket's `validationStatus === 'VALID'` -> validated; otherwise booked. `issueMethod`
- * distinguishes online bookings from tickets the conductor issued on the bus.
+ * distinguishes pre-booked tickets from tickets the conductor sold on the bus.
  */
 export function useSeatMap(tripId?: string, busId?: string) {
   const { user } = useAuth();
@@ -100,6 +100,7 @@ export function useSeatMap(tripId?: string, busId?: string) {
           ticketId: String(ticket.ticketId),
           passengerId: ticket.passengerId,
           issueMethod: ticket.issueMethod,
+          saleStage: ticket.saleStage,
           paymentMethod: ticket.paymentMethod,
           validationStatus: ticket.validationStatus,
           fareAmount: ticket.fareAmount,
@@ -125,7 +126,7 @@ export function useSeatMap(tripId?: string, busId?: string) {
   }, [layout, seatOf]);
 
   const stats: SeatMapStats = useMemo(() => {
-    let total = 0, available = 0, booked = 0, validated = 0, blockedCount = 0, online = 0, onBoard = 0;
+    let total = 0, available = 0, booked = 0, validated = 0, blockedCount = 0, preBooked = 0, onBoard = 0;
     layout.rows.forEach((row) => {
       [...(row.left ?? []), ...(row.right ?? []), ...(row.back ?? [])].forEach((seat) => {
         total++;
@@ -135,12 +136,13 @@ export function useSeatMap(tripId?: string, busId?: string) {
         else if (cell.status === 'validated') validated++;
         else if (cell.status === 'blocked') blockedCount++;
         if (cell.status === 'booked' || cell.status === 'validated') {
-          if (String(cell.issueMethod).toUpperCase() === 'ONLINE') online++;
-          else onBoard++;
+          const stage = String(cell.saleStage).toUpperCase();
+          if (stage === 'PRE_BOOKED') preBooked++;
+          else if (stage === 'ON_BUS') onBoard++;
         }
       });
     });
-    return { total, available, booked, validated, blocked: blockedCount, online, onBoard };
+    return { total, available, booked, validated, blocked: blockedCount, preBooked, onBoard };
   }, [layout, seatOf]);
 
   const validateTicket = useCallback(

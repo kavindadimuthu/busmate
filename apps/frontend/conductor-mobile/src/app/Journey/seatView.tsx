@@ -18,6 +18,7 @@ import {
   View
 } from 'react-native';
 import { presentationFor } from '@/lib/payments/paymentMethods';
+import { stageOfTicket, stagePresentation } from '@/lib/tickets/saleStages';
 
 // Shared presentation so this screen labels a payment method exactly as the ticket log and
 // revenue views do. Falls back to the issue method only for older rows the backend can't classify.
@@ -63,7 +64,7 @@ export default function SeatViewScreen() {
     if (!cell.ticketId) return;
     Alert.alert(
       `Validate seat ${cell.seatNumber}?`,
-      `Passenger: ${cell.passengerId || 'Unknown'}\nFare: Rs. ${cell.fareAmount ?? 0}\nPayment: ${methodLabel(cell)}`,
+      `Passenger: ${cell.passengerId || 'Unknown'}\nFare: Rs. ${cell.fareAmount ?? 0}\nSold: ${stagePresentation(stageOfTicket(cell)).label}\nPayment: ${methodLabel(cell)}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -87,7 +88,7 @@ export default function SeatViewScreen() {
     } else if (cell.status === 'validated') {
       Alert.alert(
         `Seat ${cell.seatNumber}`,
-        `Passenger: ${cell.passengerId || 'Unknown'}\nStatus: Validated\nFare: Rs. ${cell.fareAmount ?? 0}\nPayment: ${methodLabel(cell)}`,
+        `Passenger: ${cell.passengerId || 'Unknown'}\nStatus: Validated\nFare: Rs. ${cell.fareAmount ?? 0}\nSold: ${stagePresentation(stageOfTicket(cell)).label}\nPayment: ${methodLabel(cell)}`,
       );
     } else {
       // booked, not validated -> offer to validate
@@ -131,7 +132,7 @@ export default function SeatViewScreen() {
   }
 
   const renderPassengerItem = ({ item }: { item: SeatCell }) => {
-    const online = String(item.issueMethod).toUpperCase() === 'ONLINE';
+    const preBooked = stageOfTicket(item) === 'PRE_BOOKED';
     return (
       <TouchableOpacity style={styles.passengerCard} onPress={() => handleSeatPress(item)}>
         <View style={styles.passengerInfo}>
@@ -141,8 +142,10 @@ export default function SeatViewScreen() {
           <View style={styles.passengerDetails}>
             <Text style={styles.passengerName}>{item.passengerId || 'Passenger'}</Text>
             <View style={styles.methodRow}>
-              <View style={[styles.methodBadge, online ? styles.onlineBadge : styles.cashBadge]}>
-                <Text style={styles.methodBadgeText}>{methodLabel(item)}</Text>
+              <View style={[styles.methodBadge, preBooked ? styles.preBookedBadge : styles.onBusBadge]}>
+                <Text style={styles.methodBadgeText}>
+                  {stagePresentation(stageOfTicket(item)).label} · {methodLabel(item)}
+                </Text>
               </View>
               <Text style={styles.passengerMobile}>Rs. {item.fareAmount ?? 0}</Text>
             </View>
@@ -231,7 +234,7 @@ export default function SeatViewScreen() {
               <View style={styles.statItem}><Text style={[styles.statValue, { color: '#0066FF' }]}>{stats.validated}</Text><Text style={styles.statLabel}>Validated</Text></View>
             </View>
             <View style={[styles.statsGrid, { marginTop: 12 }]}>
-              <View style={styles.statItem}><Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.online}</Text><Text style={styles.statLabel}>Online</Text></View>
+              <View style={styles.statItem}><Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.preBooked}</Text><Text style={styles.statLabel}>Pre-booked</Text></View>
               <View style={styles.statItem}><Text style={[styles.statValue, { color: '#0891B2' }]}>{stats.onBoard}</Text><Text style={styles.statLabel}>On bus</Text></View>
             </View>
           </View>
@@ -319,8 +322,8 @@ const styles = StyleSheet.create({
   passengerName: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 4 },
   methodRow: { flexDirection: 'row', alignItems: 'center' },
   methodBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginRight: 8 },
-  onlineBadge: { backgroundColor: '#EDE9FE' },
-  cashBadge: { backgroundColor: '#CFFAFE' },
+  preBookedBadge: { backgroundColor: '#EDE9FE' },
+  onBusBadge: { backgroundColor: '#CFFAFE' },
   methodBadgeText: { fontSize: 11, fontWeight: '600', color: '#333' },
   passengerMobile: { fontSize: 14, color: '#666' },
   passengerActions: { flexDirection: 'row', alignItems: 'center' },

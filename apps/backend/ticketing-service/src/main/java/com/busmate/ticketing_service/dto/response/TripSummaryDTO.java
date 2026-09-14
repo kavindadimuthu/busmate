@@ -31,4 +31,10 @@ public class TripSummaryDTO {
      * must hand over" vs "already settled" totals. See ADR-011.
      */
     private List<PaymentBreakdownEntryDTO> paymentBreakdown;
+    /**
+     * Tickets split by sale stage — on the bus vs pre-booked — with how many have boarded
+     * (INC-010). A list for the same reason as paymentBreakdown: a stage added later needs no
+     * contract change. See ADR-012.
+     */
+    private List<SaleStageBreakdownEntryDTO> saleBreakdown;
 }

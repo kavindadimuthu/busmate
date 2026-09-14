@@ -2,6 +2,7 @@ import { useTicket } from '@/contexts/TicketContext';
 import { formatDate, formatTime } from '@/hooks/employee/useNextTrip';
 import { useOngoingTrip } from '@/hooks/employee/useOngoingTrip';
 import { cashOnHand, digitalSharePercent, presentationFor, type PaymentBreakdownEntry } from '@/lib/payments/paymentMethods';
+import { describeSaleBreakdown, type SaleStageBreakdownEntry } from '@/lib/tickets/saleStages';
 import { ticketApi } from '@/services/api/ticket';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -66,7 +67,9 @@ export default function TripReportScreen() {
   const [tripSummary, setTripSummary] = useState<{
     totalPassengers: number;
     totalRevenue: number;
+    cancelledTickets: number;
     paymentBreakdown: PaymentBreakdownEntry[];
+    saleBreakdown: SaleStageBreakdownEntry[];
   } | null>(null);
 
   useEffect(() => {
@@ -289,6 +292,11 @@ export default function TripReportScreen() {
               <Text style={styles.statLabel}>Collected Digitally</Text>
             </View>
           </View>
+
+          {/* On the bus vs pre-booked, with boarding and cancellations (INC-010) */}
+          <Text style={{ fontSize: 13, color: '#555', textAlign: 'center', marginVertical: 10 }}>
+            {describeSaleBreakdown(tripSummary?.saleBreakdown ?? [], tripSummary?.cancelledTickets ?? 0)}
+          </Text>
 
           {/* Revenue per payment method actually used on this trip */}
           {paymentBreakdown.map((entry) => {

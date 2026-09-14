@@ -4,6 +4,7 @@ import { ticketApi } from '../../services/api/ticket';
 import { Trip } from '../../types/journey';
 import { InsightsData, TicketLog } from '../../types/ticket';
 import { breakdownFromTickets, totalRevenue as sumRevenue } from '../../lib/payments/paymentMethods';
+import { saleBreakdownFromTickets } from '../../lib/tickets/saleStages';
 
 type TimeFilter = 'today' | 'lastWeek' | 'lastMonth' | 'custom';
 
@@ -36,28 +37,28 @@ export const useInsights = ({
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
-      qrValidations: { value: 0, trend: '', trending: 'same' },
+      preBookedBoarded: { value: 0, trend: '', trending: 'same' },
       paymentBreakdown: [],
     },
     lastWeek: {
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
-      qrValidations: { value: 0, trend: '', trending: 'same' },
+      preBookedBoarded: { value: 0, trend: '', trending: 'same' },
       paymentBreakdown: [],
     },
     lastMonth: {
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
-      qrValidations: { value: 0, trend: '', trending: 'same' },
+      preBookedBoarded: { value: 0, trend: '', trending: 'same' },
       paymentBreakdown: [],
     },
     custom: {
       totalPassengers: { value: 0, trend: '', trending: 'same' },
       moneyCollected: { value: 0, trend: '', trending: 'same' },
       tripsCompleted: { value: 0, trend: '', trending: 'same' },
-      qrValidations: { value: 0, trend: '', trending: 'same' },
+      preBookedBoarded: { value: 0, trend: '', trending: 'same' },
       paymentBreakdown: [],
     },
   });
@@ -132,11 +133,11 @@ export const useInsights = ({
     const revenueTickets = periodTickets.filter(
       ticket => String(ticket.validationStatus).toUpperCase() !== 'CANCELLED'
     );
-    // Who issued the ticket (conductor vs passenger online) is a different question from how it
-    // was paid; this split only drives the online-validation count below.
-    const onlineTickets = revenueTickets.filter(
-      ticket => String(ticket.issueMethod || ticket.paymentStatus).toUpperCase() === 'ONLINE'
-    );
+    // Pre-booked passengers who actually boarded. Sale stage is classified by the backend
+    // (INC-010); the old "QR validations" counted every online booking, boarded or not.
+    const preBookedBoarded = saleBreakdownFromTickets(revenueTickets)
+      .filter(entry => entry.stage === 'PRE_BOOKED')
+      .reduce((sum, entry) => sum + entry.boardedCount, 0);
 
     const totalPassengers = revenueTickets.reduce((sum, ticket) => sum + ticket.passengerCount, 0);
     // Grouped by each ticket's backend-supplied payment method and custody (INC-009) - no
@@ -149,8 +150,6 @@ export const useInsights = ({
       trip.status === 'completed' || trip.status === 'in_transit'
     ).length;
     
-    // QR validations are the online payments (when paymentStatus is ONLINE)
-    const qrValidations = onlineTickets.length;
     
 
     // Calculate trends (simplified - just showing current values)
@@ -177,9 +176,9 @@ export const useInsights = ({
         trend: getTrend(tripsCompleted, period === 'today' ? 'today' : `in ${period}`),
         trending: 'same',
       },
-      qrValidations: {
-        value: qrValidations,
-        trend: getTrend(qrValidations, period === 'today' ? 'today' : `in ${period}`),
+      preBookedBoarded: {
+        value: preBookedBoarded,
+        trend: getTrend(preBookedBoarded, period === 'today' ? 'today' : `in ${period}`),
         trending: 'same',
       },
       paymentBreakdown,

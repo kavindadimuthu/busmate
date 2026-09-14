@@ -1,6 +1,7 @@
 package com.busmate.ticketing_service.service.impl;
 
 import com.busmate.ticketing_service.dto.response.PaymentBreakdownEntryDTO;
+import com.busmate.ticketing_service.dto.response.SaleStageBreakdownEntryDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.entity.Cash;
 import com.busmate.ticketing_service.entity.Online;
@@ -49,6 +50,19 @@ class TripSummaryTotalsTest {
         assertEquals(1, summary.getInvalidTickets(), "sold but not yet boarded - not the cancelled one");
         assertEquals(1, summary.getCancelledTickets());
         assertMoney("120", summary.getAverageFarePerTicket());
+
+        // INC-010: two sold on the bus (boarded when sold), one pre-booked still awaiting boarding;
+        // the cancelled pre-booking appears in neither.
+        List<SaleStageBreakdownEntryDTO> stages = summary.getSaleBreakdown();
+        assertEquals(2, stages.size());
+        assertEquals("ON_BUS", stages.get(0).getStage());
+        assertEquals(2, stages.get(0).getTicketCount());
+        assertEquals(2, stages.get(0).getBoardedCount());
+        assertMoney("240", stages.get(0).getAmount());
+        assertEquals("PRE_BOOKED", stages.get(1).getStage());
+        assertEquals(1, stages.get(1).getTicketCount());
+        assertEquals(0, stages.get(1).getBoardedCount());
+        assertMoney("120", stages.get(1).getAmount());
     }
 
     @Test
@@ -63,6 +77,7 @@ class TripSummaryTotalsTest {
         assertEquals(1, summary.getCancelledTickets());
         assertMoney("0", summary.getAverageFarePerTicket());
         assertEquals(0, summary.getPaymentBreakdown().size());
+        assertEquals(0, summary.getSaleBreakdown().size());
     }
 
     private static Tickets cashTicket(String fare, Tickets.Status status) {

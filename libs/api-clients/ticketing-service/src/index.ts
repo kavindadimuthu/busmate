@@ -20,6 +20,7 @@ export type { PaymentBreakdownEntryDTO } from './models/PaymentBreakdownEntryDTO
 export type { PaymentConfirmResponseDTO } from './models/PaymentConfirmResponseDTO';
 export type { PaymentRequestDTO } from './models/PaymentRequestDTO';
 export type { RouteFareDTO } from './models/RouteFareDTO';
+export type { SaleStageBreakdownEntryDTO } from './models/SaleStageBreakdownEntryDTO';
 export type { Sortnull } from './models/Sortnull';
 export type { TicketCancelRequestDTO } from './models/TicketCancelRequestDTO';
 export type { TicketValidationRequestDTO } from './models/TicketValidationRequestDTO';

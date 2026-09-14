@@ -8,6 +8,7 @@ import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.PaymentBreakdownEntryDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
+import com.busmate.ticketing_service.dto.response.SaleStageBreakdownEntryDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.entity.Cash;
 import com.busmate.ticketing_service.entity.Online;
@@ -17,6 +18,7 @@ import com.busmate.ticketing_service.exception.BadRequestException;
 import com.busmate.ticketing_service.exception.NotFoundException;
 import com.busmate.ticketing_service.payment.PaymentGateway;
 import com.busmate.ticketing_service.payment.PaymentMethod;
+import com.busmate.ticketing_service.sales.SaleChannel;
 import com.busmate.ticketing_service.repository.ConductorLogRepo;
 import com.busmate.ticketing_service.repository.OnlineRepo;
 import com.busmate.ticketing_service.repository.TicketRepo;
@@ -37,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -397,7 +400,7 @@ public class PaymentServiceIMPL implements PaymentService {
             if (tickets.isEmpty()) {
                 // Return empty summary if no tickets found
                 return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0,
-                        java.math.BigDecimal.ZERO, 0, List.of());
+                        java.math.BigDecimal.ZERO, 0, List.of(), List.of());
             }
 
             // Cancelled tickets are refunded, so they are neither revenue nor carried passengers.
@@ -431,12 +434,13 @@ public class PaymentServiceIMPL implements PaymentService {
                     invalidTickets,
                     averageFarePerTicket,
                     cancelledTickets,
-                    buildPaymentBreakdown(tickets));
+                    buildPaymentBreakdown(tickets),
+                    buildSaleBreakdown(tickets));
 
         } catch (Exception e) {
             // Return empty summary in case of error
             return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0,
-                    java.math.BigDecimal.ZERO, 0, List.of());
+                    java.math.BigDecimal.ZERO, 0, List.of(), List.of());
         }
     }
 
@@ -612,8 +616,38 @@ public class PaymentServiceIMPL implements PaymentService {
         String paymentMethod = derivePaymentMethod(transaction);
         dto.setPaymentMethod(paymentMethod);
         dto.setCustody(PaymentMethod.custodyOf(paymentMethod).name());
+        String saleChannel = ticket.getIssueMethod() != null ? ticket.getIssueMethod().name() : null;
+        dto.setSaleChannel(saleChannel);
+        dto.setSaleStage(SaleChannel.stageOf(saleChannel).name());
 
         return dto;
+    }
+
+    /**
+     * Tickets grouped by sale stage (INC-010, ADR-012), excluding cancelled ones like every other
+     * total. EnumMap keeps ON_BUS, PRE_BOOKED, UNKNOWN in declaration order so rows never reshuffle.
+     */
+    private List<SaleStageBreakdownEntryDTO> buildSaleBreakdown(List<Tickets> tickets) {
+        Map<SaleChannel.SaleStage, SaleStageBreakdownEntryDTO> byStage = new EnumMap<>(SaleChannel.SaleStage.class);
+
+        for (Tickets ticket : tickets) {
+            if (ticket.getStatus() == Tickets.Status.CANCELLED) {
+                continue;
+            }
+            SaleChannel.SaleStage stage = SaleChannel.stageOf(
+                    ticket.getIssueMethod() != null ? ticket.getIssueMethod().name() : null);
+            SaleStageBreakdownEntryDTO entry = byStage.computeIfAbsent(stage, s ->
+                    new SaleStageBreakdownEntryDTO(s.name(), 0, 0, BigDecimal.ZERO));
+
+            entry.setTicketCount(entry.getTicketCount() + 1);
+            if (ticket.getStatus() == Tickets.Status.VALID) {
+                entry.setBoardedCount(entry.getBoardedCount() + 1);
+            }
+            entry.setAmount(entry.getAmount().add(
+                    ticket.getFareAmount() != null ? ticket.getFareAmount() : BigDecimal.ZERO));
+        }
+
+        return List.copyOf(byStage.values());
     }
 
     /**

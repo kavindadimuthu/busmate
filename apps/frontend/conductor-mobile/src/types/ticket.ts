@@ -60,6 +60,11 @@ export interface TicketLog {
   // Who holds this fare's money, classified by the backend so the app never keeps its own
   // method-to-custody mapping. ON_HAND | SETTLED | UNKNOWN.
   custody?: 'ON_HAND' | 'SETTLED' | 'UNKNOWN' | string | null;
+  // When it was sold relative to boarding, classified by the backend (INC-010): ON_BUS (sold by
+  // the conductor during the trip) | PRE_BOOKED (bought before boarding) | UNKNOWN.
+  saleStage?: 'ON_BUS' | 'PRE_BOOKED' | 'UNKNOWN' | string | null;
+  // Who sold it: CONDUCTOR | ONLINE today; counter and agent sales later. Open-ended.
+  saleChannel?: string | null;
   // VALID (validated / boarded) vs NOT_VALID (booked, not yet validated).
   validationStatus?: 'VALID' | 'NOT_VALID' | string | null;
   issuedAt: string;
@@ -81,7 +86,9 @@ export interface InsightsData {
     trend: string;
     trending: 'up' | 'down' | 'same';
   };
-  qrValidations: {
+  // Pre-booked tickets whose passenger has boarded (INC-010). Was "QR validations", which counted
+  // every online booking whether or not anyone boarded.
+  preBookedBoarded: {
     value: number;
     trend: string;
     trending: 'up' | 'down' | 'same';

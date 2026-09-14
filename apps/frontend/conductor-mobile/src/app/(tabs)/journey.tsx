@@ -20,6 +20,7 @@ import {
   View
 } from 'react-native';
 import { ticketApi } from '../../services/api/ticket';
+import { awaitingBoarding, stagePresentation, stagesForBreakdown, type SaleStageBreakdownEntry } from '@/lib/tickets/saleStages';
 import { startReporting, stopReporting } from '@/services/telemetry/locationReporting';
 
 
@@ -31,13 +32,14 @@ function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; ref
   const [showEndModal, setShowEndModal] = useState(false);
   
   // Backend trip summary state
-  const [tripSummary, setTripSummary] = useState({
+  const [tripSummary, setTripSummary] = useState<{
+    totalPassengers: number;
+    totalRevenue: number;
+    saleBreakdown: SaleStageBreakdownEntry[];
+  }>({
     totalPassengers: 0,
     totalRevenue: 0,
-    physicalTickets: 0,
-    onlineTickets: 0,
-    physicalTicketRevenue: 0,
-    onlineTicketRevenue: 0
+    saleBreakdown: [],
   });
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -73,10 +75,7 @@ function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; ref
         setTripSummary({
           totalPassengers: 0,
           totalRevenue: 0,
-          physicalTickets: 0,
-          onlineTickets: 0,
-          physicalTicketRevenue: 0,
-          onlineTicketRevenue: 0
+          saleBreakdown: [],
         });
       } finally {
         setLoadingSummary(false);
@@ -98,8 +97,10 @@ function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; ref
   // Calculate dynamic trip statistics using backend data
   const dynamicStats = {
     totalPassengers: tripSummary.totalPassengers,
-    validatedTickets: tripSummary.onlineTickets, // Online tickets are "validated" tickets
-    pendingTickets: Math.max(0, 10 - tripSummary.onlineTickets), // Keep this calculation for UI consistency
+    // Pre-booked passengers not yet on board - what a conductor watches for at each stop
+    // (INC-010). This tile used to show online tickets mislabelled as "validated", alongside a
+    // placeholder "10 minus online tickets" pending figure.
+    awaitingBoarding: awaitingBoarding(tripSummary.saleBreakdown),
     totalRevenue: tripSummary.totalRevenue
   };
 
@@ -255,15 +256,15 @@ function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; ref
             <Text style={styles.summaryLabel}>Total Passengers</Text>
           </View>
           
-          {/* Online Tickets - From Backend */}
-          <View style={[styles.summaryItem, styles.summaryItemThreeColumn, {backgroundColor: '#F0FFF6'}]}>
-            <View style={[styles.summaryIconContainer, {backgroundColor: '#E6FFF2'}]}>
-              <Ionicons name="receipt-outline" size={20} color="#00CC66" />
+          {/* Pre-booked passengers still to board (INC-010) */}
+          <View style={[styles.summaryItem, styles.summaryItemThreeColumn, {backgroundColor: '#F3EEFF'}]}>
+            <View style={[styles.summaryIconContainer, {backgroundColor: '#EDE9FE'}]}>
+              <Ionicons name="time-outline" size={20} color="#7C3AED" />
             </View>
             <Text style={styles.summaryValue}>
-              {loadingSummary ? '...' : dynamicStats.validatedTickets}
+              {loadingSummary ? '...' : dynamicStats.awaitingBoarding}
             </Text>
-            <Text style={styles.summaryLabel}>Online Tickets</Text>
+            <Text style={styles.summaryLabel}>Awaiting Boarding</Text>
           </View>
           
           {/* Total Revenue - From Backend */}
@@ -299,21 +300,24 @@ function OngoingTripView({ trip, refreshTrigger }: { trip: EmployeeSchedule; ref
           </Text>
         </View>
         
-        {/* Ticket Breakdown - Using Backend Data */}
+        {/* Ticket breakdown by sale stage, iterated so a stage added later appears (INC-010) */}
         <View style={styles.ticketBreakdownContainer}>
           <Text style={styles.ticketBreakdownTitle}>Ticket Breakdown</Text>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Physical Tickets:</Text>
-            <Text style={styles.breakdownValue}>
-              {loadingSummary ? '...' : `${tripSummary.physicalTickets} tickets (Rs. ${tripSummary.physicalTicketRevenue.toFixed(2)})`}
-            </Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Online Tickets:</Text>
-            <Text style={styles.breakdownValue}>
-              {loadingSummary ? '...' : `${tripSummary.onlineTickets} tickets (Rs. ${tripSummary.onlineTicketRevenue.toFixed(2)})`}
-            </Text>
-          </View>
+          {stagesForBreakdown(tripSummary.saleBreakdown).map((stage) => {
+            const entry = tripSummary.saleBreakdown.find((candidate) => candidate.stage === stage);
+            const count = entry?.ticketCount ?? 0;
+            const boarded = stage === 'PRE_BOOKED' ? ` · ${entry?.boardedCount ?? 0} boarded` : '';
+            return (
+              <View key={stage} style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>{stagePresentation(stage).label}:</Text>
+                <Text style={styles.breakdownValue}>
+                  {loadingSummary
+                    ? '...'
+                    : `${count} ${count === 1 ? 'ticket' : 'tickets'}${boarded} (Rs. ${(entry?.amount ?? 0).toFixed(2)})`}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       </View>
       

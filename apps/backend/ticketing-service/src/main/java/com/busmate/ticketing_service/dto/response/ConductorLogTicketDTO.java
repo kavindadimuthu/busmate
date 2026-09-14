@@ -40,6 +40,12 @@ public class ConductorLogTicketDTO {
     // their own copy of the method-to-custody mapping, which would drift the moment a payment
     // method is added (INC-009, ADR-011).
     private String custody;
+    // Who sold the ticket: CONDUCTOR | ONLINE today, open-ended (counter, agent later). Same codes
+    // as issueMethod, kept as its own field so clients read "channel" without knowing that.
+    private String saleChannel;
+    // When it was sold relative to boarding: ON_BUS | PRE_BOOKED | UNKNOWN. Classified here so
+    // clients never map channels to stages themselves (INC-010, ADR-012).
+    private String saleStage;
     // VALID (validated / boarded) | NOT_VALID (not yet boarded) | CANCELLED.
     private String validationStatus;
     // Transaction-level payment status (PENDING/COMPLETED/FAILED/REFUNDED/ISSUED), distinct

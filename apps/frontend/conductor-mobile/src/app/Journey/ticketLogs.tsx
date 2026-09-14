@@ -16,6 +16,15 @@ import { stopsApi } from '../../services/api/stops';
 import { ticketApi } from '../../services/api/ticket';
 import { TicketLog } from '../../types/ticket';
 import { presentationFor } from '../../lib/payments/paymentMethods';
+import {
+  awaitingBoarding,
+  boardingBadge,
+  isCancelled,
+  saleBreakdownFromTickets,
+  stageOfTicket,
+  stagePresentation,
+  stagesToShow,
+} from '../../lib/tickets/saleStages';
 
 export default function TicketLogsScreen() {
   const authContext = useContext(AuthContext);
@@ -27,9 +36,8 @@ export default function TicketLogsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // State for showing more tickets
-  const [showAllPhysical, setShowAllPhysical] = useState(false);
-  const [showAllOnline, setShowAllOnline] = useState(false);
+  // Which sale-stage sections are expanded past their first three tickets
+  const [expandedStages, setExpandedStages] = useState<Record<string, boolean>>({});
   
   // Get conductor ID from auth context
   const conductorId = authContext?.user?.id;
@@ -100,11 +108,15 @@ export default function TicketLogsScreen() {
     fetchCurrentTripTickets();
   }, [conductorId, ongoingTrip?.id]);
 
-  // Split by issue method (authoritative field; paymentStatus kept as a fallback for older data)
-  const isOnlineTicket = (ticket: TicketLog) =>
-    String(ticket.issueMethod || ticket.paymentStatus).toUpperCase() === 'ONLINE';
-  const physicalTickets = currentTripTickets.filter((ticket: TicketLog) => !isOnlineTicket(ticket));
-  const onlineTickets = currentTripTickets.filter((ticket: TicketLog) => isOnlineTicket(ticket));
+  // Tickets grouped by when they were sold - on the bus vs pre-booked - as classified by the
+  // backend (INC-010, ADR-012). Cancelled tickets stay listed in their section but never count
+  // toward the tiles.
+  const saleBreakdown = saleBreakdownFromTickets(currentTripTickets);
+  const activeTickets = currentTripTickets.filter((ticket: TicketLog) => !isCancelled(ticket));
+  const stageEntry = (stage: string) => saleBreakdown.find((entry) => entry.stage === stage);
+  const sections = stagesToShow(currentTripTickets);
+  const ticketsInStage = (stage: string) =>
+    currentTripTickets.filter((ticket: TicketLog) => stageOfTicket(ticket) === stage);
 
   // Shared presentation (lib/payments/paymentMethods) so every screen labels a method the same
   // way, and a new method is styled in exactly one place.
@@ -177,204 +189,138 @@ export default function TicketLogsScreen() {
             </View>
           )}
 
-          {/* Summary Cards */}
+          {/* Summary cards, grouped by when tickets were sold (INC-010, ADR-012). Cancelled
+              tickets are still listed below, but never counted here. */}
           <View style={styles.summarySection}>
             <View style={styles.summaryRow}>
-              <View style={[styles.summaryCard, { backgroundColor: '#F0FFF6' }]}>
-                <FontAwesome5 name="receipt" size={24} color="#00CC66" />
-                <Text style={styles.summaryValue}>{physicalTickets.length}</Text>
-                <Text style={styles.summaryLabel}>Physical Tickets</Text>
-              </View>
-              
-              <View style={[styles.summaryCard, { backgroundColor: '#ECFDF5' }]}>
-                <FontAwesome5 name="mobile-alt" size={24} color="#22C55E" />
-                <Text style={styles.summaryValue}>{onlineTickets.length}</Text>
-                <Text style={styles.summaryLabel}>Online Tickets</Text>
-              </View>
+              {sections.map((stage) => {
+                const presentation = stagePresentation(stage);
+                const entry = stageEntry(stage);
+                return (
+                  <View key={stage} style={[styles.summaryCard, { backgroundColor: presentation.background }]}>
+                    <Ionicons name={presentation.icon as any} size={24} color={presentation.color} />
+                    <Text style={styles.summaryValue}>{entry?.ticketCount ?? 0}</Text>
+                    <Text style={styles.summaryLabel}>{presentation.label}</Text>
+                    {stage === 'PRE_BOOKED' && (
+                      <Text style={styles.summarySubLabel}>
+                        {entry?.boardedCount ?? 0} boarded · {awaitingBoarding(saleBreakdown)} awaiting
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
             </View>
-            
+
             <View style={styles.summaryRow}>
               <View style={[styles.summaryCard, { backgroundColor: '#FFFBF0' }]}>
                 <Ionicons name="people" size={24} color="#FF9500" />
                 <Text style={styles.summaryValue}>
-                  {physicalTickets.reduce((total: number, ticket: TicketLog) => total + ticket.passengerCount, 0) +
-                   onlineTickets.reduce((total: number, ticket: TicketLog) => total + ticket.passengerCount, 0)}
+                  {activeTickets.reduce((total: number, ticket: TicketLog) => total + ticket.passengerCount, 0)}
                 </Text>
                 <Text style={styles.summaryLabel}>Total Passengers</Text>
               </View>
-              
+
               <View style={[styles.summaryCard, { backgroundColor: '#F9F0FF' }]}>
                 <FontAwesome5 name="money-bill-wave" size={20} color="#BF5AF2" />
                 <Text style={styles.summaryValue}>
-                  Rs. {(physicalTickets.reduce((total: number, ticket: TicketLog) => total + ticket.fareAmount, 0) +
-                       onlineTickets.reduce((total: number, ticket: TicketLog) => total + ticket.fareAmount, 0)).toFixed(2)}
+                  Rs. {activeTickets.reduce((total: number, ticket: TicketLog) => total + ticket.fareAmount, 0).toFixed(2)}
                 </Text>
                 <Text style={styles.summaryLabel}>Total Revenue</Text>
               </View>
             </View>
           </View>
 
-        {/* Physical Ticket Logs */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <FontAwesome5 name="receipt" size={20} color="#00CC66" />
-            <Text style={styles.sectionTitle}>Physical Ticket Logs</Text>
-            <View style={[styles.badge, { backgroundColor: '#E6FFF2' }]}>
-              <Text style={[styles.badgeText, { color: '#00CC66' }]}>{physicalTickets.length}</Text>
-            </View>
-          </View>
-          
-          {physicalTickets.length > 0 ? (
-            <>
-              {(showAllPhysical ? physicalTickets : physicalTickets.slice(0, 3)).map((ticket: TicketLog, index: number) => (
-                <View key={index} style={styles.logCard}>
-                  <View style={styles.logHeader}>
-                    <View style={styles.logInfo}>
-                      <Text style={styles.logTitle}>Ticket #{ticket.ticketId}</Text>
-                      <Text style={styles.logTime}>
-                        {formatDate(new Date(ticket.issuedAt))} at {formatTime(new Date(ticket.issuedAt))}
-                      </Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: paymentMethodBadge(ticket).background }]}>
-                      <Text style={[styles.statusText, { color: paymentMethodBadge(ticket).color }]}>
-                        {paymentMethodBadge(ticket).label}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.logDetails}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Passengers:</Text>
-                      <Text style={styles.detailValue}>{ticket.passengerCount}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>From:</Text>
-                      <Text style={styles.detailValue}>{getLocationName(ticket.startLocationId)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>To:</Text>
-                      <Text style={styles.detailValue}>{getLocationName(ticket.endLocationId)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Seat Number:</Text>
-                      <Text style={styles.detailValue}>{ticket.seatNumber || 'Not assigned'}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Fare:</Text>
-                      <Text style={styles.detailValue}>Rs. {ticket.fareAmount.toFixed(2)}</Text>
-                    </View>
-                    {/* <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Payment Status:</Text>
-                      <Text style={styles.detailValue}>{ticket.paymentStatus}</Text>
-                    </View> */}
-                  </View>
+        {/* One section per sale stage, sharing one card layout - a stage added later renders here
+            with no new markup. Each card shows payment method and, for pre-booked tickets,
+            boarding status as separate badges. */}
+        {sections.map((stage) => {
+          const presentation = stagePresentation(stage);
+          const stageTickets = ticketsInStage(stage);
+          const expanded = !!expandedStages[stage];
+          return (
+            <View key={stage} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name={presentation.icon as any} size={20} color={presentation.color} />
+                <Text style={styles.sectionTitle}>{presentation.sectionTitle}</Text>
+                <View style={[styles.badge, { backgroundColor: presentation.background }]}>
+                  <Text style={[styles.badgeText, { color: presentation.color }]}>{stageTickets.length}</Text>
                 </View>
-              ))}
-              
-              {physicalTickets.length > 3 && (
-                <TouchableOpacity 
-                  style={styles.viewMoreButton}
-                  onPress={() => setShowAllPhysical(!showAllPhysical)}
-                >
-                  <Text style={styles.viewMoreText}>
-                    {showAllPhysical ? 'Show Less' : `View All (${physicalTickets.length} tickets)`}
-                  </Text>
-                  <Ionicons 
-                    name={showAllPhysical ? "chevron-up" : "chevron-down"} 
-                    size={16} 
-                    color="#0066FF" 
-                  />
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <FontAwesome5 name="receipt" size={48} color="#CCCCCC" />
-              <Text style={styles.emptyTitle}>No Physical Tickets Yet</Text>
-              <Text style={styles.emptyMessage}>Physical ticket logs will appear here once you start issuing tickets</Text>
-            </View>
-          )}
-        </View>
+              </View>
 
-        {/* Online/QR Ticket Logs from Backend */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <FontAwesome5 name="mobile-alt" size={20} color="#22C55E" />
-            <Text style={styles.sectionTitle}>Online Ticket Logs</Text>
-            <View style={[styles.badge, { backgroundColor: '#ECFDF5' }]}>
-              <Text style={[styles.badgeText, { color: '#22C55E' }]}>{onlineTickets.length}</Text>
-            </View>
-          </View>
-          
-          {onlineTickets.length > 0 ? (
-            <>
-              {(showAllOnline ? onlineTickets : onlineTickets.slice(0, 3)).map((ticket: TicketLog, index: number) => (
-                <View key={index} style={styles.logCard}>
-                  <View style={styles.logHeader}>
-                    <View style={styles.logInfo}>
-                      <Text style={styles.logTitle}>Online Ticket #{ticket.ticketId}</Text>
-                      <Text style={styles.logTime}>
-                        {formatDate(new Date(ticket.issuedAt))} at {formatTime(new Date(ticket.issuedAt))}
+              {stageTickets.length > 0 ? (
+                <>
+                  {(expanded ? stageTickets : stageTickets.slice(0, 3)).map((ticket: TicketLog) => {
+                    const payment = paymentMethodBadge(ticket);
+                    const boarding = boardingBadge(ticket);
+                    return (
+                      <View key={ticket.ticketId} style={[styles.logCard, isCancelled(ticket) && styles.logCardCancelled]}>
+                        <View style={styles.logHeader}>
+                          <View style={styles.logInfo}>
+                            <Text style={styles.logTitle}>Ticket #{ticket.ticketId}</Text>
+                            <Text style={styles.logTime}>
+                              {formatDate(new Date(ticket.issuedAt))} at {formatTime(new Date(ticket.issuedAt))}
+                            </Text>
+                          </View>
+                          <View style={styles.badgeColumn}>
+                            <View style={[styles.statusBadge, { backgroundColor: payment.background }]}>
+                              <Text style={[styles.statusText, { color: payment.color }]}>{payment.label}</Text>
+                            </View>
+                            {boarding && (
+                              <View style={[styles.statusBadge, styles.secondaryBadge, { backgroundColor: boarding.background }]}>
+                                <Text style={[styles.statusText, { color: boarding.color }]}>{boarding.label}</Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+
+                        <View style={styles.logDetails}>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Passengers:</Text>
+                            <Text style={styles.detailValue}>{ticket.passengerCount}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>From:</Text>
+                            <Text style={styles.detailValue}>{getLocationName(ticket.startLocationId)}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>To:</Text>
+                            <Text style={styles.detailValue}>{getLocationName(ticket.endLocationId)}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Seat Number:</Text>
+                            <Text style={styles.detailValue}>{ticket.seatNumber || 'Not assigned'}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Fare:</Text>
+                            <Text style={styles.detailValue}>Rs. {ticket.fareAmount.toFixed(2)}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+
+                  {stageTickets.length > 3 && (
+                    <TouchableOpacity
+                      style={styles.viewMoreButton}
+                      onPress={() => setExpandedStages((current) => ({ ...current, [stage]: !expanded }))}
+                    >
+                      <Text style={styles.viewMoreText}>
+                        {expanded ? 'Show Less' : `View All (${stageTickets.length} tickets)`}
                       </Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: '#ECFDF5' }]}>
-                      <Text style={[styles.statusText, { color: '#22C55E' }]}>Online</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.logDetails}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Passengers:</Text>
-                      <Text style={styles.detailValue}>{ticket.passengerCount}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>From:</Text>
-                      <Text style={styles.detailValue}>{getLocationName(ticket.startLocationId)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>To:</Text>
-                      <Text style={styles.detailValue}>{getLocationName(ticket.endLocationId)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Seat Number:</Text>
-                      <Text style={styles.detailValue}>{ticket.seatNumber || 'Not assigned'}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Fare:</Text>
-                      <Text style={styles.detailValue}>Rs. {ticket.fareAmount.toFixed(2)}</Text>
-                    </View>
-                    {/* <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Payment Status:</Text>
-                      <Text style={styles.detailValue}>{ticket.paymentStatus}</Text>
-                    </View> */}
-                  </View>
+                      <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color="#0066FF" />
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name={presentation.icon as any} size={48} color="#CCCCCC" />
+                  <Text style={styles.emptyTitle}>{presentation.emptyTitle}</Text>
+                  <Text style={styles.emptyMessage}>{presentation.emptyMessage}</Text>
                 </View>
-              ))}
-              
-              {onlineTickets.length > 3 && (
-                <TouchableOpacity 
-                  style={styles.viewMoreButton}
-                  onPress={() => setShowAllOnline(!showAllOnline)}
-                >
-                  <Text style={styles.viewMoreText}>
-                    {showAllOnline ? 'Show Less' : `View All (${onlineTickets.length} tickets)`}
-                  </Text>
-                  <Ionicons 
-                    name={showAllOnline ? "chevron-up" : "chevron-down"} 
-                    size={16} 
-                    color="#0066FF" 
-                  />
-                </TouchableOpacity>
               )}
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <FontAwesome5 name="mobile-alt" size={48} color="#CCCCCC" />
-              <Text style={styles.emptyTitle}>No Online Tickets Yet</Text>
-              <Text style={styles.emptyMessage}>Online ticket logs will appear here when passengers book online</Text>
             </View>
-          )}
-        </View>
+          );
+        })}
 
         {/* Bottom padding */}
         <View style={{ height: 24 }} />
@@ -496,6 +442,20 @@ const styles = StyleSheet.create({
   logTime: {
     fontSize: 12,
     color: '#666',
+  },
+  summarySubLabel: {
+    fontSize: 11,
+    color: '#7C3AED',
+    marginTop: 2,
+  },
+  badgeColumn: {
+    alignItems: 'flex-end',
+  },
+  secondaryBadge: {
+    marginTop: 4,
+  },
+  logCardCancelled: {
+    opacity: 0.55,
   },
   statusBadge: {
     backgroundColor: '#E6FFF2',

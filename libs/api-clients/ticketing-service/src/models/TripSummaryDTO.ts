@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PaymentBreakdownEntryDTO } from './PaymentBreakdownEntryDTO';
+import type { SaleStageBreakdownEntryDTO } from './SaleStageBreakdownEntryDTO';
 export type TripSummaryDTO = {
     tripId?: string;
     totalTickets?: number;
@@ -12,5 +13,6 @@ export type TripSummaryDTO = {
     averageFarePerTicket?: number;
     cancelledTickets?: number;
     paymentBreakdown?: Array<PaymentBreakdownEntryDTO>;
+    saleBreakdown?: Array<SaleStageBreakdownEntryDTO>;
 };
 

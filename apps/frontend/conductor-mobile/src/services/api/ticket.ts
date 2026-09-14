@@ -1,5 +1,6 @@
 import { TicketLog } from '../../types/ticket';
 import { breakdownFromTickets, type PaymentBreakdownEntry } from '../../lib/payments/paymentMethods';
+import { saleBreakdownFromTickets, type SaleStageBreakdownEntry } from '../../lib/tickets/saleStages';
 import { apiClient } from '../apiClient';
 
 export const ticketApi = {
@@ -341,11 +342,9 @@ export const ticketApi = {
   getTripSummary: async (tripId: string): Promise<{
     totalPassengers: number;
     totalRevenue: number;
-    physicalTickets: number;
-    onlineTickets: number;
-    physicalTicketRevenue: number;
-    onlineTicketRevenue: number;
+    cancelledTickets: number;
     paymentBreakdown: PaymentBreakdownEntry[];
+    saleBreakdown: SaleStageBreakdownEntry[];
   }> => {
     try {
       console.log('📊 Fetching trip summary for trip ID:', tripId);
@@ -359,13 +358,6 @@ export const ticketApi = {
         ticketApi.getTicketsByTripId(tripId).catch(() => [] as TicketLog[]),
       ]);
 
-      const isOnline = (t: TicketLog) =>
-        String(t.issueMethod || t.paymentStatus).toUpperCase() === 'ONLINE';
-      const physicalTickets = tickets.filter(t => !isOnline(t));
-      const onlineTickets = tickets.filter(t => isOnline(t));
-
-      const physicalTicketRevenue = physicalTickets.reduce((total, t) => total + t.fareAmount, 0);
-      const onlineTicketRevenue = onlineTickets.reduce((total, t) => total + t.fareAmount, 0);
 
       // Prefer authoritative backend numbers; fall back to summing the ticket list.
       const totalPassengers = backendSummary?.totalTickets
@@ -376,16 +368,16 @@ export const ticketApi = {
       const summary = {
         totalPassengers,
         totalRevenue,
-        physicalTickets: physicalTickets.length,
-        onlineTickets: onlineTickets.length,
-        physicalTicketRevenue,
-        onlineTicketRevenue,
+        cancelledTickets: Number(backendSummary?.cancelledTickets ?? 0),
         // Revenue by payment method comes from the backend, which owns the method-to-custody
         // classification (INC-009) - deriving it here would mean a second copy to update every
         // time a payment method is added. Falls back to deriving from the ticket list only if
         // the summary endpoint itself failed.
         paymentBreakdown: (backendSummary?.paymentBreakdown as PaymentBreakdownEntry[])
           ?? breakdownFromTickets(tickets),
+        // On the bus vs pre-booked, with boarding counts - classified by the backend (INC-010).
+        saleBreakdown: (backendSummary?.saleBreakdown as SaleStageBreakdownEntry[])
+          ?? saleBreakdownFromTickets(tickets),
       };
 
       console.log('✅ Trip summary:', summary);
@@ -398,11 +390,9 @@ export const ticketApi = {
       return {
         totalPassengers: 0,
         totalRevenue: 0,
-        physicalTickets: 0,
-        onlineTickets: 0,
-        physicalTicketRevenue: 0,
-        onlineTicketRevenue: 0,
+        cancelledTickets: 0,
         paymentBreakdown: [],
+        saleBreakdown: [],
       };
     }
   },

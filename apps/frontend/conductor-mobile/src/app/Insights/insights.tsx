@@ -345,20 +345,20 @@ export default function InsightsScreen() {
             </Text>
           </View>
           
-          {/* QR Validations */}
+          {/* Pre-booked passengers who have boarded (INC-010) */}
           <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>QR Validations</Text>
+            <Text style={styles.metricLabel}>Pre-booked Boarded</Text>
             <View style={styles.metricValueRow}>
-              <MaterialIcons name="qr-code-scanner" size={20} color="#0066FF" style={styles.metricIcon} />
-              <Text style={styles.metricValue}>{currentData.qrValidations.value}</Text>
+              <MaterialIcons name="how-to-reg" size={20} color="#7C3AED" style={styles.metricIcon} />
+              <Text style={styles.metricValue}>{currentData.preBookedBoarded.value}</Text>
             </View>
             <Text style={[
               styles.trendText, 
-              currentData.qrValidations.trending === 'up' ? styles.trendUp : 
-              currentData.qrValidations.trending === 'down' ? styles.trendDown : 
+              currentData.preBookedBoarded.trending === 'up' ? styles.trendUp : 
+              currentData.preBookedBoarded.trending === 'down' ? styles.trendDown : 
               styles.trendSame
             ]}>
-              {currentData.qrValidations.trend}
+              {currentData.preBookedBoarded.trend}
             </Text>
           </View>
         </View>

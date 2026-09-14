@@ -1,5 +1,6 @@
 import { useEmployeeScheduleContext } from '@/contexts/EmployeeScheduleContext';
 import { cashOnHand, digitalSharePercent, presentationFor, type PaymentBreakdownEntry } from '@/lib/payments/paymentMethods';
+import { describeSaleBreakdown, type SaleStageBreakdownEntry } from '@/lib/tickets/saleStages';
 import { ticketApi } from '@/services/api/ticket';
 import { EmployeeSchedule } from '@/types/employee';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -20,7 +21,9 @@ import {
 interface TripSummary {
   totalPassengers: number;
   totalRevenue: number;
+  cancelledTickets: number;
   paymentBreakdown: PaymentBreakdownEntry[];
+  saleBreakdown: SaleStageBreakdownEntry[];
 }
 
 // Types for seat booking data
@@ -325,6 +328,11 @@ export default function TripOverviewScreen() {
           </View>
         </View>
 
+        {/* On the bus vs pre-booked, with boarding and cancellations (INC-010) */}
+        <Text style={styles.saleSplitText}>
+          {describeSaleBreakdown(tripSummary?.saleBreakdown ?? [], tripSummary?.cancelledTickets ?? 0)}
+        </Text>
+
         {/* Revenue Card */}
         <View style={styles.card}>
           <View style={styles.revenueHeaderRow}>
@@ -614,6 +622,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  saleSplitText: {
+    textAlign: 'center',
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 16,
   },
   statsNumber: {
     fontSize: 24,
