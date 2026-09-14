@@ -59,6 +59,10 @@ included card fares and was lost on restart. Both now read the trip summary endp
 - [x] Trip overview and the end-of-trip report show "Cash to hand over" and "Collected digitally",
       computed from custody.
 - [x] Conductor tickets without a seat number are included in trip overview revenue.
+- [x] A trip's total revenue equals the sum of its per-method rows, because cancelled (refunded)
+      tickets are excluded from every total and reported as `cancelledTickets` instead. Verified
+      live on the completed Sep 12 demo trip: Rs 360 total, rows Rs 240 + Rs 120, 1 cancelled
+      (previously Rs 480); covered by `TripSummaryTotalsTest`.
 - [x] ticketing-service compiles; conductor-mobile type-checks with only the two pre-existing
       errors; lint shows no new warnings in changed files (two pre-existing ones removed).
 - [ ] **Owed on a device:** the five screens checked visually on the test trip, including that the
@@ -79,8 +83,11 @@ included card fares and was lost on restart. Both now read the trip summary endp
 ## Constraints
 
 - **R3, A2.** Changes the ticketing-service response contract on a money path.
-- The change to `TripSummaryDTO` and `ConductorLogTicketDTO` is additive. The ticketing API client
-  was regenerated from the live spec, not hand-edited.
+- `ConductorLogTicketDTO` changed additively. `TripSummaryDTO` did not: `totalTickets`,
+  `totalFareAmount`, `averageFarePerTicket` and `invalidTickets` now exclude cancelled tickets, a
+  semantic change to a field the staff portal's `RevenueService` also reads — approved by the
+  owner, and it corrects that consumer too. The ticketing API client was regenerated from the live
+  spec, not hand-edited.
 - The `online_method_check` constraint is deliberately untouched (ADR-011, decision 5).
 
 ## Adding a payment method after this increment
@@ -99,6 +106,17 @@ No revenue screen, summary endpoint or chart changes.
   product call for the portal work.
 
 ## Discovered during the work
+
+**Trip totals counted refunded fares as revenue.** Found on the device check: a completed trip
+showed Total Revenue Rs 480 above per-method rows summing to Rs 360. The trip summary's totals
+included a cancelled, refunded ticket that the new breakdown correctly left out, so the screen
+contradicted itself. Older than this increment and overstated revenue everywhere those totals were
+read, the staff portal included. Totals now exclude cancelled tickets, reported separately.
+
+**The staff portal shows card fares as cash too — not fixed here.** `ticketColumns.tsx`,
+`TicketDetailModal.tsx` and `TicketFilterBar.tsx` label every conductor-issued ticket
+"Cash (Conductor)" from `issueMethod`. Out of scope for conductor-mobile; a candidate for the portal
+adoption of ADR-011.
 
 **Trip overview could never count a conductor-issued ticket.** Its revenue was summed from the seat
 map, and a ticket sold on the bus has no seat number, so every fare collected on board was missing

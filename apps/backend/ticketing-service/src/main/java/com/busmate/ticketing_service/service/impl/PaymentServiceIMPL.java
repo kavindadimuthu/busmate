@@ -397,22 +397,27 @@ public class PaymentServiceIMPL implements PaymentService {
             if (tickets.isEmpty()) {
                 // Return empty summary if no tickets found
                 return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0,
-                        java.math.BigDecimal.ZERO, List.of());
+                        java.math.BigDecimal.ZERO, 0, List.of());
             }
 
-            // Calculate summary statistics
-            int totalTickets = tickets.size();
-            java.math.BigDecimal totalFareAmount = tickets.stream()
-                    .map(Tickets::getFareAmount)
+            // Cancelled tickets are refunded, so they are neither revenue nor carried passengers.
+            // Every total below is computed from the same set buildPaymentBreakdown uses, which is
+            // what keeps "Total Revenue" equal to the sum of its per-method rows.
+            List<Tickets> active = tickets.stream()
+                    .filter(ticket -> ticket.getStatus() != Tickets.Status.CANCELLED)
+                    .toList();
+            int cancelledTickets = tickets.size() - active.size();
+
+            int totalTickets = active.size();
+            java.math.BigDecimal totalFareAmount = active.stream()
+                    .map(ticket -> ticket.getFareAmount() != null ? ticket.getFareAmount() : java.math.BigDecimal.ZERO)
                     .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
-            // Count valid and invalid tickets
-            long validTickets = tickets.stream()
+            long validTickets = active.stream()
                     .filter(ticket -> ticket.getStatus() == Tickets.Status.VALID)
                     .count();
             int invalidTickets = totalTickets - (int) validTickets;
 
-            // Calculate average fare per ticket
             java.math.BigDecimal averageFarePerTicket = totalTickets > 0
                     ? totalFareAmount.divide(java.math.BigDecimal.valueOf(totalTickets), 2,
                             java.math.RoundingMode.HALF_UP)
@@ -425,12 +430,13 @@ public class PaymentServiceIMPL implements PaymentService {
                     (int) validTickets,
                     invalidTickets,
                     averageFarePerTicket,
+                    cancelledTickets,
                     buildPaymentBreakdown(tickets));
 
         } catch (Exception e) {
             // Return empty summary in case of error
             return new TripSummaryDTO(tripId, 0, java.math.BigDecimal.ZERO, 0, 0,
-                    java.math.BigDecimal.ZERO, List.of());
+                    java.math.BigDecimal.ZERO, 0, List.of());
         }
     }
 

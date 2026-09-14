@@ -10,6 +10,7 @@ export type TripSummaryDTO = {
     validTickets?: number;
     invalidTickets?: number;
     averageFarePerTicket?: number;
+    cancelledTickets?: number;
     paymentBreakdown?: Array<PaymentBreakdownEntryDTO>;
 };
 
