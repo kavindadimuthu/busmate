@@ -21,10 +21,6 @@ public interface RouteFareRepo extends JpaRepository<RouteFare, UUID> {
     // Find exact distance match
     Optional<RouteFare> findByRouteIdAndDistanceFromStart(String routeId, double distanceFromStart);
 
-    // Find latest lower distance
-    @Query("SELECT rf FROM RouteFare rf WHERE rf.routeId = :routeId AND rf.distanceFromStart <= :distance ORDER BY rf.distanceFromStart DESC LIMIT 1")
-    Optional<RouteFare> findLatestLowerDistance(@Param("routeId") String routeId, @Param("distance") double distance);
-
     // Find latest higher distance
     @Query("SELECT rf FROM RouteFare rf WHERE rf.routeId = :routeId AND rf.distanceFromStart >= :distance ORDER BY rf.distanceFromStart ASC LIMIT 1")
     Optional<RouteFare> findLatestHigherDistance(@Param("routeId") String routeId, @Param("distance") double distance);

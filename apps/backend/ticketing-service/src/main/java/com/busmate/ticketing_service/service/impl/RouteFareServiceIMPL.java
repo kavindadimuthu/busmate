@@ -84,6 +84,18 @@ public class RouteFareServiceIMPL implements RouteFareService {
         return baseFareService.fareFor(sectionDifference, serviceClass);
     }
 
+    /**
+     * Each {@code route_fare_section} row records where a fare zone ENDS, not where it starts -
+     * "Colombo Fort - Kadawatha" is stored at distance 12 (Kadawatha), covering the whole 0-12km
+     * span including Colombo Fort itself at 0km. A boarding point therefore belongs to the same
+     * zone as an alighting point at the same distance would: the nearest zone boundary at or
+     * beyond it, never the one before it.
+     *
+     * <p>This used to search for the boundary <em>below</em> the distance instead, which has no
+     * answer at all for a stop at or near a route's own origin (0km, below every recorded
+     * boundary) - exactly the case that went uncaught, since every route this was tested against
+     * happened to be boarded at a stop that was itself an exact section boundary.
+     */
     private int findSectionForBoardingPoint(String routeId, double distance) {
         // Check for exact match first
         Optional<RouteFare> exactMatch = routeFareRepo.findByRouteIdAndDistanceFromStart(routeId, distance);
@@ -91,10 +103,9 @@ public class RouteFareServiceIMPL implements RouteFareService {
             return exactMatch.get().getSectionId();
         }
 
-        //  first find latest lower distance (33, 32 if looking for 34)
-        Optional<RouteFare> lowerDistance = routeFareRepo.findLatestLowerDistance(routeId, distance);
-        if (lowerDistance.isPresent()) {
-            return lowerDistance.get().getSectionId();
+        Optional<RouteFare> zoneBoundary = routeFareRepo.findLatestHigherDistance(routeId, distance);
+        if (zoneBoundary.isPresent()) {
+            return zoneBoundary.get().getSectionId();
         }
 
         throw new BadRequestException("This route has no published fare section covering the boarding stop");
