@@ -1,7 +1,7 @@
 ---
 id: INC-012
 title: A booked, cancelled or expired seat means what it says
-state: active
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
