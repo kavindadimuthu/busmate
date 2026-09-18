@@ -15,6 +15,18 @@ export type BusResponse = {
     seatLayout?: JsonNode;
     serviceClass?: string;
     status?: string;
+    statusReason?: string;
+    manufactureYear?: number;
+    chassisNumber?: string;
+    engineNumber?: string;
+    availability?: string;
+    availabilityFrom?: string;
+    availabilityUntil?: string;
+    availabilityNote?: string;
+    availableToday?: boolean;
+    coverPhotoId?: string;
+    photoCount?: number;
+    documentCount?: number;
     createdAt?: string;
     updatedAt?: string;
     createdBy?: string;

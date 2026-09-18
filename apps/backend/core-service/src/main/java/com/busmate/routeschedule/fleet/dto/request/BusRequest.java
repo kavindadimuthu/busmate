@@ -38,4 +38,9 @@ public class BusRequest {
     private String serviceClass = "NORMAL";
 
     private String status = "active";
+
+    // Registration details (INC-018), optional.
+    private Integer manufactureYear;
+    private String chassisNumber;
+    private String engineNumber;
 }

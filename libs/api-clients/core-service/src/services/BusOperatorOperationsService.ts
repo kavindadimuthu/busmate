@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { BusPassengerServicePermitAssignmentResponse } from '../models/BusPassengerServicePermitAssignmentResponse';
 import type { BusResponse } from '../models/BusResponse';
+import type { OperatorBusRequest } from '../models/OperatorBusRequest';
 import type { OperatorPermitRequest } from '../models/OperatorPermitRequest';
 import type { OperatorResponse } from '../models/OperatorResponse';
 import type { PageBusResponse } from '../models/PageBusResponse';
@@ -69,6 +70,27 @@ export class BusOperatorOperationsService {
         });
     }
     /**
+     * Register a bus in the operator's own fleet
+     * @param operatorId
+     * @param requestBody
+     * @returns BusResponse OK
+     * @throws ApiError
+     */
+    public static createOperatorBus(
+        operatorId: string,
+        requestBody: OperatorBusRequest,
+    ): CancelablePromise<BusResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bus-operator/{operatorId}/buses',
+            path: {
+                'operatorId': operatorId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Get specific bus details for operator
      * Retrieve detailed information about a specific bus belonging to the operator
      * @param operatorId Operator ID
@@ -90,6 +112,30 @@ export class BusOperatorOperationsService {
             errors: {
                 404: `Bus not found or doesn't belong to operator`,
             },
+        });
+    }
+    /**
+     * Update one of the operator's own buses
+     * @param operatorId
+     * @param busId
+     * @param requestBody
+     * @returns BusResponse OK
+     * @throws ApiError
+     */
+    public static updateOperatorBus(
+        operatorId: string,
+        busId: string,
+        requestBody: OperatorBusRequest,
+    ): CancelablePromise<BusResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/bus-operator/{operatorId}/buses/{busId}',
+            path: {
+                'operatorId': operatorId,
+                'busId': busId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

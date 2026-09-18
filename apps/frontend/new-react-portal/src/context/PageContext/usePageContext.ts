@@ -63,6 +63,9 @@ export function useSetPageMetadata(
   resetOnUnmount = false
 ) {
   const { setMetadata, resetMetadata } = usePageContext()
+  // Re-apply when the content changes (e.g. a title that waits for data), not on every render:
+  // metadata is plain data, so its serialised form is a stable dependency.
+  const key = JSON.stringify(metadata)
 
   useEffect(() => {
     setMetadata(metadata)
@@ -71,7 +74,7 @@ export function useSetPageMetadata(
       return () => resetMetadata()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setMetadata, resetMetadata, resetOnUnmount])
+  }, [setMetadata, resetMetadata, resetOnUnmount, key])
 }
 
 /**

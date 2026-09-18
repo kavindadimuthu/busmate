@@ -33,9 +33,30 @@
 	<properties>
 		<java.version>17</java.version>
 		<mapstruct.version>1.6.0</mapstruct.version>
+		<!-- Same SDK version as user-service, so both services speak one S3 client (ADR-009). -->
+		<awssdk.version>2.46.7</awssdk.version>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
+		<!-- Bus photos and documents live in S3-compatible object storage (ADR-009, INC-018):
+		     MinIO locally, any S3 endpoint in a deployment. -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+		</dependency>
+
 		<!-- Loads config/secrets/.env into the Spring environment for local dev.
 		     No-ops when the file is absent (e.g. in Docker, where env comes from
 		     docker-compose env_file). See config/secrets/README.md. -->

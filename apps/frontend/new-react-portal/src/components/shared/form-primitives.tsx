@@ -25,14 +25,18 @@ export function Field({
   hint?: ReactNode;
   children: ReactNode;
 }) {
+  // The <label> wraps its control, so the control is named by the label text for assistive tech
+  // without having to thread ids through every form.
   return (
     <div>
-      <label className="block text-xs font-medium text-muted-foreground mb-1">
-        {label} {required && <span className="text-destructive/80">*</span>}
+      <label className="block">
+        <span className="block text-xs font-medium text-muted-foreground mb-1">
+          {label} {required && <span className="text-destructive/80" aria-hidden>*</span>}
+        </span>
+        {children}
       </label>
-      {children}
       {error ? (
-        <p className="text-xs text-destructive mt-1">{error}</p>
+        <p className="text-xs text-destructive mt-1" role="alert">{error}</p>
       ) : hint ? (
         <p className="text-xs text-muted-foreground mt-1">{hint}</p>
       ) : null}

@@ -5,7 +5,7 @@ import { Bus, Link2, Plus, Unlink } from 'lucide-react';
 import { FormDialog } from '@busmate/ui';
 import type { BusPassengerServicePermitAssignmentResponse, BusResponse, PassengerServicePermitResponse } from '@busmate/api-client-core';
 import { Field, SectionCard, ToneBadge, inputClassFor } from '@/components/shared/form-primitives';
-import { TONE_CLASSES, formatDate, requiredServiceClass } from '@/lib/permits';
+import { TONE_CLASSES, formatDate, localToday, requiredServiceClass } from '@/lib/permits';
 
 interface PermitBusLinksPanelProps {
   permit: PassengerServicePermitResponse;
@@ -25,7 +25,7 @@ export function PermitBusLinksPanel({
 }: PermitBusLinksPanelProps) {
   const [open, setOpen] = useState(false);
   const [busId, setBusId] = useState('');
-  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(localToday);
 
   const inForce = links.filter((l) => l.inForce);
   const past = links.filter((l) => !l.inForce);

@@ -1,78 +1,103 @@
 'use client';
 
-import Link from '@/lib/router';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Archive, Pencil, RefreshCw } from 'lucide-react';
+import { BusProfileService } from '@busmate/api-client-core';
+import { useParams, useRouter } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { BusSummaryCard } from '@/components/operator/fleet';
-import { useBusDetail } from '@/hooks/operator/fleet/useBusDetail';
+import { useBusProfile } from '@/hooks/shared/useBusProfile';
+import { BusProfileView } from '@/components/shared/fleet/BusProfileView';
+import { ReasonDialog } from '@/components/shared/ReasonDialog';
+import { ErrorBanner } from '@/components/shared/form-primitives';
+import { apiErrorMessage } from '@/lib/api/errors';
 
-export default function OperatorBusDetailsPage() {
+export default function OperatorBusProfilePage() {
+  const router = useRouter();
+  const { busId } = useParams() as { busId: string };
+  const { bus, photos, documents, links, isLoading, error, reload } = useBusProfile(busId);
+  const [retireOpen, setRetireOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [upcoming, setUpcoming] = useState<number | null>(null);
+
   useSetPageMetadata({
-    title: 'Bus Details',
-    description: 'Bus details – read-only view',
+    title: bus?.plateNumber ?? 'Bus',
+    description: 'Details, seat layout, availability, photos and documents',
     activeItem: 'fleet',
     showBreadcrumbs: true,
-    breadcrumbs: [
-      { label: 'Fleet Management', href: '/operator/fleet' },
-      { label: 'Bus Details' },
-    ],
-    padding: 0,
+    breadcrumbs: [{ label: 'Fleet', href: '/operator/fleet' }, { label: bus?.plateNumber ?? 'Bus' }],
   });
 
-  const { bus, isLoading, error, handleRefresh } = useBusDetail();
-
+  const retired = bus?.status === 'cancelled';
   useSetPageActions(
-    <button
-      onClick={handleRefresh}
-      className="inline-flex items-center gap-2 px-3 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
-    >
-      <RefreshCw className="w-4 h-4" />
-      <span className="hidden sm:inline">Refresh</span>
-    </button>,
+    <div className="flex items-center gap-2">
+      <button onClick={reload} className="flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted">
+        <RefreshCw className="h-3.5 w-3.5" /> Refresh
+      </button>
+      {bus && !retired && (
+        <>
+          <button
+            onClick={async () => {
+              setActionError(null);
+              setRetireOpen(true);
+              BusProfileService.getBusAvailabilityImpact(busId).then((r) => setUpcoming(r.upcomingTrips ?? 0)).catch(() => setUpcoming(null));
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm border border-destructive/40 text-destructive rounded-lg hover:bg-destructive/10"
+          >
+            <Archive className="h-3.5 w-3.5" /> Retire
+          </button>
+          <button onClick={() => router.push(`/operator/fleet/${busId}/edit`)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </button>
+        </>
+      )}
+    </div>,
   );
 
-  if (isLoading) {
-    return (
-      <div className="p-6 space-y-4 animate-pulse">
-        <div className="h-6 w-48 bg-secondary rounded" />
-        <div className="h-32 bg-secondary rounded-xl" />
-        <div className="h-64 bg-secondary rounded-xl" />
-      </div>
-    );
-  }
-
-  if (error || !bus) {
-    return (
-      <div className="p-6">
-        <div className="max-w-md mx-auto mt-16 bg-card border border-destructive/20 rounded-xl p-8 text-center shadow-sm">
-          <AlertCircle className="w-12 h-12 text-destructive/80 mx-auto mb-3" />
-          <h2 className="text-lg font-semibold text-foreground mb-2">Bus Not Found</h2>
-          <p className="text-sm text-muted-foreground mb-5">{error ?? 'The requested bus could not be found.'}</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={handleRefresh}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" /> Retry
-            </button>
-            <Link
-              href="/operator/fleet"
-              className="flex items-center justify-center gap-2 px-4 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
-            >
-              Back to Fleet
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="h-64 rounded-xl border bg-card animate-pulse" />;
+  if (error || !bus) return <ErrorBanner message={error ?? 'Bus not found'} />;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="bg-warning/10 border border-warning/20 rounded-lg px-4 py-2.5 text-sm text-warning">
-        <strong>Read-only view.</strong> Bus registration details are managed by the National Transport Commission (NTC).
-      </div>
-      <BusSummaryCard bus={bus} />
+    <div className="space-y-6">
+      {actionError && <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />}
+      <BusProfileView
+        bus={bus}
+        photos={photos}
+        documents={documents}
+        links={links}
+        canEdit
+        onChanged={reload}
+        onOpenPermit={(permitId) => router.push(`/operator/passenger-permits/${permitId}`)}
+      />
+      <ReasonDialog
+        open={retireOpen}
+        onOpenChange={setRetireOpen}
+        title={`Retire ${bus.plateNumber}?`}
+        description="Use this when the bus is sold, scrapped or permanently withdrawn. It leaves every permit and cannot be given trips or edited again; its history is kept."
+        notice={upcoming ? (
+          <p className="text-sm p-3 rounded-lg bg-warning/10 border border-warning/20">
+            It is assigned to {upcoming} upcoming trip(s). Give those trips another bus from Trips.
+          </p>
+        ) : undefined}
+        confirmLabel="Retire bus"
+        destructive
+        busy={busy}
+        error={actionError}
+        onConfirm={async (reason) => {
+          setBusy(true);
+          setActionError(null);
+          try {
+            await BusProfileService.retireBus(busId, { reason });
+            setRetireOpen(false);
+            await reload();
+          } catch (err) {
+            setActionError(apiErrorMessage(err, 'Could not retire the bus'));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
     </div>
   );
 }

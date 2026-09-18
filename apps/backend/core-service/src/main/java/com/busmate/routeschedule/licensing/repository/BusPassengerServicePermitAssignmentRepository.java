@@ -40,4 +40,8 @@ public interface BusPassengerServicePermitAssignmentRepository extends JpaReposi
     @Query("SELECT a FROM BusPassengerServicePermitAssignment a WHERE a.passengerServicePermit.id = :permitId " +
            "AND a.status = 'active' AND (a.endDate IS NULL OR a.endDate >= CURRENT_DATE)")
     List<BusPassengerServicePermitAssignment> findActiveByPermitId(@Param("permitId") UUID permitId);
+
+    @Query("SELECT a FROM BusPassengerServicePermitAssignment a WHERE a.bus.id = :busId " +
+           "AND a.status = 'active' AND (a.endDate IS NULL OR a.endDate >= CURRENT_DATE)")
+    List<BusPassengerServicePermitAssignment> findActiveByBusId(@Param("busId") UUID busId);
 }

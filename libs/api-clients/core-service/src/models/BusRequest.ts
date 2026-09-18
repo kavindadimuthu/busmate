@@ -13,5 +13,8 @@ export type BusRequest = {
     seatLayout?: JsonNode;
     serviceClass?: string;
     status?: string;
+    manufactureYear?: number;
+    chassisNumber?: string;
+    engineNumber?: string;
 };
 

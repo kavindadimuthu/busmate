@@ -5,7 +5,7 @@ import { FileText, Save } from 'lucide-react';
 import { RouteManagementService } from '@busmate/api-client-core';
 import type { OperatorPermitRequest, PassengerServicePermitResponse, RouteGroupResponse } from '@busmate/api-client-core';
 import { ErrorBanner, Field, SectionCard, inputClassFor } from '@/components/shared/form-primitives';
-import { PERMIT_TYPES } from '@/lib/permits';
+import { PERMIT_TYPES, localToday } from '@/lib/permits';
 
 interface OperatorPermitFormProps {
   permit?: PassengerServicePermitResponse | null;
@@ -17,7 +17,7 @@ interface OperatorPermitFormProps {
 
 type Errors = Partial<Record<keyof OperatorPermitRequest, string>>;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = localToday;
 
 /** Create/edit a permit the operator already holds (INC-017). */
 export function OperatorPermitForm({ permit, submitting, submitError, onSubmit, onCancel }: OperatorPermitFormProps) {

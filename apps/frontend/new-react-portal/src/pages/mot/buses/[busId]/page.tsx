@@ -2,7 +2,14 @@
 
 import { useRouter } from '@/lib/router';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { BusSummary } from '@/components/mot/buses/BusSummary';
+import { useState } from 'react';
+import { PauseCircle, PlayCircle } from 'lucide-react';
+import { BusProfileService } from '@busmate/api-client-core';
+import { useBusProfile } from '@/hooks/shared/useBusProfile';
+import { BusProfileView } from '@/components/shared/fleet/BusProfileView';
+import { ReasonDialog } from '@/components/shared/ReasonDialog';
+import { ErrorBanner } from '@/components/shared/form-primitives';
+import { apiErrorMessage } from '@/lib/api/errors';
 import { BusTabsSection } from '@/components/mot/buses/BusTabsSection';
 import DeleteBusModal from '@/components/mot/buses/DeleteBusModal';
 import { useBusDetails } from '@/hooks/mot/buses/useBusDetails';
@@ -16,6 +23,24 @@ export default function BusDetailsPage() {
     handleBack, handleRefresh, handleViewOperator,
     handleDeleteCancel, handleDeleteConfirm,
   } = useBusDetails();
+  const profile = useBusProfile(bus?.id);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const reinstate = async () => {
+    if (!bus?.id) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      await BusProfileService.reinstateBus(bus.id);
+      await Promise.all([profile.reload(), handleRefresh()]);
+    } catch (err) {
+      setActionError(apiErrorMessage(err, 'Could not reinstate the bus'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -71,7 +96,65 @@ export default function BusDetailsPage() {
         </div>
       )}
 
-      <BusSummary bus={bus} operator={operator} onViewOperator={handleViewOperator} />
+      {actionError && <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button type="button" onClick={handleViewOperator} className="text-sm text-primary hover:underline">
+          Operator: {operator?.name ?? bus.operatorName}
+        </button>
+        <div className="flex gap-2">
+          {bus.status === 'active' && (
+            <button type="button" onClick={() => setSuspendOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-destructive/40 text-destructive rounded-lg hover:bg-destructive/10">
+              <PauseCircle className="h-4 w-4" /> Suspend from service
+            </button>
+          )}
+          {(bus.status === 'inactive' || bus.status === 'cancelled') && (
+            <button type="button" onClick={reinstate} disabled={busy} className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted disabled:opacity-50">
+              <PlayCircle className="h-4 w-4" /> Reinstate
+            </button>
+          )}
+        </div>
+      </div>
+
+      {profile.bus && (
+        <BusProfileView
+          bus={profile.bus}
+          photos={profile.photos}
+          documents={profile.documents}
+          links={profile.links}
+          canEdit
+          showOperator
+          onChanged={() => {
+            profile.reload();
+            handleRefresh();
+          }}
+          onOpenPermit={(permitId) => router.push(`/mot/passenger-permits/${permitId}`)}
+        />
+      )}
+
+      <ReasonDialog
+        open={suspendOpen}
+        onOpenChange={setSuspendOpen}
+        title={`Suspend ${bus.plateNumber} from service?`}
+        description="A suspended bus cannot be given trips until you reinstate it. The operator sees your reason."
+        confirmLabel="Suspend bus"
+        destructive
+        busy={busy}
+        error={actionError}
+        onConfirm={async (reason) => {
+          if (!bus.id) return;
+          setBusy(true);
+          setActionError(null);
+          try {
+            await BusProfileService.suspendBus(bus.id, { reason });
+            setSuspendOpen(false);
+            await Promise.all([profile.reload(), handleRefresh()]);
+          } catch (err) {
+            setActionError(apiErrorMessage(err, 'Could not suspend the bus'));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
 
       <BusTabsSection
         bus={bus}

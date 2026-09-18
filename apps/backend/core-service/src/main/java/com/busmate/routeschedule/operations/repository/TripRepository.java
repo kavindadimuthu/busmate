@@ -478,4 +478,18 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     @Query("SELECT COUNT(t) FROM Trip t WHERE t.passengerServicePermit.id = :permitId " +
            "AND t.tripDate >= CURRENT_DATE AND t.status = com.busmate.routeschedule.operations.enums.TripStatusEnum.pending")
     long countUpcomingByPermitId(@Param("permitId") UUID permitId);
+
+    boolean existsByBusId(UUID busId);
+
+    /** Pending trips from today on that this bus is assigned to (INC-018). */
+    @Query("SELECT COUNT(t) FROM Trip t WHERE t.bus.id = :busId " +
+           "AND t.tripDate >= CURRENT_DATE AND t.status = com.busmate.routeschedule.operations.enums.TripStatusEnum.pending")
+    long countUpcomingByBusId(@Param("busId") UUID busId);
+
+    /** Pending trips this bus is assigned to within a date window (availability changes). */
+    @Query("SELECT COUNT(t) FROM Trip t WHERE t.bus.id = :busId AND t.tripDate >= :fromDate " +
+           "AND (CAST(:untilDate AS LocalDate) IS NULL OR t.tripDate <= :untilDate) " +
+           "AND t.status = com.busmate.routeschedule.operations.enums.TripStatusEnum.pending")
+    long countPendingForBusBetween(@Param("busId") UUID busId, @Param("fromDate") java.time.LocalDate fromDate,
+                                   @Param("untilDate") java.time.LocalDate untilDate);
 }

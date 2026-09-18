@@ -54,3 +54,9 @@ export function formatDate(date?: string | null): string {
   const d = new Date(date);
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+/** Today's date as YYYY-MM-DD in the user's own time zone (toISOString would give UTC's). */
+export function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

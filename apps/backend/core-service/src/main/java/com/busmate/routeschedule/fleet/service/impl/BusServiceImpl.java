@@ -44,6 +44,8 @@ public class BusServiceImpl implements BusService {
     private final MapperUtils mapperUtils;
     private final ObjectMapper objectMapper;
     private final SeatLayoutFactory seatLayoutFactory;
+    private final com.busmate.routeschedule.fleet.service.SeatLayoutValidator seatLayoutValidator;
+    private final com.busmate.routeschedule.fleet.repository.BusMediaRepository busMediaRepository;
 
     @Override
     public BusResponse createBus(BusRequest request, String userId) {
@@ -116,6 +118,7 @@ public class BusServiceImpl implements BusService {
         bus.setSeatLayout(request.getSeatLayout());
         bus.setServiceClass(parseServiceClass(request.getServiceClass()));
         bus.setOperator(operator);
+        applyRegistrationDetails(bus, request);
 
         try {
             bus.setStatus(StatusEnum.valueOf(request.getStatus()));
@@ -135,7 +138,10 @@ public class BusServiceImpl implements BusService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bus not found with id: " + id));
 
         if (busPermitAssignmentRepository.existsByBusId(id)) {
-            throw new ConflictException("Cannot delete bus with id " + id + " as it is referenced by permit assignments");
+            throw new ConflictException("Cannot delete bus with id " + id + " as it is referenced by permit assignments; retire it instead");
+        }
+        if (!busMediaRepository.findByBusIdOrderByCreatedAtAsc(id).isEmpty()) {
+            throw new ConflictException("Cannot delete a bus that has photos or documents; retire it instead");
         }
 
         busRepository.deleteById(id);
@@ -434,14 +440,29 @@ public class BusServiceImpl implements BusService {
     }
 
     private void validateBusRequest(BusRequest request) {
-        if (request.getCapacity() <= 0) {
+        if (request.getCapacity() == null || request.getCapacity() <= 0) {
             throw new ConflictException("Capacity must be positive");
         }
+        // Plate and NTC numbers are compared for uniqueness, so " wp caa-4521" and "WP CAA-4521"
+        // must be the same bus.
+        request.setPlateNumber(request.getPlateNumber().trim().toUpperCase());
+        request.setNtcRegistrationNumber(request.getNtcRegistrationNumber().trim().toUpperCase());
+        seatLayoutValidator.validate(request.getSeatLayout(), request.getCapacity());
         try {
             StatusEnum.valueOf(request.getStatus());
         } catch (IllegalArgumentException e) {
             throw new ConflictException("Invalid status: " + request.getStatus());
         }
+    }
+
+    private void applyRegistrationDetails(Bus bus, BusRequest request) {
+        bus.setManufactureYear(request.getManufactureYear());
+        bus.setChassisNumber(blankToNull(request.getChassisNumber()));
+        bus.setEngineNumber(blankToNull(request.getEngineNumber()));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private Operator validateAndGetOperator(UUID operatorId) {
@@ -460,6 +481,7 @@ public class BusServiceImpl implements BusService {
         bus.setSeatLayout(request.getSeatLayout());
         bus.setServiceClass(parseServiceClass(request.getServiceClass()));
         bus.setOperator(operator);
+        applyRegistrationDetails(bus, request);
 
         try {
             bus.setStatus(StatusEnum.valueOf(request.getStatus()));
@@ -494,6 +516,21 @@ public class BusServiceImpl implements BusService {
         // capacity when the bus has none stored, so the conductor app never has to hardcode one.
         if (bus.getSeatLayout() == null) {
             response.setSeatLayout(seatLayoutFactory.defaultLayout(bus.getCapacity()));
+        }
+        // Set explicitly: ModelMapper's loose matching would otherwise fill `status` from
+        // `statusReason` (the same trap as on permits).
+        response.setStatus(bus.getStatus() != null ? bus.getStatus().name() : null);
+        response.setStatusReason(bus.getStatusReason());
+        response.setAvailability(bus.getAvailability() != null ? bus.getAvailability().name() : "AVAILABLE");
+        response.setAvailabilityFrom(bus.getAvailabilityFrom());
+        response.setAvailabilityUntil(bus.getAvailabilityUntil());
+        response.setAvailabilityNote(bus.getAvailabilityNote());
+        response.setAvailableToday(bus.getStatus() == StatusEnum.active && bus.isAvailableOn(java.time.LocalDate.now()));
+        if (bus.getId() != null) {
+            response.setPhotoCount(busMediaRepository.countByBusIdAndKind(bus.getId(), com.busmate.routeschedule.fleet.enums.BusMediaKindEnum.PHOTO));
+            response.setDocumentCount(busMediaRepository.countByBusIdAndKind(bus.getId(), com.busmate.routeschedule.fleet.enums.BusMediaKindEnum.DOCUMENT));
+            response.setCoverPhotoId(busMediaRepository.findFirstByBusIdAndCoverTrue(bus.getId())
+                    .map(com.busmate.routeschedule.fleet.entity.BusMedia::getId).orElse(null));
         }
         return response;
     }

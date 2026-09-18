@@ -1,6 +1,7 @@
 'use client';
 
-import { RefreshCw, Info } from 'lucide-react';
+import { RefreshCw, Plus } from 'lucide-react';
+import { useRouter } from '@/lib/router';
 import { Button } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { FleetStatsCards } from '@/components/operator/fleet/FleetStatsCards';
@@ -11,7 +12,7 @@ import { useFleetManagement } from '@/hooks/operator/fleet/useFleetManagement';
 export default function FleetManagementPage() {
   useSetPageMetadata({
     title: 'Fleet Management',
-    description: 'View details of all buses in your fleet. Contact NTC to register or update bus information.',
+    description: 'Register your buses and keep their details, seat layout, photos and documents current',
     activeItem: 'fleet',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Fleet Management' }],
@@ -23,11 +24,18 @@ export default function FleetManagementPage() {
     clearFilters, handleRefresh, handleView, loadBuses,
   } = useFleetManagement();
 
+  const router = useRouter();
   useSetPageActions(
-    <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
-      <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-      Refresh
-    </Button>,
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+        Refresh
+      </Button>
+      <Button size="sm" onClick={() => router.push('/operator/fleet/create')}>
+        <Plus className="h-3.5 w-3.5 mr-1.5" />
+        Register Bus
+      </Button>
+    </div>,
   );
 
   return (
@@ -61,14 +69,6 @@ export default function FleetManagementPage() {
         onSort={setSort} loading={isLoading} onView={handleView}
       />
 
-      <div className="flex items-start gap-2.5 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
-        <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary/80" />
-        <p>
-          <span className="font-semibold">Read-only view:</span>{' '}
-          Fleet registration and modifications are managed by the National Transport Commission (NTC).
-          Please contact NTC for any changes to your fleet.
-        </p>
-      </div>
     </div>
   );
 }

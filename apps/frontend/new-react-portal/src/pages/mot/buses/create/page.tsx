@@ -1,48 +1,47 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
-import { BusForm } from '@/components/mot/buses/BusForm';
-import { useAddBus } from '@/hooks/mot/buses/useAddBus';
+import { useEffect, useState } from 'react';
+import { BusManagementService, OperatorManagementService } from '@busmate/api-client-core';
+import type { BusRequest, OperatorResponse } from '@busmate/api-client-core';
+import { useRouter } from '@/lib/router';
+import { useSetPageMetadata } from '@/context/PageContext';
+import { BusProfileForm } from '@/components/shared/fleet/BusProfileForm';
+import type { BusProfileValues } from '@/components/shared/fleet/BusProfileForm';
+import { apiErrorMessage } from '@/lib/api/errors';
 
 export default function AddBusPage() {
-  const { operators, operatorsLoading, isSubmitting, error, clearError, handleSubmit, handleCancel } = useAddBus();
+  const router = useRouter();
+  const [operators, setOperators] = useState<OperatorResponse[] | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  return (
-    <div className="space-y-6">
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-          <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 mr-3 shrink-0" />
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-destructive">Error Creating Bus</h3>
-              <p className="text-sm text-destructive mt-1">{error}</p>
-              <button onClick={clearError} className="text-sm text-destructive hover:text-destructive underline mt-2">
-                Dismiss
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  useSetPageMetadata({
+    title: 'Add New Bus',
+    description: 'Register a bus for any operator',
+    activeItem: 'buses',
+    showBreadcrumbs: true,
+    breadcrumbs: [{ label: 'Buses', href: '/mot/buses' }, { label: 'Add New' }],
+  });
 
-      <div className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Bus Information</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Enter the bus registration and operational details
-          </p>
-        </div>
-        <div className="p-6">
-          <BusForm
-            operators={operators}
-            operatorsLoading={operatorsLoading}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            isSubmitting={isSubmitting}
-            submitButtonText="Create Bus"
-            mode="create"
-          />
-        </div>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    OperatorManagementService.getAllOperatorsAsList()
+      .then((list) => setOperators([...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))))
+      .catch((err) => setError(apiErrorMessage(err, 'Could not load operators')));
+  }, []);
+
+  const submit = async (values: BusProfileValues) => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const created = await BusManagementService.createBus(values as BusRequest);
+      router.push(`/mot/buses/${created.id}`);
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Could not create the bus'));
+      setSubmitting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  if (!operators) return <div className="h-64 rounded-xl border bg-card animate-pulse" />;
+  return <BusProfileForm operators={operators} submitting={submitting} submitError={error} onSubmit={submit} onCancel={() => router.push('/mot/buses')} />;
 }
