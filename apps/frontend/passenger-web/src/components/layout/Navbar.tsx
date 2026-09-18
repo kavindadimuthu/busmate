@@ -44,7 +44,7 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
       )}
     >
       {children}
-      {active && <span className="absolute left-0 right-0 -bottom-[21px] h-0.5 bg-primary rounded-full" />}
+      {active && <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-primary rounded-full" />}
     </Link>
   );
 }
