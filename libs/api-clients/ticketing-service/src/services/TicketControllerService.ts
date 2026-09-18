@@ -18,18 +18,26 @@ export class TicketControllerService {
     /**
      * @param ticketId
      * @param requestBody
+     * @param xUserId
+     * @param xUserType
      * @returns ConductorLogTicketDTO OK
      * @throws ApiError
      */
     public static cancelTicket(
         ticketId: number,
         requestBody: TicketCancelRequestDTO,
+        xUserId?: string,
+        xUserType?: string,
     ): CancelablePromise<ConductorLogTicketDTO> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/tickets/{ticketId}/cancel',
             path: {
                 'ticketId': ticketId,
+            },
+            headers: {
+                'x-user-id': xUserId,
+                'x-user-type': xUserType,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -52,17 +60,25 @@ export class TicketControllerService {
     }
     /**
      * @param ticketId
+     * @param xUserId
+     * @param xUserType
      * @returns PaymentConfirmResponseDTO OK
      * @throws ApiError
      */
     public static confirmPayment(
         ticketId: number,
+        xUserId?: string,
+        xUserType?: string,
     ): CancelablePromise<PaymentConfirmResponseDTO> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/tickets/payment/{ticketId}/confirm',
             path: {
                 'ticketId': ticketId,
+            },
+            headers: {
+                'x-user-id': xUserId,
+                'x-user-type': xUserType,
             },
         });
     }
@@ -83,15 +99,23 @@ export class TicketControllerService {
     }
     /**
      * @param requestBody
+     * @param xUserId
+     * @param xUserType
      * @returns BookingResponseDTO OK
      * @throws ApiError
      */
     public static bookTicket(
         requestBody: BookingRequestDTO,
+        xUserId?: string,
+        xUserType?: string,
     ): CancelablePromise<BookingResponseDTO> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/tickets/book',
+            headers: {
+                'x-user-id': xUserId,
+                'x-user-type': xUserType,
+            },
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -150,17 +174,25 @@ export class TicketControllerService {
     }
     /**
      * @param ticketId
+     * @param xUserId
+     * @param xUserType
      * @returns ConductorLogTicketDTO OK
      * @throws ApiError
      */
     public static getTicketById(
         ticketId: number,
+        xUserId?: string,
+        xUserType?: string,
     ): CancelablePromise<ConductorLogTicketDTO> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/tickets/{ticketId}',
             path: {
                 'ticketId': ticketId,
+            },
+            headers: {
+                'x-user-id': xUserId,
+                'x-user-type': xUserType,
             },
         });
     }
@@ -198,17 +230,25 @@ export class TicketControllerService {
     }
     /**
      * @param passengerId
+     * @param xUserId
+     * @param xUserType
      * @returns ConductorLogTicketDTO OK
      * @throws ApiError
      */
     public static getTicketsByPassengerId(
         passengerId: string,
+        xUserId?: string,
+        xUserType?: string,
     ): CancelablePromise<Array<ConductorLogTicketDTO>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/tickets/passenger/{passengerId}',
             path: {
                 'passengerId': passengerId,
+            },
+            headers: {
+                'x-user-id': xUserId,
+                'x-user-type': xUserType,
             },
         });
     }

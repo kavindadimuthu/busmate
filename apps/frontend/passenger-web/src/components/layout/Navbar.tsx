@@ -1,4 +1,4 @@
-import { LogOut, Menu, User as UserIcon, X } from "lucide-react";
+import { LogOut, Menu, Ticket, User as UserIcon, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -94,6 +94,11 @@ const Navbar = () => {
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/tickets" className="cursor-pointer">
+                      <Ticket className="h-4 w-4" /> My Tickets
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">
                       <UserIcon className="h-4 w-4" /> View Profile
@@ -195,6 +200,13 @@ const Navbar = () => {
                         <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                       </div>
                     </div>
+                    <Link
+                      to="/tickets"
+                      className="px-4 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors rounded-lg font-medium flex items-center gap-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Ticket className="h-4 w-4" /> My Tickets
+                    </Link>
                     <Link
                       to="/profile"
                       className="px-4 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors rounded-lg font-medium flex items-center gap-2"

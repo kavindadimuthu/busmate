@@ -15,7 +15,10 @@ const ProtectedRoute = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    // Preserve the query string too, not just the path - a redirect back into a booking flow
+    // (tripId, seat context, etc.) needs it, and dropping it silently broke that round-trip
+    // before anything actually depended on it (only /profile was protected until INC-013).
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
 
   return <Outlet />;

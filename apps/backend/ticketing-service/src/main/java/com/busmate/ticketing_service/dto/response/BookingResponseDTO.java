@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -19,8 +20,14 @@ public class BookingResponseDTO {
     private String paymentReference;
     /** PENDING | SUCCESS | FAILED, mirrors PaymentGateway.PaymentStatus. */
     private String paymentStatus;
-    /** Null for the dummy gateway; populated by a real gateway that requires a redirect. */
+    /**
+     * Null in dummy-gateway mode. Once PayHere is enabled (INC-013, ADR-014), the checkout
+     * page's POST target - submit checkoutFields to this URL as a form, don't navigate to it as
+     * a link.
+     */
     private String redirectUrl;
+    /** Null unless redirectUrl is set. Hidden form fields to POST to redirectUrl. */
+    private Map<String, String> checkoutFields;
     /** What one seat costs on this journey — server-computed, never what the client asked for. */
     private BigDecimal farePerSeat;
     /** The total being charged: farePerSeat × seats. */

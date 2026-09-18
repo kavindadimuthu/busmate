@@ -96,6 +96,17 @@ payhere:
   merchant-id: ${TICKETING_PAYHERE_MERCHANT_ID:sandbox-merchant-id-not-set}
   merchant-secret: ${TICKETING_PAYHERE_MERCHANT_SECRET:dev-only-placeholder-not-a-real-secret}
   sandbox: ${TICKETING_PAYHERE_SANDBOX:true}
+  checkout:
+    # INC-013/ADR-014. Off until a human sets real sandbox credentials and a public tunnel and
+    # confirms a live test - DummyPaymentGateway is the active PaymentGateway bean until then.
+    enabled: ${TICKETING_PAYHERE_CHECKOUT_ENABLED:false}
+    url: ${TICKETING_PAYHERE_CHECKOUT_URL:https://sandbox.payhere.lk/pay/checkout}
+    app-base-url: ${PASSENGER_WEB_URL:http://localhost:4000}
+    # Must be a tunnel (cloudflared/ngrok) while testing - PayHere's servers cannot reach
+    # localhost. TICKETING_SERVICE_URL/CORE_SERVICE_URL already exist for the same reason
+    # this needs its own var: this one must be the *gateway's* public address, not this
+    # service's own.
+    gateway-base-url: ${PUBLIC_GATEWAY_URL:http://localhost:8080}
 
 supabase:
   # From config/secrets/.env. api.key is the public anon key; auth.url is not

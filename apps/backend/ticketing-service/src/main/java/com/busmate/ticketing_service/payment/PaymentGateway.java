@@ -1,6 +1,7 @@
 package com.busmate.ticketing_service.payment;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * Provider-agnostic online payment gateway contract. A real integration (PayHere, Stripe, etc.)
@@ -29,8 +30,14 @@ public interface PaymentGateway {
     record PaymentInitiationResult(
             String gatewayReference,
             PaymentStatus status,
-            /** Null for the dummy gateway; a real gateway would return a checkout URL here. */
-            String redirectUrl) {
+            /** Null for the dummy gateway. For PayHere, the hosted checkout page's POST target -
+             * see {@link #checkoutFields}, which must be submitted to this URL as a form
+             * (ADR-014). Not a simple link to redirect the browser to. */
+            String redirectUrl,
+            /** Null unless {@link #redirectUrl} is set. The full set of hidden form fields
+             * (including the pre-computed hash) a client must POST to {@link #redirectUrl} to
+             * reach the gateway's own checkout page. */
+            Map<String, String> checkoutFields) {
     }
 
     record PaymentConfirmationResult(

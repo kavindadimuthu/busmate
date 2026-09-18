@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Ticket } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -710,6 +711,34 @@ const FindMyBusDetailPage = () => {
                       </div>
                     )}
                   </div>
+
+                  {trip.tripId && trip.bus?.busId && (
+                    <div className="pt-3 sm:pt-4 mt-1 border-t">
+                      <Button
+                        className="w-full bg-gradient-primary"
+                        onClick={() =>
+                          navigate(
+                            `/booking/seats?tripId=${encodeURIComponent(trip.tripId!)}` +
+                              `&busId=${encodeURIComponent(trip.bus!.busId!)}` +
+                              `&fromStopId=${encodeURIComponent(journeySummary?.originStop?.id ?? fromStopId ?? '')}` +
+                              `&toStopId=${encodeURIComponent(journeySummary?.destinationStop?.id ?? toStopId ?? '')}` +
+                              `&fromStopName=${encodeURIComponent(journeySummary?.originStop?.name ?? '')}` +
+                              `&toStopName=${encodeURIComponent(journeySummary?.destinationStop?.name ?? '')}` +
+                              `&routeName=${encodeURIComponent(route?.name ?? '')}` +
+                              `&operatorName=${encodeURIComponent(trip.operator?.name ?? '')}` +
+                              `&tripDate=${encodeURIComponent(data.queryDate ?? '')}` +
+                              `&departureTime=${encodeURIComponent(journeySummary?.departureFromOrigin ?? '')}` +
+                              `&arrivalTime=${encodeURIComponent(journeySummary?.arrivalAtDestination ?? '')}`,
+                          )
+                        }
+                      >
+                        <Ticket className="h-4 w-4 mr-2" /> Book This Bus
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground text-center mt-2">
+                        Seat availability and the final fare are confirmed on the next step.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

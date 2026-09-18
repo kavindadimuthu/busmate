@@ -12,11 +12,8 @@ export function configureApiClients() {
   // Auth/user/profile calls are routed through the API gateway (not straight to
   // user-management) so JWT verification, CORS and rate limiting are enforced centrally.
   UserAPI.BASE = gatewayBaseUrl;
+  // Installs the same auto-refreshing token resolver on all three clients (INC-013) - booking
+  // needs the passenger's real identity forwarded as x-user-id, which only happens with a real
+  // bearer token attached.
   installUserApiTokenResolver();
-
-  // TOKEN resolvers for the other clients will be added when their auth is implemented.
-  // Example:
-  // const getToken = async () => sessionStorage.getItem('access_token') || '';
-  // RouteAPI.TOKEN = getToken;
-  // TicketingAPI.TOKEN = getToken;
 }

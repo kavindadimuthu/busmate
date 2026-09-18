@@ -264,6 +264,7 @@ public class PaymentServiceIMPL implements PaymentService {
                 initResult.gatewayReference(),
                 initResult.status().name(),
                 initResult.redirectUrl(),
+                initResult.checkoutFields(),
                 farePerSeat,
                 total);
     }

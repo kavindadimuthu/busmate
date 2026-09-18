@@ -1,6 +1,7 @@
 package com.busmate.ticketing_service.payment;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -14,6 +15,9 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
+// The active PaymentGateway bean whenever the real one isn't (ADR-014) - default, since
+// payhere.checkout-enabled defaults to false until real sandbox credentials exist.
+@ConditionalOnProperty(prefix = "payhere.checkout", name = "enabled", havingValue = "false", matchIfMissing = true)
 public class DummyPaymentGateway implements PaymentGateway {
 
     @Override
@@ -21,7 +25,7 @@ public class DummyPaymentGateway implements PaymentGateway {
         String reference = "DUMMY-" + UUID.randomUUID();
         log.info("[DummyPaymentGateway] initiated payment {} for {} (amount={})",
                 reference, request.passengerId(), request.amount());
-        return new PaymentInitiationResult(reference, PaymentStatus.PENDING, null);
+        return new PaymentInitiationResult(reference, PaymentStatus.PENDING, null, null);
     }
 
     @Override

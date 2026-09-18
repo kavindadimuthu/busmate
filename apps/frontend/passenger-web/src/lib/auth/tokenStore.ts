@@ -1,4 +1,6 @@
 import { AuthControllerService, OpenAPI as UserAPI } from "@busmate/api-client-user";
+import { OpenAPI as TicketingAPI } from "@busmate/api-client-ticketing";
+import { OpenAPI as RouteAPI } from "@busmate/api-client-core";
 
 const ACCESS_TOKEN_KEY = "busmate.auth.accessToken";
 const REFRESH_TOKEN_KEY = "busmate.auth.refreshToken";
@@ -74,4 +76,9 @@ export async function resolveAccessToken(): Promise<string> {
 
 export function installUserApiTokenResolver(): void {
   UserAPI.TOKEN = resolveAccessToken;
+  // Booking (INC-011) needs the passenger's own identity - ticketing-service takes it from the
+  // gateway's x-user-id header, which only exists when a real bearer token is forwarded. Without
+  // this, every booking call went out unauthenticated and 401'd before INC-011 even mattered.
+  TicketingAPI.TOKEN = resolveAccessToken;
+  RouteAPI.TOKEN = resolveAccessToken;
 }
