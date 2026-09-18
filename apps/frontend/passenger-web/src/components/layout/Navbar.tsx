@@ -85,6 +85,7 @@ const Navbar = () => {
             <div className="flex items-center gap-6">
               <NavLink to="/">Home</NavLink>
               <NavLink to="/findmybus">FindMyBus</NavLink>
+              <NavLink to="/routes">Routes</NavLink>
               {isAuthenticated && <NavLink to="/tickets">My Tickets</NavLink>}
             </div>
 
@@ -203,6 +204,17 @@ const Navbar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   FindMyBus
+                </Link>
+                <Link
+                  to="/routes"
+                  aria-current={pathname === "/routes" ? "page" : undefined}
+                  className={cn(
+                    "px-4 py-3 transition-colors rounded-lg font-medium",
+                    pathname === "/routes" ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted hover:text-primary",
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Routes
                 </Link>
 
                 {isAuthenticated ? (

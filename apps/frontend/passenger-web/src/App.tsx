@@ -9,6 +9,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import FindMyBusPage from "./pages/FindMyBusPage";
 import FindMyBusDetailPage from "./pages/FindMyBusDetailPage";
+import RoutesPage from "./pages/RoutesPage";
+import RouteDetailPage from "./pages/RouteDetailPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -36,6 +38,8 @@ const App = () => (
               <Route path="/" element={<HomePage />} />
               <Route path="/findmybus" element={<FindMyBusPage />} />
               <Route path="/findmybus/detail" element={<FindMyBusDetailPage />} />
+              <Route path="/routes" element={<RoutesPage />} />
+              <Route path="/routes/:id" element={<RouteDetailPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               {/* PayHere redirects the passenger's browser here directly (ADR-014) - these two

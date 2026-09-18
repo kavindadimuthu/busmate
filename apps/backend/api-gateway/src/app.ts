@@ -69,7 +69,11 @@ export function createApp() {
   for (const route of routes) {
     const proxy = createProxy(route.target, route.pathPrefix);
     if (route.requiresAuth) {
-      app.use(route.pathPrefix, authMiddleware);
+      const publicMethods = route.publicMethods;
+      app.use(route.pathPrefix, (req, res, next) => {
+        if (publicMethods?.includes(req.method)) return next();
+        return authMiddleware(req, res, next);
+      });
     }
     app.use(proxy);
   }

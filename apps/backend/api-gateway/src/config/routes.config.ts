@@ -2,6 +2,10 @@ export interface RouteConfig {
   pathPrefix: string;
   target: string;
   requiresAuth: boolean;
+  /** Methods exempt from requiresAuth on this prefix (e.g. public reads, protected writes). Only
+   * meaningful when requiresAuth is true; core-service still enforces its own auth on every other
+   * method regardless (INC-014). */
+  publicMethods?: string[];
 }
 
 // Routes are evaluated in order — first match wins
@@ -35,8 +39,11 @@ export const routes: RouteConfig[] = [
   { pathPrefix: '/api/buses', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/v1/bus-operator', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/v1/conductor', target: 'CORE_SERVICE', requiresAuth: true },
-  { pathPrefix: '/api/stops', target: 'CORE_SERVICE', requiresAuth: true },
-  { pathPrefix: '/api/routes', target: 'CORE_SERVICE', requiresAuth: true },
+  // Reads are public (core-service's own SecurityConfig already permits GET /api/** anonymously;
+  // this just stops the gateway being stricter than the service it fronts). Writes still require a
+  // token, and core-service's @PreAuthorize(ADMIN/MOT) still gates them independently (INC-014).
+  { pathPrefix: '/api/stops', target: 'CORE_SERVICE', requiresAuth: true, publicMethods: ['GET'] },
+  { pathPrefix: '/api/routes', target: 'CORE_SERVICE', requiresAuth: true, publicMethods: ['GET'] },
   // Telemetry / IoT device registry (IoT Platform Layer plan, Phase 1) — staff-only admin API;
   // the service itself enforces ADMIN/MOT roles from the forwarded x-user-type header.
   { pathPrefix: '/api/devices', target: 'TELEMETRY', requiresAuth: true },
