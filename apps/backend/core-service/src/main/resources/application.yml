@@ -82,8 +82,9 @@ spring:
 server:
   port: ${SERVER_PORT:9010}
 
-asgardeo:
-  jwks-url: https://api.asgardeo.io/t/busmate/oauth2/jwks
+# Access tokens are verified against user-service's published signing key (INC-016).
+auth:
+  jwks-url: ${AUTH_JWKS_URL:http://localhost:9020/public/jwks.json}
 
 # Shared secret gating /internal/**, called directly by user-service (bypassing the
 # gateway) to sync operator records. Must match user-service's internal.api-key.

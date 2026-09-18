@@ -6,6 +6,7 @@ import com.busmate.routeschedule.licensing.service.BusPassengerServicePermitAssi
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import com.busmate.routeschedule.fleet.entity.Bus;
 
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
 @RequestMapping("/api/bus-permit-assignments")
 @RequiredArgsConstructor
 @Tag(name = "07. Bus-Permit Assignment", description = "APIs for managing bus - passenger service permit assignments")

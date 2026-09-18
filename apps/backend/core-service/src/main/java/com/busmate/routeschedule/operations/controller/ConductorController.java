@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,8 @@ import java.util.stream.Collectors;
  * have no ownership check at all.
  */
 @RestController
+// A conductor acts only as themselves; MOT/admin may act for any conductor (INC-016).
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT') or (hasRole('CONDUCTOR') and authentication.name == #conductorId.toString())")
 @RequestMapping("/api/v1/conductor")
 @RequiredArgsConstructor
 @Tag(name = "09. Conductor Self-Service", description = "API endpoints for a conductor to manage their own assigned trips")

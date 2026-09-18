@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,7 @@ import com.busmate.routeschedule.scheduling.entity.Schedule;
 import com.busmate.routeschedule.operations.entity.Trip;
 
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
 @Tag(name = "08. Trip Management", description = "APIs for managing trip instances")
@@ -47,6 +49,7 @@ public class TripController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("permitAll()")
     @GetMapping("/{id}")
     @Operation(summary = "Get trip by ID")
     public ResponseEntity<TripResponse> getTripById(@PathVariable UUID id) {
@@ -216,6 +219,7 @@ public class TripController {
         return ResponseEntity.ok(responses);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT') or authentication.name == #conductorId.toString()")
     @GetMapping("/conductor/{conductorId}")
     @Operation(summary = "Get trips by conductor")
     public ResponseEntity<List<TripResponse>> getTripsByConductor(@PathVariable UUID conductorId) {

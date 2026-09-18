@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+
+import com.busmate.routeschedule.fleet.security.OperatorAccess;
 
 import com.busmate.routeschedule.fleet.dto.response.BusResponse;
 import com.busmate.routeschedule.fleet.dto.response.OperatorResponse;
@@ -65,6 +68,7 @@ import lombok.RequiredArgsConstructor;
  * For optimal performance, consider implementing operator-specific repository methods.
  */
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT', 'OPERATOR')")
 @RequestMapping("/api/v1/bus-operator")
 @RequiredArgsConstructor
 @Tag(name = "Bus Operator Operations", description = "API endpoints for bus operator specific operations")
@@ -76,6 +80,7 @@ public class BusOperatorController {
     private final RouteService routeService;
     private final ScheduleService scheduleService;
     private final OperatorService operatorService;
+    private final OperatorAccess operatorAccess;
 
     // ============================================================================
     // OPERATOR PROFILE OPERATIONS
@@ -93,6 +98,7 @@ public class BusOperatorController {
     public ResponseEntity<OperatorResponse> getOperatorProfile(
             @Parameter(description = "Operator ID", required = true)
             @PathVariable UUID operatorId) {
+        operatorAccess.requireAccess(operatorId);
         OperatorResponse operator = operatorService.getOperatorById(operatorId);
         return ResponseEntity.ok(operator);
     }
@@ -140,6 +146,7 @@ public class BusOperatorController {
             
             @Parameter(description = "Maximum capacity filter")
             @RequestParam(required = false) Integer maxCapacity) {
+        operatorAccess.requireAccess(operatorId);
         
         // Validate and normalize pagination parameters
         if (page < 0) {
@@ -207,6 +214,7 @@ public class BusOperatorController {
             @PathVariable UUID operatorId,
             @Parameter(description = "Bus ID", required = true)
             @PathVariable UUID busId) {
+        operatorAccess.requireAccess(operatorId);
         
         BusResponse bus = busService.getBusById(busId);
         // Verify bus belongs to operator
@@ -255,6 +263,7 @@ public class BusOperatorController {
             
             @Parameter(description = "Search text")
             @RequestParam(required = false) String searchText) {
+        operatorAccess.requireAccess(operatorId);
         
         // Validate and normalize pagination parameters
         if (page < 0) {
@@ -340,6 +349,7 @@ public class BusOperatorController {
             @PathVariable UUID operatorId,
             @Parameter(description = "Permit ID", required = true)
             @PathVariable UUID permitId) {
+        operatorAccess.requireAccess(operatorId);
         
         PassengerServicePermitResponse permit = passengerServicePermitService.getPermitById(permitId);
         // Verify permit belongs to operator
@@ -406,6 +416,7 @@ public class BusOperatorController {
             
             @Parameter(description = "Search text (route name, permit number, etc.)")
             @RequestParam(required = false) String search) {
+        operatorAccess.requireAccess(operatorId);
         
         // Validate and normalize pagination parameters
         if (page < 0) {
@@ -470,6 +481,7 @@ public class BusOperatorController {
             @PathVariable UUID operatorId,
             @Parameter(description = "Trip ID", required = true)
             @PathVariable UUID tripId) {
+        operatorAccess.requireAccess(operatorId);
         
         TripResponse trip = tripService.getTripById(tripId);
         // Verify trip belongs to operator
@@ -497,6 +509,7 @@ public class BusOperatorController {
             @Parameter(description = "Bus ID (must belong to this operator)", required = true)
             @RequestParam UUID busId,
             Authentication authentication) {
+        operatorAccess.requireAccess(operatorId);
 
         BusResponse bus = busService.getBusById(busId);
         if (!bus.getOperatorId().equals(operatorId)) {
@@ -523,6 +536,7 @@ public class BusOperatorController {
             @Parameter(description = "Trip ID", required = true)
             @PathVariable UUID tripId,
             Authentication authentication) {
+        operatorAccess.requireAccess(operatorId);
 
         TripResponse trip = tripService.getTripById(tripId);
         if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
@@ -554,6 +568,7 @@ public class BusOperatorController {
             @Parameter(description = "Conductor's user-service userId", required = true)
             @RequestParam UUID conductorId,
             Authentication authentication) {
+        operatorAccess.requireAccess(operatorId);
 
         TripResponse trip = tripService.getTripById(tripId);
         if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
@@ -580,6 +595,7 @@ public class BusOperatorController {
             @Parameter(description = "Trip ID", required = true)
             @PathVariable UUID tripId,
             Authentication authentication) {
+        operatorAccess.requireAccess(operatorId);
 
         TripResponse trip = tripService.getTripById(tripId);
         if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
@@ -627,6 +643,7 @@ public class BusOperatorController {
             
             @Parameter(description = "Search by route name")
             @RequestParam(required = false) String searchText) {
+        operatorAccess.requireAccess(operatorId);
         
         // Validate and normalize pagination parameters
         if (page < 0) {
@@ -712,6 +729,7 @@ public class BusOperatorController {
             
             @Parameter(description = "Search by schedule name")
             @RequestParam(required = false) String searchText) {
+        operatorAccess.requireAccess(operatorId);
         
         // Validate and normalize pagination parameters
         if (page < 0) {
@@ -769,6 +787,7 @@ public class BusOperatorController {
             @PathVariable UUID operatorId,
             @Parameter(description = "Schedule ID", required = true)
             @PathVariable UUID scheduleId) {
+        operatorAccess.requireAccess(operatorId);
         
         ScheduleResponse schedule = scheduleService.getScheduleById(scheduleId);
         // Additional verification could be added here to ensure operator has access to this schedule
@@ -791,6 +810,7 @@ public class BusOperatorController {
     public ResponseEntity<?> getOperatorDashboardSummary(
             @Parameter(description = "Operator ID", required = true)
             @PathVariable UUID operatorId) {
+        operatorAccess.requireAccess(operatorId);
         
         // This would typically return a custom DTO with summary information
         // For now, we'll use the existing statistics methods
@@ -811,6 +831,7 @@ public class BusOperatorController {
             @PathVariable UUID operatorId,
             @Parameter(description = "Number of days ahead to check for expiring permits (default: 30)")
             @RequestParam(defaultValue = "30") int daysAhead) {
+        operatorAccess.requireAccess(operatorId);
         
         // Get all permits and filter by operator and expiry date
         // This is a workaround since the specific method doesn't exist
@@ -839,6 +860,7 @@ public class BusOperatorController {
     public ResponseEntity<List<TripResponse>> getTodaysTrips(
             @Parameter(description = "Operator ID", required = true)
             @PathVariable UUID operatorId) {
+        operatorAccess.requireAccess(operatorId);
         
         // Get trips by date and filter by operator
         // This is a workaround since the specific method doesn't exist

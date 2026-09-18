@@ -23,7 +23,6 @@ Delete lines that stop being worth doing rather than marking them abandoned.
 - ✅ **Trip status has no state-machine guards** — `completed → cancelled` is allowed, `PATCH /status`
   permits arbitrary jumps, and trips can be generated from non-`ACTIVE` schedules.
 - ✅ **`cancelTrip` overwrites `Trip.notes`** with the cancellation reason, destroying existing notes.
-- ✅ **Generic `/start|complete|cancel|delete` trip endpoints are ungated** — security-relevant.
 - ✅ **Unguarded deletes** — deleting a stop used by routes, or a route used by schedules, fails on a
   database FK as a 500 instead of a 409 with context.
 - ✅ **A cancelled trip is indistinguishable from "no trip yet" and renders as available.** The trip

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,6 +30,7 @@ import java.util.UUID;
 import com.busmate.routeschedule.network.entity.Route;
 
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
 @RequestMapping("/api/permits")
 @RequiredArgsConstructor
 @Tag(name = "06. Permit Management", description = "APIs for managing passenger service permits")

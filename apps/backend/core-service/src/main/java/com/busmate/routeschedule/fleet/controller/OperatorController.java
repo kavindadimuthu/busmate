@@ -3,6 +3,7 @@ package com.busmate.routeschedule.fleet.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
 @RequestMapping("/api/operators")
 @RequiredArgsConstructor
 @Tag(name = "04. Operator Management", description = "APIs for managing operators")
@@ -189,6 +191,7 @@ public class OperatorController {
     }
 
     // 4b. READ BY LINKED USER - self-lookup for the operator dashboard (unified lifecycle link)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT') or authentication.name == #userId.toString()")
     @GetMapping("/by-user/{userId}")
     @Operation(
         summary = "Get operator by linked user-service account id",

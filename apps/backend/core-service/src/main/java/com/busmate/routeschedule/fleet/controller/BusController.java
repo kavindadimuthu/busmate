@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ import java.util.UUID;
 import com.busmate.routeschedule.fleet.entity.Bus;
 
 @RestController
+@PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
 @RequestMapping("/api/buses")
 @RequiredArgsConstructor
 @Tag(name = "05. Bus Management", description = "APIs for managing bus details")
@@ -174,6 +176,7 @@ public class BusController {
     }
 
     // 4. READ BY ID - Specific read operation
+    @PreAuthorize("permitAll()")
     @GetMapping("/{id}")
     @Operation(
         summary = "Get bus by ID", 

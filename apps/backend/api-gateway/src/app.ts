@@ -13,12 +13,14 @@ import { bffAuthRouter } from './bff/auth.routes';
 import { aiRouter } from './routes/ai.routes';
 import { liveRouter } from './live/live.routes';
 import { requireStaffRole } from './middleware/requireStaffRole.middleware';
+import { stripClientIdentityHeaders } from './middleware/stripIdentityHeaders.middleware';
 
 export function createApp() {
   const app = express();
 
   // Global middleware
   app.use(helmet());
+  app.use(stripClientIdentityHeaders);
   app.use(corsMiddleware);
   app.use(cookieParser());
   app.use(requestLogger);

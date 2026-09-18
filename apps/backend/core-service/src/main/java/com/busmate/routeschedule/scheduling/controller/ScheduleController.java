@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +52,7 @@ public class ScheduleController {
 
     // ========== CORE SCHEDULE OPERATIONS ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping
     @Operation(
         summary = "Create a basic schedule",
@@ -108,6 +110,7 @@ public class ScheduleController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping("/full")
     @Operation(
         summary = "Create a complete schedule with all components",
@@ -165,6 +168,7 @@ public class ScheduleController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping("/bulk")
     @Operation(
         summary = "Create multiple schedules",
@@ -320,6 +324,7 @@ public class ScheduleController {
 
     // ========== UPDATE OPERATIONS ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PutMapping("/{id}")
     @Operation(
         summary = "Update schedule (basic)",
@@ -343,6 +348,7 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PutMapping("/{id}/full")
     @Operation(
         summary = "Update complete schedule",
@@ -367,6 +373,7 @@ public class ScheduleController {
 
     // ========== STATUS MANAGEMENT ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PutMapping("/{id}/status")
     @Operation(
         summary = "Update schedule status",
@@ -390,6 +397,7 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PutMapping("/{id}/activate")
     @Operation(
         summary = "Activate schedule",
@@ -410,6 +418,7 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PutMapping("/{id}/deactivate")
     @Operation(
         summary = "Deactivate schedule",
@@ -432,6 +441,7 @@ public class ScheduleController {
 
     // ========== CALENDAR MANAGEMENT ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PutMapping("/{id}/calendar")
     @Operation(
         summary = "Update schedule calendar",
@@ -456,6 +466,7 @@ public class ScheduleController {
 
     // ========== EXCEPTION MANAGEMENT ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping("/{id}/exceptions")
     @Operation(
         summary = "Add schedule exception",
@@ -478,6 +489,7 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @DeleteMapping("/{id}/exceptions/{exceptionId}")
     @Operation(
         summary = "Remove schedule exception",
@@ -519,6 +531,7 @@ public class ScheduleController {
 
     // ========== CLONE FUNCTIONALITY ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping("/{id}/clone")
     @Operation(
         summary = "Clone an existing schedule",
@@ -545,6 +558,7 @@ public class ScheduleController {
 
     // ========== CSV IMPORT OPERATIONS ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Import schedules from CSV file",
@@ -701,6 +715,7 @@ public class ScheduleController {
 
     // ========== DELETE OPERATION ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @DeleteMapping("/{id}")
     @Operation(
         summary = "Delete a schedule",
@@ -767,6 +782,7 @@ public class ScheduleController {
 
     // ========== TRIP GENERATION ==========
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
     @PostMapping("/{id}/generate-trips")
     @Operation(
         summary = "Generate trips for schedule",

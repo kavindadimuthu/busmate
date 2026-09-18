@@ -54,8 +54,9 @@ server:
 # Asgardeo JWT validation still uses the real JWKS endpoint.
 # Tests authenticate with real Asgardeo test-user credentials and the issued
 # JWTs are validated by the same public keys as in any other environment.
-asgardeo:
-  jwks-url: https://api.asgardeo.io/t/busmate/oauth2/jwks
+# Access tokens are verified against user-service's published signing key (INC-016).
+auth:
+  jwks-url: ${AUTH_JWKS_URL:http://localhost:9020/public/jwks.json}
 
 logging:
   level:
