@@ -339,7 +339,7 @@ const FindMyBusDetailPage = () => {
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="-ml-1 sm:-ml-2 bg-gray-200/90 hover:bg-gray-200/100 rounded-full hover:shadow transition-all p-1.5 sm:p-2 h-auto"
+            className="-ml-1 sm:-ml-2 bg-muted hover:bg-muted/70 rounded-full hover:shadow transition-all p-1.5 sm:p-2 h-auto"
           >
             <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-foreground" />
           </Button>
@@ -527,7 +527,7 @@ const FindMyBusDetailPage = () => {
                             </div>
 
                             {/* Stop Details */}
-                            <div className="flex-1 min-w-0 bg-gray-200/60 px-2 sm:px-2.5 md:px-3 py-1.5 sm:py-2 rounded-sm">
+                            <div className="flex-1 min-w-0 bg-muted/60 px-2 sm:px-2.5 md:px-3 py-1.5 sm:py-2 rounded-sm">
                               <p className="text-xs sm:text-sm font-medium text-foreground truncate">
                                 {stop.stop?.name}
                               </p>

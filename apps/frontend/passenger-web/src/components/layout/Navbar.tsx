@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 function initialsOf(name: string | undefined): string {
   if (!name) return "?";
@@ -63,7 +64,7 @@ const Navbar = () => {
   };
 
   return <>
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -90,6 +91,8 @@ const Navbar = () => {
             </div>
 
             <div className="h-6 w-px bg-border" />
+
+            <ThemeToggle />
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -139,14 +142,17 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 rounded-lg text-foreground hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            onClick={() => setIsMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          {/* Mobile: theme toggle + menu button */}
+          <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              className="p-2 rounded-lg text-foreground hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              onClick={() => setIsMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
         </div>
       </div>
     </nav>
@@ -161,7 +167,7 @@ const Navbar = () => {
         />
 
         {/* Drawer */}
-        <div className="fixed top-0 right-0 h-full w-[280px] bg-white z-[70] md:hidden shadow-2xl animate-in slide-in-from-right duration-300">
+        <div className="fixed top-0 right-0 h-full w-[280px] bg-background z-[70] md:hidden shadow-2xl animate-in slide-in-from-right duration-300">
           <div className="flex flex-col h-full">
             {/* Drawer Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">

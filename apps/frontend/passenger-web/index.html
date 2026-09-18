@@ -18,6 +18,20 @@
   </head>
 
   <body>
+    <!-- Sets the .dark class before first paint, so there's no flash of the wrong theme while
+         React boots. Kept in sync with the storage key/logic in src/lib/theme/ThemeProvider.tsx -
+         change one, change both. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("busmate.theme");
+          var dark =
+            stored === "dark" ||
+            (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -285,9 +285,9 @@ const SearchForm = ({
   return (
     <form onSubmit={handleSearch} className="space-y-4">
       {/* Mobile Layout - Card Style */}
-      <div className="md:hidden bg-white/95 backdrop-blur-sm rounded-3xl shadow-elegant border-2 border-white/20 overflow-hidden">
+      <div className="md:hidden bg-card/95 backdrop-blur-sm rounded-3xl shadow-elegant border-2 border-border overflow-hidden">
         {/* From Field */}
-        <div className="relative border-b-2 border-gray-300/50" ref={fromDropdownRef}>
+        <div className="relative border-b-2 border-border" ref={fromDropdownRef}>
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none z-10">
             <MapPin className="text-muted-foreground h-5 w-5" />
           </div>
@@ -313,7 +313,7 @@ const SearchForm = ({
           
           {/* From Stops Dropdown */}
           {showFromDropdown && fromStops.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
               {fromStops.map((stop) => (
                 <button
                   key={stop.id}
@@ -326,10 +326,10 @@ const SearchForm = ({
                     e.preventDefault();
                     selectFromStop(stop);
                   }}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                  className="w-full px-4 py-3 text-left hover:bg-muted active:bg-muted focus:bg-muted focus:outline-none border-b border-border last:border-b-0"
                 >
-                  <div className="font-medium text-gray-900">{stop.name}</div>
-                  {stop.city && <div className="text-sm text-gray-500">{stop.city}</div>}
+                  <div className="font-medium text-foreground">{stop.name}</div>
+                  {stop.city && <div className="text-sm text-muted-foreground">{stop.city}</div>}
                 </button>
               ))}
             </div>
@@ -343,14 +343,14 @@ const SearchForm = ({
             variant="outline"
             size="lg"
             onClick={handleSwapLocations}
-            className="bg-gray-500 border-2 border-gray-200 hover:border-primary/50 transition-all duration-300 rounded-full w-16 h-16 p-2 shadow-md hover:shadow-lg"
+            className="bg-muted-foreground hover:bg-foreground border-2 border-border hover:border-primary/50 transition-all duration-300 rounded-full w-16 h-16 p-2 shadow-md hover:shadow-lg"
           >
-            <ArrowRightLeftIcon className="h-12 w-12 text-white rotate-90" />
+            <ArrowRightLeftIcon className="h-12 w-12 text-background rotate-90" />
           </Button>
         </div>
 
         {/* To Field */}
-        <div className="relative border-b-2 border-gray-300/50" ref={toDropdownRef}>
+        <div className="relative border-b-2 border-border" ref={toDropdownRef}>
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none z-10">
             <MapPin className="text-muted-foreground h-5 w-5" />
           </div>
@@ -376,7 +376,7 @@ const SearchForm = ({
           
           {/* To Stops Dropdown */}
           {showToDropdown && toStops.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
               {toStops.map((stop) => (
                 <button
                   key={stop.id}
@@ -389,10 +389,10 @@ const SearchForm = ({
                     e.preventDefault();
                     selectToStop(stop);
                   }}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                  className="w-full px-4 py-3 text-left hover:bg-muted active:bg-muted focus:bg-muted focus:outline-none border-b border-border last:border-b-0"
                 >
-                  <div className="font-medium text-gray-900">{stop.name}</div>
-                  {stop.city && <div className="text-sm text-gray-500">{stop.city}</div>}
+                  <div className="font-medium text-foreground">{stop.name}</div>
+                  {stop.city && <div className="text-sm text-muted-foreground">{stop.city}</div>}
                 </button>
               ))}
             </div>
@@ -419,7 +419,7 @@ const SearchForm = ({
                 className={`rounded-full px-4 py-1.5 text-sm transition-all ${
                   travelDate === today 
                     ? 'bg-primary/10 text-primary border-primary/30' 
-                    : 'bg-white border-gray-200'
+                    : 'bg-card border-border'
                 }`}
               >
                 Today
@@ -436,7 +436,7 @@ const SearchForm = ({
                 className={`rounded-full px-4 py-1.5 text-sm transition-all ${
                   travelDate === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]
                     ? 'bg-primary/10 text-primary border-primary/30'
-                    : 'bg-white border-gray-200'
+                    : 'bg-card border-border'
                 }`}
               >
                 Tomorrow
@@ -469,21 +469,21 @@ const SearchForm = ({
             value={fromText}
             onChange={(e) => handleFromTextChange(e.target.value)}
             onFocus={() => fromText.length >= 2 && fromStops.length > 0 && setShowFromDropdown(true)}
-            className={`pl-10 ${fromLoading ? 'pr-10' : ''} h-14 text-lg rounded-2xl bg-white/95 backdrop-blur-sm shadow-elegant border-2 border-white/20 focus:border-primary/50 transition-all duration-300`}
+            className={`pl-10 ${fromLoading ? 'pr-10' : ''} h-14 text-lg rounded-2xl bg-card/95 backdrop-blur-sm shadow-elegant border-2 border-border focus:border-primary/50 transition-all duration-300`}
           />
           
           {/* From Stops Dropdown */}
           {showFromDropdown && fromStops.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
               {fromStops.map((stop) => (
                 <button
                   key={stop.id}
                   type="button"
                   onClick={() => selectFromStop(stop)}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                  className="w-full px-4 py-3 text-left hover:bg-muted focus:bg-muted focus:outline-none border-b border-border last:border-b-0"
                 >
-                  <div className="font-medium text-gray-900">{stop.name}</div>
-                  {stop.city && <div className="text-sm text-gray-500">{stop.city}</div>}
+                  <div className="font-medium text-foreground">{stop.name}</div>
+                  {stop.city && <div className="text-sm text-muted-foreground">{stop.city}</div>}
                 </button>
               ))}
             </div>
@@ -495,7 +495,7 @@ const SearchForm = ({
           variant="outline"
           size="sm"
           onClick={handleSwapLocations}
-          className="bg-white/95 backdrop-blur-sm shadow-elegant border-2 border-white/20 hover:border-primary/50 transition-all duration-300 rounded-full p-3 h-auto w-auto self-center"
+          className="bg-card/95 backdrop-blur-sm shadow-elegant border-2 border-border hover:border-primary/50 transition-all duration-300 rounded-full p-3 h-auto w-auto self-center"
         >
           <ArrowRightLeftIcon className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
         </Button>
@@ -511,21 +511,21 @@ const SearchForm = ({
             value={toText}
             onChange={(e) => handleToTextChange(e.target.value)}
             onFocus={() => toText.length >= 2 && toStops.length > 0 && setShowToDropdown(true)}
-            className={`pl-10 ${toLoading ? 'pr-10' : ''} h-14 text-lg rounded-2xl bg-white/95 backdrop-blur-sm shadow-elegant border-2 border-white/20 focus:border-primary/50 transition-all duration-300`}
+            className={`pl-10 ${toLoading ? 'pr-10' : ''} h-14 text-lg rounded-2xl bg-card/95 backdrop-blur-sm shadow-elegant border-2 border-border focus:border-primary/50 transition-all duration-300`}
           />
           
           {/* To Stops Dropdown */}
           {showToDropdown && toStops.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
               {toStops.map((stop) => (
                 <button
                   key={stop.id}
                   type="button"
                   onClick={() => selectToStop(stop)}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                  className="w-full px-4 py-3 text-left hover:bg-muted focus:bg-muted focus:outline-none border-b border-border last:border-b-0"
                 >
-                  <div className="font-medium text-gray-900">{stop.name}</div>
-                  {stop.city && <div className="text-sm text-gray-500">{stop.city}</div>}
+                  <div className="font-medium text-foreground">{stop.name}</div>
+                  {stop.city && <div className="text-sm text-muted-foreground">{stop.city}</div>}
                 </button>
               ))}
             </div>
@@ -537,7 +537,7 @@ const SearchForm = ({
             type="date"
             value={travelDate}
             onChange={(e) => setTravelDate(e.target.value)}
-            className="h-14 text-lg rounded-2xl bg-white/95 backdrop-blur-sm shadow-elegant border-2 border-white/20 focus:border-primary/50 transition-all duration-300"
+            className="h-14 text-lg rounded-2xl bg-card/95 backdrop-blur-sm shadow-elegant border-2 border-border focus:border-primary/50 transition-all duration-300"
           />
         </div>
 

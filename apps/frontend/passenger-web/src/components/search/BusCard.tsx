@@ -335,7 +335,7 @@ export default function BusCard({
                     : calculateDuration(departureTime, arrivalTime)}
                   </span>
               </div>
-              <span className="hidden sm:block border-l-2 border-gray-300 h-5"></span>
+              <span className="hidden sm:block border-l-2 border-border h-5"></span>
               <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-foreground">
                 <Route className="h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground flex-shrink-0" />
                 <span className="hidden sm:inline">Distance:</span>
@@ -349,7 +349,7 @@ export default function BusCard({
             {/* Button */}
             {getDetailLink() ? (
               <Button
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white rounded-full transition-all duration-300"
+                className="w-full sm:w-auto bg-primary hover:bg-primary-hover px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground rounded-full transition-all duration-300"
                 onClick={() => {
                   if (onViewDetails) {
                     onViewDetails();

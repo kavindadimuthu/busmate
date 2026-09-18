@@ -32,7 +32,7 @@ function statusOf(seat: string, occupied: Set<string>, selected: string[], block
 }
 
 const STATUS_STYLES: Record<SeatStatus, string> = {
-  available: "bg-white border-2 border-border hover:border-primary hover:bg-primary/5 cursor-pointer",
+  available: "bg-background border-2 border-border hover:border-primary hover:bg-primary/5 cursor-pointer",
   selected: "bg-gradient-primary text-white border-2 border-transparent cursor-pointer",
   booked: "bg-muted text-muted-foreground border-2 border-transparent cursor-not-allowed opacity-60",
   blocked: "bg-muted/50 text-muted-foreground/50 border-2 border-dashed border-border cursor-not-allowed",
@@ -111,7 +111,7 @@ export default function SeatMap({ layout, occupiedSeats, selectedSeats, onToggle
         )}
       </div>
       <div className="flex flex-wrap gap-3 sm:gap-4 justify-center pt-3 border-t text-[11px] sm:text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border-2 border-border bg-white" /> Available</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border-2 border-border bg-background" /> Available</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-gradient-primary" /> Selected</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-muted opacity-60" /> Booked</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border-2 border-dashed border-border" /> Blocked</span>
