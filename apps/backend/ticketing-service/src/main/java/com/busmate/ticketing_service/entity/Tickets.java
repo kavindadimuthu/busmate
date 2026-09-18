@@ -55,6 +55,12 @@ public class Tickets {
     @Column(name = "issued_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime issuedAt;
 
+    // Set only for an unpaid ONLINE booking; null once paid, cancelled, or for a conductor-issued
+    // ticket. Governs whether reserveSeatsOrThrow() treats this ticket as an active hold or a
+    // stale one it can expire and rebook over (INC-012).
+    @Column(name = "hold_expires_at")
+    private LocalDateTime holdExpiresAt;
+
     @ManyToOne( cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Transactions transactions;
 }

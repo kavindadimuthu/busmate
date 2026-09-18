@@ -37,6 +37,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,12 +64,16 @@ public class PaymentServiceIMPL implements PaymentService {
     private final PaymentGateway paymentGateway;
     private final CoreServiceClient coreServiceClient;
     private final RouteFareService routeFareService;
+    private final com.busmate.ticketing_service.service.SeatHoldService seatHoldService;
 
     @Value("${booking.cutoff-minutes-before-departure:30}")
     private int cutoffMinutesBeforeDeparture;
 
     @Value("${booking.max-seats-per-booking:5}")
     private int maxSeatsPerBooking;
+
+    @Value("${booking.hold-minutes:10}")
+    private int holdMinutes;
 
     /**
      * Trip states a seat can still be sold for. Everything else - departed, in transit, completed,
@@ -196,6 +201,7 @@ public class PaymentServiceIMPL implements PaymentService {
                 requestDTO.getTripId(), requestDTO.getStartLocationId(), requestDTO.getEndLocationId());
 
         requireBookable(context);
+        reserveSeatsOrThrow(requestDTO.getTripId(), seats);
 
         BigDecimal farePerSeat = priceOf(context);
         BigDecimal total = farePerSeat.multiply(BigDecimal.valueOf(seats.size()));
@@ -221,7 +227,17 @@ public class PaymentServiceIMPL implements PaymentService {
             ticket.setStatus(Tickets.Status.NOT_VALID);
             ticket.setIssueMethod(Tickets.IssueMethod.ONLINE);
             ticket.setTransactions(savedTransaction);
-            savedTickets.add(ticketRepo.save(ticket));
+            ticket.setHoldExpiresAt(LocalDateTime.now().plusMinutes(holdMinutes));
+            try {
+                savedTickets.add(ticketRepo.save(ticket));
+            } catch (DataIntegrityViolationException e) {
+                // The database's own partial unique index caught a genuine race that
+                // reserveSeatsOrThrow's pre-check could not - two requests passed that check for
+                // the same seat at the same moment. This is the actual guarantee, not the
+                // pre-check; the pre-check only exists so the common case gets a clear message.
+                throw new BadRequestException(
+                        "Seat " + seat + " was just booked by someone else - please choose again");
+            }
         }
 
         Long firstTicketId = savedTickets.get(0).getTicketId();
@@ -320,6 +336,27 @@ public class PaymentServiceIMPL implements PaymentService {
                 serviceClass);
     }
 
+    /**
+     * Refuses seats that are genuinely still held, and lets {@link SeatHoldService} free any that
+     * only look held because their booking was abandoned. This is the clear-message path - the
+     * database's own partial unique index (tickets_trip_seat_active_uq) is what actually decides
+     * a true race between two simultaneous requests; this method cannot (INC-012).
+     */
+    private void reserveSeatsOrThrow(String tripId, List<String> seats) {
+        List<Tickets> existing = ticketRepo.findByTripIdAndSeatNumberInAndStatusNot(
+                tripId, seats, Tickets.Status.CANCELLED);
+
+        List<String> conflicts = new ArrayList<>();
+        for (Tickets ticket : existing) {
+            if (!seatHoldService.expireIfStale(ticket.getTicketId())) {
+                conflicts.add(ticket.getSeatNumber());
+            }
+        }
+        if (!conflicts.isEmpty()) {
+            throw new BadRequestException("Seat(s) already taken: " + String.join(", ", conflicts));
+        }
+    }
+
     @Override
     @Transactional
     public PaymentConfirmResponseDTO confirmPayment(Long ticketId, Caller caller) {
@@ -330,6 +367,17 @@ public class PaymentServiceIMPL implements PaymentService {
         // else has any business completing someone's purchase.
         if (!caller.owns(ticket.getPassengerId())) {
             throw new ForbiddenException("This booking is not yours to pay for");
+        }
+
+        // A hold that expired between booking and this call must never be revived by paying for
+        // it late - the seat may already belong to someone else (INC-012). expireIfStale() may
+        // just have cancelled `ticket` in its own committed transaction, which this method's own
+        // in-memory copy (loaded above, in this transaction) never sees - so the check below uses
+        // its boolean result, not ticket.getStatus(), for the case it expires it just now.
+        boolean justExpired = seatHoldService.expireIfStale(ticket.getTicketId());
+        if (justExpired || ticket.getStatus() == Tickets.Status.CANCELLED) {
+            throw new BadRequestException(
+                    "This booking's seat hold has expired and is no longer available - please book again");
         }
 
         Transactions transaction = ticket.getTransactions();

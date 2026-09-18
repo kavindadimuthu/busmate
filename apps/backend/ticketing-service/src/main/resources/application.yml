@@ -174,3 +174,8 @@ booking:
   cutoff-minutes-before-departure: 30
   # One payment, one ticket per seat. A cap exists so a single request cannot hold a whole bus.
   max-seats-per-booking: 5
+  # How long an unpaid online booking holds its seat before another passenger can take it (INC-012).
+  hold-minutes: 10
+  # How often the sweep looks for expired holds to free, independent of anyone else trying to
+  # book that seat - this is what makes a conductor's seat map correct even if nobody retries.
+  hold-sweep-interval-ms: 60000

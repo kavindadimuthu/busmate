@@ -74,12 +74,17 @@ export function useSeatMap(tripId?: string, busId?: string) {
   // seatNumber -> ticket. A ticket may carry comma-separated seats.
   const bookingBySeat = useMemo(() => {
     const map = new Map<string, TicketLog>();
-    tickets.forEach((t) => {
-      if (!t.seatNumber) return;
-      t.seatNumber.split(',').map((s) => s.trim()).filter(Boolean).forEach((seat) => {
-        map.set(seat, t);
+    // A cancelled or hold-expired ticket (INC-012) never occupies its seat - both are the same
+    // 'CANCELLED' validationStatus. Skipping them here is what makes a freed seat actually show
+    // as available instead of permanently "booked" by a ticket nobody holds any more.
+    tickets
+      .filter((t) => String(t.validationStatus).toUpperCase() !== 'CANCELLED')
+      .forEach((t) => {
+        if (!t.seatNumber) return;
+        t.seatNumber.split(',').map((s) => s.trim()).filter(Boolean).forEach((seat) => {
+          map.set(seat, t);
+        });
       });
-    });
     return map;
   }, [tickets]);
 

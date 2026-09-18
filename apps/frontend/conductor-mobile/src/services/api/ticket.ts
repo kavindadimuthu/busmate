@@ -423,8 +423,10 @@ export const ticketApi = {
         };
       }
       
-      // Update seat status based on bookings
+      // Update seat status based on bookings. A cancelled or hold-expired ticket (INC-012) does
+      // not occupy its seat - skip it, or a freed seat would show as permanently booked.
       tickets.forEach(ticket => {
+        if (String(ticket.validationStatus).toUpperCase() === 'CANCELLED') return;
         if (ticket.seatNumber && ticket.seatNumber.trim() !== '') {
           // Handle multiple seat numbers (comma-separated)
           const seatNumbers = ticket.seatNumber.split(',').map(s => s.trim());
