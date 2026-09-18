@@ -2,12 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BusPassengerServicePermitAssignmentResponse } from '../models/BusPassengerServicePermitAssignmentResponse';
 import type { PaginatedResponsePassengerServicePermitResponse } from '../models/PaginatedResponsePassengerServicePermitResponse';
 import type { PassengerServicePermitFilterOptionsResponse } from '../models/PassengerServicePermitFilterOptionsResponse';
 import type { PassengerServicePermitImportResponse } from '../models/PassengerServicePermitImportResponse';
 import type { PassengerServicePermitRequest } from '../models/PassengerServicePermitRequest';
 import type { PassengerServicePermitResponse } from '../models/PassengerServicePermitResponse';
 import type { PassengerServicePermitStatisticsResponse } from '../models/PassengerServicePermitStatisticsResponse';
+import type { StatusReasonRequest } from '../models/StatusReasonRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -210,6 +212,103 @@ export class PermitManagementService {
             path: {
                 'id': id,
             },
+        });
+    }
+    /**
+     * Buses linked to a permit, current and past
+     * @param id
+     * @returns BusPassengerServicePermitAssignmentResponse OK
+     * @throws ApiError
+     */
+    public static getPermitBuses(
+        id: string,
+    ): CancelablePromise<Array<BusPassengerServicePermitAssignmentResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/permits/{id}/buses',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * End a bus's link to a permit (MOT)
+     * @param id
+     * @param linkId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static endPermitBusLink(
+        id: string,
+        linkId: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/permits/{id}/buses/{linkId}/end',
+            path: {
+                'id': id,
+                'linkId': linkId,
+            },
+        });
+    }
+    /**
+     * Reinstate a suspended or withdrawn permit (MOT)
+     * @param id
+     * @returns PassengerServicePermitResponse OK
+     * @throws ApiError
+     */
+    public static reinstatePermit(
+        id: string,
+    ): CancelablePromise<PassengerServicePermitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/permits/{id}/reinstate',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Suspend a permit (MOT)
+     * The permit stops authorising new trip assignments until reinstated.
+     * @param id
+     * @param requestBody
+     * @returns PassengerServicePermitResponse OK
+     * @throws ApiError
+     */
+    public static suspendPermit(
+        id: string,
+        requestBody: StatusReasonRequest,
+    ): CancelablePromise<PassengerServicePermitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/permits/{id}/suspend',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Withdraw a permit (MOT); ends its bus links
+     * @param id
+     * @param requestBody
+     * @returns PassengerServicePermitResponse OK
+     * @throws ApiError
+     */
+    public static withdrawPermit(
+        id: string,
+        requestBody: StatusReasonRequest,
+    ): CancelablePromise<PassengerServicePermitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/permits/{id}/withdraw',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

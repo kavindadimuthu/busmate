@@ -2,7 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BusPassengerServicePermitAssignmentResponse } from '../models/BusPassengerServicePermitAssignmentResponse';
 import type { BusResponse } from '../models/BusResponse';
+import type { OperatorPermitRequest } from '../models/OperatorPermitRequest';
 import type { OperatorResponse } from '../models/OperatorResponse';
 import type { PageBusResponse } from '../models/PageBusResponse';
 import type { PageRouteResponse } from '../models/PageRouteResponse';
@@ -10,7 +12,9 @@ import type { PageScheduleResponse } from '../models/PageScheduleResponse';
 import type { PageTripResponse } from '../models/PageTripResponse';
 import type { PaginatedResponsePassengerServicePermitResponse } from '../models/PaginatedResponsePassengerServicePermitResponse';
 import type { PassengerServicePermitResponse } from '../models/PassengerServicePermitResponse';
+import type { PermitBusLinkRequest } from '../models/PermitBusLinkRequest';
 import type { ScheduleResponse } from '../models/ScheduleResponse';
+import type { StatusReasonRequest } from '../models/StatusReasonRequest';
 import type { TripResponse } from '../models/TripResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -155,6 +159,27 @@ export class BusOperatorOperationsService {
         });
     }
     /**
+     * Record one of the operator's own passenger service permits
+     * @param operatorId
+     * @param requestBody
+     * @returns PassengerServicePermitResponse OK
+     * @throws ApiError
+     */
+    public static createOperatorPermit(
+        operatorId: string,
+        requestBody: OperatorPermitRequest,
+    ): CancelablePromise<PassengerServicePermitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bus-operator/{operatorId}/permits',
+            path: {
+                'operatorId': operatorId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Get expiring permits for operator
      * Retrieve permits that are expiring within a specified number of days
      * @param operatorId Operator ID
@@ -202,6 +227,122 @@ export class BusOperatorOperationsService {
             errors: {
                 404: `Permit not found or doesn't belong to operator`,
             },
+        });
+    }
+    /**
+     * Update one of the operator's own permits
+     * @param operatorId
+     * @param permitId
+     * @param requestBody
+     * @returns PassengerServicePermitResponse OK
+     * @throws ApiError
+     */
+    public static updateOperatorPermit(
+        operatorId: string,
+        permitId: string,
+        requestBody: OperatorPermitRequest,
+    ): CancelablePromise<PassengerServicePermitResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/bus-operator/{operatorId}/permits/{permitId}',
+            path: {
+                'operatorId': operatorId,
+                'permitId': permitId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Buses linked to one of the operator's permits (current and past)
+     * @param operatorId
+     * @param permitId
+     * @returns BusPassengerServicePermitAssignmentResponse OK
+     * @throws ApiError
+     */
+    public static getOperatorPermitBuses(
+        operatorId: string,
+        permitId: string,
+    ): CancelablePromise<Array<BusPassengerServicePermitAssignmentResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/bus-operator/{operatorId}/permits/{permitId}/buses',
+            path: {
+                'operatorId': operatorId,
+                'permitId': permitId,
+            },
+        });
+    }
+    /**
+     * Authorise one of the operator's buses to run under this permit
+     * In force immediately, up to the permit's maximum buses. The bus's service class must match the permit type.
+     * @param operatorId
+     * @param permitId
+     * @param requestBody
+     * @returns BusPassengerServicePermitAssignmentResponse OK
+     * @throws ApiError
+     */
+    public static linkBusToOperatorPermit(
+        operatorId: string,
+        permitId: string,
+        requestBody: PermitBusLinkRequest,
+    ): CancelablePromise<BusPassengerServicePermitAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bus-operator/{operatorId}/permits/{permitId}/buses',
+            path: {
+                'operatorId': operatorId,
+                'permitId': permitId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * End a bus's link to this permit
+     * @param operatorId
+     * @param permitId
+     * @param linkId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static endOperatorPermitBusLink(
+        operatorId: string,
+        permitId: string,
+        linkId: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bus-operator/{operatorId}/permits/{permitId}/buses/{linkId}/end',
+            path: {
+                'operatorId': operatorId,
+                'permitId': permitId,
+                'linkId': linkId,
+            },
+        });
+    }
+    /**
+     * Withdraw a permit the operator no longer holds; ends its bus links
+     * @param operatorId
+     * @param permitId
+     * @param requestBody
+     * @returns PassengerServicePermitResponse OK
+     * @throws ApiError
+     */
+    public static withdrawOperatorPermit(
+        operatorId: string,
+        permitId: string,
+        requestBody: StatusReasonRequest,
+    ): CancelablePromise<PassengerServicePermitResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bus-operator/{operatorId}/permits/{permitId}/withdraw',
+            path: {
+                'operatorId': operatorId,
+                'permitId': permitId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

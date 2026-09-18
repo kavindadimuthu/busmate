@@ -19,6 +19,7 @@ import type {
   OperatorResponse,
   RouteGroupResponse
 } from '@busmate/api-client-core';
+import { PERMIT_TYPES } from '@/lib/permits';
 
 interface PermitFormProps {
   permit?: PassengerServicePermitResponse;
@@ -64,8 +65,8 @@ export function PermitForm({
     issueDate: permit?.issueDate ? permit.issueDate.split('T')[0] : new Date().toISOString().split('T')[0],
     expiryDate: permit?.expiryDate ? permit.expiryDate.split('T')[0] : '',
     maximumBusAssigned: permit?.maximumBusAssigned || undefined,
-    status: permit?.status || 'pending',
-    permitType: permit?.permitType || 'REGULAR',
+    status: permit?.status || 'active',
+    permitType: permit?.permitType || 'NORMAL',
   });
 
   // Form validation and UI state
@@ -73,7 +74,6 @@ export function PermitForm({
   const [isFormValid, setIsFormValid] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  console.log("Permit details: ", permit)
 
   // Form validation
   useEffect(() => {
@@ -159,21 +159,19 @@ export function PermitForm({
   };
 
   // Form field options
+  // Values core-service accepts (shared StatusEnum / PassengerServicePermitTypeEnum).
   const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'text-warning' },
     { value: 'active', label: 'Active', color: 'text-success' },
-    { value: 'suspended', label: 'Suspended', color: 'text-warning' },
-    { value: 'expired', label: 'Expired', color: 'text-destructive' },
-    { value: 'cancelled', label: 'Cancelled', color: 'text-destructive' },
+    { value: 'pending', label: 'Pending', color: 'text-warning' },
+    { value: 'inactive', label: 'Suspended', color: 'text-warning' },
+    { value: 'cancelled', label: 'Withdrawn', color: 'text-destructive' },
   ];
 
-  const permitTypeOptions = [
-    { value: 'NORMAL', label: 'Normal Service', description: 'Standard passenger service operations' },
-    { value: 'EXPRESS', label: 'Express Service', description: 'Limited stop express services' },
-    { value: 'INTERCITY', label: 'Intercity Service', description: 'Long distance intercity operations' },
-    { value: 'LUXURY', label: 'Luxury Service', description: 'Premium passenger services' },
-    { value: 'SEMI_LUXURY', label: 'Semi-Luxury Service', description: 'Semi-luxury passenger services' },
-  ];
+  const permitTypeOptions = PERMIT_TYPES.map((t) => ({
+    value: t.value,
+    label: t.label,
+    description: `Buses linked to this permit must be ${t.serviceClass.replace(/_/g, ' ').toLowerCase()} class`,
+  }));
 
   // Get today's date for min date validation
   const today = new Date().toISOString().split('T')[0];

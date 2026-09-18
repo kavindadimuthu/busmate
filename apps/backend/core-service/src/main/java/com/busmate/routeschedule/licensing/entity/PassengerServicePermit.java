@@ -45,6 +45,10 @@ public class PassengerServicePermit extends BaseEntity {
     @Column(name = "status", nullable = false)
     private StatusEnum status;
 
+    // Why the permit is suspended or withdrawn (INC-017); null while active.
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "permit_type", nullable = false)
     private PassengerServicePermitTypeEnum permitType;

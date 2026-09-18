@@ -191,11 +191,6 @@ public class BusPassengerServicePermitAssignmentServiceImpl implements BusPassen
     }
 
     private BusPassengerServicePermitAssignmentResponse mapToResponse(BusPassengerServicePermitAssignment assignment) {
-        BusPassengerServicePermitAssignmentResponse response = mapperUtils.map(assignment, BusPassengerServicePermitAssignmentResponse.class);
-        response.setBusId(assignment.getBus().getId());
-        response.setBusPlateNumber(assignment.getBus().getPlateNumber());
-        response.setPassengerServicePermitId(assignment.getPassengerServicePermit().getId());
-        response.setPermitNumber(assignment.getPassengerServicePermit().getPermitNumber());
-        return response;
+        return com.busmate.routeschedule.licensing.service.PermitBusLinks.toResponse(assignment);
     }
 }

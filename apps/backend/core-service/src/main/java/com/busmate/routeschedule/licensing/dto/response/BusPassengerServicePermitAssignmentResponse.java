@@ -10,6 +10,10 @@ public class BusPassengerServicePermitAssignmentResponse {
     private UUID id;
     private UUID busId;
     private String busPlateNumber;
+    private String busModel;
+    private String busServiceClass;
+    /** True while the link authorises the bus: active and not past its end date. */
+    private Boolean inForce;
     private UUID passengerServicePermitId;
     private String permitNumber;
     private LocalDate startDate;

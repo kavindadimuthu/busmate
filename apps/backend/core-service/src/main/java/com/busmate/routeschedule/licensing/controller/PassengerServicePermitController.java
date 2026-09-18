@@ -7,6 +7,11 @@ import com.busmate.routeschedule.licensing.dto.response.PassengerServicePermitSt
 import com.busmate.routeschedule.licensing.dto.response.PassengerServicePermitImportResponse;
 import com.busmate.routeschedule.shared.dto.PaginatedResponse;
 import com.busmate.routeschedule.licensing.service.PassengerServicePermitService;
+import com.busmate.routeschedule.licensing.service.PermitBusLinks;
+import com.busmate.routeschedule.licensing.dto.request.StatusReasonRequest;
+import com.busmate.routeschedule.licensing.dto.response.BusPassengerServicePermitAssignmentResponse;
+import com.busmate.routeschedule.licensing.entity.BusPassengerServicePermitAssignment;
+import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,6 +41,7 @@ import com.busmate.routeschedule.network.entity.Route;
 @Tag(name = "06. Permit Management", description = "APIs for managing passenger service permits")
 public class PassengerServicePermitController {
     private final PassengerServicePermitService permitService;
+    private final PermitBusLinks permitBusLinks;
 
     @PostMapping
     public ResponseEntity<PassengerServicePermitResponse> createPermit(@Valid @RequestBody PassengerServicePermitRequest request, Authentication authentication) {
@@ -48,6 +54,7 @@ public class PassengerServicePermitController {
     @Operation(summary = "Get permit by ID", description = "Retrieve a specific passenger service permit by its ID")
     public ResponseEntity<PassengerServicePermitResponse> getPermitById(@PathVariable UUID id) {
         PassengerServicePermitResponse response = permitService.getPermitById(id);
+        response.setUpcomingTripCount(permitService.countUpcomingTrips(id));
         return ResponseEntity.ok(response);
     }
 
@@ -173,5 +180,47 @@ public class PassengerServicePermitController {
         String userId = authentication.getName();
         PassengerServicePermitImportResponse response = permitService.importPermitsFromCsv(file, userId);
         return ResponseEntity.ok(response);
+    }
+
+    // ============================================================================
+    // INC-017: MOT suspension, withdrawal and bus links
+    // ============================================================================
+
+    @PostMapping("/{id}/suspend")
+    @Operation(summary = "Suspend a permit (MOT)", description = "The permit stops authorising new trip assignments until reinstated.")
+    public ResponseEntity<PassengerServicePermitResponse> suspendPermit(
+            @PathVariable UUID id, @Valid @RequestBody StatusReasonRequest request, Authentication authentication) {
+        return ResponseEntity.ok(permitService.suspendPermit(id, request.getReason(), authentication.getName()));
+    }
+
+    @PostMapping("/{id}/reinstate")
+    @Operation(summary = "Reinstate a suspended or withdrawn permit (MOT)")
+    public ResponseEntity<PassengerServicePermitResponse> reinstatePermit(@PathVariable UUID id, Authentication authentication) {
+        return ResponseEntity.ok(permitService.reinstatePermit(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/withdraw")
+    @Operation(summary = "Withdraw a permit (MOT); ends its bus links")
+    public ResponseEntity<PassengerServicePermitResponse> withdrawPermit(
+            @PathVariable UUID id, @Valid @RequestBody StatusReasonRequest request, Authentication authentication) {
+        return ResponseEntity.ok(permitService.withdrawPermit(null, id, request.getReason(), authentication.getName()));
+    }
+
+    @GetMapping("/{id}/buses")
+    @Operation(summary = "Buses linked to a permit, current and past")
+    public ResponseEntity<List<BusPassengerServicePermitAssignmentResponse>> getPermitBuses(@PathVariable UUID id) {
+        permitService.getPermitById(id);
+        return ResponseEntity.ok(permitBusLinks.forPermit(id));
+    }
+
+    @PostMapping("/{id}/buses/{linkId}/end")
+    @Operation(summary = "End a bus's link to a permit (MOT)")
+    public ResponseEntity<Void> endPermitBusLink(@PathVariable UUID id, @PathVariable UUID linkId, Authentication authentication) {
+        BusPassengerServicePermitAssignment link = permitBusLinks.require(linkId);
+        if (!link.getPassengerServicePermit().getId().equals(id)) {
+            throw new ResourceNotFoundException("Permit link not found with id: " + linkId);
+        }
+        permitBusLinks.end(link, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 }

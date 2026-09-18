@@ -1,88 +1,107 @@
 'use client';
 
-import { ArrowLeft, RefreshCw, AlertCircle, Download } from 'lucide-react';
+import { useState } from 'react';
+import { Archive, Pencil, RefreshCw } from 'lucide-react';
+import { ConfirmDialog } from '@busmate/ui';
+import type { BusPassengerServicePermitAssignmentResponse } from '@busmate/api-client-core';
+import { useRouter } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { PermitSummaryCard } from '@/components/operator/permits/PermitSummaryCard';
-import { PermitInfoPanel } from '@/components/operator/permits/PermitInfoPanel';
 import { usePermitDetail } from '@/hooks/operator/permits/usePermitDetail';
+import { PermitDetailsCard } from '@/components/operator/permits/PermitDetailsCard';
+import { PermitBusLinksPanel } from '@/components/operator/permits/PermitBusLinksPanel';
+import { ReasonDialog } from '@/components/shared/ReasonDialog';
+import { ErrorBanner } from '@/components/shared/form-primitives';
 
 export default function ServicePermitDetailPage() {
+  const router = useRouter();
+  const { permitId, permit, links, buses, isLoading, error, actionError, setActionError, busy, reload, linkBus, endLink, withdraw } =
+    usePermitDetail();
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [ending, setEnding] = useState<BusPassengerServicePermitAssignmentResponse | null>(null);
+
   useSetPageMetadata({
-    title: 'Service Permit Details',
-    description: 'Passenger service permit – read-only view',
+    title: 'Service Permit',
+    description: permit?.permitNumber ?? '',
     activeItem: 'passenger-permits',
     showBreadcrumbs: true,
-    breadcrumbs: [
-      { label: 'Service Permits', href: '/operator/passenger-permits' },
-      { label: 'Permit Details' },
-    ],
-    padding: 0,
+    breadcrumbs: [{ label: 'Service Permits', href: '/operator/passenger-permits' }, { label: permit?.permitNumber ?? 'Permit' }],
   });
 
-  const { permit, isLoading, error, handleBack, handleRefresh, handleExport } = usePermitDetail();
-
+  const withdrawn = permit?.status === 'cancelled';
   useSetPageActions(
-    <>
-      <button
-        onClick={handleRefresh}
-        className="inline-flex items-center gap-2 px-3 py-2 border border-border text-muted-foreground rounded-lg text-sm hover:bg-muted transition-colors"
-      >
-        <RefreshCw className="w-4 h-4" />
-        <span className="hidden sm:inline">Refresh</span>
+    <div className="flex items-center gap-2">
+      <button onClick={reload} className="flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted">
+        <RefreshCw className="h-3.5 w-3.5" /> Refresh
       </button>
-      <button
-        onClick={handleExport}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-primary rounded-lg hover:bg-primary font-semibold shadow-sm transition-colors"
-      >
-        <Download className="w-4 h-4" />
-        <span className="hidden sm:inline">Export</span>
-      </button>
-    </>,
+      {permit && !withdrawn && (
+        <>
+          <button
+            onClick={() => setWithdrawOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm border border-destructive/40 text-destructive rounded-lg hover:bg-destructive/10"
+          >
+            <Archive className="h-3.5 w-3.5" /> Withdraw
+          </button>
+          <button
+            onClick={() => router.push(`/operator/passenger-permits/${permitId}/edit`)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </button>
+        </>
+      )}
+    </div>,
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="text-center">
-          <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderWidth: 3 }} />
-          <p className="text-muted-foreground text-sm">Loading permit details…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !permit) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="text-center max-w-md">
-          <div className="bg-destructive/15 text-destructive w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8" />
-          </div>
-          <h2 className="text-lg font-semibold text-foreground mb-2">Permit not found</h2>
-          <p className="text-sm text-muted-foreground mb-6">{error ?? 'The requested permit could not be found.'}</p>
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Permits
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading && !permit) return <div className="h-64 rounded-xl border bg-card animate-pulse" />;
+  if (error || !permit) return <ErrorBanner message={error ?? 'Permit not found'} />;
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <div className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary">
-        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-        <span>
-          This permit is issued and managed by the Ministry of Transport. All information is
-          read-only. Contact the MOT to request any modifications.
-        </span>
-      </div>
-      <PermitSummaryCard permit={permit} />
-      <PermitInfoPanel permit={permit} />
-    </main>
+    <div className="space-y-6">
+      {actionError && <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />}
+      <PermitDetailsCard permit={permit} />
+      <PermitBusLinksPanel
+        permit={permit}
+        links={links}
+        candidateBuses={withdrawn ? undefined : buses}
+        busy={busy}
+        onLink={(busId, startDate) => linkBus(busId, startDate)}
+        onEnd={withdrawn ? undefined : setEnding}
+        onOpenBus={(busId) => router.push(`/operator/fleet/${busId}`)}
+      />
+
+      <ReasonDialog
+        open={withdrawOpen}
+        onOpenChange={setWithdrawOpen}
+        title="Withdraw this permit?"
+        description="Use this when your company no longer holds the permit. Its bus links end today."
+        notice={
+          (permit.upcomingTripCount ?? 0) > 0 ? (
+            <p className="text-sm p-3 rounded-lg bg-warning/10 border border-warning/20">
+              {permit.upcomingTripCount} upcoming trip(s) are assigned to this permit. The MOT will see them as needing a
+              new permit.
+            </p>
+          ) : undefined
+        }
+        confirmLabel="Withdraw permit"
+        destructive
+        busy={busy}
+        onConfirm={async (reason) => {
+          if (await withdraw(reason)) setWithdrawOpen(false);
+        }}
+      />
+      <ConfirmDialog
+        open={!!ending}
+        onOpenChange={(open) => !open && setEnding(null)}
+        title={`End ${ending?.busPlateNumber}'s link?`}
+        description="The bus stops being authorised under this permit from today. Trips it is already assigned to keep it until you change them."
+        confirmLabel="End link"
+        variant="destructive"
+        loading={busy}
+        onConfirm={async () => {
+          if (ending?.id) await endLink(ending.id);
+          setEnding(null);
+        }}
+      />
+    </div>
   );
 }

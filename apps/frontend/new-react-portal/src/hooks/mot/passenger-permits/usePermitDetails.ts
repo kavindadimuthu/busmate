@@ -8,7 +8,9 @@ import {
   RouteManagementService,
   BusManagementService,
 } from '@busmate/api-client-core';
+import { apiErrorMessage } from '@/lib/api/errors';
 import type {
+  BusPassengerServicePermitAssignmentResponse,
   PassengerServicePermitResponse,
   OperatorResponse,
   RouteGroupResponse,
@@ -33,6 +35,12 @@ export function usePermitDetails() {
   const [busesLoading, setBusesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // INC-017: the buses this permit actually authorises, and MOT status actions
+  const [links, setLinks] = useState<BusPassengerServicePermitAssignmentResponse[]>([]);
+  const [statusDialog, setStatusDialog] = useState<'suspend' | 'withdraw' | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,8 +54,12 @@ export function usePermitDetails() {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await PermitManagementService.getPermitById(permitId);
+      const [data, permitLinks] = await Promise.all([
+        PermitManagementService.getPermitById(permitId),
+        PermitManagementService.getPermitBuses(permitId),
+      ]);
       setPermit(data);
+      setLinks(permitLinks);
       return data;
     } catch (err) {
       console.error('Error loading permit details:', err);
@@ -86,7 +98,7 @@ export function usePermitDetails() {
     try {
       setBusesLoading(true);
       const busesResponse = await BusManagementService.getAllBuses(
-        0, 100, 'ntc_registration_number', 'asc', undefined, operatorId, 'active'
+        0, 100, 'ntcRegistrationNumber', 'asc', undefined, operatorId, 'active'
       );
       setAssignedBuses(busesResponse.content || []);
     } catch (err) {
@@ -136,7 +148,8 @@ export function usePermitDetails() {
       router.push('/mot/passenger-permits');
     } catch (err) {
       console.error('Error deleting permit:', err);
-      setError('Failed to delete permit. Please try again.');
+      setShowDeleteModal(false);
+      setError(apiErrorMessage(err, 'Failed to delete permit'));
     } finally {
       setIsDeleting(false);
     }
@@ -161,6 +174,30 @@ export function usePermitDetails() {
     }
   }, [loadPermitDetails, loadOperatorDetails, loadAssignedBuses, loadRouteGroupDetails]);
 
+  const runAction = useCallback(async (action: () => Promise<unknown>, fallback: string) => {
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await action();
+      await loadPermitDetails();
+      setStatusDialog(null);
+    } catch (err) {
+      setActionError(apiErrorMessage(err, fallback));
+    } finally {
+      setActionBusy(false);
+    }
+  }, [loadPermitDetails]);
+
+  const suspend = useCallback((reason: string) =>
+    runAction(() => PermitManagementService.suspendPermit(permitId, { reason }), 'Could not suspend the permit'), [runAction, permitId]);
+  const withdraw = useCallback((reason: string) =>
+    runAction(() => PermitManagementService.withdrawPermit(permitId, { reason }), 'Could not withdraw the permit'), [runAction, permitId]);
+  const reinstate = useCallback(() =>
+    runAction(() => PermitManagementService.reinstatePermit(permitId), 'Could not reinstate the permit'), [runAction, permitId]);
+  const endLink = useCallback((link: BusPassengerServicePermitAssignmentResponse) =>
+    link.id ? runAction(() => PermitManagementService.endPermitBusLink(permitId, link.id!), 'Could not end the link') : Promise.resolve(),
+    [runAction, permitId]);
+
   // ── Page metadata & actions ───────────────────────────────
 
   useSetPageMetadata({
@@ -180,10 +217,23 @@ export function usePermitDetails() {
       onRefresh: handleRefresh,
       onEdit: handleEdit,
       onDelete: handleDelete,
+      status: permit?.status,
+      onSuspend: () => setStatusDialog('suspend'),
+      onWithdraw: () => setStatusDialog('withdraw'),
+      onReinstate: reinstate,
     })
   );
 
   return {
+    links,
+    statusDialog,
+    setStatusDialog,
+    actionBusy,
+    actionError,
+    setActionError,
+    suspend,
+    withdraw,
+    endLink,
     permit,
     operator,
     routeGroup,

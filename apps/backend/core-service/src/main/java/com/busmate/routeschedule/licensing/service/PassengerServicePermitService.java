@@ -25,4 +25,15 @@ public interface PassengerServicePermitService {
     PassengerServicePermitStatisticsResponse getStatistics();
     PassengerServicePermitImportResponse importPermitsFromCsv(MultipartFile file, String userId);
     byte[] getImportTemplate();
+
+    // INC-017: operator self-service and MOT suspension
+    PaginatedResponse<PassengerServicePermitResponse> getPermitsForOperator(UUID operatorId, String status, String permitType, String search, Pageable pageable);
+    PassengerServicePermitResponse createPermitForOperator(UUID operatorId, com.busmate.routeschedule.licensing.dto.request.OperatorPermitRequest request, String userId);
+    PassengerServicePermitResponse updatePermitForOperator(UUID operatorId, UUID permitId, com.busmate.routeschedule.licensing.dto.request.OperatorPermitRequest request, String userId);
+    /** @param operatorId the owning operator, or null when MOT withdraws it */
+    PassengerServicePermitResponse withdrawPermit(UUID operatorId, UUID permitId, String reason, String userId);
+    PassengerServicePermitResponse suspendPermit(UUID permitId, String reason, String userId);
+    PassengerServicePermitResponse reinstatePermit(UUID permitId, String userId);
+    long countUpcomingTrips(UUID permitId);
+    com.busmate.routeschedule.licensing.entity.PassengerServicePermit requireOwnedPermit(UUID operatorId, UUID permitId);
 }

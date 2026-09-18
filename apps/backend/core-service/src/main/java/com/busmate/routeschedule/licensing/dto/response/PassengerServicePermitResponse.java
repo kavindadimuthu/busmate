@@ -18,6 +18,14 @@ public class PassengerServicePermitResponse {
     private Integer maximumBusAssigned;
     private String status;
     private String permitType;
+    /** Why the permit is suspended (MOT) or withdrawn (operator); null while active. */
+    private String statusReason;
+    /** True when the permit's expiry date has passed, whatever its recorded status says. */
+    private Boolean expired;
+    /** Buses currently authorised to run under this permit. */
+    private Long activeBusCount;
+    /** Pending trips from today on that run under this permit; filled on single-permit reads. */
+    private Long upcomingTripCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdBy;

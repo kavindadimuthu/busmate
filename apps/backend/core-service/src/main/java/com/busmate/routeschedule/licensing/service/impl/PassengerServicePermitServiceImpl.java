@@ -18,6 +18,10 @@ import com.busmate.routeschedule.licensing.repository.PassengerServicePermitRepo
 import com.busmate.routeschedule.fleet.repository.OperatorRepository;
 import com.busmate.routeschedule.network.repository.RouteGroupRepository;
 import com.busmate.routeschedule.licensing.service.PassengerServicePermitService;
+import com.busmate.routeschedule.licensing.service.PermitBusLinks;
+import com.busmate.routeschedule.licensing.dto.request.OperatorPermitRequest;
+import com.busmate.routeschedule.operations.repository.TripRepository;
+import org.springframework.transaction.annotation.Transactional;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -45,7 +49,8 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
     private final PassengerServicePermitRepository permitRepository;
     private final OperatorRepository operatorRepository;
     private final RouteGroupRepository routeGroupRepository;
-//    private final BusPassengerServicePermitAssignmentRepository busPermitAssignmentRepository;
+    private final PermitBusLinks permitBusLinks;
+    private final TripRepository tripRepository;
     private final MapperUtils mapperUtils;
 
     @Override
@@ -112,6 +117,8 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
             throw new ConflictException("Permit with number " + request.getPermitNumber() + " already exists");
         }
 
+        requireCapCoversLinks(permit, request.getMaximumBusAssigned());
+
         // Store the original ID to avoid overwriting it
         UUID originalId = permit.getId();
         
@@ -147,11 +154,177 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
         PassengerServicePermit permit = permitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Permit not found with id: " + id));
 
-//        if (busPermitAssignmentRepository.existsByPermitId(id)) {
-//            throw new ConflictException("Cannot delete permit with id " + id + " as it is referenced by bus assignments");
-//        }
+        // A permit that has carried trips is history the trip and ticket records point at; it is
+        // withdrawn, never deleted (INC-017).
+        if (tripRepository.existsByPassengerServicePermitId(id)) {
+            throw new ConflictException("Permit " + permit.getPermitNumber() + " has trips on record; withdraw it instead of deleting it");
+        }
+        if (!permitBusLinks.forPermit(id).isEmpty()) {
+            throw new ConflictException("Permit " + permit.getPermitNumber() + " has bus links on record; withdraw it instead of deleting it");
+        }
 
         permitRepository.deleteById(id);
+    }
+
+    // ============================================================================
+    // INC-017: operator self-service and MOT suspension
+    // ============================================================================
+
+    @Override
+    public PaginatedResponse<PassengerServicePermitResponse> getPermitsForOperator(
+            UUID operatorId, String status, String permitType, String search, Pageable pageable) {
+        Specification<PassengerServicePermit> spec = createSpecification(status, permitType, null, null)
+                .and((root, query, cb) -> cb.equal(root.get("operator").get("id"), operatorId));
+        if (search != null && !search.isBlank()) {
+            String like = "%" + search.trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("permitNumber")), like),
+                    cb.like(cb.lower(root.get("routeGroup").get("name")), like)));
+        }
+        Page<PassengerServicePermit> page = permitRepository.findAll(spec, pageable);
+        List<PassengerServicePermitResponse> content = page.getContent().stream().map(this::mapToResponse).toList();
+        return PaginatedResponse.of(content, pageable.getPageNumber(), pageable.getPageSize(), page.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public PassengerServicePermitResponse createPermitForOperator(UUID operatorId, OperatorPermitRequest request, String userId) {
+        Operator operator = validateAndGetOperator(operatorId);
+        RouteGroup routeGroup = validateAndGetRouteGroup(request.getRouteGroupId());
+        validateDates(request.getIssueDate(), request.getExpiryDate());
+        String permitNumber = request.getPermitNumber().trim();
+        if (permitRepository.existsByPermitNumber(permitNumber)) {
+            throw new ConflictException("Permit number " + permitNumber
+                    + " is already registered. If it is yours, contact the MOT to have it transferred.");
+        }
+        PassengerServicePermit permit = new PassengerServicePermit();
+        permit.setOperator(operator);
+        permit.setRouteGroup(routeGroup);
+        permit.setPermitNumber(permitNumber);
+        permit.setIssueDate(request.getIssueDate());
+        permit.setExpiryDate(request.getExpiryDate());
+        permit.setMaximumBusAssigned(request.getMaximumBusAssigned());
+        permit.setPermitType(parsePermitType(request.getPermitType()));
+        // Operator-entered permits take effect immediately; MOT can suspend one later.
+        permit.setStatus(StatusEnum.active);
+        permit.setCreatedBy(userId);
+        permit.setUpdatedBy(userId);
+        return mapToResponse(permitRepository.save(permit));
+    }
+
+    @Override
+    @Transactional
+    public PassengerServicePermitResponse updatePermitForOperator(UUID operatorId, UUID permitId,
+                                                                   OperatorPermitRequest request, String userId) {
+        PassengerServicePermit permit = requireOwnedPermit(operatorId, permitId);
+        if (permit.getStatus() == StatusEnum.cancelled) {
+            throw new ConflictException("A withdrawn permit cannot be edited");
+        }
+        RouteGroup routeGroup = validateAndGetRouteGroup(request.getRouteGroupId());
+        validateDates(request.getIssueDate(), request.getExpiryDate());
+        String permitNumber = request.getPermitNumber().trim();
+        if (!permit.getPermitNumber().equals(permitNumber) && permitRepository.existsByPermitNumber(permitNumber)) {
+            throw new ConflictException("Permit number " + permitNumber + " is already registered");
+        }
+        PassengerServicePermitTypeEnum type = parsePermitType(request.getPermitType());
+        if (type != permit.getPermitType() && permitBusLinks.activeCount(permitId) > 0) {
+            throw new ConflictException("End this permit's bus links before changing its type; the linked buses were checked against the old type");
+        }
+        requireCapCoversLinks(permit, request.getMaximumBusAssigned());
+        permit.setRouteGroup(routeGroup);
+        permit.setPermitNumber(permitNumber);
+        permit.setIssueDate(request.getIssueDate());
+        permit.setExpiryDate(request.getExpiryDate());
+        permit.setMaximumBusAssigned(request.getMaximumBusAssigned());
+        permit.setPermitType(type);
+        permit.setUpdatedBy(userId);
+        return mapToResponse(permitRepository.save(permit));
+    }
+
+    @Override
+    @Transactional
+    public PassengerServicePermitResponse withdrawPermit(UUID operatorId, UUID permitId, String reason, String userId) {
+        PassengerServicePermit permit = operatorId != null
+                ? requireOwnedPermit(operatorId, permitId)
+                : permitRepository.findById(permitId).orElseThrow(() -> new ResourceNotFoundException("Permit not found with id: " + permitId));
+        if (permit.getStatus() == StatusEnum.cancelled) {
+            throw new ConflictException("This permit is already withdrawn");
+        }
+        permitBusLinks.endAllFor(permitId, userId);
+        permit.setStatus(StatusEnum.cancelled);
+        permit.setStatusReason(reason.trim());
+        permit.setUpdatedBy(userId);
+        return mapToResponse(permitRepository.save(permit));
+    }
+
+    @Override
+    @Transactional
+    public PassengerServicePermitResponse suspendPermit(UUID permitId, String reason, String userId) {
+        PassengerServicePermit permit = permitRepository.findById(permitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Permit not found with id: " + permitId));
+        if (permit.getStatus() != StatusEnum.active) {
+            throw new ConflictException("Only an active permit can be suspended (this one is " + permit.getStatus() + ")");
+        }
+        permit.setStatus(StatusEnum.inactive);
+        permit.setStatusReason(reason.trim());
+        permit.setUpdatedBy(userId);
+        return mapToResponse(permitRepository.save(permit));
+    }
+
+    @Override
+    @Transactional
+    public PassengerServicePermitResponse reinstatePermit(UUID permitId, String userId) {
+        PassengerServicePermit permit = permitRepository.findById(permitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Permit not found with id: " + permitId));
+        if (permit.getStatus() == StatusEnum.active) {
+            throw new ConflictException("This permit is already active");
+        }
+        permit.setStatus(StatusEnum.active);
+        permit.setStatusReason(null);
+        permit.setUpdatedBy(userId);
+        return mapToResponse(permitRepository.save(permit));
+    }
+
+    @Override
+    public long countUpcomingTrips(UUID permitId) {
+        return tripRepository.countUpcomingByPermitId(permitId);
+    }
+
+    @Override
+    public PassengerServicePermit requireOwnedPermit(UUID operatorId, UUID permitId) {
+        PassengerServicePermit permit = permitRepository.findById(permitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Permit not found with id: " + permitId));
+        if (!permit.getOperator().getId().equals(operatorId)) {
+            // Same answer as a missing permit: another operator's permit ids are not confirmed.
+            throw new ResourceNotFoundException("Permit not found with id: " + permitId);
+        }
+        return permit;
+    }
+
+    private void requireCapCoversLinks(PassengerServicePermit permit, Integer newCap) {
+        if (permit.getId() == null || newCap == null) {
+            return;
+        }
+        long inForce = permitBusLinks.activeCount(permit.getId());
+        if (newCap < inForce) {
+            throw new ConflictException("Maximum buses cannot be below the " + inForce
+                    + " bus(es) currently linked to this permit; end some links first");
+        }
+    }
+
+    private void validateDates(LocalDate issueDate, LocalDate expiryDate) {
+        if (expiryDate != null && issueDate != null && !expiryDate.isAfter(issueDate)) {
+            throw new ConflictException("Expiry date must be after the issue date");
+        }
+    }
+
+    private PassengerServicePermitTypeEnum parsePermitType(String value) {
+        try {
+            return PassengerServicePermitTypeEnum.valueOf(value);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new ConflictException("Invalid permit type: " + value + ". Allowed: "
+                    + Arrays.toString(PassengerServicePermitTypeEnum.values()));
+        }
     }
 
     private void validatePermitRequest(PassengerServicePermitRequest request) {
@@ -209,6 +382,13 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
         response.setOperatorName(permit.getOperator().getName());
         response.setRouteGroupId(permit.getRouteGroup().getId());
         response.setRouteGroupName(permit.getRouteGroup().getName());
+        // Set explicitly: ModelMapper's loose matching would otherwise fill `status` from
+        // `statusReason`.
+        response.setStatus(permit.getStatus() != null ? permit.getStatus().name() : null);
+        response.setStatusReason(permit.getStatusReason());
+        response.setPermitType(permit.getPermitType() != null ? permit.getPermitType().name() : null);
+        response.setExpired(permit.getExpiryDate() != null && permit.getExpiryDate().isBefore(LocalDate.now()));
+        response.setActiveBusCount(permit.getId() != null ? permitBusLinks.activeCount(permit.getId()) : 0L);
         return response;
     }
 
@@ -218,7 +398,7 @@ public class PassengerServicePermitServiceImpl implements PassengerServicePermit
             
             if (status != null && !status.trim().isEmpty()) {
                 try {
-                    StatusEnum statusEnum = StatusEnum.valueOf(status.toUpperCase());
+                    StatusEnum statusEnum = StatusEnum.valueOf(status.toLowerCase());
                     predicates.add(criteriaBuilder.equal(root.get("status"), statusEnum));
                 } catch (IllegalArgumentException e) {
                     // Invalid status, ignore or throw exception

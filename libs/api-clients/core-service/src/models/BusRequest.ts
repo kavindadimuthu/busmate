@@ -11,6 +11,7 @@ export type BusRequest = {
     model?: string;
     facilities?: JsonNode;
     seatLayout?: JsonNode;
+    serviceClass?: string;
     status?: string;
 };
 

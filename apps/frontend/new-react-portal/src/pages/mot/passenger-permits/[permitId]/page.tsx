@@ -5,9 +5,23 @@ import { usePermitDetails } from '@/hooks/mot/passenger-permits/usePermitDetails
 import { PermitSummary } from '@/components/mot/passenger-permits/PermitSummary';
 import { PermitTabsSection } from '@/components/mot/passenger-permits/PermitTabsSection';
 import { DeletePermitModal } from '@/components/mot/passenger-permits/DeletePermitModal';
+import { PermitBusLinksPanel } from '@/components/operator/permits/PermitBusLinksPanel';
+import { ReasonDialog } from '@/components/shared/ReasonDialog';
+import { ErrorBanner } from '@/components/shared/form-primitives';
+import { useRouter } from '@/lib/router';
 
 export default function PermitDetailsPage() {
+  const router = useRouter();
   const {
+    links,
+    statusDialog,
+    setStatusDialog,
+    actionBusy,
+    actionError,
+    setActionError,
+    suspend,
+    withdraw,
+    endLink,
     permit,
     operator,
     routeGroup,
@@ -66,6 +80,13 @@ export default function PermitDetailsPage() {
         </div>
       )}
 
+      {actionError && <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />}
+      {permit.statusReason && (permit.status === 'inactive' || permit.status === 'cancelled') && (
+        <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm">
+          <strong>{permit.status === 'inactive' ? 'Suspended' : 'Withdrawn'}:</strong> {permit.statusReason}
+        </div>
+      )}
+
       <PermitSummary permit={permit} operator={operator} routeGroup={routeGroup} assignedBuses={assignedBuses} />
 
       <PermitTabsSection
@@ -77,6 +98,30 @@ export default function PermitDetailsPage() {
         routeGroupLoading={routeGroupLoading}
         busesLoading={busesLoading}
         onRefresh={handleRefresh}
+      />
+
+      <PermitBusLinksPanel
+        permit={permit}
+        links={links}
+        busy={actionBusy}
+        onEnd={endLink}
+        onOpenBus={(busId) => router.push(`/mot/buses/${busId}`)}
+      />
+
+      <ReasonDialog
+        open={statusDialog !== null}
+        onOpenChange={(open) => !open && setStatusDialog(null)}
+        title={statusDialog === 'suspend' ? 'Suspend this permit?' : 'Withdraw this permit?'}
+        description={
+          statusDialog === 'suspend'
+            ? 'A suspended permit cannot authorise new buses or receive new trips until you reinstate it. The operator sees your reason.'
+            : 'Withdrawing ends every bus link on the permit. Use this when the operator no longer holds it.'
+        }
+        confirmLabel={statusDialog === 'suspend' ? 'Suspend permit' : 'Withdraw permit'}
+        destructive
+        busy={actionBusy}
+        error={actionError}
+        onConfirm={(reason) => (statusDialog === 'suspend' ? suspend(reason) : withdraw(reason))}
       />
 
       <DeletePermitModal

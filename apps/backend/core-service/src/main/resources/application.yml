@@ -147,6 +147,9 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: operationId
   show-actuator: false
+  # /internal/** is service-to-service only (API-key gated, never routed by the gateway); keeping it
+  # out of the published contract keeps it out of the generated browser clients too.
+  paths-to-exclude: /internal/**
 
 # Base URL for the internal, unauthenticated (GET /api/live/** is permitAll there) calls this
 # service makes to fetch a bus's latest live position for real-time ETAs (IoT Platform Layer plan,

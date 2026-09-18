@@ -2,7 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type InternalOperatorStatusRequest = {
-    status: string;
+export type PermitBusLinkRequest = {
+    busId: string;
+    startDate?: string;
+    endDate?: string;
 };
 

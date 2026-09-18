@@ -14,6 +14,10 @@ export type PassengerServicePermitResponse = {
     maximumBusAssigned?: number;
     status?: string;
     permitType?: string;
+    statusReason?: string;
+    expired?: boolean;
+    activeBusCount?: number;
+    upcomingTripCount?: number;
     createdAt?: string;
     updatedAt?: string;
     createdBy?: string;

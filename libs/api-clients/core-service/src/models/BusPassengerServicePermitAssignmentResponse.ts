@@ -6,6 +6,9 @@ export type BusPassengerServicePermitAssignmentResponse = {
     id?: string;
     busId?: string;
     busPlateNumber?: string;
+    busModel?: string;
+    busServiceClass?: string;
+    inForce?: boolean;
     passengerServicePermitId?: string;
     permitNumber?: string;
     startDate?: string;

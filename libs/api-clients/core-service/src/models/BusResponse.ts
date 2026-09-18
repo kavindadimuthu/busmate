@@ -13,6 +13,7 @@ export type BusResponse = {
     model?: string;
     facilities?: JsonNode;
     seatLayout?: JsonNode;
+    serviceClass?: string;
     status?: string;
     createdAt?: string;
     updatedAt?: string;

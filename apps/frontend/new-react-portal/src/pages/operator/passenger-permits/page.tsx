@@ -1,99 +1,87 @@
 'use client';
 
-import { Suspense } from 'react';
-import { RefreshCw, AlertCircle, Info } from 'lucide-react';
+import { Plus, RefreshCw, Info } from 'lucide-react';
+import { useRouter } from '@/lib/router';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
-import { useServicePermits } from '@/hooks/useServicePermits';
+import { useOperatorPermits } from '@/hooks/operator/permits/useOperatorPermits';
 import { PermitStatsCards } from '@/components/operator/permits/PermitStatsCards';
 import { PermitFilters } from '@/components/operator/permits/PermitFilters';
 import { PermitsTable } from '@/components/operator/permits/PermitsTable';
+import { ErrorBanner } from '@/components/shared/form-primitives';
 
-function ServicePermitsContent() {
+export default function ServicePermitsPage() {
+  const router = useRouter();
+  const {
+    state, permits, totalItems, stats, isLoading, error, setError, refresh,
+    setPage, setPageSize, setSort, setSearch, setFilters,
+  } = useOperatorPermits();
+
   useSetPageMetadata({
     title: 'Service Permits',
-    description: 'View your passenger service permits issued by the Ministry of Transport',
+    description: 'The passenger service permits your company holds',
     activeItem: 'passenger-permits',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Service Permits' }],
   });
 
-  const {
-    permits, statistics, filterOptions, error, setError, loading, initialized,
-    filters, pagination, sort, handleView, handleSort, handleFilterChange,
-    handleClearFilters, handleRefresh, onPageChange, onPageSizeChange,
-  } = useServicePermits();
-
-  const handleTableSort = (column: string) => handleSort(column);
-
   useSetPageActions(
-    <button onClick={handleRefresh} disabled={loading} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50 transition-colors">
-      <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-      Refresh
-    </button>,
+    <div className="flex items-center gap-2">
+      <button
+        onClick={refresh}
+        disabled={isLoading}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted disabled:opacity-50"
+      >
+        <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+        Refresh
+      </button>
+      <button
+        onClick={() => router.push('/operator/passenger-permits/create')}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90"
+      >
+        <Plus className="h-4 w-4" />
+        Add Permit
+      </button>
+    </div>,
   );
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-destructive/70 mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-destructive">Failed to load permits</p>
-            <p className="text-sm text-destructive mt-0.5">{error}</p>
-            <button onClick={() => setError(null)} className="text-sm text-destructive hover:text-destructive underline mt-1">Dismiss</button>
-          </div>
-        </div>
-      )}
+      {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-      <PermitStatsCards stats={statistics} loading={!initialized} />
+      <PermitStatsCards stats={stats} loading={isLoading && !stats} />
 
       <PermitFilters
-        searchTerm={filters.search}
-        setSearchTerm={(v) => handleFilterChange({ search: v })}
-        statusFilter={filters.status}
-        setStatusFilter={(v) => handleFilterChange({ status: v })}
-        permitTypeFilter={filters.permitType}
-        setPermitTypeFilter={(v) => handleFilterChange({ permitType: v })}
-        filterOptions={filterOptions}
-        loading={loading}
-        totalCount={statistics?.totalPermits ?? 0}
-        filteredCount={pagination.totalElements}
-        onClearAll={handleClearFilters}
+        search={state.searchQuery}
+        onSearch={setSearch}
+        status={state.filters.status}
+        onStatus={(status) => setFilters({ status })}
+        permitType={state.filters.permitType}
+        onPermitType={(permitType) => setFilters({ permitType })}
+        onClearAll={() => setFilters({ status: '__all__', permitType: '__all__' })}
       />
 
       <PermitsTable
-          permits={permits}
-          loading={loading}
-          sortColumn={sort.column}
-          sortDirection={sort.direction}
-          onSort={handleTableSort}
-          onView={handleView}
-          totalItems={pagination.totalElements}
-          page={pagination.currentPage}
-          pageSize={pagination.pageSize}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
-        />
+        permits={permits}
+        totalItems={totalItems}
+        loading={isLoading}
+        page={state.page}
+        pageSize={state.pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        sortColumn={state.sortColumn ?? undefined}
+        sortDirection={state.sortDirection}
+        onSort={setSort}
+        onView={(id) => router.push(`/operator/passenger-permits/${id}`)}
+      />
 
       <div className="flex items-start gap-2.5 p-3.5 bg-primary/10 border border-primary/20 rounded-xl text-sm text-primary">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
-        <span>Service permits are issued and managed by the Ministry of Transport. This view is read-only. Contact the MOT to request changes or renewals.</span>
+        <span>
+          Permits are applied for and issued outside BusMate. Record each permit you hold here so trips can be
+          assigned to it; a recorded permit is in force immediately. The Ministry of Transport can see every
+          permit and may suspend one.
+        </span>
       </div>
     </div>
-  );
-}
-
-export default function ServicePermitsPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <RefreshCw className="w-5 h-5 animate-spin" />
-          <span>Loading…</span>
-        </div>
-      </div>
-    }>
-      <ServicePermitsContent />
-    </Suspense>
   );
 }

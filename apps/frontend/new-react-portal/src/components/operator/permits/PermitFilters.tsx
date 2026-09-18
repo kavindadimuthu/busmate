@@ -1,100 +1,37 @@
 'use client';
 
-import { useCallback } from 'react';
 import { FilterBar, FilterSelect } from '@busmate/ui';
-import type { OperatorPermitFilterOptions } from '@/data/operator/permits';
+import { PERMIT_TYPES } from '@/lib/permits';
 
-// ── Types ─────────────────────────────────────────────────────────
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Suspended' },
+  { value: 'cancelled', label: 'Withdrawn' },
+];
+const TYPE_OPTIONS = PERMIT_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
 interface PermitFiltersProps {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  statusFilter: string;
-  setStatusFilter: (value: string) => void;
-  permitTypeFilter: string;
-  setPermitTypeFilter: (value: string) => void;
-  filterOptions: OperatorPermitFilterOptions;
-  loading: boolean;
-  totalCount?: number;
-  filteredCount?: number;
-  onClearAll?: () => void;
+  search: string;
+  onSearch: (value: string) => void;
+  status: string;
+  onStatus: (value: string) => void;
+  permitType: string;
+  onPermitType: (value: string) => void;
+  onClearAll: () => void;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  PENDING: 'Pending',
-  EXPIRED: 'Expired',
-};
-
-const PERMIT_TYPE_LABELS: Record<string, string> = {
-  REGULAR: 'Regular',
-  SPECIAL: 'Special',
-  TEMPORARY: 'Temporary',
-};
-
-// ── Component ─────────────────────────────────────────────────────
-
-export function PermitFilters({
-  searchTerm,
-  setSearchTerm,
-  statusFilter,
-  setStatusFilter,
-  permitTypeFilter,
-  setPermitTypeFilter,
-  filterOptions,
-  loading,
-  totalCount = 0,
-  filteredCount = 0,
-  onClearAll,
-}: PermitFiltersProps) {
-  const handleClearAll = useCallback(() => {
-    setSearchTerm('');
-    setStatusFilter('__all__');
-    setPermitTypeFilter('__all__');
-    onClearAll?.();
-  }, [setSearchTerm, setStatusFilter, setPermitTypeFilter, onClearAll]);
-
-  // ── Options ─────────────────────────────────────────────────────
-
-  const statusOptions = filterOptions.statuses.map((s) => ({
-    value: s,
-    label: STATUS_LABELS[s] ?? (s.charAt(0) + s.slice(1).toLowerCase()),
-  }));
-
-  const permitTypeOptions = filterOptions.permitTypes.map((t) => ({
-    value: t,
-    label: PERMIT_TYPE_LABELS[t] ?? t,
-  }));
-
-  // ── Active filter count ─────────────────────────────────────────
-
-  const activeFilterCount = [statusFilter, permitTypeFilter].filter(v => v !== '__all__').length;
-
-  // ── Render ──────────────────────────────────────────────────────
-
+export function PermitFilters({ search, onSearch, status, onStatus, permitType, onPermitType, onClearAll }: PermitFiltersProps) {
+  const activeFilterCount = [status, permitType].filter((v) => v && v !== '__all__').length;
   return (
     <FilterBar
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
+      searchValue={search}
+      onSearchChange={onSearch}
       searchPlaceholder="Search by permit number or route group…"
       activeFilterCount={activeFilterCount}
-      onClearAll={handleClearAll}
+      onClearAll={onClearAll}
     >
-      <FilterSelect
-        label="Statuses"
-        value={statusFilter}
-        onChange={setStatusFilter}
-        options={statusOptions}
-      />
-      <FilterSelect
-        label="Types"
-        value={permitTypeFilter}
-        onChange={setPermitTypeFilter}
-        options={permitTypeOptions}
-      />
+      <FilterSelect label="Statuses" value={status || '__all__'} onChange={onStatus} options={STATUS_OPTIONS} />
+      <FilterSelect label="Types" value={permitType || '__all__'} onChange={onPermitType} options={TYPE_OPTIONS} />
     </FilterBar>
   );
 }

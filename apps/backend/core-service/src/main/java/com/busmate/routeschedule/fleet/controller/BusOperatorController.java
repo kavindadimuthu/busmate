@@ -283,55 +283,13 @@ public class BusOperatorController {
             throw new IllegalArgumentException("Invalid sort field: " + sortBy + ". Allowed fields: " + allowedSortFields);
         }
         
-        // Create pageable without sorting since PaginatedResponse doesn't support it properly
-        Pageable pageable = PageRequest.of(page, size);
-        
-        // Get all permits and filter by operator (suboptimal but works with current service design)
-        PaginatedResponse<PassengerServicePermitResponse> permits = passengerServicePermitService
-            .getPermits(pageable, status, permitType, null, null);
-        
-        // Filter results to only include permits for this operator
-        List<PassengerServicePermitResponse> filteredPermits = permits.getContent().stream()
-            .filter(permit -> permit.getOperatorId().equals(operatorId))
-            .toList();
-        
-        // Apply search filter if provided
-        if (searchText != null && !searchText.trim().isEmpty()) {
-            String normalizedSearch = searchText.trim().toLowerCase();
-            filteredPermits = filteredPermits.stream()
-                .filter(permit -> 
-                    permit.getPermitNumber().toLowerCase().contains(normalizedSearch) ||
-                    (permit.getRouteGroupName() != null && permit.getRouteGroupName().toLowerCase().contains(normalizedSearch)))
-                .toList();
-        }
-        
-        // Apply manual sorting since service doesn't support it
-        if (!filteredPermits.isEmpty()) {
-            filteredPermits = filteredPermits.stream()
-                .sorted((p1, p2) -> {
-                    int comparison = switch (sortBy) {
-                        case "permitNumber" -> p1.getPermitNumber().compareToIgnoreCase(p2.getPermitNumber());
-                        case "issueDate" -> p1.getIssueDate().compareTo(p2.getIssueDate());
-                        case "expiryDate" -> {
-                            if (p1.getExpiryDate() == null && p2.getExpiryDate() == null) yield 0;
-                            if (p1.getExpiryDate() == null) yield 1;
-                            if (p2.getExpiryDate() == null) yield -1;
-                            yield p1.getExpiryDate().compareTo(p2.getExpiryDate());
-                        }
-                        case "status" -> p1.getStatus().compareToIgnoreCase(p2.getStatus());
-                        case "createdAt" -> p1.getCreatedAt().compareTo(p2.getCreatedAt());
-                        case "updatedAt" -> p1.getUpdatedAt().compareTo(p2.getUpdatedAt());
-                        default -> p1.getPermitNumber().compareToIgnoreCase(p2.getPermitNumber());
-                    };
-                    return sortDir.equalsIgnoreCase("desc") ? -comparison : comparison;
-                })
-                .toList();
-        }
-        
-        // Create a new paginated response with filtered results
-        PaginatedResponse<PassengerServicePermitResponse> result = PaginatedResponse.of(
-            filteredPermits, page, filteredPermits.size(), filteredPermits.size());
-        
+        // Filtered, sorted and paged in the database, scoped to this operator (INC-017). The
+        // previous version paged every operator's permits first and filtered afterwards, so an
+        // operator saw only whichever of their permits happened to land on that page.
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        String normalizedSearch = (searchText != null && !searchText.trim().isEmpty()) ? searchText.trim() : null;
+        PaginatedResponse<PassengerServicePermitResponse> result = passengerServicePermitService
+            .getPermitsForOperator(operatorId, status, permitType, normalizedSearch, PageRequest.of(page, size, sort));
         return ResponseEntity.ok(result);
     }
 
@@ -356,6 +314,7 @@ public class BusOperatorController {
         if (!permit.getOperatorId().equals(operatorId)) {
             return ResponseEntity.notFound().build();
         }
+        permit.setUpcomingTripCount(passengerServicePermitService.countUpcomingTrips(permitId));
         return ResponseEntity.ok(permit);
     }
 

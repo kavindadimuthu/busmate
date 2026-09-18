@@ -471,4 +471,11 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
            "ORDER BY t.scheduledDepartureTime ASC")
     List<Trip> findBySchedule_IdAndTripDateAndScheduledDepartureTimeGreaterThanEqual(
             UUID scheduleId, LocalDate tripDate, LocalTime departureTime);
+
+    boolean existsByPassengerServicePermitId(UUID passengerServicePermitId);
+
+    /** Trips on a permit that have not happened yet and are not cancelled (INC-017). */
+    @Query("SELECT COUNT(t) FROM Trip t WHERE t.passengerServicePermit.id = :permitId " +
+           "AND t.tripDate >= CURRENT_DATE AND t.status = com.busmate.routeschedule.operations.enums.TripStatusEnum.pending")
+    long countUpcomingByPermitId(@Param("permitId") UUID permitId);
 }
