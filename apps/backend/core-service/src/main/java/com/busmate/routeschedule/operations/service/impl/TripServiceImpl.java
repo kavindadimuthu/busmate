@@ -59,6 +59,13 @@ public class TripServiceImpl implements TripService {
     private final BusRepository busRepository;
     private final MapperUtils mapperUtils;
 
+    /**
+     * How far ahead to generate trips when a schedule has no {@code effectiveEndDate} (an
+     * open-ended schedule, valid indefinitely) and the caller didn't supply a {@code toDate}
+     * either - there is otherwise no upper bound to generate trips through.
+     */
+    private static final int DEFAULT_GENERATION_WINDOW_DAYS = 30;
+
     @Override
     public TripResponse createTrip(TripRequest request, String userId) {
         validateTripRequest(request);
@@ -437,11 +444,19 @@ public class TripServiceImpl implements TripService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with ID: " + scheduleId));
 
-        // If dates are not provided, use the schedule's entire validity period
+        // If dates are not provided, use the schedule's entire validity period. A null
+        // effectiveEndDate means the schedule is open-ended (valid indefinitely) - every
+        // schedule in this codebase's own seed data is like this. Without a caller-supplied
+        // toDate there is then no upper bound to generate through, so default to a bounded
+        // window instead of leaving effectiveToDate null.
         LocalDate effectiveFromDate = fromDate != null ? fromDate : schedule.getEffectiveStartDate();
-        LocalDate effectiveToDate = toDate != null ? toDate : schedule.getEffectiveEndDate();
-        
-        log.info("Using date range: {} to {} (original: {} to {})", 
+        LocalDate effectiveToDate = toDate != null
+                ? toDate
+                : (schedule.getEffectiveEndDate() != null
+                        ? schedule.getEffectiveEndDate()
+                        : effectiveFromDate.plusDays(DEFAULT_GENERATION_WINDOW_DAYS));
+
+        log.info("Using date range: {} to {} (original: {} to {})",
                 effectiveFromDate, effectiveToDate, fromDate, toDate);
 
         // Validate date range
@@ -449,10 +464,15 @@ public class TripServiceImpl implements TripService {
             throw new BadRequestException("From date cannot be after to date");
         }
 
-        // Validate dates are within schedule validity period
-        if (effectiveFromDate.isBefore(schedule.getEffectiveStartDate()) || effectiveToDate.isAfter(schedule.getEffectiveEndDate())) {
-            throw new BadRequestException("Date range must be within schedule validity period (" + 
-                    schedule.getEffectiveStartDate() + " to " + schedule.getEffectiveEndDate() + ")");
+        // Validate dates are within schedule validity period. schedule.getEffectiveEndDate()
+        // being null means no upper bound - previously compared against it unconditionally,
+        // which threw a NullPointerException for every open-ended schedule whenever a caller
+        // supplied an explicit toDate, rather than only when trusting the (also broken) default.
+        if (effectiveFromDate.isBefore(schedule.getEffectiveStartDate())
+                || (schedule.getEffectiveEndDate() != null && effectiveToDate.isAfter(schedule.getEffectiveEndDate()))) {
+            throw new BadRequestException("Date range must be within schedule validity period (" +
+                    schedule.getEffectiveStartDate() + " to " +
+                    (schedule.getEffectiveEndDate() != null ? schedule.getEffectiveEndDate() : "no end date") + ")");
         }
 
         // Get schedule stops to determine departure and arrival times
