@@ -16,7 +16,13 @@ import com.busmate.ticketing_service.entity.Tickets;
 import com.busmate.ticketing_service.entity.Transactions;
 import com.busmate.ticketing_service.exception.BadRequestException;
 import com.busmate.ticketing_service.exception.NotFoundException;
+import com.busmate.ticketing_service.core.BookingContext;
+import com.busmate.ticketing_service.core.CoreServiceClient;
+import com.busmate.ticketing_service.fare.ServiceClass;
+import com.busmate.ticketing_service.exception.ForbiddenException;
 import com.busmate.ticketing_service.payment.PaymentGateway;
+import com.busmate.ticketing_service.security.Caller;
+import com.busmate.ticketing_service.service.RouteFareService;
 import com.busmate.ticketing_service.payment.PaymentMethod;
 import com.busmate.ticketing_service.sales.SaleChannel;
 import com.busmate.ticketing_service.repository.ConductorLogRepo;
@@ -30,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +61,20 @@ public class PaymentServiceIMPL implements PaymentService {
     private final TransactionsRepo transactionsRepo;
     private final OnlineRepo onlineRepo;
     private final PaymentGateway paymentGateway;
+    private final CoreServiceClient coreServiceClient;
+    private final RouteFareService routeFareService;
+
+    @Value("${booking.cutoff-minutes-before-departure:30}")
+    private int cutoffMinutesBeforeDeparture;
+
+    @Value("${booking.max-seats-per-booking:5}")
+    private int maxSeatsPerBooking;
+
+    /**
+     * Trip states a seat can still be sold for. Everything else - departed, in transit, completed,
+     * cancelled - is a bus the passenger cannot still board at their stop.
+     */
+    private static final java.util.Set<String> BOOKABLE_TRIP_STATUSES = java.util.Set.of("pending", "active");
 
     @Override
     @Transactional
@@ -163,52 +184,57 @@ public class PaymentServiceIMPL implements PaymentService {
 
     @Override
     @Transactional
-    public BookingResponseDTO bookTicket(BookingRequestDTO requestDTO) {
-        if (requestDTO.getFareAmount() == null || requestDTO.getFareAmount().signum() <= 0) {
-            throw new BadRequestException("fareAmount must be positive");
+    public BookingResponseDTO bookTicket(BookingRequestDTO requestDTO, Caller caller) {
+        if (requestDTO.getTripId() == null || requestDTO.getTripId().isBlank()) {
+            throw new BadRequestException("tripId is mandatory");
         }
-        if (requestDTO.getBusId() == null || requestDTO.getTripId() == null || requestDTO.getPassengerId() == null) {
-            throw new BadRequestException("busId, tripId and passengerId are mandatory");
-        }
+        List<String> seats = requestedSeats(requestDTO);
 
-        // Passenger self-booking is always an online payment - create the transaction/ticket in
-        // PENDING state, then hand off to the payment gateway to start the payment. Mirrors
-        // issueTicket()'s online branch but goes through PaymentGateway instead of trusting a
-        // client-supplied transactionRef.
+        // Everything that decides the price and whether this is sellable comes from core-service,
+        // which owns trips, routes and fleet. The request body gets no vote (INC-011).
+        BookingContext context = coreServiceClient.getBookingContext(
+                requestDTO.getTripId(), requestDTO.getStartLocationId(), requestDTO.getEndLocationId());
+
+        requireBookable(context);
+
+        BigDecimal farePerSeat = priceOf(context);
+        BigDecimal total = farePerSeat.multiply(BigDecimal.valueOf(seats.size()));
+
         Transactions transaction = new Transactions();
-        transaction.setTotalAmount(requestDTO.getFareAmount().doubleValue());
+        transaction.setTotalAmount(total.doubleValue());
         transaction.setPaymentMethod(Transactions.Method.ONLINE);
         transaction.setStatus(Transactions.Status.PENDING);
         Transactions savedTransaction = transactionsRepo.save(transaction);
 
-        Tickets ticket = new Tickets();
-        ticket.setBusId(requestDTO.getBusId());
-        ticket.setTripId(requestDTO.getTripId());
-        ticket.setPassengerId(requestDTO.getPassengerId());
-        ticket.setStartLocationId(requestDTO.getStartLocationId());
-        ticket.setEndLocationId(requestDTO.getEndLocationId());
-        ticket.setSeatNumber(requestDTO.getSeatNumber());
-        ticket.setFareAmount(requestDTO.getFareAmount());
-        ticket.setIssuedAt(LocalDateTime.now());
-        ticket.setStatus(Tickets.Status.NOT_VALID);
-        ticket.setIssueMethod(Tickets.IssueMethod.ONLINE);
-        ticket.setTransactions(savedTransaction);
-        Tickets savedTicket = ticketRepo.save(ticket);
+        // One ticket per seat, all against the single transaction the passenger pays once for.
+        List<Tickets> savedTickets = new ArrayList<>();
+        for (String seat : seats) {
+            Tickets ticket = new Tickets();
+            ticket.setBusId(context.busId());
+            ticket.setTripId(requestDTO.getTripId());
+            ticket.setPassengerId(caller.userId());
+            ticket.setStartLocationId(requestDTO.getStartLocationId());
+            ticket.setEndLocationId(requestDTO.getEndLocationId());
+            ticket.setSeatNumber(seat);
+            ticket.setFareAmount(farePerSeat);
+            ticket.setIssuedAt(LocalDateTime.now());
+            ticket.setStatus(Tickets.Status.NOT_VALID);
+            ticket.setIssueMethod(Tickets.IssueMethod.ONLINE);
+            ticket.setTransactions(savedTransaction);
+            savedTickets.add(ticketRepo.save(ticket));
+        }
 
+        Long firstTicketId = savedTickets.get(0).getTicketId();
         PaymentGateway.PaymentInitiationResult initResult = paymentGateway.initiate(
                 new PaymentGateway.PaymentInitiationRequest(
-                        "TICKET-" + savedTicket.getTicketId(),
-                        requestDTO.getFareAmount(),
-                        requestDTO.getPassengerId(),
-                        "BusMate ticket " + requestDTO.getBusId() + "/" + requestDTO.getTripId()));
+                        "TICKET-" + firstTicketId,
+                        total,
+                        caller.userId(),
+                        "BusMate ticket " + context.busId() + "/" + requestDTO.getTripId()));
 
         Online onlinePayment = new Online();
-        onlinePayment.setPassengerId(requestDTO.getPassengerId());
-        onlinePayment.setAmount(requestDTO.getFareAmount());
-        // Online.Method's DB check constraint only allows PAYHERE/CASH/CARD - reuse PAYHERE as
-        // the placeholder until a real gateway is wired (matches the existing issueTicket()
-        // online branch's convention); the actual gateway used is recorded in transactionRef's
-        // "DUMMY-..." prefix and by which PaymentGateway bean is active.
+        onlinePayment.setPassengerId(caller.userId());
+        onlinePayment.setAmount(total);
         onlinePayment.setMethod(Online.Method.PAYHERE);
         onlinePayment.setStatus(toOnlineStatus(initResult.status()));
         onlinePayment.setTransactionRef(initResult.gatewayReference());
@@ -217,18 +243,94 @@ public class PaymentServiceIMPL implements PaymentService {
         onlineRepo.save(onlinePayment);
 
         return new BookingResponseDTO(
-                savedTicket.getTicketId(),
+                firstTicketId,
+                savedTickets.stream().map(Tickets::getTicketId).toList(),
                 initResult.gatewayReference(),
                 initResult.status().name(),
                 initResult.redirectUrl(),
-                requestDTO.getFareAmount());
+                farePerSeat,
+                total);
+    }
+
+    /**
+     * Seats as the caller asked for them. Duplicates are rejected rather than quietly collapsed:
+     * a request for the same seat twice is a client bug, and silently charging for one seat while
+     * the passenger believes they hold two is the worse failure.
+     */
+    private List<String> requestedSeats(BookingRequestDTO requestDTO) {
+        List<String> seats = requestDTO.getSeatNumbers() != null && !requestDTO.getSeatNumbers().isEmpty()
+                ? requestDTO.getSeatNumbers()
+                : (requestDTO.getSeatNumber() != null ? List.of(requestDTO.getSeatNumber()) : List.of());
+
+        List<String> cleaned = seats.stream()
+                .filter(seat -> seat != null && !seat.isBlank())
+                .map(String::trim)
+                .toList();
+
+        if (cleaned.isEmpty()) {
+            throw new BadRequestException("Choose at least one seat");
+        }
+        if (cleaned.size() > maxSeatsPerBooking) {
+            throw new BadRequestException("A single booking can hold at most " + maxSeatsPerBooking + " seats");
+        }
+        if (cleaned.stream().distinct().count() != cleaned.size()) {
+            throw new BadRequestException("The same seat was requested more than once");
+        }
+        return cleaned;
+    }
+
+    /**
+     * A trip is sellable only while it is still going to pick this passenger up: it has to exist in
+     * a pre-departure state, have a bus (without one there is no seat map to sell against), and
+     * still be more than the cutoff away from leaving the passenger's own boarding stop.
+     */
+    private void requireBookable(BookingContext context) {
+        String status = context.tripStatus() == null ? "" : context.tripStatus().toLowerCase();
+        if (!BOOKABLE_TRIP_STATUSES.contains(status)) {
+            throw new BadRequestException("This trip can no longer be booked");
+        }
+        if (context.busId() == null) {
+            throw new BadRequestException("No bus has been assigned to this trip yet, so seats cannot be booked");
+        }
+        if (context.tripDate() == null || context.scheduledDepartureFromBoardingStop() == null) {
+            throw new BadRequestException("This trip has no departure time, so seats cannot be booked");
+        }
+
+        LocalDateTime departure = LocalDateTime.of(
+                context.tripDate(), context.scheduledDepartureFromBoardingStop());
+        if (LocalDateTime.now().isAfter(departure.minusMinutes(cutoffMinutesBeforeDeparture))) {
+            throw new BadRequestException(
+                    "Booking for this trip closed " + cutoffMinutesBeforeDeparture
+                            + " minutes before it leaves your stop");
+        }
+    }
+
+    /** The fare for one seat, from this service's own fare tables and core-service's facts. */
+    private BigDecimal priceOf(BookingContext context) {
+        if (context.boardingDistanceKm() == null || context.alightingDistanceKm() == null) {
+            throw new BadRequestException("This route has no distances recorded, so a fare cannot be calculated");
+        }
+        ServiceClass serviceClass = ServiceClass.resolve(context.busServiceClass())
+                .orElse(ServiceClass.NORMAL);
+
+        return routeFareService.priceJourney(
+                context.routeId(),
+                context.boardingDistanceKm(),
+                context.alightingDistanceKm(),
+                serviceClass);
     }
 
     @Override
     @Transactional
-    public PaymentConfirmResponseDTO confirmPayment(Long ticketId) {
+    public PaymentConfirmResponseDTO confirmPayment(Long ticketId, Caller caller) {
         Tickets ticket = ticketRepo.findById(ticketId)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + ticketId));
+
+        // Only the passenger who booked it may drive its payment - staff included, since nobody
+        // else has any business completing someone's purchase.
+        if (!caller.owns(ticket.getPassengerId())) {
+            throw new ForbiddenException("This booking is not yours to pay for");
+        }
 
         Transactions transaction = ticket.getTransactions();
         if (transaction == null || transaction.getOnline() == null) {
@@ -305,14 +407,14 @@ public class PaymentServiceIMPL implements PaymentService {
 
     @Override
     @Transactional
-    public ConductorLogTicketDTO cancelTicket(Long ticketId, TicketCancelRequestDTO requestDTO) {
+    public ConductorLogTicketDTO cancelTicket(Long ticketId, TicketCancelRequestDTO requestDTO, Caller caller) {
         Tickets ticket = ticketRepo.findById(ticketId)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + ticketId));
 
-        if (requestDTO.getPassengerId() != null
-                && !requestDTO.getPassengerId().equals(ticket.getPassengerId())) {
-            throw new BadRequestException("This ticket does not belong to the given passenger");
-        }
+        // The passenger who booked it, or staff acting on their behalf. Before INC-011 the
+        // passenger in the request body was checked only when the client chose to send one, so
+        // omitting it cancelled anyone's ticket.
+        caller.requireOwnershipOrStaff(ticket.getPassengerId());
         if (ticket.getStatus() == Tickets.Status.CANCELLED) {
             throw new BadRequestException("Ticket is already cancelled");
         }
@@ -445,7 +547,9 @@ public class PaymentServiceIMPL implements PaymentService {
     }
 
     @Override
-    public List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId) {
+    public List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId, Caller caller) {
+        // A passenger may ask only for their own tickets; staff may ask for anyone's.
+        caller.requireOwnershipOrStaff(passengerId);
         try {
             // Fetch all tickets for the given passenger ID
             List<Tickets> tickets = ticketRepo.findByPassengerId(passengerId);
@@ -496,16 +600,20 @@ public class PaymentServiceIMPL implements PaymentService {
     }
 
     @Override
-    public ConductorLogTicketDTO getTicketDetailsById(Long ticketId) {
+    public ConductorLogTicketDTO getTicketDetailsById(Long ticketId, Caller caller) {
         try {
             // Find the ticket by ID
             Tickets ticket = ticketRepo.findById(ticketId)
                     .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + ticketId));
 
+            caller.requireOwnershipOrStaff(ticket.getPassengerId());
+
             // Convert ticket to DTO
             return toDto(ticket);
 
-        } catch (NotFoundException e) {
+        } catch (NotFoundException | ForbiddenException e) {
+            // Rethrown explicitly: the catch-all below would otherwise turn a refusal into a 400
+            // and tell the caller the ticket exists but something went wrong reading it.
             throw e;
         } catch (Exception e) {
             throw new BadRequestException("Failed to fetch ticket with ID: " + ticketId + ", " + e.getMessage());

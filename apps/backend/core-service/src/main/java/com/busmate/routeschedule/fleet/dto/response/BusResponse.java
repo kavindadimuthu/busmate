@@ -18,6 +18,8 @@ public class BusResponse {
     // Structured seat layout. Never null in responses — the service fills a default 2+2
     // layout derived from `capacity` when the bus has no explicit layout stored.
     private JsonNode seatLayout;
+    /** Fare tier the bus is charged at — one of ServiceClassEnum. */
+    private String serviceClass;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -8,6 +8,7 @@ import com.busmate.routeschedule.fleet.dto.response.BusStatisticsResponse;
 import com.busmate.routeschedule.fleet.dto.response.BusImportResponse;
 import com.busmate.routeschedule.fleet.entity.Bus;
 import com.busmate.routeschedule.fleet.entity.Operator;
+import com.busmate.routeschedule.fleet.enums.ServiceClassEnum;
 import com.busmate.routeschedule.shared.enums.StatusEnum;
 import com.busmate.routeschedule.fleet.enums.OperatorTypeEnum;
 import com.busmate.routeschedule.shared.exception.ConflictException;
@@ -113,6 +114,7 @@ public class BusServiceImpl implements BusService {
         bus.setModel(request.getModel());
         bus.setFacilities(request.getFacilities());
         bus.setSeatLayout(request.getSeatLayout());
+        bus.setServiceClass(parseServiceClass(request.getServiceClass()));
         bus.setOperator(operator);
 
         try {
@@ -456,6 +458,7 @@ public class BusServiceImpl implements BusService {
         bus.setModel(request.getModel());
         bus.setFacilities(request.getFacilities());
         bus.setSeatLayout(request.getSeatLayout());
+        bus.setServiceClass(parseServiceClass(request.getServiceClass()));
         bus.setOperator(operator);
 
         try {
@@ -469,9 +472,23 @@ public class BusServiceImpl implements BusService {
         return bus;
     }
 
+    private ServiceClassEnum parseServiceClass(String serviceClass) {
+        if (serviceClass == null || serviceClass.isBlank()) {
+            return ServiceClassEnum.NORMAL;
+        }
+        try {
+            return ServiceClassEnum.valueOf(serviceClass.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ConflictException("Invalid service class: " + serviceClass);
+        }
+    }
+
     private BusResponse mapToResponse(Bus bus) {
         BusResponse response = mapperUtils.map(bus, BusResponse.class);
         response.setOperatorId(bus.getOperator().getId());
+        response.setServiceClass(bus.getServiceClass() != null
+                ? bus.getServiceClass().name()
+                : ServiceClassEnum.NORMAL.name());
         response.setOperatorName(bus.getOperator().getName());
         // Always return a usable seat layout: fall back to a default 2+2 layout derived from
         // capacity when the bus has none stored, so the conductor app never has to hardcode one.

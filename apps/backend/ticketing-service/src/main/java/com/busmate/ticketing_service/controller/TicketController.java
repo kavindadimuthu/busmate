@@ -8,6 +8,7 @@ import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
+import com.busmate.ticketing_service.security.Caller;
 import com.busmate.ticketing_service.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,14 @@ public class TicketController {
 
     private final PaymentService conductorLogService;
 
+    /**
+     * Who is calling, from the headers api-gateway sets once it has verified the JWT (INC-011).
+     * Headers, not body fields: a body field is whatever the caller typed.
+     */
+    private static Caller caller(String userId, String userType) {
+        return Caller.of(userId, userType);
+    }
+
     @PostMapping("/conductor/issue")
     public ResponseEntity<ConductorLogTicketDTO> createTicket(@RequestBody PaymentRequestDTO request) {
         ConductorLogTicketDTO ticketDetails = conductorLogService.issueTicket(request);
@@ -41,21 +50,29 @@ public class TicketController {
     // ============================================================================
 
     @PostMapping("/book")
-    public ResponseEntity<BookingResponseDTO> bookTicket(@RequestBody BookingRequestDTO request) {
-        BookingResponseDTO response = conductorLogService.bookTicket(request);
+    public ResponseEntity<BookingResponseDTO> bookTicket(
+            @RequestBody BookingRequestDTO request,
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @RequestHeader(value = "x-user-type", required = false) String userType) {
+        BookingResponseDTO response = conductorLogService.bookTicket(request, caller(userId, userType));
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/payment/{ticketId}/confirm")
-    public ResponseEntity<PaymentConfirmResponseDTO> confirmPayment(@PathVariable Long ticketId) {
-        return ResponseEntity.ok(conductorLogService.confirmPayment(ticketId));
+    public ResponseEntity<PaymentConfirmResponseDTO> confirmPayment(
+            @PathVariable Long ticketId,
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @RequestHeader(value = "x-user-type", required = false) String userType) {
+        return ResponseEntity.ok(conductorLogService.confirmPayment(ticketId, caller(userId, userType)));
     }
 
     @PostMapping("/{ticketId}/cancel")
     public ResponseEntity<ConductorLogTicketDTO> cancelTicket(
             @PathVariable Long ticketId,
-            @RequestBody TicketCancelRequestDTO request) {
-        return ResponseEntity.ok(conductorLogService.cancelTicket(ticketId, request));
+            @RequestBody TicketCancelRequestDTO request,
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @RequestHeader(value = "x-user-type", required = false) String userType) {
+        return ResponseEntity.ok(conductorLogService.cancelTicket(ticketId, request, caller(userId, userType)));
     }
 
     // ============================================================================
@@ -114,13 +131,19 @@ public class TicketController {
     }
 
     @GetMapping("/passenger/{passengerId}")
-    public List<ConductorLogTicketDTO> getTicketsByPassengerId(@PathVariable String passengerId) {
-        return conductorLogService.getTicketDetailsByPassengerId(passengerId);
+    public List<ConductorLogTicketDTO> getTicketsByPassengerId(
+            @PathVariable String passengerId,
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @RequestHeader(value = "x-user-type", required = false) String userType) {
+        return conductorLogService.getTicketDetailsByPassengerId(passengerId, caller(userId, userType));
     }
 
     @GetMapping("/{ticketId}")
-    public ConductorLogTicketDTO getTicketById(@PathVariable Long ticketId) {
-        return conductorLogService.getTicketDetailsById(ticketId);
+    public ConductorLogTicketDTO getTicketById(
+            @PathVariable Long ticketId,
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @RequestHeader(value = "x-user-type", required = false) String userType) {
+        return conductorLogService.getTicketDetailsById(ticketId, caller(userId, userType));
     }
 
     @PostMapping("/validate")

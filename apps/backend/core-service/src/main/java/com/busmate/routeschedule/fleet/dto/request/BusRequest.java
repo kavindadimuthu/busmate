@@ -30,5 +30,12 @@ public class BusRequest {
     // layout generated from `capacity` when read back.
     private JsonNode seatLayout;
 
+    /**
+     * Fare tier (ServiceClassEnum). Defaults to NORMAL when omitted: an operator correcting a
+     * bus wrongly left at NORMAL is a cheap, visible fix, while a wrongly assumed higher tier
+     * silently overcharges every passenger who books it.
+     */
+    private String serviceClass = "NORMAL";
+
     private String status = "active";
 }

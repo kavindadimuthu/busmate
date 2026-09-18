@@ -6,6 +6,10 @@ import com.busmate.ticketing_service.entity.RouteFare;
 import com.busmate.ticketing_service.repository.RouteFareRepo;
 import com.busmate.ticketing_service.service.RouteFareService;
 import com.busmate.ticketing_service.service.BaseFareService;
+import com.busmate.ticketing_service.exception.BadRequestException;
+import com.busmate.ticketing_service.fare.ServiceClass;
+
+import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,37 +48,40 @@ public class RouteFareServiceIMPL implements RouteFareService {
 
     @Override
     public String calculateFare(FareCalculationRequestDTO requestDTO) {
+        // Public endpoint contract, unchanged: failures are prose in the success channel. New
+        // callers use priceJourney() instead - see BaseFareService.fareFor().
         try {
-            // Step 1: Find boarding point section
-            int boardingSectionId = findSectionForBoardingPoint(
+            ServiceClass serviceClass = ServiceClass.resolve(requestDTO.getBusType())
+                    .orElseThrow(() -> new BadRequestException("Invalid type"));
+            BigDecimal fare = priceJourney(
                     requestDTO.getRouteId(),
-                    requestDTO.getDistanceFromStartToBoardingPoint()
-            );
-
-            // Step 2: Find alighting point section
-            int alightingSectionId = findSectionForAlightingPoint(
-                    requestDTO.getRouteId(),
-                    requestDTO.getDistanceFromStartToAlightingPoint()
-            );
-
-            // Step 3: Calculate section difference
-            int sectionDifference = alightingSectionId - boardingSectionId;
-
-            if (sectionDifference <= 0) {
-                return "Invalid journey: Alighting point must be after boarding point";
-            }
-            // Step 4: Get fare from BaseFare table using existing API
-            String fare = baseFareService.getBaseFareBySection(
-                    String.valueOf(sectionDifference),
-                    requestDTO.getBusType()
-            );
-
-            return fare;
-
-
+                    requestDTO.getDistanceFromStartToBoardingPoint(),
+                    requestDTO.getDistanceFromStartToAlightingPoint(),
+                    serviceClass);
+            return String.format("%.2f", fare);
+        } catch (BadRequestException e) {
+            return e.getMessage();
         } catch (Exception e) {
             return "Error calculating fare: " + e.getMessage();
         }
+    }
+
+    @Override
+    public BigDecimal priceJourney(String routeId, double boardingDistanceKm,
+            double alightingDistanceKm, ServiceClass serviceClass) {
+        if (routeId == null || routeId.isBlank()) {
+            throw new BadRequestException("A route is required to price a journey");
+        }
+
+        int boardingSectionId = findSectionForBoardingPoint(routeId, boardingDistanceKm);
+        int alightingSectionId = findSectionForAlightingPoint(routeId, alightingDistanceKm);
+
+        int sectionDifference = alightingSectionId - boardingSectionId;
+        if (sectionDifference <= 0) {
+            throw new BadRequestException("Invalid journey: Alighting point must be after boarding point");
+        }
+
+        return baseFareService.fareFor(sectionDifference, serviceClass);
     }
 
     private int findSectionForBoardingPoint(String routeId, double distance) {
@@ -90,7 +97,7 @@ public class RouteFareServiceIMPL implements RouteFareService {
             return lowerDistance.get().getSectionId();
         }
 
-        throw new RuntimeException("No boarding section found for distance: " + distance);
+        throw new BadRequestException("This route has no published fare section covering the boarding stop");
     }
 
     private int findSectionForAlightingPoint(String routeId, double distance) {
@@ -106,6 +113,6 @@ public class RouteFareServiceIMPL implements RouteFareService {
             return higherDistance.get().getSectionId();
         }
 
-        throw new RuntimeException("No alighting section found for distance: " + distance);
+        throw new BadRequestException("This route has no published fare section covering the alighting stop");
     }
 }

@@ -8,6 +8,7 @@ import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
+import com.busmate.ticketing_service.security.Caller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -23,20 +24,24 @@ public interface PaymentService {
 
     List<ConductorLogTicketDTO> getTicketDetailsByTripId(String tripId);
 
-    List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId);
+    List<ConductorLogTicketDTO> getTicketDetailsByPassengerId(String passengerId, Caller caller);
 
-    ConductorLogTicketDTO getTicketDetailsById(Long ticketId);
+    ConductorLogTicketDTO getTicketDetailsById(Long ticketId, Caller caller);
 
     TripSummaryDTO getTripSummary(String tripId);
 
     String validateTicket(TicketValidationRequestDTO requestDTO);
 
-    // Passenger self-service booking (always online, via PaymentGateway)
-    BookingResponseDTO bookTicket(BookingRequestDTO requestDTO);
+    /**
+     * Books seats for the signed-in passenger. The caller decides which trip and which seats; this
+     * service decides who the booking belongs to, what it costs, and whether the trip can be
+     * booked at all (INC-011).
+     */
+    BookingResponseDTO bookTicket(BookingRequestDTO requestDTO, Caller caller);
 
-    PaymentConfirmResponseDTO confirmPayment(Long ticketId);
+    PaymentConfirmResponseDTO confirmPayment(Long ticketId, Caller caller);
 
-    ConductorLogTicketDTO cancelTicket(Long ticketId, TicketCancelRequestDTO requestDTO);
+    ConductorLogTicketDTO cancelTicket(Long ticketId, TicketCancelRequestDTO requestDTO, Caller caller);
 
     /**
      * Reconciles a conductor-collected card payment (INC-008) against PayHere's own record of

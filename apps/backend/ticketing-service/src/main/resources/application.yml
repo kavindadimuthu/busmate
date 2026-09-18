@@ -158,3 +158,19 @@ resilience4j:
           - java.net.SocketTimeoutException
           - org.postgresql.util.PSQLException
           - org.springframework.dao.DataAccessResourceFailureException
+
+# core-service owns trips, routes and fleet; ticketing-service reads the facts it needs to price a
+# booking from there (INC-011) rather than trusting a client-supplied fare. Called directly on its
+# /internal/** surface with the shared key - the gateway authenticates end users, and this is one
+# backend asking another. Both values already exist in config/secrets/.env.
+core-service:
+  base-url: ${CORE_SERVICE_URL:http://localhost:9010}
+  internal-api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
+
+# How a passenger's own online booking behaves (INC-011).
+booking:
+  # A seat stops being sellable this long before the bus leaves the passenger's boarding stop -
+  # long enough to reach the stop, and for the booking to reach the conductor before the bus does.
+  cutoff-minutes-before-departure: 30
+  # One payment, one ticket per seat. A cap exists so a single request cannot hold a whole bus.
+  max-seats-per-booking: 5

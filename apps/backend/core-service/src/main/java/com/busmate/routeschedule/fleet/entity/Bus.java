@@ -1,5 +1,6 @@
 package com.busmate.routeschedule.fleet.entity;
 
+import com.busmate.routeschedule.fleet.enums.ServiceClassEnum;
 import com.busmate.routeschedule.shared.enums.StatusEnum;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
@@ -47,6 +48,12 @@ public class Bus extends BaseEntity {
     @Type(JsonType.class)
     @Column(name = "seat_layout", columnDefinition = "jsonb")
     private JsonNode seatLayout;
+
+    // The fare tier this bus is charged at (INC-011). Recorded, never inferred from `facilities`:
+    // ticketing-service prices a journey from this, so a guess here is a wrong fare.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "service_class", nullable = false)
+    private ServiceClassEnum serviceClass = ServiceClassEnum.NORMAL;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

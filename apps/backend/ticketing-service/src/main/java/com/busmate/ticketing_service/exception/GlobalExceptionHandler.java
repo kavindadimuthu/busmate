@@ -23,6 +23,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleUnauthenticated(UnauthenticatedException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(ex.getMessage(), "UNAUTHENTICATED", System.currentTimeMillis());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponseDTO> handleForbidden(ForbiddenException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(ex.getMessage(), "FORBIDDEN", System.currentTimeMillis());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleAny(Exception ex) {
         // Previously silent - any unexpected exception (DB constraint violation, NPE, etc.)
