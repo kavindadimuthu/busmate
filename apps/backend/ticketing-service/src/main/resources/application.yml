@@ -102,6 +102,9 @@ payhere:
     enabled: ${TICKETING_PAYHERE_CHECKOUT_ENABLED:false}
     url: ${TICKETING_PAYHERE_CHECKOUT_URL:https://sandbox.payhere.lk/pay/checkout}
     app-base-url: ${PASSENGER_WEB_URL:http://localhost:4000}
+    # PayHere assigns one secret per registered Domain/App - this is NOT the same value as
+    # payhere.merchant-secret above (that one belongs to the conductor mobile app, INC-008).
+    merchant-secret: ${TICKETING_PAYHERE_CHECKOUT_MERCHANT_SECRET:dev-only-placeholder-not-a-real-secret}
     # Must be a tunnel (cloudflared/ngrok) while testing - PayHere's servers cannot reach
     # localhost. TICKETING_SERVICE_URL/CORE_SERVICE_URL already exist for the same reason
     # this needs its own var: this one must be the *gateway's* public address, not this

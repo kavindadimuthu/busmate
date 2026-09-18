@@ -40,8 +40,13 @@ class PayHerePaymentGatewayTest {
         checkoutProperties.setUrl("https://sandbox.payhere.lk/pay/checkout");
         checkoutProperties.setAppBaseUrl("http://localhost:4000");
         checkoutProperties.setGatewayBaseUrl("http://localhost:8080");
+        // Deliberately a different secret from the conductor path's, matching how PayHere
+        // actually assigns one per registered Domain/App (discovered while wiring in real
+        // sandbox credentials - see ADR-014).
+        checkoutProperties.setMerchantSecret("test-checkout-merchant-secret");
 
-        gateway = new PayHerePaymentGateway(new PayHereHashService(properties), properties, checkoutProperties, onlineRepo);
+        gateway = new PayHerePaymentGateway(
+                new PayHereHashService(properties, checkoutProperties), properties, checkoutProperties, onlineRepo);
     }
 
     @Test
@@ -65,12 +70,15 @@ class PayHerePaymentGatewayTest {
         assertThat(fields.get("notify_url")).isEqualTo("http://localhost:8080/api/v1/payments/payhere/notify");
 
         // The hash PayHerePaymentGateway sends must be exactly the one a real checkout page
-        // would compute and verify - reusing PayHereHashService, not a bespoke formula.
-        PayHereHashService reference = new PayHereHashService(new PayHereProperties() {{
-            setMerchantId("test-merchant-id");
-            setMerchantSecret("test-merchant-secret");
-        }});
-        String expectedHash = reference.generateCheckoutHash("TICKET-42", new BigDecimal("135.00"), "LKR");
+        // would compute and verify - reusing PayHereHashService's passenger-checkout formula
+        // (the checkout-domain secret, not the conductor app's), not a bespoke one.
+        PayHereProperties referenceProperties = new PayHereProperties();
+        referenceProperties.setMerchantId("test-merchant-id");
+        referenceProperties.setMerchantSecret("test-merchant-secret");
+        PayHereCheckoutProperties referenceCheckoutProperties = new PayHereCheckoutProperties();
+        referenceCheckoutProperties.setMerchantSecret("test-checkout-merchant-secret");
+        PayHereHashService reference = new PayHereHashService(referenceProperties, referenceCheckoutProperties);
+        String expectedHash = reference.generatePassengerCheckoutHash("TICKET-42", new BigDecimal("135.00"), "LKR");
         assertThat(fields.get("hash")).isEqualTo(expectedHash);
     }
 

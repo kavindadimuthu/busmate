@@ -66,15 +66,67 @@ pay (dummy) → My Tickets → cancel.
 
 ## Open questions
 
-- **PayHere sandbox credentials and a public tunnel are still needed** to flip
-  `payhere.checkout.enabled` and live-verify a real payment and its webhook. Everything this
-  increment can do without them is done; this is the one open item, owned by the human.
+- None blocking. Resolved 2026-09-18: real sandbox credentials, a stable Cloudflare Tunnel
+  (`busmate.site`, a dedicated domain bought for this), and a full live payment were completed -
+  see Discovered during the work.
 
 ## Decisions
 
 - See [ADR-014](../decisions/ADR-014-payhere-hosted-checkout-for-passenger-booking.md).
 
 ## Discovered during the work
+
+**PayHere assigns a distinct Merchant Secret per registered Domain/App, not one per account.**
+The original design shared `PayHereProperties.merchantSecret` (the conductor mobile app's
+secret, INC-008) with the new passenger-checkout path - wrong, discovered the moment a real
+checkout was attempted ("Unauthorized payment request"). Fixed by giving
+`PayHereCheckoutProperties` its own `merchantSecret`, and `PayHereHashService` now computes
+against whichever secret the caller needs
+(`generateCheckoutHash` for the conductor app, `generatePassengerCheckoutHash` for the browser
+checkout) and verifies an incoming webhook against both, since one `notify_url` now serves paths
+signed by either secret.
+
+**PayHere's Domain/App field also rejects subdomains** - `api.busmate.site` was refused outright.
+Registered the bare `busmate.site` instead.
+
+**A checkout initiated from `localhost` is genuinely unauthorized by PayHere**, independent of
+the hash - confirmed once the domain-only theory was tested for real. Fixed by also tunnelling
+`passenger-web` itself through the same named tunnel (`busmate.site` -> :4000,
+`api.busmate.site` -> :8080, one `cloudflared` config with two ingress rules), so the checkout is
+genuinely initiated from the domain PayHere has on file.
+
+**Once `passenger-web` was actually served from a public domain, two more real, general gaps
+surfaced - neither specific to PayHere:**
+- Modern browsers block a page on a public origin from calling a `localhost` address directly
+  (Private Network Access). `passenger-web`'s API base has to be the public gateway domain
+  whenever the page itself is public - true for any future deployment, not just this tunnel.
+- `api-gateway`'s proxy forwarded the browser's original `Origin` header straight through to
+  each internal service, and `user-service` has its *own*, separately-maintained CORS allowlist
+  (deliberately narrower - "internal service, gateway owns public CORS") that the gateway's own
+  `ALLOWED_ORIGINS` fix never reaches. This silently broke every legitimate public frontend
+  origin, including the existing production Vercel deployment, not only the new tunnel domain -
+  a real, general bug, not a PayHere-specific one. Fixed at the source: the gateway now strips
+  `Origin` before proxying, since that hop is a trusted server-to-server call, not a
+  browser-originated cross-origin request the internal service needs to re-validate.
+- Vite's dev server serves dozens of individual unbundled module files; through a tunnel's added
+  round-trip latency this made first-load painfully slow and occasionally 502'd under the
+  concurrent request burst. Switched to testing against a production build (`vite preview`) for
+  anything routed through the tunnel - also just a more honest test of real behaviour.
+
+**Live-verified with a genuine, complete PayHere sandbox payment** (Playwright driving real
+Chromium against the real running stack, a real card entered on PayHere's own hosted page): real
+checkout initiation, real hash accepted, real card submitted, real `notify_url` webhook received
+and its signature verified, real database update (`Online.status = SUCCESS`), and the
+passenger-web return page correctly reaching "Payment confirmed" - the one thing that could not
+be exercised until real infrastructure existed is now the one thing directly confirmed working.
+
+**`PayHereReturnPage` relied on in-memory React state that does not survive PayHere's redirect.**
+PayHere's return is a full top-level navigation, not a client-side route change, so
+`BookingContext`'s state is gone by the time the page remounts - every real return silently
+bounced straight to My Tickets with `order_id` sitting unused in the URL. Only caught by
+completing a real redirect round trip; a mocked or client-side-only test would never have hit
+it. Fixed by parsing the ticket id out of `order_id` itself (`TICKET-<id>`), which survives the
+redirect because it is server state carried in the URL, not client state.
 
 **`passenger-web` never sent an auth token to `ticketing-service` or `core-service` at all.**
 `setup.ts` had a stale comment ("TOKEN resolvers for the other clients will be added when their

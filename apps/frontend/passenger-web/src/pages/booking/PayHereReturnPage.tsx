@@ -17,8 +17,13 @@ const MAX_POLLS = 15; // ~30s - PayHere's own callback to /notify is what actual
  * to wait for the notify_url webhook to actually land and update the ticket, since that webhook -
  * not this return - is authoritative.
  *
- * Cannot be exercised end to end without a public tunnel and real sandbox credentials (INC-013
- * open question) - built and reachable, but its actual webhook race is untested until then.
+ * Live-verified against a real sandbox payment (INC-013): PayHere's redirect back is a full
+ * top-level navigation, not a client-side route change, so BookingContext's in-memory state
+ * (including bookingResult.ticketIds) is gone by the time this page mounts - relying on it left
+ * every real return bouncing straight to /tickets with order_id sitting unused in the URL the
+ * whole time. Fixed by reading the ticket id out of order_id itself
+ * ("TICKET-<id>", set in bookTicket()), which survives the redirect because it's server state,
+ * not client state.
  */
 export default function PayHereReturnPage() {
   const navigate = useNavigate();
@@ -27,13 +32,14 @@ export default function PayHereReturnPage() {
   const [status, setStatus] = useState<"waiting" | "success" | "timeout" | "error">("waiting");
 
   const orderId = searchParams.get("order_id");
-  const ticketId = bookingResult?.ticketIds[0];
+  const ticketIdFromOrder = orderId?.match(/^TICKET-(\d+)$/)?.[1];
+  const ticketId = ticketIdFromOrder ? Number(ticketIdFromOrder) : bookingResult?.ticketIds[0];
 
   useEffect(() => {
     if (!ticketId) {
-      // A page refresh here loses the in-memory booking context - not recoverable without a
-      // server-side "look up my pending booking by order_id" endpoint, which is out of scope.
-      // My Tickets still shows the real, current state either way.
+      // No order_id at all (a passenger landing here directly, not via a real PayHere redirect)
+      // and no in-memory fallback either - nothing to poll. My Tickets shows the real, current
+      // state regardless.
       navigate("/tickets", { replace: true });
       return;
     }

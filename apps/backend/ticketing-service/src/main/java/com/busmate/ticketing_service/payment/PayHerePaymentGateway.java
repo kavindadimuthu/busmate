@@ -43,7 +43,7 @@ public class PayHerePaymentGateway implements PaymentGateway {
     @Override
     public PaymentInitiationResult initiate(PaymentInitiationRequest request) {
         String orderId = request.transactionRef();
-        String hash = hashService.generateCheckoutHash(orderId, request.amount(), CURRENCY);
+        String hash = hashService.generatePassengerCheckoutHash(orderId, request.amount(), CURRENCY);
 
         Map<String, String> fields = new LinkedHashMap<>();
         fields.put("merchant_id", properties.getMerchantId());

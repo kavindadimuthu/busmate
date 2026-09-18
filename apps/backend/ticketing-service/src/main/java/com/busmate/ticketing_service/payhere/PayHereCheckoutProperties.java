@@ -19,6 +19,14 @@ public class PayHereCheckoutProperties {
     /** Off until a human sets real sandbox credentials and confirms a live test (ADR-014). */
     private boolean enabled = false;
 
+    /**
+     * PayHere assigns a distinct Merchant Secret per registered Domain/App - the conductor
+     * mobile app's secret (PayHereProperties) will not produce a valid hash for a checkout
+     * initiated from passenger-web's own domain. Merchant ID is account-level and shared
+     * (PayHereProperties.merchantId); only the secret differs here.
+     */
+    private String merchantSecret;
+
     /** PayHere's hosted checkout page - sandbox and live have different hosts. */
     private String url = "https://sandbox.payhere.lk/pay/checkout";
 

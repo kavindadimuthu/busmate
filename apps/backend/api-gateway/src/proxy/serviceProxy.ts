@@ -23,6 +23,18 @@ export function createProxy(serviceName: string, pathFilter: string) {
     // real path. pathFilter matches without touching req.url.
     pathFilter,
     on: {
+      // The gateway is the only public-facing CORS boundary (each internal service's own CORS
+      // config is scoped to localhost/internal ports only, by design - see user-service's
+      // CorsConfig). http-proxy-middleware forwards every incoming header by default, including
+      // Origin, which made an internal service re-apply its own narrow CORS check to a request
+      // that already passed the gateway's - rejecting any real public frontend origin (this
+      // would have broken the production Vercel origin too, not just a new one - discovered
+      // while wiring in INC-013's PayHere checkout domain). The request past this point is a
+      // trusted server-to-server hop, not a browser-originated cross-origin one, so Origin has
+      // nothing left to say.
+      proxyReq: (proxyReq) => {
+        proxyReq.removeHeader('origin');
+      },
       error: (err, req, res: any) => {
         logger.error(
           { err, service: serviceName, requestId: (req as { id?: string }).id },

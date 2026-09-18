@@ -9,6 +9,16 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 4000,
+    // Vite's dev-server host check rejects any Host header it doesn't recognise, by design -
+    // needed here because a Cloudflare Tunnel forwards the real public hostname through
+    // (INC-013, so PayHere's checkout can validate the request came from a registered domain).
+    // Dev-only; production builds are served by something else entirely.
+    allowedHosts: ["busmate.site"],
+  },
+  preview: {
+    host: "::",
+    port: 4000,
+    allowedHosts: ["busmate.site"],
   },
   plugins: [
     react(),
