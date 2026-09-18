@@ -22,7 +22,10 @@ const HomePage = () => {
           <source src="/hero-bg-video.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-black/40"></div>
-        <div className="container mx-auto px-4 relative z-10">
+        {/* pt-16 clears the now-solid, fixed navbar (h-16) - before it was transparent and this
+            content sat directly underneath it, which was fine only because the nav had no
+            background of its own yet to collide with. */}
+        <div className="container mx-auto px-4 relative z-10 pt-16">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
               Your Journey Starts with

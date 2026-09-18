@@ -1,9 +1,8 @@
 import { LogOut, Menu, Ticket, User as UserIcon, X } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import busLogo from "@/assets/bus-logo.png";
-import busLogoText from "@/assets/bus-logo-text.png";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -15,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { cn } from "@/lib/utils";
 
 function initialsOf(name: string | undefined): string {
   if (!name) return "?";
@@ -26,19 +26,34 @@ function initialsOf(name: string | undefined): string {
     .join("");
 }
 
+/** A top-level nav link, solid-navbar only - no transparent/scroll-dependent state (that was
+ * the actual bug: it assumed every page had a dark hero image directly behind the bar, which
+ * was only ever true on Home and briefly on FindMyBus - everywhere else it left white text on
+ * a plain white page). Highlights the current page via aria-current, not just color. */
+function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const active = pathname === to;
+  return (
+    <Link
+      to={to}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative px-1 py-2 font-medium transition-colors rounded-md",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        active ? "text-primary" : "text-foreground/80 hover:text-primary",
+      )}
+    >
+      {children}
+      {active && <span className="absolute left-0 right-0 -bottom-[21px] h-0.5 bg-primary rounded-full" />}
+    </Link>
+  );
+}
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -48,31 +63,32 @@ const Navbar = () => {
   };
 
   return <>
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled
-        ? 'bg-white/95 backdrop-blur-sm border-b border-border shadow-card'
-        : 'bg-transparent'
-    }`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-0">
-            <div className="py-1 rounded-lg bg-gradient-primary">
-              <img src={busLogo} alt="BusMate" className="h-15 w-20 object-cover filter brightness-0 invert" />
+          <Link
+            to="/"
+            className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+          >
+            <div className="p-1.5 rounded-lg bg-gradient-primary shrink-0">
+              <img src={busLogo} alt="" className="h-6 w-6 object-contain filter brightness-0 invert" />
             </div>
-            <span className="text-2xl font-bold">
-              <img src={busLogoText} alt="BusMate" className="h-24 w-auto" />
-            </span>
+            {/* Real text, not the wordmark image asset: that PNG is a white-on-transparent
+                lockup only ever legible over a dark hero - the exact class of bug this navbar
+                redesign exists to fix, so it shouldn't reappear here for the same reason. */}
+            <span className="text-xl font-bold text-foreground tracking-tight">BusMate</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/" className={`transition-colors font-medium ${
-              isScrolled ? 'text-foreground hover:text-primary' : 'text-white hover:text-blue-100'
-            }`}>Home</Link>
-            <Link to="/findmybus" className={`transition-colors font-medium ${
-              isScrolled ? 'text-foreground hover:text-primary' : 'text-white hover:text-blue-100'
-            }`}>FindMyBus</Link>
+          <div className="hidden md:flex items-center gap-8">
+            <div className="flex items-center gap-6">
+              <NavLink to="/">Home</NavLink>
+              <NavLink to="/findmybus">FindMyBus</NavLink>
+              {isAuthenticated && <NavLink to="/tickets">My Tickets</NavLink>}
+            </div>
+
+            <div className="h-6 w-px bg-border" />
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -112,11 +128,7 @@ const Navbar = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Button
-                  asChild
-                  variant="ghost"
-                  className={isScrolled ? '' : 'text-white hover:bg-white/10 hover:text-white'}
-                >
+                <Button asChild variant="ghost">
                   <Link to="/login">Log In</Link>
                 </Button>
                 <Button asChild className="bg-gradient-primary">
@@ -128,9 +140,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className={`md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors ${
-              isScrolled ? 'text-foreground' : 'text-white'
-            }`}
+            className="md:hidden p-2 rounded-lg text-foreground hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             onClick={() => setIsMenuOpen(true)}
             aria-label="Open menu"
           >
@@ -154,11 +164,11 @@ const Navbar = () => {
           <div className="flex flex-col h-full">
             {/* Drawer Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <div className="flex items-center space-x-2">
-                <div className="p-2 rounded-lg bg-gradient-primary">
-                  <img src={busLogo} alt="BusMate" className="h-15 w-24 object-cover filter brightness-0 invert" />
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-primary">
+                  <img src={busLogo} alt="" className="h-5 w-5 object-contain filter brightness-0 invert" />
                 </div>
-                <span className="text-xl font-bold text-foreground">BusMate</span>
+                <span className="text-lg font-bold text-foreground">BusMate</span>
               </div>
               <button
                 onClick={() => setIsMenuOpen(false)}
@@ -174,14 +184,22 @@ const Navbar = () => {
               <div className="flex flex-col space-y-1">
                 <Link
                   to="/"
-                  className="px-4 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors rounded-lg font-medium"
+                  aria-current={pathname === "/" ? "page" : undefined}
+                  className={cn(
+                    "px-4 py-3 transition-colors rounded-lg font-medium",
+                    pathname === "/" ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted hover:text-primary",
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Home
                 </Link>
                 <Link
                   to="/findmybus"
-                  className="px-4 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors rounded-lg font-medium"
+                  aria-current={pathname === "/findmybus" ? "page" : undefined}
+                  className={cn(
+                    "px-4 py-3 transition-colors rounded-lg font-medium",
+                    pathname === "/findmybus" ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted hover:text-primary",
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   FindMyBus
@@ -202,14 +220,22 @@ const Navbar = () => {
                     </div>
                     <Link
                       to="/tickets"
-                      className="px-4 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors rounded-lg font-medium flex items-center gap-2"
+                      aria-current={pathname === "/tickets" ? "page" : undefined}
+                      className={cn(
+                        "px-4 py-3 transition-colors rounded-lg font-medium flex items-center gap-2",
+                        pathname === "/tickets" ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted hover:text-primary",
+                      )}
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Ticket className="h-4 w-4" /> My Tickets
                     </Link>
                     <Link
                       to="/profile"
-                      className="px-4 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors rounded-lg font-medium flex items-center gap-2"
+                      aria-current={pathname === "/profile" ? "page" : undefined}
+                      className={cn(
+                        "px-4 py-3 transition-colors rounded-lg font-medium flex items-center gap-2",
+                        pathname === "/profile" ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted hover:text-primary",
+                      )}
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <UserIcon className="h-4 w-4" /> View Profile
