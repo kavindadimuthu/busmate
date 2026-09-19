@@ -62,6 +62,8 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             r.route_through as routeThrough,
             r.route_through_sinhala as routeThroughSinhala,
             r.route_through_tamil as routeThroughTamil,
+            r.source_tier as routeSourceTier,
+            r.observed_at as routeObservedAt,
             
             -- Route Group Information
             rg.id as routeGroupId,
@@ -86,6 +88,8 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
             s.schedule_type as scheduleType,
             s.effective_start_date as scheduleStartDate,
             s.effective_end_date as scheduleEndDate,
+            s.source_tier as scheduleSourceTier,
+            s.observed_at as scheduleObservedAt,
             
             -- From Schedule Stop Information - all time types
             ss1.id as fromScheduleStopId,

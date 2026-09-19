@@ -1,6 +1,7 @@
 package com.busmate.routeschedule.network.dto.response;
 
 import com.busmate.routeschedule.shared.provenance.ProvenanceResponse;
+import com.busmate.routeschedule.shared.provenance.TrustInfo;
 
 import lombok.Data;
 import com.busmate.routeschedule.shared.dto.LocationDto;
@@ -12,6 +13,9 @@ import com.busmate.routeschedule.network.entity.Route;
 @Data
 public class RouteResponse {
     private ProvenanceResponse provenance;
+
+    /** How far a passenger should trust this route and when it was last confirmed; derived from provenance. */
+    private TrustInfo trust;
 
     private UUID id;
     private String name; // English name (primary)

@@ -17,6 +17,8 @@ public interface FindMyBusProjection {
     
     // Route Information
     UUID getRouteId();
+    com.busmate.routeschedule.shared.provenance.SourceTier getRouteSourceTier();
+    java.time.Instant getRouteObservedAt();
     String getRouteName();
     String getRouteNameSinhala();
     String getRouteNameTamil();
@@ -44,6 +46,8 @@ public interface FindMyBusProjection {
     
     // Schedule Information (nullable)
     UUID getScheduleId();
+    com.busmate.routeschedule.shared.provenance.SourceTier getScheduleSourceTier();
+    java.time.Instant getScheduleObservedAt();
     String getScheduleName();
     String getScheduleDescription();
     String getScheduleType();

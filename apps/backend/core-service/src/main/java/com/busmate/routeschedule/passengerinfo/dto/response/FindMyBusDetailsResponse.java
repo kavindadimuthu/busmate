@@ -3,6 +3,7 @@ package com.busmate.routeschedule.passengerinfo.dto.response;
 import com.busmate.routeschedule.shared.dto.LocationDto;
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.shared.enums.TimeSourceEnum;
+import com.busmate.routeschedule.shared.provenance.TrustInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -84,6 +85,9 @@ public class FindMyBusDetailsResponse {
     public static class RouteDetails {
         @Schema(description = "Route ID")
         private UUID routeId;
+        
+        @Schema(description = "How far to trust this route's data, and when it was last confirmed")
+        private TrustInfo trust;
         
         @Schema(description = "Route name in English")
         private String name;
@@ -175,6 +179,9 @@ public class FindMyBusDetailsResponse {
     public static class ScheduleDetails {
         @Schema(description = "Schedule ID")
         private UUID scheduleId;
+        
+        @Schema(description = "How far to trust this timetable, and when it was last confirmed")
+        private TrustInfo trust;
         
         @Schema(description = "Schedule name")
         private String name;
@@ -289,6 +296,12 @@ public class FindMyBusDetailsResponse {
         
         @Schema(description = "Source of resolved departure time")
         private TimeSourceEnum departureTimeSource;
+        
+        @Schema(description = "How far to trust the resolved arrival time")
+        private TrustInfo arrivalTimeTrust;
+        
+        @Schema(description = "How far to trust the resolved departure time")
+        private TrustInfo departureTimeTrust;
     }
     
     /**
@@ -449,6 +462,9 @@ public class FindMyBusDetailsResponse {
     @AllArgsConstructor
     @Schema(description = "Real-time trip information")
     public static class RealTimeInfo {
+        @Schema(description = "Always LIVE: this came from a vehicle position, with the time of the fix")
+        private TrustInfo trust;
+        
         @Schema(description = "Current latitude of the bus")
         private Double currentLatitude;
         
@@ -521,6 +537,12 @@ public class FindMyBusDetailsResponse {
         
         @Schema(description = "Source of arrival time")
         private TimeSourceEnum arrivalTimeSource;
+        
+        @Schema(description = "How far to trust the departure time")
+        private TrustInfo departureTimeTrust;
+        
+        @Schema(description = "How far to trust the arrival time")
+        private TrustInfo arrivalTimeTrust;
         
         @Schema(description = "Stop order of origin in the schedule")
         private Integer originStopOrder;

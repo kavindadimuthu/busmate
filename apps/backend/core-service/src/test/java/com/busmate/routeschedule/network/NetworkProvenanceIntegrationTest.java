@@ -1,7 +1,6 @@
 package com.busmate.routeschedule.network;
 
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -99,7 +98,7 @@ class NetworkProvenanceIntegrationTest extends AbstractPostgresIntegrationTest {
                 .andExpect(jsonPath("$.provenance.sourceTier").value("SRC_4"))
                 .andExpect(jsonPath("$.provenance.attributionLabel").value("BusMate"))
                 .andExpect(jsonPath("$.provenance.observedAt").value(notNullValue()))
-                .andExpect(jsonPath("$.provenance.attributedUserId").value(nullValue()));
+                .andExpect(jsonPath("$.provenance.attributedUserId").doesNotExist());
     }
 
     @Test
@@ -124,12 +123,14 @@ class NetworkProvenanceIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    @DisplayName("INC-027 a request cannot choose who is credited")
+    @DisplayName("INC-027 a request cannot choose who is credited, and a response never names them")
     void inc027_creditCannotBeSetByClient() throws Exception {
         mvc.perform(post("/api/stops").with(as(admin, "ADMIN")).contentType(MediaType.APPLICATION_JSON)
                         .content(stopJson("Delta", ",\"provenance\":{\"attributedUserId\":\"" + UUID.randomUUID() + "\"}")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.provenance.attributedUserId").value(nullValue()));
+                .andExpect(jsonPath("$.provenance.attributedUserId").doesNotExist());
+        assertThat(stops.findAll().stream().filter(x -> x.getName().equals("Delta")).findFirst().orElseThrow()
+                .getProvenance().getAttributedUserId()).isNull();
     }
 
     @Test

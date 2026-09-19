@@ -3,6 +3,7 @@ package com.busmate.routeschedule.network.mapper;
 import java.util.Comparator;
 
 import org.mapstruct.AfterMapping;
+import com.busmate.routeschedule.shared.provenance.TrustLabels;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -49,6 +50,11 @@ public interface RouteMapper {
      * Sorts route stops by their sequential order after the primary mapping is complete.
      * This ensures the response list is always ordered without requiring callers to sort.
      */
+    @AfterMapping
+    default void addTrust(Route entity, @MappingTarget RouteResponse response) {
+        response.setTrust(TrustLabels.recordTrust(entity.getProvenance()));
+    }
+
     @AfterMapping
     default void sortRouteStops(@MappingTarget RouteResponse response) {
         if (response.getRouteStops() != null) {

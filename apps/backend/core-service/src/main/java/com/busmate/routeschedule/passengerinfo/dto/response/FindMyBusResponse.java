@@ -3,6 +3,7 @@ package com.busmate.routeschedule.passengerinfo.dto.response;
 import com.busmate.routeschedule.shared.dto.LocationDto;
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.shared.enums.TimeSourceEnum;
+import com.busmate.routeschedule.shared.provenance.TrustInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -176,12 +177,21 @@ public class FindMyBusResponse {
         @Schema(description = "Source of departure time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)")
         private TimeSourceEnum departureAtOriginSource;
         
+        @Schema(description = "How far to trust the departure time, and when it was last confirmed")
+        private TrustInfo departureAtOriginTrust;
+        
         @JsonFormat(pattern = "HH:mm:ss")
         @Schema(description = "Arrival time at destination stop", type = "string", pattern = "HH:mm:ss")
         private LocalTime arrivalAtDestination;
         
         @Schema(description = "Source of arrival time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)")
         private TimeSourceEnum arrivalAtDestinationSource;
+        
+        @Schema(description = "How far to trust the arrival time, and when it was last confirmed")
+        private TrustInfo arrivalAtDestinationTrust;
+        
+        @Schema(description = "How far to trust this route's data, and when it was last confirmed")
+        private TrustInfo routeTrust;
         
         // ==================== Schedule Start/End Stop Information ====================
         

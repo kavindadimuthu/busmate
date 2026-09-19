@@ -32,6 +32,8 @@ import com.busmate.routeschedule.network.entity.Stop;
 import com.busmate.routeschedule.operations.entity.Trip;
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;
 import com.busmate.routeschedule.shared.enums.TimeSourceEnum;
+import com.busmate.routeschedule.shared.provenance.Provenance;
+import com.busmate.routeschedule.shared.provenance.TrustLabels;
 import com.busmate.routeschedule.passengerinfo.dto.projection.FindMyBusProjection;
 import com.busmate.routeschedule.passengerinfo.dto.projection.ScheduleStopDetailsProjection;
 import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusDetailsRequest;
@@ -298,6 +300,9 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .departureAtOriginSource(departure.source)
                 .arrivalAtDestination(arrival.time)
                 .arrivalAtDestinationSource(arrival.source)
+                .departureAtOriginTrust(TrustLabels.timeTrust(departure.source, proj.getScheduleSourceTier(), proj.getScheduleObservedAt()))
+                .arrivalAtDestinationTrust(TrustLabels.timeTrust(arrival.source, proj.getScheduleSourceTier(), proj.getScheduleObservedAt()))
+                .routeTrust(TrustLabels.recordTrust(proj.getRouteSourceTier(), proj.getRouteObservedAt()))
                 // Schedule start/end stop info
                 .scheduleStartStopDepartureTime(startStopDepartureTime)
                 .scheduleStartStopArrivalTime(startStopArrivalTime)
@@ -629,7 +634,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
 
         // Build route schedule stops (all stops with unified data)
         List<RouteScheduleStop> routeScheduleStops = scheduleStops.stream()
-                .map(proj -> buildRouteScheduleStop(proj, timePreference, request.getFromStopId(), request.getToStopId()))
+                .map(proj -> buildRouteScheduleStop(proj, timePreference, request.getFromStopId(), request.getToStopId(), schedule.getProvenance()))
                 .collect(Collectors.toList());
 
         // Get trip details if tripId provided
@@ -648,7 +653,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         ScheduleStopDetailsProjection toStopProj = scheduleStops.get(toStopIndex);
         JourneySummary journeySummary = buildJourneySummary(
                 fromStopProj, toStopProj, fromStopIndex, toStopIndex, 
-                scheduleStops.size(), timePreference, tripDetails);
+                scheduleStops.size(), timePreference, tripDetails, schedule.getProvenance());
 
         // Build route details
         RouteDetails routeDetails = buildRouteDetails(route);
@@ -697,6 +702,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
 
         return RouteDetails.builder()
                 .routeId(route.getId())
+                .trust(TrustLabels.recordTrust(route.getProvenance()))
                 .name(route.getName())
                 .nameSinhala(route.getNameSinhala())
                 .nameTamil(route.getNameTamil())
@@ -724,6 +730,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         
         return ScheduleDetails.builder()
                 .scheduleId(schedule.getId())
+                .trust(TrustLabels.recordTrust(schedule.getProvenance()))
                 .name(schedule.getName())
                 .description(schedule.getDescription())
                 .scheduleType(schedule.getScheduleType() != null ? schedule.getScheduleType().name() : null)
@@ -742,7 +749,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     private RouteScheduleStop buildRouteScheduleStop(ScheduleStopDetailsProjection proj,
                                                      TimePreferenceEnum preference,
                                                      UUID fromStopId,
-                                                     UUID toStopId) {
+                                                     UUID toStopId,
+                                                     Provenance scheduleProvenance) {
         // Build location
         LocationDto location = new LocationDto();
         location.setLatitude(proj.getStopLatitude());
@@ -811,6 +819,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .arrivalTimeSource(resolvedArrival.source)
                 .resolvedDepartureTime(resolvedDeparture.time)
                 .departureTimeSource(resolvedDeparture.source)
+                .arrivalTimeTrust(TrustLabels.timeTrust(resolvedArrival.source, scheduleProvenance))
+                .departureTimeTrust(TrustLabels.timeTrust(resolvedDeparture.source, scheduleProvenance))
                 .build();
     }
 
@@ -985,6 +995,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .build();
 
         return RealTimeInfo.builder()
+                .trust(TrustLabels.live(live.ingestedAt()))
                 .currentLatitude(live.lat())
                 .currentLongitude(live.lng())
                 .lastUpdated(live.ingestedAt().atZone(java.time.ZoneId.systemDefault()).toLocalTime())
@@ -1067,7 +1078,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                                                 int fromIndex, int toIndex,
                                                 int totalStops,
                                                 TimePreferenceEnum preference,
-                                                TripDetails tripDetails) {
+                                                TripDetails tripDetails,
+                                                Provenance scheduleProvenance) {
         // Calculate distance
         Double distance = null;
         if (fromStop.getDistanceFromStartKm() != null && toStop.getDistanceFromStartKm() != null) {
@@ -1131,6 +1143,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .departureTimeSource(departure.source)
                 .arrivalAtDestination(arrival.time)
                 .arrivalTimeSource(arrival.source)
+                .departureTimeTrust(TrustLabels.timeTrust(departure.source, scheduleProvenance))
+                .arrivalTimeTrust(TrustLabels.timeTrust(arrival.source, scheduleProvenance))
                 .estimatedDurationMinutes(durationMinutes)
                 .build();
     }
