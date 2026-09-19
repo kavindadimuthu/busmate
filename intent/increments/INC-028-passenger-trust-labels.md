@@ -84,5 +84,7 @@ show every time as if it were equally certain.
 ## Decisions
 
 - See ADR-018
+- passenger-mobile is type-checked against the workspace client but was not run on a device: the owner
+  waived that check on 2026-09-19. (It cannot run on web — `react-native-maps` is native-only.)
 - English-only labels on both apps — neither has a translation layer; decided during INC-028 because
   the server sends keys, so translating later touches only the apps.
