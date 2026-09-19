@@ -145,6 +145,18 @@ class VehicleIngestIntegrationTest extends AbstractPostgresIntegrationTest {
                 .content(objectMapper.writeValueAsString(body)));
     }
 
+    /** Same as {@link #send} but also names a trip, as a phone reporting position would. */
+    private ResultActions sendNamingTrip(String path, UUID tripId, Map<String, Object> payload) throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("deviceTimestamp", Instant.now().toString());
+        body.put("tripId", tripId.toString());
+        body.put("payload", payload);
+        return mockMvc.perform(post("/ingest/v1/" + path)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)));
+    }
+
     private Map<String, Object> alert(String code, String state, String component) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("code", code);
@@ -364,6 +376,47 @@ class VehicleIngestIntegrationTest extends AbstractPostgresIntegrationTest {
 
         assertThat(vehicleStateRepository.findById(busId)).isEmpty();
         assertThat(alertRepository.findByBusId(busId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("INC-023: naming another operator's trip cannot file vehicle health or alerts against their bus")
+    void tripHintCannotRedirectVehicleEvents() throws Exception {
+        // A device with no installed bus (a phone) names the trip of a rival operator's bus.
+        assignmentRepository.deleteAll(assignmentRepository.findAll().stream().filter(a -> a.getDeviceId().equals(deviceId)).toList());
+        UUID rivalTrip = UUID.randomUUID();
+        UUID rivalBus = UUID.randomUUID();
+        when(coreServiceClient.getTripById(rivalTrip)).thenReturn(Optional.of(
+                new CoreServiceClient.TripSummary(rivalTrip, rivalBus, java.time.LocalDate.now(), "in_transit")));
+        when(coreServiceClient.getOperatorIdForBus(rivalBus)).thenReturn(Optional.of(UUID.randomUUID()));
+
+        sendNamingTrip("vehicle-telemetry", rivalTrip, snapshot(60, 88)).andExpect(status().isAccepted());
+        sendNamingTrip("alert", rivalTrip, alert("ENGINE_OVERHEAT", "raised", null)).andExpect(status().isAccepted());
+
+        assertThat(vehicleStateRepository.findById(rivalBus)).isEmpty();
+        assertThat(alertRepository.findByBusId(rivalBus)).isEmpty();
+        org.mockito.Mockito.verify(coreServiceClient, org.mockito.Mockito.never()).getTripById(rivalTrip);
+        try (var consumer = consumerFor(vehicleTopic)) {
+            for (var record : recordsOn(consumer, vehicleTopic)) {
+                assertThat(objectMapper.readTree(record.value()).get("busId").isNull()).as("published with no bus").isTrue();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("INC-023: an installed device's vehicle events go to its own bus whatever trip it names")
+    void installedDeviceIgnoresTripHint() throws Exception {
+        UUID otherTrip = UUID.randomUUID();
+        UUID otherBus = UUID.randomUUID();
+        when(coreServiceClient.getTripById(otherTrip)).thenReturn(Optional.of(
+                new CoreServiceClient.TripSummary(otherTrip, otherBus, java.time.LocalDate.now(), "in_transit")));
+
+        sendNamingTrip("vehicle-telemetry", otherTrip, snapshot(60, 88)).andExpect(status().isAccepted());
+        sendNamingTrip("alert", otherTrip, alert("LOW_FUEL", "raised", null)).andExpect(status().isAccepted());
+
+        assertThat(vehicleStateRepository.findById(busId)).isPresent();
+        assertThat(alertRepository.findByBusId(busId)).hasSize(1);
+        assertThat(vehicleStateRepository.findById(otherBus)).isEmpty();
+        assertThat(alertRepository.findByBusId(otherBus)).isEmpty();
     }
 
     @Test

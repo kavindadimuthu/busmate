@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.UUID;
 
-/** Wire shape for {@code POST /ingest/v1/alert} (INC-023). */
+/**
+ * Wire shape for {@code POST /ingest/v1/alert} (INC-023). No trip hint, for the same reason as
+ * {@link VehicleTelemetryIngestRequest}: an alert belongs to the bus the device is installed in.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,8 +26,6 @@ public class AlertIngestRequest {
     @NotNull
     private Instant deviceTimestamp;
 
-    @Schema(description = "Active trip hint, resolved the same way a location fix's is")
-    private UUID tripId;
 
     @Valid
     @NotNull

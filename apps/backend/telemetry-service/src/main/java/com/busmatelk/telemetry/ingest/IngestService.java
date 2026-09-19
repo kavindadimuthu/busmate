@@ -194,7 +194,7 @@ public class IngestService {
      */
     public IngestAcceptedResponse ingestVehicleTelemetry(UUID deviceId, VehicleTelemetryIngestRequest request, String adapter) {
         Device device = requireDevice(deviceId);
-        BusTripResolution resolution = resolveBusAndTrip(deviceId, request.getTripId());
+        BusTripResolution resolution = resolveInstalledBus(deviceId);
         Instant now = Instant.now();
         UUID eventId = UUID.randomUUID();
 
@@ -238,7 +238,7 @@ public class IngestService {
      */
     public IngestAcceptedResponse ingestAlert(UUID deviceId, AlertIngestRequest request, String adapter) {
         Device device = requireDevice(deviceId);
-        BusTripResolution resolution = resolveBusAndTrip(deviceId, request.getTripId());
+        BusTripResolution resolution = resolveInstalledBus(deviceId);
         Instant now = Instant.now();
         UUID eventId = UUID.randomUUID();
         AlertPayload alert = request.getPayload();
@@ -263,6 +263,17 @@ public class IngestService {
             }
         }
         return IngestAcceptedResponse.builder().eventId(eventId).status("accepted").build();
+    }
+
+    /**
+     * The bus a vehicle event belongs to: only the one the device is installed in. Unlike a location
+     * fix, a vehicle event never takes its bus from a trip hint the device sends. A trip hint exists
+     * so a phone can report position for whichever bus it rides, but a phone has no engine data; and
+     * honouring it here would let any device — including any conductor's self-provisioned app — file
+     * vehicle health or a critical alert against another operator's bus just by naming its trip.
+     */
+    private BusTripResolution resolveInstalledBus(UUID deviceId) {
+        return resolveBusAndTrip(deviceId, null);
     }
 
     /** Null when core-service cannot say — the row is stored untagged rather than the event dropped. */

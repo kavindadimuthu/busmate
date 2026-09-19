@@ -35,6 +35,10 @@ Direction in [ADR-015](../decisions/ADR-015-vehicle-health-is-its-own-staff-scop
   to filter.
 - **Ingest accepts them on both transports.** `POST /ingest/v1/vehicle-telemetry` and `/alert`, and the
   matching MQTT event types, through the existing validation, enrichment and dead-letter path.
+- **Vehicle events belong to the bus the device is installed in.** A location fix may name a trip so a
+  phone can report for whichever bus it rides; a vehicle event may not, because a phone has no engine
+  data and honouring the hint would let any device, including any conductor's self-provisioned app,
+  file health or a critical alert against another operator's bus. Found in pre-review; fixed here.
 - **The device owns its alerts.** An alert event is `raised` or `cleared`; the platform does not derive
   clearance from later snapshots, so real hardware and the simulator behave identically.
 - **Latest state stored per bus, tagged with its operator.** A new Flyway migration adds a table
@@ -55,6 +59,8 @@ Direction in [ADR-015](../decisions/ADR-015-vehicle-health-is-its-own-staff-scop
       appears on `iot.telemetry.v1` or the gateway's live stream.
 - [x] The latest vehicle state per bus is stored, with the bus's operator, and an alert clears only
       when the device says so.
+- [x] A vehicle event is filed only against the bus its device is installed in; naming a trip can
+      neither move it to another bus nor attach it to one when the device has none.
 - [x] An event for a bus whose operator cannot be resolved is still accepted and stored, untagged.
 - [x] The published schemas, valid and invalid examples and their validation tests are updated.
 - [x] Tests named INC-023 cover the above against real Postgres and a real broker.

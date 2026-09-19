@@ -10,12 +10,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Wire shape for {@code POST /ingest/v1/vehicle-telemetry}. Like {@link DeviceStatusIngestRequest}
  * it carries no {@code sequenceNo}: the per-device counter is shared with location events, and a
  * snapshot that arrived late is handled by its device timestamp instead.
+ *
+ * <p>Deliberately no trip hint: vehicle health belongs to the bus the device is installed in, never
+ * to a bus the device names (see {@code IngestService.resolveInstalledBus}). A client that still
+ * sends {@code tripId} is not rejected; the field is simply not read.
  */
 @Getter
 @Setter
@@ -28,8 +31,6 @@ public class VehicleTelemetryIngestRequest {
     @NotNull
     private Instant deviceTimestamp;
 
-    @Schema(description = "Active trip hint, resolved the same way a location fix's is")
-    private UUID tripId;
 
     @Valid
     @NotNull
