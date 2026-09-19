@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { SimRoute } from '../core/route.ts';
 import type { DriverProfileId, FaultId, TyrePosition, VehicleState } from '../core/types.ts';
-import { PLAYBACK_SPEEDS, type ConsoleState, type LogEntry, type PlatformView, type SessionInfo } from '../shared/protocol.ts';
+import { compareVehicle, type AlertRef } from '../shared/compareVehicle.ts';
+import { PLAYBACK_SPEEDS, type ConsoleState, type LogEntry, type PlatformView, type PlatformVehicleData, type SessionInfo } from '../shared/protocol.ts';
 import { useSimulator, type SimulatorFeed } from './useSimulator.ts';
 
 /** A platform fix older than this while the bus is reporting reads as stale. */
@@ -50,6 +51,10 @@ export function App() {
           <Warnings v={state.vehicle} />
           <h2 className="sub">Event log</h2>
           <Log entries={feed.log} />
+        </section>
+        <section className="panel">
+          <h2>Vehicle health · bus vs platform</h2>
+          <PlatformVehicle state={state} />
         </section>
       </div>
     </main>
@@ -403,5 +408,76 @@ function Log({ entries }: { entries: LogEntry[] }) {
         ))}
       </div>
     </>
+  );
+}
+
+// --- platform's vehicle view (INC-026) -------------------------------------------------------
+
+const alertLabel = (a: AlertRef) => `${a.code}${a.component ? ` (${a.component})` : ''}`;
+
+function PlatformVehicle({ state }: { state: ConsoleState }) {
+  const now = useNow();
+  const { vehicle: view } = state.platform;
+  const bus = state.vehicle;
+  const comparison = compareVehicle(bus, view.data, now);
+
+  if (view.state === 'disabled') {
+    return <p className="muted">Off: reading the platform needs the staff sign-in, which is disabled (<code>--no-stream</code>).</p>;
+  }
+
+  const verdict = view.data == null
+    ? { text: 'waiting for the platform', tone: '' }
+    : comparison.stale ? { text: 'platform copy is stale', tone: 'bad' }
+    : comparison.missingOnPlatform.length || comparison.staleOnPlatform.length ? { text: 'alerts differ', tone: 'bad' }
+    : { text: 'in sync', tone: 'ok' };
+
+  return (
+    <div className="stack">
+      <div className="row">
+        <span className={`pill ${verdict.tone}`}>{verdict.text}</span>
+        {comparison.ageS != null && <span className="muted">platform copy is {Math.round(comparison.ageS)} s old</span>}
+      </div>
+      {view.state === 'error' && <p className="error">{view.error}</p>}
+      {view.data && <ReadingsTable bus={bus} platform={view.data} />}
+      <div>
+        <span className="label">Alerts the platform holds</span>
+        <p className="muted">
+          {view.data ? (view.data.activeAlerts.length ? view.data.activeAlerts.map((a) => alertLabel({ code: a.code, component: a.component })).join(', ') : 'none') : '—'}
+        </p>
+        {comparison.missingOnPlatform.length > 0 && (
+          <p className="error">Missing on platform: {comparison.missingOnPlatform.map(alertLabel).join(', ')}</p>
+        )}
+        {comparison.staleOnPlatform.length > 0 && (
+          <p className="error">Still on platform, cleared on the bus: {comparison.staleOnPlatform.map(alertLabel).join(', ')}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReadingsTable({ bus, platform }: { bus: ConsoleState['vehicle']; platform: PlatformVehicleData }) {
+  const snap = platform.snapshot;
+  const platformTyre = (position: string) => snap.tyres?.find((t) => t.position === position)?.pressureKpa;
+  const fmt = (v: number | undefined, digits = 0) => (v == null ? '—' : v.toFixed(digits));
+  const rows: Array<[string, string, string]> = [
+    ['Fuel %', bus.fuel.levelPct.toFixed(1), fmt(snap.fuel?.levelPct, 1)],
+    ['Coolant °C', bus.engine.coolantTempC.toFixed(0), fmt(snap.engine?.coolantTempC)],
+    ['Odometer km', bus.motion.odometerKm.toFixed(1), fmt(snap.odometerKm, 1)],
+    ['Passengers', String(bus.cabin.passengers), fmt(snap.cabin?.passengers)],
+    ...bus.tyres.map((t): [string, string, string] => [`Tyre ${t.position} kPa`, t.pressureKpa.toFixed(0), fmt(platformTyre(t.position))]),
+  ];
+  return (
+    <div className="cmp" role="table" aria-label="Bus and platform readings">
+      <span className="cmp-head">Reading</span>
+      <span className="cmp-head">Bus</span>
+      <span className="cmp-head">Platform</span>
+      {rows.map(([label, busValue, platformValue]) => (
+        <div className="cmp-row" role="row" key={label}>
+          <span className="muted">{label}</span>
+          <span>{busValue}</span>
+          <span>{platformValue}</span>
+        </div>
+      ))}
+    </div>
   );
 }

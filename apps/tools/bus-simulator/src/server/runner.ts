@@ -11,6 +11,7 @@ import {
 import { DEMO_DEVICES, publicDeviceInfo, type DeviceCredential } from './devices.ts';
 import type { GatewayClient } from './gateway.ts';
 import { PlatformWatcher } from './platformWatcher.ts';
+import { VehiclePoller } from './vehiclePoller.ts';
 import { Publisher, type PublisherEvent } from './publisher.ts';
 
 const TICK_MS = 100;
@@ -39,6 +40,7 @@ export interface RunnerListener {
 export class Runner {
   private readonly gateway: GatewayClient;
   private readonly watcher: PlatformWatcher;
+  private readonly poller: VehiclePoller;
   private readonly listeners = new Set<RunnerListener>();
   private readonly logEntries: LogEntry[] = [];
   private nextLogId = 1;
@@ -63,12 +65,22 @@ export class Runner {
     this.gateway = options.gateway;
     this.playback = options.playback;
     this.watcher = new PlatformWatcher(options.gateway, options.streamCredentials, '', (m) => this.log('platform', m));
+    const credentials = options.streamCredentials;
+    // Reading vehicle health needs the same staff sign-in as the live stream, so both stand or fall together.
+    this.poller = new VehiclePoller(
+      {
+        login: () => options.gateway.login(credentials!.email, credentials!.password),
+        getVehicleState: (token, busId) => options.gateway.getVehicleState(token, busId),
+      },
+      credentials != null,
+    );
   }
 
   static async create(options: RunnerOptions): Promise<Runner> {
     const runner = new Runner(options);
     await runner.setup({ routeId: options.routeId, deviceSerial: options.deviceSerial, seed: options.seed });
     runner.watcher.start();
+    runner.poller.start();
     return runner;
   }
 
@@ -80,6 +92,7 @@ export class Runner {
   stop(): void {
     if (this.timer) clearInterval(this.timer);
     this.watcher.stop();
+    this.poller.stop();
   }
 
   /**
@@ -99,6 +112,7 @@ export class Runner {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     this.watcher.stop();
+    this.poller.stop();
   }
 
   subscribe(listener: RunnerListener): () => void {
@@ -180,6 +194,7 @@ export class Runner {
     this.seed = seed;
     this.owedSimS = 0;
     this.lastWarnings.clear();
+    this.poller.watchBus(device.busId);
     if (this.device?.serial !== device.serial || !this.publisher) {
       this.device = device;
       this.publisher = new Publisher(this.gateway, device.token, (e) => this.onPublish(e));
@@ -250,7 +265,7 @@ export class Runner {
       clock: { paused: this.paused, playback: this.playback },
       vehicle: this.sim.snapshot(),
       publisher: this.publisher.snapshot(),
-      platform: this.watcher.snapshot(),
+      platform: { ...this.watcher.snapshot(), vehicle: this.poller.snapshot() },
     };
   }
 

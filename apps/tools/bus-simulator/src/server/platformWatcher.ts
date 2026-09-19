@@ -1,5 +1,5 @@
 import type { PlatformView } from '../shared/protocol.ts';
-import { HttpError, type GatewayClient } from './gateway.ts';
+import { HttpError, toIso, type GatewayClient } from './gateway.ts';
 
 const RETRY_MS = 5_000;
 const UNAUTHORIZED_RETRY_MS = 30_000;
@@ -21,14 +21,8 @@ interface StreamDeviceStatus {
   ingestedAt: string | number;
 }
 
-/**
- * The gateway's stream types these fields as ISO strings, but telemetry-service's Kafka serializer
- * writes instants as epoch seconds, and the gateway forwards them untouched. Accept both.
- */
-function toIso(value: string | number | null): string | null {
-  if (value == null) return null;
-  return typeof value === 'number' ? new Date(value * 1000).toISOString() : value;
-}
+/** The live-stream half of what the platform believes; vehicle health is read separately (INC-026). */
+export type WatcherView = Omit<PlatformView, 'vehicle'>;
 
 /**
  * The platform's side of the comparison: watches api-gateway's live stream (the same feed the MOT
@@ -42,7 +36,7 @@ export class PlatformWatcher {
   private deviceId: string;
   private abort: AbortController | null = null;
   private stopped = false;
-  private view: PlatformView;
+  private view: WatcherView;
 
   constructor(
     gateway: GatewayClient,
@@ -72,7 +66,7 @@ export class PlatformWatcher {
     this.view = { ...this.view, bus: null, deviceStatus: null };
   }
 
-  snapshot(): PlatformView {
+  snapshot(): WatcherView {
     return { ...this.view };
   }
 

@@ -51,8 +51,13 @@ pnpm --filter @busmate/bus-simulator typecheck
   and the platform never clears them for it. Switching bus or route, or stopping the simulator
   (Ctrl+C), clears what the bus had raised first. A process that is killed outright cannot, and leaves
   its alerts active on the platform until that bus reports again.
-- **Not readable back yet.** The platform stores the vehicle state but has no read path for it until
-  INC-024, so the console shows what was sent and whether it was accepted, not what the platform holds.
+- **Read back through the gateway.** The console's "Vehicle health · bus vs platform" panel polls
+  `GET /api/vehicles/{busId}/state` (INC-024's read path) as the dev-seed staff account and compares it
+  with the bus: how old the platform's copy is, which alerts the bus holds that the platform lacks, and
+  which the platform still holds after the bus cleared them. Readings are shown side by side but not
+  judged — the platform only receives a snapshot every couple of seconds, so at fast playback it is
+  legitimately far behind. It needs the same staff sign-in as the live stream, so `--no-stream` turns
+  both off, and it needs a telemetry-service and gateway that include INC-024.
 - **Straight-line legs.** core-service holds ordered stops with coordinates but no road geometry, so
   the bus cuts corners between stops.
 - **Playback above 1×** speeds the model up, not the reporting: the platform receives at most one

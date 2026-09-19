@@ -107,6 +107,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
 .entry.flagged .kind, .entry.warning .kind { color: var(--warn); }
 .entry.platform .kind { color: var(--platform); }
 .entry.command .kind { color: var(--accent); }
+.cmp { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2px 10px; font-variant-numeric: tabular-nums; font-size: 13px; }
+.cmp-head { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.cmp-row { display: contents; }
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
   .span2 { grid-column: auto; }

@@ -60,11 +60,52 @@ export interface PlatformBusView {
   receivedAt: string;
 }
 
+/** An alert the platform currently holds raised for the bus. */
+export interface PlatformAlert {
+  code: string;
+  /** The tyre, for a per-tyre alert; null when the alert has no component. */
+  component: string | null;
+  severity: string;
+  message: string | null;
+  raisedAt: string | null;
+}
+
+/** Subset of the platform's snapshot the console compares; the platform stores the payload as sent. */
+export interface PlatformSnapshot {
+  ignition?: boolean;
+  odometerKm?: number;
+  engine?: { running?: boolean; rpm?: number; coolantTempC?: number; derated?: boolean };
+  fuel?: { levelPct?: number; levelL?: number };
+  tyres?: Array<{ position: string; pressureKpa?: number; tempC?: number }>;
+  cabin?: { passengers?: number; doorsOpen?: boolean };
+}
+
+/** What the platform holds about one bus's vehicle health, as read back through the gateway. */
+export interface PlatformVehicleData {
+  operatorId: string | null;
+  /** When the device says the snapshot was taken. */
+  deviceTimestamp: string | null;
+  ingestedAt: string | null;
+  snapshot: PlatformSnapshot;
+  activeAlerts: PlatformAlert[];
+  /** When this simulator last read it. */
+  receivedAt: string;
+}
+
+export interface PlatformVehicleView {
+  /** `waiting`: the platform has no state for this bus yet. `disabled`: no staff sign-in to read with. */
+  state: 'disabled' | 'waiting' | 'ok' | 'error';
+  error: string | null;
+  data: PlatformVehicleData | null;
+}
+
 export interface PlatformView {
   state: 'disabled' | 'connecting' | 'connected' | 'unauthorized' | 'error';
   error: string | null;
   bus: PlatformBusView | null;
   deviceStatus: { status: string; ingestedAt: string } | null;
+  /** Vehicle health as the platform holds it (INC-026). */
+  vehicle: PlatformVehicleView;
 }
 
 export interface ConsoleState {
