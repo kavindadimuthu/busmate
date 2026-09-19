@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { ScheduleCalendarInfo } from './ScheduleCalendarInfo';
 import type { ScheduleExceptionInfo } from './ScheduleExceptionInfo';
+import type { TrustInfo } from './TrustInfo';
 /**
  * Detailed schedule information
  */
@@ -12,6 +13,10 @@ export type ScheduleDetails = {
      * Schedule ID
      */
     scheduleId?: string;
+    /**
+     * How far to trust this timetable, and when it was last confirmed
+     */
+    trust?: TrustInfo;
     /**
      * Schedule name
      */

@@ -120,6 +120,7 @@ export type { TripFilterOptionsResponse } from './models/TripFilterOptionsRespon
 export { TripRequest } from './models/TripRequest';
 export type { TripResponse } from './models/TripResponse';
 export type { TripStatisticsResponse } from './models/TripStatisticsResponse';
+export { TrustInfo } from './models/TrustInfo';
 export type { UpdateMetadata } from './models/UpdateMetadata';
 export type { UpdateResult } from './models/UpdateResult';
 export type { UpdateSummary } from './models/UpdateSummary';

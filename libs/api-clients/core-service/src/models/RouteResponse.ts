@@ -5,8 +5,10 @@
 import type { LocationDto } from './LocationDto';
 import type { ProvenanceResponse } from './ProvenanceResponse';
 import type { RouteStopResponse } from './RouteStopResponse';
+import type { TrustInfo } from './TrustInfo';
 export type RouteResponse = {
     provenance?: ProvenanceResponse;
+    trust?: TrustInfo;
     id?: string;
     name?: string;
     nameSinhala?: string;

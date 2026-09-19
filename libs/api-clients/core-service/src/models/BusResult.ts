@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { TrustInfo } from './TrustInfo';
 /**
  * Individual bus/route result with schedule and trip information
  */
@@ -99,6 +100,10 @@ export type BusResult = {
      */
     departureAtOriginSource?: BusResult.departureAtOriginSource;
     /**
+     * How far to trust the departure time, and when it was last confirmed
+     */
+    departureAtOriginTrust?: TrustInfo;
+    /**
      * Arrival time at destination stop
      */
     arrivalAtDestination?: string;
@@ -106,6 +111,14 @@ export type BusResult = {
      * Source of arrival time (VERIFIED, UNVERIFIED, CALCULATED, UNAVAILABLE)
      */
     arrivalAtDestinationSource?: BusResult.arrivalAtDestinationSource;
+    /**
+     * How far to trust the arrival time, and when it was last confirmed
+     */
+    arrivalAtDestinationTrust?: TrustInfo;
+    /**
+     * How far to trust this route's data, and when it was last confirmed
+     */
+    routeTrust?: TrustInfo;
     /**
      * Departure time at schedule's first stop
      */

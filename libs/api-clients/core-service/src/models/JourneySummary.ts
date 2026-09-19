@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { StopInfo } from './StopInfo';
+import type { TrustInfo } from './TrustInfo';
 /**
  * Summary of the journey between origin and destination
  */
@@ -43,6 +44,14 @@ export type JourneySummary = {
      * Source of arrival time
      */
     arrivalTimeSource?: JourneySummary.arrivalTimeSource;
+    /**
+     * How far to trust the departure time
+     */
+    departureTimeTrust?: TrustInfo;
+    /**
+     * How far to trust the arrival time
+     */
+    arrivalTimeTrust?: TrustInfo;
     /**
      * Stop order of origin in the schedule
      */

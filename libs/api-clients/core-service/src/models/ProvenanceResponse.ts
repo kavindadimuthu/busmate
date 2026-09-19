@@ -6,7 +6,6 @@ export type ProvenanceResponse = {
     sourceTier?: ProvenanceResponse.sourceTier;
     observedAt?: string;
     baseConfidence?: number;
-    attributedUserId?: string;
     attributionLabel?: string;
 };
 export namespace ProvenanceResponse {

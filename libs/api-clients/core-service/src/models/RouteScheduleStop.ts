@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { StopInfo } from './StopInfo';
+import type { TrustInfo } from './TrustInfo';
 /**
  * Unified stop information combining route stop, schedule stop, and stop metadata
  */
@@ -87,6 +88,14 @@ export type RouteScheduleStop = {
      * Source of resolved departure time
      */
     departureTimeSource?: RouteScheduleStop.departureTimeSource;
+    /**
+     * How far to trust the resolved arrival time
+     */
+    arrivalTimeTrust?: TrustInfo;
+    /**
+     * How far to trust the resolved departure time
+     */
+    departureTimeTrust?: TrustInfo;
 };
 export namespace RouteScheduleStop {
     /**

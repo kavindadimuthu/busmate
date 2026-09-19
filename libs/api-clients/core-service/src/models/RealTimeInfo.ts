@@ -4,10 +4,15 @@
 /* eslint-disable */
 import type { LocalTime } from './LocalTime';
 import type { StopInfo } from './StopInfo';
+import type { TrustInfo } from './TrustInfo';
 /**
  * Real-time trip information
  */
 export type RealTimeInfo = {
+    /**
+     * Always LIVE: this came from a vehicle position, with the time of the fix
+     */
+    trust?: TrustInfo;
     /**
      * Current latitude of the bus
      */

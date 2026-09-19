@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { RouteGroupInfo } from './RouteGroupInfo';
 import type { StopInfo } from './StopInfo';
+import type { TrustInfo } from './TrustInfo';
 /**
  * Detailed route information
  */
@@ -12,6 +13,10 @@ export type RouteDetails = {
      * Route ID
      */
     routeId?: string;
+    /**
+     * How far to trust this route's data, and when it was last confirmed
+     */
+    trust?: TrustInfo;
     /**
      * Route name in English
      */
