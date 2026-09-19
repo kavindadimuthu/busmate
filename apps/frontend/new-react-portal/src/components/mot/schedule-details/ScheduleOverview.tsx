@@ -14,6 +14,7 @@ import {
   Users
 } from 'lucide-react';
 import { ScheduleResponse, RouteResponse } from '@busmate/api-client-core';
+import { ProvenanceInline } from '@/components/shared/provenance/ProvenanceBadge';
 
 interface ScheduleOverviewProps {
   schedule: ScheduleResponse;
@@ -244,6 +245,12 @@ export function ScheduleOverview({ schedule, route, tripsCount = 0 }: ScheduleOv
           </div>
         </div>
       </div>
+
+      {schedule.provenance && (
+        <div className="px-6 py-4 border-t border-border text-sm text-muted-foreground">
+          <ProvenanceInline provenance={schedule.provenance} />
+        </div>
+      )}
 
       {/* Additional Notes or Metadata */}
       {(schedule.createdAt || schedule.updatedAt) && (

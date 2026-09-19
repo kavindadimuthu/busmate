@@ -11,6 +11,7 @@ import {
   Route as RouteIcon,
 } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
+import { ProvenanceBadge } from "@/components/shared/provenance/ProvenanceBadge";
 
 function formatDate(dateString?: string): string {
   if (!dateString) return "—";
@@ -120,6 +121,12 @@ export const schedulesColumns: ColumnDef<any>[] = [
         </span>
       );
     },
+  },
+  {
+    id: "source",
+    header: "Source",
+    hideBelow: "md",
+    cell: ({ row }) => <ProvenanceBadge provenance={row.provenance} />,
   },
   {
     id: "operatingDays",

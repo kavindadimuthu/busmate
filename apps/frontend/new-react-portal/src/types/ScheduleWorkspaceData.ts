@@ -105,6 +105,8 @@ export interface Schedule {
   status: ScheduleStatusEnum;
   description?: string;
   generateTrips?: boolean;
+  /** MOT only: where this schedule came from; unset keeps the default (create) or current (edit) source. */
+  sourceTier?: 'SRC_1' | 'SRC_2' | 'SRC_3' | 'SRC_4';
   scheduleStops: ScheduleStop[];
   calendar: ScheduleCalendar;
   exceptions: ScheduleException[];
@@ -333,6 +335,7 @@ export function scheduleToApiRequest(schedule: Schedule): {
   status?: 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'CANCELLED';
   description?: string;
   generateTrips?: boolean;
+  sourceTier?: 'SRC_1' | 'SRC_2' | 'SRC_3' | 'SRC_4';
   scheduleStops?: {
     id?: string;
     stopId: string;
@@ -382,6 +385,7 @@ export function scheduleToApiRequest(schedule: Schedule): {
     status: schedule.status,
     description: schedule.description || undefined,
     generateTrips: schedule.generateTrips,
+    sourceTier: schedule.sourceTier,
     scheduleStops: allScheduleStops,
     calendar: schedule.calendar,
     exceptions: schedule.exceptions.map(exc => ({

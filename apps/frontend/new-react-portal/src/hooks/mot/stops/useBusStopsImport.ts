@@ -52,7 +52,7 @@ export function useBusStopsImport() {
             const csvContent = [headers, ...rows].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const defaultCountry = options?.defaultCountry || 'Sri Lanka';
-            return await BusStopManagementService.importStops(defaultCountry, { file: blob });
+            return await BusStopManagementService.importStops(defaultCountry, options?.sourceTier, { file: blob });
         } catch (error) {
             console.error('Bus stops import error:', error);
             throw error;

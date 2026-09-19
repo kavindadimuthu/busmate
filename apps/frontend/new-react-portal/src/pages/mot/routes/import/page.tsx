@@ -2,21 +2,27 @@
 
 import { CSVEditor, ROUTE_VALIDATION_RULES } from '@/components/tools/csv-editor';
 import { useRoutesImport } from '@/hooks/mot/routes/useRoutesImport';
+import { SourceTierSelect } from '@/components/shared/provenance/SourceTierSelect';
+import type { SourceTierKey } from '@/lib/provenance';
+import { useState } from 'react';
 
 function RoutesImportPage() {
     const {
         handleImport, handleImportComplete, handleImportError,
         handleTemplateDownload, importOptions,
     } = useRoutesImport();
+    // MOT only; undefined records the default source (field observation).
+    const [sourceTier, setSourceTier] = useState<SourceTierKey | undefined>(undefined);
 
     return (
         <div className="p-0 mx-auto">
+            <SourceTierSelect className="mb-4 max-w-md" value={sourceTier} onChange={setSourceTier} />
             <CSVEditor
                 onImport={handleImport}
                 onImportComplete={handleImportComplete}
                 onImportError={handleImportError}
                 templateDownloadFn={handleTemplateDownload}
-                importOptions={importOptions}
+                importOptions={{ ...importOptions, sourceTier }}
                 validationRules={ROUTE_VALIDATION_RULES}
                 maxRows={5000}
                 maxFileSize={5 * 1024 * 1024}

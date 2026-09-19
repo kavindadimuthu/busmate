@@ -1,12 +1,14 @@
 'use client';
 
 import { Suspense } from 'react';
+import { useParams } from '@/lib/router';
 import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { useBusStopDetails } from '@/hooks/mot/stops/useBusStopDetails';
 import BusStopBasicInfo from '@/components/mot/stops/BusStopBasicInfo';
 import BusStopLocationDetails from '@/components/mot/stops/BusStopLocationDetails';
 import BusStopMapSection from '@/components/mot/stops/BusStopMapSection';
 import BusStopSystemInfo from '@/components/mot/stops/BusStopSystemInfo';
+import { ProvenanceDetails } from '@/components/shared/provenance/ProvenanceDetails';
 import DeleteBusStopModal from '@/components/mot/stops/DeleteBusStopModal';
 
 interface BusStopDetailsPageProps {
@@ -62,6 +64,7 @@ function BusStopDetailsContent({ params }: BusStopDetailsPageProps) {
         </div>
         <div className="space-y-6">
           {hasCoordinates && <BusStopMapSection busStop={busStop} copiedField={copiedField} onCopy={copyToClipboard} onOpenInMaps={openInMaps} />}
+          <ProvenanceDetails provenance={busStop.provenance} />
           <BusStopSystemInfo busStop={busStop} formatDate={formatDate} />
         </div>
       </div>
@@ -70,7 +73,9 @@ function BusStopDetailsContent({ params }: BusStopDetailsPageProps) {
   );
 }
 
-export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) {
+// The router renders pages without props, so the id comes from the URL, not a Next-style `params` prop.
+export default function BusStopDetailsPage() {
+  const params = useParams() as BusStopDetailsPageProps['params'];
   return (
     <Suspense fallback={<div className="flex items-center justify-center h-64">Loading...</div>}>
       <BusStopDetailsContent params={params} />

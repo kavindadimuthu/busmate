@@ -75,6 +75,7 @@ export function useRoutesImport() {
         importOptions.validateCoordinates,
         importOptions.continueOnError,
         importOptions.defaultRoadType,
+        importOptions.sourceTier,
         { file: blob }
       );
 

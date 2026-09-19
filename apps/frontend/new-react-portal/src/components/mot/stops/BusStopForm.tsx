@@ -17,6 +17,8 @@ import {
 import { StopRequest, StopResponse, LocationDto, BusStopManagementService } from '@busmate/api-client-core';
 import { useToast } from '@/hooks/use-toast';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
+import { SourceTierSelect } from '@/components/shared/provenance/SourceTierSelect';
+import type { SourceTierKey } from '@/lib/provenance';
 
 interface BusStopFormProps {
   busStopId?: string;
@@ -354,6 +356,8 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  // Only MOT sees the selector; undefined means "default on create, keep current on edit".
+  const [sourceTier, setSourceTier] = useState<SourceTierKey | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!busStopId);
   const [isDirty, setIsDirty] = useState(false);
@@ -526,6 +530,7 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
           countryTamil: formData.location.countryTamil?.trim() || undefined,
         },
         isAccessible: formData.isAccessible,
+        sourceTier: sourceTier as StopRequest['sourceTier'],
       };
 
       let result: StopResponse | undefined;
@@ -641,6 +646,8 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
               <span className="ml-2 text-sm text-foreground/80">This bus stop is wheelchair accessible</span>
             </label>
           </div>
+
+          <SourceTierSelect className="md:col-span-2" value={sourceTier} onChange={setSourceTier} isEdit={isEditMode} />
         </div>
       </div>
 

@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@busmate/ui';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
+import { SourceTierSelect } from '@/components/shared/provenance/SourceTierSelect';
+import type { SourceTierKey } from '@/lib/provenance';
 import { 
   searchAllStopsExistence, 
   applyBulkSearchResultsToRouteStops,
@@ -87,6 +89,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
   // where state might be stale inside async callbacks).
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submissionIdRef = useRef<string | null>(null);
+  // MOT only: undefined means "default on create, keep current on edit".
+  const [sourceTier, setSourceTier] = useState<SourceTierKey | undefined>(undefined);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -96,6 +100,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       // Reset idempotency guards so the modal is ready for the next open
       setIsSubmitting(false);
       submissionIdRef.current = null;
+      setSourceTier(undefined);
     }
   }, [isOpen]);
 
@@ -619,6 +624,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         nameSinhala: routeGroup.nameSinhala,
         nameTamil: routeGroup.nameTamil,
         description: routeGroup.description,
+        sourceTier: sourceTier as RouteGroupRequest['sourceTier'],
         routes: validatedRoutes.map(route => {
           const routeStopsWithIds = route.routeStops.map((routeStop, index) => ({
             id: routeStop.id, // Include route stop ID for updates
@@ -707,7 +713,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       }));
       return false;
     }
-  }, [data.routeGroup, mode, routeGroupId]);
+  }, [data.routeGroup, mode, routeGroupId, sourceTier]);
 
   // Main submission flow
   const handleProceed = useCallback(async () => {
@@ -894,6 +900,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
               </div>
             </div>
           )}
+
+          <SourceTierSelect className="mt-4" value={sourceTier} onChange={setSourceTier} isEdit={mode === 'edit'} />
 
           <div className={`mt-4 p-4 border rounded-lg ${mode === 'edit' ? 'bg-warning/10 border-warning/20' : 'bg-primary/10 border-primary/20'}`}>
             <div className="flex gap-3">

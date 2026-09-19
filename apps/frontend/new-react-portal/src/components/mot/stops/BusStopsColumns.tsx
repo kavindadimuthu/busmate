@@ -4,6 +4,7 @@ import * as React from "react";
 import { MapPin, Navigation2, CheckCircle2, XCircle } from "lucide-react";
 import type { ColumnDef } from "@busmate/ui";
 import type { StopResponse } from "@busmate/api-client-core";
+import { ProvenanceBadge } from "@/components/shared/provenance/ProvenanceBadge";
 
 // ── Helpers ───────────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ export const busStopsColumns: ColumnDef<StopResponse>[] = [
     cell: ({ row }) =>
       row.description ? (
         <p
-          className="text-sm text-muted-foreground truncate max-w-[200px]"
+          className="text-sm text-muted-foreground truncate max-w-[140px]"
           title={row.description}
         >
           {row.description}
@@ -129,5 +130,11 @@ export const busStopsColumns: ColumnDef<StopResponse>[] = [
         {formatDate(row.createdAt)}
       </span>
     ),
+  },
+  {
+    id: "source",
+    header: "Source",
+    hideBelow: "md",
+    cell: ({ row }) => <ProvenanceBadge provenance={row.provenance} />,
   },
 ];

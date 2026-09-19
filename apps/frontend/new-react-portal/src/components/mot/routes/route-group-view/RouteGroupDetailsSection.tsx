@@ -7,6 +7,7 @@ import {
   User,
 } from 'lucide-react';
 import type { RouteGroupResponse } from '@busmate/api-client-core';
+import { ProvenanceInline } from '@/components/shared/provenance/ProvenanceBadge';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ export function RouteGroupDetailsSection({ routeGroup }: RouteGroupDetailsSectio
         {/* Inline metadata footer */}
         <div className="mt-3 pt-3 border-t border-border/50">
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <ProvenanceInline provenance={routeGroup.provenance} />
             {routeGroup.createdAt && (
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 text-muted-foreground/70" />

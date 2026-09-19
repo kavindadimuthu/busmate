@@ -1,6 +1,7 @@
 'use client';
 
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
+import { SourceTierSelect } from '@/components/shared/provenance/SourceTierSelect';
 import { ScheduleTypeEnum, ScheduleStatusEnum, ScheduleCalendar } from '@/types/ScheduleWorkspaceData';
 
 export default function ScheduleMetadata() {
@@ -127,6 +128,13 @@ export default function ScheduleMetadata() {
                             placeholder="Optional description"
                         />
                     </div>
+                    {/* Data source (MOT only) */}
+                    <SourceTierSelect
+                        className="flex flex-col flex-1"
+                        value={activeSchedule.sourceTier}
+                        onChange={(tier) => updateActiveSchedule({ sourceTier: tier as 'SRC_1' | 'SRC_2' | 'SRC_3' | 'SRC_4' | undefined })}
+                        isEdit={!!activeSchedule.id}
+                    />
                 </div>
                 {/* Third row: Operating Days with quick actions */}
                 <div className="flex flex-col">

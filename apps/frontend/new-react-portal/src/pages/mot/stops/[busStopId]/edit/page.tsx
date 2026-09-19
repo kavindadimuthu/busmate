@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import { useParams } from '@/lib/router';
 import BusStopForm from '@/components/mot/stops/BusStopForm';
 import { useEditBusStop } from '@/hooks/mot/stops/useEditBusStop';
 
@@ -39,7 +40,9 @@ function EditBusStopContent({ params }: EditBusStopPageProps) {
   );
 }
 
-export default function EditBusStopPage({ params }: EditBusStopPageProps) {
+// The router renders pages without props, so the id comes from the URL, not a Next-style `params` prop.
+export default function EditBusStopPage() {
+  const params = useParams() as EditBusStopPageProps['params'];
   return (
     <Suspense fallback={<div className="flex items-center justify-center h-64">Loading...</div>}>
       <EditBusStopContent params={params} />
