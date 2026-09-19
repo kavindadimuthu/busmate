@@ -21,6 +21,8 @@ import org.springframework.kafka.config.TopicBuilder;
  * <ul>
  *   <li>{@code iot.telemetry.v1} — normalized device telemetry (location, etc.), keyed by deviceId.</li>
  *   <li>{@code iot.device-status.v1} — device lifecycle/health events (online, silent, disabled).</li>
+ *   <li>{@code iot.vehicle.v1} — vehicle health snapshots and alerts (INC-023). A topic of its own so
+ *       the open live-position consumer can never receive vehicle data.</li>
  *   <li>{@code iot.telemetry.dlq.v1} — messages that failed validation/enrichment, with a reason.</li>
  * </ul>
  *
@@ -38,6 +40,9 @@ public class KafkaTopicConfig {
     @Value("${telemetry.kafka.topics.device-status}")
     private String deviceStatusTopic;
 
+    @Value("${telemetry.kafka.topics.vehicle}")
+    private String vehicleTopic;
+
     @Value("${telemetry.kafka.topics.dlq}")
     private String dlqTopic;
 
@@ -52,6 +57,9 @@ public class KafkaTopicConfig {
 
     @Value("${telemetry.kafka.retention-ms.device-status}")
     private String deviceStatusRetentionMs;
+
+    @Value("${telemetry.kafka.retention-ms.vehicle}")
+    private String vehicleRetentionMs;
 
     @Value("${telemetry.kafka.retention-ms.dlq}")
     private String dlqRetentionMs;
@@ -71,6 +79,15 @@ public class KafkaTopicConfig {
                 .partitions(partitions)
                 .replicas(replicationFactor)
                 .config("retention.ms", deviceStatusRetentionMs)
+                .build();
+    }
+
+    @Bean
+    public NewTopic vehicleTopic() {
+        return TopicBuilder.name(vehicleTopic)
+                .partitions(partitions)
+                .replicas(replicationFactor)
+                .config("retention.ms", vehicleRetentionMs)
                 .build();
     }
 

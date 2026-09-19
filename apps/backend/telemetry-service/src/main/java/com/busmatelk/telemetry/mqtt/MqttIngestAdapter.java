@@ -1,8 +1,10 @@
 package com.busmatelk.telemetry.mqtt;
 
 import com.busmatelk.telemetry.ingest.IngestService;
+import com.busmatelk.telemetry.ingest.dto.AlertIngestRequest;
 import com.busmatelk.telemetry.ingest.dto.DeviceStatusIngestRequest;
 import com.busmatelk.telemetry.ingest.dto.LocationIngestRequest;
+import com.busmatelk.telemetry.ingest.dto.VehicleTelemetryIngestRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -152,6 +154,16 @@ public class MqttIngestAdapter implements MqttCallback {
                 DeviceStatusIngestRequest request = objectMapper.readValue(payload, DeviceStatusIngestRequest.class);
                 requireValid(request);
                 ingestService.ingestDeviceStatus(deviceId, request, IngestService.ADAPTER_MQTT);
+            }
+            case "vehicle-telemetry" -> {
+                VehicleTelemetryIngestRequest request = objectMapper.readValue(payload, VehicleTelemetryIngestRequest.class);
+                requireValid(request);
+                ingestService.ingestVehicleTelemetry(deviceId, request, IngestService.ADAPTER_MQTT);
+            }
+            case "alert" -> {
+                AlertIngestRequest request = objectMapper.readValue(payload, AlertIngestRequest.class);
+                requireValid(request);
+                ingestService.ingestAlert(deviceId, request, IngestService.ADAPTER_MQTT);
             }
             default -> log.warn("Ignoring MQTT message with unknown eventType '{}' on topic {}", eventType, topic);
         }

@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { TOPICS } from '../index.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -22,6 +23,8 @@ const envelopeSchema = readJson(join(root, 'schemas', 'envelope.v1.json'));
 const payloadSchemas = {
   'location.v1': readJson(join(root, 'schemas', 'location.v1.json')),
   'device-status.v1': readJson(join(root, 'schemas', 'device-status.v1.json')),
+  'vehicle-telemetry.v1': readJson(join(root, 'schemas', 'vehicle-telemetry.v1.json')),
+  'alert.v1': readJson(join(root, 'schemas', 'alert.v1.json')),
 };
 
 const validateEnvelope = ajv.compile(envelopeSchema);
@@ -65,4 +68,36 @@ test('invalid location payload is rejected (latitude out of range)', () => {
   assert.ok(validateEnvelope(event), 'envelope of the bad-coords fixture should be structurally valid');
   const validator = validatePayload[payloadKey(event)];
   assert.ok(!validator(event.payload), 'expected location payload validation to fail for lat=200');
+});
+
+// INC-023 — vehicle health contract.
+const invalidPayload = (file) => {
+  const event = readJson(join(root, 'examples', 'invalid', file));
+  assert.ok(validateEnvelope(event), );
+  return validatePayload[payloadKey(event)](event.payload);
+};
+
+test('INC-023: a vehicle-telemetry payload with fuel above 100% or an unknown field is rejected', () => {
+  assert.ok(!invalidPayload('vehicle-telemetry-bad-fuel.json'));
+});
+
+test('INC-023: an alert with a free-text code or an unknown state is rejected', () => {
+  assert.ok(!invalidPayload('alert-bad-state.json'));
+});
+
+test('INC-023: vehicle-telemetry needs only the ignition, so a unit with few sensors can report', () => {
+  assert.ok(validatePayload['vehicle-telemetry.v1']({ ignition: false }));
+  assert.ok(!validatePayload['vehicle-telemetry.v1']({}));
+});
+
+test('INC-023: the vehicle contract carries no driver or passenger identity fields', () => {
+  const tel = payloadSchemas['vehicle-telemetry.v1'];
+  assert.equal(tel.additionalProperties, false);
+  assert.equal(tel.properties.cabin.additionalProperties, false);
+  assert.deepEqual(Object.keys(tel.properties.cabin.properties).sort(), ['doorsOpen', 'passengers']);
+});
+
+test('INC-023: vehicle events have their own topic, distinct from position', () => {
+  assert.notEqual(TOPICS.vehicle, TOPICS.telemetry);
+  assert.equal(TOPICS.vehicle, 'iot.vehicle.v1');
 });

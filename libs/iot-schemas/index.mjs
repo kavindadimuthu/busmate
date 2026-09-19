@@ -13,10 +13,13 @@ export const envelopeSchema = load('envelope.v1.json');
 export const payloadSchemas = {
   'location.v1': load('location.v1.json'),
   'device-status.v1': load('device-status.v1.json'),
+  'vehicle-telemetry.v1': load('vehicle-telemetry.v1.json'),
+  'alert.v1': load('alert.v1.json'),
 };
 
 export const TOPICS = {
   telemetry: 'iot.telemetry.v1',
   deviceStatus: 'iot.device-status.v1',
+  vehicle: 'iot.vehicle.v1',
   dlq: 'iot.telemetry.dlq.v1',
 };

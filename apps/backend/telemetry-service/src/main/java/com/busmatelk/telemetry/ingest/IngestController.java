@@ -1,8 +1,10 @@
 package com.busmatelk.telemetry.ingest;
 
+import com.busmatelk.telemetry.ingest.dto.AlertIngestRequest;
 import com.busmatelk.telemetry.ingest.dto.DeviceStatusIngestRequest;
 import com.busmatelk.telemetry.ingest.dto.IngestAcceptedResponse;
 import com.busmatelk.telemetry.ingest.dto.LocationIngestRequest;
+import com.busmatelk.telemetry.ingest.dto.VehicleTelemetryIngestRequest;
 import com.busmatelk.telemetry.ingest.security.DeviceTokenAuthenticationFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -49,5 +51,21 @@ public class IngestController {
             @RequestAttribute(DeviceTokenAuthenticationFilter.DEVICE_ID_ATTRIBUTE) UUID deviceId,
             @Valid @RequestBody DeviceStatusIngestRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestService.ingestDeviceStatus(deviceId, request));
+    }
+
+    @Operation(summary = "Report a vehicle health snapshot (engine, fuel, tyres, battery, cabin counts)")
+    @PostMapping("/vehicle-telemetry")
+    public ResponseEntity<IngestAcceptedResponse> vehicleTelemetry(
+            @RequestAttribute(DeviceTokenAuthenticationFilter.DEVICE_ID_ATTRIBUTE) UUID deviceId,
+            @Valid @RequestBody VehicleTelemetryIngestRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestService.ingestVehicleTelemetry(deviceId, request));
+    }
+
+    @Operation(summary = "Raise or clear an alert; the device owns its alerts and clears them itself")
+    @PostMapping("/alert")
+    public ResponseEntity<IngestAcceptedResponse> alert(
+            @RequestAttribute(DeviceTokenAuthenticationFilter.DEVICE_ID_ATTRIBUTE) UUID deviceId,
+            @Valid @RequestBody AlertIngestRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestService.ingestAlert(deviceId, request));
     }
 }

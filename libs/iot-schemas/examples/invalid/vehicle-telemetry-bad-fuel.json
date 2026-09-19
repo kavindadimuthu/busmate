@@ -1,0 +1,15 @@
+{
+  "envelopeVersion": 1,
+  "eventId": "7a1c2f3e-4b5d-4c6e-8f90-a1b2c3d4e5f6",
+  "eventType": "vehicle-telemetry",
+  "schemaVersion": 1,
+  "deviceId": "00000000-0000-0000-0000-000000010601",
+  "deviceTimestamp": "2026-09-19T08:31:02Z",
+  "ingestedAt": "2026-09-19T08:31:03Z",
+  "source": { "adapter": "https" },
+  "payload": {
+    "ignition": true,
+    "fuel": { "levelPct": 140 },
+    "driver": "not a field this contract has"
+  }
+}

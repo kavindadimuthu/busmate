@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://busmate.lk/iot-schemas/vehicle-telemetry.v1.json",
+  "title": "Vehicle Telemetry Payload v1",
+  "description": "payload for an envelope with eventType='vehicle-telemetry', schemaVersion=1. A periodic snapshot of the vehicle's own state. Every section is optional so a unit with only some sensors can report what it has; position is not here — it travels as a 'location' event. Passenger figures are counts only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ignition"],
+  "properties": {
+    "ignition": {
+      "description": "Whether the ignition is on.",
+      "type": "boolean"
+    },
+    "odometerKm": {
+      "description": "Distance the vehicle has travelled in total, in km.",
+      "type": "number",
+      "minimum": 0
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["running"],
+      "properties": {
+        "running": { "type": "boolean" },
+        "rpm": { "type": "integer", "minimum": 0 },
+        "gear": { "description": "0 is neutral or not engaged.", "type": "integer", "minimum": 0 },
+        "loadPct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "coolantTempC": { "type": "number" },
+        "oilPressureKpa": { "type": "number", "minimum": 0 },
+        "hours": { "description": "Total engine running hours.", "type": "number", "minimum": 0 },
+        "derated": { "description": "Power cut by the engine to protect itself.", "type": "boolean" }
+      }
+    },
+    "fuel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["levelPct"],
+      "properties": {
+        "levelPct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "levelL": { "type": "number", "minimum": 0 },
+        "rateLph": { "description": "Current consumption, litres per hour.", "type": "number", "minimum": 0 }
+      }
+    },
+    "electrical": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "batteryV": { "type": "number", "minimum": 0 },
+        "charging": { "type": "boolean" }
+      }
+    },
+    "tyres": {
+      "description": "One entry per monitored wheel. Position labels are the unit's own (axle layouts differ between buses).",
+      "type": "array",
+      "maxItems": 24,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["position"],
+        "properties": {
+          "position": { "type": "string", "pattern": "^[A-Z0-9]{1,6}$" },
+          "pressureKpa": { "type": "number", "minimum": 0 },
+          "tempC": { "type": "number" }
+        }
+      }
+    },
+    "cabin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "doorsOpen": { "type": "boolean" },
+        "passengers": { "description": "Head count. A number, never identities.", "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

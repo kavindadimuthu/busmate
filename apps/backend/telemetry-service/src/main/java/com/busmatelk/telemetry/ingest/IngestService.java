@@ -5,12 +5,18 @@ import com.busmatelk.telemetry.device.entity.DeviceStatus;
 import com.busmatelk.telemetry.device.repository.DeviceAssignmentRepository;
 import com.busmatelk.telemetry.device.repository.DeviceRepository;
 import com.busmatelk.telemetry.ingest.client.CoreServiceClient;
+import com.busmatelk.telemetry.ingest.dto.AlertIngestRequest;
+import com.busmatelk.telemetry.ingest.dto.AlertPayload;
 import com.busmatelk.telemetry.ingest.dto.DeviceStatusIngestRequest;
 import com.busmatelk.telemetry.ingest.dto.IngestAcceptedResponse;
 import com.busmatelk.telemetry.ingest.dto.LocationIngestRequest;
+import com.busmatelk.telemetry.ingest.dto.VehicleTelemetryIngestRequest;
 import com.busmatelk.telemetry.livestate.entity.BusLiveState;
 import com.busmatelk.telemetry.livestate.repository.BusLiveStateRepository;
 import com.busmatelk.telemetry.shared.exception.NotFoundException;
+import com.busmatelk.telemetry.vehiclestate.service.VehicleStateService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -22,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +50,14 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class IngestService {
 
+    /**
+     * Turns the bound vehicle payload into the plain map that is stored. Deliberately not the
+     * Spring-managed mapper: its registered modules decide what an untyped object deserializes to
+     * (the test classpath's Scala module makes it a Scala Map), and what lands in the database should
+     * not depend on that.
+     */
+    private static final ObjectMapper SNAPSHOT_MAPPER = new ObjectMapper();
+
     private static final int ENVELOPE_VERSION = 1;
     private static final int SCHEMA_VERSION = 1;
     /** Default adapter for the HTTPS ingest path (Phase 2); the MQTT adapter (Phase 4) passes its own. */
@@ -53,11 +68,13 @@ public class IngestService {
     private final DeviceAssignmentRepository assignmentRepository;
     private final BusLiveStateRepository liveStateRepository;
     private final CoreServiceClient coreServiceClient;
+    private final VehicleStateService vehicleStateService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final MeterRegistry meterRegistry;
 
     private final String telemetryTopic;
     private final String deviceStatusTopic;
+    private final String vehicleTopic;
     private final String dlqTopic;
     private final double maxSpeedKmh;
     private final double maxAccuracyM;
@@ -68,10 +85,12 @@ public class IngestService {
             DeviceAssignmentRepository assignmentRepository,
             BusLiveStateRepository liveStateRepository,
             CoreServiceClient coreServiceClient,
+            VehicleStateService vehicleStateService,
             KafkaTemplate<String, Object> kafkaTemplate,
             MeterRegistry meterRegistry,
             @Value("${telemetry.kafka.topics.telemetry}") String telemetryTopic,
             @Value("${telemetry.kafka.topics.device-status}") String deviceStatusTopic,
+            @Value("${telemetry.kafka.topics.vehicle}") String vehicleTopic,
             @Value("${telemetry.kafka.topics.dlq}") String dlqTopic,
             @Value("${telemetry.ingest.plausibility.max-speed-kmh}") double maxSpeedKmh,
             @Value("${telemetry.ingest.plausibility.max-accuracy-m}") double maxAccuracyM) {
@@ -79,10 +98,12 @@ public class IngestService {
         this.assignmentRepository = assignmentRepository;
         this.liveStateRepository = liveStateRepository;
         this.coreServiceClient = coreServiceClient;
+        this.vehicleStateService = vehicleStateService;
         this.kafkaTemplate = kafkaTemplate;
         this.meterRegistry = meterRegistry;
         this.telemetryTopic = telemetryTopic;
         this.deviceStatusTopic = deviceStatusTopic;
+        this.vehicleTopic = vehicleTopic;
         this.dlqTopic = dlqTopic;
         this.maxSpeedKmh = maxSpeedKmh;
         this.maxAccuracyM = maxAccuracyM;
@@ -160,6 +181,93 @@ public class IngestService {
         recordIngestOutcome("device-status", adapter, "accepted");
 
         return IngestAcceptedResponse.builder().eventId(eventId).status("accepted").build();
+    }
+
+    public IngestAcceptedResponse ingestVehicleTelemetry(UUID deviceId, VehicleTelemetryIngestRequest request) {
+        return ingestVehicleTelemetry(deviceId, request, ADAPTER_HTTPS);
+    }
+
+    /**
+     * Vehicle health snapshot (INC-023). Published to its own topic, never {@code iot.telemetry.v1},
+     * so the open live-position consumer cannot receive it. Implausible readings go to the DLQ and
+     * never touch stored state.
+     */
+    public IngestAcceptedResponse ingestVehicleTelemetry(UUID deviceId, VehicleTelemetryIngestRequest request, String adapter) {
+        Device device = requireDevice(deviceId);
+        BusTripResolution resolution = resolveBusAndTrip(deviceId, request.getTripId());
+        Instant now = Instant.now();
+        UUID eventId = UUID.randomUUID();
+
+        String flagReason = VehiclePlausibility.issue(request.getPayload());
+        if (flagReason != null) {
+            publish(dlqTopic, deviceId, new DlqRecord(
+                    eventId, "vehicle-telemetry", deviceId, resolution.busId(), resolution.tripId(),
+                    flagReason, request.getDeviceTimestamp(), now, request.getPayload()));
+            touchDeviceLiveness(device, null);
+            recordIngestOutcome("vehicle-telemetry", adapter, "flagged");
+            return IngestAcceptedResponse.builder().eventId(eventId).status("flagged").reason(flagReason).build();
+        }
+
+        publish(vehicleTopic, deviceId, new EventEnvelope(
+                ENVELOPE_VERSION, eventId, "vehicle-telemetry", SCHEMA_VERSION,
+                deviceId, resolution.busId(), resolution.tripId(),
+                request.getDeviceTimestamp(), now, null,
+                new EventEnvelope.Source(adapter, gatewayId),
+                request.getPayload()));
+        touchDeviceLiveness(device, null);
+        recordIngestOutcome("vehicle-telemetry", adapter, "accepted");
+        recordIngestLatency(request.getDeviceTimestamp(), now);
+
+        if (resolution.busId() != null) {
+            // Only the fields the contract declares reach this map: the payload is the bound DTO,
+            // not the raw request body.
+            Map<String, Object> snapshot = SNAPSHOT_MAPPER.convertValue(request.getPayload(), new TypeReference<>() {});
+            vehicleStateService.applySnapshot(resolution.busId(), deviceId, resolution.tripId(),
+                    operatorFor(resolution.busId()), snapshot, request.getDeviceTimestamp(), now);
+        }
+        return IngestAcceptedResponse.builder().eventId(eventId).status("accepted").build();
+    }
+
+    public IngestAcceptedResponse ingestAlert(UUID deviceId, AlertIngestRequest request) {
+        return ingestAlert(deviceId, request, ADAPTER_HTTPS);
+    }
+
+    /**
+     * An alert raised or cleared by the device (INC-023). The device owns clearance: the platform
+     * removes a stored alert only when it receives {@code cleared} for the same code and component.
+     */
+    public IngestAcceptedResponse ingestAlert(UUID deviceId, AlertIngestRequest request, String adapter) {
+        Device device = requireDevice(deviceId);
+        BusTripResolution resolution = resolveBusAndTrip(deviceId, request.getTripId());
+        Instant now = Instant.now();
+        UUID eventId = UUID.randomUUID();
+        AlertPayload alert = request.getPayload();
+
+        publish(vehicleTopic, deviceId, new EventEnvelope(
+                ENVELOPE_VERSION, eventId, "alert", SCHEMA_VERSION,
+                deviceId, resolution.busId(), resolution.tripId(),
+                request.getDeviceTimestamp(), now, null,
+                new EventEnvelope.Source(adapter, gatewayId),
+                alert));
+        touchDeviceLiveness(device, null);
+        recordIngestOutcome("alert", adapter, "accepted");
+
+        if (resolution.busId() != null) {
+            if (AlertPayload.RAISED.equals(alert.getState())) {
+                vehicleStateService.raiseAlert(resolution.busId(), deviceId, operatorFor(resolution.busId()),
+                        alert.getCode(), alert.getComponent(), alert.getSeverity(), alert.getMessage(),
+                        request.getDeviceTimestamp());
+            } else {
+                vehicleStateService.clearAlert(resolution.busId(), alert.getCode(), alert.getComponent(),
+                        request.getDeviceTimestamp());
+            }
+        }
+        return IngestAcceptedResponse.builder().eventId(eventId).status("accepted").build();
+    }
+
+    /** Null when core-service cannot say — the row is stored untagged rather than the event dropped. */
+    private UUID operatorFor(UUID busId) {
+        return coreServiceClient.getOperatorIdForBus(busId).orElse(null);
     }
 
     private Device requireDevice(UUID deviceId) {

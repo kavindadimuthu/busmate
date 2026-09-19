@@ -29,7 +29,7 @@
     "eventType": {
       "description": "Discriminator selecting the payload schema. Each value maps to a <eventType>.v<schemaVersion>.json payload schema.",
       "type": "string",
-      "enum": ["location", "device-status", "alert"]
+      "enum": ["location", "device-status", "alert", "vehicle-telemetry"]
     },
     "schemaVersion": {
       "description": "Version of the payload schema for this eventType. Lets payloads evolve independently of the envelope.",

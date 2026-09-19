@@ -7,7 +7,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,10 +35,52 @@ public class CoreServiceClient {
     /** Trip states a device's fix can plausibly belong to "right now". */
     private static final Set<String> ACTIVE_TRIP_STATUSES = Set.of("active", "in_transit", "boarding", "departed");
 
-    private final RestClient restClient;
+    /**
+     * How long a resolved bus-to-operator answer is reused. A snapshot arrives every few seconds per
+     * bus, so asking core-service for each one would be most of its traffic; a bus changes operator
+     * rarely. The cost is that a bus sold to another operator keeps its old tag for at most this long.
+     */
+    private static final Duration OPERATOR_TTL = Duration.ofMinutes(5);
 
-    public CoreServiceClient(@Value("${core.service.url}") String coreServiceUrl) {
+    private final RestClient restClient;
+    private final String internalApiKey;
+    private final Map<UUID, CachedOperator> operatorCache = new ConcurrentHashMap<>();
+
+    public CoreServiceClient(@Value("${core.service.url}") String coreServiceUrl,
+                             @Value("${core.service.internal-api-key}") String internalApiKey) {
         this.restClient = RestClient.builder().baseUrl(coreServiceUrl).build();
+        this.internalApiKey = internalApiKey;
+    }
+
+    /**
+     * Which operator owns a bus (INC-023), from core-service's {@code /internal/**} surface, which
+     * needs the shared key that the public {@code GET /api/**} calls above do not. Empty when it
+     * cannot be resolved — the caller keeps the row untagged rather than dropping the event. Only a
+     * successful answer is cached, so an outage is retried on the next event.
+     */
+    public Optional<UUID> getOperatorIdForBus(UUID busId) {
+        CachedOperator cached = operatorCache.get(busId);
+        if (cached != null && cached.expiresAt().isAfter(Instant.now())) {
+            return Optional.of(cached.operatorId());
+        }
+        try {
+            Map<?, ?> body = restClient.get()
+                    .uri("/internal/operators/by-bus/{busId}", busId)
+                    .header("X-Internal-Api-Key", internalApiKey)
+                    .retrieve()
+                    .body(Map.class);
+            Object operatorId = body != null ? body.get("operatorId") : null;
+            if (operatorId == null) return Optional.empty();
+            UUID resolved = UUID.fromString(operatorId.toString());
+            operatorCache.put(busId, new CachedOperator(resolved, Instant.now().plus(OPERATOR_TTL)));
+            return Optional.of(resolved);
+        } catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Failed to resolve operator for bus {} from core-service: {}", busId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private record CachedOperator(UUID operatorId, Instant expiresAt) {
     }
 
     /** Resolves a trip by id, returning its busId if the trip exists and core-service is reachable. */

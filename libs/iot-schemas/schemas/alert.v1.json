@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://busmate.lk/iot-schemas/alert.v1.json",
+  "title": "Alert Payload v1",
+  "description": "payload for an envelope with eventType='alert', schemaVersion=1. A condition the device has detected, raised or cleared. The device owns the alert: the platform never derives clearance, so a raised alert stays active until the device sends 'cleared' for the same code and component.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "state", "severity"],
+  "properties": {
+    "code": {
+      "description": "Stable machine-readable condition, e.g. LOW_FUEL, TYRE_PRESSURE_LOW.",
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{1,39}$"
+    },
+    "state": {
+      "type": "string",
+      "enum": ["raised", "cleared"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "warning", "critical"]
+    },
+    "component": {
+      "description": "Which part the condition concerns when a code can apply to several (a tyre position). Together with 'code' it identifies the alert.",
+      "type": "string",
+      "pattern": "^[A-Z0-9]{1,6}$"
+    },
+    "message": {
+      "description": "Human-readable detail.",
+      "type": "string",
+      "maxLength": 200
+    }
+  }
+}

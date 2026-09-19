@@ -1,0 +1,24 @@
+{
+  "envelopeVersion": 1,
+  "eventId": "7a1c2f3e-4b5d-4c6e-8f90-a1b2c3d4e5f6",
+  "eventType": "vehicle-telemetry",
+  "schemaVersion": 1,
+  "deviceId": "00000000-0000-0000-0000-000000010601",
+  "busId": "00000000-0000-0000-0000-000000010301",
+  "tripId": null,
+  "deviceTimestamp": "2026-09-19T08:31:02Z",
+  "ingestedAt": "2026-09-19T08:31:03Z",
+  "source": { "adapter": "https", "gateway": "telemetry-service-1" },
+  "payload": {
+    "ignition": true,
+    "odometerKm": 48211.4,
+    "engine": { "running": true, "rpm": 1450, "gear": 5, "loadPct": 38, "coolantTempC": 88, "oilPressureKpa": 310, "hours": 1420.5, "derated": false },
+    "fuel": { "levelPct": 63.5, "levelL": 127, "rateLph": 14.2 },
+    "electrical": { "batteryV": 27.8, "charging": true },
+    "tyres": [
+      { "position": "FL", "pressureKpa": 790, "tempC": 44 },
+      { "position": "FR", "pressureKpa": 792, "tempC": 45 }
+    ],
+    "cabin": { "doorsOpen": false, "passengers": 31 }
+  }
+}

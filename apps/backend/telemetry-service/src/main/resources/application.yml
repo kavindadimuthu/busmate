@@ -85,6 +85,7 @@ telemetry:
     topics:
       telemetry: iot.telemetry.v1
       device-status: iot.device-status.v1
+      vehicle: iot.vehicle.v1
       dlq: iot.telemetry.dlq.v1
     # Retention/downsampling policy (Phase 4): raw telemetry is a bridge to live consumers, not a
     # historical store (bus_live_state in Postgres already serves "latest position"), so it's kept
@@ -92,6 +93,9 @@ telemetry:
     retention-ms:
       telemetry: ${TELEMETRY_KAFKA_RETENTION_MS:86400000}      # 24h
       device-status: ${TELEMETRY_DEVICE_STATUS_RETENTION_MS:604800000}  # 7d — low volume, useful for fleet-health history
+      # Vehicle health snapshots: the latest state lives in bus_vehicle_state, so the topic only
+      # bridges live consumers, like raw telemetry.
+      vehicle: ${TELEMETRY_VEHICLE_RETENTION_MS:86400000}     # 24h
       dlq: ${TELEMETRY_DLQ_RETENTION_MS:1209600000}            # 14d — low volume, needs human review
   # HTTPS ingestion (Phase 2). Rate limit is a single-instance, in-memory token bucket
   # (DeviceRateLimiter) — fine at this scale; move to a shared store (Redis) if telemetry-service
@@ -132,6 +136,10 @@ telemetry:
 core:
   service:
     url: ${CORE_SERVICE_URL:http://localhost:9010}
+    # Shared key for core-service's /internal/** surface (the bus-to-operator lookup, INC-023). The
+    # same INTERNAL_API_KEY the other services already read from config/secrets/.env; the fallback
+    # is the obvious dev placeholder the others use, never a real secret.
+    internal-api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
 
 server:
   address: 0.0.0.0
