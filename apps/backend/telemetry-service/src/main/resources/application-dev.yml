@@ -4,14 +4,20 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/busmate_telemetry
-    username: postgres
-    password: postgres
+    # Requests run as the restricted runtime role (INC-024): not a superuser, cannot bypass row-level
+    # security. Created by scripts/postgres/init-dev-dbs.sql on a fresh volume, or
+    # scripts/postgres/provision-telemetry-app-role.sql on an existing one. Dev-only password.
+    username: busmate_telemetry_app
+    password: busmate_telemetry_app
   jpa:
     show-sql: true
   # Tier 3 demo data (docs/plans/Database-Migrations-and-Seed-Data-Plan.md §3, §5) — dev only.
   # Overrides (not appends to) the base locations, so it repeats db/migration + db/reference
   # alongside db/seed/dev.
   flyway:
+    # Migrations run as the database owner, not the runtime role.
+    user: postgres
+    password: postgres
     locations: classpath:db/migration,classpath:db/reference,classpath:db/seed/dev
 
 # EMQX runs alongside the app stack in dev (docker-compose.yml), so the MQTT adapter (Phase 4) is

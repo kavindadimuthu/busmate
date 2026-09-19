@@ -84,6 +84,7 @@ class VehicleIngestIntegrationTest extends AbstractPostgresIntegrationTest {
     @Autowired private BusLiveStateRepository liveStateRepository;
     @Autowired private EmbeddedKafkaBroker embeddedKafkaBroker;
     @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    @Autowired private com.busmatelk.telemetry.tenancy.TenantContext tenantContext;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
 
     @MockitoBean private CoreServiceClient coreServiceClient;
@@ -120,6 +121,11 @@ class VehicleIngestIntegrationTest extends AbstractPostgresIntegrationTest {
                 .build());
 
         when(coreServiceClient.getOperatorIdForBus(busId)).thenReturn(Optional.of(operatorId));
+
+        // These tests check what ingest stored, so they read as the ingest pipeline: the vehicle tables
+        // are row-level-secured and, with no actor declared, show nothing (which would make every
+        // "nothing was stored" assertion pass for the wrong reason). Who else may read is INC-024's suite.
+        tenantContext.asIngest();
     }
 
     // --- helpers -----------------------------------------------------------------------------

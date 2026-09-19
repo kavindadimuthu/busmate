@@ -305,8 +305,11 @@ services:
       - SERVER_PORT=9040
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/busmate_telemetry
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Requests run as the restricted runtime role; migrations as the owner (INC-024, ADR-016).
+      - SPRING_DATASOURCE_USERNAME=busmate_telemetry_app
+      - SPRING_DATASOURCE_PASSWORD=busmate_telemetry_app
+      - SPRING_FLYWAY_USER=postgres
+      - SPRING_FLYWAY_PASSWORD=postgres
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - CORE_SERVICE_URL=http://core-service:9010
       - TELEMETRY_MQTT_BROKER_URL=tcp://emqx:1883

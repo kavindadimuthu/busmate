@@ -21,6 +21,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, "NOT_FOUND", e.getMessage());
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> forbidden(ForbiddenException e) {
+        return error(HttpStatus.FORBIDDEN, "FORBIDDEN", e.getMessage());
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Map<String, Object>> conflict(ConflictException e) {
         return error(HttpStatus.CONFLICT, "CONFLICT", e.getMessage());

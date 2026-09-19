@@ -80,6 +80,28 @@ public class CoreServiceClient {
         }
     }
 
+    /**
+     * The core-service operator linked to a user-service account (INC-024), so an operator's read of
+     * vehicle health can be scoped to their own operator. Deliberately uncached and not best-effort:
+     * empty means "not a confirmed operator" — the account is not linked, or core-service could not be
+     * reached — and the caller must refuse rather than answer unscoped.
+     */
+    public Optional<UUID> getOperatorIdForUser(UUID userId) {
+        try {
+            Map<?, ?> body = restClient.get()
+                    .uri("/internal/operators/by-user/{userId}", userId)
+                    .header("X-Internal-Api-Key", internalApiKey)
+                    .retrieve()
+                    .onStatus(status -> status.is4xxClientError(), (request, response) -> { })
+                    .body(Map.class);
+            Object id = body != null ? body.get("id") : null;
+            return id == null ? Optional.empty() : Optional.of(UUID.fromString(id.toString()));
+        } catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Failed to resolve operator for user {} from core-service: {}", userId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     private record CachedOperator(UUID operatorId, Instant expiresAt) {
     }
 

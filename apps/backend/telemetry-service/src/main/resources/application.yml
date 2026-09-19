@@ -56,6 +56,13 @@ spring:
     locations: classpath:db/migration,classpath:db/reference
     baseline-on-migrate: true
     baseline-version: 1
+    # Migrations run as the table OWNER; requests run as the restricted runtime role
+    # (spring.datasource.*, which must not be a superuser or the owner — RuntimeRoleGuard refuses to
+    # start otherwise; INC-024, ADR-016). Set TELEMETRY_DB_MIGRATION_* to the owner and
+    # TELEMETRY_DB_USERNAME/PASSWORD to the runtime role. The fallback to the runtime credentials only
+    # keeps a misconfiguration loud: the runtime role cannot migrate, so startup fails.
+    user: ${TELEMETRY_DB_MIGRATION_USERNAME:${TELEMETRY_DB_USERNAME:postgres}}
+    password: ${TELEMETRY_DB_MIGRATION_PASSWORD:${TELEMETRY_DB_PASSWORD:changeme}}
 
   kafka:
     # Host-dev default is localhost:9092 (Redpanda's host-mapped EXTERNAL listener — see

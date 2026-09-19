@@ -1,7 +1,7 @@
 ---
 id: INC-024
 title: One operator's vehicle data is invisible to another operator because the database refuses it
-state: active
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -54,19 +54,19 @@ Direction in [ADR-016](../decisions/ADR-016-runtime-database-role-cannot-bypass-
 
 ## Acceptance criteria
 
-- [ ] An operator's read returns only their own buses' vehicle state, however the request is shaped;
+- [x] An operator's read returns only their own buses' vehicle state, however the request is shaped;
       another operator's bus is indistinguishable from one that does not exist.
-- [ ] MOT and admin read every operator's; a passenger, conductor or unauthenticated request is
+- [x] MOT and admin read every operator's; a passenger, conductor or unauthenticated request is
       refused.
-- [ ] With no tenant context on the transaction, the runtime role reads no rows and writes none; an
+- [x] With no tenant context on the transaction, the runtime role reads no rows and writes none; an
       operator context cannot write at all.
-- [ ] The runtime role cannot bypass the policy: it is not a superuser, owns nothing, and cannot
+- [x] The runtime role cannot bypass the policy: it is not a superuser, owns nothing, and cannot
       disable row-level security or alter the policy.
-- [ ] A pooled connection reused for a different caller carries none of the previous caller's context.
-- [ ] An operator whose own operator link cannot be confirmed is refused, not shown everything.
-- [ ] The service refuses to start when its runtime role is privileged.
+- [x] A pooled connection reused for a different caller carries none of the previous caller's context.
+- [x] An operator whose own operator link cannot be confirmed is refused, not shown everything.
+- [x] The service refuses to start when its runtime role is privileged.
 - [ ] The isolation suite exists, runs in the Backend CI gate, and fails when a policy is removed.
-- [ ] Tests named INC-024 cover the above against real Postgres.
+- [x] Tests named INC-024 cover the above against real Postgres.
 
 ## Out of scope
 

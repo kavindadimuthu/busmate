@@ -40,6 +40,20 @@ spring-dotenv silently no-ops (`springdotenv.ignoreIfMissing` defaults to
 
 [spring-dotenv]: https://github.com/paulschwarz/spring-dotenv
 
+## telemetry-service uses two database roles
+
+Unlike the other services, `telemetry-service` connects as **two** database roles (INC-024, ADR-016):
+
+| Variables | Role | Used for |
+| --- | --- | --- |
+| `TELEMETRY_DB_USERNAME` / `_PASSWORD` | restricted runtime role | Every request. Not a superuser, no `BYPASSRLS`, owns no tables. |
+| `TELEMETRY_DB_MIGRATION_USERNAME` / `_PASSWORD` | table owner | Flyway migrations only. |
+
+Row-level security keeps one operator's vehicle data invisible to another, but a superuser or table
+owner bypasses it. The service therefore **refuses to start** if its runtime role is privileged.
+Create the runtime role with `scripts/postgres/provision-telemetry-app-role.sql`; the password is
+passed on the command line and is never committed in a migration.
+
 ## Why the variable names are service-scoped
 
 Every backend service loads this **entire** file. The three Spring services

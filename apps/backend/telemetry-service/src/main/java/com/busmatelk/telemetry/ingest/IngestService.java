@@ -15,7 +15,7 @@ import com.busmatelk.telemetry.livestate.entity.BusLiveState;
 import com.busmatelk.telemetry.livestate.repository.BusLiveStateRepository;
 import com.busmatelk.telemetry.shared.exception.NotFoundException;
 import com.busmatelk.telemetry.vehiclestate.service.VehicleStateService;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -221,7 +220,7 @@ public class IngestService {
         if (resolution.busId() != null) {
             // Only the fields the contract declares reach this map: the payload is the bound DTO,
             // not the raw request body.
-            Map<String, Object> snapshot = SNAPSHOT_MAPPER.convertValue(request.getPayload(), new TypeReference<>() {});
+            JsonNode snapshot = SNAPSHOT_MAPPER.valueToTree(request.getPayload());
             vehicleStateService.applySnapshot(resolution.busId(), deviceId, resolution.tripId(),
                     operatorFor(resolution.busId()), snapshot, request.getDeviceTimestamp(), now);
         }

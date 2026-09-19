@@ -48,6 +48,10 @@ export const routes: RouteConfig[] = [
   // the service itself enforces ADMIN/MOT roles from the forwarded x-user-type header.
   { pathPrefix: '/api/devices', target: 'TELEMETRY', requiresAuth: true },
   { pathPrefix: '/api/device-types', target: 'TELEMETRY', requiresAuth: true },
+  // Vehicle health (INC-024): staff and the owning operator only. The gateway authenticates and
+  // forwards the verified identity; telemetry-service decides who may read what from that identity,
+  // and the database enforces it. Deliberately NOT under /api/live, which is open and position-only.
+  { pathPrefix: '/api/vehicles', target: 'TELEMETRY', requiresAuth: true },
   // Device telemetry ingestion (IoT Platform Layer plan, Phase 2) — NOT staff auth. A device
   // authenticates with its own bearer token, checked by telemetry-service itself
   // (DeviceTokenAuthenticationFilter), so this route must skip the gateway's JWT authMiddleware

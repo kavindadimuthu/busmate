@@ -1,17 +1,18 @@
 package com.busmatelk.telemetry.vehiclestate.service;
 
+import com.busmatelk.telemetry.tenancy.TenantContext;
 import com.busmatelk.telemetry.vehiclestate.entity.BusActiveAlert;
 import com.busmatelk.telemetry.vehiclestate.entity.BusActiveAlertId;
 import com.busmatelk.telemetry.vehiclestate.entity.BusVehicleState;
 import com.busmatelk.telemetry.vehiclestate.repository.BusActiveAlertRepository;
 import com.busmatelk.telemetry.vehiclestate.repository.BusVehicleStateRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -23,6 +24,9 @@ import java.util.UUID;
  * older than what is already stored never overwrites it. For alerts that also means a stale
  * {@code cleared} cannot remove an alert the device raised again afterwards.
  *
+ * <p>Every write declares itself the ingest pipeline first ({@link TenantContext#asIngest()}): the
+ * database's row-level security lets only that actor write these tables.
+ *
  * <p>{@code operatorId} is stamped on every row and may be null when core-service could not say who
  * owns the bus; such a row is kept rather than the event dropped.
  */
@@ -33,10 +37,12 @@ public class VehicleStateService {
 
     private final BusVehicleStateRepository stateRepository;
     private final BusActiveAlertRepository alertRepository;
+    private final TenantContext tenantContext;
 
     @Transactional
     public void applySnapshot(UUID busId, UUID deviceId, UUID tripId, UUID operatorId,
-                              Map<String, Object> snapshot, Instant deviceTimestamp, Instant ingestedAt) {
+                              JsonNode snapshot, Instant deviceTimestamp, Instant ingestedAt) {
+        tenantContext.asIngest();
         BusVehicleState state = stateRepository.findById(busId)
                 .orElseGet(() -> BusVehicleState.builder().busId(busId).build());
         if (state.getDeviceTimestamp() != null && deviceTimestamp.isBefore(state.getDeviceTimestamp())) {
@@ -56,6 +62,7 @@ public class VehicleStateService {
     @Transactional
     public void raiseAlert(UUID busId, UUID deviceId, UUID operatorId, String code, String component,
                            String severity, String message, Instant deviceTimestamp) {
+        tenantContext.asIngest();
         String comp = componentKey(component);
         BusActiveAlert alert = alertRepository.findById(new BusActiveAlertId(busId, code, comp)).orElse(null);
         if (alert != null && deviceTimestamp.isBefore(alert.getDeviceTimestamp())) {
@@ -76,6 +83,7 @@ public class VehicleStateService {
 
     @Transactional
     public void clearAlert(UUID busId, String code, String component, Instant deviceTimestamp) {
+        tenantContext.asIngest();
         alertRepository.findById(new BusActiveAlertId(busId, code, componentKey(component)))
                 .filter(alert -> !deviceTimestamp.isBefore(alert.getDeviceTimestamp()))
                 .ifPresent(alertRepository::delete);

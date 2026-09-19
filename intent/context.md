@@ -33,7 +33,7 @@ Every frontend calls **only** `api-gateway` (`:8080`). Nothing talks to a Spring
 | `user-service` (Spring) | Identity — accounts, RBAC, permissions, profiles, tenancy | 9020 |
 | `core-service` (Spring) | Network, Scheduling, Operations, Fleet, Licensing, Passenger info | 9010 |
 | `ticketing-service` (Spring) | Fares, tickets, bookings, settlement | 9030 |
-| `telemetry-service` (Spring) | Device registry, position, vehicle health | — |
+| `telemetry-service` (Spring) | Device registry, position, vehicle health | 9040 |
 
 Frontends: `new-react-portal` (Vite — MOT/operator/admin/timekeeper), `passenger-web` (Vite),
 `passenger-mobile` + `conductor-mobile` (Expo/React Native).
@@ -94,10 +94,11 @@ Violating one of these is a bug, not a design choice.
    data moves over the API or events.
 3. **Reference data flows inward, always** —
    [ADR-006](decisions/ADR-006-reference-data-flows-inward-always.md).
-4. **Tenant isolation is to be enforced in the database via RLS**, not in application code —
-   [ADR-005](decisions/ADR-005-tenant-isolation-via-database-rls.md). **This is a target, not the
-   current state:** see Known debt. New operator-scoped data carries `operator_id` from its first
-   migration so RLS can be switched on without a retrofit.
+4. **Tenant isolation is enforced in the database via RLS**, not in application code —
+   [ADR-005](decisions/ADR-005-tenant-isolation-via-database-rls.md). **Today that is true only for
+   telemetry-service's vehicle tables** (INC-024); every other service is still application-level — see
+   Known debt. New operator-scoped data carries `operator_id` from its first migration so RLS can be
+   switched on without a retrofit.
 5. **Schema changes happen only through Flyway migrations.** `db/migration` (schema) and
    `db/reference` (reference data) are append-only — never edit an applied migration. `ddl-auto` must
    stay off.
@@ -144,11 +145,12 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
   only. The staff portal still splits tickets "Cash (Conductor)" vs "Online" from `issueMethod`,
   which also mislabels card fares as cash.
 - Mobile apps duplicate copies of generated API clients rather than consuming `libs/api-clients`.
-- **Row-level security is not implemented anywhere.** No policies, no tenant context on connections,
-  and every service connects as the `postgres` superuser, which bypasses RLS even on forced tables.
-  Operator isolation today is application-level (INC-016, INC-021) and fails open. Real enforcement
-  needs a restricted runtime role per service ([ADR-016](decisions/ADR-016-runtime-database-role-cannot-bypass-row-level-security.md));
-  telemetry-service is the pilot (INC-024), the other three services follow.
+- **Row-level security exists in one service only.** telemetry-service enforces it on its vehicle
+  tables through a restricted runtime role that cannot bypass it (INC-024,
+  [ADR-016](decisions/ADR-016-runtime-database-role-cannot-bypass-row-level-security.md)). core-service,
+  user-service and ticketing-service still connect as the `postgres` superuser, which bypasses RLS even
+  on forced tables, so their operator isolation is application-level (INC-016, INC-021) and fails
+  open. Each needs an owner role, a runtime role and a tenant-context hook; core-service first.
 - Passenger live ETAs do not exist; monitoring/analytics surfaces run on mock data.
 
 ## Out of bounds
