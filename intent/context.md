@@ -122,6 +122,10 @@ Violating one of these is a bug, not a design choice.
   hand-edit them — change the controller/DTO and regenerate.
 - **Backend tests** boot a real Postgres via Testcontainers and run the actual Flyway migrations
   (`AbstractPostgresIntegrationTest`). No H2, no Hibernate DDL in tests.
+- **Provenance on network records.** `stop`, `route`, `route_group` and `schedule` carry a source tier,
+  observed-at, confidence and credit ([ADR-018](decisions/ADR-018-community-changes-are-reviewed-changesets.md)).
+  Any new write path to those tables goes through `ProvenanceStamper`; a path that skips it is caught only
+  by a `PrePersist` default that labels the record `SRC_4` "BusMate", which is honest but loses the source.
 - **Anchors** (HACO §4.2): branch name contains the increment ID; every commit carries an
   `Increment:` trailer, enforced by [.githooks/commit-msg](../.githooks/commit-msg); acceptance tests
   name the increment ID. Code comments carry the ID only where intent is genuinely non-obvious.

@@ -28,6 +28,9 @@ Delete lines that stop being worth doing rather than marking them abandoned.
 - ✅ **A cancelled trip is indistinguishable from "no trip yet" and renders as available.** The trip
   join omits `cancelled`, so the row silently falls back to the schedule and shows as a normal
   scheduled service. Worst for near-term searches — exactly when passengers trust the result most.
+- **Creating a stop returns `createdAt` and `updatedAt` as null.** The response is built before the
+  insert is flushed, so the timestamps are not set yet; `StopControllerIntegrationTest.shouldCreateStopWithValidDataAndAuth`
+  fails on it, and did before INC-027. Probably true of the other create endpoints too.
 - **`user.{type}:read` carries no ownership scoping** — any operator can read any conductor's record,
   including one employed by a different company. Surfaced while checking photo access in INC-003 and
   deliberately left alone there: the gap is in the permission engine, not in media, and tightening it

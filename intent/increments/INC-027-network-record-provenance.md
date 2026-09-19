@@ -1,7 +1,7 @@
 ---
 id: INC-027
 title: Every stop, route and schedule says where it came from, when it was observed, and whom to credit
-state: shaped
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -35,25 +35,33 @@ Direction in [ADR-018](../decisions/ADR-018-community-changes-are-reviewed-chang
 - **Backfill.** Every existing row becomes `SRC_4`, attributed to "BusMate", observed at its `updated_at`
   (else `created_at`), confidence 50. No existing data is known to come from a gazette, so none is
   labelled official.
-- **Writes stamp provenance.** Staff create and edit through the existing controllers default to `SRC_4`
-  "BusMate", observed now. Only an `mot` caller may mark a record `SRC_1`. Stop and route imports take a
-  tier for the whole file, defaulting to `SRC_4`. A caller can never set `attributed_user_id` directly.
+- **Writes stamp provenance.** A create through the existing controllers defaults to `SRC_4` "BusMate",
+  observed now. An edit keeps the record's source and moves `observed_at` to now, with two exceptions
+  where the old credit no longer describes the data and the record falls back to `SRC_4` "BusMate": an
+  official record edited by anyone but `mot`, and a contributor-credited record edited by staff. Only
+  `mot` may record `SRC_1`; staff may record only `SRC_1`–`SRC_4`. Stop, route and schedule imports take a
+  tier for the whole file, checked once so a forbidden tier refuses the whole file. A route group's
+  routes take the group's provenance. A caller can never set `attributed_user_id` directly. A JPA
+  `PrePersist` default is the net under any write path that does not stamp, so no record is stored
+  unlabelled.
 - **Read.** Staff-facing stop, route, route-group and schedule responses carry a `provenance` object.
   Passenger responses are INC-028.
-- **Portal.** A provenance badge on the MOT stop, route and schedule list rows and detail pages: tier
-  name, observed date, credit. The create/edit forms get a source selector for MOT accounts only.
+- **Portal.** A provenance badge on the MOT stop, route-group and schedule lists and detail pages: tier
+  name, observed date, credit. The stop form, the route-group submission step, the schedule form and the
+  stop and route import pages get a source selector for MOT accounts only; the backend, not the selector,
+  enforces who may choose what.
 
 ## Acceptance criteria
 
-- [ ] Every existing stop, route, route group and schedule has provenance after migrating, labelled
+- [x] Every existing stop, route, route group and schedule has provenance after migrating, labelled
       observed and credited to BusMate; none is labelled official.
-- [ ] Creating or editing any of them through the portal records the source, the time and the credit
+- [x] Creating or editing any of them through the portal records the source, the time and the credit
       without the user typing them.
-- [ ] Only an MOT account can mark a record official; an admin who tries is refused.
-- [ ] An imported file's records all carry the source chosen for that import.
-- [ ] The MOT stop, route and schedule lists and detail pages show each record's source, observed date
+- [x] Only an MOT account can mark a record official; an admin who tries is refused.
+- [x] An imported file's records all carry the source chosen for that import.
+- [x] The MOT stop, route and schedule lists and detail pages show each record's source, observed date
       and credit.
-- [ ] Tests named INC-027 cover the backfill, stamping on write, and the official-tier restriction
+- [x] Tests named INC-027 cover the backfill, stamping on write, and the official-tier restriction
       against real Postgres.
 
 ## Out of scope
