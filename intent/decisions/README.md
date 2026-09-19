@@ -46,3 +46,5 @@
 | [ADR-012](ADR-012-tickets-grouped-by-sale-stage-listed-by-channel.md) | Tickets are grouped by sale stage and listed by sale channel | architecture | Accepted |
 | [ADR-013](ADR-013-passenger-fares-collect-centrally-settle-periodically.md) | Passenger fares collect into one BusMate account and settle to operators periodically | commercial | Accepted |
 | [ADR-014](ADR-014-payhere-hosted-checkout-for-passenger-booking.md) | PayHere hosted checkout is the PaymentGateway for passenger self-booking | architecture | Accepted |
+| [ADR-015](ADR-015-vehicle-health-is-its-own-staff-scoped-event.md) | Vehicle health is its own event type, and is visible to staff only | architecture | Proposed |
+| [ADR-016](ADR-016-runtime-database-role-cannot-bypass-row-level-security.md) | The runtime database role cannot bypass row-level security | architecture | Proposed |

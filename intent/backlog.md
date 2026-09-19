@@ -53,6 +53,12 @@ Delete lines that stop being worth doing rather than marking them abandoned.
 - **Nothing deletes media when its owner is deleted.** Removing a user leaves their stored object
   behind — observed directly while cleaning up INC-003's test accounts. Harmless at seven objects,
   a slow leak and a personal-data retention problem at scale.
+- **Row-level security in core-service, user-service and ticketing-service** — after the telemetry
+  pilot (INC-024) proves the two-role mechanism. Each service needs an owner and a runtime role, a
+  tenant-context hook, and its existing application-level scoping kept as defence in depth. Do
+  core-service first: it owns operators, buses and permits.
+- **Cross-tenant isolation suite in CI across every service** ([ADR-005](decisions/ADR-005-tenant-isolation-via-database-rls.md)
+  requires it) — grows with each service that adopts row-level security.
 - **Staleness sweeper** (HACO §14 step 2) — scheduled job flagging intent artifacts a diff may have
   invalidated. Advisory only, never blocking.
 - **Policy check in CI** (HACO §14 step 4) — fail when a PR's declared autonomy exceeds what
