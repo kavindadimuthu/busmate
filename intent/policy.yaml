@@ -80,6 +80,7 @@ risk_classes:
     paths:
       - "libs/ui/**"
       - "apps/frontend/**"
+      - "apps/tools/**"
       - "tests/**"
       - "tools/**"
       - "docs/**"
@@ -98,7 +99,7 @@ risk_classes:
 # regression. Not before. Deleting it early is autonomy inflation (HACO §16).
 # -----------------------------------------------------------------------------
 autonomy_ceiling_overrides:
-  - paths: ["apps/frontend/**", "libs/ui/**"]
+  - paths: ["apps/frontend/**", "apps/tools/**", "libs/ui/**"]
     max_autonomy: A2
     reason: "No frontend CI gate exists. Revisit once lint/test/e2e run on PRs."
 

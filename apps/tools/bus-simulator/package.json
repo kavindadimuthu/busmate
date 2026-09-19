@@ -1,0 +1,26 @@
+{
+  "name": "@busmate/bus-simulator",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Simulated bus for development and demos: drives real core-service routes, reports through the telemetry ingest pipeline, controlled from a browser console (INC-022).",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "start": "node src/server/main.ts",
+    "build": "vite build",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
+  }
+}

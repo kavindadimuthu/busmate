@@ -809,6 +809,34 @@ importers:
         specifier: ^5.4.19
         version: 5.4.21(@types/node@22.19.13)(lightningcss@1.32.0)(terser@5.48.0)
 
+  apps/tools/bus-simulator:
+    dependencies:
+      react:
+        specifier: ^19.2.1
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.1
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.3
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^6.0.3
+        version: 6.0.3(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.48.0)(tsx@4.23.0)(yaml@2.8.2))
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      vite:
+        specifier: ^8.1.1
+        version: 8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.48.0)(tsx@4.23.0)(yaml@2.8.2)
+
   libs/api-clients/core-service: {}
 
   libs/api-clients/ticketing-service: {}

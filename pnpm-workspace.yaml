@@ -15,6 +15,7 @@ packages:
 
   # Internal tools
   - "tools/dev-portal"
+  - "apps/tools/bus-simulator"
 
   # E2E tests
   - "tests/e2e"
