@@ -15,6 +15,9 @@ public class RouteUnifiedImportRequest {
             allowableValues = {"SKIP", "UPDATE", "CREATE_WITH_SUFFIX"})
     private RouteDuplicateStrategy routeDuplicateStrategy = RouteDuplicateStrategy.SKIP;
     
+    @Schema(description = "Source recorded for every route group and route this import creates or changes; SRC_1 is MOT only. Defaults to field observation.")
+    private com.busmate.routeschedule.shared.provenance.SourceTier sourceTier;
+
     @Schema(description = "Whether to validate that start and end stops exist in the system")
     private Boolean validateStopsExist = true;
     

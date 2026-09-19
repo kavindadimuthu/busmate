@@ -33,6 +33,7 @@ import com.busmate.routeschedule.network.repository.RouteRepository;
 import com.busmate.routeschedule.network.repository.RouteStopRepository;
 import com.busmate.routeschedule.network.repository.StopRepository;
 import com.busmate.routeschedule.network.service.RouteImportExportService;
+import com.busmate.routeschedule.shared.provenance.ProvenanceStamper;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,7 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
     private final RouteStopRepository routeStopRepository;
     private final StopRepository stopRepository;
     private final MapperUtils mapperUtils;
+    private final ProvenanceStamper provenanceStamper;
 
     // ════════════════════════════════ IMPORT ════════════════════════════════
 
@@ -62,6 +64,8 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
     public RouteUnifiedImportResponse importRoutesUnified(MultipartFile file,
                                                           RouteUnifiedImportRequest importRequest,
                                                           String userId) {
+        // Validate once so a bad or forbidden tier fails the whole file, not row by row.
+        provenanceStamper.resolve(importRequest.getSourceTier());
         RouteUnifiedImportResponse response = new RouteUnifiedImportResponse();
         List<RouteUnifiedImportResponse.ImportError> errors = new ArrayList<>();
         List<RouteUnifiedImportResponse.ImportWarning> warnings = new ArrayList<>();
@@ -251,7 +255,7 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
                     return routeGroup;
                 case CREATE_WITH_SUFFIX:
                     String newName = findUniqueRouteGroupName(name);
-                    RouteGroup newRG = createRouteGroup(newName, nameSinhala, nameTamil, description, userId);
+                    RouteGroup newRG = createRouteGroup(newName, nameSinhala, nameTamil, description, userId, importRequest);
                     routeGroupCache.put(name, newRG);
                     addCreatedEntity(summary.getCreatedRouteGroups(), newRG.getId(), newRG.getName(), rowNumber);
                     summary.setRouteGroupsCreated(summary.getRouteGroupsCreated() + 1);
@@ -260,7 +264,7 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
             }
         }
 
-        RouteGroup newRouteGroup = createRouteGroup(name, nameSinhala, nameTamil, description, userId);
+        RouteGroup newRouteGroup = createRouteGroup(name, nameSinhala, nameTamil, description, userId, importRequest);
         routeGroupCache.put(name, newRouteGroup);
         addCreatedEntity(summary.getCreatedRouteGroups(), newRouteGroup.getId(), newRouteGroup.getName(), rowNumber);
         summary.setRouteGroupsCreated(summary.getRouteGroupsCreated() + 1);
@@ -275,7 +279,8 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
     }
 
     private RouteGroup createRouteGroup(String name, String nameSinhala, String nameTamil,
-                                         String description, String userId) {
+                                         String description, String userId,
+                                         RouteUnifiedImportRequest importRequest) {
         RouteGroup rg = new RouteGroup();
         rg.setName(name);
         rg.setNameSinhala(nameSinhala);
@@ -285,6 +290,7 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
         rg.setUpdatedAt(LocalDateTime.now());
         rg.setCreatedBy(userId);
         rg.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(rg, importRequest.getSourceTier(), null);
         return routeGroupRepository.save(rg);
     }
 
@@ -376,6 +382,7 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
 
         route.setUpdatedAt(LocalDateTime.now());
         route.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(route, importRequest.getSourceTier(), null);
         routeRepository.save(route);
     }
 
@@ -423,6 +430,7 @@ public class RouteImportExportServiceImpl implements RouteImportExportService {
         route.setUpdatedAt(LocalDateTime.now());
         route.setCreatedBy(userId);
         route.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(route, importRequest.getSourceTier(), null);
 
         route = routeRepository.save(route);
 

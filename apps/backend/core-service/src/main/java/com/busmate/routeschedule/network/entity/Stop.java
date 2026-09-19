@@ -5,13 +5,13 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import com.busmate.routeschedule.shared.entity.BaseEntity;
+import com.busmate.routeschedule.shared.provenance.ProvenancedEntity;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "stop")
-public class Stop extends BaseEntity {
+public class Stop extends ProvenancedEntity {
     @Id
     @GeneratedValue
     @Column(columnDefinition = "UUID")

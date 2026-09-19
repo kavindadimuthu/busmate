@@ -481,6 +481,8 @@ public class RouteController {
             @RequestParam(value = "validateCoordinates", defaultValue = "false") Boolean validateCoordinates,
             @RequestParam(value = "continueOnError", defaultValue = "true") Boolean continueOnError,
             @RequestParam(value = "defaultRoadType", defaultValue = "NORMALWAY") String defaultRoadType,
+            @Parameter(description = "Source recorded for every imported record; SRC_1 is MOT only. Defaults to SRC_4.")
+            @RequestParam(value = "sourceTier", required = false) com.busmate.routeschedule.shared.provenance.SourceTier sourceTier,
             Authentication authentication) {
         
         if (file.isEmpty()) {
@@ -502,6 +504,7 @@ public class RouteController {
         importRequest.setValidateCoordinates(validateCoordinates);
         importRequest.setContinueOnError(continueOnError);
         importRequest.setDefaultRoadType(defaultRoadType);
+        importRequest.setSourceTier(sourceTier);
         
         String userId = authentication.getName();
         RouteUnifiedImportResponse response = routeImportExportService.importRoutesUnified(file, importRequest, userId);

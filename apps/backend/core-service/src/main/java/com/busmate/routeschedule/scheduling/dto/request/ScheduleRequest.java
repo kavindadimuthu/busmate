@@ -1,5 +1,8 @@
 package com.busmate.routeschedule.scheduling.dto.request;
 
+import com.busmate.routeschedule.shared.provenance.SourceTier;
+import jakarta.validation.constraints.Size;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
@@ -18,6 +21,12 @@ import com.busmate.routeschedule.network.entity.Stop;
 @Data
 @Schema(description = "Request DTO for creating or updating a schedule")
 public class ScheduleRequest {
+    /** Optional source of this record; defaults to field observation by BusMate. SRC_1 is MOT only. */
+    private SourceTier sourceTier;
+
+    @Size(max = 255)
+    private String attributionLabel;
+
     
     @NotBlank(message = "Name is mandatory")
     @Schema(

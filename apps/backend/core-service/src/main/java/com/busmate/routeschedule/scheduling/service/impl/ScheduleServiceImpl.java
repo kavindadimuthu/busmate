@@ -28,6 +28,9 @@ import com.busmate.routeschedule.network.repository.*;
 import com.busmate.routeschedule.operations.repository.*;
 import com.busmate.routeschedule.scheduling.service.ScheduleService;
 import com.busmate.routeschedule.operations.service.TripService;
+import com.busmate.routeschedule.shared.provenance.Provenance;
+import com.busmate.routeschedule.shared.provenance.ProvenanceResponse;
+import com.busmate.routeschedule.shared.provenance.ProvenanceStamper;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +71,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final TripService tripService;
     private final MapperUtils mapperUtils;
     private final ObjectMapper objectMapper;
+    private final ProvenanceStamper provenanceStamper;
 
     @Override
     @Transactional
@@ -292,6 +296,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         updateScheduleCalendar(schedule, request);
         schedule.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(schedule, null, null); // service days changed
         
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         return mapToResponse(updatedSchedule);
@@ -313,6 +318,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         schedule.getScheduleExceptions().add(exception);
         schedule.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(schedule, null, null); // service days changed
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         return mapToResponse(updatedSchedule);
@@ -326,6 +332,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         schedule.getScheduleExceptions().removeIf(exception -> exception.getId().equals(exceptionId));
         schedule.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(schedule, null, null); // service days changed
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         return mapToResponse(updatedSchedule);
@@ -372,6 +379,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         clonedSchedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         clonedSchedule.setCreatedBy(userId);
         clonedSchedule.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(clonedSchedule, request.getSourceTier(), request.getAttributionLabel());
 
         // Clone schedule stops
         if (originalSchedule.getScheduleStops() != null) {
@@ -414,6 +422,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     @Transactional
     public ScheduleCsvImportResponse importSchedulesFromCsv(MultipartFile file, ScheduleCsvImportRequest options, String userId) {
+        // Validate once so a bad or forbidden tier fails the whole file, not row by row.
+        provenanceStamper.resolve(options.getSourceTier());
         log.info("Starting CSV schedule import for user: {}", userId);
         
         ScheduleCsvImportResponse response = new ScheduleCsvImportResponse();
@@ -646,6 +656,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         schedule.setCreatedBy(userId);
         schedule.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(schedule, request.getSourceTier(), request.getAttributionLabel());
         return schedule;
     }
 
@@ -658,6 +669,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setEffectiveEndDate(request.getEffectiveEndDate());
         schedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         schedule.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(schedule, request.getSourceTier(), request.getAttributionLabel());
     }
 
     private List<ScheduleStop> createScheduleStops(Schedule schedule, List<ScheduleRequest.ScheduleStopRequest> stopRequests) {
@@ -1205,6 +1217,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setDescription(firstRow.getDescription());
         schedule.setCreatedBy(userId);
         schedule.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(schedule, options.getSourceTier(), null);
         
         // Create schedule stops
         List<ScheduleStop> scheduleStops = new ArrayList<>();
@@ -1296,6 +1309,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         existingSchedule.setStatus(ScheduleStatusEnum.valueOf(firstRow.getStatus()));
         existingSchedule.setDescription(firstRow.getDescription());
         existingSchedule.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(existingSchedule, options.getSourceTier(), null);
         
         // Clear existing stops and create new ones
         if (existingSchedule.getScheduleStops() != null) {
@@ -1405,6 +1419,19 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
     }
 
+    private static ProvenanceResponse toProvenanceResponse(Provenance p) {
+        if (p == null) {
+            return null;
+        }
+        ProvenanceResponse r = new ProvenanceResponse();
+        r.setSourceTier(p.getSourceTier());
+        r.setObservedAt(p.getObservedAt());
+        r.setBaseConfidence(p.getBaseConfidence());
+        r.setAttributedUserId(p.getAttributedUserId());
+        r.setAttributionLabel(p.getAttributionLabel());
+        return r;
+    }
+
     private ScheduleResponse mapToResponse(Schedule schedule) {
         ScheduleResponse response = new ScheduleResponse();
         response.setId(schedule.getId());
@@ -1422,6 +1449,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         response.setUpdatedAt(schedule.getUpdatedAt());
         response.setCreatedBy(schedule.getCreatedBy());
         response.setUpdatedBy(schedule.getUpdatedBy());
+        response.setProvenance(toProvenanceResponse(schedule.getProvenance()));
         
         // Map schedule stops
         if (schedule.getScheduleStops() != null) {

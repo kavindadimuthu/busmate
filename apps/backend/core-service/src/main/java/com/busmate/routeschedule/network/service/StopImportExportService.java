@@ -23,9 +23,11 @@ public interface StopImportExportService {
      * @param file          the uploaded CSV file
      * @param userId        the authenticated user performing the import
      * @param defaultCountry country value to apply when the CSV row omits it
+     * @param sourceTier    the source recorded for every imported stop; null means field observation
      * @return a detailed import result report
      */
-    StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry);
+    StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry,
+                                   com.busmate.routeschedule.shared.provenance.SourceTier sourceTier);
 
     /**
      * Exports stops to CSV or JSON based on the supplied request filters and options.

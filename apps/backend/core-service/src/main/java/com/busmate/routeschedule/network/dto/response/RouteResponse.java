@@ -1,5 +1,7 @@
 package com.busmate.routeschedule.network.dto.response;
 
+import com.busmate.routeschedule.shared.provenance.ProvenanceResponse;
+
 import lombok.Data;
 import com.busmate.routeschedule.shared.dto.LocationDto;
 import java.time.LocalDateTime;
@@ -9,6 +11,8 @@ import com.busmate.routeschedule.network.entity.Route;
 
 @Data
 public class RouteResponse {
+    private ProvenanceResponse provenance;
+
     private UUID id;
     private String name; // English name (primary)
     private String nameSinhala;

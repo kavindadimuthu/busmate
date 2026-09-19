@@ -17,7 +17,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
  */
 public abstract class AbstractPostgresIntegrationTest {
 
-    static final PostgreSQLContainer<?> POSTGRES =
+    protected static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:16-alpine");
 
     static {

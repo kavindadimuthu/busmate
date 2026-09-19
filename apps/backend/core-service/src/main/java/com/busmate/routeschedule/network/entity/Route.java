@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import com.busmate.routeschedule.network.enums.DirectionEnum;
 import com.busmate.routeschedule.network.enums.RoadTypeEnum;
-import com.busmate.routeschedule.shared.entity.BaseEntity;
+import com.busmate.routeschedule.shared.provenance.ProvenancedEntity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -27,7 +27,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "route")
-public class Route extends BaseEntity {
+public class Route extends ProvenancedEntity {
     @Id
     @GeneratedValue
     @Column(columnDefinition = "UUID")

@@ -29,6 +29,7 @@ import com.busmate.routeschedule.network.repository.RouteStopRepository;
 import com.busmate.routeschedule.network.repository.StopRepository;
 import com.busmate.routeschedule.network.service.RouteGroupService;
 import com.busmate.routeschedule.shared.exception.ConflictException;
+import com.busmate.routeschedule.shared.provenance.ProvenanceStamper;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 
 import jakarta.persistence.EntityManager;
@@ -44,6 +45,7 @@ public class RouteGroupServiceImpl implements RouteGroupService {
     private final RouteStopRepository routeStopRepository;
     private final RouteMapper routeMapper;
     private final RouteGroupMapper routeGroupMapper;
+    private final ProvenanceStamper provenanceStamper;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -62,6 +64,7 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         routeGroup.setDescription(request.getDescription());
         routeGroup.setCreatedBy(userId);
         routeGroup.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(routeGroup, request.getSourceTier(), request.getAttributionLabel());
 
         if (request.getRoutes() != null && !request.getRoutes().isEmpty()) {
             List<Route> routes = request.getRoutes().stream().map(r -> {
@@ -117,6 +120,8 @@ public class RouteGroupServiceImpl implements RouteGroupService {
                 return route;
             }).collect(Collectors.toList());
             routeGroup.setRoutes(routes);
+            // The group's routes come from the same source, at the same time, as the group.
+            routes.forEach(r -> provenanceStamper.copy(routeGroup, r));
         }
 
         RouteGroup savedRouteGroup = routeGroupRepository.save(routeGroup);
@@ -171,9 +176,11 @@ public class RouteGroupServiceImpl implements RouteGroupService {
         routeGroup.setNameTamil(request.getNameTamil());
         routeGroup.setDescription(request.getDescription());
         routeGroup.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(routeGroup, request.getSourceTier(), request.getAttributionLabel());
 
         if (request.getRoutes() != null) {
             updateRoutes(routeGroup, request.getRoutes(), userId);
+            routeGroup.getRoutes().forEach(r -> provenanceStamper.copy(routeGroup, r));
         }
 
         RouteGroup updatedRouteGroup = routeGroupRepository.save(routeGroup);

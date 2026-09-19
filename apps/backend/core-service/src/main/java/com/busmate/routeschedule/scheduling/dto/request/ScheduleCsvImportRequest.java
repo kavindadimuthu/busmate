@@ -13,6 +13,9 @@ public class ScheduleCsvImportRequest {
         example = "SKIP"
     )
     private ScheduleDuplicateStrategy scheduleDuplicateStrategy = ScheduleDuplicateStrategy.SKIP;
+
+    @Schema(description = "Source recorded for every schedule this import creates or changes; SRC_1 is MOT only. Defaults to field observation.")
+    private com.busmate.routeschedule.shared.provenance.SourceTier sourceTier;
     
     @Schema(
         description = "Strategy for handling duplicate schedule stops within a schedule",

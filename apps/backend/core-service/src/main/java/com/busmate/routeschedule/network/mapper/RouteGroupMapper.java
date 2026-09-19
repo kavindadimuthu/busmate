@@ -43,6 +43,7 @@ public interface RouteGroupMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "provenance", ignore = true)
     @Mapping(target = "routes", ignore = true)
     RouteGroup toEntity(RouteGroupRequest request);
 
@@ -56,6 +57,7 @@ public interface RouteGroupMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "provenance", ignore = true)
     @Mapping(target = "routes", ignore = true)
     void updateEntityFromRequest(RouteGroupRequest request, @MappingTarget RouteGroup entity);
 }

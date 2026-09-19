@@ -35,6 +35,7 @@ import com.busmate.routeschedule.network.repository.projection.RouteGroupSummary
 import com.busmate.routeschedule.network.repository.projection.RouteStatisticsProjection;
 import com.busmate.routeschedule.network.service.RouteService;
 import com.busmate.routeschedule.shared.exception.ConflictException;
+import com.busmate.routeschedule.shared.provenance.ProvenanceStamper;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class RouteServiceImpl implements RouteService {
     private final RouteGroupRepository routeGroupRepository;
     private final StopRepository stopRepository;
     private final RouteMapper routeMapper;
+    private final ProvenanceStamper provenanceStamper;
 
     @Override
     public RouteResponse getRouteById(UUID id) {
@@ -169,6 +171,9 @@ public class RouteServiceImpl implements RouteService {
         route.setUpdatedBy(userId);
         if (isNew) {
             route.setCreatedBy(userId);
+            provenanceStamper.stampCreate(route, request.getSourceTier(), request.getAttributionLabel());
+        } else {
+            provenanceStamper.stampEdit(route, request.getSourceTier(), request.getAttributionLabel());
         }
 
         try {

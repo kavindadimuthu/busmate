@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import com.busmate.routeschedule.shared.entity.BaseEntity;
+import com.busmate.routeschedule.shared.provenance.ProvenancedEntity;
 import com.busmate.routeschedule.network.entity.Route;
 import com.busmate.routeschedule.scheduling.enums.ScheduleStatusEnum;
 
@@ -16,7 +16,7 @@ import com.busmate.routeschedule.scheduling.enums.ScheduleStatusEnum;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "schedule")
-public class Schedule extends BaseEntity {
+public class Schedule extends ProvenancedEntity {
     @Id
     @GeneratedValue
     @Column(columnDefinition = "UUID")

@@ -17,6 +17,9 @@ public class StopBulkUpdateRequest {
     @Schema(description = "Whether to update only non-null/non-empty fields from CSV (partial update)")
     private Boolean partialUpdate = false;
     
+    @Schema(description = "Source recorded for every stop this update creates or changes; SRC_1 is MOT only. Defaults to field observation.")
+    private com.busmate.routeschedule.shared.provenance.SourceTier sourceTier;
+
     @Schema(description = "Default country to use if not specified in CSV")
     private String defaultCountry;
     

@@ -650,6 +650,9 @@ public class ScheduleController {
             
             @Parameter(description = "Validate stop order sequence within each schedule")
             @RequestParam(value = "validateStopOrder", defaultValue = "true") Boolean validateStopOrder,
+
+            @Parameter(description = "Source recorded for every imported schedule; SRC_1 is MOT only. Defaults to SRC_4.")
+            @RequestParam(value = "sourceTier", required = false) com.busmate.routeschedule.shared.provenance.SourceTier sourceTier,
             
             Authentication authentication) {
         
@@ -668,6 +671,7 @@ public class ScheduleController {
         options.setDefaultScheduleType(defaultScheduleType);
         options.setValidateTimeSequence(validateTimeSequence);
         options.setValidateStopOrder(validateStopOrder);
+        options.setSourceTier(sourceTier);
         
         ScheduleCsvImportResponse response = scheduleService.importSchedulesFromCsv(file, options, userId);
         return ResponseEntity.ok(response);

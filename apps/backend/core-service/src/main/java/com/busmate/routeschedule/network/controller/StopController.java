@@ -407,6 +407,9 @@ public class StopController {
             
             @Parameter(description = "Default country for stops when not specified in CSV", example = "Sri Lanka")
             @RequestParam(defaultValue = "Sri Lanka") String defaultCountry,
+
+            @Parameter(description = "Source recorded for every imported stop; SRC_1 is MOT only. Defaults to SRC_4.")
+            @RequestParam(required = false) com.busmate.routeschedule.shared.provenance.SourceTier sourceTier,
             
             Authentication authentication) {
         
@@ -415,7 +418,7 @@ public class StopController {
         }
         
         String userId = authentication != null ? authentication.getName() : "system";
-        StopImportResponse response = stopImportExportService.importStops(file, userId, defaultCountry);
+        StopImportResponse response = stopImportExportService.importStops(file, userId, defaultCountry, sourceTier);
         return ResponseEntity.ok(response);
     }
 

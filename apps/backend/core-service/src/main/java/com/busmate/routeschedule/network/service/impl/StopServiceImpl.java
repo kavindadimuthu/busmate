@@ -40,6 +40,7 @@ import com.busmate.routeschedule.scheduling.repository.ScheduleStopRepository;
 import com.busmate.routeschedule.shared.dto.LocationDto;
 import com.busmate.routeschedule.shared.exception.ConflictException;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
+import com.busmate.routeschedule.shared.provenance.ProvenanceStamper;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,7 @@ public class StopServiceImpl implements StopService {
     private final ScheduleStopRepository scheduleStopRepository;
     private final MapperUtils mapperUtils;
     private final StopMapper stopMapper;
+    private final ProvenanceStamper provenanceStamper;
 
     @Override
     @Transactional
@@ -77,6 +79,7 @@ public class StopServiceImpl implements StopService {
         Stop stop = stopMapper.toEntity(request);
         stop.setCreatedBy(userId);
         stop.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(stop, request.getSourceTier(), request.getAttributionLabel());
         Stop savedStop = stopRepository.save(stop);
         return stopMapper.toResponse(savedStop);
     }
@@ -123,6 +126,7 @@ public class StopServiceImpl implements StopService {
                 Stop stop = mapperUtils.map(stopRequest, Stop.class);
                 stop.setCreatedBy(userId);
                 stop.setUpdatedBy(userId);
+                provenanceStamper.stampCreate(stop, stopRequest.getSourceTier(), stopRequest.getAttributionLabel());
                 Stop savedStop = stopRepository.save(stop);
                 StopResponse response = mapperUtils.map(savedStop, StopResponse.class);
 
@@ -255,6 +259,7 @@ public class StopServiceImpl implements StopService {
 
         stopMapper.updateEntityFromRequest(request, stop);
         stop.setUpdatedBy(userId);
+        provenanceStamper.stampEdit(stop, request.getSourceTier(), request.getAttributionLabel());
         Stop updatedStop = stopRepository.save(stop);
         return stopMapper.toResponse(updatedStop);
     }

@@ -1,5 +1,7 @@
 package com.busmate.routeschedule.scheduling.dto.response;
 
+import com.busmate.routeschedule.shared.provenance.ProvenanceResponse;
+
 import com.busmate.routeschedule.shared.dto.LocationDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,6 +18,8 @@ import com.busmate.routeschedule.network.entity.Stop;
 @Data
 @Schema(description = "Schedule response containing all schedule information and related components")
 public class ScheduleResponse {
+    private ProvenanceResponse provenance;
+
     
     @Schema(description = "Unique identifier of the schedule", example = "12345678-1234-1234-1234-123456789012")
     private UUID id;

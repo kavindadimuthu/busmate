@@ -5,13 +5,13 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.util.List;
 import java.util.UUID;
-import com.busmate.routeschedule.shared.entity.BaseEntity;
+import com.busmate.routeschedule.shared.provenance.ProvenancedEntity;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "route_group")
-public class RouteGroup extends BaseEntity {
+public class RouteGroup extends ProvenancedEntity {
     @Id
     @GeneratedValue
     @Column(columnDefinition = "UUID")

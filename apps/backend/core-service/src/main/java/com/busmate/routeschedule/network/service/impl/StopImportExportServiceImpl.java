@@ -31,6 +31,8 @@ import com.busmate.routeschedule.network.entity.Stop;
 import com.busmate.routeschedule.network.repository.StopRepository;
 import com.busmate.routeschedule.network.service.StopImportExportService;
 import com.busmate.routeschedule.shared.dto.LocationDto;
+import com.busmate.routeschedule.shared.provenance.ProvenanceStamper;
+import com.busmate.routeschedule.shared.provenance.SourceTier;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -49,12 +51,16 @@ public class StopImportExportServiceImpl implements StopImportExportService {
 
     private final StopRepository stopRepository;
     private final MapperUtils mapperUtils;
+    private final ProvenanceStamper provenanceStamper;
 
     // ════════════════════════════════ IMPORT ════════════════════════════════
 
     @Override
     @Transactional
-    public StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry) {
+    public StopImportResponse importStops(MultipartFile file, String userId, String defaultCountry,
+                                          SourceTier sourceTier) {
+        // Validate once so a bad or forbidden tier fails the whole file, not row by row.
+        provenanceStamper.resolve(sourceTier);
         log.info("Starting dynamic stop import for user: {} with default country: {}", userId, defaultCountry);
 
         StopImportResponse response = new StopImportResponse();
@@ -93,7 +99,7 @@ public class StopImportExportServiceImpl implements StopImportExportService {
                 String[] columns = line.split(",");
 
                 try {
-                    processDynamicRow(columns, fieldMapping, rowNumber, userId, defaultCountry, importedStops);
+                    processDynamicRow(columns, fieldMapping, rowNumber, userId, defaultCountry, sourceTier, importedStops);
                     successfulImports++;
                 } catch (Exception e) {
                     failedImports++;
@@ -205,7 +211,7 @@ public class StopImportExportServiceImpl implements StopImportExportService {
     }
 
     private void processDynamicRow(String[] columns, Map<String, Integer> fieldMapping, int rowNumber,
-                                   String userId, String defaultCountry,
+                                   String userId, String defaultCountry, SourceTier sourceTier,
                                    List<StopImportResponse.ImportedStop> importedStops) {
 
         String name = getFieldValue(columns, fieldMapping, "name");
@@ -294,6 +300,7 @@ public class StopImportExportServiceImpl implements StopImportExportService {
 
         stop.setCreatedBy(userId);
         stop.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(stop, sourceTier, null);
 
         Stop savedStop = stopRepository.save(stop);
 
@@ -729,6 +736,7 @@ public class StopImportExportServiceImpl implements StopImportExportService {
             List<String> updatedFields = updateStopFromCsvRow(existingStop, columns, fieldMapping, userId, request);
 
             if (!updatedFields.isEmpty()) {
+                provenanceStamper.stampEdit(existingStop, request.getSourceTier(), null);
                 stopRepository.save(existingStop);
                 result.setStatus(BulkUpdateStatus.SUCCESS_UPDATED);
                 result.setStop(existingStop);
@@ -805,6 +813,7 @@ public class StopImportExportServiceImpl implements StopImportExportService {
         Stop stop = mapperUtils.map(stopRequest, Stop.class);
         stop.setCreatedBy(userId);
         stop.setUpdatedBy(userId);
+        provenanceStamper.stampCreate(stop, request.getSourceTier(), null);
         return stopRepository.save(stop);
     }
 

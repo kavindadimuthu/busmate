@@ -1,6 +1,9 @@
 // src/main/java/com/ntc/busmate/routeschedules/dto/request/RouteRequest.java
 package com.busmate.routeschedule.network.dto.request;
 
+import com.busmate.routeschedule.shared.provenance.SourceTier;
+import jakarta.validation.constraints.Size;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -11,6 +14,12 @@ import com.busmate.routeschedule.network.entity.Stop;
 
 @Data
 public class RouteRequest {
+    /** Optional source of this record; defaults to field observation by BusMate. SRC_1 is MOT only. */
+    private SourceTier sourceTier;
+
+    @Size(max = 255)
+    private String attributionLabel;
+
     @NotBlank(message = "Name is mandatory")
     private String name; // English name (primary)
 
