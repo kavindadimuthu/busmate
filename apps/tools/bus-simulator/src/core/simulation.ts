@@ -1,6 +1,7 @@
 import { offsetM } from './geo.ts';
 import { createRng, gaussian, type Rng } from './rng.ts';
 import { buildPath, pointAt, reversePath, type RoutePath, type SimRoute } from './route.ts';
+import { ALERT_SEVERITY, toVehicleTelemetry } from './vehicleTelemetry.ts';
 import {
   TYRE_POSITIONS,
   type ActiveFault,
@@ -81,6 +82,8 @@ export interface SimulationOptions {
   initialFuelPct?: number;
   /** Sim seconds between location reports while the ignition is on. */
   reportIntervalS?: number;
+  /** Sim seconds between vehicle-health snapshots while the ignition is on. */
+  snapshotIntervalS?: number;
   /** Drive back along the reversed route after reaching the terminus. */
   loop?: boolean;
 }
@@ -88,6 +91,7 @@ export interface SimulationOptions {
 /** Fixed step, sim seconds. Stepping in fixed increments is what makes a run reproducible. */
 export const STEP_S = 0.1;
 
+const alertKey = (w: Warning) => `${w.code}${w.tyre ? `:${w.tyre}` : ''}`;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 /** First-order approach of `current` toward `target` with time constant `tauS`. */
 const approach = (current: number, target: number, dtS: number, tauS: number) =>
@@ -103,6 +107,7 @@ export class Simulation {
   private readonly rng: Rng;
   private readonly ambientC: number;
   private readonly reportIntervalS: number;
+  private readonly snapshotIntervalS: number;
   private readonly loop: boolean;
   private readonly baseRoute: SimRoute;
 
@@ -110,6 +115,9 @@ export class Simulation {
   private reversed = false;
   private simTimeS = 0;
   private nextReportAtS = 0;
+  private nextSnapshotAtS = 0;
+  /** Alerts this bus has raised and not yet cleared, by code and component. */
+  private raisedAlerts = new Map<string, Warning>();
   private reports: Report[] = [];
 
   private ignition = true;
@@ -151,6 +159,7 @@ export class Simulation {
     this.path = buildPath(options.route);
     this.ambientC = options.ambientTempC ?? 30;
     this.reportIntervalS = options.reportIntervalS ?? 5;
+    this.snapshotIntervalS = options.snapshotIntervalS ?? 5;
     this.loop = options.loop ?? true;
     this.driverProfile = options.driverProfile ?? 'normal';
     this.coolantC = this.ambientC;
@@ -295,6 +304,8 @@ export class Simulation {
     this.updateElectrical(dt);
     this.updateTyres(dt);
     this.maybeReport();
+    this.maybeSnapshot();
+    this.trackAlerts();
   }
 
   /** Slow random drift in how freely traffic flows, so no two stretches drive identically. */
@@ -469,6 +480,50 @@ export class Simulation {
       speedKmh,
       headingDeg: this.headingDeg % 360,
       accuracyM,
+    });
+  }
+
+  private maybeSnapshot(): void {
+    if (this.simTimeS + 1e-9 < this.nextSnapshotAtS) return;
+    // Independent of GPS: the vehicle's own sensors keep reporting when the satellite fix is lost.
+    this.nextSnapshotAtS = this.simTimeS + (this.ignition ? this.snapshotIntervalS : this.snapshotIntervalS * 6);
+    this.reports.push({ kind: 'vehicle-telemetry', simTimeS: this.simTimeS, payload: toVehicleTelemetry(this.snapshot()) });
+  }
+
+  /**
+   * A warning that appears is a raised alert and one that goes away is cleared. The bus owns its
+   * alerts: the platform only ever learns of a clearance from here.
+   */
+  private trackAlerts(): void {
+    const now = new Map(this.warnings().map((w) => [alertKey(w), w] as const));
+    for (const [key, w] of now) {
+      if (!this.raisedAlerts.has(key)) this.pushAlert(w, 'raised');
+    }
+    for (const [key, w] of this.raisedAlerts) {
+      if (!now.has(key)) this.pushAlert(w, 'cleared');
+    }
+    this.raisedAlerts = now;
+  }
+
+  /**
+   * Clears every alert this bus has raised. Called when the bus is retired (the operator switches to
+   * another bus or route), so the platform is not left holding alerts for a bus that no longer exists.
+   */
+  closeOut(): Report[] {
+    for (const w of this.raisedAlerts.values()) this.pushAlert(w, 'cleared');
+    this.raisedAlerts = new Map();
+    return this.drainReports().filter((r) => r.kind === 'alert');
+  }
+
+  private pushAlert(w: Warning, state: 'raised' | 'cleared'): void {
+    this.reports.push({
+      kind: 'alert',
+      simTimeS: this.simTimeS,
+      code: w.code,
+      state,
+      severity: ALERT_SEVERITY[w.code],
+      ...(w.tyre ? { component: w.tyre } : {}),
+      message: w.message,
     });
   }
 

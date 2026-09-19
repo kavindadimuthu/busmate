@@ -123,6 +123,28 @@ export interface VehicleState {
   warnings: Warning[];
 }
 
+/** Mirrors libs/iot-schemas/schemas/vehicle-telemetry.v1.json — what a unit sends about the vehicle. */
+export interface VehicleTelemetryPayload {
+  ignition: boolean;
+  odometerKm: number;
+  engine: {
+    running: boolean;
+    rpm: number;
+    gear: number;
+    loadPct: number;
+    coolantTempC: number;
+    oilPressureKpa: number;
+    hours: number;
+    derated: boolean;
+  };
+  fuel: { levelPct: number; levelL: number; rateLph: number };
+  electrical: { batteryV: number; charging: boolean };
+  tyres: Array<{ position: TyrePosition; pressureKpa: number; tempC: number }>;
+  cabin: { doorsOpen: boolean; passengers: number };
+}
+
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+
 /** What a tracker would report. Produced on the model's own cadence so it is part of the deterministic output. */
 export type Report =
   | {
@@ -139,6 +161,17 @@ export type Report =
       simTimeS: number;
       status: 'ONLINE' | 'OFFLINE';
       reason: string;
+    }
+  | { kind: 'vehicle-telemetry'; simTimeS: number; payload: VehicleTelemetryPayload }
+  | {
+      kind: 'alert';
+      simTimeS: number;
+      code: WarningCode;
+      state: 'raised' | 'cleared';
+      severity: AlertSeverity;
+      /** The tyre, for a per-tyre warning. Together with `code` it identifies the alert. */
+      component?: TyrePosition;
+      message: string;
     };
 
 export type Command =

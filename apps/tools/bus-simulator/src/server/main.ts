@@ -78,10 +78,12 @@ server.listen(port, host, () => {
   }
 });
 
+let stopping = false;
 const shutdown = () => {
-  runner.stop();
+  if (stopping) process.exit(1); // a second Ctrl+C means "now"
+  stopping = true;
   server.close();
-  process.exit(0);
+  void runner.retire().finally(() => process.exit(0));
 };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);

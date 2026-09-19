@@ -3,8 +3,15 @@ import type { RouteSummary } from '../shared/protocol.ts';
 
 const TIMEOUT_MS = 8_000;
 
+/** The one thing a publisher needs from the gateway; lets tests supply a stand-in. */
+export interface IngestGateway {
+  ingest(eventType: IngestEventType, token: string, body: unknown): Promise<IngestResult>;
+}
+
+export type IngestEventType = 'location' | 'device-status' | 'vehicle-telemetry' | 'alert';
+
 /** Every call goes through api-gateway, as a real device's would; nothing here holds a service URL. */
-export class GatewayClient {
+export class GatewayClient implements IngestGateway {
   readonly baseUrl: string;
 
   constructor(baseUrl: string) {
@@ -43,7 +50,7 @@ export class GatewayClient {
   }
 
   /** Posts one event to the device ingest endpoint with the device's own bearer token. */
-  async ingest(eventType: 'location' | 'device-status', token: string, body: unknown): Promise<IngestResult> {
+  async ingest(eventType: IngestEventType, token: string, body: unknown): Promise<IngestResult> {
     const res = await fetch(`${this.baseUrl}/ingest/v1/${eventType}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

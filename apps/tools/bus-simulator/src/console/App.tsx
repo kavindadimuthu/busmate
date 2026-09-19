@@ -235,6 +235,7 @@ function PlatformPanel({ state }: { state: ConsoleState }) {
   const now = useNow();
   const { platform, publisher, vehicle } = state;
   const lastAccepted = publisher.lastAcceptedAt ? now - Date.parse(publisher.lastAcceptedAt) : null;
+  const lastVehicle = publisher.lastVehicleAcceptedAt ? now - Date.parse(publisher.lastVehicleAcceptedAt) : null;
   const seenAgeMs = platform.bus ? now - Date.parse(platform.bus.receivedAt) : null;
   const stale = seenAgeMs != null && seenAgeMs > STALE_AFTER_MS;
   return (
@@ -261,6 +262,8 @@ function PlatformPanel({ state }: { state: ConsoleState }) {
       <Row k="Accepted / flagged / failed" v={`${publisher.accepted} / ${publisher.flagged} / ${publisher.failed}`} />
       <Row k="Coalesced (fast playback)" v={String(publisher.coalesced)} />
       <Row k="Last accepted" v={lastAccepted != null ? `${Math.round(lastAccepted / 1000)} s ago` : '—'} />
+      <Row k="Vehicle health sent" v={lastVehicle != null ? `${Math.round(lastVehicle / 1000)} s ago` : '—'} />
+      {publisher.dropped > 0 && <Row k="Dropped (platform down)" v={String(publisher.dropped)} />}
       {publisher.lastError && <p className="error">{publisher.lastError}</p>}
       {!vehicle.gps.fix && <p className="error">GPS has no fix — no position is being sent.</p>}
     </div>

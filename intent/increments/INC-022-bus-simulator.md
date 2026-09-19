@@ -32,10 +32,10 @@ lets the next telemetry increments be built and demonstrated without hardware.
   and lifecycle to `/ingest/v1/device-status`, through the gateway, authenticated with a seeded demo
   device token — the same path `tools/device-simulator` and the conductor app use. This increment
   changes no contract.
-- **Vehicle state is simulated and shown locally, not yet sent.** Engine, fuel, tyre, electrical and
-  cabin state exist in the model and the console today; putting them on the wire needs a published
-  contract change (see Out of scope). The model's output shape is written so that becoming an event
-  payload later is a mapping, not a redesign.
+- **Vehicle state is simulated and shown locally.** Engine, fuel, tyre, electrical and cabin state
+  exist in the model and the console; putting them on the wire needed a published contract change
+  (INC-023), and sending them is INC-025. The model's output shape is written so that becoming an
+  event payload is a mapping, not a redesign.
 - **Two views side by side.** The console shows the bus's own truth beside the platform's view of it
   (the gateway's live-bus stream), so a dropped fix, a rejected event or a stale live state is
   visible rather than silently assumed.

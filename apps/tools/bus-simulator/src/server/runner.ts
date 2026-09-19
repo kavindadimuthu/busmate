@@ -17,6 +17,8 @@ const TICK_MS = 100;
 const LOG_LIMIT = 300;
 /** A tick never runs more than this many model steps, so a stalled event loop cannot trigger a burst. */
 const MAX_STEPS_PER_TICK = 1_000;
+/** How long a retired bus's publisher may keep trying to deliver its closing alerts. */
+const DRAIN_LIMIT_MS = 30_000;
 
 export interface RunnerOptions {
   gateway: GatewayClient;
@@ -43,6 +45,8 @@ export class Runner {
 
   private sim!: Simulation;
   private publisher!: Publisher;
+  /** Publishers of retired buses, kept only until their closing alerts have been delivered. */
+  private draining: Array<{ publisher: Publisher; since: number }> = [];
   private device!: DeviceCredential;
   private routeId!: string;
   private seed!: number;
@@ -75,6 +79,25 @@ export class Runner {
 
   stop(): void {
     if (this.timer) clearInterval(this.timer);
+    this.watcher.stop();
+  }
+
+  /**
+   * Clears the bus's raised alerts and gives the publisher a moment to deliver them, so stopping the
+   * simulator does not leave the platform holding alerts for a bus that has gone. Best effort: a
+   * platform that is unreachable simply keeps them (a killed process cannot do this at all).
+   */
+  async retire(timeoutMs = 4_000): Promise<void> {
+    if (this.timer) clearInterval(this.timer);
+    this.timer = null;
+    const producedAt = new Date();
+    this.publisher.enqueue(this.sim.closeOut().map((report) => ({ report, producedAt })));
+    const deadline = Date.now() + timeoutMs;
+    const all = () => [this.publisher, ...this.draining.map((d) => d.publisher)];
+    while (Date.now() < deadline && !all().every((p) => p.isIdle())) {
+      for (const p of all()) p.pump();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     this.watcher.stop();
   }
 
@@ -142,6 +165,16 @@ export class Runner {
       throw new BadRequest(error instanceof Error ? error.message : String(error));
     }
 
+    // The old bus is retiring: have it clear whatever it raised so the platform is left with no
+    // alerts for a bus that no longer exists, and let its publisher deliver them before it goes.
+    if (this.sim && this.publisher) {
+      const closing = this.sim.closeOut();
+      if (closing.length) {
+        const producedAt = new Date();
+        this.publisher.enqueue(closing.map((report) => ({ report, producedAt })));
+        this.draining.push({ publisher: this.publisher, since: Date.now() });
+      }
+    }
     this.sim = sim;
     this.routeId = routeId;
     this.seed = seed;
@@ -151,6 +184,9 @@ export class Runner {
       this.device = device;
       this.publisher = new Publisher(this.gateway, device.token, (e) => this.onPublish(e));
       this.watcher.watchDevice(device.deviceId);
+    } else if (this.draining.some((d) => d.publisher === this.publisher)) {
+      // Same bus, new route: the retiring publisher still owns queued alerts, so start a fresh one.
+      this.publisher = new Publisher(this.gateway, device.token, (e) => this.onPublish(e));
     }
     this.log('info', `driving ${route.name} as ${device.busLabel} (${device.serial}), seed ${seed}`);
     for (const listener of this.listeners) listener.session(this.session());
@@ -174,8 +210,17 @@ export class Runner {
       this.trackWarnings(this.sim.snapshot().warnings);
     }
     this.publisher.pump(now);
+    this.pumpDraining(now);
     // The console needs a few frames a second, not ten.
     if (now - this.lastBroadcastAt >= 250) this.broadcastState();
+  }
+
+  /** Keeps retired publishers running until they have delivered their queue, or gives up after a while. */
+  private pumpDraining(now: number): void {
+    this.draining = this.draining.filter(({ publisher, since }) => {
+      publisher.pump(now);
+      return !publisher.isIdle() && now - since < DRAIN_LIMIT_MS;
+    });
   }
 
   private trackWarnings(warnings: Warning[]): void {

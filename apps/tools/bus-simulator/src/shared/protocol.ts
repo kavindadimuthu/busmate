@@ -41,8 +41,12 @@ export interface PublisherStatus {
   failed: number;
   /** Fixes superseded by a newer one before they could be sent (high playback, or while failing). */
   coalesced: number;
+  /** Alerts or status events discarded because the platform stayed unreachable past the queue limit. */
+  dropped: number;
   lastError: string | null;
   lastAcceptedAt: string | null;
+  /** Last time a vehicle-health snapshot or alert was accepted. */
+  lastVehicleAcceptedAt: string | null;
 }
 
 export interface PlatformBusView {

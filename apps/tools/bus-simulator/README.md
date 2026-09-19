@@ -43,10 +43,16 @@ pnpm --filter @busmate/bus-simulator typecheck
 
 ## What is real and what is not
 
-- **On the wire today:** position (`location`) and liveness (`device-status`), using the seeded demo
-  device tokens in [docs/dev-iot-device-credentials.md](../../../docs/dev-iot-device-credentials.md).
-- **Simulated but local only:** engine, fuel, tyres, battery, cabin, warnings. The platform has no
-  event type for these yet (INC-023), so the console is the only place they are visible.
+- **On the wire:** position (`location`), liveness (`device-status`), and — since INC-025 — vehicle
+  health snapshots (`vehicle-telemetry`) and alerts, using the seeded demo device tokens in
+  [docs/dev-iot-device-credentials.md](../../../docs/dev-iot-device-credentials.md). The payloads are
+  the published INC-023 contract, and a test validates the simulator's output against those schemas.
+- **Alerts follow the bus's warnings.** A warning that appears is raised, one that goes away is cleared,
+  and the platform never clears them for it. Switching bus or route, or stopping the simulator
+  (Ctrl+C), clears what the bus had raised first. A process that is killed outright cannot, and leaves
+  its alerts active on the platform until that bus reports again.
+- **Not readable back yet.** The platform stores the vehicle state but has no read path for it until
+  INC-024, so the console shows what was sent and whether it was accepted, not what the platform holds.
 - **Straight-line legs.** core-service holds ordered stops with coordinates but no road geometry, so
   the bus cuts corners between stops.
 - **Playback above 1×** speeds the model up, not the reporting: the platform receives at most one
