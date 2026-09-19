@@ -93,8 +93,9 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
   service.
 - **Driver entity** — a `driverId` column with queries exists, but no entity, assignment endpoint, or
   UI.
-- **Three-tier data-quality columns** (`*_unverified`, `*_calculated`) are modelled but never
-  written. Either build the verification queue or drop the columns.
+- **`*_calculated` data-quality columns** are modelled but never written — build the calculation or
+  drop them. The `*_unverified` tier is now claimed by community timetable proposals
+  ([ADR-018](decisions/ADR-018-community-changes-are-reviewed-changesets.md)).
 - **Timekeeper portal runs entirely on mock data** (`data/timekeeper/trips.ts`). A real timekeeper
   API recording boarding/departure/delay per stop closes several gaps at once.
 - **Analytics and revenue screens are all mock** even though real tickets and trips sit in the
@@ -104,6 +105,57 @@ unused `boarding`/`departed`/`delayed` trip statuses show the loop was modelled 
 - **Route versioning / effective-dating** — route edits currently mutate history.
 - **Relocate the AI Studio Gemini proxy** from a Next.js API route to the api-gateway BFF module; the
   Vite portal split removes the server it currently runs on.
+
+## Community contribution — the rest of the programme
+
+Direction in [ADR-017](decisions/ADR-017-community-contributors-produce-reference-data-before-p3.md),
+[ADR-018](decisions/ADR-018-community-changes-are-reviewed-changesets.md) and
+[ADR-019](decisions/ADR-019-contributor-standing-lives-with-the-network.md). The first slice (provenance,
+passenger labels, applying, proposing and reviewing stops) is shaped as INC-027..INC-031. The lines below
+are in build order. **Shape nothing past the pilot gate until the pilot has tested `A-15` and `A-16`** —
+its results will reshape them.
+
+- **Pilot gate (not code).** 5–10 invited enthusiasts on one corridor, running on INC-027..031 for 90 days:
+  count who is still active at day 30 and day 90, and ride-check a sample of approved stops. Decides
+  whether anything below gets built.
+- **Evidence photos on proposals.** Attach photos (stop, signboard, timetable board) through the existing
+  media storage; visible only to reviewers; the contributor affirms that no faces or number plates are
+  identifiable, and the reviewer can remove a photo before approving. passenger-web upload plus portal
+  review gallery.
+- **Route proposals.** Propose a new route or correct a route's ordered stop list: a passenger-web editor
+  (pick stops in order on a map, reorder, drag to insert) and a portal review showing the stop-sequence
+  diff on a map. Reuses the changeset table.
+- **Timetable proposals.** Propose departure times per stop, days of operation and the date observed,
+  written on approval to `schedule_stop.*_unverified` — never the authoritative columns (ADR-018): a
+  passenger-web grid editor seeded from the current schedule, and a portal review with a time diff.
+- **Field capture in passenger-mobile.** For a contributor standing at the stop: propose a stop at the
+  current position with a photo, photograph a timetable board to attach to a timetable proposal, and see
+  *My contributions*. Uses the app's existing `expo-location` and `expo-camera`.
+- **Stewards.** Staff appoint a contributor as steward for chosen route groups; stewards review others'
+  proposals inside that scope in a passenger-web review queue (the portal's review page rebuilt from
+  shared `libs/ui` parts). Never their own; staff can overrule and revert.
+- **Track record, suspension with revert-all.** Per-contributor approved, rejected and reverted counts
+  shown wherever standing is decided; suspending a contributor can revert every change they made that has
+  not been edited since, with one confirmation. The defence against a deliberate bad actor.
+- **Passenger reports (`SRC-5`).** Any signed-in passenger can flag a stop, route or time as wrong ("this
+  bus no longer runs", "stop moved") or confirm or deny a time from route detail, on web and mobile. Staff
+  and stewards see reports grouped by record; this also starts measuring `A-10`.
+- **Confidence decay and re-verification work.** Effective confidence computed at read time (ADR-018);
+  records below the threshold, and records with several independent reports against them, become
+  re-verification tasks; a staff view of coverage and staleness by corridor.
+- **Contributor task queue.** "Needs checking on my corridors / near me" in passenger-web and
+  passenger-mobile: claim a task, finish it with a proposal or a confirmation, release it. This is what
+  keeps the programme going after the first collection.
+- **Recognition.** A public contributor profile (display name, corridors, approved count), "observed by …"
+  credit on public route and stop pages for contributors who opt in, and a per-corridor leaderboard. No
+  money.
+- **Community spreadsheet import.** Enthusiast groups keep route and timetable spreadsheets: a contributor
+  uploads one, and each row becomes a changeset through the existing unified-import parser, reviewed like
+  any other.
+- **Contributor notifications.** Email when a proposal is decided or a task is waiting. Blocked by the
+  notification-service backlog item.
+- **Observed fares.** Contributors report the fare actually charged between two stops. Fares live in
+  ticketing-service (R3 as a whole) — a separate decision, not a changeset type in core-service.
 
 ## Media — what the photo work deliberately left undone
 
@@ -185,6 +237,6 @@ profile photos are built and in use; everything below reuses them rather than st
 
 ## Strategy
 
-- Validate strategy assumptions `A-01`..`A-14` —
-  [strategy/06-assumption-log.md](strategy/06-assumption-log.md). 0 of 14 done, and this is where the
+- Validate strategy assumptions `A-01`..`A-16` —
+  [strategy/06-assumption-log.md](strategy/06-assumption-log.md). 0 of 16 done, and this is where the
   company is actually built rather than in the code.

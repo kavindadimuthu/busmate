@@ -74,6 +74,9 @@ flowchart LR
 **Currently in `P-1`.** Everything in `P-2`–`P-5` is on the **stop list** — a defensible reason not to
 build the exciting thing is worth more to a solo founder than a roadmap of things to build.
 
+**One deliberate exception:** the community contribution programme ([ADR-017](../decisions/ADR-017-community-contributors-produce-reference-data-before-p3.md))
+produces passenger-facing reference data during `P-1`. It runs as a bounded pilot; if the pilot fails, it stops.
+
 ## 4. The flywheel — and the corridor constraint
 
 ```mermaid

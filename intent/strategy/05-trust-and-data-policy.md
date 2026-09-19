@@ -117,7 +117,7 @@ accordingly** — *scheduled*, *reported*, or *live*. We do not present a schedu
 | `SRC-1` | Authority-issued | Official |
 | `SRC-2` | Operator on BusMate, live execution | Live / reported |
 | `SRC-3` | Operator-supplied feed | Reported |
-| `SRC-4` | BusMate field survey | Scheduled — observed |
+| `SRC-4` | Field observation — BusMate or an accepted contributor | Scheduled — observed |
 | `SRC-5` | Passenger crowdsourced | Reported — unverified |
 | `SRC-6` | Derived from history | Estimated |
 

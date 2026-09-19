@@ -1,6 +1,6 @@
 # ADR-007 · Multi-source ingestion resolved by precedence
 
-**Date:** 2026-08-02 · **Status:** Accepted
+**Date:** 2026-08-02 · **Status:** Accepted (`SRC-4` amended by [ADR-018](ADR-018-community-changes-are-reviewed-changesets.md))
 **Type:** architecture
 
 ## Context
@@ -30,7 +30,7 @@ migration.
 | `SRC-1` | Authority-issued — gazetted routes, permits, official timetables | Highest | Authority adopts (`T-3`+) |
 | `SRC-2` | Operator on BusMate — live trip execution, actual times | Highest operational | Any operator at `S-1`+ |
 | `SRC-3` | Operator not on BusMate — shared file or feed (CSV, GTFS, API) | High | Willing non-customer |
-| `SRC-4` | Field survey — our team rides the route and records it | Medium, decays | Always, at a cost |
+| `SRC-4` | Field observation — our team, or an accepted contributor ([ADR-018](ADR-018-community-changes-are-reviewed-changesets.md)) | Medium, decays | Always, at a cost |
 | `SRC-5` | Crowdsourced — passenger reports and corrections | Low individually, good in aggregate | Once there are users |
 | `SRC-6` | Derived — inferred from historical patterns | Lowest, better than nothing | Always |
 

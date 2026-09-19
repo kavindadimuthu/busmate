@@ -6,7 +6,7 @@
 > This is the document that converts the rest of this folder from opinions into a research programme.
 > It is also the one most likely to be skipped, and the one worth the most. **Updated weekly.**
 
-**Opened:** 2026-08-02 · **Validated:** 0 of 14 · **Falsified:** 0
+**Opened:** 2026-08-02 · **Validated:** 0 of 16 · **Falsified:** 0
 
 ---
 
@@ -64,6 +64,8 @@ quadrantChart
 | `A-08` | Network effects cluster by corridor, so corridor density beats geographic spread | Reasoning about passenger behaviour | Compare passenger-app retention in a dense corridor vs a sparse one | 🟡 | ⏳ |
 | `A-09` | A single-operator passenger app underperforms enough to motivate `S-1` | Reasoning | Ship one branded app; measure usage against a multi-operator corridor | 🟢 | ⏳ |
 | `A-10` | Crowdsourced corrections (`SRC-5`) will arrive at usable volume | **Assumed** | Instrument reporting in the first passenger release | 🟡 | ⏳ |
+| `A-15` | Bus enthusiasts will keep contributing reviewed reference data for months without pay ([ADR-017](../decisions/ADR-017-community-contributors-produce-reference-data-before-p3.md)) | Visible unpaid activity in enthusiast groups | Pilot: 5–10 invited contributors on one corridor; count those still proposing at day 30 and day 90 | 🟡 | ⏳ |
+| `A-16` | Reviewed community data is accurate enough to publish as *observed* | **Assumed** | Ride-check a random sample of approved pilot stops and times against reality | 🟡 | ⏳ |
 
 ## Institutional assumptions
 
@@ -85,7 +87,7 @@ Ordered by cost-to-test, cheapest first. None of these require writing code.
 | 1 | Interview 10 operators — open questions about what loses them money | `A-01` `A-05` `A-06` `A-07` |
 | 2 | Interview 5 conductors, separately from owners | `A-03` |
 | 3 | Show [05](05-trust-and-data-policy.md) to 3 operators and 1 official | `A-02` `A-12` |
-| 4 | Legal review of data-holding and payment structure | `A-13` `A-14` |
+| 4 | Legal review of data-holding and payment structure, and of the contributor agreement ([ADR-017](../decisions/ADR-017-community-contributors-produce-reference-data-before-p3.md)) | `A-13` `A-14` |
 | 5 | 2 informal NTC / provincial conversations — listening, not pitching | `A-11` |
 
 > **Discipline note.** Documents [01](01-scope-constitution.md)–[05](05-trust-and-data-policy.md) are the

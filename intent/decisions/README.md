@@ -48,3 +48,6 @@
 | [ADR-014](ADR-014-payhere-hosted-checkout-for-passenger-booking.md) | PayHere hosted checkout is the PaymentGateway for passenger self-booking | architecture | Accepted |
 | [ADR-015](ADR-015-vehicle-health-is-its-own-staff-scoped-event.md) | Vehicle health is its own event type, and is visible to staff only | architecture | Proposed |
 | [ADR-016](ADR-016-runtime-database-role-cannot-bypass-row-level-security.md) | The runtime database role cannot bypass row-level security | architecture | Proposed |
+| [ADR-017](ADR-017-community-contributors-produce-reference-data-before-p3.md) | Community contributors produce reference data ahead of the passenger phase | strategy | Accepted |
+| [ADR-018](ADR-018-community-changes-are-reviewed-changesets.md) | Community changes are reviewed changesets, applied through precedence | architecture | Accepted |
+| [ADR-019](ADR-019-contributor-standing-lives-with-the-network.md) | Contributor standing lives with the network, not in account roles | architecture | Accepted |

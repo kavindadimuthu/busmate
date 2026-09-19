@@ -49,7 +49,7 @@ Nothing in the next phase starts until the previous gate is passed.
 
 ## Where we honestly are
 
-**Phase `P-1` (Wedge), not commercially started. Zero paying customers, no live tenant, 0 of 14
+**Phase `P-1` (Wedge), not commercially started. Zero paying customers, no live tenant, 0 of 16
 strategy assumptions validated.** Everything in [strategy/](strategy/) is a reasoned hypothesis, not
 a finding.
 

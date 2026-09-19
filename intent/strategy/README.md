@@ -89,5 +89,5 @@ the decision that motivated it and the assumption it tests.
 | **Phase** | `P-1` (Wedge) — not started commercially |
 | **Deployment topology** | `T-0` — development only, no live tenant |
 | **Paying customers** | 0 |
-| **Assumptions validated** | 0 of 14 |
+| **Assumptions validated** | 0 of 16 |
 | **Immediate priority** | Customer discovery — see [06](06-assumption-log.md) §"Next tests" |
