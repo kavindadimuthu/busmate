@@ -65,10 +65,11 @@ public class InternalService {
         String userType = appMetadata != null ? (String) appMetadata.get("user_type") : null;
         String accountStatus = appMetadata != null ? (String) appMetadata.get("account_status") : null;
 
-        return new InternalUserResponse(UUID.fromString(userId), email, userType, accountStatus);
+        return new InternalUserResponse(UUID.fromString(userId), email, userType, accountStatus, null, null);
     }
 
     private InternalUserResponse toResponse(User user) {
-        return new InternalUserResponse(user.getUserId(), user.getEmail(), user.getUserType().getName(), user.getAccountStatus());
+        return new InternalUserResponse(user.getUserId(), user.getEmail(), user.getUserType().getName(),
+                user.getAccountStatus(), user.getFullName(), Boolean.TRUE.equals(user.getIsEmailVerified()));
     }
 }
