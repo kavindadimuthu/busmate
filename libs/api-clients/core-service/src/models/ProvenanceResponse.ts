@@ -2,17 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { RouteRequest } from './RouteRequest';
-export type RouteGroupRequest = {
-    sourceTier?: RouteGroupRequest.sourceTier;
+export type ProvenanceResponse = {
+    sourceTier?: ProvenanceResponse.sourceTier;
+    observedAt?: string;
+    baseConfidence?: number;
+    attributedUserId?: string;
     attributionLabel?: string;
-    name: string;
-    nameSinhala?: string;
-    nameTamil?: string;
-    description?: string;
-    routes?: Array<RouteRequest>;
 };
-export namespace RouteGroupRequest {
+export namespace ProvenanceResponse {
     export enum sourceTier {
         SRC_1 = 'SRC_1',
         SRC_2 = 'SRC_2',

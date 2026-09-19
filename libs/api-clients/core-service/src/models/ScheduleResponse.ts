@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ProvenanceResponse } from './ProvenanceResponse';
 import type { ScheduleCalendarResponse } from './ScheduleCalendarResponse';
 import type { ScheduleExceptionResponse } from './ScheduleExceptionResponse';
 import type { ScheduleStopResponse } from './ScheduleStopResponse';
@@ -9,6 +10,7 @@ import type { ScheduleStopResponse } from './ScheduleStopResponse';
  * Schedule response containing all schedule information and related components
  */
 export type ScheduleResponse = {
+    provenance?: ProvenanceResponse;
     /**
      * Unique identifier of the schedule
      */

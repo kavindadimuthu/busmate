@@ -9,6 +9,8 @@ import type { ScheduleStopRequest } from './ScheduleStopRequest';
  * Request DTO for creating or updating a schedule
  */
 export type ScheduleRequest = {
+    sourceTier?: ScheduleRequest.sourceTier;
+    attributionLabel?: string;
     /**
      * Unique name for this schedule within the route
      */
@@ -55,6 +57,14 @@ export type ScheduleRequest = {
     exceptions?: Array<ScheduleExceptionRequest>;
 };
 export namespace ScheduleRequest {
+    export enum sourceTier {
+        SRC_1 = 'SRC_1',
+        SRC_2 = 'SRC_2',
+        SRC_3 = 'SRC_3',
+        SRC_4 = 'SRC_4',
+        SRC_5 = 'SRC_5',
+        SRC_6 = 'SRC_6',
+    }
     /**
      * Type of schedule
      */

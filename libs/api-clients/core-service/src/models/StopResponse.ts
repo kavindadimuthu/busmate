@@ -3,7 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { LocationDto } from './LocationDto';
+import type { ProvenanceResponse } from './ProvenanceResponse';
 export type StopResponse = {
+    provenance?: ProvenanceResponse;
     id?: string;
     name?: string;
     nameSinhala?: string;

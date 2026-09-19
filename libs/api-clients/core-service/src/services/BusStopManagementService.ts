@@ -218,12 +218,14 @@ export class BusStopManagementService {
      * Import stops from CSV file
      * Dynamically import stops from CSV files with flexible field combinations. The system automatically detects available fields and processes any combination: Required: At least one name field (name, name_sinhala, or name_tamil). Optional: description, coordinates (lat/lng), address fields (all languages), city/state/country (all languages), zipCode, isAccessible. Mixed data supported - different rows can have different field combinations. Requires authentication.
      * @param defaultCountry Default country for stops when not specified in CSV
+     * @param sourceTier Source recorded for every imported stop; SRC_1 is MOT only. Defaults to SRC_4.
      * @param formData
      * @returns StopImportResponse Import completed (check response for detailed results including imported stop IDs)
      * @throws ApiError
      */
     public static importStops(
         defaultCountry: string = 'Sri Lanka',
+        sourceTier?: 'SRC_1' | 'SRC_2' | 'SRC_3' | 'SRC_4' | 'SRC_5' | 'SRC_6',
         formData?: {
             /**
              * CSV file containing stop data (supports multiple formats)
@@ -236,6 +238,7 @@ export class BusStopManagementService {
             url: '/api/stops/import',
             query: {
                 'defaultCountry': defaultCountry,
+                'sourceTier': sourceTier,
             },
             formData: formData,
             mediaType: 'multipart/form-data',

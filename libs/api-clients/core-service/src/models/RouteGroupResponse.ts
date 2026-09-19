@@ -2,8 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ProvenanceResponse } from './ProvenanceResponse';
 import type { RouteResponse } from './RouteResponse';
 export type RouteGroupResponse = {
+    provenance?: ProvenanceResponse;
     id?: string;
     name?: string;
     nameSinhala?: string;

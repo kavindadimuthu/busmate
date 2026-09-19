@@ -353,6 +353,7 @@ export class RouteManagementService {
      * @param validateCoordinates
      * @param continueOnError
      * @param defaultRoadType
+     * @param sourceTier Source recorded for every imported record; SRC_1 is MOT only. Defaults to SRC_4.
      * @param formData
      * @returns RouteUnifiedImportResponse Import completed (check response for detailed results)
      * @throws ApiError
@@ -366,6 +367,7 @@ export class RouteManagementService {
         validateCoordinates: boolean = false,
         continueOnError: boolean = true,
         defaultRoadType: string = 'NORMALWAY',
+        sourceTier?: 'SRC_1' | 'SRC_2' | 'SRC_3' | 'SRC_4' | 'SRC_5' | 'SRC_6',
         formData?: {
             /**
              * CSV file containing complete route data
@@ -385,6 +387,7 @@ export class RouteManagementService {
                 'validateCoordinates': validateCoordinates,
                 'continueOnError': continueOnError,
                 'defaultRoadType': defaultRoadType,
+                'sourceTier': sourceTier,
             },
             formData: formData,
             mediaType: 'multipart/form-data',

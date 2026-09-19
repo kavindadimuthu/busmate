@@ -291,6 +291,7 @@ export class ScheduleManagementService {
      * @param defaultScheduleType Default schedule type when not specified in CSV
      * @param validateTimeSequence Validate arrival time is before or equal to departure time
      * @param validateStopOrder Validate stop order sequence within each schedule
+     * @param sourceTier Source recorded for every imported schedule; SRC_1 is MOT only. Defaults to SRC_4.
      * @param formData
      * @returns ScheduleCsvImportResponse Import completed (check response for success/failure details)
      * @throws ApiError
@@ -307,6 +308,7 @@ export class ScheduleManagementService {
         defaultScheduleType?: 'REGULAR' | 'SPECIAL',
         validateTimeSequence: boolean = true,
         validateStopOrder: boolean = true,
+        sourceTier?: 'SRC_1' | 'SRC_2' | 'SRC_3' | 'SRC_4' | 'SRC_5' | 'SRC_6',
         formData?: {
             /**
              * CSV file containing schedule data
@@ -329,6 +331,7 @@ export class ScheduleManagementService {
                 'defaultScheduleType': defaultScheduleType,
                 'validateTimeSequence': validateTimeSequence,
                 'validateStopOrder': validateStopOrder,
+                'sourceTier': sourceTier,
             },
             formData: formData,
             mediaType: 'multipart/form-data',

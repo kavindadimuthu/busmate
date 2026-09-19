@@ -4,6 +4,8 @@
 /* eslint-disable */
 import type { RouteStopRequest } from './RouteStopRequest';
 export type RouteRequest = {
+    sourceTier?: RouteRequest.sourceTier;
+    attributionLabel?: string;
     name: string;
     nameSinhala?: string;
     nameTamil?: string;
@@ -21,4 +23,14 @@ export type RouteRequest = {
     direction: string;
     routeStops?: Array<RouteStopRequest>;
 };
+export namespace RouteRequest {
+    export enum sourceTier {
+        SRC_1 = 'SRC_1',
+        SRC_2 = 'SRC_2',
+        SRC_3 = 'SRC_3',
+        SRC_4 = 'SRC_4',
+        SRC_5 = 'SRC_5',
+        SRC_6 = 'SRC_6',
+    }
+}
 

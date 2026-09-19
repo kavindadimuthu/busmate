@@ -3,8 +3,10 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { LocationDto } from './LocationDto';
+import type { ProvenanceResponse } from './ProvenanceResponse';
 import type { RouteStopResponse } from './RouteStopResponse';
 export type RouteResponse = {
+    provenance?: ProvenanceResponse;
     id?: string;
     name?: string;
     nameSinhala?: string;
