@@ -4,6 +4,7 @@ import { AlertTriangle, Bus, Link2, Sparkles, LayoutGrid } from 'lucide-react';
 import type { BusMediaResponse, BusPassengerServicePermitAssignmentResponse, BusResponse } from '@busmate/api-client-core';
 import { SectionCard, ToneBadge } from '@/components/shared/form-primitives';
 import { BusAvailabilityCard } from '@/components/shared/fleet/BusAvailabilityCard';
+import { BusDefaultConductorCard } from '@/components/shared/fleet/BusDefaultConductorCard';
 import { BusCoverImage, BusPhotoGallery } from '@/components/shared/fleet/BusPhotoGallery';
 import { BusDocumentsPanel } from '@/components/shared/fleet/BusDocumentsPanel';
 import { SeatMapView } from '@/components/shared/fleet/SeatMapView';
@@ -74,7 +75,10 @@ export function BusProfileView({ bus, photos, documents, links, canEdit, showOpe
         </div>
       </section>
 
-      <BusAvailabilityCard bus={bus} canEdit={canEdit && !retired} onChanged={onChanged} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BusAvailabilityCard bus={bus} canEdit={canEdit && !retired} onChanged={onChanged} />
+        <BusDefaultConductorCard bus={bus} canEdit={canEdit && !showOperator} onChanged={onChanged} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SectionCard title={`Seat layout — ${layout?.layoutName ?? `${bus.capacity} seats`}`} icon={<LayoutGrid className="h-4 w-4 text-primary" />}>

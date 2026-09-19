@@ -59,6 +59,7 @@ public class BusProfileService {
     private final MediaStorageService storage;
     private final ImageSanitizer imageSanitizer;
     private final DocumentSanitizer documentSanitizer;
+    private final com.busmate.routeschedule.shared.client.ConductorDirectory conductorDirectory;
 
     @org.springframework.beans.factory.annotation.Value("${media.max-upload-bytes}")
     private long maxUploadBytes;
@@ -166,6 +167,31 @@ public class BusProfileService {
     private BusResponse setStatus(Bus bus, StatusEnum status, String reason, Caller caller) {
         bus.setStatus(status);
         bus.setStatusReason(reason != null ? reason.trim() : null);
+        bus.setUpdatedBy(caller.auditId());
+        busRepository.save(bus);
+        return busService.getBusById(bus.getId());
+    }
+
+    /**
+     * Sets or clears the conductor who usually works the bus (design R5). The conductor must be an
+     * active account working for the bus's own operator.
+     */
+    @Transactional
+    public BusResponse setDefaultConductor(Bus bus, UUID conductorId, Caller caller) {
+        if (bus.getStatus() == StatusEnum.cancelled) {
+            throw new ConflictException("A retired bus cannot have a default conductor");
+        }
+        if (conductorId != null) {
+            var conductor = conductorDirectory.find(conductorId)
+                    .orElseThrow(() -> new BadRequestException("No conductor account with id " + conductorId));
+            if (!conductor.worksFor(bus.getOperator().getId())) {
+                throw new ConflictException("The conductor does not work for this bus's operator");
+            }
+            if (!conductor.isActive()) {
+                throw new ConflictException("The conductor's account is not active");
+            }
+        }
+        bus.setDefaultConductorId(conductorId);
         bus.setUpdatedBy(caller.auditId());
         busRepository.save(bus);
         return busService.getBusById(bus.getId());

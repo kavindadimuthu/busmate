@@ -18,6 +18,28 @@ import java.util.UUID;
 public class InternalController {
 
     private final InternalService internalService;
+    private final com.busmatelk.backend.repository.UserRepository userRepository;
+    private final com.busmatelk.backend.operator.OperatorScope operatorScope;
+
+    /**
+     * A conductor account as core-service needs it to check a trip or default-bus assignment
+     * (INC-019/020): which operator they work for and whether the account can still work.
+     * 404 when the id is not a conductor.
+     */
+    @GetMapping("/conductors/{userId}")
+    public ResponseEntity<Map<String, Object>> getConductor(@PathVariable UUID userId) {
+        return userRepository.findById(userId)
+                .filter(u -> com.busmatelk.backend.operator.OperatorScope.CONDUCTOR.equals(u.getUserType().getName()))
+                .map(u -> {
+                    Map<String, Object> body = new java.util.HashMap<>();
+                    body.put("userId", u.getUserId());
+                    body.put("fullName", u.getFullName());
+                    body.put("accountStatus", u.getAccountStatus());
+                    body.put("operatorId", operatorScope.linkedOperatorOf(u.getUserId()));
+                    return ResponseEntity.ok(body);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 
     @GetMapping("/users/{userId}")
     public ResponseEntity<InternalUserResponse> getUser(@PathVariable UUID userId) {

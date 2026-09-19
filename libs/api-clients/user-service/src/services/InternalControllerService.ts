@@ -55,4 +55,20 @@ export class InternalControllerService {
             },
         });
     }
+    /**
+     * @param userId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getConductor(
+        userId: string,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/internal/conductors/{userId}',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
 }

@@ -90,6 +90,11 @@ public class Bus extends BaseEntity {
     @Column(name = "availability_note", length = 500)
     private String availabilityNote;
 
+    // The conductor who usually works this bus (design R5): pre-fills trip assignments only.
+    // A user-service account id, checked with user-service when set.
+    @Column(name = "default_conductor_id")
+    private UUID defaultConductorId;
+
     /** Whether the operator has the bus available on {@code date}. */
     public boolean isAvailableOn(LocalDate date) {
         if (availability == null || availability == BusAvailabilityEnum.AVAILABLE) {

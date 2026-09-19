@@ -56,4 +56,10 @@ public class MediaStorageService {
             return Optional.empty();
         }
     }
+
+    /** Idempotent: deleting a key that does not exist is not an error in S3. */
+    public void delete(String key) {
+        mediaS3Client.deleteObject(software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                .bucket(bucket).key(key).build());
+    }
 }

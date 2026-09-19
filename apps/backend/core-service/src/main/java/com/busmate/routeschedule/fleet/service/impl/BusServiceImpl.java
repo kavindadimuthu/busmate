@@ -525,6 +525,7 @@ public class BusServiceImpl implements BusService {
         response.setAvailabilityFrom(bus.getAvailabilityFrom());
         response.setAvailabilityUntil(bus.getAvailabilityUntil());
         response.setAvailabilityNote(bus.getAvailabilityNote());
+        response.setDefaultConductorId(bus.getDefaultConductorId());
         response.setAvailableToday(bus.getStatus() == StatusEnum.active && bus.isAvailableOn(java.time.LocalDate.now()));
         if (bus.getId() != null) {
             response.setPhotoCount(busMediaRepository.countByBusIdAndKind(bus.getId(), com.busmate.routeschedule.fleet.enums.BusMediaKindEnum.PHOTO));

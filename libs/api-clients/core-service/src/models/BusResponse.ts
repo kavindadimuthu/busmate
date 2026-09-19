@@ -27,6 +27,7 @@ export type BusResponse = {
     coverPhotoId?: string;
     photoCount?: number;
     documentCount?: number;
+    defaultConductorId?: string;
     createdAt?: string;
     updatedAt?: string;
     createdBy?: string;

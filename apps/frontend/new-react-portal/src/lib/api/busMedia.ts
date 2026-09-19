@@ -32,3 +32,21 @@ export async function openBusDocument(busId: string, mediaId: string, filename: 
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
+
+/** A conductor document's bytes (user-service, INC-019); same reasoning as fetchBusMediaBlob. */
+export async function downloadUserDocument(userId: string, documentId: string, filename: string): Promise<void> {
+  const { OpenAPI: UserAPI } = await import('@busmate/api-client-user');
+  const token = await fetchAccessToken();
+  const response = await fetch(`${UserAPI.BASE}/api/users/${userId}/documents/${documentId}/content`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`The document could not be loaded (${response.status}).`);
+  const url = URL.createObjectURL(await response.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

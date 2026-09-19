@@ -14,14 +14,8 @@ export type CrewFilters = { status: AccountStatus | '__all__' };
 const INITIAL_FILTERS: CrewFilters = { status: '__all__' };
 
 /**
- * Conductor accounts belonging to the logged-in operator.
- *
- * user-service has no operatorId-scoped conductor list endpoint (permission scope on
- * user.conductor:read is 'any', platform-wide) — this fetches every conductor account and
- * filters client-side to those whose profileData.assign_operator_id matches this operator's
- * own core-service Operator.id. Fine at this scale (a handful of conductors per operator);
- * would need a real server-side scoped endpoint if the platform grows much larger. See
- * docs/plans/Unified-Operator-Lifecycle-Management-Plan.md for the assign_operator_id field.
+ * Conductor accounts belonging to the logged-in operator. user-service returns only the calling
+ * operator's own conductors (INC-019); the assign_operator_id filter below is defence in depth.
  */
 export function useCrewManagement() {
   const router = useRouter();

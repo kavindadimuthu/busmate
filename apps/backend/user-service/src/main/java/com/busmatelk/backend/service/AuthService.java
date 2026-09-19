@@ -12,6 +12,7 @@ import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserIdentity;
 import com.busmatelk.backend.model.UserProfile;
 import com.busmatelk.backend.model.UserType;
+import com.busmatelk.backend.operator.OperatorScope;
 import com.busmatelk.backend.operator.OperatorSyncService;
 import com.busmatelk.backend.repository.UserIdentityRepository;
 import com.busmatelk.backend.repository.UserProfileRepository;
@@ -61,6 +62,7 @@ public class AuthService {
     private final UserEventPublisher userEventPublisher;
     private final ProfileSchemaValidator profileSchemaValidator;
     private final OperatorSyncService operatorSyncService;
+    private final OperatorScope operatorScope;
 
     /**
      * Self-registration flow — always creates a "passenger", pending verification. The user row,
@@ -125,6 +127,15 @@ public class AuthService {
         Map<String, Object> profileData = request.getProfileData() != null
                 ? new HashMap<>(request.getProfileData())
                 : new HashMap<>();
+        // An operator creates conductors for their own operator and nothing else (INC-019); the
+        // link is set here, whatever the request said.
+        var scope = operatorScope.operatorScopeOf(callerId);
+        if (scope.isPresent()) {
+            if (!OperatorScope.CONDUCTOR.equals(request.getUserType())) {
+                throw new AccessDeniedException("Operators can only create conductor accounts");
+            }
+            profileData.put(OperatorScope.OPERATOR_LINK_FIELD, scope.get().toString());
+        }
         profileSchemaValidator.validate(request.getUserType(), profileData);
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {

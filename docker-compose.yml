@@ -249,6 +249,7 @@ services:
       - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
       - AUTH_JWKS_URL=http://user-service:9020/public/jwks.json
       - MEDIA_S3_ENDPOINT=http://minio:9000
+      - USER_SERVICE_URL=http://user-service:9020
       - OTEL_SERVICE_NAME=core-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf

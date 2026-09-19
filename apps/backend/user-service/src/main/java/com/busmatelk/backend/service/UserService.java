@@ -7,6 +7,7 @@ import com.busmatelk.backend.dto.response.UserResponse;
 import com.busmatelk.backend.event.UserEventPublisher;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
+import com.busmatelk.backend.operator.OperatorScope;
 import com.busmatelk.backend.operator.OperatorSyncService;
 import com.busmatelk.backend.repository.AuthCredentialRepository;
 import com.busmatelk.backend.repository.UserIdentityRepository;
@@ -46,6 +47,7 @@ public class UserService {
     private final AuditLogService auditLogService;
     private final UserEventPublisher userEventPublisher;
     private final OperatorSyncService operatorSyncService;
+    private final OperatorScope operatorScope;
 
     /**
      * Checks if the caller is accessing their own resource and holds the given own-scoped permission.
@@ -60,7 +62,11 @@ public class UserService {
      */
     public void requireReadAccess(UUID callerId, UUID targetUserId, String targetUserType) {
         String scoped = "user." + targetUserType + ":read";
-        if (permissionService.hasPermission(callerId, scoped) || resolveOwnAccess(callerId, targetUserId, "profile:read:own")) {
+        if (resolveOwnAccess(callerId, targetUserId, "profile:read:own")) {
+            return;
+        }
+        if (permissionService.hasPermission(callerId, scoped)) {
+            operatorScope.requireWithinScope(callerId, findUserOrThrow(targetUserId));
             return;
         }
         throw new AccessDeniedException("Permission denied: " + scoped);
@@ -72,7 +78,11 @@ public class UserService {
      */
     public void requireUpdateAccess(UUID callerId, UUID targetUserId, String targetUserType) {
         String scoped = "user." + targetUserType + ":update";
-        if (permissionService.hasPermission(callerId, scoped) || resolveOwnAccess(callerId, targetUserId, "profile:update:own")) {
+        if (resolveOwnAccess(callerId, targetUserId, "profile:update:own")) {
+            return;
+        }
+        if (permissionService.hasPermission(callerId, scoped)) {
+            operatorScope.requireWithinScope(callerId, findUserOrThrow(targetUserId));
             return;
         }
         throw new AccessDeniedException("Permission denied: " + scoped);
@@ -85,6 +95,14 @@ public class UserService {
         }
 
         Specification<User> spec = hasUserType(userType);
+        // An operator lists only their own conductors (INC-019), filtered in the database.
+        var scope = operatorScope.operatorScopeOf(callerId);
+        if (scope.isPresent()) {
+            if (!OperatorScope.CONDUCTOR.equals(userType)) {
+                throw new AccessDeniedException("Operators can only list their own conductors");
+            }
+            spec = spec.and(assignedToOperator(scope.get().toString()));
+        }
         if (status != null && !status.isBlank()) {
             spec = spec.and(hasStatus(status));
         }
@@ -161,6 +179,7 @@ public class UserService {
         if (!permissionService.hasPermission(callerId, permission)) {
             throw new AccessDeniedException("Permission denied: " + permission);
         }
+        operatorScope.requireWithinScope(callerId, target);
 
         // saveAndFlush for the same reason as transitionAccountStatus below — the bulk deletes
         // and revocation that follow all clear the persistence context.
@@ -273,6 +292,19 @@ public class UserService {
 
     private static Specification<User> hasUserType(String userType) {
         return (root, query, cb) -> cb.equal(root.get("userType").get("name"), userType);
+    }
+
+    /** Conductors whose profile assigns them to this core-service Operator. */
+    private static Specification<User> assignedToOperator(String operatorId) {
+        return (root, query, cb) -> {
+            var sub = query.subquery(Integer.class);
+            var profile = sub.from(UserProfile.class);
+            sub.select(cb.literal(1)).where(
+                    cb.equal(profile.get("user"), root),
+                    cb.equal(cb.function("jsonb_extract_path_text", String.class,
+                            profile.get("profileData"), cb.literal(OperatorScope.OPERATOR_LINK_FIELD)), operatorId));
+            return cb.exists(sub);
+        };
     }
 
     private static Specification<User> hasStatus(String status) {

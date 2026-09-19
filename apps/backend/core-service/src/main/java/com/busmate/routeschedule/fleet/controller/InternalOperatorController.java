@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +29,16 @@ import java.util.UUID;
 public class InternalOperatorController {
 
     private final InternalOperatorService internalOperatorService;
+    private final com.busmate.routeschedule.fleet.service.OperatorService operatorService;
+
+    /**
+     * The Operator linked to a user-service account (INC-019): user-service uses it to scope an
+     * operator's conductor management to their own operator.
+     */
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<OperatorResponse> getOperatorByUserId(@PathVariable UUID userId) {
+        return ResponseEntity.ok(operatorService.getOperatorByUserId(userId));
+    }
 
     @PostMapping
     public ResponseEntity<OperatorResponse> createOrGetOperator(@Valid @RequestBody InternalOperatorRequest request) {

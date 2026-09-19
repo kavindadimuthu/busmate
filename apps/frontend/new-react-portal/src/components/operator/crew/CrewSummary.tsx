@@ -5,9 +5,12 @@ import { CircleDot, Mail, Phone, AtSign, Hash, CreditCard, Calendar } from 'luci
 import type { AdminUser } from '@/data/admin/users';
 import { USER_STATUS_CONFIG, formatDateShort } from '@/data/admin/users';
 import { UserPhoto } from '@/components/shared/profile/UserPhoto';
+import { ProfilePhotoAvatar } from '@/components/shared/profile/ProfilePhotoAvatar';
 
 interface CrewSummaryProps {
   conductor: AdminUser;
+  /** The operator may set or replace their conductor's photo (INC-019). */
+  photoEditable?: boolean;
 }
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
@@ -22,7 +25,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-export function CrewSummary({ conductor }: CrewSummaryProps) {
+export function CrewSummary({ conductor, photoEditable = false }: CrewSummaryProps) {
   const statusConfig = USER_STATUS_CONFIG[conductor.status];
   const employeeId = (conductor.profileData?.employee_id as string) || '—';
   const nic = (conductor.profileData?.nic_number as string) || '—';
@@ -32,13 +35,22 @@ export function CrewSummary({ conductor }: CrewSummaryProps) {
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-8">
           <div className="flex items-center gap-5">
-            <UserPhoto
-              userId={conductor.id}
-              name={conductor.fullName}
-              className="w-16 h-16 shrink-0 border-2 border-white/30"
-              fallbackClassName="bg-card/20 backdrop-blur-sm text-white text-xl font-bold"
-              fallback={`${conductor.firstName[0]}${conductor.lastName?.[0] ?? ''}`}
-            />
+            {photoEditable ? (
+              <ProfilePhotoAvatar
+                userId={conductor.id}
+                displayName={conductor.fullName}
+                initials={`${conductor.firstName[0]}${conductor.lastName?.[0] ?? ''}`}
+                fallbackClassName="bg-card/20 backdrop-blur-sm text-white text-xl font-bold"
+              />
+            ) : (
+              <UserPhoto
+                userId={conductor.id}
+                name={conductor.fullName}
+                className="w-16 h-16 shrink-0 border-2 border-white/30"
+                fallbackClassName="bg-card/20 backdrop-blur-sm text-white text-xl font-bold"
+                fallback={`${conductor.firstName[0]}${conductor.lastName?.[0] ?? ''}`}
+              />
+            )}
             <div className="text-white">
               <h2 className="text-xl font-bold">{conductor.fullName}</h2>
               <div className="flex items-center gap-3 mt-1">

@@ -109,6 +109,11 @@ auth:
 internal:
   api-key: ${INTERNAL_API_KEY:dev-only-internal-api-key-change-me}
 
+# user-service, for checking a conductor's operator and account status before recording them on a
+# bus or trip (INC-019/020). Same shared internal API key, sent the other way.
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:9020}
+
 logging:
   level:
     com.busmate.routeschedule: INFO  # Reduce debug logging

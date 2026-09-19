@@ -2,6 +2,7 @@ package com.busmatelk.backend.service;
 
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
+import com.busmatelk.backend.operator.OperatorScope;
 import com.busmatelk.backend.operator.OperatorSyncService;
 import com.busmatelk.backend.repository.UserProfileRepository;
 import com.busmatelk.backend.repository.UserRepository;
@@ -23,6 +24,7 @@ public class UserProfileService {
     private final UserService userService;
     private final ProfileSchemaValidator profileSchemaValidator;
     private final OperatorSyncService operatorSyncService;
+    private final OperatorScope operatorScope;
 
     public Map<String, Object> getProfile(UUID callerId, UUID targetUserId) {
         User target = findUserOrThrow(targetUserId);
@@ -36,6 +38,13 @@ public class UserProfileService {
         userService.requireUpdateAccess(callerId, targetUserId, target.getUserType().getName());
 
         UserProfile profile = findProfileOrThrow(targetUserId);
+        // Which operator a conductor works for is not theirs, nor their operator's, to change
+        // (INC-019): only a platform admin may move a conductor between operators.
+        if (OperatorScope.isOperatorLinkChange(profile.getProfileData(), patch)
+                && (callerId.equals(targetUserId) || operatorScope.operatorScopeOf(callerId).isPresent())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "A conductor's operator can only be changed by an administrator");
+        }
         Map<String, Object> merged = new HashMap<>(profile.getProfileData());
         merged.putAll(patch);
         // Server-managed; a client-supplied value is dropped rather than rejected so that clients

@@ -101,6 +101,15 @@ public class BusProfileController {
         return ResponseEntity.ok(busProfileService.reinstate(bus, callerContext.require()));
     }
 
+    @PutMapping("/default-conductor")
+    @Operation(summary = "Set or clear the conductor who usually works this bus",
+            description = "Pre-fills trip assignments only; the trip's own conductor is the record. Body: {\"conductorId\": uuid|null}.",
+            operationId = "setBusDefaultConductor")
+    public ResponseEntity<BusResponse> setDefaultConductor(@PathVariable UUID busId, @RequestBody Map<String, UUID> body) {
+        Bus bus = busProfileService.requireManageable(busId);
+        return ResponseEntity.ok(busProfileService.setDefaultConductor(bus, body.get("conductorId"), callerContext.require()));
+    }
+
     @GetMapping("/permit-links")
     @Operation(summary = "The permits this bus is (and was) authorised under", operationId = "getBusPermitLinks")
     public ResponseEntity<List<BusPassengerServicePermitAssignmentResponse>> permitLinks(@PathVariable UUID busId) {

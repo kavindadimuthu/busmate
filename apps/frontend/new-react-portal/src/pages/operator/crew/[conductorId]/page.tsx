@@ -4,6 +4,10 @@ import { ArrowLeft, Edit, ToggleLeft, ToggleRight, AlertCircle, Loader2 } from '
 import { ConfirmDialog } from '@busmate/ui';
 import { useSetPageMetadata, useSetPageActions } from '@/context/PageContext';
 import { CrewSummary } from '@/components/operator/crew';
+import { ConductorDocumentsPanel } from '@/components/operator/crew/ConductorDocumentsPanel';
+import { ConductorBusCard } from '@/components/operator/crew/ConductorBusCard';
+import { useMyOperator } from '@/hooks/operator/useMyOperator';
+import { useRouter } from '@/lib/router';
 import { useCrewDetail } from '@/hooks/operator/crew/useCrewDetail';
 import { getUserDisplayName } from '@/data/admin/users';
 
@@ -12,6 +16,8 @@ export default function ConductorDetailPage() {
     conductor, isLoading, error, actionLoading, confirmOpen,
     handleEdit, handleBack, openConfirm, closeConfirm, handleConfirmToggleStatus,
   } = useCrewDetail();
+  const { operator } = useMyOperator();
+  const router = useRouter();
 
   useSetPageMetadata({
     title: conductor ? getUserDisplayName(conductor) : 'Conductor Details',
@@ -82,8 +88,15 @@ export default function ConductorDetailPage() {
   }
 
   return (
-    <div>
-      <CrewSummary conductor={conductor} />
+    <div className="space-y-6">
+      <CrewSummary conductor={conductor} photoEditable />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {operator?.id && (
+          <ConductorBusCard operatorId={operator.id} conductorId={conductor.id} canEdit={isActive}
+            onOpenBus={(busId) => router.push(`/operator/fleet/${busId}`)} />
+        )}
+        <ConductorDocumentsPanel userId={conductor.id} canEdit />
+      </div>
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={(open) => !open && closeConfirm()}

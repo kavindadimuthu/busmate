@@ -37,6 +37,8 @@ public class BusResponse {
     private UUID coverPhotoId;
     private Long photoCount;
     private Long documentCount;
+    /** The conductor who usually works this bus (user-service account id); pre-fills trip assignment. */
+    private UUID defaultConductorId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdBy;

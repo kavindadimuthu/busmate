@@ -60,6 +60,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
       - AUTH_JWKS_URL=http://user-service:9020/public/jwks.json
+      - USER_SERVICE_URL=http://user-service:9020
     expose:
       - "9010"
     restart: unless-stopped

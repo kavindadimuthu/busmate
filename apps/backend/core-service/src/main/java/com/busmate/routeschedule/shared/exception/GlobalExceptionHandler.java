@@ -55,6 +55,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Not found: /" + ex.getResourcePath()), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleUnavailable(ServiceUnavailableException ex) {
+        log.warn("Dependency unavailable: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(HttpStatus.SERVICE_UNAVAILABLE.value(), ex.getMessage()), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
         return new ResponseEntity<>(new ErrorResponse(HttpStatus.FORBIDDEN.value(), ex.getMessage()), HttpStatus.FORBIDDEN);

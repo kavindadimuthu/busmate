@@ -60,6 +60,28 @@ export class BusProfileService {
         });
     }
     /**
+     * Set or clear the conductor who usually works this bus
+     * Pre-fills trip assignments only; the trip's own conductor is the record. Body: {"conductorId": uuid|null}.
+     * @param busId
+     * @param requestBody
+     * @returns BusResponse OK
+     * @throws ApiError
+     */
+    public static setBusDefaultConductor(
+        busId: string,
+        requestBody: Record<string, string>,
+    ): CancelablePromise<BusResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/buses/{busId}/default-conductor',
+            path: {
+                'busId': busId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * A bus's photos and documents (metadata)
      * @param busId
      * @returns BusMediaResponse OK
