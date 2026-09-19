@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { BusFront, Clock, ArrowRight, Route, CheckCircle, AlertCircle, Calculator } from "lucide-react";
 import type { BusResult } from "@busmate/api-client-core";
+import { TrustChip } from "@/components/trust/TrustChip";
 
 interface BusCardProps {
   bus: BusResult;
@@ -170,26 +171,16 @@ export default function BusCard({
 
         {/* BADGES ROW - Time Source, Operator and Bus Info */}
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-          {/* Time Source Badges */}
-          {/* <TooltipProvider>
-            {bus.departureAtOriginSource && getTimeSourceConfig(bus.departureAtOriginSource) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 flex items-center gap-1 ${getTimeSourceConfig(bus.departureAtOriginSource)?.className}`}
-                  >
-                    {React.createElement(getTimeSourceConfig(bus.departureAtOriginSource)!.icon, { className: "h-3 w-3" })}
-                    {getTimeSourceConfig(bus.departureAtOriginSource)?.label}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{getTimeSourceConfig(bus.departureAtOriginSource)?.tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </TooltipProvider> */}
-          
+          {/* How far to trust the times. One chip when both agree, two when they differ. */}
+          {bus.departureAtOriginTrust?.label === bus.arrivalAtDestinationTrust?.label ? (
+            <TrustChip trust={bus.departureAtOriginTrust ?? bus.arrivalAtDestinationTrust} prefix="Times" />
+          ) : (
+            <>
+              <TrustChip trust={bus.departureAtOriginTrust} prefix="Departs" />
+              <TrustChip trust={bus.arrivalAtDestinationTrust} prefix="Arrives" />
+            </>
+          )}
+
           {/* Trip Status Badge */}
           {bus.hasTripData && bus.tripStatus && (
             <Badge

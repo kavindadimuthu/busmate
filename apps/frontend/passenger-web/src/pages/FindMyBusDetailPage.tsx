@@ -28,6 +28,8 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
+import { TrustChip } from "@/components/trust/TrustChip";
+import { TrustExplainer } from "@/components/trust/TrustExplainer";
 import { PassengerQueryService } from "@busmate/api-client-core";
 import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -160,35 +162,6 @@ const FindMyBusDetailPage = () => {
       return Math.floor(diffMs / 60000);
     } catch {
       return null;
-    }
-  };
-
-  // Get time source badge config
-  const getTimeSourceConfig = (source?: string) => {
-    switch (source) {
-      case 'VERIFIED':
-        return {
-          label: 'Verified',
-          icon: CheckCircle,
-          className: 'bg-green-100 text-green-700 border-green-200',
-          tooltip: 'Time verified by official sources'
-        };
-      case 'UNVERIFIED':
-        return {
-          label: 'Unverified',
-          icon: AlertCircle,
-          className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-          tooltip: 'Time submitted by users, not officially verified'
-        };
-      case 'CALCULATED':
-        return {
-          label: 'Calculated',
-          icon: Calculator,
-          className: 'bg-blue-50 text-blue-600 border-blue-200',
-          tooltip: 'Time calculated based on average travel times'
-        };
-      default:
-        return null;
     }
   };
 
@@ -356,6 +329,9 @@ const FindMyBusDetailPage = () => {
         {/* Journey Summary Card */}
         <Card className="mb-4 sm:mb-5 md:mb-6 bg-muted/30">
           <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="mb-3 flex justify-end">
+              <TrustExplainer />
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               {route?.routeNumber && (
                 <div>
@@ -373,20 +349,7 @@ const FindMyBusDetailPage = () => {
                   <p className="text-lg sm:text-xl md:text-2xl font-semibold">
                     {formatTime(journeySummary?.departureFromOrigin) || 'N/A'}
                   </p>
-                  {journeySummary?.departureTimeSource && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant="outline" className={`text-[10px] px-1 py-0 ${getTimeSourceConfig(journeySummary.departureTimeSource)?.className}`}>
-                            {journeySummary.departureTimeSource?.charAt(0)}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{getTimeSourceConfig(journeySummary.departureTimeSource)?.tooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                  <TrustChip trust={journeySummary?.departureTimeTrust} />
                 </div>
               </div>
               <div>
@@ -395,20 +358,7 @@ const FindMyBusDetailPage = () => {
                   <p className="text-lg sm:text-xl md:text-2xl font-semibold">
                     {formatTime(journeySummary?.arrivalAtDestination) || 'N/A'}
                   </p>
-                  {journeySummary?.arrivalTimeSource && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant="outline" className={`text-[10px] px-1 py-0 ${getTimeSourceConfig(journeySummary.arrivalTimeSource)?.className}`}>
-                            {journeySummary.arrivalTimeSource?.charAt(0)}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{getTimeSourceConfig(journeySummary.arrivalTimeSource)?.tooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                  <TrustChip trust={journeySummary?.arrivalTimeTrust} />
                 </div>
               </div>
               <div>
@@ -507,6 +457,10 @@ const FindMyBusDetailPage = () => {
                           <div className="text-sm sm:text-base md:text-lg font-semibold text-foreground">
                             {formatTime(stop.resolvedDepartureTime || stop.resolvedArrivalTime) || '-'}
                           </div>
+                          <TrustChip
+                            iconOnly
+                            trust={stop.resolvedDepartureTime ? stop.departureTimeTrust : stop.arrivalTimeTrust}
+                          />
                         </div>
 
                         {/* Timeline & Stop Info */}
@@ -577,6 +531,12 @@ const FindMyBusDetailPage = () => {
                   Schedule Details
                 </h2>
                 <div className="space-y-3 sm:space-y-4">
+                  {schedule?.trust && (
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Timetable:</span>
+                      <TrustChip trust={schedule.trust} />
+                    </div>
+                  )}
                   {schedule?.name && (
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-xs sm:text-sm text-muted-foreground">Schedule:</span>
@@ -761,6 +721,12 @@ const FindMyBusDetailPage = () => {
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-xs sm:text-sm text-muted-foreground">Route Number:</span>
                       <span className="font-medium text-xs sm:text-sm text-right">{route.routeNumber}</span>
+                    </div>
+                  )}
+                  {route?.trust && (
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Route data:</span>
+                      <TrustChip trust={route.trust} />
                     </div>
                   )}
                   {route?.roadType && (

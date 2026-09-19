@@ -10,6 +10,7 @@ import Navbar from "@/components/layout/Navbar";
 import SearchForm from "@/components/search/SearchForm";
 import FilterSidebar from "@/components/search/FilterSidebar";
 import BusCard from "@/components/search/BusCard";
+import { TrustExplainer } from "@/components/trust/TrustExplainer";
 import { PassengerQueryService } from "@busmate/api-client-core";
 import type {
   BusResult,
@@ -221,9 +222,12 @@ const FindMyBusPage = () => {
                     )}
                   </div>
                   {!loading && (
-                    <Badge variant="secondary" className="text-sm self-start sm:self-center">
-                      {totalResults} {totalResults === 1 ? 'bus' : 'buses'} found
-                    </Badge>
+                    <div className="flex flex-col items-start sm:items-end gap-1">
+                      <Badge variant="secondary" className="text-sm">
+                        {totalResults} {totalResults === 1 ? 'bus' : 'buses'} found
+                      </Badge>
+                      {totalResults > 0 && <TrustExplainer />}
+                    </div>
                   )}
                 </div>
               </div>

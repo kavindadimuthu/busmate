@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RouteManagementService, BusStopManagementService } from "@busmate/api-client-core";
+import { TrustChip } from "@/components/trust/TrustChip";
+import { TrustExplainer } from "@/components/trust/TrustExplainer";
+import { confirmedText } from "@/lib/trust";
 import type { RouteResponse, RouteStopDetailResponse } from "@busmate/api-client-core";
 
 /** A route's full ordered stop list - for a passenger who knows the route but not their exact
@@ -88,6 +91,15 @@ export default function RouteDetailPage() {
                 </span>
               )}
             </div>
+            {route.trust && (
+              <div className="flex flex-wrap items-center gap-3 mb-6 -mt-3">
+                <TrustChip trust={route.trust} prefix="Route data" />
+                {confirmedText(route.trust) && (
+                  <span className="text-xs text-muted-foreground">{confirmedText(route.trust)}</span>
+                )}
+                <TrustExplainer />
+              </div>
+            )}
 
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               Stops ({stops.length})
