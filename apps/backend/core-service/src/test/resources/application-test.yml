@@ -48,3 +48,8 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
+
+# INC-029: tests accept contributors under the draft agreement; one test turns this off to prove the guard.
+community:
+  agreement:
+    allow-draft-acceptance: true

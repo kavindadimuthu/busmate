@@ -114,6 +114,15 @@ internal:
 user-service:
   url: ${USER_SERVICE_URL:http://localhost:9020}
 
+# Contributor agreement (INC-029). The text is a legal document a human writes; until the approved
+# version is in place the served text is a draft, and staff cannot accept anyone under it except where
+# allow-draft-acceptance is switched on (dev and tests only — never production).
+community:
+  agreement:
+    version: draft-1
+    draft: true
+    allow-draft-acceptance: ${COMMUNITY_ALLOW_DRAFT_ACCEPTANCE:false}
+
 logging:
   level:
     com.busmate.routeschedule: INFO  # Reduce debug logging

@@ -16,6 +16,7 @@ public record Caller(UUID userId, Set<String> roles) {
     public static final String MOT = "MOT";
     public static final String OPERATOR = "OPERATOR";
     public static final String CONDUCTOR = "CONDUCTOR";
+    public static final String PASSENGER = "PASSENGER";
 
     public boolean hasRole(String role) {
         return roles.contains(role);

@@ -21,3 +21,8 @@ spring:
 logging:
   level:
     com.busmate.routeschedule: DEBUG
+
+# INC-029: a local stack may accept contributors under the draft agreement, so the flow can be used end to end.
+community:
+  agreement:
+    allow-draft-acceptance: true

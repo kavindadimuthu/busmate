@@ -39,6 +39,8 @@ export const routes: RouteConfig[] = [
   { pathPrefix: '/api/buses', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/v1/bus-operator', target: 'CORE_SERVICE', requiresAuth: true },
   { pathPrefix: '/api/v1/conductor', target: 'CORE_SERVICE', requiresAuth: true },
+  // Contributor programme (INC-029): passengers apply, MOT/admin decide; core-service checks which.
+  { pathPrefix: '/api/community', target: 'CORE_SERVICE', requiresAuth: true },
   // Reads are public (core-service's own SecurityConfig already permits GET /api/** anonymously;
   // this just stops the gateway being stricter than the service it fronts). Writes still require a
   // token, and core-service's @PreAuthorize(ADMIN/MOT) still gates them independently (INC-014).
