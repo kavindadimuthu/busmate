@@ -100,6 +100,8 @@ public class PaymentServiceIMPL implements PaymentService {
             ticket.setIssuedAt(LocalDateTime.now());
             ticket.setSeatNumber(requestDTO.getSeatNumber());
             ticket.setPassengerId(requestDTO.getPassengerId());
+            // Best-effort (INC-021): a sale is never blocked on this lookup succeeding.
+            coreServiceClient.getOperatorIdForBus(requestDTO.getBusId()).ifPresent(ticket::setOperatorId);
 
             if ("CASH".equalsIgnoreCase(requestDTO.getPaymentMethod())) {
                 // Set transaction details for cash payment
@@ -219,6 +221,7 @@ public class PaymentServiceIMPL implements PaymentService {
             ticket.setBusId(context.busId());
             ticket.setTripId(requestDTO.getTripId());
             ticket.setPassengerId(caller.userId());
+            ticket.setOperatorId(context.operatorId());
             ticket.setStartLocationId(requestDTO.getStartLocationId());
             ticket.setEndLocationId(requestDTO.getEndLocationId());
             ticket.setSeatNumber(seat);
@@ -670,7 +673,21 @@ public class PaymentServiceIMPL implements PaymentService {
     }
 
     @Override
+    public String resolveTicketListScope(com.busmate.ticketing_service.security.Caller caller) {
+        if ("admin".equals(caller.userType()) || "mot".equals(caller.userType())) {
+            return null;
+        }
+        if ("operator".equals(caller.userType())) {
+            return coreServiceClient.getOperatorIdForUser(caller.userId())
+                    .orElseThrow(() -> new ForbiddenException(
+                            "Your operator account could not be confirmed; please try again shortly"));
+        }
+        throw new ForbiddenException("This listing is not available to you");
+    }
+
+    @Override
     public Page<ConductorLogTicketDTO> getAllTicketsWithFilters(
+            String operatorScope,
             List<String> busIds,
             String tripId,
             String conductorId,
@@ -685,6 +702,12 @@ public class PaymentServiceIMPL implements PaymentService {
         Specification<Tickets> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // INC-021: an operator caller sees only their own sales, scoped by the server from
+            // their own account - never from a bus-id list the caller sent. Staff pass null here
+            // and keep the optional busIds filter below for their own convenience.
+            if (operatorScope != null) {
+                predicates.add(cb.equal(root.get("operatorId"), operatorScope));
+            }
             if (busIds != null && !busIds.isEmpty()) {
                 predicates.add(root.get("busId").in(busIds));
             }
@@ -753,6 +776,7 @@ public class PaymentServiceIMPL implements PaymentService {
         dto.setBusId(ticket.getBusId());
         dto.setTripId(ticket.getTripId());
         dto.setConductorId(ticket.getConductorId());
+        dto.setOperatorId(ticket.getOperatorId());
         dto.setPassengerId(ticket.getPassengerId());
         dto.setStartLocationId(ticket.getStartLocationId());
         dto.setEndLocationId(ticket.getEndLocationId());

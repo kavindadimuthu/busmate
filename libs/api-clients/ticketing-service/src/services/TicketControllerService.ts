@@ -134,6 +134,8 @@ export class TicketControllerService {
      * @param dateFrom
      * @param dateTo
      * @param search
+     * @param xUserId
+     * @param xUserType
      * @returns PageConductorLogTicketDTO OK
      * @throws ApiError
      */
@@ -151,10 +153,16 @@ export class TicketControllerService {
         dateFrom?: string,
         dateTo?: string,
         search?: string,
+        xUserId?: string,
+        xUserType?: string,
     ): CancelablePromise<PageConductorLogTicketDTO> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/tickets',
+            headers: {
+                'x-user-id': xUserId,
+                'x-user-type': xUserType,
+            },
             query: {
                 'page': page,
                 'size': size,

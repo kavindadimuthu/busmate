@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * Reads trip, route and fleet facts from core-service, which owns them (invariant 2 — cross-domain
  * data moves over the API, never by reaching into another service's tables).
@@ -58,6 +61,47 @@ public class CoreServiceClient {
         } catch (RestClientException e) {
             log.error("[CoreServiceClient] booking context unavailable for trip {}: {}", tripId, e.toString());
             throw new BadRequestException("Booking is temporarily unavailable - please try again shortly");
+        }
+    }
+
+    /**
+     * Which operator owns a bus, for stamping a conductor-issued ticket (INC-021). Best-effort: a
+     * ticket sale must not be blocked by this service being briefly unreachable the way a booking
+     * or an assignment decision would be, so a failure here is logged and the ticket is saved
+     * without an operator scope rather than refused.
+     */
+    public Optional<String> getOperatorIdForBus(String busId) {
+        try {
+            Map<String, Object> body = restClient.get()
+                    .uri("/internal/operators/by-bus/{busId}", busId)
+                    .retrieve()
+                    .body(Map.class);
+            Object operatorId = body != null ? body.get("operatorId") : null;
+            return Optional.ofNullable(operatorId).map(Object::toString);
+        } catch (RestClientException e) {
+            log.warn("[CoreServiceClient] could not resolve operator for bus {}: {}", busId, e.toString());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * The core-service Operator linked to a user-service account (INC-021), so an operator's own
+     * ticket-sales listing can be scoped to their own operator rather than trusting a client-sent
+     * filter. Empty when the account is not a linked operator, or core-service cannot be reached -
+     * in the latter case the caller must refuse the listing rather than answer it unscoped.
+     */
+    public Optional<String> getOperatorIdForUser(String userId) {
+        try {
+            Map<String, Object> body = restClient.get()
+                    .uri("/internal/operators/by-user/{userId}", userId)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> { })
+                    .body(Map.class);
+            Object operatorId = body != null ? body.get("id") : null;
+            return Optional.ofNullable(operatorId).map(Object::toString);
+        } catch (RestClientException e) {
+            log.warn("[CoreServiceClient] could not resolve operator for user {}: {}", userId, e.toString());
+            return Optional.empty();
         }
     }
 }

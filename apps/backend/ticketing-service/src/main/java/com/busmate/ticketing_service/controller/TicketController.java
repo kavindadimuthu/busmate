@@ -93,7 +93,19 @@ public class TicketController {
             @RequestParam(required = false) String validationStatus,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            // Trailing, like every other header-scoped endpoint in this controller: a generated
+            // client's positional callers (existing pagination/filter params) stay unaffected, and
+            // the browser never populates these anyway - the gateway sets them from the verified
+            // token before the request reaches this service.
+            @RequestHeader(value = "x-user-id", required = false) String userId,
+            @RequestHeader(value = "x-user-type", required = false) String userType) {
+
+        // INC-021: this is the platform-wide sales listing - a passenger or conductor account has
+        // no business here at all, and an operator sees only their own operator's scope, resolved
+        // server-side rather than trusted from busIds (which used to be able to name anyone's).
+        Caller caller = caller(userId, userType);
+        String operatorScope = conductorLogService.resolveTicketListScope(caller);
 
         if (page < 0) page = 0;
         if (size <= 0) size = 10;
@@ -105,7 +117,7 @@ public class TicketController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<ConductorLogTicketDTO> result = conductorLogService.getAllTicketsWithFilters(
-                busIds, tripId, conductorId, passengerId, issueMethod, validationStatus,
+                operatorScope, busIds, tripId, conductorId, passengerId, issueMethod, validationStatus,
                 dateFrom, dateTo, search, pageable);
         return ResponseEntity.ok(result);
     }

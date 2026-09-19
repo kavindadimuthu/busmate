@@ -7,6 +7,7 @@ export type ConductorLogTicketDTO = {
     busId?: string;
     tripId?: string;
     conductorId?: string;
+    operatorId?: string;
     passengerId?: string;
     startLocationId?: string;
     endLocationId?: string;

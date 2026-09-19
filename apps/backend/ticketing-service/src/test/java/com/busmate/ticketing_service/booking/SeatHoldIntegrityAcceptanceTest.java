@@ -91,7 +91,7 @@ class SeatHoldIntegrityAcceptanceTest extends AbstractPostgresIntegrationTest {
     private BookingContext bookableTrip() {
         LocalDateTime departure = LocalDateTime.now().plusHours(3);
         return new BookingContext(TRIP_ID, "pending", departure.toLocalDate(), departure.toLocalTime(),
-                BUS_ID, 50, "NORMAL", ROUTE_ID, 0.0, 20.0, 1, 5);
+                BUS_ID, 50, "NORMAL", ROUTE_ID, 0.0, 20.0, 1, 5, "operator-1");
     }
 
     private Map<String, Object> bookingFor(String... seats) {

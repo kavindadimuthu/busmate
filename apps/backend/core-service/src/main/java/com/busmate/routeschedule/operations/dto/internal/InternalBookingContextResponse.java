@@ -30,5 +30,7 @@ public record InternalBookingContextResponse(
         Double boardingDistanceKm,
         Double alightingDistanceKm,
         Integer boardingStopOrder,
-        Integer alightingStopOrder) {
+        Integer alightingStopOrder,
+        /** Who owns the bus on this trip, if one is assigned yet (INC-021: stamps every ticket sold). */
+        UUID operatorId) {
 }

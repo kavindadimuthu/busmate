@@ -17,6 +17,7 @@ public class ConductorLogTicketDTO {
     private String busId;
     private String tripId;
     private String conductorId;
+    private String operatorId;
     private String passengerId;
     private String startLocationId;
     private String endLocationId;

@@ -21,5 +21,6 @@ public record BookingContext(
         Double boardingDistanceKm,
         Double alightingDistanceKm,
         Integer boardingStopOrder,
-        Integer alightingStopOrder) {
+        Integer alightingStopOrder,
+        String operatorId) {
 }

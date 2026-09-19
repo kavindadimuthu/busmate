@@ -95,7 +95,7 @@ class PassengerBookingAcceptanceTest extends AbstractPostgresIntegrationTest {
     private BookingContext bookableTrip(String serviceClass) {
         LocalDateTime departure = LocalDateTime.now().plusHours(3);
         return new BookingContext(TRIP_ID, "pending", departure.toLocalDate(), departure.toLocalTime(),
-                BUS_ID, 50, serviceClass, ROUTE_ID, 0.0, 20.0, 1, 5);
+                BUS_ID, 50, serviceClass, ROUTE_ID, 0.0, 20.0, 1, 5, "operator-1");
     }
 
     private String bookingBody(Map<String, Object> fields) throws Exception {
@@ -215,20 +215,20 @@ class PassengerBookingAcceptanceTest extends AbstractPostgresIntegrationTest {
         // Past the cutoff
         when(coreServiceClient.getBookingContext(anyString(), anyString(), anyString()))
                 .thenReturn(new BookingContext(TRIP_ID, "pending", soon.toLocalDate(), soon.toLocalTime(),
-                        BUS_ID, 50, "NORMAL", ROUTE_ID, 0.0, 20.0, 1, 5));
+                        BUS_ID, 50, "NORMAL", ROUTE_ID, 0.0, 20.0, 1, 5, "operator-1"));
         expectBookingRefused();
 
         // Already departed
         LocalDateTime later = LocalDateTime.now().plusHours(3);
         when(coreServiceClient.getBookingContext(anyString(), anyString(), anyString()))
                 .thenReturn(new BookingContext(TRIP_ID, "departed", later.toLocalDate(), later.toLocalTime(),
-                        BUS_ID, 50, "NORMAL", ROUTE_ID, 0.0, 20.0, 1, 5));
+                        BUS_ID, 50, "NORMAL", ROUTE_ID, 0.0, 20.0, 1, 5, "operator-1"));
         expectBookingRefused();
 
         // No bus assigned, so there is no seat map to sell against
         when(coreServiceClient.getBookingContext(anyString(), anyString(), anyString()))
                 .thenReturn(new BookingContext(TRIP_ID, "pending", later.toLocalDate(), later.toLocalTime(),
-                        null, null, null, ROUTE_ID, 0.0, 20.0, 1, 5));
+                        null, null, null, ROUTE_ID, 0.0, 20.0, 1, 5, null));
         expectBookingRefused();
 
         assertThat(ticketRepo.findAll()).isEmpty();

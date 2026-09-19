@@ -30,6 +30,7 @@ public class InternalOperatorController {
 
     private final InternalOperatorService internalOperatorService;
     private final com.busmate.routeschedule.fleet.service.OperatorService operatorService;
+    private final com.busmate.routeschedule.fleet.repository.BusRepository busRepository;
 
     /**
      * The Operator linked to a user-service account (INC-019): user-service uses it to scope an
@@ -38,6 +39,19 @@ public class InternalOperatorController {
     @GetMapping("/by-user/{userId}")
     public ResponseEntity<OperatorResponse> getOperatorByUserId(@PathVariable UUID userId) {
         return ResponseEntity.ok(operatorService.getOperatorByUserId(userId));
+    }
+
+    /**
+     * Which operator owns a bus (INC-021): ticketing-service stamps every ticket it sells with
+     * this, so a conductor-issued sale can be scoped to the right operator the same way an online
+     * booking already is via the booking-context response.
+     */
+    @GetMapping("/by-bus/{busId}")
+    public ResponseEntity<java.util.Map<String, Object>> getOperatorByBus(@PathVariable UUID busId) {
+        var bus = busRepository.findById(busId)
+                .orElseThrow(() -> new com.busmate.routeschedule.shared.exception.ResourceNotFoundException(
+                        "Bus not found with id: " + busId));
+        return ResponseEntity.ok(java.util.Map.of("operatorId", bus.getOperator().getId()));
     }
 
     @PostMapping

@@ -65,7 +65,8 @@ public class InternalBookingContextServiceImpl implements InternalBookingContext
                 resolvedDistanceKm(boarding),
                 resolvedDistanceKm(alighting),
                 boarding.getStopOrder(),
-                alighting.getStopOrder());
+                alighting.getStopOrder(),
+                bus != null && bus.getOperator() != null ? bus.getOperator().getId() : null);
     }
 
     private RouteStop requireStopOnRoute(UUID routeId, UUID stopId, String role) {

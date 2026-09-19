@@ -13,6 +13,10 @@ spring:
   # alongside the new db/seed/dev. No db/reference here — ticketing-service needed none (Phase 2).
   flyway:
     locations: classpath:db/migration,classpath:db/seed/dev
+    # The demo seed is numbered V900+ so it always sorts after the schema; a schema migration
+    # added later (V003, V004, ...) therefore arrives "below" seed versions already applied to a
+    # dev database. Dev only — production has no seed tier, so its history is never interleaved.
+    out-of-order: true
 
 logging:
   level:

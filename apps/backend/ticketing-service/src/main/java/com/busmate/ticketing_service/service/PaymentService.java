@@ -55,8 +55,16 @@ public interface PaymentService {
      */
     void applyPayHereNotification(String orderId, int statusCode);
 
+    /**
+     * The operator_id every ticket in the listing must match, or null for no restriction
+     * (INC-021). Refuses (ForbiddenException) a caller who is neither staff nor a linked
+     * operator, and an operator whose own operator link cannot be confirmed right now.
+     */
+    String resolveTicketListScope(com.busmate.ticketing_service.security.Caller caller);
+
     // Admin (operator/MOT) ticket listing - filterable, paginated
     Page<ConductorLogTicketDTO> getAllTicketsWithFilters(
+            String operatorScope,
             List<String> busIds,
             String tripId,
             String conductorId,

@@ -32,6 +32,11 @@ public class Tickets {
     @Column(name = "conductor_id")
     private String conductorId;
 
+    // Who sold this ticket, recorded at the moment of sale (INC-021). Never re-derived: a bus
+    // sold to another operator afterwards must not rewrite who a past ticket belonged to.
+    @Column(name = "operator_id")
+    private String operatorId;
+
     @Column(name = "passenger_id")
     private String passengerId;
 

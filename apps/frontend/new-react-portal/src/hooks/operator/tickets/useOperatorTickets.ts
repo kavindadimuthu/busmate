@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useDataTable, useDialog } from '@busmate/ui';
 import { TicketControllerService } from '@busmate/api-client-ticketing';
 import type { ConductorLogTicketDTO } from '@busmate/api-client-ticketing';
-import { BusOperatorOperationsService } from '@busmate/api-client-core';
 import { useMyOperator } from '@/hooks/operator/useMyOperator';
 import type { TicketFilters } from '@/components/shared/tickets';
 import type { TicketStatistics } from '@/components/shared/tickets';
@@ -22,10 +21,13 @@ const EMPTY_STATS: TicketStatistics = {
 };
 
 /**
- * ticketing-service's Tickets entity has no operatorId (busId is a bare string, no FK) - so
- * "this operator's tickets" is resolved by first fetching the operator's own bus ids (already
- * real, via BusOperatorOperationsService) and passing them as the busIds filter on the real
- * admin ticket-listing endpoint. Same client-side-scoping approach already used for Fleet/Crew.
+ * "This operator's tickets" (INC-021): the admin ticket-listing endpoint scopes itself from the
+ * caller's own identity — a ticket carries the `operator_id` it was sold under, stamped by
+ * ticketing-service at sale time from core-service's own facts, never from a filter this page
+ * sends. Earlier this fetched the operator's own bus ids and passed them as a `busIds` filter,
+ * which was never a real boundary (any caller could send any ids) and went stale the moment a bus
+ * changed hands; the real scoping now lives on the server, so this page no longer needs to know
+ * its own bus ids to see only its own sales.
  */
 export function useOperatorTickets() {
   const { operator, isLoading: operatorLoading, error: operatorError } = useMyOperator();
@@ -37,7 +39,6 @@ export function useOperatorTickets() {
       initialFilters: INITIAL_FILTERS,
     });
 
-  const [myBusIds, setMyBusIds] = useState<string[] | null>(null);
   const [tickets, setTickets] = useState<ConductorLogTicketDTO[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [stats, setStats] = useState<TicketStatistics>(EMPTY_STATS);
@@ -47,30 +48,11 @@ export function useOperatorTickets() {
 
   const detailModal = useDialog<ConductorLogTicketDTO>();
 
-  const loadMyBusIds = useCallback(async () => {
-    if (!operator?.id) return;
-    try {
-      const result = await BusOperatorOperationsService.getOperatorBuses(operator.id, 0, 100);
-      setMyBusIds((result.content ?? []).map((b) => b.id!).filter(Boolean));
-    } catch (err) {
-      console.error('Error loading operator buses for ticket scoping:', err);
-      setMyBusIds([]);
-    }
-  }, [operator?.id]);
-
-  useEffect(() => {
-    loadMyBusIds();
-  }, [loadMyBusIds]);
-
   const loadStatistics = useCallback(async () => {
-    if (!myBusIds || myBusIds.length === 0) {
-      setStats(EMPTY_STATS);
-      setStatsLoading(false);
-      return;
-    }
+    if (!operator?.id) return;
     setStatsLoading(true);
     try {
-      const result = await TicketControllerService.getAllTickets(0, 200, 'issuedAt', 'desc', myBusIds);
+      const result = await TicketControllerService.getAllTickets(0, 200, 'issuedAt', 'desc');
       const all = result.content ?? [];
       setStats({
         totalTickets: all.length,
@@ -87,20 +69,14 @@ export function useOperatorTickets() {
     } finally {
       setStatsLoading(false);
     }
-  }, [myBusIds]);
+  }, [operator?.id]);
 
   useEffect(() => {
     loadStatistics();
   }, [loadStatistics]);
 
   const loadTickets = useCallback(async () => {
-    if (!myBusIds) return;
-    if (myBusIds.length === 0) {
-      setTickets([]);
-      setTotalItems(0);
-      setIsLoading(false);
-      return;
-    }
+    if (!operator?.id) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -111,7 +87,7 @@ export function useOperatorTickets() {
         state.pageSize,
         state.sortColumn ?? 'issuedAt',
         state.sortDirection ?? 'desc',
-        myBusIds,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -129,7 +105,7 @@ export function useOperatorTickets() {
     } finally {
       setIsLoading(false);
     }
-  }, [myBusIds, state.page, state.pageSize, state.sortColumn, state.sortDirection, state.searchQuery, state.filters]);
+  }, [operator?.id, state.page, state.pageSize, state.sortColumn, state.sortDirection, state.searchQuery, state.filters]);
 
   useEffect(() => {
     loadTickets();
