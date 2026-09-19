@@ -1,7 +1,7 @@
 ---
 id: INC-028
 title: A passenger can tell whether a route or departure time is official, observed or unverified
-state: shaped
+state: in-review
 track: 1
 risk: R2
 owner: kavinda
@@ -10,7 +10,7 @@ autonomy: A2
 
 ## Goal
 
-A passenger looking at a route, a stop, or a departure time in passenger-web or passenger-mobile sees a
+A passenger looking at a route or a departure time in passenger-web or passenger-mobile sees a
 plain label saying how far to trust it — official, observed, reported (unverified), estimated or live —
 and when it was last confirmed, with one tap to find out what the labels mean.
 
@@ -36,41 +36,53 @@ show every time as if it were equally certain.
 
 - **Passenger query responses** (route search, find-my-bus, route detail) gain `trust` beside each time and
   on the route: label key plus observed date. Label keys, not English strings, so each app translates.
-- **passenger-web**: a small label chip beside times and on the route header, a "last confirmed" date on
-  route detail, and a "What do these labels mean?" dialog.
-- **passenger-mobile**: the same chips on search results and route detail, and the explainer as a bottom
-  sheet, in each language the app already supports.
+- **Where the label is computed.** One mapper, `TrustLabels`, on the server; the authoritative column takes
+  its record's label, `*_unverified` is always *reported*, `*_calculated` always *estimated*, and only a
+  vehicle position is *live*. Responses carry the label key and the observed date, never wording.
+  Passenger-facing responses: find-my-bus results, find-my-bus-details (route, timetable, every stop time,
+  journey summary, live info) and the public route read.
+- **passenger-web**: a chip beside times, in the timeline and on the timetable and route panels; a
+  "last confirmed" date on the route page; a "What do these labels mean?" dialog from the results, the
+  detail page and the route page. Replaces the detail page's single-letter V/U/C badges, whose tooltip
+  called every verified time "verified by official sources".
+- **passenger-mobile**: the same chips on results and schedule; a phone has no hover, so tapping a chip
+  opens a bottom sheet explaining every label, with the tapped one's confirmed date.
+- **The public reads must not name a contributor.** The stop, route and schedule reads are
+  unauthenticated, so `attributedUserId` is removed from the provenance they return (INC-027 had added
+  it); only the display credit remains.
 - **Tone**: labels inform, never alarm. "Observed · 3 Sep 2026", not a warning icon.
 
 ## Acceptance criteria
 
-- [ ] Every departure time a passenger sees carries a label from the table above, and the label matches
+- [x] Every departure time a passenger sees carries a label from the table above, and the label matches
       where the time actually came from.
-- [ ] A route shows when its data was last confirmed.
-- [ ] No passenger surface shows a scheduled or observed time labelled as live.
-- [ ] The explainer is reachable from every screen that shows a label, on web and mobile.
-- [ ] Both apps show the same label for the same time.
-- [ ] Tests named INC-028 cover the label derivation for each row of the table.
+- [x] A route shows when its data was last confirmed.
+- [x] No passenger surface shows a scheduled or observed time labelled as live.
+- [x] The explainer is reachable from every screen that shows a label, on web and mobile.
+- [x] Both apps show the same label for the same time.
+- [x] Tests named INC-028 cover the label derivation for each row of the table.
 
 ## Out of scope
 
 - Crediting individual contributors by name on public pages (a later recognition increment).
+- Labels on individual stops; passenger-mobile's route browsing (it has none) and live-tracking map.
+- Translating the labels: neither app has a translation layer yet.
 - Hiding low-confidence data; confidence decay.
-- Stop-level labels in passenger-mobile's live tracking map.
 
 ## Constraints
 
 - Depends on INC-027 being merged.
-- Published contract change: regenerate the core-service client; passenger-mobile's duplicated client copy
-  (known debt) must be updated too, or it shows no labels.
+- Published contract change: regenerated the core-service client. Both passenger apps consume it as a
+  workspace package, so there is no separate copy to update.
 - Passenger query stays auth-free and in one query; the label is derived in that query, not by an extra
   call per row.
 
 ## Open questions
 
-- passenger-web has no translation layer. English-only labels there are acceptable for now, but the
-  choice should be conscious.
+- None open.
 
 ## Decisions
 
 - See ADR-018
+- English-only labels on both apps — neither has a translation layer; decided during INC-028 because
+  the server sends keys, so translating later touches only the apps.

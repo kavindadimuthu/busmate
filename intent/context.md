@@ -126,6 +126,10 @@ Violating one of these is a bug, not a design choice.
   observed-at, confidence and credit ([ADR-018](decisions/ADR-018-community-changes-are-reviewed-changesets.md)).
   Any new write path to those tables goes through `ProvenanceStamper`; a path that skips it is caught only
   by a `PrePersist` default that labels the record `SRC_4` "BusMate", which is honest but loses the source.
+- **Passenger-facing trust.** A time or route shown to a passenger carries a label from `TrustLabels`
+  (official / operator timetable / observed / reported / estimated / live); never wire a new passenger
+  surface to a raw time column without one. The unauthenticated stop, route and schedule reads must not
+  expose who contributed a record — display credit only.
 - **Anchors** (HACO §4.2): branch name contains the increment ID; every commit carries an
   `Increment:` trailer, enforced by [.githooks/commit-msg](../.githooks/commit-msg); acceptance tests
   name the increment ID. Code comments carry the ID only where intent is genuinely non-obvious.
