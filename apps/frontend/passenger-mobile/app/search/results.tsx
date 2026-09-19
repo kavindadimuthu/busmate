@@ -8,6 +8,7 @@ import RouteFilterModal from '../../components/modals/NewRouteFilterModal';
 import AppHeader from '../../components/ui/AppHeader';
 import { PassengerQueryService, BusResult } from '@busmate/api-client-core';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
+import { TrustChip, TrustExplainerLink } from '@/components/ui/TrustChip';
 
 function formatTime(time?: string): string {
   if (!time) return '--:--';
@@ -226,6 +227,7 @@ export default function SearchResultsScreen() {
             <Text style={styles.resultsCount}>
               {trips.length} trip{trips.length !== 1 ? 's' : ''} found
             </Text>
+            {trips.length > 0 && <TrustExplainerLink />}
 
             {trips.length === 0 ? (
               <View style={styles.noResultsContainer}>
@@ -248,6 +250,18 @@ export default function SearchResultsScreen() {
                       <Text style={styles.resultRouteName}>{trip.routeName || trip.scheduleName || 'Route'}</Text>
                     </View>
                     {trip.operatorName && <Text style={styles.resultOperator}>{trip.operatorName}</Text>}
+                  </View>
+
+                  {/* How far to trust the times: one chip when both agree, two when they differ. */}
+                  <View style={styles.trustRow}>
+                    {trip.departureAtOriginTrust?.label === trip.arrivalAtDestinationTrust?.label ? (
+                      <TrustChip trust={trip.departureAtOriginTrust ?? trip.arrivalAtDestinationTrust} prefix="Times" />
+                    ) : (
+                      <>
+                        <TrustChip trust={trip.departureAtOriginTrust} prefix="Departs" />
+                        <TrustChip trust={trip.arrivalAtDestinationTrust} prefix="Arrives" />
+                      </>
+                    )}
                   </View>
 
                   <View style={styles.resultTimesRow}>
@@ -430,6 +444,12 @@ const styles = StyleSheet.create({
   resultOperator: {
     fontSize: 12,
     color: '#6B7280',
+  },
+  trustRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
   },
   resultTimesRow: {
     flexDirection: 'row',

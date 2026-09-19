@@ -11,6 +11,7 @@ import { RouteFareControllerService, TicketControllerService } from '@busmate/ap
 import { useBooking } from '../../context/BookingContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSafeAreaContainerStyles } from '@/hooks/useSafeAreaStyles';
+import { TrustChip, TrustExplainerLink } from '@/components/ui/TrustChip';
 
 export default function ScheduleScreen() {
   const router = useRouter();
@@ -247,15 +248,22 @@ export default function ScheduleScreen() {
         {selectedTab === 'schedule' && (
           <View style={styles.scheduleContainer}>
             <Text style={styles.sectionTitle}>Route Schedule</Text>
+            <View style={styles.trustRow}>
+              <TrustChip trust={tripData.schedule?.trust} prefix="Timetable" />
+              <TrustChip trust={tripData.route?.trust} prefix="Route data" />
+            </View>
+            <TrustExplainerLink />
 
             <View style={styles.scheduleHeader}>
               <View style={styles.scheduleHeaderItem}>
                 <Text style={styles.scheduleHeaderTitle}>Departure</Text>
                 <Text style={styles.scheduleHeaderValue}>{departureTime}</Text>
+                <TrustChip trust={tripData.journeySummary?.departureTimeTrust} iconOnly />
               </View>
               <View style={styles.scheduleHeaderItem}>
                 <Text style={styles.scheduleHeaderTitle}>Arrival</Text>
                 <Text style={styles.scheduleHeaderValue}>{arrivalTime}</Text>
+                <TrustChip trust={tripData.journeySummary?.arrivalTimeTrust} iconOnly />
               </View>
               <View style={styles.scheduleHeaderItem}>
                 <Text style={styles.scheduleHeaderTitle}>Duration</Text>
@@ -276,6 +284,10 @@ export default function ScheduleScreen() {
                     <Text style={[styles.scheduleTime, isUserStop && styles.highlightedText]}>
                       {formatTime(stop.resolvedDepartureTime || stop.resolvedArrivalTime)}
                     </Text>
+                    <TrustChip
+                      iconOnly
+                      trust={stop.resolvedDepartureTime ? stop.departureTimeTrust : stop.arrivalTimeTrust}
+                    />
                   </View>
                   <View style={styles.stopIndicator}>
                     <View style={[styles.stopDot, { backgroundColor: isUserStop ? '#004CFF' : '#9CA3AF' }, isUserStop && styles.highlightedDot]} />
@@ -377,7 +389,8 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 14, fontWeight: '500', color: '#6B7280' },
   activeTabText: { color: 'white' },
   scheduleContainer: { backgroundColor: 'white', marginHorizontal: 24, borderRadius: 16, padding: 20, marginBottom: 120 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#111827', marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#111827', marginBottom: 8 },
+  trustRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
   scheduleHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#F9FAFB', borderRadius: 12, marginBottom: 20 },
   scheduleHeaderItem: { alignItems: 'center' },
   scheduleHeaderTitle: { fontSize: 12, color: '#6B7280', marginBottom: 4 },
