@@ -267,6 +267,12 @@ public class TripController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{id}/reinstate")
+    @Operation(summary = "Reinstate a cancelled trip", description = "MOT correcting a mistaken or premature cancellation. Pending trips only.")
+    public ResponseEntity<TripResponse> reinstateTrip(@PathVariable UUID id, Authentication authentication) {
+        return ResponseEntity.ok(tripService.reinstateTrip(id, authentication.getName()));
+    }
+
     @PostMapping("/generate")
     @Operation(summary = "Generate trips for schedule within date range or entire validity period", 
                description = "Generate trips for a schedule. If fromDate and toDate are not provided, " +

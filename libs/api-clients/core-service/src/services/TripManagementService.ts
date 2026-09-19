@@ -469,6 +469,24 @@ export class TripManagementService {
         });
     }
     /**
+     * Reinstate a cancelled trip
+     * MOT correcting a mistaken or premature cancellation. Pending trips only.
+     * @param id
+     * @returns TripResponse OK
+     * @throws ApiError
+     */
+    public static reinstateTrip(
+        id: string,
+    ): CancelablePromise<TripResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/trips/{id}/reinstate',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
      * Remove Passenger Service Permit from trip
      * @param id
      * @returns TripResponse OK

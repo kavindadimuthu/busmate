@@ -75,6 +75,7 @@ export function useTripDetails() {
   const canCancel = (status?: string) =>
     status === 'pending' || status === 'active' || status === 'delayed';
   const canEdit = (status?: string) => status === 'pending' || status === 'active';
+  const canReinstate = (status?: string) => status === 'cancelled';
 
   const handleBack = () => router.back();
   const handleEdit = () => router.push(`/mot/trips/${tripId}/edit`);
@@ -109,6 +110,14 @@ export function useTripDetails() {
     finally { setIsCancelling(false); }
   };
 
+  const handleReinstate = async () => {
+    if (!trip?.id) return;
+    try {
+      await TripManagementService.reinstateTrip(trip.id);
+      await loadTripDetails();
+    } catch (e) { console.error('Failed to reinstate trip:', e); }
+  };
+
   const handleDelete = () => setShowDeleteModal(true);
   const handleDeleteCancel = () => setShowDeleteModal(false);
 
@@ -126,9 +135,9 @@ export function useTripDetails() {
     trip, route, schedule, permit,
     isLoading, error,
     showDeleteModal, showCancelModal, isDeleting, isCancelling,
-    canStart, canComplete, canCancel, canEdit,
+    canStart, canComplete, canCancel, canEdit, canReinstate,
     handleBack, handleEdit, handleRefresh,
-    handleStart, handleComplete, handleCancel, handleCancelConfirm,
+    handleStart, handleComplete, handleCancel, handleCancelConfirm, handleReinstate,
     handleDelete, handleDeleteCancel, handleDeleteConfirm,
     setShowCancelModal,
     loadTripDetails,

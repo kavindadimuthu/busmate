@@ -37,6 +37,7 @@ import com.busmate.routeschedule.scheduling.service.ScheduleService;
 import com.busmate.routeschedule.shared.dto.PaginatedResponse;
 import com.busmate.routeschedule.shared.enums.StatusEnum;
 import com.busmate.routeschedule.shared.exception.BadRequestException;
+import com.busmate.routeschedule.shared.exception.ConflictException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -475,6 +476,13 @@ public class BusOperatorController {
             throw new BadRequestException("Bus does not belong to this operator");
         }
 
+        // INC-020: without this, any operator could put their own bus on a trip belonging to a
+        // different operator's permit just by knowing its id - the trip itself was never checked.
+        TripResponse existingTrip = tripService.getTripById(tripId);
+        if (existingTrip.getOperatorId() == null || !existingTrip.getOperatorId().equals(operatorId)) {
+            return ResponseEntity.notFound().build();
+        }
+
         String userId = authentication.getName();
         TripResponse response = tripService.assignBusToTrip(tripId, busId, userId);
         return ResponseEntity.ok(response);
@@ -563,6 +571,39 @@ public class BusOperatorController {
 
         String userId = authentication.getName();
         TripResponse response = tripService.removeConductorFromTrip(tripId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{operatorId}/trips/{tripId}/cancel")
+    @Operation(
+        summary = "Report that one of the operator's own trips will not run",
+        description = "Only a Pending trip can be cancelled this way, and a reason is required. MOT sees the cancellation and can reinstate it."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Trip cancelled"),
+        @ApiResponse(responseCode = "404", description = "Trip not found or doesn't belong to operator"),
+        @ApiResponse(responseCode = "409", description = "Trip is not Pending")
+    })
+    public ResponseEntity<TripResponse> cancelOwnTrip(
+            @Parameter(description = "Operator ID", required = true)
+            @PathVariable UUID operatorId,
+            @Parameter(description = "Trip ID", required = true)
+            @PathVariable UUID tripId,
+            @Parameter(description = "Why the trip will not run", required = true)
+            @RequestParam String reason,
+            Authentication authentication) {
+        operatorAccess.requireAccess(operatorId);
+
+        TripResponse trip = tripService.getTripById(tripId);
+        if (trip.getOperatorId() == null || !trip.getOperatorId().equals(operatorId)) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!"pending".equals(trip.getStatus())) {
+            throw new ConflictException("Only a pending trip can be reported as not running (this one is " + trip.getStatus() + ")");
+        }
+
+        String userId = authentication.getName();
+        TripResponse response = tripService.cancelTrip(tripId, reason, userId);
         return ResponseEntity.ok(response);
     }
 

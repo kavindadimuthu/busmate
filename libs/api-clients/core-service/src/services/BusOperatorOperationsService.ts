@@ -695,6 +695,36 @@ export class BusOperatorOperationsService {
         });
     }
     /**
+     * Report that one of the operator's own trips will not run
+     * Only a Pending trip can be cancelled this way, and a reason is required. MOT sees the cancellation and can reinstate it.
+     * @param operatorId Operator ID
+     * @param tripId Trip ID
+     * @param reason Why the trip will not run
+     * @returns TripResponse Trip cancelled
+     * @throws ApiError
+     */
+    public static cancelOwnTrip(
+        operatorId: string,
+        tripId: string,
+        reason: string,
+    ): CancelablePromise<TripResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bus-operator/{operatorId}/trips/{tripId}/cancel',
+            path: {
+                'operatorId': operatorId,
+                'tripId': tripId,
+            },
+            query: {
+                'reason': reason,
+            },
+            errors: {
+                404: `Trip not found or doesn't belong to operator`,
+                409: `Trip is not Pending`,
+            },
+        });
+    }
+    /**
      * Unassign the vehicle from one of the operator's trips
      * Removes the currently assigned bus from a trip owned by this operator.
      * @param operatorId Operator ID

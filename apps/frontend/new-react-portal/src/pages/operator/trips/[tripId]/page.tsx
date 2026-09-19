@@ -1,6 +1,8 @@
 'use client';
 
-import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, AlertCircle, Loader2, Ban } from 'lucide-react';
+import { ReasonDialog } from '@/components/shared/ReasonDialog';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { TripSummary, TripAssignmentPanel } from '@/components/operator/trips';
 import { useTripDetail } from '@/hooks/operator/trips/useTripDetail';
@@ -22,7 +24,9 @@ export default function OperatorTripDetailPage() {
     trip, isLoading, error, handleBack,
     myBuses, myConductors, actionLoading,
     assignBus, removeBus, assignConductor, removeConductor,
+    cancelTrip, cancelError, setCancelError,
   } = useTripDetail();
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -73,7 +77,19 @@ export default function OperatorTripDetailPage() {
         <ArrowLeft className="w-4 h-4" />
         Back to Trips
       </button>
-      <TripSummary trip={trip} />
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+        <div className="w-full">
+          <TripSummary trip={trip} />
+        </div>
+        {trip.status === 'pending' && (
+          <button
+            onClick={() => { setCancelError(null); setCancelOpen(true); }}
+            className="shrink-0 flex items-center gap-2 px-3 py-1.5 text-sm border border-destructive/40 text-destructive rounded-lg hover:bg-destructive/10"
+          >
+            <Ban className="w-4 h-4" /> This trip won&apos;t run
+          </button>
+        )}
+      </div>
       <TripAssignmentPanel
         trip={trip}
         myBuses={myBuses}
@@ -83,6 +99,19 @@ export default function OperatorTripDetailPage() {
         onRemoveBus={removeBus}
         onAssignConductor={assignConductor}
         onRemoveConductor={removeConductor}
+      />
+      <ReasonDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        title="Report that this trip won't run?"
+        description="Use this for a breakdown, missing crew, or any other reason the trip cannot go ahead. The Ministry of Transport sees the cancellation and your reason, and can reinstate the trip."
+        confirmLabel="Confirm — trip won't run"
+        destructive
+        busy={actionLoading}
+        error={cancelError}
+        onConfirm={async (reason) => {
+          if (await cancelTrip(reason)) setCancelOpen(false);
+        }}
       />
     </main>
   );

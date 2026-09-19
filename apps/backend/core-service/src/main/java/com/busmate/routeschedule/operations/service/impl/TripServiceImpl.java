@@ -27,6 +27,8 @@ import com.busmate.routeschedule.scheduling.repository.*;
 import com.busmate.routeschedule.network.repository.*;
 import com.busmate.routeschedule.operations.repository.*;
 import com.busmate.routeschedule.operations.service.TripService;
+import com.busmate.routeschedule.licensing.service.PermitBusLinks;
+import com.busmate.routeschedule.shared.client.ConductorDirectory;
 import com.busmate.routeschedule.shared.util.MapperUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +55,13 @@ import com.busmate.routeschedule.operations.entity.Trip;
 @RequiredArgsConstructor
 @Transactional
 public class TripServiceImpl implements TripService {
+    // Trips generated further out than this never overlap what's being assigned today, so
+    // there is no need to scan the whole table for a conflict check.
+    private static final int TURNAROUND_BUFFER_MINUTES = 10;
+
     private final TripRepository tripRepository;
+    private final PermitBusLinks permitBusLinks;
+    private final ConductorDirectory conductorDirectory;
     private final PassengerServicePermitRepository passengerServicePermitRepository;
     private final ScheduleRepository scheduleRepository;
     private final BusRepository busRepository;
@@ -421,10 +429,30 @@ public class TripServiceImpl implements TripService {
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + id));
 
+        if (trip.getStatus() == TripStatusEnum.completed || trip.getStatus() == TripStatusEnum.cancelled) {
+            throw new ConflictException("Trip is already " + trip.getStatus() + "; it cannot be cancelled");
+        }
+
         trip.setStatus(TripStatusEnum.cancelled);
         trip.setNotes(cancellationReason);
         trip.setUpdatedBy(userId);
         
+        Trip updatedTrip = tripRepository.save(trip);
+        return mapToResponse(updatedTrip);
+    }
+
+    @Override
+    public TripResponse reinstateTrip(UUID id, String userId) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + id));
+
+        if (trip.getStatus() != TripStatusEnum.cancelled) {
+            throw new ConflictException("Only a cancelled trip can be reinstated (this one is " + trip.getStatus() + ")");
+        }
+
+        trip.setStatus(TripStatusEnum.pending);
+        trip.setUpdatedBy(userId);
+
         Trip updatedTrip = tripRepository.save(trip);
         return mapToResponse(updatedTrip);
     }
@@ -661,6 +689,8 @@ public class TripServiceImpl implements TripService {
 
         Bus bus = validateAndGetBus(busId);
 
+        requireAssignable(trip);
+
         if (trip.getBus() != null) {
             throw new BadRequestException("Trip already has a bus assigned");
         }
@@ -671,12 +701,26 @@ public class TripServiceImpl implements TripService {
 
         // Invariant: a bus can only be assigned to a trip whose permit (if already assigned)
         // belongs to the same operator that owns the bus.
-        if (trip.getPassengerServicePermit() != null
-                && trip.getPassengerServicePermit().getOperator() != null
-                && bus.getOperator() != null
-                && !trip.getPassengerServicePermit().getOperator().getId().equals(bus.getOperator().getId())) {
+        UUID permitOperatorId = trip.getPassengerServicePermit() != null && trip.getPassengerServicePermit().getOperator() != null
+                ? trip.getPassengerServicePermit().getOperator().getId() : null;
+        if (permitOperatorId != null && bus.getOperator() != null && !permitOperatorId.equals(bus.getOperator().getId())) {
             throw new BadRequestException("Bus operator does not match the trip's permit operator");
         }
+
+        // INC-020: a bus the operator has marked unavailable, or that is not authorised under the
+        // trip's own permit, cannot quietly end up on the trip anyway.
+        if (!bus.isAvailableOn(trip.getTripDate())) {
+            throw new ConflictException("Bus " + bus.getPlateNumber() + " is marked unavailable on " + trip.getTripDate());
+        }
+        if (trip.getPassengerServicePermit() != null
+                && !permitBusLinks.forPermit(trip.getPassengerServicePermit().getId()).stream()
+                        .anyMatch(link -> bus.getId().equals(link.getBusId())
+                                && Boolean.TRUE.equals(link.getInForce()))) {
+            throw new ConflictException("Bus " + bus.getPlateNumber()
+                    + " is not authorised under this trip's permit; link it from the permit page first");
+        }
+        requireNoOverlap(tripRepository.findByTripDateAndBusId(trip.getTripDate(), busId), tripId,
+                trip, "Bus " + bus.getPlateNumber());
 
         trip.setBus(bus);
         trip.setUpdatedBy(userId);
@@ -714,13 +758,27 @@ public class TripServiceImpl implements TripService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with ID: " + tripId));
 
+        requireAssignable(trip);
+
         if (trip.getConductorId() != null) {
             throw new BadRequestException("Trip already has a conductor assigned");
         }
 
-        // No Driver/Conductor domain entity exists in core-service (conductors live in
-        // user-service). Ownership scoping is enforced by the caller (operator-scoped
-        // controller); this layer only records the identifier.
+        // Conductor accounts live in user-service; checked there rather than trusted from the
+        // caller (INC-020) - closes the gap this class used to document and rely on the operator
+        // dashboard alone to avoid.
+        UUID tripOperatorId = operatorIdOf(trip);
+        var conductor = conductorDirectory.find(conductorId)
+                .orElseThrow(() -> new BadRequestException("No conductor account with id " + conductorId));
+        if (!conductor.isActive()) {
+            throw new ConflictException("Conductor's account is not active");
+        }
+        if (tripOperatorId != null && !conductor.worksFor(tripOperatorId)) {
+            throw new ConflictException("Conductor does not work for this trip's operator");
+        }
+        requireNoOverlap(tripRepository.findByTripDateAndConductorId(trip.getTripDate(), conductorId), tripId,
+                trip, "This conductor");
+
         trip.setConductorId(conductorId);
         trip.setUpdatedBy(userId);
 
@@ -748,6 +806,50 @@ public class TripServiceImpl implements TripService {
         log.info("Successfully removed conductor from trip {}", tripId);
 
         return mapToResponse(savedTrip);
+    }
+
+    /**
+     * The trip's operator, the same way the response mapper derives it: the permit's operator if
+     * one is assigned, otherwise the bus's operator if one is assigned, otherwise unknown (a trip
+     * nobody can be said to own yet, e.g. before MOT assigns a permit).
+     */
+    private UUID operatorIdOf(Trip trip) {
+        if (trip.getPassengerServicePermit() != null && trip.getPassengerServicePermit().getOperator() != null) {
+            return trip.getPassengerServicePermit().getOperator().getId();
+        }
+        if (trip.getBus() != null && trip.getBus().getOperator() != null) {
+            return trip.getBus().getOperator().getId();
+        }
+        return null;
+    }
+
+    /** Only a still-pending trip can have its bus or conductor changed (INC-020). */
+    private void requireAssignable(Trip trip) {
+        if (trip.getStatus() != TripStatusEnum.pending) {
+            throw new ConflictException("Trip is " + trip.getStatus() + "; only a pending trip can be assigned");
+        }
+    }
+
+    /**
+     * No bus or conductor may be on two trips whose scheduled windows overlap, once a turnaround
+     * buffer is added on each side (INC-020) - the same real-world constraint a bus or a person
+     * cannot be in two places at once.
+     */
+    private void requireNoOverlap(List<Trip> sameDayTrips, UUID excludingTripId, Trip trip, String subject) {
+        LocalTime start = trip.getScheduledDepartureTime().minusMinutes(TURNAROUND_BUFFER_MINUTES);
+        LocalTime end = trip.getScheduledArrivalTime().plusMinutes(TURNAROUND_BUFFER_MINUTES);
+        for (Trip other : sameDayTrips) {
+            if (other.getId().equals(excludingTripId) || other.getStatus() == TripStatusEnum.cancelled) {
+                continue;
+            }
+            boolean overlaps = start.isBefore(other.getScheduledArrivalTime())
+                    && other.getScheduledDepartureTime().isBefore(end);
+            if (overlaps) {
+                throw new ConflictException(subject + " is already assigned to a trip on " + trip.getTripDate()
+                        + " from " + other.getScheduledDepartureTime() + " to " + other.getScheduledArrivalTime()
+                        + " that overlaps this one");
+            }
+        }
     }
 
     private void validateTripRequest(TripRequest request) {

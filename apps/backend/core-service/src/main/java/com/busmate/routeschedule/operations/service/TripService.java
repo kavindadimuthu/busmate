@@ -51,6 +51,8 @@ public interface TripService {
     TripResponse startTrip(UUID id, String userId);
     TripResponse completeTrip(UUID id, String userId);
     TripResponse cancelTrip(UUID id, String cancellationReason, String userId);
+    /** Un-cancels a trip (MOT correcting a mistaken or premature cancellation). Pending only. */
+    TripResponse reinstateTrip(UUID id, String userId);
     void deleteTrip(UUID id);
     List<TripResponse> generateTripsForSchedule(UUID scheduleId, LocalDate fromDate, LocalDate toDate, String userId);
     

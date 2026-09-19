@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, RefreshCw, Edit2, Trash2, Play, Square, CheckCircle } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Edit2, Trash2, Play, Square, CheckCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@busmate/ui';
 import type { TripResponse } from '@busmate/api-client-core';
 
@@ -10,6 +10,7 @@ interface TripDetailsActionsProps {
   canComplete: (status?: string) => boolean;
   canCancel: (status?: string) => boolean;
   canEdit: (status?: string) => boolean;
+  canReinstate: (status?: string) => boolean;
   onBack: () => void;
   onRefresh: () => void;
   onStart: () => void;
@@ -17,11 +18,12 @@ interface TripDetailsActionsProps {
   onCancel: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onReinstate: () => void;
 }
 
 export function TripDetailsActions({
-  trip, canStart, canComplete, canCancel, canEdit,
-  onBack, onRefresh, onStart, onComplete, onCancel, onEdit, onDelete,
+  trip, canStart, canComplete, canCancel, canEdit, canReinstate,
+  onBack, onRefresh, onStart, onComplete, onCancel, onEdit, onDelete, onReinstate,
 }: TripDetailsActionsProps) {
   return (
     <div className="flex items-center space-x-2">
@@ -48,6 +50,12 @@ export function TripDetailsActions({
         <Button variant="outline" size="sm" onClick={onCancel}>
           <Square className="h-4 w-4 mr-2" />
           Cancel Trip
+        </Button>
+      )}
+      {trip && canReinstate(trip.status) && (
+        <Button variant="outline" size="sm" onClick={onReinstate}>
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reinstate
         </Button>
       )}
       {trip && canEdit(trip.status) && (

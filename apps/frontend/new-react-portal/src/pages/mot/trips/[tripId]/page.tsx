@@ -30,6 +30,7 @@ export default function TripDetailsPage() {
       canComplete={details.canComplete}
       canCancel={details.canCancel}
       canEdit={details.canEdit}
+      canReinstate={details.canReinstate}
       onBack={details.handleBack}
       onRefresh={details.handleRefresh}
       onStart={details.handleStart}
@@ -37,6 +38,7 @@ export default function TripDetailsPage() {
       onCancel={details.handleCancel}
       onEdit={details.handleEdit}
       onDelete={details.handleDelete}
+      onReinstate={details.handleReinstate}
     />
   );
 

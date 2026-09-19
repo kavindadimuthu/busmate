@@ -148,6 +148,24 @@ export function useTripDetail() {
     }
   }, [operator?.id, tripId]);
 
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const cancelTrip = useCallback(async (reason: string): Promise<boolean> => {
+    if (!operator?.id || !tripId) return false;
+    setActionLoading(true);
+    setCancelError(null);
+    try {
+      const updated = await BusOperatorOperationsService.cancelOwnTrip(operator.id, tripId, reason);
+      setTrip(updated);
+      toast.success('Trip reported as not running.');
+      return true;
+    } catch (err) {
+      setCancelError(errorMessage(err, 'Could not cancel the trip.'));
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [operator?.id, tripId]);
+
   return {
     trip,
     isLoading: isLoading || operatorLoading,
@@ -160,5 +178,8 @@ export function useTripDetail() {
     removeBus,
     assignConductor,
     removeConductor,
+    cancelTrip,
+    cancelError,
+    setCancelError,
   };
 }
