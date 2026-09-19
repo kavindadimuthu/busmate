@@ -38,6 +38,9 @@ row-level security" requires to be true.
 - Existing application-level scoping (INC-016, INC-021) stays as defence in depth and is not removed by
   adoption; it stops being the control.
 - A repeatable cross-tenant isolation suite becomes the proof, as ADR-005 requires.
+- The service still declares the tenant context itself, so this protects against a wrong query, not
+  against compromised service code — the same limit every row-level tenancy design has. It removes the
+  failure ADR-005 worried about (a forgotten filter), not the need to review who may set the context.
 - Until a service adopts it, its operator scoping is application-level and fails open. That is known
   debt, recorded in `context.md`.
 
