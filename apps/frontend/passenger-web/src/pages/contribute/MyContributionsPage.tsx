@@ -14,6 +14,7 @@ const STATUS_STYLES: Record<string, string> = {
   APPROVED: "bg-green-600",
   REJECTED: "bg-destructive",
   WITHDRAWN: "bg-muted text-muted-foreground",
+  REVERTED: "bg-muted text-muted-foreground",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -21,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
   APPROVED: "Approved",
   REJECTED: "Not approved",
   WITHDRAWN: "Withdrawn",
+  REVERTED: "Reverted",
 };
 
 function proposalName(c: ChangesetResponse): string {
@@ -70,7 +72,7 @@ export default function MyContributionsPage() {
         </div>
 
         <div className="flex gap-2 mb-6 flex-wrap">
-          {["ALL", "PENDING", "APPROVED", "REJECTED", "WITHDRAWN"].map((s) => (
+          {["ALL", "PENDING", "APPROVED", "REJECTED", "WITHDRAWN", "REVERTED"].map((s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}

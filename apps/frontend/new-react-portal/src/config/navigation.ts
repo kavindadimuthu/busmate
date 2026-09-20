@@ -19,6 +19,7 @@ import {
   Ticket,
   Radio,
   HeartHandshake,
+  ClipboardCheck,
 } from "lucide-react";
 import type { NavigationConfig } from "@busmate/ui";
 
@@ -115,6 +116,12 @@ export const motNavigation: NavigationConfig = {
           label: "Contributors",
           icon: HeartHandshake,
           href: "/mot/community",
+        },
+        {
+          id: "community-review",
+          label: "Review",
+          icon: ClipboardCheck,
+          href: "/mot/community/review",
         },
       ],
     },

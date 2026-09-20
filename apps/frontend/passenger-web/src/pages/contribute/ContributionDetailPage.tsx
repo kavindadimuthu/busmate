@@ -15,6 +15,7 @@ const STATUS_LABEL: Record<string, string> = {
   APPROVED: "Approved",
   REJECTED: "Not approved",
   WITHDRAWN: "Withdrawn",
+  REVERTED: "Reverted",
 };
 
 const OBSERVATION_LABEL: Record<string, string> = {
@@ -183,6 +184,17 @@ export default function ContributionDetailPage() {
                     <p className="text-sm font-medium text-foreground mb-1">Reviewer's note</p>
                     <p className="text-sm text-muted-foreground">{proposal.decisionReason}</p>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {proposal.status === "REVERTED" && (
+              <Card>
+                <CardContent className="p-5 flex gap-3">
+                  <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    This was approved, but a reviewer later undid it.
+                  </p>
                 </CardContent>
               </Card>
             )}
