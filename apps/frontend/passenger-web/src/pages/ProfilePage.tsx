@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Mail, Pencil, ShieldCheck, User as UserIcon, X } from "lucide-react";
+import { HeartHandshake, Loader2, Mail, Pencil, ShieldCheck, User as UserIcon, X } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UsersControllerService } from "@busmate/api-client-user";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -182,6 +183,21 @@ const ProfilePage = () => {
                   )}
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border border-border">
+            <CardContent className="p-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <HeartHandshake className="h-6 w-6 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">Contribute to the network</p>
+                  <p className="text-sm text-muted-foreground">Help map stops, routes and timetables you know.</p>
+                </div>
+              </div>
+              <Button asChild variant="outline">
+                <Link to="/contribute">View</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

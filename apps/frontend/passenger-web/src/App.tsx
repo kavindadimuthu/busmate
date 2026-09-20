@@ -24,6 +24,8 @@ import PayHereReturnPage from "./pages/booking/PayHereReturnPage";
 import PayHereCancelPage from "./pages/booking/PayHereCancelPage";
 import MyTicketsPage from "./pages/tickets/MyTicketsPage";
 import TicketDetailPage from "./pages/tickets/TicketDetailPage";
+import ContributeProgrammePage from "./pages/contribute/ContributeProgrammePage";
+import ContributeApplyPage from "./pages/contribute/ContributeApplyPage";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,7 @@ const App = () => (
               <Route path="/findmybus/detail" element={<FindMyBusDetailPage />} />
               <Route path="/routes" element={<RoutesPage />} />
               <Route path="/routes/:id" element={<RouteDetailPage />} />
+              <Route path="/contribute" element={<ContributeProgrammePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               {/* PayHere redirects the passenger's browser here directly (ADR-014) - these two
@@ -58,6 +61,7 @@ const App = () => (
                 <Route path="/booking/success" element={<BookingSuccessPage />} />
                 <Route path="/tickets" element={<MyTicketsPage />} />
                 <Route path="/tickets/:id" element={<TicketDetailPage />} />
+                <Route path="/contribute/apply" element={<ContributeApplyPage />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFoundPage />} />

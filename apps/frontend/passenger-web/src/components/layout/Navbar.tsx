@@ -1,4 +1,4 @@
-import { LogOut, Menu, Ticket, User as UserIcon, X } from "lucide-react";
+import { HeartHandshake, LogOut, Menu, Ticket, User as UserIcon, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -124,6 +124,11 @@ const Navbar = () => {
                       <UserIcon className="h-4 w-4" /> View Profile
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/contribute" className="cursor-pointer">
+                      <HeartHandshake className="h-4 w-4" /> Contribute
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="h-4 w-4" /> Log Out
@@ -221,6 +226,17 @@ const Navbar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Routes
+                </Link>
+                <Link
+                  to="/contribute"
+                  aria-current={pathname === "/contribute" ? "page" : undefined}
+                  className={cn(
+                    "px-4 py-3 transition-colors rounded-lg font-medium flex items-center gap-2",
+                    pathname === "/contribute" ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted hover:text-primary",
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <HeartHandshake className="h-4 w-4" /> Contribute
                 </Link>
 
                 {isAuthenticated ? (
