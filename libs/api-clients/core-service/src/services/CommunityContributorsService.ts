@@ -3,13 +3,17 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { AgreementAcceptanceRequest } from '../models/AgreementAcceptanceRequest';
+import type { ChangesetResponse } from '../models/ChangesetResponse';
 import type { ContributorAgreementResponse } from '../models/ContributorAgreementResponse';
 import type { ContributorApplicationRequest } from '../models/ContributorApplicationRequest';
 import type { ContributorCountsResponse } from '../models/ContributorCountsResponse';
 import type { ContributorDecisionRequest } from '../models/ContributorDecisionRequest';
 import type { ContributorResponse } from '../models/ContributorResponse';
 import type { MyContributorStandingResponse } from '../models/MyContributorStandingResponse';
+import type { PageChangesetResponse } from '../models/PageChangesetResponse';
 import type { PageContributorResponse } from '../models/PageContributorResponse';
+import type { ProposeStopResponse } from '../models/ProposeStopResponse';
+import type { StopProposalRequest } from '../models/StopProposalRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -39,6 +43,46 @@ export class CommunityContributorsService {
             url: '/api/community/applications',
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * The signed-in user's own proposals, newest first
+     * @param status
+     * @param page
+     * @param size
+     * @returns PageChangesetResponse OK
+     * @throws ApiError
+     */
+    public static listMyChangesets(
+        status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN',
+        page?: number,
+        size: number = 20,
+    ): CancelablePromise<PageChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/changesets/mine',
+            query: {
+                'status': status,
+                'page': page,
+                'size': size,
+            },
+        });
+    }
+    /**
+     * Withdraw one of the signed-in user's own pending proposals
+     * @param changesetId
+     * @returns ChangesetResponse OK
+     * @throws ApiError
+     */
+    public static withdrawChangeset(
+        changesetId: string,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/changesets/{changesetId}/withdraw',
+            path: {
+                'changesetId': changesetId,
+            },
         });
     }
     /**
@@ -191,6 +235,22 @@ export class CommunityContributorsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/community/me/agreement',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Propose a new stop or a correction to one (active contributors only)
+     * @param requestBody
+     * @returns ProposeStopResponse OK
+     * @throws ApiError
+     */
+    public static proposeStop(
+        requestBody: StopProposalRequest,
+    ): CancelablePromise<ProposeStopResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/stop-proposals',
             body: requestBody,
             mediaType: 'application/json',
         });
