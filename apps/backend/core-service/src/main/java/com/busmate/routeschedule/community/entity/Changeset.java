@@ -95,6 +95,39 @@ public class Changeset {
     @Column(name = "decision_reason")
     private String decisionReason;
 
+    // ───────────────────────────── apply / revert (INC-031) ─────────────────────────────
+
+    /** The target stop's version right after an approval wrote it; null until approved. */
+    @Column(name = "applied_version")
+    private Long appliedVersion;
+
+    /**
+     * The target's exact provenance before an approval overwrote it — including who was credited,
+     * which the public API never exposes, read here straight from the entity — so a revert restores
+     * it precisely rather than guessing.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "previous_source_tier")
+    private com.busmate.routeschedule.shared.provenance.SourceTier previousSourceTier;
+
+    @Column(name = "previous_observed_at")
+    private Instant previousObservedAt;
+
+    @Column(name = "previous_base_confidence")
+    private Integer previousBaseConfidence;
+
+    @Column(name = "previous_attributed_user_id")
+    private UUID previousAttributedUserId;
+
+    @Column(name = "previous_attribution_label")
+    private String previousAttributionLabel;
+
+    @Column(name = "reverted_by")
+    private UUID revertedBy;
+
+    @Column(name = "reverted_at")
+    private Instant revertedAt;
+
     @Version
     private Long version;
 }

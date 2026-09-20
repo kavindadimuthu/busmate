@@ -20,7 +20,10 @@ import com.busmate.routeschedule.community.dto.AgreementAcceptanceRequest;
 import com.busmate.routeschedule.community.dto.ChangesetResponse;
 import com.busmate.routeschedule.community.dto.ProposeStopResponse;
 import com.busmate.routeschedule.community.dto.StopProposalRequest;
+import com.busmate.routeschedule.community.dto.ChangesetReviewResponse;
+import com.busmate.routeschedule.community.dto.RejectChangesetRequest;
 import com.busmate.routeschedule.community.entity.ChangesetStatus;
+import com.busmate.routeschedule.community.service.ChangesetReviewService;
 import com.busmate.routeschedule.community.service.StopProposalService;
 import com.busmate.routeschedule.community.dto.ContributorAgreementResponse;
 import com.busmate.routeschedule.community.dto.ContributorApplicationRequest;
@@ -46,6 +49,7 @@ public class CommunityController {
 
     private final ContributorService service;
     private final StopProposalService stopProposals;
+    private final ChangesetReviewService review;
     private final CallerContext callerContext;
 
     @GetMapping("/agreement")
@@ -146,5 +150,51 @@ public class CommunityController {
     @Operation(summary = "Withdraw one of the signed-in user's own pending proposals", operationId = "withdrawChangeset")
     public ChangesetResponse withdraw(@PathVariable UUID changesetId) {
         return stopProposals.withdraw(callerContext.require(), changesetId);
+    }
+
+    // ───────────────────────────── staff review (INC-031) ─────────────────────────────
+
+    @GetMapping("/changesets")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "The review queue: stop proposals, oldest first, filterable by status, contributor and district",
+            operationId = "listChangesetsForReview")
+    public Page<ChangesetReviewResponse> queue(@RequestParam(required = false) ChangesetStatus status,
+                                               @RequestParam(required = false) UUID proposerUserId,
+                                               @RequestParam(required = false) String homeDistrict,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "20") int size) {
+        return review.queue(status, proposerUserId, homeDistrict,
+                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+    }
+
+    @GetMapping("/changesets/{changesetId}/review")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "One proposal with the stop it targets, the distance between positions, and the contributor's record",
+            operationId = "getChangesetForReview")
+    public ChangesetReviewResponse getForReview(@PathVariable UUID changesetId) {
+        return review.get(changesetId);
+    }
+
+    @PostMapping("/changesets/{changesetId}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Approve a stop proposal — writes the canonical stop, credited and labelled observed",
+            operationId = "approveChangeset")
+    public ChangesetResponse approve(@PathVariable UUID changesetId) {
+        return review.approve(callerContext.require(), changesetId);
+    }
+
+    @PostMapping("/changesets/{changesetId}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Reject a stop proposal with a reason the contributor will see", operationId = "rejectChangeset")
+    public ChangesetResponse reject(@PathVariable UUID changesetId, @Valid @RequestBody RejectChangesetRequest request) {
+        return review.reject(callerContext.require(), changesetId, request);
+    }
+
+    @PostMapping("/changesets/{changesetId}/revert")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Undo an approved stop proposal, restoring the stop's previous values and provenance",
+            operationId = "revertChangeset")
+    public ChangesetResponse revert(@PathVariable UUID changesetId) {
+        return review.revert(callerContext.require(), changesetId);
     }
 }
