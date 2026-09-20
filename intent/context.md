@@ -130,6 +130,9 @@ Violating one of these is a bug, not a design choice.
   (official / operator timetable / observed / reported / estimated / live); never wire a new passenger
   surface to a raw time column without one. The unauthenticated stop, route and schedule reads must not
   expose who contributed a record — display credit only.
+- **A stop's `attributedUserId` is never in a response the public endpoints return.** Only staff-only
+  reads (a changeset's `proposerUserId`) may carry the real contributor identity; the stop's own
+  provenance label stays generic ("Community contributor") even after review credits them.
 - **A contributor's proposal never writes the canonical tables.** It lands in `community.changeset`
   as a proposed value set; only the review flow (INC-031) applies it. Never let a proposal endpoint
   call a staff write path directly, however tempting that shortcut looks.
