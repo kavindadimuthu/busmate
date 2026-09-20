@@ -130,6 +130,9 @@ Violating one of these is a bug, not a design choice.
   (official / operator timetable / observed / reported / estimated / live); never wire a new passenger
   surface to a raw time column without one. The unauthenticated stop, route and schedule reads must not
   expose who contributed a record — display credit only.
+- **A contributor's proposal never writes the canonical tables.** It lands in `community.changeset`
+  as a proposed value set; only the review flow (INC-031) applies it. Never let a proposal endpoint
+  call a staff write path directly, however tempting that shortcut looks.
 - **Community standing lives in core-service, not user-service.** A contributor is still a
   `passenger` account; `core-service`'s `community` module (ADR-019) is the only source of what they
   may do to the network. Never add a `contributor` user type or check standing from the JWT.
