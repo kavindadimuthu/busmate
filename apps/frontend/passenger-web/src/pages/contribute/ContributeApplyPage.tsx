@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -79,13 +80,21 @@ function StatusCard({ standing, onReapply }: { standing: MyContributorStandingRe
   if (standing.status === "ACTIVE") {
     return (
       <Card>
-        <CardContent className="p-6 flex gap-4">
-          <CheckCircle2 className="h-8 w-8 text-green-600 shrink-0" />
-          <div>
-            <h2 className="font-semibold text-foreground mb-1">You're a contributor</h2>
-            <p className="text-sm text-muted-foreground">
-              Thanks for helping map the network. Proposing changes isn't built yet — check back soon.
-            </p>
+        <CardContent className="p-6">
+          <div className="flex gap-4 mb-4">
+            <CheckCircle2 className="h-8 w-8 text-green-600 shrink-0" />
+            <div>
+              <h2 className="font-semibold text-foreground mb-1">You're a contributor</h2>
+              <p className="text-sm text-muted-foreground">Thanks for helping map the network.</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button asChild className="bg-gradient-primary">
+              <Link to="/contribute/propose">Propose a stop</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/contribute/mine">My contributions</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
