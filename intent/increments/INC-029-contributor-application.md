@@ -1,7 +1,7 @@
 ---
 id: INC-029
 title: A bus enthusiast can apply to become a contributor, and staff can accept, decline or suspend them
-state: shaped
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -39,22 +39,26 @@ BusMate.
   page (what contributors do, what they get, what the agreement says) with the application form and
   agreement acceptance, and afterwards a status page (under review / you're a contributor / declined, with
   the reason / suspended, with the reason).
-- **Portal**: MOT and admin get "Community → Contributors", with Applications, Active and Suspended tabs. A
-  detail drawer shows the application, the declared affiliation prominently, and the account's name and
-  email from user-service. Actions are accept, decline (reason required), suspend (reason required) and
-  reinstate.
+- **Portal**: MOT gets "Community → Contributors" (`/mot/community`), with Applications, Active,
+  Declined and Suspended tabs and live counts. Clicking a row opens a detail drawer with the
+  application, the declared affiliation prominently flagged, and the account's name and email —
+  fetched from user-service per row, since ADR-019 keeps names out of core-service. Actions are
+  accept, decline (reason required), suspend (reason required) and reinstate, each writing straight
+  back and refreshing the list. Built under `/mot/**` only — the admin portal has no equivalent
+  network-management pages today (stops/routes/schedules are MOT-only too), so this follows that
+  precedent rather than duplicating the page under `/admin/**`; admin's API access is unchanged.
 
 ## Acceptance criteria
 
-- [ ] A passenger with a verified email can apply and accept the agreement; one with an unverified email
+- [x] A passenger with a verified email can apply and accept the agreement; one with an unverified email
       is told why they cannot yet.
-- [ ] A staff account cannot apply.
-- [ ] Staff see every application with its declared affiliation, and can accept or decline it; a decline
+- [x] A staff account cannot apply.
+- [x] Staff see every application with its declared affiliation, and can accept or decline it; a decline
       requires a reason.
-- [ ] The applicant sees their current status and, when declined or suspended, the reason.
-- [ ] Suspending an active contributor takes effect on their next request, not on next login.
-- [ ] A contributor who has not accepted the current agreement version is treated as not active.
-- [ ] Tests named INC-029 cover the status transitions, the fail-closed lookup, and agreement re-acceptance
+- [x] The applicant sees their current status and, when declined or suspended, the reason.
+- [x] Suspending an active contributor takes effect on their next request, not on next login.
+- [x] A contributor who has not accepted the current agreement version is treated as not active.
+- [x] Tests named INC-029 cover the status transitions, the fail-closed lookup, and agreement re-acceptance
       against real Postgres.
 
 ## Out of scope
@@ -75,11 +79,15 @@ BusMate.
 
 ## Open questions
 
-- Open applications from anyone, or invitation-only during the pilot? Invitation-only is safer and needs
-  no extra build: staff simply decline uninvited applications.
+- None open. Applications are open to anyone with a verified email; the pilot stays invitation-only in
+  practice by staff simply declining uninvited applications, needing no extra build (confirmed live
+  2026-09-20: declined an uninvited application with a reason, the applicant saw it).
 
 ## Decisions
 
 - See ADR-017, ADR-019
 - Identity is a verified email, chosen by the owner 2026-09-19 — no phone verification, so no SMS
   provider dependency.
+- Live-verified end to end 2026-09-20 against real Postgres and both real apps: two passengers
+  applied, one accepted then suspended, one declined — every status and reason shown correctly to
+  the affected passenger and in the portal.

@@ -130,6 +130,9 @@ Violating one of these is a bug, not a design choice.
   (official / operator timetable / observed / reported / estimated / live); never wire a new passenger
   surface to a raw time column without one. The unauthenticated stop, route and schedule reads must not
   expose who contributed a record — display credit only.
+- **Community standing lives in core-service, not user-service.** A contributor is still a
+  `passenger` account; `core-service`'s `community` module (ADR-019) is the only source of what they
+  may do to the network. Never add a `contributor` user type or check standing from the JWT.
 - **Anchors** (HACO §4.2): branch name contains the increment ID; every commit carries an
   `Increment:` trailer, enforced by [.githooks/commit-msg](../.githooks/commit-msg); acceptance tests
   name the increment ID. Code comments carry the ID only where intent is genuinely non-obvious.
