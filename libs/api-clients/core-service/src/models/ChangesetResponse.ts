@@ -40,6 +40,7 @@ export namespace ChangesetResponse {
         APPROVED = 'APPROVED',
         REJECTED = 'REJECTED',
         WITHDRAWN = 'WITHDRAWN',
+        REVERTED = 'REVERTED',
     }
 }
 

@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { AgreementAcceptanceRequest } from '../models/AgreementAcceptanceRequest';
 import type { ChangesetResponse } from '../models/ChangesetResponse';
+import type { ChangesetReviewResponse } from '../models/ChangesetReviewResponse';
 import type { ContributorAgreementResponse } from '../models/ContributorAgreementResponse';
 import type { ContributorApplicationRequest } from '../models/ContributorApplicationRequest';
 import type { ContributorCountsResponse } from '../models/ContributorCountsResponse';
@@ -11,8 +12,10 @@ import type { ContributorDecisionRequest } from '../models/ContributorDecisionRe
 import type { ContributorResponse } from '../models/ContributorResponse';
 import type { MyContributorStandingResponse } from '../models/MyContributorStandingResponse';
 import type { PageChangesetResponse } from '../models/PageChangesetResponse';
+import type { PageChangesetReviewResponse } from '../models/PageChangesetReviewResponse';
 import type { PageContributorResponse } from '../models/PageContributorResponse';
 import type { ProposeStopResponse } from '../models/ProposeStopResponse';
+import type { RejectChangesetRequest } from '../models/RejectChangesetRequest';
 import type { StopProposalRequest } from '../models/StopProposalRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -46,6 +49,35 @@ export class CommunityContributorsService {
         });
     }
     /**
+     * The review queue: stop proposals, oldest first, filterable by status, contributor and district
+     * @param status
+     * @param proposerUserId
+     * @param homeDistrict
+     * @param page
+     * @param size
+     * @returns PageChangesetReviewResponse OK
+     * @throws ApiError
+     */
+    public static listChangesetsForReview(
+        status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'REVERTED',
+        proposerUserId?: string,
+        homeDistrict?: string,
+        page?: number,
+        size: number = 20,
+    ): CancelablePromise<PageChangesetReviewResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/changesets',
+            query: {
+                'status': status,
+                'proposerUserId': proposerUserId,
+                'homeDistrict': homeDistrict,
+                'page': page,
+                'size': size,
+            },
+        });
+    }
+    /**
      * The signed-in user's own proposals, newest first
      * @param status
      * @param page
@@ -54,7 +86,7 @@ export class CommunityContributorsService {
      * @throws ApiError
      */
     public static listMyChangesets(
-        status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN',
+        status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'REVERTED',
         page?: number,
         size: number = 20,
     ): CancelablePromise<PageChangesetResponse> {
@@ -65,6 +97,78 @@ export class CommunityContributorsService {
                 'status': status,
                 'page': page,
                 'size': size,
+            },
+        });
+    }
+    /**
+     * Approve a stop proposal — writes the canonical stop, credited and labelled observed
+     * @param changesetId
+     * @returns ChangesetResponse OK
+     * @throws ApiError
+     */
+    public static approveChangeset(
+        changesetId: string,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/changesets/{changesetId}/approve',
+            path: {
+                'changesetId': changesetId,
+            },
+        });
+    }
+    /**
+     * Reject a stop proposal with a reason the contributor will see
+     * @param changesetId
+     * @param requestBody
+     * @returns ChangesetResponse OK
+     * @throws ApiError
+     */
+    public static rejectChangeset(
+        changesetId: string,
+        requestBody: RejectChangesetRequest,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/changesets/{changesetId}/reject',
+            path: {
+                'changesetId': changesetId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Undo an approved stop proposal, restoring the stop's previous values and provenance
+     * @param changesetId
+     * @returns ChangesetResponse OK
+     * @throws ApiError
+     */
+    public static revertChangeset(
+        changesetId: string,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/changesets/{changesetId}/revert',
+            path: {
+                'changesetId': changesetId,
+            },
+        });
+    }
+    /**
+     * One proposal with the stop it targets, the distance between positions, and the contributor's record
+     * @param changesetId
+     * @returns ChangesetReviewResponse OK
+     * @throws ApiError
+     */
+    public static getChangesetForReview(
+        changesetId: string,
+    ): CancelablePromise<ChangesetReviewResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/changesets/{changesetId}/review',
+            path: {
+                'changesetId': changesetId,
             },
         });
     }
