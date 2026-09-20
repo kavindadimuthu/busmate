@@ -17,6 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.busmate.routeschedule.community.dto.AgreementAcceptanceRequest;
+import com.busmate.routeschedule.community.dto.ChangesetResponse;
+import com.busmate.routeschedule.community.dto.ProposeStopResponse;
+import com.busmate.routeschedule.community.dto.StopProposalRequest;
+import com.busmate.routeschedule.community.entity.ChangesetStatus;
+import com.busmate.routeschedule.community.service.StopProposalService;
 import com.busmate.routeschedule.community.dto.ContributorAgreementResponse;
 import com.busmate.routeschedule.community.dto.ContributorApplicationRequest;
 import com.busmate.routeschedule.community.dto.ContributorCountsResponse;
@@ -40,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 public class CommunityController {
 
     private final ContributorService service;
+    private final StopProposalService stopProposals;
     private final CallerContext callerContext;
 
     @GetMapping("/agreement")
@@ -118,5 +124,27 @@ public class CommunityController {
     @Operation(summary = "Reinstate a suspended contributor", operationId = "reinstateContributor")
     public ContributorResponse reinstate(@PathVariable UUID userId) {
         return service.reinstate(callerContext.require(), userId);
+    }
+
+    // ───────────────────────────── stop proposals (INC-030) ─────────────────────────────
+
+    @PostMapping("/stop-proposals")
+    @Operation(summary = "Propose a new stop or a correction to one (active contributors only)", operationId = "proposeStop")
+    public ResponseEntity<ProposeStopResponse> proposeStop(@Valid @RequestBody StopProposalRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(stopProposals.propose(callerContext.require(), request));
+    }
+
+    @GetMapping("/changesets/mine")
+    @Operation(summary = "The signed-in user's own proposals, newest first", operationId = "listMyChangesets")
+    public Page<ChangesetResponse> mine(@RequestParam(required = false) ChangesetStatus status,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size) {
+        return stopProposals.mine(callerContext.require(), status, PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+    }
+
+    @PostMapping("/changesets/{changesetId}/withdraw")
+    @Operation(summary = "Withdraw one of the signed-in user's own pending proposals", operationId = "withdrawChangeset")
+    public ChangesetResponse withdraw(@PathVariable UUID changesetId) {
+        return stopProposals.withdraw(callerContext.require(), changesetId);
     }
 }

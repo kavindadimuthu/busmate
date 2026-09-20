@@ -132,7 +132,17 @@ public interface StopRepository extends JpaRepository<Stop, UUID> {
     Long countDistinctCities();
     
     // Flexible export query methods
-    @Query("SELECT s FROM Stop s WHERE " +
+    /**
+     * Stops within a coarse bounding box around a point (INC-030's duplicate check). The box is
+     * wider than the real radius on purpose; the caller filters to the true distance with
+     * {@link com.busmate.routeschedule.shared.util.GeoUtils#haversineMeters}.
+     */
+    @Query("SELECT s FROM Stop s WHERE s.location.latitude BETWEEN :minLat AND :maxLat " +
+           "AND s.location.longitude BETWEEN :minLng AND :maxLng")
+    List<Stop> findWithinBoundingBox(@Param("minLat") double minLat, @Param("maxLat") double maxLat,
+                                      @Param("minLng") double minLng, @Param("maxLng") double maxLng);
+
+@Query("SELECT s FROM Stop s WHERE " +
            "(:stopIds IS NULL OR s.id IN :stopIds) AND " +
            "(:cities IS NULL OR s.location.city IN :cities OR s.location.citySinhala IN :cities OR s.location.cityTamil IN :cities) AND " +
            "(:states IS NULL OR s.location.state IN :states OR s.location.stateSinhala IN :states OR s.location.stateTamil IN :states) AND " +

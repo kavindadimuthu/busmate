@@ -122,6 +122,10 @@ community:
     version: draft-1
     draft: true
     allow-draft-acceptance: ${COMMUNITY_ALLOW_DRAFT_ACCEPTANCE:false}
+  proposals:
+    # Per contributor, per day, across all entity types they can propose (INC-030).
+    daily-cap: ${COMMUNITY_PROPOSALS_DAILY_CAP:20}
+
 
 logging:
   level:
