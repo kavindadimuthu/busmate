@@ -1,0 +1,10 @@
+# The build context is apps/backend, which also holds api-gateway's node_modules. Without this, every
+# build ships hundreds of megabytes of JavaScript to the daemon for nothing. (BuildKit reads this file
+# because it sits next to Dockerfile.spring; the repository-root .dockerignore does not apply to a
+# narrower context.)
+**/node_modules
+**/target
+**/dist
+**/.env
+**/.env.*
+api-gateway

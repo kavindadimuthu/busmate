@@ -108,8 +108,10 @@ services:
   # ── Backend ───────────────────────────────────────────────────────────────
   user-service:
     build:
-      context: apps/backend/user-service
-      dockerfile: Dockerfile
+      context: apps/backend
+      dockerfile: Dockerfile.spring
+      args:
+        SERVICE: user-service
     env_file:
       - config/secrets/.env
     environment:
@@ -137,8 +139,10 @@ services:
 
   core-service:
     build:
-      context: apps/backend/core-service
-      dockerfile: Dockerfile
+      context: apps/backend
+      dockerfile: Dockerfile.spring
+      args:
+        SERVICE: core-service
     env_file:
       - config/secrets/.env
     environment:
@@ -166,8 +170,10 @@ services:
 
   ticketing-service:
     build:
-      context: apps/backend/ticketing-service
-      dockerfile: Dockerfile
+      context: apps/backend
+      dockerfile: Dockerfile.spring
+      args:
+        SERVICE: ticketing-service
     env_file:
       - config/secrets/.env
     environment:
