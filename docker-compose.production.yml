@@ -108,8 +108,10 @@ services:
   # ── Backend ───────────────────────────────────────────────────────────────
   user-service:
     build:
-      context: apps/backend/user-service
-      dockerfile: Dockerfile
+      context: apps/backend
+      dockerfile: Dockerfile.spring
+      args:
+        SERVICE: user-service
     env_file:
       - config/secrets/.env
     environment:
@@ -137,8 +139,10 @@ services:
 
   core-service:
     build:
-      context: apps/backend/core-service
-      dockerfile: Dockerfile
+      context: apps/backend
+      dockerfile: Dockerfile.spring
+      args:
+        SERVICE: core-service
     env_file:
       - config/secrets/.env
     environment:
@@ -166,8 +170,10 @@ services:
 
   ticketing-service:
     build:
-      context: apps/backend/ticketing-service
-      dockerfile: Dockerfile
+      context: apps/backend
+      dockerfile: Dockerfile.spring
+      args:
+        SERVICE: ticketing-service
     env_file:
       - config/secrets/.env
     environment:
@@ -176,6 +182,7 @@ services:
       - TICKETING_DB_URL=jdbc:postgresql://postgres:5432/busmate_ticketing
       - TICKETING_DB_USERNAME=postgres
       - TICKETING_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - PUBLIC_GATEWAY_URL=https://api.busmate.site
       - OTEL_SDK_DISABLED=true
       - JAVA_TOOL_OPTIONS=-Xmx448m -XX:MaxMetaspaceSize=192m
     depends_on:
@@ -205,6 +212,14 @@ services:
       # Browsers reach the API same-origin via Caddy, so these matter only for the mobile apps
       # and any stray cross-origin call. Keep them exact; never widen to '*'.
       - ALLOWED_ORIGINS=https://busmate.site,https://portal.busmate.site
+      # Caddy is the single hop in front. Without this every user shares Caddy's IP and one
+      # rate-limit bucket (INC-033). If Cloudflare's proxy is ever switched on in front of Caddy
+      # this becomes 2, and Caddy must be told to trust Cloudflare's forwarded address.
+      - TRUST_PROXY_HOPS=1
+      # Mobile carriers in Sri Lanka put many subscribers behind one address, so the defaults
+      # (100/min general, 10/min auth) would throttle innocent neighbours.
+      - RATE_LIMIT_MAX=300
+      - AUTH_RATE_LIMIT_MAX=20
     depends_on:
       - user-service
       - core-service

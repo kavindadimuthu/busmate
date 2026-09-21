@@ -15,6 +15,14 @@ export const env = {
   ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000').split(','),
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '60000'),
   RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX ?? '100'),
+  // Login/register/forgot-password attempts per IP per minute (brute-force guard).
+  AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX ?? '10'),
+  // How many reverse-proxy hops sit in front of the gateway. Both rate limiters key on the client
+  // IP, and behind a proxy that IP is only visible through X-Forwarded-For. At 0 (dev, where the
+  // gateway is hit directly) the header is ignored, which is correct: trusting it with no proxy
+  // in front would let a client pick its own IP and dodge the limit. In production Caddy is one
+  // hop; leaving this at 0 there makes every user share Caddy's IP and one global bucket.
+  TRUST_PROXY_HOPS: parseInt(process.env.TRUST_PROXY_HOPS ?? '0'),
   // Optional: the AI route-generation feature 503s (not a startup crash) when unset.
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 };

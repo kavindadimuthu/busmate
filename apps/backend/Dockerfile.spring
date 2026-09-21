@@ -1,0 +1,49 @@
+# One Dockerfile for the Spring Boot services in the production stack (INC-033).
+#
+#   docker build -f apps/backend/Dockerfile.spring --build-arg SERVICE=core-service apps/backend
+#
+# The per-service Dockerfiles assume a jar already sitting in target/ — true on a developer's laptop,
+# never true on the server, because *.jar is gitignored and a fresh clone has none. This one builds
+# the jar itself, so a clean checkout is enough to produce an image.
+#
+# The build context is apps/backend (not the service folder) only so a single file can serve every
+# service; ARG SERVICE picks which subdirectory is copied in.
+
+# ── Build ───────────────────────────────────────────────────────────────────
+FROM eclipse-temurin:17-jdk AS build
+ARG SERVICE
+WORKDIR /src
+
+# Build containers are commonly IPv4-only, while Maven Central resolves to IPv6 as well. Java tries the
+# IPv6 address first and fails with "Network is unreachable" instead of falling back, although curl
+# (used by the wrapper to fetch Maven itself) reaches the same host fine.
+ENV MAVEN_OPTS="-Djava.net.preferIPv4Stack=true"
+
+# Dependencies first, on their own layer: they change far less often than the source, so a code-only
+# change rebuilds in seconds instead of re-downloading the world. The BuildKit cache mount keeps the
+# local Maven repository across builds and across services.
+COPY ${SERVICE}/.mvn .mvn
+COPY ${SERVICE}/mvnw ${SERVICE}/pom.xml ./
+# Invoked as ./mvnw, never `sh mvnw`: run that way the wrapper derives its project directory from the
+# script name and looks for "mvnw/.mvn/wrapper/..." — a path that does not exist.
+RUN chmod +x mvnw
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q dependency:go-offline
+
+COPY ${SERVICE}/src src
+# Tests are not skipped by accident: CI runs them against a real Postgres. An image build has no
+# database, and must not need one.
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q -DskipTests package \
+ && cp target/*.jar /app.jar
+
+# ── Runtime ─────────────────────────────────────────────────────────────────
+# JRE, not JDK: there is nothing to compile at runtime, and it is smaller.
+FROM eclipse-temurin:17-jre
+RUN groupadd --system busmate && useradd --system --gid busmate --no-create-home busmate
+WORKDIR /app
+COPY --from=build /app.jar app.jar
+USER busmate
+
+# Heap and metaspace caps arrive as JAVA_TOOL_OPTIONS from docker-compose.production.yml. The
+# OpenTelemetry agent the dev images bundle is deliberately absent: production has no collector to
+# receive it, and an agent retrying a missing endpoint is cost with no benefit.
+ENTRYPOINT ["java", "-jar", "app.jar"]

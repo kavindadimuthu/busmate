@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { env } from './config/env';
 import { corsMiddleware } from './middleware/cors.middleware';
 import { rateLimiter, authRateLimiter } from './middleware/rateLimiter.middleware';
 import { authMiddleware } from './middleware/auth.middleware';
@@ -17,6 +18,11 @@ import { stripClientIdentityHeaders } from './middleware/stripIdentityHeaders.mi
 
 export function createApp() {
   const app = express();
+
+  // Must precede every middleware that reads req.ip — the rate limiters and the request logger.
+  if (env.TRUST_PROXY_HOPS > 0) {
+    app.set('trust proxy', env.TRUST_PROXY_HOPS);
+  }
 
   // Global middleware
   app.use(helmet());
