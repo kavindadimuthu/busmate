@@ -46,13 +46,13 @@ run a migration, create an admin or load pilot data until the stack stands up.
 
 ## Acceptance criteria
 
-- [ ] `https://busmate.site` serves passenger-web with a valid certificate, and HTTP redirects to HTTPS.
+- [x] `https://busmate.site` serves passenger-web with a valid certificate, and HTTP redirects to HTTPS.
 - [ ] `https://api.busmate.site` reaches api-gateway, and a passenger can search routes over it.
-- [ ] `https://portal.busmate.site` serves the staff portal and a staff account can sign in.
-- [ ] Postgres is unreachable from the internet; only 80, 443 and SSH are open on the host.
-- [ ] Every service comes up from an empty volume with Flyway applying its own migrations.
-- [ ] With the whole stack running and idle, the host has at least 1.5 GiB of memory free.
-- [ ] No container publishes a port to the host except Caddy.
+- [x] `https://portal.busmate.site` serves the staff portal and a staff account can sign in.
+- [x] Postgres is unreachable from the internet; only 80, 443 and SSH are open on the host.
+- [x] Every service comes up from an empty volume with Flyway applying its own migrations.
+- [x] With the whole stack running and idle, the host has at least 1.5 GiB of memory free.
+- [x] No container publishes a port to the host except Caddy.
 
 ## Out of scope
 
@@ -81,3 +81,9 @@ run a migration, create an admin or load pilot data until the stack stands up.
 ## Decisions
 
 - See ADR-020
+- Brought up on the production VPS 2026-09-21. Starting it for real found two defects the compose file
+  had shipped with — the MinIO image was on a registry that no longer hosts it, and the Java images
+  needed a pre-built jar (fixed in INC-033). Verified from outside the host: valid certificates on all
+  four names, HTTP redirecting to HTTPS, every internal port closed, the gateway refusing `/internal`
+  on every host, and a real admin sign-in through the public portal. Still unchecked: passenger route
+  search, which needs network data to mean anything.
