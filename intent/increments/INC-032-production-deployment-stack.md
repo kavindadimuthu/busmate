@@ -81,9 +81,3 @@ run a migration, create an admin or load pilot data until the stack stands up.
 ## Decisions
 
 - See ADR-020
-- Brought up on the production VPS 2026-09-21. Starting it for real found two defects the compose file
-  had shipped with — the MinIO image was on a registry that no longer hosts it, and the Java images
-  needed a pre-built jar (fixed in INC-033). Verified from outside the host: valid certificates on all
-  four names, HTTP redirecting to HTTPS, every internal port closed, the gateway refusing `/internal`
-  on every host, and a real admin sign-in through the public portal. Still unchecked: passenger route
-  search, which needs network data to mean anything.
