@@ -111,17 +111,6 @@ payhere:
     # service's own.
     gateway-base-url: ${PUBLIC_GATEWAY_URL:http://localhost:8080}
 
-supabase:
-  # From config/secrets/.env. api.key is the public anon key; auth.url is not
-  # sensitive — real fallbacks are fine. jwt.secret IS sensitive, so it falls
-  # back to an obvious placeholder — set SUPABASE_JWT_SECRET for real use.
-  api:
-    key: ${TICKETING_SUPABASE_API_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eGJ6Y3hqdWVnaHZydHNmZHhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyODAzMjksImV4cCI6MjA2NDg1NjMyOX0.b8JmC_Q-O6K5k_5gpIiQWIDKE5jqyQxb9FgrfJzngkg}
-  auth:
-    url: ${TICKETING_SUPABASE_AUTH_URL:https://gvxbzcxjueghvrtsfdxc.supabase.co/auth/v1}
-  jwt:
-    secret: ${SUPABASE_JWT_SECRET:dev-only-placeholder-jwt-secret-change-me}
-
 logging:
   level:
     com.busmate.ticketing_service: INFO # Reduce debug logging
