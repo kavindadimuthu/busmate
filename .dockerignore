@@ -1,0 +1,29 @@
+# Keeps the build context small enough to send. node_modules alone is gigabytes and is
+# always reinstalled inside the image anyway; target/ likewise for the Maven services.
+**/node_modules
+**/dist
+**/build
+**/target
+**/.next
+**/.expo
+**/.nx
+**/coverage
+**/playwright-report
+**/test-results
+**/*.tsbuildinfo
+
+.git
+.github
+
+# Never let a real secrets file reach an image layer. The template is enough.
+config/secrets/.env
+**/.env.local
+**/.env.*.local
+
+# Frontend .env files hold each developer's local API host (localhost, a LAN IP). Vite would bake
+# whichever it found into the production bundle. Production values arrive as build args instead.
+apps/frontend/*/.env
+apps/frontend/*/.env.production
+
+**/*.log
+**/.DS_Store

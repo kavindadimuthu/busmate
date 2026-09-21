@@ -1,0 +1,76 @@
+# TLS termination, static hosting and the only public entry point (INC-032).
+#
+# Each site proxies its OWN /api/* to the gateway rather than sending the browser to
+# api.busmate.site. That is not cosmetic: the staff portal's session cookie is httpOnly and
+# SameSite=Lax, so a cross-site XHR from portal.busmate.site to api.busmate.site would not carry
+# it and every authenticated request would fail. Same-origin keeps the cookie valid and removes
+# CORS from the browser path entirely.
+#
+# api.busmate.site still exists, for the Expo mobile apps — they are not browsers, send no Origin,
+# and need one stable API host.
+
+{
+	email {$ACME_EMAIL}
+	# Caddy obtains and renews Let's Encrypt certificates for every site name below.
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+(api_proxy) {
+	# X-Forwarded-For / -Proto are set by Caddy automatically. api-gateway must trust them
+	# (INC-033) or express-rate-limit sees every user as this one proxy IP.
+	reverse_proxy api-gateway:8080
+}
+
+# ── Passenger web ───────────────────────────────────────────────────────────
+busmate.site {
+	import security_headers
+
+	handle /api/* {
+		import api_proxy
+	}
+
+	handle {
+		root * /srv/passenger-web
+		encode gzip zstd
+		# SPA: unknown paths are client-side routes, not 404s.
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Built with an absolute API base of https://busmate.site, so a visitor on www must land on the
+# apex or every API call becomes cross-origin.
+www.busmate.site {
+	redir https://busmate.site{uri} permanent
+}
+
+# ── Staff portal ────────────────────────────────────────────────────────────
+portal.busmate.site {
+	import security_headers
+
+	handle /api/* {
+		import api_proxy
+	}
+
+	handle {
+		root * /srv/portal
+		encode gzip zstd
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# ── API host for the mobile apps ────────────────────────────────────────────
+api.busmate.site {
+	import security_headers
+	import api_proxy
+}
