@@ -1,40 +1,111 @@
-# Production backend stack.
+# Production stack for busmate.site — the whole platform on one VPS (INC-032, ADR-020).
 #
-# Only api-gateway is published to the host. Downstream services keep their
-# stable internal ports on the Docker network:
-#   core-service      : 9010
-#   user-service      : 9020
-#   ticketing-service : 9030
-#   api-gateway       : 8080
+# Run it with the secrets file supplied BOTH ways, because the two do different jobs:
+#
+#     docker compose --env-file config/secrets/.env -f docker-compose.production.yml up -d
+#
+#   --env-file  → interpolation of ${...} below (the DB password reused as each service's)
+#   env_file:   → the variables each container actually reads at runtime
+#
+# Only Caddy publishes ports. Postgres, MinIO, Redpanda and every service are reachable on the
+# internal Docker network alone; the host firewall allows 80, 443 and SSH only.
+#
+# Topology (ports, internal URLs, database names) is set here and overrides the local-dev values
+# in the secrets file. Secrets are never written here.
+#
+# NOT in this stack, deliberately: telemetry-service, EMQX and the bus simulator. There are no
+# hardware trackers and no live ETAs at launch; core-service's only use of telemetry is a live
+# position lookup that already falls back to schedule-based times. See INC-032 Out of scope.
+
 services:
-  api-gateway:
-    build:
-      context: apps/backend/api-gateway
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    # Secrets come from the central file; topology (ports, internal URLs) is set
-    # inline here and overrides the local-dev URLs from the file.
-    env_file:
-      - config/secrets/.env
+  # ── Data ──────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
     environment:
-      - PORT=8080
-      - USER_SERVICE_URL=http://user-service:9020
-      - CORE_SERVICE_URL=http://core-service:9010
-      - TICKETING_SERVICE_URL=http://ticketing-service:9030
-      - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
-      - NODE_ENV=production
-    depends_on:
-      user-service:
-        condition: service_started
-      core-service:
-        condition: service_started
-      ticketing-service:
-        condition: service_started
-      telemetry-service:
-        condition: service_started
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in config/secrets/.env}
+      # Without this, the init script below runs against a database named after the user.
+      POSTGRES_DB: postgres
+    volumes:
+      - busmate_prod_postgres_data:/var/lib/postgresql/data
+      # Runs on a FRESH volume only — see the script's own header.
+      - ./scripts/postgres/init-prod-dbs.sql:/docker-entrypoint-initdb.d/init-prod-dbs.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
     restart: unless-stopped
 
+  # Media object store (ADR-009). On-host rather than managed S3 because the platform is meant to
+  # run independently of any provider; MEDIA_S3_ENDPOINT is the seam if that changes.
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
+    volumes:
+      - busmate_prod_minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    restart: unless-stopped
+
+  # One-shot: creates the media bucket if it is not there, then exits. Not a long-running service.
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+      mc mb --ignore-existing local/$${MEDIA_S3_BUCKET} &&
+      echo 'bucket ready: '$${MEDIA_S3_BUCKET}
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MEDIA_S3_BUCKET: ${MEDIA_S3_BUCKET:-busmate-media}
+    restart: "no"
+
+  # user-service publishes user/operator events on real write paths. Nothing in this stack consumes
+  # them yet, but a send with no broker fails inside those writes, so the broker stays.
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=INTERNAL://0.0.0.0:9092
+      - --advertise-kafka-addr=INTERNAL://redpanda:9092
+    volumes:
+      - busmate_prod_redpanda_data:/var/lib/redpanda/data
+    deploy:
+      resources:
+        limits:
+          memory: 800m
+    restart: unless-stopped
+
+  # ── Backend ───────────────────────────────────────────────────────────────
   user-service:
     build:
       context: apps/backend/user-service
@@ -43,10 +114,25 @@ services:
       - config/secrets/.env
     environment:
       - SERVER_PORT=9020
-      - CORE_SERVICE_URL=http://core-service:9010
       - SPRING_PROFILES_ACTIVE=prod
+      - USER_DB_URL=jdbc:postgresql://postgres:5432/busmate_user
+      - USER_DB_USERNAME=postgres
+      - USER_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - CORE_SERVICE_URL=http://core-service:9010
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - MEDIA_S3_ENDPOINT=http://minio:9000
+      # The Dockerfile's OTel agent would otherwise retry a collector that is not deployed.
+      - OTEL_SDK_DISABLED=true
+      - JAVA_TOOL_OPTIONS=-Xmx448m -XX:MaxMetaspaceSize=192m
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "9020"
+    deploy:
+      resources:
+        limits:
+          memory: 768m
     restart: unless-stopped
 
   core-service:
@@ -58,11 +144,24 @@ services:
     environment:
       - SERVER_PORT=9010
       - SPRING_PROFILES_ACTIVE=prod
-      - TELEMETRY_SERVICE_URL=http://telemetry-service:9040
+      - CORE_DB_URL=jdbc:postgresql://postgres:5432/busmate_core
+      - CORE_DB_USERNAME=postgres
+      - CORE_DB_PASSWORD=${POSTGRES_PASSWORD}
       - AUTH_JWKS_URL=http://user-service:9020/public/jwks.json
       - USER_SERVICE_URL=http://user-service:9020
+      - MEDIA_S3_ENDPOINT=http://minio:9000
+      - OTEL_SDK_DISABLED=true
+      # The largest service (network, scheduling, operations, fleet, licensing, passenger info).
+      - JAVA_TOOL_OPTIONS=-Xmx640m -XX:MaxMetaspaceSize=192m
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "9010"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
     restart: unless-stopped
 
   ticketing-service:
@@ -74,73 +173,81 @@ services:
     environment:
       - SERVER_PORT=9030
       - SPRING_PROFILES_ACTIVE=prod
+      - TICKETING_DB_URL=jdbc:postgresql://postgres:5432/busmate_ticketing
+      - TICKETING_DB_USERNAME=postgres
+      - TICKETING_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - OTEL_SDK_DISABLED=true
+      - JAVA_TOOL_OPTIONS=-Xmx448m -XX:MaxMetaspaceSize=192m
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "9030"
+    deploy:
+      resources:
+        limits:
+          memory: 768m
     restart: unless-stopped
 
-  # Event broker for the IoT/telemetry pipeline (IoT Platform Layer plan, Phase 0). This
-  # self-hosted single node is the simplest thing that works; swap KAFKA_BOOTSTRAP_SERVERS on
-  # the services below to a managed Kafka (e.g. Redpanda Cloud / MSK) and drop this block to
-  # externalize it. Not published to the host — only reachable on the internal network.
-  redpanda:
-    image: redpandadata/redpanda:v24.2.7
-    command:
-      - redpanda
-      - start
-      - --smp=1
-      - --memory=1G
-      - --reserve-memory=0M
-      - --overprovisioned
-      - --node-id=0
-      - --check=false
-      - --kafka-addr=INTERNAL://0.0.0.0:9092
-      - --advertise-kafka-addr=INTERNAL://redpanda:9092
-    expose:
-      - "9092"
-    volumes:
-      - busmate_prod_redpanda_data:/var/lib/redpanda/data
-    restart: unless-stopped
-
-  # MQTT broker for hardware GPS trackers (IoT Platform Layer plan, Phase 4). Not published to the
-  # host by default — see docs/iot-pilot-runbook.md for how to expose 1883 for a real hardware
-  # pilot (e.g. a temporary port mapping, or a VPN/firewall rule scoped to the tracker's network).
-  emqx:
-    image: emqx/emqx:5.8.0
-    volumes:
-      - ./config/mqtt/emqx.conf:/opt/emqx/etc/emqx.conf:ro
-      - busmate_prod_emqx_data:/opt/emqx/data
-    expose:
-      - "1883"
-      - "18083"
-    restart: unless-stopped
-
-  telemetry-service:
+  api-gateway:
     build:
-      context: apps/backend/telemetry-service
+      context: apps/backend/api-gateway
       dockerfile: Dockerfile
     env_file:
       - config/secrets/.env
     environment:
-      - SERVER_PORT=9040
-      - SPRING_PROFILES_ACTIVE=prod
-      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - PORT=8080
+      - NODE_ENV=production
+      - USER_SERVICE_URL=http://user-service:9020
       - CORE_SERVICE_URL=http://core-service:9010
-      - TELEMETRY_MQTT_ENABLED=true
-      - TELEMETRY_MQTT_BROKER_URL=tcp://emqx:1883
-      # TELEMETRY_MQTT_PASSWORD must be set in config/secrets/.env to a real device token before
-      # this connects — provision the MQTT_CONSUMER device the same way as any other (POST
-      # /api/devices) and use the token it returns. See docs/iot-pilot-runbook.md.
-    expose:
-      - "9040"
+      - TICKETING_SERVICE_URL=http://ticketing-service:9030
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      # Browsers reach the API same-origin via Caddy, so these matter only for the mobile apps
+      # and any stray cross-origin call. Keep them exact; never widen to '*'.
+      - ALLOWED_ORIGINS=https://busmate.site,https://portal.busmate.site
     depends_on:
-      redpanda:
-        condition: service_started
-      core-service:
-        condition: service_started
-      emqx:
-        condition: service_started
+      - user-service
+      - core-service
+      - ticketing-service
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+    restart: unless-stopped
+
+  # ── Edge ──────────────────────────────────────────────────────────────────
+  # Builds both web frontends and serves them; the only container with published ports.
+  caddy:
+    build:
+      context: .
+      dockerfile: config/caddy/Dockerfile
+      args:
+        PASSENGER_WEB_ORIGIN: https://busmate.site
+        PORTAL_ORIGIN: https://portal.busmate.site
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
+    environment:
+      # Let's Encrypt sends expiry and problem notices here.
+      - ACME_EMAIL=${ACME_EMAIL:?ACME_EMAIL must be set in config/secrets/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Certificates must survive a redeploy, or Let's Encrypt rate limits will bite.
+      - busmate_prod_caddy_data:/data
+      - busmate_prod_caddy_config:/config
+    depends_on:
+      - api-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 192m
     restart: unless-stopped
 
 volumes:
+  busmate_prod_postgres_data:
+  busmate_prod_minio_data:
   busmate_prod_redpanda_data:
-  busmate_prod_emqx_data:
+  busmate_prod_caddy_data:
+  busmate_prod_caddy_config:
