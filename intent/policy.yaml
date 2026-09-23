@@ -48,6 +48,10 @@ risk_classes:
       - "config/secrets/**"
       - ".github/workflows/**"
 
+      # Decides what is publicly reachable and what isn't — the same class of decision as
+      # docker-compose.production.yml, just expressed in a different file.
+      - "config/caddy/**"
+
       # Runs against production data directly, outside any compose file's review surface —
       # a bug here reads or restores real databases, not a container definition.
       - "scripts/backup/**"

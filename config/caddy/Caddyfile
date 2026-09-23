@@ -74,3 +74,16 @@ api.busmate.site {
 	import security_headers
 	import api_proxy
 }
+
+# ── Public status page (INC-039) ────────────────────────────────────────────
+# The one exception to every other observability host staying on 127.0.0.1 (ADR-021) — a status
+# page is only useful if it's actually public. Proxies the whole Uptime Kuma app, not just
+# /status/*: its status pages, JS/CSS bundles and the socket.io connection that feeds them live
+# data all share one origin, so path-restricting here would load the page shell and then break
+# every asset and live update it needs. That also makes the admin login reachable at this host —
+# accepted, not overlooked: a real login protects it, the same trust model every other public
+# BusMate host already uses.
+status.busmate.site {
+	import security_headers
+	reverse_proxy uptime-kuma:3001
+}

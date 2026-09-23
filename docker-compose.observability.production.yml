@@ -16,10 +16,11 @@
 #     Spring services already run with OTEL_SDK_DISABLED=true (docker-compose.production.yml).
 #   - Prometheus reaches every app service by its Compose service name over the app stack's own
 #     `busmate_default` network — production publishes only api-gateway's port to the host, so
-#     host.docker.internal (what the dev stack uses) resolves nothing here. Nothing else needs
-#     that network: Grafana talks to Prometheus/Loki by their names inside this stack's own
-#     network, and Uptime Kuma checks the public HTTPS endpoints over the internet, the same way
-#     a real visitor would.
+#     host.docker.internal (what the dev stack uses) resolves nothing here. Uptime Kuma also
+#     joins that network (INC-039), not to reach app services by name — it checks the public
+#     HTTPS endpoints over the internet, the same way a real visitor would — but so Caddy, which
+#     runs in the app stack, can reach it by name to serve the public status page. Grafana talks
+#     to Prometheus/Loki by name inside this stack's own network and needs neither.
 #   - Retention is capped by size as well as by time on Prometheus, and Loki's time window drops
 #     from dev's 14 days to 7. The disk is shared with Postgres and MinIO; filling it takes the
 #     database down, not just the dashboards.
@@ -198,6 +199,10 @@ services:
     container_name: busmate-uptime-kuma
     ports:
       - "127.0.0.1:3001:3001"
+    # Joins busmate_default (INC-039) so Caddy — running in the app stack, not this one — can
+    # reach it by name to serve the public status page. The loopback port above still works too,
+    # for direct SSH-tunnel access without going through the public host.
+    networks: [default, busmate_default]
     volumes:
       - busmate_uptime_kuma_data:/app/data
     restart: unless-stopped
