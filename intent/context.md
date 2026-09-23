@@ -179,11 +179,13 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
 - `user-service` reports a missing or malformed request parameter as HTTP 500, not 400 — its
   `GlobalExceptionHandler` catches them as unhandled. Found by calling `GET /api/users` without
   `user_type` and `/api/users/me` (parsed as a UUID) against production.
-- **Production reports nothing about itself.** The observability stack
-  ([ADR-021](decisions/ADR-021-operational-telemetry-lives-in-grafana.md)) exists but is absent from
-  `docker-compose.production.yml`, which also sets `OTEL_SDK_DISABLED=true` on every Spring service. The
-  seven provisioned alert rules run only where the stack does, and their one contact point posts to an
-  address nothing listens on, so no alert has ever reached a person. INC-035 and INC-036.
+- **Production's observability floor is up** (`docker-compose.observability.production.yml`,
+  [ADR-021](decisions/ADR-021-operational-telemetry-lives-in-grafana.md), INC-035) — Prometheus,
+  Loki, Grafana, cAdvisor, node-exporter and Alloy, bound to `127.0.0.1` only, reachable over an
+  SSH tunnel. Tracing stays off: Tempo isn't part of it, and `OTEL_SDK_DISABLED=true` stands in
+  `docker-compose.production.yml`. The seven provisioned alert rules still route to a contact
+  point pointed at an address nothing listens on, so no alert has yet reached a person, and
+  `uptime-kuma` has no monitors configured — both INC-036.
 - No logical backups, and no deploy pipeline: production is updated by hand over SSH. The provider's
   daily VM snapshot is running, which restores a machine rather than a table, lives in the account that
   would be lost, and has never been tested. INC-037.

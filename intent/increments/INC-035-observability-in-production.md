@@ -1,7 +1,7 @@
 ---
 id: INC-035
 title: The production VPS reports its own health, running an observability floor and nothing more
-state: active
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -57,7 +57,7 @@ how much of the stack production should run at all — which is what ADR-021 set
       refuses the default password.
 - [x] Production logs are searchable in Loki with `service` and `level` parsed.
 - [x] The observability stack's own containers do not appear in Loki.
-- [ ] Measured free memory with both stacks running still satisfies the app stack's declared limits.
+- [x] Measured free memory with both stacks running still satisfies the app stack's declared limits.
 - [x] Tracing is still disabled in production.
 
 Verified twice against real containers in dev, not just config syntax — a second pass with more
@@ -87,9 +87,31 @@ mounted directory — only `deleteDatasources:` tells it to. Fixed by adding tha
 exactly Prometheus and Loki. A fresh volume never has this problem, but the fix is correct
 regardless of a volume's history, which is worth more than depending on every deploy being fresh.
 
-Memory headroom is the one criterion this dev machine cannot answer honestly — it has far less
-free memory than the VPS's 7.8 GiB and was fighting its own disk pressure throughout. That still
-needs a measurement taken on the real host.
+Memory headroom is the one criterion the dev machine could not answer honestly, and it is now
+answered for real: brought up on the production VPS itself (2026-09-23), all seven services showed
+`up` in Prometheus against real production traffic — `up` for the first time ever, not a dry run.
+`free -h` showed 5.1 GiB still available with both stacks running, well above the floor's ~1.3 GiB
+estimate. Every UI is bound to `127.0.0.1` as designed (confirmed in `docker ps`'s port list — bare
+`9100`/`8080` with no host mapping for node-exporter/cadvisor, `127.0.0.1:port->port` for the rest);
+the app stack's eight containers stayed untouched at 42+ hours uptime throughout, and
+`https://busmate.site` returned 200 before and after. Grafana logged in with the generated password
+on a genuinely fresh volume — the `deleteDatasources` fix found in the second dev pass was
+confirmed a correct no-op there: no Tempo ever appeared. And the one thing dev's non-prod Spring
+profile couldn't show — real production logs are JSON, so `level` parses for real — is now
+confirmed too: `level: DEBUG` on a live `core-service` line, queried straight out of Loki.
+
+Deployed by reconciling the server first: it was still on the pre-INC-034 commit with the same
+hand-applied MinIO patch and untracked `bootstrap-admin.sh` recorded as the server's drift in
+INC-034 and in memory — `git diff` against the incoming `origin/main` showed it byte-identical to
+what was already running, so `git checkout -- .` + `rm scripts/bootstrap-admin.sh` + `git pull` was
+safe with no container restart required for that step. `GRAFANA_ADMIN_PASSWORD` was generated with
+`openssl rand` and given to the owner directly (their choice, not written only to a file); the
+Discord webhook already set in the owner's local `config/secrets/.env` was piped straight into the
+server's over SSH stdin, never printed to any terminal output.
+
+All seven acceptance criteria are met, against the real production host. `uptime-kuma` came up but
+has no monitors configured yet — that, and wiring the alert webhook into Grafana's contact point,
+are INC-036.
 
 ## Out of scope
 
