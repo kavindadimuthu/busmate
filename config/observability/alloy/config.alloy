@@ -21,11 +21,13 @@ discovery.docker "busmate" {
 discovery.relabel "busmate" {
   targets = []
 
-  // Keep containers whose Compose project starts with "busmate"
-  // (the app stack: `name: busmate`; this stack: `name: busmate-observability`).
+  // Keep only the app stack's containers (Compose project "busmate", both dev and
+  // production — neither sets a project name other than the default). Anchored exactly:
+  // an unanchored "busmate.*" also matched this stack's own project, "busmate-observability",
+  // so Loki was ingesting Grafana's, Prometheus's and its own logs (INC-035 audit finding #13).
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
-    regex         = "busmate.*"
+    regex         = "^busmate$"
     action        = "keep"
   }
 

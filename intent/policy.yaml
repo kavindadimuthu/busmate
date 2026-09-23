@@ -70,6 +70,7 @@ risk_classes:
       - "docker-compose.yml"
       - "docker-compose.e2e.yml"
       - "docker-compose.observability.yml"
+      - "docker-compose.observability.production.yml"
       # The configuration those stacks mount shares their class: an alert rule that
       # does not fire, or a scrape target that resolves nowhere, fails exactly as
       # visibly and exactly as recoverably as the compose file that mounts it.

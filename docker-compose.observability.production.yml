@@ -1,0 +1,183 @@
+# Observability floor for the production VPS (INC-035, ADR-021).
+#
+# A standalone file, not an overlay of docker-compose.observability.yml — the same choice
+# docker-compose.production.yml already made over docker-compose.yml, so Compose's list-merge
+# semantics (ports and similar arrays are concatenated across -f files, not replaced) never have
+# to be reasoned about to know what actually runs.
+#
+# Run alongside the app stack, after it, from the same directory:
+#
+#     docker compose --env-file config/secrets/.env \
+#       -f docker-compose.observability.production.yml up -d
+#
+# What's here, and why it differs from the dev stack in docker-compose.observability.yml:
+#
+#   - No Tempo, and no OTLP wiring. Tracing stays a development tool (ADR-021); production
+#     Spring services already run with OTEL_SDK_DISABLED=true (docker-compose.production.yml).
+#   - Prometheus reaches every app service by its Compose service name over the app stack's own
+#     `busmate_default` network — production publishes only api-gateway's port to the host, so
+#     host.docker.internal (what the dev stack uses) resolves nothing here. Nothing else needs
+#     that network: Grafana talks to Prometheus/Loki by their names inside this stack's own
+#     network, and Uptime Kuma checks the public HTTPS endpoints over the internet, the same way
+#     a real visitor would.
+#   - Retention is capped by size as well as by time on Prometheus, and Loki's time window drops
+#     from dev's 14 days to 7. The disk is shared with Postgres and MinIO; filling it takes the
+#     database down, not just the dashboards.
+#   - Every UI binds to 127.0.0.1 only. Reach them over an SSH tunnel
+#     (`ssh -L 3000:localhost:3000 -p 22022 deploy@<host>` for Grafana, same pattern for the
+#     others) — never publish one through Caddy. Grafana also refuses to start without a real
+#     admin password: no admin/admin fallback here, unlike dev.
+name: busmate-observability
+
+networks:
+  busmate_default:
+    external: true
+
+services:
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: busmate-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ./config/observability/loki/loki-config.production.yml:/etc/loki/loki-config.yml:ro
+      - busmate_loki_data:/loki
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 -O- http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  alloy:
+    image: grafana/alloy:v1.7.5
+    container_name: busmate-alloy
+    user: root
+    command:
+      - run
+      - --server.http.listen-addr=127.0.0.1:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "127.0.0.1:12345:12345"
+    volumes:
+      - ./config/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - busmate_alloy_data:/var/lib/alloy/data
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: busmate-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=3GB
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks: [default, busmate_default]
+    volumes:
+      - ./config/observability/prometheus/prometheus.production.yml:/etc/prometheus/prometheus.yml:ro
+      - busmate_prometheus_data:/prometheus
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: busmate-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    container_name: busmate-node-exporter
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: busmate-grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set in config/secrets/.env — production has no admin/admin fallback}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:?ALERT_WEBHOOK_URL must be set in config/secrets/.env — see config/observability/README.md}
+    volumes:
+      # Dashboards and alerting are shared with dev, mounted subpath-by-subpath so datasources
+      # can differ: the dev provisioning/datasources/ wires a Tempo datasource this stack never
+      # runs (ADR-021), which would sit in Grafana always erroring when used.
+      - ./config/observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/observability/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+      - ./config/observability/grafana/provisioning-production/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./config/observability/grafana/dashboards:/etc/grafana/dashboards:ro
+      - busmate_grafana_data:/var/lib/grafana
+    depends_on:
+      loki:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: busmate-uptime-kuma
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - busmate_uptime_kuma_data:/app/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+volumes:
+  busmate_loki_data:
+  busmate_alloy_data:
+  busmate_prometheus_data:
+  busmate_grafana_data:
+  busmate_uptime_kuma_data:
