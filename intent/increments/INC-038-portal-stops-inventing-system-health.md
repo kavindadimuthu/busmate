@@ -1,7 +1,7 @@
 ---
 id: INC-038
 title: The portal stops reporting system health it cannot know
-state: in-review
+state: done
 track: 1
 risk: R1
 owner: kavinda
@@ -44,13 +44,13 @@ becomes a specific liability the moment backups are real.
       `systemSettings.ts`, and those files no longer exist.
 - [x] The three routes load without error and state what they do not yet show.
 - [x] No screen anywhere offers to restart a service or to edit an alert rule.
-- [ ] Admin users and self-profile behave exactly as before.
+- [x] Admin users and self-profile behave exactly as before.
 - [x] `context.md`'s claim that monitoring surfaces run on mock data is narrowed to what is still true
       of the product surfaces.
 
-The three routes were checked in a real browser against the dev server with the BFF session
-mocked, which exercises rendering but not authentication — so the admin users and self-profile
-criterion is still owed, against a signed-in session on the running stack.
+Verified twice: first in a real browser with the BFF session mocked, then by the owner against a
+real signed-in admin session on the running dev stack — user list, user detail (including the real
+permission grants), self-profile, and the three replaced routes all behaved correctly with no errors.
 
 ## Out of scope
 
