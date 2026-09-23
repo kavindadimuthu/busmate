@@ -187,20 +187,28 @@ connect for Postgres, an HTTP check against MinIO's own liveness endpoint. Prome
 definitions. `busmate-service-down` reads the resulting `probe_success` metric the same way it
 reads `up` for the app services.
 
-## Uptime monitoring (Phase 4)
+## Uptime monitoring and the public status page (Phase 4, INC-039)
 
-**Uptime Kuma** (http://localhost:3001, tunnelled in production — see "Running it in
-production" above) is included for one thing (ADR-021): a public status page, checking the
-platform the way a real visitor would rather than reaching for internal service names — it
-deliberately does **not** join `busmate_default` in production, unlike Prometheus and
-blackbox-exporter, which need to. Per-service internal health is Prometheus's job
-(`busmate-service-down`), not Uptime Kuma's; adding it here would duplicate that rule with a
-tool that has no alerting rules of its own to route through severity-split policy. The
-open-source edition has no declarative/file-based config, so set it up once by hand:
+**Uptime Kuma** is included for one thing (ADR-021): a public status page, checking the platform
+the way a real visitor would rather than reaching for internal service names. Per-service
+internal health is Prometheus's job (`busmate-service-down`), not Uptime Kuma's; adding it here
+would duplicate that rule with a tool that has no alerting rules of its own to route through
+severity-split policy.
 
-1. Open http://localhost:3001 (dev) or the tunnelled equivalent (production) and create the
-   admin account (first-run only).
-2. Add a monitor for each public endpoint (**Add New Monitor** → type **HTTP(s)**):
+**In production it is live at https://status.busmate.site** (INC-039) — the one deliberate
+exception to every other observability UI staying on `127.0.0.1`, since a status page nobody can
+reach is pointless. Caddy proxies the whole Uptime Kuma app there (see `config/caddy/Caddyfile`
+for why path-restricting it doesn't work), and it joins `busmate_default` so Caddy — which runs
+in the app stack, not the observability one — can reach it by name. Its loopback port still
+works for admin access over an SSH tunnel:
+`ssh -L 3001:localhost:3001 -p 22022 deploy@<host>`.
+
+The open-source edition has no declarative/file-based config, so it is set up by hand. In
+**2.x** (pinned to `2.5.5`; the old `1` tag is the EOL v1 line) the first-run flow is:
+
+1. Open it and pick a database — **SQLite** for this deployment.
+2. Create the admin account.
+3. Add a monitor for each public endpoint (**Add New Monitor** → type **HTTP(s)**):
 
    | Environment | Friendly name | URL | Heartbeat interval |
    |---|---|---|---|
@@ -214,10 +222,13 @@ open-source edition has no declarative/file-based config, so set it up once by h
 
    Dev checks each service directly (host.docker.internal, since dev publishes every port);
    production checks the three public hostnames through Caddy, exactly what a visitor sees.
-3. (Optional) **Settings → Notifications** to add the same Discord webhook as above, then
-   attach it to each monitor.
-4. (Optional) **Status Pages → New Status Page** to publish a public page showing the three
-   production monitors — this is the "public status page" ADR-021 keeps Uptime Kuma for.
+4. **Status Pages → New Status Page**, slug `busmate`. In 2.x you must **Add Group** before the
+   monitor picker appears — an empty status page won't let you attach anything. Production's is
+   already built; this is here for rebuilding it from scratch.
+5. (Optional) **Settings → Notifications** to add the same Discord webhook as above, then
+   attach it to each monitor. Not currently wired: the INC-036 alert rules already cover these
+   services through Prometheus, and duplicating them here would mean two notifications per
+   incident from two systems with different thresholds.
 
 ## Frontend & mobile error tracking (Phase 5)
 

@@ -195,7 +195,11 @@ services:
           memory: 256m
 
   uptime-kuma:
-    image: louislam/uptime-kuma:1
+    # 2.x, pinned exactly, for two reasons found while setting this up in INC-039: the `1` tag
+    # is the EOL v1 line ("no longer maintained, does not receive any bug or security fixes",
+    # per its own startup banner), which is not something to put on the public internet; and it
+    # was the only floating major tag in this stack, where everything else pins an exact version.
+    image: louislam/uptime-kuma:2.5.5
     container_name: busmate-uptime-kuma
     ports:
       - "127.0.0.1:3001:3001"

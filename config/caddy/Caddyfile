@@ -85,5 +85,10 @@ api.busmate.site {
 # BusMate host already uses.
 status.busmate.site {
 	import security_headers
+
+	# Uptime Kuma sends the bare hostname to /dashboard (its admin login). Someone typing
+	# status.busmate.site wants the status, not a login form.
+	redir / /status/busmate
+
 	reverse_proxy uptime-kuma:3001
 }
