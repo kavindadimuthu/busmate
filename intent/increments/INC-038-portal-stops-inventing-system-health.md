@@ -1,7 +1,7 @@
 ---
 id: INC-038
 title: The portal stops reporting system health it cannot know
-state: shaped
+state: in-review
 track: 1
 risk: R1
 owner: kavinda
@@ -40,13 +40,17 @@ becomes a specific liability the moment backups are real.
 
 ## Acceptance criteria
 
-- [ ] No staff screen displays a value derived from `data/admin/systemMonitoring.ts`, `logs.ts` or
+- [x] No staff screen displays a value derived from `data/admin/systemMonitoring.ts`, `logs.ts` or
       `systemSettings.ts`, and those files no longer exist.
-- [ ] The three routes load without error and state what they do not yet show.
-- [ ] No screen anywhere offers to restart a service or to edit an alert rule.
+- [x] The three routes load without error and state what they do not yet show.
+- [x] No screen anywhere offers to restart a service or to edit an alert rule.
 - [ ] Admin users and self-profile behave exactly as before.
 - [ ] `context.md`'s claim that monitoring surfaces run on mock data is narrowed to what is still true
       of the product surfaces.
+
+The three routes were checked in a real browser against the dev server with the BFF session
+mocked, which exercises rendering but not authentication — so the admin users and self-profile
+criterion is still owed, against a signed-in session on the running stack.
 
 ## Out of scope
 
@@ -64,6 +68,12 @@ becomes a specific liability the moment backups are real.
   is verified by a person running the portal, not by a test suite.
 - The one way this breaks is deleting a shared component that a real page also imports. Every removal
   is checked against its importers rather than assumed to be isolated.
+
+## Open questions
+
+- `core-service/.gitignore` carries the same unanchored `logs` pattern. Nothing is being lost there
+  today — its `logs/` is a real runtime output directory — but the landmine is identical, and it is a
+  backend path, so it is left for whoever next has reason to touch that service.
 
 ## Decisions
 
