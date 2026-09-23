@@ -1,4 +1,4 @@
-# Observability floor for the production VPS (INC-035, INC-036, ADR-021).
+# Observability floor for the production VPS (INC-035, INC-036, INC-037, ADR-021).
 #
 # A standalone file, not an overlay of docker-compose.observability.yml — the same choice
 # docker-compose.production.yml already made over docker-compose.yml, so Compose's list-merge
@@ -30,6 +30,10 @@
 #   - blackbox-exporter probes Postgres and MinIO for Prometheus (INC-036) — neither exposes its
 #     own metrics endpoint, so "is it up" has to be asked from the outside, the same way
 #     `pg_isready` and MinIO's own healthcheck already do inside docker-compose.production.yml.
+#   - node-exporter's textfile collector reads ./backup-metrics/backup.prom, written by
+#     scripts/backup/run-backup.sh (INC-037) on every successful backup run — the signal
+#     busmate-backup-stale watches. The backup job itself is a host systemd timer, not a
+#     container; docker-compose.production.yml is untouched by INC-037.
 name: busmate-observability
 
 networks:
@@ -144,9 +148,14 @@ services:
     container_name: busmate-node-exporter
     command:
       - --path.rootfs=/host
+      # Reads scripts/backup/run-backup.sh's own metrics file (INC-037) — the textfile
+      # collector is node-exporter's built-in way to surface a fact nothing else can scrape,
+      # rather than standing up a separate exporter just for two gauges.
+      - --collector.textfile.directory=/textfile
     pid: host
     volumes:
       - /:/host:ro,rslave
+      - ./backup-metrics:/textfile:ro
     restart: unless-stopped
     deploy:
       resources:

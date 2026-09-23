@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the BusMate off-host backup nightly (INC-037)
+
+[Timer]
+# 20:30 UTC = 02:00 Sri Lanka time — the platform's actual low-traffic window, not an
+# arbitrary UTC midnight.
+OnCalendar=*-*-* 20:30:00 UTC
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

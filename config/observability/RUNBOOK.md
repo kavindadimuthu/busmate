@@ -92,6 +92,19 @@ in a 5-minute window.
 deliberately a blunt trip-wire (not tied to one service) — the log stream tells you which
 service and what's actually failing.
 
+### Backup stale (`busmate-backup-stale`) — critical
+**Fires when:** no successful backup in 25+ hours (INC-037) — including if the metric has never
+been written at all, which is treated as unhealthy, not unknown.
+**Check:**
+```bash
+systemctl status busmate-backup.timer          # is it even scheduled?
+journalctl -u busmate-backup.service -n 100    # what did the last run actually do?
+sudo /opt/busmate/scripts/backup/run-backup.sh # run it by hand, watch it fail live
+```
+**Common causes:** the VPS was rebooted and the timer wasn't re-enabled, a B2 credential
+expired/was rotated without updating `config/secrets/.env`, Postgres or MinIO was briefly down
+during the scheduled window. Full detail: `scripts/backup/README.md`.
+
 ## Alert hygiene
 
 - If an alert fires and there was nothing to do, that's a signal the threshold is wrong —

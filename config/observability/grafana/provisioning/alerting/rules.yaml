@@ -435,3 +435,57 @@ groups:
               conditions:
                 - evaluator: { type: gt, params: [10] }
               refId: C
+
+  - orgId: 1
+    name: busmate-backup
+    folder: BusMate
+    interval: 5m
+    rules:
+      - uid: busmate-backup-stale
+        title: "Backup stale"
+        condition: C
+        # Alerting, not OK: unlike "zero ERROR lines", "we don't know when the last backup
+        # succeeded" is never the healthy case — including right now, before the metric has
+        # ever been written once. That's a real gap worth surfacing, not a false positive.
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No successful backup in {{ $values.B }} seconds (threshold: 90000, 25h)"
+          description: >
+            scripts/backup/run-backup.sh (INC-037) only writes its metrics file on full success,
+            so this means the last nightly run either never happened or failed partway. Check
+            `journalctl -u busmate-backup.service -n 100` on the VPS, and
+            `systemctl status busmate-backup.timer` to confirm the timer itself is still active.
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: 'time() - backup_last_success_timestamp_seconds'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              # 25 hours: a day's grace beyond the nightly cadence before treating a late
+              # backup as stale rather than just running a little behind.
+              conditions:
+                - evaluator: { type: gt, params: [90000] }
+              refId: C

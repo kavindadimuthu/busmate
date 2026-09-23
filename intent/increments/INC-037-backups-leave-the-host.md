@@ -1,7 +1,7 @@
 ---
 id: INC-037
 title: A nightly backup leaves the host, and a restore has actually been performed
-state: active
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -62,10 +62,38 @@ fill the bucket but cannot erase what's already there. Credentials live only in 
 
 ## Acceptance criteria
 
-- [ ] A nightly encrypted backup of all three databases and the media bucket exists off-host.
-- [ ] A restore has been performed into a scratch target, and row and object counts match the source.
-- [ ] Backup age and size are alertable, so a stopped backup surfaces within a day.
-- [ ] The restore procedure is written where someone who did not build it can follow it under pressure.
+- [x] A nightly encrypted backup of all three databases and the media bucket exists off-host.
+- [x] A restore has been performed into a scratch target, and row and object counts match the source.
+- [x] Backup age and size are alertable, so a stopped backup surfaces within a day.
+- [x] The restore procedure is written where someone who did not build it can follow it under pressure.
+
+Built and verified against production for real, 2026-09-23, not against a sketch:
+
+- **Encryption verified at the storage layer, not assumed.** Wrote a test file through the
+  `crypt:` remote, then listed the *raw* B2 bucket directly — both the path and filename were
+  gibberish, confirming B2 itself never sees a real name or unencrypted byte. Read the file back
+  through `crypt:` and confirmed the content round-tripped intact.
+- **The actual first backup ran for real**: all three databases dumped and uploaded (99,251
+  bytes), the MinIO mirror ran and correctly found zero objects — production's media bucket
+  genuinely has nothing in it yet, confirmed independently by listing the live bucket, not a bug
+  in the sync.
+- **The restore drill ran for real, against production**: every database restored into a
+  throwaway scratch Postgres (never the real one), and row counts on each database's three
+  largest tables matched live production exactly — including a non-trivial one
+  (`auth_audit_log`: 47 rows, matched). Media object counts matched (0 = 0). Full PASS, printed
+  by the script, not inferred.
+- **The alertable signal was verified end to end**, not just written: node-exporter's textfile
+  collector picked up the real backup's timestamp and byte count, Prometheus scraped it, and
+  `busmate-backup-stale` (new, alongside INC-036's rules) evaluated as healthy — genuinely
+  reading a real value, not a placeholder.
+- **The systemd timer is installed and enabled** (`busmate-backup.timer`), confirmed scheduled
+  via `systemctl list-timers` — not just files sitting in the repo.
+
+One design change from the original sketch, made after actually looking at how B2 retention
+works: backups go to **fixed paths, overwritten nightly** (`db/busmate_core.dump`, not a new
+timestamped folder per run), because B2's lifecycle rules act on a file's own version history,
+not on folder age — matching that shape is what lets retention be a bucket setting instead of
+custom pruning code that has to be trusted to keep working.
 
 ## Out of scope
 
@@ -79,14 +107,25 @@ fill the bucket but cannot erase what's already there. Credentials live only in 
 - `always_human`: choosing a destination adds a third-party dependency, and a restore rehearsal
   touches production data. Both are on that list, so this increment cannot be shaped without a human
   decision.
-- R3: `config/secrets/**`, and `docker-compose.production.yml` if the job runs inside the stack.
+- R3: `config/secrets/**` and `scripts/backup/**` (added to `policy.yaml`'s R3 list this
+  increment — a bug here reads or restores real production data directly, outside any compose
+  file's review surface). `docker-compose.production.yml` itself is untouched;
+  `docker-compose.observability.production.yml` gained one small addition (node-exporter's
+  textfile collector mount) for the alertable signal.
 - Backup credentials are write-only wherever the destination supports it. A host that can delete its
-  own backups has one failure mode that takes both.
+  own backups has one failure mode that takes both — confirmed: the B2 application key's
+  capabilities were set to `listBuckets, listFiles, readFiles, writeFiles` only, `deleteFiles`
+  withheld.
 
 ## Open questions
 
 - ~~Where backups live.~~ Decided: Backblaze B2, `busmate-prod-backups`, a write-only-scoped key.
 - ~~Container vs. host cron.~~ Decided: host cron. `docker-compose.production.yml` is untouched.
+- **B2's own lifecycle rule (retention) still needs a one-time step in the B2 web console** —
+  deliberately left to the account owner rather than automated: it needs the account's own login,
+  not the app's deliberately narrow-scoped key, and setting it is exactly the kind of
+  irreversible-ish, account-level action this repo's `always_human` list exists for.
+  `scripts/backup/README.md` has the exact steps.
 
 ## Decisions
 
