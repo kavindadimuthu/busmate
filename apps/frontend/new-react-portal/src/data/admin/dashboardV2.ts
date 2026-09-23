@@ -8,9 +8,7 @@
 //   GET /api/dashboard/kpis          — KPI cards data
 //   GET /api/dashboard/trends        — Historical trend data
 //   GET /api/dashboard/activity      — Recent activity feed
-//   GET /api/dashboard/services      — Service status summary
 //   GET /api/dashboard/users/stats   — User distribution
-//   GET /api/dashboard/alerts/active — Active alerts summary
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -33,8 +31,6 @@ export interface KPIMetric {
 export interface TrendPoint {
   label: string; // e.g. "14:00"
   passengers: number;
-  requestRate: number;
-  errorRate: number;
   activeSessions: number;
 }
 
@@ -128,7 +124,7 @@ function makeKPIs(): KPIMetric[] {
 function makeTrendHistory(): TrendPoint[] {
   const now = Date.now();
   const points: TrendPoint[] = [];
-  let pass = 145000, rr = 340, er = 1.2, sess = 1100;
+  let pass = 145000, sess = 1100;
 
   for (let i = 23; i >= 0; i--) {
     const dt = new Date(now - i * 3600 * 1000);
@@ -139,11 +135,9 @@ function makeTrendHistory(): TrendPoint[] {
     const peakFactor = hour >= 7 && hour <= 9 ? 1.4 : hour >= 16 && hour <= 18 ? 1.3 : 1.0;
 
     pass = Math.round(drift(pass, 5000 * peakFactor, 80000, 200000));
-    rr   = Math.round(drift(rr, 40 * peakFactor, 120, 900));
-    er   = parseFloat(drift(er, 0.4, 0.1, 8.0).toFixed(1));
     sess = Math.round(drift(sess, 100 * peakFactor, 400, 3000));
 
-    points.push({ label, passengers: pass, requestRate: rr, errorRate: er, activeSessions: sess });
+    points.push({ label, passengers: pass, activeSessions: sess });
   }
   return points;
 }
@@ -157,33 +151,6 @@ const mockActivity: ActivityEntry[] = [
     action: 'logged in via mobile app',
     target: 'Mobile App — Android',
     severity: 'normal',
-  },
-  {
-    id: 'act-002',
-    timestamp: new Date(Date.now() - 8 * 60000).toISOString(),
-    actor: 'System',
-    actorType: 'system',
-    action: 'database backup completed',
-    target: 'PostgreSQL Primary — 4.2 GB',
-    severity: 'normal',
-  },
-  {
-    id: 'act-003',
-    timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-    actor: 'Security Bot',
-    actorType: 'security',
-    action: 'blocked brute-force attempt',
-    target: 'IP 196.44.11.22 — 47 requests',
-    severity: 'warning',
-  },
-  {
-    id: 'act-004',
-    timestamp: new Date(Date.now() - 22 * 60000).toISOString(),
-    actor: 'Permit Service',
-    actorType: 'system',
-    action: 'service went offline',
-    target: 'SVC-008 — All instances unreachable',
-    severity: 'critical',
   },
   {
     id: 'act-005',
@@ -220,24 +187,6 @@ const mockActivity: ActivityEntry[] = [
     action: 'registered new buses',
     target: '3 buses — NB4821, NB4822, NB4823',
     severity: 'normal',
-  },
-  {
-    id: 'act-009',
-    timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
-    actor: 'System',
-    actorType: 'security',
-    action: 'security scan completed',
-    target: 'No vulnerabilities found — 1,204 endpoints scanned',
-    severity: 'normal',
-  },
-  {
-    id: 'act-010',
-    timestamp: new Date(Date.now() - 150 * 60000).toISOString(),
-    actor: 'Location Tracking Service',
-    actorType: 'system',
-    action: 'high CPU usage detected',
-    target: 'SVC-004 — CPU at 78% (threshold: 75%)',
-    severity: 'warning',
   },
 ];
 
@@ -285,8 +234,6 @@ export function simulateDashboardTick(): void {
   const newPoint: TrendPoint = {
     label: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     passengers:    Math.round(drift(last.passengers, 4000, 80000, 200000)),
-    requestRate:   Math.round(drift(last.requestRate, 30, 120, 900)),
-    errorRate:     parseFloat(drift(last.errorRate, 0.3, 0.1, 8.0).toFixed(1)),
     activeSessions: Math.round(drift(last.activeSessions, 60, 400, 3000)),
   };
   _trendHistory = [..._trendHistory.slice(1), newPoint];
