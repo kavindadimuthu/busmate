@@ -49,10 +49,6 @@ Delete lines that stop being worth doing rather than marking them abandoned.
   `redgate/flyway:11` image tag and the runner Java 17 version are both unconfirmed.
 - **Baseline the production/Supabase databases at `V001`** so migrations apply on deploy. Touches
   live databases — deliberate, per service, with a backup. `always_human`.
-- **Back up and restore the media object store.** Named as a consequence in
-  [ADR-009](decisions/ADR-009-self-hosted-s3-compatible-media-storage.md): "back up Postgres" stopped
-  being a sufficient story the moment bytes started living outside it, and a restore that recovers
-  rows but not objects yields profiles pointing at nothing.
 - **Nothing deletes media when its owner is deleted.** Removing a user leaves their stored object
   behind — observed directly while cleaning up INC-003's test accounts. Harmless at seven objects,
   a slow leak and a personal-data retention problem at scale.
@@ -66,6 +62,43 @@ Delete lines that stop being worth doing rather than marking them abandoned.
   invalidated. Advisory only, never blocking.
 - **Policy check in CI** (HACO §14 step 4) — fail when a PR's declared autonomy exceeds what
   `policy.yaml` permits for the paths it touches. This is what makes the autonomy dial real.
+
+## Operations — what INC-035..INC-038 deliberately leave undone
+
+Direction in [ADR-021](decisions/ADR-021-operational-telemetry-lives-in-grafana.md). The first slice —
+the observability floor in production, alert delivery, backups, and removing the portal's invented
+telemetry — is shaped as INC-035..INC-038. These are what it stops short of, roughly in build order.
+
+- **Operations permissions, and a read-only support role.** No permission in the catalogue means
+  anything about operations, so there is nothing for an operations screen to gate on. A `system:*`
+  family (health, logs, audit, config, maintenance) comes first; `admin` picks it up through the
+  existing cross join. A seventh user type, `support`, that can look a passenger up and read logs but
+  write nothing, is what stops a complaint queue being answered by handing someone `admin` — which is
+  every permission there is. R3: reference data plus the permission engine.
+- **Real capability health in the portal** — the narrow server-side read ADR-021 describes, reducing
+  named capabilities (ticket validation, trip generation, sign-in, media upload) to healthy, degraded
+  or unknown. Blocked by the permission above, and by INC-035 giving it something true to read.
+- **A real audit trail.** Actor, action, target, before and after, time, address — for staff writes at
+  minimum. The portal's "security logs" are mock today and INC-038 deletes them; this is what should
+  exist instead. Touches personal data, and it is also what `createdBy`/`updatedBy` were reaching for
+  in the dormant JPA-auditing item above.
+- **Maintenance mode for real** — a switch that actually turns passenger writes away with an honest
+  message, and a banner the apps display. INC-038 removes the panel that pretends to.
+- **A public status page** at a `status.` host, from the Uptime Kuma already in the stack. The only
+  public statement BusMate makes about its own availability, and the thing that stops an outage
+  becoming individual questions.
+- **A deploy pipeline with a rollback.** Production is updated by hand over SSH, so a bad deploy is
+  recovered by remembering what the last good commit was. Alerting makes a bad deploy visible; this is
+  what makes it reversible.
+- **Business-level metrics, and alerts on them.** Trips generated, tickets validated, operator-sync
+  outbox depth, failed payments. Every alert today watches the platform; none watches the product, so
+  a fully green stack that has generated no trips for a day looks perfectly healthy.
+- **Configure Sentry, or remove it.** SDKs are wired into every frontend and have never sent an event
+  — no DSN is set. It is the only thing in the stack that sees a failure on a passenger's own phone,
+  which argues for configuring it; carrying dormant SDKs and stale setup instructions instead is the
+  worst of both.
+- **Review retention once real traffic exists.** Every window — Prometheus, Loki, Tempo — was chosen
+  with no traffic to size it against, on a disk shared with Postgres and MinIO.
 
 ## Structural gaps — the feedback loop
 
@@ -229,6 +262,15 @@ profile photos are built and in use; everything below reuses them rather than st
 
 ## Documentation
 
+- **Retire `docs/plans/Logging-and-Monitoring-Implementation-Plan.md`.** A completed plan carrying a
+  status field, per-phase DONE markers and verification results — all Evidence that git and CI own, and
+  the fifth such document INC-001 did not get to. It also names `management-portal`, deleted in the Vite
+  split. Two things in it are genuinely Intent and have nowhere else to live yet: why Loki rather than
+  ELK, why Alloy rather than Promtail, and why Tempo's metrics-generator was skipped. Rehome those, then
+  delete the file — do not delete it first.
+- **Trim the Evidence out of `config/observability/README.md`.** "Verified live", "verified on a real
+  request", and a narrated account of which log line proved trace correlation. Useful once, owned by
+  git now. What should remain is how to run it and how to wire a real webhook.
 - **Phase 3 of the HACO adoption** — merge the overlapping dev guides (4 run/quickstart guides, 3
   seed-credential files). Note the constraint found in INC-001: filenames referenced from migrations
   and config must keep their current paths.

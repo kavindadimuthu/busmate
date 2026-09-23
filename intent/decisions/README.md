@@ -51,3 +51,5 @@
 | [ADR-017](ADR-017-community-contributors-produce-reference-data-before-p3.md) | Community contributors produce reference data ahead of the passenger phase | strategy | Accepted |
 | [ADR-018](ADR-018-community-changes-are-reviewed-changesets.md) | Community changes are reviewed changesets, applied through precedence | architecture | Accepted |
 | [ADR-019](ADR-019-contributor-standing-lives-with-the-network.md) | Contributor standing lives with the network, not in account roles | architecture | Accepted |
+| [ADR-020](ADR-020-self-hosted-postgres-on-one-vps.md) | Production runs on one self-hosted VPS, with our own Postgres | architecture | Accepted |
+| [ADR-021](ADR-021-operational-telemetry-lives-in-grafana.md) | Operational telemetry lives in Grafana; the portal shows capability health only | architecture | Accepted |
