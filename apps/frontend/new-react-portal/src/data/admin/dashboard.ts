@@ -112,14 +112,6 @@ const mockQuickActions: QuickActionItem[] = [
     color: 'purple',
   },
   {
-    id: '4',
-    title: 'System Backup',
-    description: 'Create manual backup',
-    icon: 'Database',
-    href: '/admin/settings/backup',
-    color: 'orange',
-  },
-  {
     id: '5',
     title: 'View Logs',
     description: 'Check system logs',

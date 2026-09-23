@@ -1,67 +1,21 @@
 'use client';
 
-import { Suspense, useCallback } from 'react';
-import { useSearchParams, useRouter } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
-import { SettingsTabs } from '@/components/admin/settings/SettingsTabs';
-import type { SettingsTab } from '@/components/admin/settings/SettingsTabs';
-import {
-  GeneralSettingsPanel,
-  ApiSettingsPanel,
-  MaintenanceSettingsPanel,
-  BackupSettingsPanel,
-} from '@/components/admin/settings';
+import { OperationsNotWired } from '@/components/admin/OperationsNotWired';
 
-// ── Constants ────────────────────────────────────────────────────
-
-const VALID_TABS = new Set<string>(['general', 'api', 'maintenance', 'backup']);
-const DEFAULT_TAB: SettingsTab = 'general';
-
-// ── Inner component (reads searchParams) ─────────────────────────
-
-function SettingsPageContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
+export default function SettingsPage() {
   useSetPageMetadata({
     title: 'System Settings',
-    description: 'Configure general settings, API, maintenance, and backup options',
+    description: 'Platform configuration',
     activeItem: 'settings',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Settings' }],
   });
 
-  const rawTab = searchParams.get('tab');
-  const activeTab: SettingsTab =
-    rawTab && VALID_TABS.has(rawTab) ? (rawTab as SettingsTab) : DEFAULT_TAB;
-
-  const handleTabChange = useCallback(
-    (tab: SettingsTab) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('tab', tab);
-      router.push(`/admin/settings?${params.toString()}`);
-    },
-    [router, searchParams],
-  );
-
   return (
-    <div className="space-y-6">
-      <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
-
-      {activeTab === 'general' && <GeneralSettingsPanel />}
-      {activeTab === 'api' && <ApiSettingsPanel />}
-      {activeTab === 'maintenance' && <MaintenanceSettingsPanel />}
-      {activeTab === 'backup' && <BackupSettingsPanel />}
-    </div>
-  );
-}
-
-// ── Page ─────────────────────────────────────────────────────────
-
-export default function SettingsPage() {
-  return (
-    <Suspense>
-      <SettingsPageContent />
-    </Suspense>
+    <OperationsNotWired
+      what="Platform configuration, a maintenance-mode switch and backup status will live here once each one has something behind it."
+      where="Nothing on this page was ever connected, including the panels that appeared to schedule downtime and to trigger a backup."
+    />
   );
 }

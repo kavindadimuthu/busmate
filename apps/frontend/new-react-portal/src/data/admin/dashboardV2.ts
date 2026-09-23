@@ -15,8 +15,6 @@
 // ── Types ────────────────────────────────────────────────────────
 
 export type Trend = 'up' | 'down' | 'stable';
-export type AlertSeverity = 'critical' | 'warning' | 'info';
-export type ServiceStatus = 'healthy' | 'degraded' | 'down';
 
 export interface KPIMetric {
   id: string;
@@ -50,36 +48,17 @@ export interface ActivityEntry {
   severity: 'normal' | 'warning' | 'critical';
 }
 
-export interface ServiceSummary {
-  id: string;
-  name: string;
-  status: ServiceStatus;
-  uptime: string;
-  responseTime: number; // ms
-  errorRate: number;    // %
-}
-
 export interface UserDistribution {
   type: string;
   count: number;
   color: string;
 }
 
-export interface ActiveAlertEntry {
-  id: string;
-  title: string;
-  severity: AlertSeverity;
-  source: string;
-  createdAt: string;
-}
-
 export interface DashboardSnapshot {
   kpis: KPIMetric[];
   trendHistory: TrendPoint[];
   activity: ActivityEntry[];
-  services: ServiceSummary[];
   userDistribution: UserDistribution[];
-  activeAlerts: ActiveAlertEntry[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -130,30 +109,6 @@ function makeKPIs(): KPIMetric[] {
       trendPositiveIsGood: true,
       sparkData: sparkSeries(1100, 20, 120),
       color: 'teal',
-    },
-    {
-      id: 'kpi-uptime',
-      label: 'System Uptime',
-      value: '99.8%',
-      rawValue: 99.8,
-      unit: '%',
-      trend: 'stable',
-      trendValue: '72d 14h continuous',
-      trendPositiveIsGood: true,
-      sparkData: sparkSeries(99.5, 20, 0.4),
-      color: 'green',
-    },
-    {
-      id: 'kpi-errors',
-      label: 'Error Rate',
-      value: '1.2%',
-      rawValue: 1.2,
-      unit: '%',
-      trend: 'down',
-      trendValue: '-0.3pp vs 1h ago',
-      trendPositiveIsGood: false,
-      sparkData: sparkSeries(1.5, 20, 0.5),
-      color: 'red',
     },
     {
       id: 'kpi-transactions',
@@ -286,17 +241,6 @@ const mockActivity: ActivityEntry[] = [
   },
 ];
 
-const mockServices: ServiceSummary[] = [
-  { id: 'SVC-001', name: 'User Management',      status: 'healthy',  uptime: '45d 12h', responseTime: 45,  errorRate: 0.08 },
-  { id: 'SVC-002', name: 'Route Management',     status: 'healthy',  uptime: '30d 8h',  responseTime: 123, errorRate: 0.16 },
-  { id: 'SVC-003', name: 'Ticketing Service',    status: 'healthy',  uptime: '22d 6h',  responseTime: 89,  errorRate: 0.08 },
-  { id: 'SVC-004', name: 'Location Tracking',    status: 'degraded', uptime: '5d 2h',   responseTime: 890, errorRate: 2.70 },
-  { id: 'SVC-005', name: 'Notifications',        status: 'healthy',  uptime: '60d 4h',  responseTime: 34,  errorRate: 0.04 },
-  { id: 'SVC-006', name: 'Analytics',            status: 'healthy',  uptime: '25d 16h', responseTime: 156, errorRate: 0.12 },
-  { id: 'SVC-007', name: 'Schedule Service',     status: 'healthy',  uptime: '35d 9h',  responseTime: 98,  errorRate: 0.07 },
-  { id: 'SVC-008', name: 'Permit Service',       status: 'down',     uptime: '0d 0h',   responseTime: 0,   errorRate: 100  },
-];
-
 const mockUserDistribution: UserDistribution[] = [
   { type: 'Passengers',       count: 1890123, color: '#3b82f6' },
   { type: 'Conductors',       count: 18420,   color: '#10b981' },
@@ -305,45 +249,12 @@ const mockUserDistribution: UserDistribution[] = [
   { type: 'MOT Officers',     count: 4677,    color: '#ef4444' },
 ];
 
-const mockActiveAlerts: ActiveAlertEntry[] = [
-  {
-    id: 'ALR-002',
-    title: 'Permit Service Down',
-    severity: 'critical',
-    source: 'SVC-008',
-    createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
-  },
-  {
-    id: 'ALR-001',
-    title: 'High CPU — Location Tracking',
-    severity: 'warning',
-    source: 'SVC-004',
-    createdAt: new Date(Date.now() - 25 * 60000).toISOString(),
-  },
-  {
-    id: 'ALR-004',
-    title: 'API Error Rate Spike',
-    severity: 'warning',
-    source: 'API /api/tracking/buses',
-    createdAt: new Date(Date.now() - 35 * 60000).toISOString(),
-  },
-  {
-    id: 'ALR-003',
-    title: 'High Memory — Ticketing',
-    severity: 'info',
-    source: 'SVC-003',
-    createdAt: new Date(Date.now() - 60 * 60000).toISOString(),
-  },
-];
-
 // ── Snapshot state (for simulation) ─────────────────────────────
 
 let _kpis: KPIMetric[] = makeKPIs();
 let _trendHistory: TrendPoint[] = makeTrendHistory();
 const _activity: ActivityEntry[] = [...mockActivity];
-const _services: ServiceSummary[] = [...mockServices];
 const _userDistribution: UserDistribution[] = [...mockUserDistribution];
-const _activeAlerts: ActiveAlertEntry[] = [...mockActiveAlerts];
 
 // ── Simulation tick ──────────────────────────────────────────────
 
@@ -360,21 +271,11 @@ export function simulateDashboardTick(): void {
       const newSpark = [...kpi.sparkData.slice(1), newRaw];
       return { ...kpi, rawValue: newRaw, value: newRaw.toLocaleString(), sparkData: newSpark };
     }
-    if (kpi.id === 'kpi-errors') {
-      const newRaw = parseFloat(drift(kpi.rawValue, 0.3, 0.2, 6.0).toFixed(1));
-      const newSpark = [...kpi.sparkData.slice(1), newRaw];
-      const trend: Trend = newRaw < kpi.rawValue ? 'down' : newRaw > kpi.rawValue ? 'up' : 'stable';
-      return { ...kpi, rawValue: newRaw, value: `${newRaw}%`, trend, sparkData: newSpark };
-    }
     if (kpi.id === 'kpi-transactions') {
       const newRaw = kpi.rawValue + rand(5000, 25000);
       const val = newRaw >= 1000000 ? `Rs ${(newRaw / 1000000).toFixed(2)}M` : `Rs ${(newRaw / 1000).toFixed(0)}K`;
       const newSpark = [...kpi.sparkData.slice(1), newRaw];
       return { ...kpi, rawValue: newRaw, value: val, sparkData: newSpark };
-    }
-    if (kpi.id === 'kpi-uptime') {
-      const newSpark = [...kpi.sparkData.slice(1), kpi.rawValue + (Math.random() - 0.3) * 0.05];
-      return { ...kpi, sparkData: newSpark };
     }
     return kpi;
   });
@@ -408,19 +309,9 @@ export function getDashboardActivity(limit = 10): ActivityEntry[] {
   return _activity.slice(0, limit);
 }
 
-export function getDashboardServices(): ServiceSummary[] {
-  // TODO: Replace with → GET /api/dashboard/services
-  return _services;
-}
-
 export function getDashboardUserDistribution(): UserDistribution[] {
   // TODO: Replace with → GET /api/dashboard/users/stats
   return _userDistribution;
-}
-
-export function getDashboardActiveAlerts(): ActiveAlertEntry[] {
-  // TODO: Replace with → GET /api/dashboard/alerts/active
-  return _activeAlerts;
 }
 
 export function getDashboardSnapshot(): DashboardSnapshot {
@@ -429,8 +320,6 @@ export function getDashboardSnapshot(): DashboardSnapshot {
     kpis:             getDashboardKPIs(),
     trendHistory:     getDashboardTrends(),
     activity:         getDashboardActivity(),
-    services:         getDashboardServices(),
     userDistribution: getDashboardUserDistribution(),
-    activeAlerts:     getDashboardActiveAlerts(),
   };
 }

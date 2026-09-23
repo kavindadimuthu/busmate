@@ -6,9 +6,7 @@ import {
   KPIMetric,
   TrendPoint,
   ActivityEntry,
-  ServiceSummary,
   UserDistribution,
-  ActiveAlertEntry,
   getDashboardSnapshot,
   simulateDashboardTick,
 } from '@/data/admin/dashboardV2';
@@ -28,9 +26,7 @@ export interface DashboardState {
   kpis: KPIMetric[];
   trendHistory: TrendPoint[];
   activity: ActivityEntry[];
-  services: ServiceSummary[];
   userDistribution: UserDistribution[];
-  activeAlerts: ActiveAlertEntry[];
 
   loading: boolean;
   lastRefresh: Date;
@@ -91,9 +87,7 @@ export function useDashboard(options: UseDashboardOptions = {}): DashboardState 
     kpis:             snapshot?.kpis             ?? [],
     trendHistory:     snapshot?.trendHistory      ?? [],
     activity:         snapshot?.activity          ?? [],
-    services:         snapshot?.services          ?? [],
     userDistribution: snapshot?.userDistribution  ?? [],
-    activeAlerts:     snapshot?.activeAlerts       ?? [],
 
     loading,
     lastRefresh,
