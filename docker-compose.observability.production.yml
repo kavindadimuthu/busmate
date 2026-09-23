@@ -1,4 +1,4 @@
-# Observability floor for the production VPS (INC-035, ADR-021).
+# Observability floor for the production VPS (INC-035, INC-036, ADR-021).
 #
 # A standalone file, not an overlay of docker-compose.observability.yml — the same choice
 # docker-compose.production.yml already made over docker-compose.yml, so Compose's list-merge
@@ -27,6 +27,9 @@
 #     (`ssh -L 3000:localhost:3000 -p 22022 deploy@<host>` for Grafana, same pattern for the
 #     others) — never publish one through Caddy. Grafana also refuses to start without a real
 #     admin password: no admin/admin fallback here, unlike dev.
+#   - blackbox-exporter probes Postgres and MinIO for Prometheus (INC-036) — neither exposes its
+#     own metrics endpoint, so "is it up" has to be asked from the outside, the same way
+#     `pg_isready` and MinIO's own healthcheck already do inside docker-compose.production.yml.
 name: busmate-observability
 
 networks:
@@ -79,6 +82,23 @@ services:
         limits:
           memory: 128m
 
+  # Probes Postgres and MinIO, neither of which exposes its own Prometheus endpoint (INC-036).
+  # Joins busmate_default because it — not Prometheus — is what actually opens the TCP/HTTP
+  # connection to them; Prometheus only ever talks to this exporter's own /probe endpoint.
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: busmate-blackbox-exporter
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    networks: [default, busmate_default]
+    volumes:
+      - ./config/observability/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 32m
+
   prometheus:
     image: prom/prometheus:v3.1.0
     container_name: busmate-prometheus
@@ -93,6 +113,8 @@ services:
     volumes:
       - ./config/observability/prometheus/prometheus.production.yml:/etc/prometheus/prometheus.yml:ro
       - busmate_prometheus_data:/prometheus
+    depends_on:
+      - blackbox-exporter
     restart: unless-stopped
     deploy:
       resources:

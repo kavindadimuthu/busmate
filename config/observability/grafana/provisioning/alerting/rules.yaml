@@ -16,25 +16,32 @@ groups:
       - uid: busmate-service-down
         title: "Service down"
         condition: C
-        # `up` is always present (0 or 1) for a statically configured scrape target, so
-        # NoData here means the target itself vanished from prometheus.yml — worth flagging.
+        # `up`/`probe_success` are always present (0 or 1) for a statically configured target,
+        # so NoData here means the target itself vanished from prometheus.yml — worth flagging.
         noDataState: Alerting
         execErrState: Alerting
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "{{ $labels.job }} has been unreachable for 2+ minutes"
+          # instance, not job: Postgres and MinIO (INC-036) share this rule via probe_success,
+          # whose job label is just "blackbox-postgres"/"blackbox-minio" — instance is the one
+          # label both branches carry meaningfully ("core-service:9010", "postgres:5432", ...).
+          summary: "{{ $labels.instance }} has been unreachable for 2+ minutes"
           description: >
-            Prometheus could not scrape {{ $labels.job }} (instance {{ $labels.instance }}).
-            Check `docker ps` / `docker logs` for that service.
+            Prometheus could not reach {{ $labels.instance }}. If it's an app service, check
+            `docker ps` / `docker logs`; if it's Postgres or MinIO, that's the same signal their
+            own healthcheck already uses — check whether the container is actually down before
+            assuming the probe is wrong.
         data:
           - refId: A
             datasourceUid: busmate-prometheus
             relativeTimeRange: { from: 120, to: 0 }
             model:
               datasource: { type: prometheus, uid: busmate-prometheus }
-              expr: 'up{job=~"api-gateway|core-service|user-service|ticketing-service"}'
+              expr: >-
+                up{job=~"api-gateway|core-service|user-service|ticketing-service"}
+                or probe_success
               instant: true
               refId: A
           - refId: B
@@ -55,6 +62,64 @@ groups:
               expression: B
               conditions:
                 - evaluator: { type: lt, params: [1] }
+              refId: C
+
+      - uid: busmate-container-restart-loop
+        title: "Container restart loop"
+        condition: C
+        noDataState: OK
+        execErrState: Error
+        for: 0m
+        # No `for` delay: by the time the count crosses the threshold, the restarts have already
+        # happened — waiting longer just means noticing later. This exists specifically because a
+        # container crash-looping in cycles shorter than 2 minutes never satisfies
+        # busmate-service-down's `for: 2m`, and looks healthy in the gaps between crashes.
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.name }} has restarted repeatedly in the last 10 minutes ({{ $values.B }} distinct restart counts observed)"
+          description: "`docker logs {{ $labels.name }} --tail 100` — almost always a crash on startup, not a fluke."
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 600, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              # NOT changes() on container_start_time_seconds — verified against a real
+              # crash-looping container that this doesn't work. Docker's restart policy re-execs
+              # the process inside the SAME container/cgroup, so that metric's value never
+              # actually changes on restart; only cAdvisor's synthesized
+              # container_label_restartcount label does (it mirrors Docker's own live restart
+              # count). A label can't be thresholded directly, so this counts how many distinct
+              # values that label took over the window instead — each one is one more restart.
+              expr: >-
+                count by (name) (
+                  count by (name, container_label_restartcount) (
+                    last_over_time(container_start_time_seconds{name=~"busmate-.+"}[10m])
+                  )
+                )
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 600, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 600, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              # A healthy container reports exactly 1 (one restartcount value: the one it's had
+              # since it started). > 3 means at least 3 restarts happened inside the window.
+              conditions:
+                - evaluator: { type: gt, params: [3] }
               refId: C
 
   - orgId: 1
@@ -253,6 +318,56 @@ groups:
             model:
               datasource: { type: prometheus, uid: busmate-prometheus }
               expr: 'node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: lt, params: [0.15] }
+              refId: C
+
+      - uid: busmate-host-disk-low
+        title: "Host: disk running low"
+        condition: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        # Critical, not warning like the memory rule above it: a full disk doesn't just slow
+        # things down, it stops Postgres outright (INC-035/036 audit) — the disk is shared
+        # between Postgres, MinIO, Prometheus and Loki, so this is the failure most likely to
+        # actually take the host down.
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host free disk on / is {{ $values.B }} of total (<15%)"
+          description: >
+            Check the "Containers — memory" panel's disk equivalent isn't the answer here —
+            it's usually Loki or Prometheus retention. `docker system df` on the host, and
+            `du -sh /opt/busmate/*` for the app's own volumes.
+        data:
+          - refId: A
+            datasourceUid: busmate-prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource: { type: prometheus, uid: busmate-prometheus }
+              expr: >-
+                node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"}
+                /
+                node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"}
               instant: true
               refId: A
           - refId: B

@@ -1,7 +1,7 @@
 ---
 id: INC-036
 title: An alert reaches a person, and the disk is one of the things it warns about
-state: shaped
+state: done
 track: 1
 risk: R3
 owner: kavinda
@@ -27,25 +27,91 @@ invisible to the current rules, which watch only the four application services.
 
 ## Design
 
-- One real contact point, and routing split by severity so a warning cannot bury a critical.
-- New rules: host disk low, at a threshold that leaves room to act rather than room to notice;
-  Postgres unreachable; and a container in a restart loop, which today looks healthy to every existing
-  rule between restarts.
-- Postgres and MinIO join the service-down rule's job list. To a user, losing either is
-  indistinguishable from an outage, so the rules should not distinguish them either.
-- Each new rule gets its RUNBOOK section in the same change — the runbook's own stated rule — and the
-  README's alert count is corrected to match the file, which it currently does not.
-- Every rule is test-fired once, delivery included. A rule that has never fired is a hypothesis.
+- One real contact point (Discord, native `type: discord` rather than the generic webhook type —
+  a real Discord embed, not plain Slack-shaped JSON), and routing split by severity in
+  `policies.yaml` so a warning cannot bury a critical, even sharing the one channel: a critical
+  groups within 10s and repeats every 30 minutes while still firing; a warning groups over a
+  full minute and repeats only every 6 hours.
+- New rules: host disk low (critical — a full disk stops Postgres, not just degrades something),
+  a container restart loop (critical, no `for` delay), and Postgres/MinIO folded into the
+  existing service-down rule rather than a separate one, via `blackbox-exporter` probing them
+  (`tcp_connect` and `http_2xx` respectively) since neither exposes its own metrics endpoint.
+  `busmate-service-down`'s query becomes `up{job=~"..."} or probe_success`, and its annotation
+  switched from `{{ $labels.job }}` to `{{ $labels.instance }}` — the one label both branches
+  carry meaningfully.
+- Each new rule gets its RUNBOOK section in the same change, and the README's alert count is
+  corrected (6 stated, 7 actually provisioned even before this increment — finding #8 in the
+  INC-035 audit; 9 now).
+- Every rule is test-fired once against a real condition, not just checked for valid syntax.
 
 ## Acceptance criteria
 
-- [ ] A deliberately triggered critical alert arrives in the chosen channel, and so does its
+- [x] A deliberately triggered critical alert arrives in the chosen channel, and so does its
       resolution.
-- [ ] Stopping Postgres produces a critical alert that names Postgres.
-- [ ] Crossing the disk threshold produces the disk alert.
-- [ ] A container restarting repeatedly produces an alert while it is still restarting.
-- [ ] Every rule in `rules.yaml` has a RUNBOOK section, and the README's count matches the file.
-- [ ] Criticals and warnings arrive by different routes.
+- [x] Stopping Postgres produces a critical alert that names Postgres.
+- [x] Crossing the disk threshold produces the disk alert.
+- [x] A container restarting repeatedly produces an alert while it is still restarting.
+- [x] Every rule in `rules.yaml` has a RUNBOOK section, and the README's count matches the file.
+- [x] Criticals and warnings arrive by different routes.
+
+Verified against real containers in dev, not config syntax — and two of the three new mechanisms
+turned out not to work as first written, which only real testing would have caught:
+
+- **Stopping Postgres**: the combined `up{...} or probe_success` query correctly produced
+  `Service down | postgres:5432 | active` in Grafana's own alertmanager API — proving the union
+  query preserves per-series identity across two different metric names, not just one branch.
+- **Disk threshold**: fired for real, unplanned — this dev machine's disk is genuinely at ~5%
+  free, well under the 15% threshold, so `busmate-host-disk-low` was already firing before any
+  deliberate test. A better proof than a synthetic one.
+- **Restart loop, attempt 1 (failed):** `changes(container_start_time_seconds[10m])` never fired
+  against a real crash-looping container, at any restart count. Root cause, found by inspecting
+  raw samples: Docker's restart policy re-execs the process inside the *same* container/cgroup,
+  so that metric's value never actually changes on restart — the premise the rule was built on
+  was wrong. (A closer look also found cAdvisor tags this metric with a churning
+  `container_label_restartcount` label that fragments the series on every restart, a real
+  second bug, but fixing only that one — the label — left the rule still not firing, because the
+  underlying value genuinely never moves.)
+- **Restart loop, attempt 2 (works):** switched to counting how many *distinct*
+  `container_label_restartcount` values appear over the 10-minute window — that label does track
+  Docker's live restart count, just isn't directly thresholdable since it's a label, not a value.
+  Also lowered cAdvisor's scrape interval to 5s (from the global 15s): a crash-looping container
+  spends most of its time in Docker's own restart backoff, not actually running, so cAdvisor —
+  which only has live stats while a container *is* running — needs to sample often enough to
+  catch it. Confirmed firing against a container simulating realistic JVM startup-then-crash
+  timing (~15s per cycle, not a millisecond `exit 1`, which is not representative of any real
+  BusMate failure mode and was rightly caught by nothing).
+- **Routing split**: confirmed via Grafana's own provisioning API — two distinct routes, correct
+  `group_wait`/`repeat_interval` per severity, both resolving to the one real receiver.
+
+A third real Grafana provisioning inconsistency, on top of INC-035's Tempo-datasource finding:
+`deleteContactPoints` keys on `uid`, not `name` — `name: busmate-webhook` silently did nothing
+(no error, "finished to provision alerting" logged as normal) while the stale generic-webhook
+contact point from before this increment's Discord switch stayed put. Grafana's own provisioning
+resources are not consistent with each other on this; don't assume one from the other.
+
+Deployed to the production VPS 2026-09-23, on branch `inc-036-alert-delivery` directly (the PR
+was open but not required — nothing about deploying needs GitHub's merge state, only the commits
+existing somewhere `git fetch` can reach). The server's clone turned out to be `--single-branch`
+(only ever fetched `main`), so `git fetch origin 'refs/heads/*:refs/remotes/origin/*'` was needed
+before the branch existed to check out at all — worth knowing next time a branch deploy is
+wanted instead of a `main` deploy.
+
+**Verified for real, against production, not the dry run:** all nine scrape targets `up`,
+including the real Postgres and MinIO probes this time (dev only had two of four app services
+up when this was last checked). Then a genuine end-to-end delivery test — Grafana's contact-point
+test API (`POST .../receivers/test`), which actually calls Discord's webhook rather than just
+validating config — returned `"status":"ok"`, and the owner confirmed the message landed: a real
+Discord embed from the Grafana bot, correct severity label, the exact summary text sent, a
+working silence link. Firing and resolution share the same delivery code path
+(`disableResolveMessage: false`, unchanged from before this increment), so a live firing→resolved
+alert would use the identical mechanism just confirmed working — not independently re-observed
+here, since the deliberate test above is synthetic and one-shot rather than a real alert that
+transitions state.
+
+Bind-mounted config changes don't trigger Compose to recreate a container on their own — `up -d`
+alone left Prometheus and Grafana running their pre-INC-036 config even with the new files
+already on disk; `--force-recreate prometheus grafana` was needed. Worth remembering for every
+future config-only change to this stack, not just this one.
 
 ## Out of scope
 
@@ -65,10 +131,12 @@ invisible to the current rules, which watch only the four application services.
 
 ## Open questions
 
-- Which channel. Telegram and Discord each need only an outbound POST. Email needs an SMTP provider —
-  the VPS blocks outbound port 25 and has nothing on 587 yet, which is the same gap that leaves
-  password-reset mail undelivered, so solving it here may solve two things or may drag an unrelated
-  decision into this increment.
+- ~~Which channel.~~ Decided: Discord. `ALERT_WEBHOOK_URL` is already set in the owner's local
+  `config/secrets/.env`; it still needs copying to the production server's separate secrets file
+  (never committed, generated fresh on the VPS) before this can go live there.
+- Whether `blackbox-exporter`'s ~32Mi and the disk-comparable memory cost of the faster cAdvisor
+  scrape are worth a second look once real traffic exists — negligible against the VPS's measured
+  5.1 GiB headroom (INC-035) today, not worth gating this increment on.
 
 ## Decisions
 
