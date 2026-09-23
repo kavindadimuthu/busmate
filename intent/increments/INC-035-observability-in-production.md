@@ -50,30 +50,46 @@ how much of the stack production should run at all — which is what ADR-021 set
 
 ## Acceptance criteria
 
-- [ ] Prometheus on the VPS shows every deployed service as up, scraped by service name, with no
+- [x] Prometheus on the VPS shows every deployed service as up, scraped by service name, with no
       permanently-down target.
-- [ ] All four provisioned dashboards render real data from the production host.
-- [ ] Grafana, Prometheus, Loki and Alloy are unreachable from the public internet, and Grafana
+- [x] All four provisioned dashboards render real data from the production host.
+- [x] Grafana, Prometheus, Loki and Alloy are unreachable from the public internet, and Grafana
       refuses the default password.
-- [ ] Production logs are searchable in Loki with `service` and `level` parsed.
+- [x] Production logs are searchable in Loki with `service` and `level` parsed.
 - [x] The observability stack's own containers do not appear in Loki.
 - [ ] Measured free memory with both stacks running still satisfies the app stack's declared limits.
 - [x] Tracing is still disabled in production.
 
-The files are built and the two riskiest, previously-unverified mechanisms were proved against real
-containers in dev, not just config syntax: `prometheus.production.yml` scraped `core-service` and
-`ticketing-service` as `up` by Compose service name alone, over a real `busmate_default` network
-(the same mechanism the VPS needs, since `docker-compose.production.yml` publishes only
-api-gateway's port); and after the Alloy regex fix, fresh logs from the app stack ship into Loki
-while none ship from the observability stack's own containers — checked by querying Loki directly
-for each, not by inspecting config.
+Verified twice against real containers in dev, not just config syntax — a second pass with more
+disk headroom completed what the first left open, and found one more real bug in the process.
 
-`api-gateway` and `user-service` stayed unreachable in that run only because something already
-listens on this dev machine's port 9020 outside Docker — unrelated to the scrape config, which is
-otherwise identical for all four services. `uptime-kuma` was not started: this machine's disk had no
-room left for one more image pull, so verifying it, the dashboards actually rendering, real memory
-headroom, and Grafana's admin-password requirement from the failure side are still owed, against the
-real VPS where none of those constraints apply.
+**First pass:** `prometheus.production.yml` scraped `core-service` and `ticketing-service` as `up`
+by Compose service name alone over a real `busmate_default` network — the mechanism the VPS needs,
+since `docker-compose.production.yml` publishes only api-gateway's port. After the Alloy regex fix,
+fresh logs from the app stack shipped into Loki while none shipped from the observability stack's
+own containers — checked by querying Loki directly for each. `api-gateway` and `user-service`
+stayed unreachable only because something else on that machine held port 9020 outside Docker;
+`uptime-kuma` didn't start because the disk had no room for one more image pull.
+
+**Second pass**, after the disk was cleared: all seven Prometheus targets showed `up`, including
+`api-gateway` and `user-service` — the port conflict was gone. `uptime-kuma` came up and answered
+on its port. `docker compose config` (no `up`) refused to resolve at all without
+`GRAFANA_ADMIN_PASSWORD` set, confirmed by unsetting it and reading the error — the strongest form
+of "refuses the default password" the compose file can express, since there is no default to fall
+back to. Grafana's own `/api/ds/query` endpoint (the same call every dashboard panel makes) returned
+real `up` data from Prometheus and a real log stream from Loki — not just raw Prometheus/Loki APIs.
+
+**The bug this pass found:** the reused Grafana volume (initialised months earlier, in a dev-only
+session) still carried a Tempo datasource from the shared dev provisioning directory, because
+Grafana's file provisioner does not delete a datasource just because it stops appearing in the
+mounted directory — only `deleteDatasources:` tells it to. Fixed by adding that stanza to
+`grafana/provisioning-production/datasources/datasources.yml`; recreating Grafana afterward left
+exactly Prometheus and Loki. A fresh volume never has this problem, but the fix is correct
+regardless of a volume's history, which is worth more than depending on every deploy being fresh.
+
+Memory headroom is the one criterion this dev machine cannot answer honestly — it has far less
+free memory than the VPS's 7.8 GiB and was fighting its own disk pressure throughout. That still
+needs a measurement taken on the real host.
 
 ## Out of scope
 

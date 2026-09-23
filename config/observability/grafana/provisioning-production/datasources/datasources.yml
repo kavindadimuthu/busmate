@@ -9,6 +9,15 @@ apiVersion: 1
 # Mounted in place of the dev file's directory — see docker-compose.observability.production.yml.
 # Keep this in sync with the Prometheus/Loki entries above if those ever change.
 
+# Prunes a Tempo datasource left behind if this Grafana volume was ever provisioned from the
+# dev directory first (verified necessary: Grafana's file provisioner does not delete a
+# datasource just because it stops appearing in the mounted directory — it only reconciles
+# what IS present unless told to remove what isn't). A first-ever start on a fresh volume never
+# had one, so this is a no-op there.
+deleteDatasources:
+  - name: Tempo
+    orgId: 1
+
 datasources:
   - name: Prometheus
     uid: busmate-prometheus
