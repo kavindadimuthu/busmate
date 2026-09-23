@@ -1,0 +1,53 @@
+# Single-binary Loki 3.x, filesystem storage — production (INC-035, ADR-021).
+#
+# Same shape as loki-config.yml (dev), with a shorter retention window: the disk is shared
+# with Postgres and MinIO on the one production VPS, and filling it takes the database down,
+# not just the dashboards (finding #9 in the INC-035 audit — the same reasoning that gave
+# Prometheus a size cap alongside its time cap here).
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  retention_period: 168h            # 7 days (dev: 14)
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  allow_structured_metadata: true
+  volume_enabled: true
+  max_label_names_per_series: 20
+
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules

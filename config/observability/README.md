@@ -11,9 +11,11 @@ for the full roadmap and [`RUNBOOK.md`](RUNBOOK.md) for what to do when an alert
 
 | Path | Purpose |
 |---|---|
-| `loki/loki-config.yml` | Single-binary Loki, filesystem storage, 14-day retention |
-| `alloy/config.alloy` | Grafana Alloy — discovers `busmate*` containers via the Docker socket, parses JSON logs, ships to Loki |
-| `prometheus/prometheus.yml` | Prometheus scrape config — the 4 app services + cAdvisor + node-exporter |
+| `loki/loki-config.yml` | Single-binary Loki, filesystem storage, 14-day retention (dev) |
+| `loki/loki-config.production.yml` | Same, 7-day retention — the disk is shared with Postgres and MinIO in production |
+| `alloy/config.alloy` | Grafana Alloy — discovers the app stack's containers (Compose project `busmate` exactly) via the Docker socket, parses JSON logs, ships to Loki |
+| `prometheus/prometheus.yml` | Prometheus scrape config (dev) — the 4 app services by `host.docker.internal` + cAdvisor + node-exporter |
+| `prometheus/prometheus.production.yml` | Same, by Compose service name over `busmate_default`, no `telemetry-service` (not deployed — INC-032) |
 | `tempo/tempo-config.yml` | Single-binary Tempo, filesystem storage, 3-day retention, OTLP receiver |
 | `grafana/provisioning/datasources/` | Auto-provisioned Prometheus + Loki + Tempo datasources (with trace<->log linking) |
 | `grafana/provisioning/dashboards/` | Dashboard provider config |
@@ -83,25 +85,37 @@ To trace one request end-to-end in Grafana Explore:
 | Spring `prod` / `e2e`, gateway `NODE_ENV=production` | JSON (one line/event) | `service`, `level` |
 | Spring `dev`, gateway dev | Pretty-printed text | none (lines still appear, unlabeled) |
 
-## Metrics scraping: dev vs. production
+## Running it in production (INC-035, ADR-021)
 
-Prometheus reaches the app services via `host.docker.internal` because the **dev** stack
-(`docker-compose.yml`) publishes every service port to the host. In **production**
-(`docker-compose.production.yml`) only api-gateway is published, so instead attach
-Prometheus to the app's Docker network and scrape by service name:
+Production is a **separate, standalone compose file** —
+[`docker-compose.observability.production.yml`](../../docker-compose.observability.production.yml)
+at the repo root, not a tweak of the dev one described above. The differences, and why:
 
-```yaml
-# docker-compose.observability.yml (prod tweak)
-networks:
-  busmate_default:            # the app stack's default network (project name: busmate)
-    external: true
-services:
-  prometheus:
-    networks: [default, busmate_default]
+- **No Tempo.** Tracing stays a development tool (ADR-021); the production Spring services
+  already run with `OTEL_SDK_DISABLED=true`.
+- **Prometheus reaches the app services by Compose service name**, not `host.docker.internal`:
+  production (`docker-compose.production.yml`) publishes only api-gateway's port to the host,
+  so Prometheus instead joins the app stack's `busmate_default` network and scrapes
+  `api-gateway:8080`, `core-service:9010`, `user-service:9020`, `ticketing-service:9030` —
+  see [`prometheus/prometheus.production.yml`](prometheus/prometheus.production.yml).
+  `telemetry-service` is not scraped; production doesn't deploy it (INC-032).
+- **Retention is capped by size as well as time.** The disk is shared with Postgres and MinIO,
+  and filling it takes the database down, not just the dashboards. Prometheus gets
+  `--storage.tsdb.retention.size=3GB` alongside its time limit; Loki's window drops from dev's
+  14 days to 7 (`loki/loki-config.production.yml`).
+- **Every UI binds to `127.0.0.1` only.** Reach one over an SSH tunnel, e.g.
+  `ssh -L 3000:localhost:3000 -p 22022 deploy@<host>` for Grafana — never publish one through
+  Caddy.
+- **Grafana requires real secrets.** `GRAFANA_ADMIN_PASSWORD` and `ALERT_WEBHOOK_URL` must be
+  set in `config/secrets/.env` — there is no `admin`/`admin` fallback and no silently-undelivered
+  alert default in production, unlike the dev file.
+
+Bring it up alongside the app stack, from the repo root:
+
+```bash
+docker compose --env-file config/secrets/.env \
+  -f docker-compose.observability.production.yml up -d
 ```
-
-and change the targets in `prometheus/prometheus.yml` from `host.docker.internal:<port>` to
-`api-gateway:8080`, `core-service:9010`, `user-service:9020`, `ticketing-service:9030`.
 
 ## Alerting (Phase 4)
 
@@ -258,11 +272,12 @@ become worth the added complexity.
 `tempo/tempo-config.yml`) — traces are large and short-lived compared to logs/metrics;
 raise it if you need longer trace history and have the disk for it.
 
-**Dev vs. production networking:** exactly the same `host.docker.internal` pattern
-already used for Prometheus/Uptime Kuma (see "Metrics scraping" above) — each app service
-in `docker-compose.yml` has `OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318`
-+ `extra_hosts: host.docker.internal:host-gateway`. In production, switch this to Tempo's
-real service name on the shared network, same as the Prometheus scrape-target change.
+**Dev only (ADR-021):** each app service in `docker-compose.yml` has
+`OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318` + `extra_hosts:
+host.docker.internal:host-gateway`, and that's as far as tracing goes. Tempo is not part of
+`docker-compose.observability.production.yml`, and `docker-compose.production.yml` sets
+`OTEL_SDK_DISABLED=true` on every Spring service — tracing stays a development tool until
+sustained traffic makes a latency question unanswerable without it.
 
 **If Tempo isn't running:** every service's OTLP export just fails silently in the
 background (visible only in that service's own debug-level agent/SDK logs) — no impact
@@ -272,7 +287,9 @@ on the app itself, so it's safe to run the app stack without the observability s
 
 - Alloy runs as `root` to read `/var/run/docker.sock`; in a hardened deployment, drop root
   and add the host's `docker` group gid instead.
-- Do not expose Grafana/Prometheus/Loki publicly — keep them on the private host/network and
-  change the default Grafana password.
+- The dev stack (this file's default) is unauthenticated by default and binds to every
+  interface — fine on a laptop, never on a reachable host. Production
+  (`docker-compose.observability.production.yml`) enforces the opposite: every UI on
+  `127.0.0.1` only, and Grafana refuses to start without a real `GRAFANA_ADMIN_PASSWORD`.
 - To move off self-hosting later, point `alloy/config.alloy`'s `loki.write` and Prometheus'
   `remote_write` at Grafana Cloud (same APIs) — no application changes needed.

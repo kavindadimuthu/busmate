@@ -1,0 +1,30 @@
+apiVersion: 1
+
+# Production-only variant of ../../provisioning/datasources/datasources.yml — Prometheus and
+# Loki only. Tempo isn't part of docker-compose.observability.production.yml (ADR-021: tracing
+# stays a development tool), so it's dropped here rather than provisioned pointing at a host
+# that doesn't exist, which would show a datasource in Grafana that always errors when used, and
+# a Loki "TraceID" derived-field link on every log line that leads nowhere.
+#
+# Mounted in place of the dev file's directory — see docker-compose.observability.production.yml.
+# Keep this in sync with the Prometheus/Loki entries above if those ever change.
+
+datasources:
+  - name: Prometheus
+    uid: busmate-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s
+
+  - name: Loki
+    uid: busmate-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    jsonData:
+      maxLines: 1000

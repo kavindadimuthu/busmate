@@ -1,0 +1,49 @@
+# Prometheus scrape config — production (INC-035, ADR-021).
+#
+# Unlike prometheus.yml (dev), production Compose publishes only api-gateway's port to the
+# host, so this file reaches every app service by its Compose service name over the shared
+# `busmate_default` network instead of host.docker.internal. See
+# docker-compose.observability.production.yml, which attaches this Prometheus to that network.
+#
+# telemetry-service is deliberately absent: INC-032 leaves it out of production (no hardware
+# trackers, no live ETAs yet), and a permanently-down target trains the reader to ignore the
+# targets page (finding #11 in the INC-035 audit).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: busmate
+    env: production
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: api-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['api-gateway:8080']
+
+  - job_name: core-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['core-service:9010']
+
+  - job_name: user-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['user-service:9020']
+
+  - job_name: ticketing-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['ticketing-service:9030']
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']

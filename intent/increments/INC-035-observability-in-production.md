@@ -1,7 +1,7 @@
 ---
 id: INC-035
 title: The production VPS reports its own health, running an observability floor and nothing more
-state: shaped
+state: active
 track: 2
 risk: R3
 owner: kavinda
@@ -25,9 +25,15 @@ how much of the stack production should run at all — which is what ADR-021 set
 
 ## Design
 
-- A production overlay for `docker-compose.observability.yml` joins the app stack's network and
-  scrapes by service name, instead of reaching for a host gateway that production does not publish
-  ports to.
+- `docker-compose.observability.production.yml` — a standalone file, not an overlay of the dev one.
+  Compose concatenates array fields (`ports` among them) across `-f` files rather than replacing
+  them, so an overlay could not actually remove the dev file's public port bindings; standalone is
+  also the choice `docker-compose.production.yml` already made over `docker-compose.yml`, for the
+  same reason. It joins the app stack's `busmate_default` network and scrapes by service name,
+  instead of reaching for a host gateway that production does not publish ports to.
+- Grafana's dev-shared datasource provisioning wires a Tempo datasource; since Tempo isn't part of
+  this stack, that's mounted from a small `grafana/provisioning-production/datasources/` override
+  instead of the dev directory, so Grafana never shows a datasource that always errors.
 - Scrape targets become environment-specific. `telemetry-service` is deliberately not deployed
   (INC-032), so in production it is dropped rather than left as a permanently-down target that
   trains the reader to ignore the targets page.
@@ -50,9 +56,24 @@ how much of the stack production should run at all — which is what ADR-021 set
 - [ ] Grafana, Prometheus, Loki and Alloy are unreachable from the public internet, and Grafana
       refuses the default password.
 - [ ] Production logs are searchable in Loki with `service` and `level` parsed.
-- [ ] The observability stack's own containers do not appear in Loki.
+- [x] The observability stack's own containers do not appear in Loki.
 - [ ] Measured free memory with both stacks running still satisfies the app stack's declared limits.
-- [ ] Tracing is still disabled in production.
+- [x] Tracing is still disabled in production.
+
+The files are built and the two riskiest, previously-unverified mechanisms were proved against real
+containers in dev, not just config syntax: `prometheus.production.yml` scraped `core-service` and
+`ticketing-service` as `up` by Compose service name alone, over a real `busmate_default` network
+(the same mechanism the VPS needs, since `docker-compose.production.yml` publishes only
+api-gateway's port); and after the Alloy regex fix, fresh logs from the app stack ship into Loki
+while none ship from the observability stack's own containers — checked by querying Loki directly
+for each, not by inspecting config.
+
+`api-gateway` and `user-service` stayed unreachable in that run only because something already
+listens on this dev machine's port 9020 outside Docker — unrelated to the scrape config, which is
+otherwise identical for all four services. `uptime-kuma` was not started: this machine's disk had no
+room left for one more image pull, so verifying it, the dashboards actually rendering, real memory
+headroom, and Grafana's admin-password requirement from the failure side are still owed, against the
+real VPS where none of those constraints apply.
 
 ## Out of scope
 
