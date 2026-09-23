@@ -173,7 +173,9 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
   user-service and ticketing-service still connect as the `postgres` superuser, which bypasses RLS even
   on forced tables, so their operator isolation is application-level (INC-016, INC-021) and fails
   open. Each needs an owner role, a runtime role and a tenant-context hook; core-service first.
-- Passenger live ETAs do not exist; monitoring/analytics surfaces run on mock data.
+- Passenger live ETAs do not exist; analytics and revenue surfaces run on mock data. The admin
+  dashboard's remaining user and transaction figures are part of that. Its *operations* surfaces no
+  longer invent anything — they say they are unwired (INC-038, ADR-021).
 - `user-service` reports a missing or malformed request parameter as HTTP 500, not 400 — its
   `GlobalExceptionHandler` catches them as unhandled. Found by calling `GET /api/users` without
   `user_type` and `/api/users/me` (parsed as a UUID) against production.

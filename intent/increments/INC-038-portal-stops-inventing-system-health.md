@@ -45,7 +45,7 @@ becomes a specific liability the moment backups are real.
 - [x] The three routes load without error and state what they do not yet show.
 - [x] No screen anywhere offers to restart a service or to edit an alert rule.
 - [ ] Admin users and self-profile behave exactly as before.
-- [ ] `context.md`'s claim that monitoring surfaces run on mock data is narrowed to what is still true
+- [x] `context.md`'s claim that monitoring surfaces run on mock data is narrowed to what is still true
       of the product surfaces.
 
 The three routes were checked in a real browser against the dev server with the BFF session
