@@ -173,11 +173,20 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
   user-service and ticketing-service still connect as the `postgres` superuser, which bypasses RLS even
   on forced tables, so their operator isolation is application-level (INC-016, INC-021) and fails
   open. Each needs an owner role, a runtime role and a tenant-context hook; core-service first.
-- Passenger live ETAs do not exist; monitoring/analytics surfaces run on mock data.
+- Passenger live ETAs do not exist; analytics and revenue surfaces run on mock data. The admin
+  dashboard's remaining user and transaction figures are part of that. Its *operations* surfaces no
+  longer invent anything — they say they are unwired (INC-038, ADR-021).
 - `user-service` reports a missing or malformed request parameter as HTTP 500, not 400 — its
   `GlobalExceptionHandler` catches them as unhandled. Found by calling `GET /api/users` without
   `user_type` and `/api/users/me` (parsed as a UUID) against production.
-- No automated backups, and no deploy pipeline: production is updated by hand over SSH.
+- **Production reports nothing about itself.** The observability stack
+  ([ADR-021](decisions/ADR-021-operational-telemetry-lives-in-grafana.md)) exists but is absent from
+  `docker-compose.production.yml`, which also sets `OTEL_SDK_DISABLED=true` on every Spring service. The
+  seven provisioned alert rules run only where the stack does, and their one contact point posts to an
+  address nothing listens on, so no alert has ever reached a person. INC-035 and INC-036.
+- No logical backups, and no deploy pipeline: production is updated by hand over SSH. The provider's
+  daily VM snapshot is running, which restores a machine rather than a table, lives in the account that
+  would be lost, and has never been tested. INC-037.
 
 ## Out of bounds
 

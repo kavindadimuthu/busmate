@@ -97,58 +97,6 @@ export interface NotificationStats {
   averageReadRate: number;
 }
 
-// Monitoring types are now in ./system-monitoring.ts
-
-// Log types
-export interface LogEntry {
-  id: string;
-  timestamp: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
-  source: string;
-  message: string;
-  userId?: string;
-  userName?: string;
-  ipAddress?: string;
-  device?: string;
-  location?: string;
-}
-
-export interface UserActivityLog {
-  id: string;
-  timestamp: string;
-  userId: string;
-  userName: string;
-  userType: string;
-  action: string;
-  details: string;
-  ipAddress: string;
-  device: string;
-  location: string;
-  status: 'success' | 'error' | 'warning';
-}
-
-export interface SecurityLog {
-  id: string;
-  timestamp: string;
-  eventType: 'login' | 'logout' | 'failed_login' | 'password_change' | 'permission_change' | 'suspicious_activity';
-  userId?: string;
-  userName?: string;
-  ipAddress: string;
-  userAgent: string;
-  details: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-}
-
-export interface ApplicationLog {
-  id: string;
-  timestamp: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
-  service: string;
-  message: string;
-  stackTrace?: string;
-  metadata?: Record<string, unknown>;
-}
-
 // Analytics types
 export interface AnalyticsMetric {
   name: string;
@@ -176,5 +124,3 @@ export interface ChartData {
   }[];
 }
 
-// NOTE: Settings types (SystemSettings, BackupEntry, AdminProfile) have been moved to system-settings.ts
-// The old settings.ts data file used these types but is now replaced by system-settings.ts

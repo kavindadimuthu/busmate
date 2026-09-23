@@ -7,9 +7,6 @@ import {
   FileText,
   Activity,
   Settings,
-  DatabaseZap,
-  Bus,
-  ShieldCheck,
   ArrowUpRight,
 } from 'lucide-react';
 
@@ -41,13 +38,6 @@ const ACTIONS = [
     description: 'Browse audit & error logs',
     href: '/admin/logs',
     color: 'purple',
-  },
-  {
-    icon: ShieldCheck,
-    label: 'Security Logs',
-    description: 'Auth & security events',
-    href: '/admin/logs/listing?tab=security',
-    color: 'orange',
   },
   {
     icon: Settings,

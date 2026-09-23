@@ -19,11 +19,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 
 // ── Tab config ────────────────────────────────────────────────────
 
-type MetricKey = 'requestRate' | 'errorRate' | 'activeSessions' | 'passengers';
+type MetricKey = 'activeSessions' | 'passengers';
 
 const METRICS: { key: MetricKey; label: string; color: string; fill: string; yLabel: string }[] = [
-  { key: 'requestRate',    label: 'Request Rate',   color: '#3b82f6', fill: 'rgba(59,130,246,0.08)', yLabel: 'req/s' },
-  { key: 'errorRate',      label: 'Error Rate (%)', color: '#ef4444', fill: 'rgba(239,68,68,0.08)',  yLabel: '%' },
   { key: 'activeSessions', label: 'Active Sessions',color: '#14b8a6', fill: 'rgba(20,184,166,0.08)', yLabel: 'sessions' },
   { key: 'passengers',     label: 'Passengers',     color: '#a855f7', fill: 'rgba(168,85,247,0.08)', yLabel: 'users' },
 ];
@@ -36,7 +34,7 @@ interface DashboardTrendsChartProps {
 }
 
 export function DashboardTrendsChart({ trendHistory, loading = false }: DashboardTrendsChartProps) {
-  const [active, setActive] = useState<MetricKey>('requestRate');
+  const [active, setActive] = useState<MetricKey>('passengers');
   const [compareMode, setCompareMode] = useState(false);
 
   if (loading || trendHistory.length === 0) {

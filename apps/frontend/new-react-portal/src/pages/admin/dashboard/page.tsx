@@ -6,18 +6,15 @@ import { useDashboard } from '@/hooks/useDashboard';
 import {
   DashboardKPICards,
   DashboardTrendsChart,
-  DashboardSystemHealth,
-  DashboardAlertsWidget,
   DashboardUserStats,
   DashboardActivityFeed,
   DashboardQuickActions,
-  DashboardServiceStatus,
 } from '@/components/admin/dashboard';
 
 export default function AdminDashboardPage() {
   useSetPageMetadata({
     title: 'System Dashboard',
-    description: 'Real-time overview of system performance, user activity, and key metrics',
+    description: 'Overview of user activity and key metrics',
     activeItem: 'dashboard',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Dashboard' }],
@@ -27,9 +24,7 @@ export default function AdminDashboardPage() {
     kpis,
     trendHistory,
     activity,
-    services,
     userDistribution,
-    activeAlerts,
     loading,
     lastRefresh,
     isLive,
@@ -69,24 +64,17 @@ export default function AdminDashboardPage() {
       {/* Row 1: KPI Cards */}
       <DashboardKPICards kpis={kpis} loading={loading} />
 
-      {/* Row 2: Trends + Health */}
+      {/* Row 2: Trends + Users */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[400px]">
         <div className="xl:col-span-2">
           <DashboardTrendsChart trendHistory={trendHistory} loading={loading} />
         </div>
         <div className="xl:col-span-1">
-          <DashboardSystemHealth services={services} loading={loading} />
+          <DashboardUserStats userDistribution={userDistribution} loading={loading} />
         </div>
       </div>
 
-      {/* Row 3: Service + Users + Alerts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <DashboardServiceStatus services={services} loading={loading} />
-        <DashboardUserStats userDistribution={userDistribution} loading={loading} />
-        <DashboardAlertsWidget alerts={activeAlerts} loading={loading} />
-      </div>
-
-      {/* Row 4: Activity + Actions */}
+      {/* Row 3: Activity + Actions */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <DashboardActivityFeed activity={activity} loading={loading} />
