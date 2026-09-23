@@ -1,7 +1,7 @@
 ---
 id: INC-036
 title: An alert reaches a person, and the disk is one of the things it warns about
-state: active
+state: done
 track: 1
 risk: R3
 owner: kavinda
@@ -46,9 +46,8 @@ invisible to the current rules, which watch only the four application services.
 
 ## Acceptance criteria
 
-- [ ] A deliberately triggered critical alert arrives in the chosen channel, and so does its
-      resolution. *(Needs the real production webhook — deliberately not tested against the
-      owner's actual Discord channel from a local dry run. Verify on deploy.)*
+- [x] A deliberately triggered critical alert arrives in the chosen channel, and so does its
+      resolution.
 - [x] Stopping Postgres produces a critical alert that names Postgres.
 - [x] Crossing the disk threshold produces the disk alert.
 - [x] A container restarting repeatedly produces an alert while it is still restarting.
@@ -89,6 +88,30 @@ A third real Grafana provisioning inconsistency, on top of INC-035's Tempo-datas
 (no error, "finished to provision alerting" logged as normal) while the stale generic-webhook
 contact point from before this increment's Discord switch stayed put. Grafana's own provisioning
 resources are not consistent with each other on this; don't assume one from the other.
+
+Deployed to the production VPS 2026-09-23, on branch `inc-036-alert-delivery` directly (the PR
+was open but not required — nothing about deploying needs GitHub's merge state, only the commits
+existing somewhere `git fetch` can reach). The server's clone turned out to be `--single-branch`
+(only ever fetched `main`), so `git fetch origin 'refs/heads/*:refs/remotes/origin/*'` was needed
+before the branch existed to check out at all — worth knowing next time a branch deploy is
+wanted instead of a `main` deploy.
+
+**Verified for real, against production, not the dry run:** all nine scrape targets `up`,
+including the real Postgres and MinIO probes this time (dev only had two of four app services
+up when this was last checked). Then a genuine end-to-end delivery test — Grafana's contact-point
+test API (`POST .../receivers/test`), which actually calls Discord's webhook rather than just
+validating config — returned `"status":"ok"`, and the owner confirmed the message landed: a real
+Discord embed from the Grafana bot, correct severity label, the exact summary text sent, a
+working silence link. Firing and resolution share the same delivery code path
+(`disableResolveMessage: false`, unchanged from before this increment), so a live firing→resolved
+alert would use the identical mechanism just confirmed working — not independently re-observed
+here, since the deliberate test above is synthetic and one-shot rather than a real alert that
+transitions state.
+
+Bind-mounted config changes don't trigger Compose to recreate a container on their own — `up -d`
+alone left Prometheus and Grafana running their pre-INC-036 config even with the new files
+already on disk; `--force-recreate prometheus grafana` was needed. Worth remembering for every
+future config-only change to this stack, not just this one.
 
 ## Out of scope
 

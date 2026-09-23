@@ -179,13 +179,15 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
 - `user-service` reports a missing or malformed request parameter as HTTP 500, not 400 — its
   `GlobalExceptionHandler` catches them as unhandled. Found by calling `GET /api/users` without
   `user_type` and `/api/users/me` (parsed as a UUID) against production.
-- **Production's observability floor is up** (`docker-compose.observability.production.yml`,
-  [ADR-021](decisions/ADR-021-operational-telemetry-lives-in-grafana.md), INC-035) — Prometheus,
-  Loki, Grafana, cAdvisor, node-exporter and Alloy, bound to `127.0.0.1` only, reachable over an
-  SSH tunnel. Tracing stays off: Tempo isn't part of it, and `OTEL_SDK_DISABLED=true` stands in
-  `docker-compose.production.yml`. The seven provisioned alert rules still route to a contact
-  point pointed at an address nothing listens on, so no alert has yet reached a person, and
-  `uptime-kuma` has no monitors configured — both INC-036.
+- **Production's observability floor is up and alerting** (`docker-compose.observability.production.yml`,
+  [ADR-021](decisions/ADR-021-operational-telemetry-lives-in-grafana.md), INC-035, INC-036) —
+  Prometheus, Loki, Grafana, cAdvisor, node-exporter, Alloy and `blackbox-exporter` (probing
+  Postgres/MinIO, neither of which exposes its own metrics), bound to `127.0.0.1` only, reachable
+  over an SSH tunnel. Nine alert rules route by severity to a Discord contact point,
+  live-verified end to end. Tracing stays off: Tempo isn't part of it, and
+  `OTEL_SDK_DISABLED=true` stands in `docker-compose.production.yml`. `uptime-kuma` still has no
+  monitors configured — a manual one-time setup (README.md), never part of either increment's
+  acceptance criteria.
 - No logical backups, and no deploy pipeline: production is updated by hand over SSH. The provider's
   daily VM snapshot is running, which restores a machine rather than a table, lives in the account that
   would be lost, and has never been tested. INC-037.
