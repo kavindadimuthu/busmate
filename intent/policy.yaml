@@ -48,6 +48,10 @@ risk_classes:
       - "config/secrets/**"
       - ".github/workflows/**"
 
+      # Runs against production data directly, outside any compose file's review surface —
+      # a bug here reads or restores real databases, not a container definition.
+      - "scripts/backup/**"
+
   # ---------------------------------------------------------------------------
   # R2 — Core. Failure is visible and costly but recoverable.
   # ---------------------------------------------------------------------------

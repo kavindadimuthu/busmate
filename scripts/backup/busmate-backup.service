@@ -1,0 +1,16 @@
+[Unit]
+Description=BusMate nightly off-host backup (INC-037)
+Wants=network-online.target
+After=network-online.target docker.service
+# If the app stack isn't up, pg_dump has nothing to dump from — fail loudly rather than
+# silently produce an empty/partial backup.
+ConditionPathExists=/opt/busmate/docker-compose.production.yml
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/opt/busmate
+ExecStart=/opt/busmate/scripts/backup/run-backup.sh
+# A partial backup (Postgres up, MinIO briefly down) should not look like a healthy run —
+# no retry here; INC-036's busmate-backup-stale alert is the backstop for "it didn't run".
+TimeoutStartSec=30m

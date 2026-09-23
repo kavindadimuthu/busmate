@@ -87,7 +87,7 @@ To trace one request end-to-end in Grafana Explore:
 | Spring `prod` / `e2e`, gateway `NODE_ENV=production` | JSON (one line/event) | `service`, `level` |
 | Spring `dev`, gateway dev | Pretty-printed text | none (lines still appear, unlabeled) |
 
-## Running it in production (INC-035, INC-036, ADR-021)
+## Running it in production (INC-035, INC-036, INC-037, ADR-021)
 
 Production is a **separate, standalone compose file** —
 [`docker-compose.observability.production.yml`](../../docker-compose.observability.production.yml)
@@ -113,6 +113,9 @@ at the repo root, not a tweak of the dev one described above. The differences, a
 - **Grafana requires real secrets.** `GRAFANA_ADMIN_PASSWORD` and `ALERT_WEBHOOK_URL` must be
   set in `config/secrets/.env` — there is no `admin`/`admin` fallback and no silently-undelivered
   alert default in production, unlike the dev file.
+- **`node-exporter` reads a backup-status textfile.** `./backup-metrics/backup.prom` (INC-037,
+  `scripts/backup/README.md`), written by the host's own `busmate-backup.service` — the backup
+  job itself is a systemd timer, not part of this compose file at all.
 
 Bring it up alongside the app stack, from the repo root:
 
@@ -121,13 +124,14 @@ docker compose --env-file config/secrets/.env \
   -f docker-compose.observability.production.yml up -d
 ```
 
-## Alerting (Phase 4, extended in INC-036)
+## Alerting (Phase 4, extended in INC-036 and INC-037)
 
-Nine alert rules are provisioned as code in `grafana/provisioning/alerting/rules.yaml` (view
+Ten alert rules are provisioned as code in `grafana/provisioning/alerting/rules.yaml` (view
 them live under Alerting → Alert rules): service down (now covering Postgres and MinIO too, via
 `blackbox-exporter` — neither exposes its own metrics endpoint), a container restart loop,
 gateway/Spring 5xx rate, gateway p95 latency, JVM heap near capacity, host memory low, host disk
-low, and an error-log spike. See `RUNBOOK.md` for what each one means and how to respond.
+low, a stale backup (INC-037 — see `scripts/backup/README.md`), and an error-log spike. See
+`RUNBOOK.md` for what each one means and how to respond.
 
 They all route to one **Discord contact point** (`busmate-discord`,
 `grafana/provisioning/alerting/contactpoints.yaml`) pointed at the `ALERT_WEBHOOK_URL` env var,
