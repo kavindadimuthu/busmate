@@ -46,13 +46,13 @@ run a migration, create an admin or load pilot data until the stack stands up.
 
 ## Acceptance criteria
 
-- [ ] `https://busmate.site` serves passenger-web with a valid certificate, and HTTP redirects to HTTPS.
+- [x] `https://busmate.site` serves passenger-web with a valid certificate, and HTTP redirects to HTTPS.
 - [ ] `https://api.busmate.site` reaches api-gateway, and a passenger can search routes over it.
-- [ ] `https://portal.busmate.site` serves the staff portal and a staff account can sign in.
-- [ ] Postgres is unreachable from the internet; only 80, 443 and SSH are open on the host.
-- [ ] Every service comes up from an empty volume with Flyway applying its own migrations.
-- [ ] With the whole stack running and idle, the host has at least 1.5 GiB of memory free.
-- [ ] No container publishes a port to the host except Caddy.
+- [x] `https://portal.busmate.site` serves the staff portal and a staff account can sign in.
+- [x] Postgres is unreachable from the internet; only 80, 443 and SSH are open on the host.
+- [x] Every service comes up from an empty volume with Flyway applying its own migrations.
+- [x] With the whole stack running and idle, the host has at least 1.5 GiB of memory free.
+- [x] No container publishes a port to the host except Caddy.
 
 ## Out of scope
 

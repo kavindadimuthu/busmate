@@ -40,7 +40,7 @@ that the repository is public.
 - [x] Two clients behind the same proxy are rate-limited independently when the proxy hop is trusted.
 - [x] With no proxy trusted, a client cannot escape the limit by rotating `X-Forwarded-For`.
 - [x] `application.yml` for ticketing-service contains no Supabase key or project URL.
-- [ ] A clean checkout, with no `target/` directory, builds the core-, user- and ticketing-service
+- [x] A clean checkout, with no `target/` directory, builds the core-, user- and ticketing-service
       images.
 
 ## Out of scope

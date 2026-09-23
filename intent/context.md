@@ -15,8 +15,10 @@ BusMate is the authoritative record of every scheduled passenger bus trip in Sri
 crew, depots, regulators and passengers all hold a stake in the *same* trip record — that shared
 record, not any one app, is the product. See [vision.md](vision.md) for the boundary test.
 
-Today it is a working development platform with **zero paying customers and no live tenant**. Nothing
-described below has been validated in production.
+It is deployed to production at busmate.site on one self-hosted VPS — Docker Compose, our own Postgres,
+Caddy for TLS ([ADR-020](decisions/ADR-020-self-hosted-postgres-on-one-vps.md)) — with **zero paying
+customers and no live tenant**. Only staff and pilot contributors use it, and nothing described below has
+been validated by real passenger or operator use.
 
 ## Architecture
 
@@ -26,6 +28,9 @@ ownership, not by product** ([ADR-002](decisions/ADR-002-decompose-by-data-not-b
 services do not map one-to-one onto the frontends that call them.
 
 Every frontend calls **only** `api-gateway` (`:8080`). Nothing talks to a Spring service directly.
+
+Production deploys a subset: `telemetry-service`, EMQX and the bus simulator are **not** in
+`docker-compose.production.yml` (no hardware trackers, no live ETAs yet — INC-032).
 
 | Service | Owns (domain) | Port |
 |---|---|---|
@@ -169,6 +174,10 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
   on forced tables, so their operator isolation is application-level (INC-016, INC-021) and fails
   open. Each needs an owner role, a runtime role and a tenant-context hook; core-service first.
 - Passenger live ETAs do not exist; monitoring/analytics surfaces run on mock data.
+- `user-service` reports a missing or malformed request parameter as HTTP 500, not 400 — its
+  `GlobalExceptionHandler` catches them as unhandled. Found by calling `GET /api/users` without
+  `user_type` and `/api/users/me` (parsed as a UUID) against production.
+- No automated backups, and no deploy pipeline: production is updated by hand over SSH.
 
 ## Out of bounds
 
