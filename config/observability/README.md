@@ -16,10 +16,12 @@ for the full roadmap and [`RUNBOOK.md`](RUNBOOK.md) for what to do when an alert
 | `alloy/config.alloy` | Grafana Alloy — discovers the app stack's containers (Compose project `busmate` exactly) via the Docker socket, parses JSON logs, ships to Loki |
 | `prometheus/prometheus.yml` | Prometheus scrape config (dev) — the 4 app services by `host.docker.internal` + cAdvisor + node-exporter |
 | `prometheus/prometheus.production.yml` | Same, by Compose service name over `busmate_default`, no `telemetry-service` (not deployed — INC-032) |
-| `tempo/tempo-config.yml` | Single-binary Tempo, filesystem storage, 3-day retention, OTLP receiver |
-| `grafana/provisioning/datasources/` | Auto-provisioned Prometheus + Loki + Tempo datasources (with trace<->log linking) |
+| `blackbox/blackbox.yml` | Probe modules for Postgres/MinIO (production only — INC-036); neither has its own `/metrics` |
+| `tempo/tempo-config.yml` | Single-binary Tempo, filesystem storage, 3-day retention, OTLP receiver (dev only — ADR-021) |
+| `grafana/provisioning/datasources/` | Auto-provisioned Prometheus + Loki + Tempo datasources (dev; with trace<->log linking) |
+| `grafana/provisioning-production/datasources/` | Same, minus Tempo (production — INC-035) |
 | `grafana/provisioning/dashboards/` | Dashboard provider config |
-| `grafana/provisioning/alerting/` | Alert rules, contact point, and notification policy — all as code |
+| `grafana/provisioning/alerting/` | Alert rules, contact point, and severity-split notification policy — all as code |
 | `grafana/dashboards/busmate-logs.json` | "BusMate — Logs" (volume-by-level, error rate, searchable log stream) |
 | `grafana/dashboards/busmate-services.json` | "BusMate — Spring Services (RED + JVM)" (rate/errors/p95, heap, GC, threads, Hikari) |
 | `grafana/dashboards/busmate-infra.json` | "BusMate — Gateway & Infrastructure" (gateway RED, Node event loop, container + host CPU/mem) |
@@ -85,7 +87,7 @@ To trace one request end-to-end in Grafana Explore:
 | Spring `prod` / `e2e`, gateway `NODE_ENV=production` | JSON (one line/event) | `service`, `level` |
 | Spring `dev`, gateway dev | Pretty-printed text | none (lines still appear, unlabeled) |
 
-## Running it in production (INC-035, ADR-021)
+## Running it in production (INC-035, INC-036, ADR-021)
 
 Production is a **separate, standalone compose file** —
 [`docker-compose.observability.production.yml`](../../docker-compose.observability.production.yml)
@@ -98,7 +100,9 @@ at the repo root, not a tweak of the dev one described above. The differences, a
   so Prometheus instead joins the app stack's `busmate_default` network and scrapes
   `api-gateway:8080`, `core-service:9010`, `user-service:9020`, `ticketing-service:9030` —
   see [`prometheus/prometheus.production.yml`](prometheus/prometheus.production.yml).
-  `telemetry-service` is not scraped; production doesn't deploy it (INC-032).
+  `telemetry-service` is not scraped; production doesn't deploy it (INC-032). Postgres and
+  MinIO — neither has a `/metrics` endpoint — are probed via `blackbox-exporter` instead (see
+  "Probing Postgres and MinIO" below).
 - **Retention is capped by size as well as time.** The disk is shared with Postgres and MinIO,
   and filling it takes the database down, not just the dashboards. Prometheus gets
   `--storage.tsdb.retention.size=3GB` alongside its time limit; Loki's window drops from dev's
@@ -117,71 +121,99 @@ docker compose --env-file config/secrets/.env \
   -f docker-compose.observability.production.yml up -d
 ```
 
-## Alerting (Phase 4)
+## Alerting (Phase 4, extended in INC-036)
 
-Six alert rules are provisioned as code in `grafana/provisioning/alerting/rules.yaml`
-(view them live at http://localhost:3000/alerting/list): service down, gateway/Spring 5xx
-rate, gateway p95 latency, JVM heap near capacity, host memory low, and an error-log spike.
-See `RUNBOOK.md` for what each one means and how to respond.
+Nine alert rules are provisioned as code in `grafana/provisioning/alerting/rules.yaml` (view
+them live under Alerting → Alert rules): service down (now covering Postgres and MinIO too, via
+`blackbox-exporter` — neither exposes its own metrics endpoint), a container restart loop,
+gateway/Spring 5xx rate, gateway p95 latency, JVM heap near capacity, host memory low, host disk
+low, and an error-log spike. See `RUNBOOK.md` for what each one means and how to respond.
 
-They all route to a single **webhook contact point** (`busmate-webhook`,
-`grafana/provisioning/alerting/contactpoints.yaml`) pointed at the `ALERT_WEBHOOK_URL`
-env var. By default that's `http://localhost:9999/configure-me` — nothing listens there,
-so alerts still fire/resolve correctly and are visible in Grafana's Alerting UI, but
-outbound delivery will fail (harmlessly logged in `docker logs busmate-grafana`) until you
+They all route to one **Discord contact point** (`busmate-discord`,
+`grafana/provisioning/alerting/contactpoints.yaml`) pointed at the `ALERT_WEBHOOK_URL` env var,
+with severity-split routing in `policies.yaml` — a critical groups and repeats far more
+aggressively than a warning, even sharing the one channel (see `RUNBOOK.md`'s "Routing"
+section). By default `ALERT_WEBHOOK_URL` is `http://localhost:9999/configure-me` — nothing
+listens there, so alerts still fire/resolve correctly and are visible in Grafana's Alerting UI,
+but outbound delivery will fail (harmlessly logged in `docker logs busmate-grafana`) until you
 set a real URL.
 
-**To wire up real delivery (Slack, Discord, or any webhook receiver):**
+**To wire up real delivery:**
 
-1. Get a webhook URL:
-   - **Slack**: create an [incoming webhook](https://api.slack.com/messaging/webhooks) for a channel.
-   - **Discord**: channel settings → Integrations → Webhooks → copy URL, then append `/slack`
-     to the URL (Discord will accept Grafana's Slack-formatted payload that way).
+1. **Discord**: channel settings → Integrations → Webhooks → **Copy Webhook URL**. Use it
+   exactly as copied — do **not** append `/slack`; that suffix is only for the generic
+   `type: webhook` contact point, not this one.
 2. Add it to `config/secrets/.env`:
    ```
-   ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
+   ALERT_WEBHOOK_URL=https://discord.com/api/webhooks/...
    ```
 3. Recreate Grafana so it picks up the new env var:
    ```bash
+   # dev
    docker compose -f docker-compose.observability.yml up -d --force-recreate grafana
+   # production
+   docker compose --env-file config/secrets/.env \
+     -f docker-compose.observability.production.yml up -d --force-recreate grafana
    ```
-4. Confirm it under Grafana → Alerting → Contact points → `busmate-webhook` → **Test**.
+4. Confirm it under Grafana → Alerting → Contact points → `busmate-discord` → **Test**.
 
-For email instead, you'd need to configure Grafana's `[smtp]` section (not provisioned
-here — no SMTP server was available at setup time) and change the contact point's
-`type: webhook` to `type: email` in `contactpoints.yaml`.
+For Slack instead, change the contact point's `type: discord` to `type: slack` and its
+`settings.url` to a Slack incoming-webhook URL (`contactpoints.yaml`). For email, configure
+Grafana's `[smtp]` section (not provisioned here — no SMTP server was available at setup time)
+and use `type: email`.
 
 **`noDataState` matters:** most rules are set to `noDataState: OK` — e.g. "zero ERROR log
 lines" or "no gateway traffic in the window" is the *healthy* case, not an unknown/alerting
-one. Only `busmate-service-down` uses `noDataState: Alerting`, since Prometheus's `up`
-metric is always present for a configured target — if it's ever missing, something is
-wrong with the scrape config itself.
+one. `busmate-service-down` and `busmate-container-restart-loop` use `noDataState: Alerting`,
+since their underlying metrics (`up`, `probe_success`, `container_start_time_seconds`) are
+always present for a configured target — if one is ever missing, something is wrong with the
+scrape config itself, which is itself worth flagging.
 
 **Editing rules:** change `rules.yaml` and recreate Grafana (same command as above) —
 don't edit rules by hand in the UI, since a future recreate will reconcile back to disk
 and silently drop manual changes.
 
+## Probing Postgres and MinIO (INC-036)
+
+Neither exposes a `/metrics` endpoint, so **blackbox-exporter** (production only —
+`docker-compose.observability.production.yml`) asks from the outside instead: a bare TCP
+connect for Postgres, an HTTP check against MinIO's own liveness endpoint. Prometheus scrapes
+*it*, not them directly — see the `blackbox-postgres`/`blackbox-minio` jobs in
+`prometheus/prometheus.production.yml`, and `blackbox/blackbox.yml` for the two probe module
+definitions. `busmate-service-down` reads the resulting `probe_success` metric the same way it
+reads `up` for the app services.
+
 ## Uptime monitoring (Phase 4)
 
-**Uptime Kuma** (http://localhost:3001) is included for simple black-box "is it up"
-checks + a status page, complementary to Prometheus's `up` (which only tells you if
-Prometheus itself can reach a target — Uptime Kuma checks from a slightly different angle
-and gives you a public-friendly status page). The open-source edition has no
-declarative/file-based config, so set it up once by hand:
+**Uptime Kuma** (http://localhost:3001, tunnelled in production — see "Running it in
+production" above) is included for one thing (ADR-021): a public status page, checking the
+platform the way a real visitor would rather than reaching for internal service names — it
+deliberately does **not** join `busmate_default` in production, unlike Prometheus and
+blackbox-exporter, which need to. Per-service internal health is Prometheus's job
+(`busmate-service-down`), not Uptime Kuma's; adding it here would duplicate that rule with a
+tool that has no alerting rules of its own to route through severity-split policy. The
+open-source edition has no declarative/file-based config, so set it up once by hand:
 
-1. Open http://localhost:3001 and create the admin account (first-run only).
-2. Add a monitor for each service (**Add New Monitor** → type **HTTP(s)**):
+1. Open http://localhost:3001 (dev) or the tunnelled equivalent (production) and create the
+   admin account (first-run only).
+2. Add a monitor for each public endpoint (**Add New Monitor** → type **HTTP(s)**):
 
-   | Friendly name | URL | Heartbeat interval |
-   |---|---|---|
-   | api-gateway | `http://host.docker.internal:8080/health` | 30s |
-   | core-service | `http://host.docker.internal:9010/actuator/health` | 30s |
-   | user-service | `http://host.docker.internal:9020/actuator/health` | 30s |
-   | ticketing-service | `http://host.docker.internal:9030/actuator/health` | 30s |
+   | Environment | Friendly name | URL | Heartbeat interval |
+   |---|---|---|---|
+   | dev | api-gateway | `http://host.docker.internal:8080/health` | 30s |
+   | dev | core-service | `http://host.docker.internal:9010/actuator/health` | 30s |
+   | dev | user-service | `http://host.docker.internal:9020/actuator/health` | 30s |
+   | dev | ticketing-service | `http://host.docker.internal:9030/actuator/health` | 30s |
+   | production | passenger-web | `https://busmate.site/` | 60s |
+   | production | api-gateway | `https://api.busmate.site/health` | 60s |
+   | production | staff portal | `https://portal.busmate.site/` | 60s |
 
-3. (Optional) **Settings → Notifications** to add the same Slack/Discord webhook as above,
-   then attach it to each monitor.
-4. (Optional) **Status Pages → New Status Page** to publish a public page showing all four.
+   Dev checks each service directly (host.docker.internal, since dev publishes every port);
+   production checks the three public hostnames through Caddy, exactly what a visitor sees.
+3. (Optional) **Settings → Notifications** to add the same Discord webhook as above, then
+   attach it to each monitor.
+4. (Optional) **Status Pages → New Status Page** to publish a public page showing the three
+   production monitors — this is the "public status page" ADR-021 keeps Uptime Kuma for.
 
 ## Frontend & mobile error tracking (Phase 5)
 

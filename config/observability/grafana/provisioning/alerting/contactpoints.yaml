@@ -1,22 +1,39 @@
 apiVersion: 1
 
-# Generic webhook contact point (Phase 4). Points at $ALERT_WEBHOOK_URL, set on the
-# Grafana container's environment in docker-compose.observability.yml. Defaults to a
-# localhost address nothing listens on, so alerts still fire/resolve visibly in
-# Grafana's Alerting UI even before you configure real delivery.
+# Discord contact point (Phase 4, switched to Grafana's native type in INC-036). Points at
+# $ALERT_WEBHOOK_URL, set on the Grafana container's environment. Grafana's `discord` type posts
+# a real Discord embed (title, colour by alert state, a link back into Grafana) rather than the
+# generic webhook type's plain JSON — that generic type is still what dev defaults to when the
+# var is unset (localhost:9999/configure-me), so alerts still fire/resolve visibly in Grafana's
+# own Alerting UI even before delivery is configured.
 #
-# To wire up real delivery: set ALERT_WEBHOOK_URL in config/secrets/.env to a Slack
-# incoming-webhook URL, a Discord channel webhook (append "/slack" to a Discord webhook
-# URL to get Slack-compatible payloads Grafana already knows how to send), or any HTTP
-# endpoint that accepts a POST. Then `docker compose -f docker-compose.observability.yml
-# up -d --force-recreate grafana`. See README.md for step-by-step instructions.
+# The URL must be the RAW Discord incoming-webhook URL (Server Settings → Integrations →
+# Webhooks → Copy Webhook URL) — no "/slack" suffix. That suffix is only for the generic webhook
+# type posting Slack-shaped payloads; the native type speaks Discord's own format directly.
+#
+# Recreate Grafana after changing this file: `docker compose --env-file config/secrets/.env
+# -f docker-compose.observability.production.yml up -d --force-recreate grafana`.
+# Prunes the old generic-webhook contact point this same volume may already have provisioned
+# under its previous name — Grafana's file provisioner doesn't delete what stops appearing in
+# the mounted file just because the name changed (the same class of gap found with the Tempo
+# datasource in INC-035). A first-ever start never had one, so this is a no-op there.
+#
+# Keyed by `uid`, not `name` — verified the hard way. `deleteDatasources` in
+# provisioning-production/datasources/datasources.yml takes `name`; this stanza silently did
+# nothing with `name: busmate-webhook` (no error, "finished to provision alerting" logged as
+# normal) until switched to the receiver's actual uid. Grafana's own provisioning resources are
+# not consistent with each other here — don't assume one from the other.
+deleteContactPoints:
+  - uid: busmate-webhook-receiver
+    orgId: 1
+
 contactPoints:
   - orgId: 1
-    name: busmate-webhook
+    name: busmate-discord
     receivers:
-      - uid: busmate-webhook-receiver
-        type: webhook
+      - uid: busmate-discord-receiver
+        type: discord
         settings:
           url: $ALERT_WEBHOOK_URL
-          httpMethod: POST
+          use_discord_username: true
         disableResolveMessage: false

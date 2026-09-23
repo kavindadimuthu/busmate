@@ -1,4 +1,4 @@
-# Prometheus scrape config — production (INC-035, ADR-021).
+# Prometheus scrape config — production (INC-035, INC-036, ADR-021).
 #
 # Unlike prometheus.yml (dev), production Compose publishes only api-gateway's port to the
 # host, so this file reaches every app service by its Compose service name over the shared
@@ -41,9 +41,47 @@ scrape_configs:
       - targets: ['ticketing-service:9030']
 
   - job_name: cadvisor
+    # Faster than the global 15s (INC-036): a container crash-looping under Docker's own
+    # restart backoff spends most of its time in "Restarting", not "Running", and cAdvisor
+    # only has live stats while a container is actually running. A 15s interval measurably
+    # missed real restart cycles in testing; 5s catches enough of them to be useful without
+    # meaningfully raising Prometheus's own load at this traffic level.
+    scrape_interval: 5s
     static_configs:
       - targets: ['cadvisor:8080']
 
   - job_name: node-exporter
     static_configs:
       - targets: ['node-exporter:9100']
+
+  # Postgres and MinIO expose no Prometheus endpoint of their own (INC-036), so they're probed
+  # through blackbox-exporter instead. __address__ becomes the real target via relabeling, so
+  # `instance` on the resulting `probe_success` series is "postgres:5432" / "minio:9000", not
+  # blackbox-exporter's own address — the alert rule reads that label to name which one is down.
+  - job_name: blackbox-postgres
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets: ['postgres:5432']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox-minio
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ['http://minio:9000/minio/health/live']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

@@ -1,0 +1,17 @@
+# Blackbox Exporter modules (INC-036). Minimal on purpose — only the two probe types this
+# stack actually uses, rather than depending on the image's larger built-in default config.
+#
+# tcp_connect: for Postgres, which has no Prometheus endpoint of its own — a bare TCP connect
+# is the same signal `pg_isready` already gives the container healthcheck.
+# http_2xx: for MinIO's own liveness endpoint.
+modules:
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_status_codes: [200]
+      method: GET
