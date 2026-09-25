@@ -7,14 +7,16 @@ import {
   Bus, 
   AlertTriangle,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Users
 } from 'lucide-react';
 import { ScheduleResponse, RouteResponse, TripResponse } from '@busmate/api-client-core';
 import { 
   ScheduleStopsTab,
   ScheduleCalendarTab,
   ScheduleTripsTab,
-  ScheduleExceptionsTab
+  ScheduleExceptionsTab,
+  ScheduleWorkingsTab
 } from './tabs';
 
 interface ScheduleTabsSectionProps {
@@ -27,7 +29,7 @@ interface ScheduleTabsSectionProps {
   onAssignBuses?: () => void;
 }
 
-type TabType = 'stops' | 'calendar' | 'trips' | 'exceptions';
+type TabType = 'stops' | 'calendar' | 'trips' | 'exceptions' | 'workings';
 
 export function ScheduleTabsSection({
   schedule,
@@ -64,6 +66,12 @@ export function ScheduleTabsSection({
       name: 'Exceptions',
       icon: AlertTriangle,
       count: schedule.scheduleExceptions?.length || 0
+    },
+    {
+      id: 'workings' as TabType,
+      name: 'Usual Workings',
+      icon: Users,
+      count: 0
     }
   ];
 
@@ -101,6 +109,8 @@ export function ScheduleTabsSection({
             onRefresh={onRefresh}
           />
         );
+      case 'workings':
+        return <ScheduleWorkingsTab schedule={schedule} />;
       default:
         return null;
     }
