@@ -39,6 +39,7 @@ import com.busmate.routeschedule.passengerinfo.dto.projection.ScheduleStopDetail
 import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.UsualWorking;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.BusInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.JourneySummary;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.OperatorInfo;
@@ -94,6 +95,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     private final TripRepository tripRepository;
     private final LiveBusStateClient liveBusStateClient;
     private final LiveEtaProperties liveEtaProperties;
+    private final UsualWorkingLookup usualWorkingLookup;
 
     @Override
     public FindMyBusResponse findMyBus(FindMyBusRequest request) {
@@ -148,6 +150,11 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .filter(Objects::nonNull)
                 .sorted(this::compareResults)
                 .collect(Collectors.toList());
+
+        // Who usually works each departure (ADR-024): one query for the whole result set, never one per bus.
+        Map<UUID, List<UsualWorking>> usual = usualWorkingLookup.forSchedules(
+                results.stream().map(BusResult::getScheduleId).filter(Objects::nonNull).distinct().toList(), searchDate);
+        results.forEach(r -> r.setUsualWorkings(usual.getOrDefault(r.getScheduleId(), List.of())));
 
         return buildSuccessResponse(fromStop, toStop, searchDate, searchTime, timePreference, results);
     }
@@ -672,6 +679,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .routeScheduleStops(routeScheduleStops)
                 .trip(tripDetails)
                 .journeySummary(journeySummary)
+                .usualWorkings(usualWorkingLookup.forSchedules(List.of(schedule.getId()), searchDate)
+                        .getOrDefault(schedule.getId(), List.of()))
                 .build();
     }
 

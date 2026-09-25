@@ -20,4 +20,11 @@ public interface ScheduleWorkingRepository extends JpaRepository<ScheduleWorking
     @Query("SELECT DISTINCT w FROM ScheduleWorking w LEFT JOIN FETCH w.vehicles LEFT JOIN FETCH w.operator " +
            "WHERE w.id IN (SELECT v.working.id FROM ScheduleWorkingVehicle v WHERE v.id = :vehicleId)")
     java.util.Optional<ScheduleWorking> findByVehicleId(@Param("vehicleId") UUID vehicleId);
+
+    /** Workings in effect on a date for a set of schedules, with what a passenger is shown fetched together. */
+    @Query("SELECT DISTINCT w FROM ScheduleWorking w LEFT JOIN FETCH w.vehicles v LEFT JOIN FETCH v.bus LEFT JOIN FETCH w.operator " +
+           "WHERE w.schedule.id IN :scheduleIds AND w.effectiveStartDate <= :date " +
+           "AND (w.effectiveEndDate IS NULL OR w.effectiveEndDate >= :date) ORDER BY w.effectiveStartDate ASC")
+    List<ScheduleWorking> findActiveOn(@Param("scheduleIds") java.util.Collection<UUID> scheduleIds,
+                                       @Param("date") java.time.LocalDate date);
 }
