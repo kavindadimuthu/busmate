@@ -15,6 +15,15 @@ Delete lines that stop being worth doing rather than marking them abandoned.
 
 ## Correctness bugs — code-confirmed, fix first
 
+- ✅ **Approving a stop correction erases the stop's Sinhala and Tamil names.** Found live during the
+  INC-041/042 end-to-end run: a correction to Kadawatha left `name_sinhala` and `name_tamil` empty; an
+  untouched stop kept its own. Two causes together. `ProposeStopPage.selectTargetStop` seeds the form from
+  the passenger search result, which carries no Sinhala or Tamil names, so the proposal sends them as
+  null; then `StopMapper.updateEntityFromRequest` (MapStruct, null-overwriting by default) writes those
+  nulls over the real values on approval — by staff or a steward alike. Fix the form (load the full stop)
+  and decide whether apply should skip fields a proposal leaves out; a contributor deliberately clearing a
+  translation is the case that decision has to weigh. The same path may also drop the location's Sinhala
+  and Tamil address, city and state — check when fixing.
 - ✅ **Trip generation ignores `ScheduleCalendar` and `ScheduleException`** — creates trips on
   non-service days and skips `ADDED` days, so passenger search and trip data disagree.
   `TripServiceImpl.generateTripsForSchedule`. Highest impact, low effort — the natural first fix.
@@ -151,6 +160,13 @@ passenger labels, applying, proposing and reviewing stops) is shaped as INC-027.
 are in build order. **Shape nothing past the pilot gate until the pilot has tested `A-15` and `A-16`** —
 its results will reshape them.
 
+- **The contributor agreement is still a draft.** `community.agreement.draft` is true, so staff cannot
+  accept anyone in production until a human approves the real text (the dev profile allows it locally).
+  It is a legal document a person writes; nothing in code unblocks it, and it gates the pilot.
+- **No automated end-to-end test of the contribution loop.** INC-041/042 were verified with ad hoc browser
+  scripts (apply → accept → appoint → propose → steward approves → suspend), which is how the bug above
+  was found and which nothing keeps. Worth turning into a `tests/e2e` spec against the dev seed
+  (`docs/dev-seed-credentials.md` now has an account for each role) once frontend CI exists.
 - **Pilot gate (not code).** 5–10 invited enthusiasts on one corridor, running on INC-027..031 for 90 days:
   count who is still active at day 30 and day 90, and ride-check a sample of approved stops. Decides
   whether anything below gets built.
