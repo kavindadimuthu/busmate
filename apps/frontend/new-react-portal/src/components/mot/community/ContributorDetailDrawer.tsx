@@ -19,6 +19,7 @@ import {
   Label,
 } from "@busmate/ui";
 import type { ContributorRow } from "@/hooks/mot/community/useContributors";
+import { StewardSection } from "./StewardSection";
 
 function formatDate(dateString?: string): string {
   if (!dateString) return "—";
@@ -45,6 +46,9 @@ interface ContributorDetailDrawerProps {
   onDecline: (userId: string, reason: string) => Promise<boolean>;
   onSuspend: (userId: string, reason: string) => Promise<boolean>;
   onReinstate: (userId: string) => Promise<boolean>;
+  onAppointSteward: (userId: string, routeGroupIds: string[]) => Promise<boolean>;
+  onRevokeSteward: (userId: string) => Promise<boolean>;
+  routeGroups: { id: string; name: string }[];
   actionLoading: boolean;
 }
 
@@ -59,6 +63,9 @@ export function ContributorDetailDrawer({
   onDecline,
   onSuspend,
   onReinstate,
+  onAppointSteward,
+  onRevokeSteward,
+  routeGroups,
   actionLoading,
 }: ContributorDetailDrawerProps) {
   const [reasonDialog, setReasonDialog] = useState<ReasonAction | null>(null);
@@ -90,6 +97,7 @@ export function ContributorDetailDrawer({
           <div className="px-4 pb-4 space-y-5">
             <div className="flex items-center gap-2">
               <Badge variant={contributor.status === "ACTIVE" ? "default" : "secondary"}>{contributor.status}</Badge>
+              {contributor.level === "STEWARD" && <Badge variant="outline">Steward</Badge>}
               {contributor.affiliation && contributor.affiliation !== "NONE" && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-warning/10 text-warning border border-warning/20">
                   <AlertTriangle className="h-3 w-3" /> {AFFILIATION_LABEL[contributor.affiliation]}
@@ -151,6 +159,16 @@ export function ContributorDetailDrawer({
                   </p>
                 )}
               </div>
+            )}
+
+            {contributor.status === "ACTIVE" && contributor.agreementCurrent !== false && (
+              <StewardSection
+                contributor={contributor}
+                routeGroups={routeGroups}
+                onAppoint={onAppointSteward}
+                onRevoke={onRevokeSteward}
+                actionLoading={actionLoading}
+              />
             )}
 
             <div className="flex flex-wrap gap-2 pt-2">
