@@ -48,4 +48,9 @@ public interface RouteStopRepository extends JpaRepository<RouteStop, UUID> {
            "WHERE r.routeGroup.id = :routeGroupId " +
            "ORDER BY r.name ASC, rs.stopOrder ASC")
     List<RouteStop> findByRouteGroupIdOrderByRouteAndStopOrder(@Param("routeGroupId") UUID routeGroupId);
+
+    /** The route groups whose routes serve this stop; empty when no route does (ADR-022 corridor scope). */
+    @Query("SELECT DISTINCT rs.route.routeGroup.id FROM RouteStop rs " +
+           "WHERE rs.stop.id = :stopId AND rs.route.routeGroup IS NOT NULL")
+    List<UUID> findRouteGroupIdsByStopId(@Param("stopId") UUID stopId);
 }

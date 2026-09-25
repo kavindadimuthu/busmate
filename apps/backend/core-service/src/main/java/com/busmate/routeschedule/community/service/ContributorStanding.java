@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.busmate.routeschedule.community.entity.Contributor;
+import com.busmate.routeschedule.community.entity.ContributorLevel;
 import com.busmate.routeschedule.community.entity.ContributorStatus;
 import com.busmate.routeschedule.community.repository.ContributorRepository;
 
@@ -29,6 +30,11 @@ public class ContributorStanding {
             return false;
         }
         return contributors.findById(userId).map(this::isActive).orElse(false);
+    }
+
+    /** An active contributor with steward level and a scope. Fails closed like {@link #isActive}. */
+    public boolean isActiveSteward(Contributor c) {
+        return isActive(c) && c.getLevel() == ContributorLevel.STEWARD && !c.getStewardScopeRouteGroupIds().isEmpty();
     }
 
     public boolean isActive(Contributor c) {

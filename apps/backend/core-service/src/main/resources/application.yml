@@ -125,6 +125,12 @@ community:
   proposals:
     # Per contributor, per day, across all entity types they can propose (INC-030).
     daily-cap: ${COMMUNITY_PROPOSALS_DAILY_CAP:20}
+  # Who staff are shown as ready to be made a steward (INC-041, ADR-022). Advisory only: it decides who
+  # appears in the list, never who may be appointed.
+  promotion:
+    min-approved: ${COMMUNITY_PROMOTION_MIN_APPROVED:10}
+    min-approval-rate: ${COMMUNITY_PROMOTION_MIN_APPROVAL_RATE:0.8}
+    min-days-active: ${COMMUNITY_PROMOTION_MIN_DAYS_ACTIVE:30}
 
 
 logging:

@@ -59,10 +59,14 @@ public class ChangesetReviewService {
     private final StopRepository stops;
     private final StopMapper stopMapper;
     private final ObjectMapper objectMapper;
+    private final ReviewAccess access;
 
     @Transactional(readOnly = true)
-    public Page<ChangesetReviewResponse> queue(ChangesetStatus status, UUID proposerUserId, String homeDistrict,
-                                                Pageable pageable) {
+    public Page<ChangesetReviewResponse> queue(Caller caller, ChangesetStatus status, UUID proposerUserId,
+                                                String homeDistrict, Pageable pageable) {
+        ReviewAccess.Reviewer reviewer = access.reviewer(caller);
+        // A steward does not see who proposed a change (ADR-022), so they cannot filter by it either.
+        UUID proposerFilter = reviewer.isStaff() ? proposerUserId : null;
         List<UUID> districtProposerIds = homeDistrict == null || homeDistrict.isBlank()
                 ? null
                 : contributors.findAll().stream()
@@ -72,19 +76,37 @@ public class ChangesetReviewService {
         if (districtProposerIds != null && districtProposerIds.isEmpty()) {
             return Page.empty(pageable);
         }
-        Page<Changeset> page = changesets.findReviewQueue(ChangesetEntityType.STOP, status, proposerUserId,
-                districtProposerIds, pageable);
-        return page.map(this::toReviewResponse);
+        if (reviewer.isStaff()) {
+            return changesets.findReviewQueue(ChangesetEntityType.STOP, status, proposerFilter,
+                    districtProposerIds, pageable).map(c -> toReviewResponse(c, false));
+        }
+        // Scope is derived per proposal (ADR-022), so a steward's queue is filtered before it is paged.
+        // Pilot-scale by design; the ADR names the trigger for storing the corridor instead.
+        List<Changeset> visible = changesets.findReviewQueue(ChangesetEntityType.STOP, status, null,
+                        districtProposerIds, Pageable.unpaged()).getContent().stream()
+                .filter(c -> !c.getProposerUserId().equals(reviewer.userId()))
+                .filter(c -> access.inScope(reviewer, c))
+                .toList();
+        int from = (int) Math.min(pageable.getOffset(), visible.size());
+        int to = Math.min(from + pageable.getPageSize(), visible.size());
+        return new org.springframework.data.domain.PageImpl<>(
+                visible.subList(from, to).stream().map(c -> toReviewResponse(c, true)).toList(),
+                pageable, visible.size());
     }
 
     @Transactional(readOnly = true)
-    public ChangesetReviewResponse get(UUID changesetId) {
-        return toReviewResponse(find(changesetId));
+    public ChangesetReviewResponse get(Caller caller, UUID changesetId) {
+        ReviewAccess.Reviewer reviewer = access.reviewer(caller);
+        Changeset c = find(changesetId);
+        access.requireInScope(reviewer, c);
+        return toReviewResponse(c, !reviewer.isStaff());
     }
 
     @Transactional
     public ChangesetResponse approve(Caller staff, UUID changesetId) {
+        ReviewAccess.Reviewer reviewer = access.reviewer(staff);
         Changeset c = find(changesetId);
+        access.requireInScope(reviewer, c);
         requireStopPending(c);
         requireNotSelf(staff, c);
 
@@ -117,12 +139,14 @@ public class ChangesetReviewService {
         c.setStatus(ChangesetStatus.APPROVED);
         c.setDecidedBy(staff.userId());
         c.setDecidedAt(Instant.now());
-        return toResponse(changesets.save(c));
+        return toResponse(changesets.save(c), !reviewer.isStaff());
     }
 
     @Transactional
     public ChangesetResponse reject(Caller staff, UUID changesetId, RejectChangesetRequest request) {
+        ReviewAccess.Reviewer reviewer = access.reviewer(staff);
         Changeset c = find(changesetId);
+        access.requireInScope(reviewer, c);
         requireStopPending(c);
         requireNotSelf(staff, c);
 
@@ -131,11 +155,14 @@ public class ChangesetReviewService {
         c.setDecidedAt(Instant.now());
         String note = request.getNote() == null ? "" : request.getNote().strip();
         c.setDecisionReason(request.getReason().label() + (note.isEmpty() ? "" : ": " + note));
-        return toResponse(changesets.save(c));
+        return toResponse(changesets.save(c), !reviewer.isStaff());
     }
 
     @Transactional
     public ChangesetResponse revert(Caller staff, UUID changesetId) {
+        if (!staff.isStaff()) {
+            throw new ForbiddenException("Only staff can revert an approval");
+        }
         Changeset c = find(changesetId);
         if (c.getEntityType() != ChangesetEntityType.STOP || c.getStatus() != ChangesetStatus.APPROVED) {
             throw new ConflictException("Only an approved stop proposal can be reverted");
@@ -254,7 +281,7 @@ public class ChangesetReviewService {
         return objectMapper.convertValue(c.getTargetSnapshot(), StopResponse.class);
     }
 
-    private ChangesetReviewResponse toReviewResponse(Changeset c) {
+    private ChangesetReviewResponse toReviewResponse(Changeset c, boolean redactProposer) {
         StopResponse currentStop = c.getTargetId() != null
                 ? stops.findById(c.getTargetId()).map(stopMapper::toResponse).orElse(null)
                 : null;
@@ -274,7 +301,8 @@ public class ChangesetReviewService {
         Affiliation affiliation = contributor != null ? contributor.getAffiliation() : null;
         ContributorTrackRecord track = new ContributorTrackRecord(
                 changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.APPROVED),
-                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REJECTED));
+                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REJECTED),
+                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REVERTED));
 
         boolean outranks = false;
         boolean stale = false;
@@ -288,13 +316,18 @@ public class ChangesetReviewService {
             }
         }
 
-        return new ChangesetReviewResponse(toResponse(c), currentStop, distance, affiliation, track, outranks, stale);
+        return new ChangesetReviewResponse(toResponse(c, redactProposer), currentStop, distance, affiliation, track, outranks, stale);
     }
 
     private ChangesetResponse toResponse(Changeset c) {
+        return toResponse(c, false);
+    }
+
+    /** A steward's view withholds the proposer's identity (ADR-022). */
+    private ChangesetResponse toResponse(Changeset c, boolean redactProposer) {
         return new ChangesetResponse(c.getId(), c.getEntityType(), c.getAction(), c.getTargetId(),
                 c.getProposedValues(), c.getTargetSnapshot(), c.getObservedOn(), c.getObservationMethod(),
-                c.getNote(), c.getStatus(), c.getProposerUserId(), c.getCreatedAt(), c.getDecidedBy(),
+                c.getNote(), c.getStatus(), redactProposer ? null : c.getProposerUserId(), c.getCreatedAt(), c.getDecidedBy(),
                 c.getDecidedAt(), c.getDecisionReason());
     }
 }

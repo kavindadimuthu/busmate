@@ -16,6 +16,8 @@ public record ContributorResponse(
         String motivation,
         String homeDistrict,
         Set<UUID> corridorRouteGroupIds,
+        Set<UUID> stewardScopeRouteGroupIds,
+        Instant stewardAppointedAt,
         Affiliation affiliation,
         String affiliationDetail,
         String agreementVersion,
