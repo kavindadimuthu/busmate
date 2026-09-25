@@ -16,17 +16,22 @@ autonomy: A2
 ## Why now
 
 Backend CI has failed on every run since it first executed, on every branch and every merge to
-`main`, always in the same job and on the same single assertion. Increments have been merged over a
-red pipeline throughout, which is how a gate stops being a gate: nobody reads a signal that is
-always red, so the next real regression arrives unnoticed.
+`main`, always in the same job. Increments have been merged over a red pipeline throughout, which
+is how a gate stops being a gate: nobody reads a signal that is always red, so the next real
+regression arrives unnoticed.
 
-The assertion is not wrong. Creating a stop returns `createdAt` as null while the row it just
-created demonstrably has a creation time — reading the same stop back a moment later returns it
-populated. Any client that shows "created" straight after creating something gets nothing.
+Fixing it surfaced that it was two independent bugs, not one, because the first one had been
+masking the second everywhere it was checked before now: locally, where the fix was written and
+verified, a real secrets file happens to be present and hid the second one completely.
 
 ## Design
 
-`BaseEntity` stamps `createdAt`/`updatedAt` with Hibernate's `@CreationTimestamp`/`@UpdateTimestamp`,
+Two unrelated defects, found in sequence rather than both at once — the second was invisible until
+the first was fixed and CI was re-run for real, because every prior local run had a real secrets
+file sitting in the working tree that no CI run has ever had.
+
+**First: a create response returning `createdAt`/`updatedAt` as null.** `BaseEntity`
+stamps `createdAt`/`updatedAt` with Hibernate's `@CreationTimestamp`/`@UpdateTimestamp`,
 which are applied immediately *before the INSERT statement executes* — that is, at flush. Every
 create path in the service is `@Transactional` and maps the entity to its response DTO straight
 after `save()`, while the flush is still pending, so it reads the fields before anything has written
@@ -51,9 +56,23 @@ puts them on that same working path.
   can preserve a record's real original creation time rather than having it silently restamped,
   which is the behaviour worth having if bulk import ever carries one.
 
+**Second: every test needing the full application context failing at startup**, not just the one
+the first bug's assertion pointed at. core-service's media-storage configuration requires real S3
+credentials, sourced in development from a secrets file that is deliberately never committed and
+so is never present in CI. Every other backend service that has this same S3 dependency already
+gives its test profile safe placeholder values for exactly this reason — user-service's own test
+config says as much in so many words. core-service's test profile was simply never given the same
+treatment, so its test context has been failing to start in CI from the day the workflow was
+written; it was invisible locally only because a real secrets file happens to sit in the working
+tree there. Fixed the same way the sibling service already does: safe non-real placeholder values
+in the test profile, which the one test that needs real S3 behaviour already overrides for itself
+against its own Testcontainers instance.
+
 ## Acceptance criteria
 
-- [x] core-service's full Maven verify passes locally, with no failing tests.
+- [x] core-service's full Maven verify passes with no failing tests, including with no secrets
+      file present in the working tree — the condition CI actually runs under, reproduced and
+      checked directly rather than assumed.
 - [x] A create response carries a non-null `createdAt`/`updatedAt`, and they match what a
       subsequent read of the same record returns.
 - [ ] Backend CI is green on this branch's PR, including the services this does not touch.
