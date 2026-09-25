@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -533,6 +533,17 @@ const FindMyBusDetailPage = () => {
                 </h2>
                 <div className="space-y-3 sm:space-y-4">
                   <UsualWorkingLine workings={data.usualWorkings} />
+                  {scheduleId && (
+                    <Link
+                      to={`/contribute/propose-working?scheduleId=${encodeURIComponent(scheduleId)}`}
+                      className="block text-xs text-primary underline underline-offset-2"
+                      data-testid="propose-working-link"
+                    >
+                      {data.usualWorkings && data.usualWorkings.length > 0
+                        ? "Seen it run differently? Tell us"
+                        : "Know who runs this bus? Tell us"}
+                    </Link>
+                  )}
                   {schedule?.trust && (
                     <div className="flex justify-between items-center gap-2">
                       <span className="text-xs sm:text-sm text-muted-foreground">Timetable:</span>

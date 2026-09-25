@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CommunityContributorsService, type ChangesetResponse } from "@busmate/api-client-core";
+import { proposalKind, proposalTitle } from "@/lib/proposalLabel";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-amber-500",
@@ -25,10 +26,7 @@ const STATUS_LABEL: Record<string, string> = {
   REVERTED: "Reverted",
 };
 
-function proposalName(c: ChangesetResponse): string {
-  const values = c.proposedValues as { name?: string } | undefined;
-  return values?.name ?? "Untitled proposal";
-}
+const proposalName = (c: ChangesetResponse) => proposalTitle(c.entityType, c.proposedValues);
 
 /** Everything the signed-in contributor has proposed, newest first (INC-030). */
 export default function MyContributionsPage() {
@@ -129,7 +127,7 @@ export default function MyContributionsPage() {
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{proposalName(p)}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {p.action === "CREATE" ? "New stop" : "Correction"} · {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ""}
+                        {proposalKind(p.entityType, p.action)} · {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

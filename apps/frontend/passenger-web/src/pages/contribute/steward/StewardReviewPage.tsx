@@ -20,6 +20,8 @@ import {
   type ChangesetReviewResponse,
 } from "@busmate/api-client-core";
 import { coreErrorMessage } from "@/lib/coreError";
+import WorkingProposalDetail from "@/components/contribute/WorkingProposalDetail";
+import { isWorking, proposalKind } from "@/lib/proposalLabel";
 
 const REJECT_REASONS: { value: RejectChangesetRequest.reason; label: string }[] = [
   { value: RejectChangesetRequest.reason.DUPLICATE, label: "Duplicate of an existing stop" },
@@ -139,6 +141,15 @@ function Review() {
   }
 
   const { changeset, currentStop, positionDistanceMeters, proposerAffiliation, proposerTrackRecord } = review;
+  const working = isWorking(changeset?.entityType);
+  // Reasons that read wrongly for a working (a stop's position, "not a real stop") are not offered for one.
+  const reasons = working
+    ? [
+        { value: RejectChangesetRequest.reason.DUPLICATE, label: "Already recorded for this departure" },
+        { value: RejectChangesetRequest.reason.CANNOT_VERIFY, label: "Can't verify this" },
+        { value: RejectChangesetRequest.reason.OTHER, label: "Other" },
+      ]
+    : REJECT_REASONS;
   const pending = changeset?.status === "PENDING";
   const canApprove = pending && !review.targetOutranksCommunityTier && !review.stale;
 
@@ -147,7 +158,7 @@ function Review() {
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            {changeset?.action === "CREATE" ? "New stop" : "Correction"}
+            {proposalKind(changeset?.entityType, changeset?.action)}
           </h1>
           <p className="text-xs text-muted-foreground">
             Proposed {changeset?.createdAt ? new Date(changeset.createdAt).toLocaleString() : ""}
@@ -199,7 +210,11 @@ function Review() {
       <Card>
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold text-foreground mb-3">What would change</h2>
-          <ProposalDiff changeset={changeset} currentStop={currentStop} positionDistanceMeters={positionDistanceMeters} />
+          {working ? (
+            <WorkingProposalDetail changeset={changeset} context={review.scheduleContext} />
+          ) : (
+            <ProposalDiff changeset={changeset} currentStop={currentStop} positionDistanceMeters={positionDistanceMeters} />
+          )}
         </CardContent>
       </Card>
 
@@ -237,7 +252,7 @@ function Review() {
                   <SelectValue placeholder="Choose one" />
                 </SelectTrigger>
                 <SelectContent>
-                  {REJECT_REASONS.map((r) => (
+                  {reasons.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
                       {r.label}
                     </SelectItem>

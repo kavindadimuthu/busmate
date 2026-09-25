@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CommunityContributorsService, type ChangesetReviewResponse } from "@busmate/api-client-core";
 import { coreErrorMessage } from "@/lib/coreError";
+import { proposalKind, proposalTitle } from "@/lib/proposalLabel";
 
 type Tab = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -19,13 +20,10 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "REJECTED", label: "Rejected" },
 ];
 
-function proposalName(r: ChangesetReviewResponse): string {
-  const values = r.changeset?.proposedValues as { name?: string } | undefined;
-  return values?.name ?? "Untitled proposal";
-}
+const proposalName = (r: ChangesetReviewResponse) => proposalTitle(r.changeset?.entityType, r.changeset?.proposedValues);
 
 /**
- * A steward's queue: the stop proposals waiting in the corridors they were appointed to (INC-042, ADR-022).
+ * A steward's queue: the proposals waiting in the corridors they were appointed to (INC-042, ADR-022).
  * The server already filters to those corridors and leaves out anything the steward proposed themselves.
  */
 function Queue() {
@@ -41,7 +39,7 @@ function Queue() {
       try {
         setLoading(true);
         setError(null);
-        const result = await CommunityContributorsService.listChangesetsForReview(tab, undefined, undefined, 0, 50);
+        const result = await CommunityContributorsService.listChangesetsForReview(undefined, tab, undefined, undefined, 0, 50);
         if (cancelled) return;
         setRows(result.content ?? []);
         setTotal(result.totalElements ?? 0);
@@ -114,7 +112,7 @@ function Queue() {
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{proposalName(r)}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {r.changeset?.action === "CREATE" ? "New stop" : "Correction"} ·{" "}
+                        {proposalKind(r.changeset?.entityType, r.changeset?.action)} ·{" "}
                         {r.changeset?.createdAt ? new Date(r.changeset.createdAt).toLocaleDateString() : ""}
                       </p>
                     </div>

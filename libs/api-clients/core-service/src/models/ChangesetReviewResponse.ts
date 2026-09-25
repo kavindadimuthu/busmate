@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { ChangesetResponse } from './ChangesetResponse';
 import type { ContributorTrackRecord } from './ContributorTrackRecord';
+import type { ScheduleWorkingContext } from './ScheduleWorkingContext';
 import type { StopResponse } from './StopResponse';
 export type ChangesetReviewResponse = {
     changeset?: ChangesetResponse;
@@ -13,6 +14,7 @@ export type ChangesetReviewResponse = {
     proposerTrackRecord?: ContributorTrackRecord;
     targetOutranksCommunityTier?: boolean;
     stale?: boolean;
+    scheduleContext?: ScheduleWorkingContext;
 };
 export namespace ChangesetReviewResponse {
     export enum proposerAffiliation {

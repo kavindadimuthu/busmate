@@ -19,6 +19,7 @@ import type { ProposeStopResponse } from '../models/ProposeStopResponse';
 import type { RejectChangesetRequest } from '../models/RejectChangesetRequest';
 import type { StewardAppointmentRequest } from '../models/StewardAppointmentRequest';
 import type { StopProposalRequest } from '../models/StopProposalRequest';
+import type { WorkingProposalRequest } from '../models/WorkingProposalRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -51,7 +52,8 @@ export class CommunityContributorsService {
         });
     }
     /**
-     * The review queue: stop proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity
+     * The review queue: stop and working proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity
+     * @param entityType
      * @param status
      * @param proposerUserId
      * @param homeDistrict
@@ -61,6 +63,7 @@ export class CommunityContributorsService {
      * @throws ApiError
      */
     public static listChangesetsForReview(
+        entityType?: 'STOP' | 'SCHEDULE_WORKING',
         status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'REVERTED',
         proposerUserId?: string,
         homeDistrict?: string,
@@ -71,6 +74,7 @@ export class CommunityContributorsService {
             method: 'GET',
             url: '/api/community/changesets',
             query: {
+                'entityType': entityType,
                 'status': status,
                 'proposerUserId': proposerUserId,
                 'homeDistrict': homeDistrict,
@@ -406,6 +410,22 @@ export class CommunityContributorsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/community/stop-proposals',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Propose who usually works a departure (active contributors only)
+     * @param requestBody
+     * @returns ChangesetResponse Created
+     * @throws ApiError
+     */
+    public static proposeScheduleWorking(
+        requestBody: WorkingProposalRequest,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/working-proposals',
             body: requestBody,
             mediaType: 'application/json',
         });
