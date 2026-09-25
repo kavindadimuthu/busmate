@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/select";
 import { StopLocationPicker } from "@/components/contribute/StopLocationPicker";
 import {
+  BusStopManagementService,
   CommunityContributorsService,
   PassengerQueryService,
   StopProposalRequest,
   type DuplicateStopCandidate,
   type PassengerStopResponse,
+  type StopResponse,
 } from "@busmate/api-client-core";
 
 const OBSERVATION_METHODS: { value: StopProposalRequest.observationMethod; label: string }[] = [
@@ -104,17 +106,28 @@ const ProposeStopPage = () => {
     };
   }, [searchText, mode, targetStop]);
 
-  const selectTargetStop = (stop: PassengerStopResponse) => {
+  const selectTargetStop = async (stop: PassengerStopResponse) => {
     setTargetStop(stop);
     setChangedFields(new Set());
+    // The search result carries no Sinhala or Tamil names, so seeding from it alone would show them blank
+    // and send them blank (INC-043). Load the full stop; if that fails the server still keeps whatever
+    // a correction doesn't state, so falling back to the search result is safe.
+    let full: StopResponse | null = null;
+    try {
+      full = stop.stopId ? await BusStopManagementService.getStopById(stop.stopId) : null;
+    } catch {
+      full = null;
+    }
     setForm({
       ...EMPTY_FORM,
-      name: stop.name ?? "",
-      description: stop.description ?? "",
-      city: stop.city ?? "",
-      latitude: stop.location?.latitude ?? null,
-      longitude: stop.location?.longitude ?? null,
-      isAccessible: stop.isAccessible ?? false,
+      name: full?.name ?? stop.name ?? "",
+      nameSinhala: full?.nameSinhala ?? "",
+      nameTamil: full?.nameTamil ?? "",
+      description: full?.description ?? stop.description ?? "",
+      city: full?.location?.city ?? stop.city ?? "",
+      latitude: full?.location?.latitude ?? stop.location?.latitude ?? null,
+      longitude: full?.location?.longitude ?? stop.location?.longitude ?? null,
+      isAccessible: full?.isAccessible ?? stop.isAccessible ?? false,
       observedOn: EMPTY_FORM.observedOn,
     });
   };
