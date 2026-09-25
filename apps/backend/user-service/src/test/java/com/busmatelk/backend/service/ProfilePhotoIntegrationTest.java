@@ -50,10 +50,9 @@ class ProfilePhotoIntegrationTest extends AbstractPostgresIntegrationTest {
 
     @SuppressWarnings("resource")
     static final GenericContainer<?> MINIO =
-            new GenericContainer<>("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
+            new GenericContainer<>("bitnamilegacy/minio:2025.7.23-debian-12-r3")
                     .withEnv("MINIO_ROOT_USER", "testaccesskey")
                     .withEnv("MINIO_ROOT_PASSWORD", "testsecretkey")
-                    .withCommand("server", "/data")
                     .withExposedPorts(9000)
                     .waitingFor(Wait.forHttp("/minio/health/live").forPort(9000));
 

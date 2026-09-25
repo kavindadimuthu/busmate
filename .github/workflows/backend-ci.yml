@@ -84,25 +84,21 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      # core-service's BusProfileIntegrationTest starts its own Testcontainers MinIO (INC-018),
-      # separate from AbstractPostgresIntegrationTest's shared Postgres container. Testcontainers
-      # gives an image pull 2 minutes before failing the whole test class; pulling from quay.io
-      # from this runner reliably took longer than that (confirmed on two separate CI runs, not a
-      # one-off), so the pull happens here first, on this step's own much longer default timeout,
-      # with the image then already warm in the local Docker cache when Testcontainers asks for it.
-      - name: Pre-pull MinIO image (avoids Testcontainers' 2-minute pull timeout from quay.io)
-        if: matrix.service == 'core-service'
-        # quay.io throttles/rejects anonymous pulls from GitHub Actions' shared runner IP ranges
-        # more aggressively than from an ordinary IP (confirmed: the same pull succeeds from a
-        # non-Actions network). A few retries with backoff is the standard, low-cost first
-        # response to that class of problem before reaching for a second registry or credentials.
+      # core-service and user-service each have integration tests that start their own Testcontainers
+      # MinIO (separate from AbstractPostgresIntegrationTest's shared Postgres). The image is
+      # bitnamilegacy/minio from Docker Hub: MinIO's own quay.io image now denies anonymous pulls
+      # outright (verified from a non-CI machine too, so not runner throttling), and the old
+      # docker.io/minio/minio is gone. Pulling here first gives the pull this step's own long
+      # timeout rather than Testcontainers' 2 minutes; a few retries cover ordinary registry blips.
+      - name: Pre-pull MinIO test image (avoids Testcontainers' 2-minute pull timeout)
+        if: matrix.service == 'core-service' || matrix.service == 'user-service'
         run: |
-          for attempt in 1 2 3 4 5; do
-            docker pull quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z && exit 0
+          for attempt in 1 2 3; do
+            docker pull bitnamilegacy/minio:2025.7.23-debian-12-r3 && exit 0
             echo "pull attempt $attempt failed, waiting before retry..."
-            sleep $((attempt * 20))
+            sleep $((attempt * 15))
           done
-          echo "::warning::MinIO pre-pull failed after 5 attempts; BusProfileIntegrationTest will likely fail"
+          echo "::warning::MinIO pre-pull failed after 3 attempts; the MinIO integration tests will likely fail"
           exit 0
       - name: Run tests (Testcontainers Postgres exercises the real Flyway migrations)
         working-directory: apps/backend/${{ matrix.service }}

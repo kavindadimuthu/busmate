@@ -20,14 +20,13 @@ Backend CI has failed on every run since it first executed, on every branch and 
 is how a gate stops being a gate: nobody reads a signal that is always red, so the next real
 regression arrives unnoticed.
 
-Fixing it surfaced that it was three independent problems, not one — each only visible once the
-one before it was fixed and pushed for a real CI run, because two of the three had been fully
-masked everywhere they were checked before now.
+Fixing it surfaced that it was several independent problems, not one — each only visible once the
+one before it was fixed and pushed for a real CI run.
 
 ## Design
 
-Three unrelated problems, found in sequence rather than all at once — each was invisible until the
-one before it was fixed and CI was re-run for real.
+Several unrelated problems, found in sequence rather than all at once — each was invisible until
+the one before it was fixed and CI was re-run for real.
 
 **First: a create response returning `createdAt`/`updatedAt` as null.** `BaseEntity`
 stamps `createdAt`/`updatedAt` with Hibernate's `@CreationTimestamp`/`@UpdateTimestamp`,
@@ -73,10 +72,18 @@ Postgres one every test shares) failed on two separate, independent CI runs with
 exception: Testcontainers gives an image pull two minutes before giving up, and pulling
 `quay.io/minio/minio` from this runner consistently took longer than that. Not a one-off — checked
 by re-running the identical CI job a second time and getting the identical failure before treating
-it as a real problem rather than registry flakiness worth ignoring. Fixed by pulling the image in
-its own CI step first, ahead of the test run, so the pull happens against that step's own far
-longer default timeout and the image is already warm in the local cache by the time Testcontainers
-asks for it.
+it as a real problem rather than registry flakiness worth ignoring. First attempt: pull the image
+in its own CI step ahead of the test run, so it hits that step's own far longer default timeout
+instead of Testcontainers' two minutes.
+
+**Fourth: the pre-pull failing outright, on every retry, with `unauthorized`.** Not throttling:
+the same anonymous pull is denied from a non-CI machine too. MinIO's own `quay.io/minio/minio`
+image no longer serves anonymous pulls, and the old Docker Hub `minio/minio` is gone. Every local
+run had passed only because the image was already in the local Docker cache — the cache hid the
+failure exactly as the secrets file hid the second problem. It also broke user-service, which has
+two MinIO test classes and had been assumed unaffected. Fixed by pointing the three MinIO test
+classes at `bitnamilegacy/minio` from Docker Hub (still real MinIO, pinned to a release), and
+verified with the quay image removed from the local cache so the run matches the runner.
 
 ## Acceptance criteria
 
@@ -86,21 +93,21 @@ asks for it.
 - [x] A create response carries a non-null `createdAt`/`updatedAt`, and they match what a
       subsequent read of the same record returns.
 - [ ] Backend CI is green on this branch's PR, including the services this does not touch.
-      *(In progress — two of three known causes fixed and confirmed on real CI runs; the third
-      pushed and awaiting confirmation.)*
+      *(Four causes found and fixed; the last one is confirmed locally with a cold image cache
+      and awaits a real CI run.)*
 
 ## Out of scope
 
 - The dormant JPA-auditing item (`@CreatedBy`/`@LastModifiedBy`). `createdBy`/`updatedBy` are set
   by hand in each service today and already reach the response correctly; making them automatic is
   the audit-trail work in the backlog, not this.
-- The other three services' suites. They pass, and nothing here touches them.
+- Production and dev compose, which still pin `quay.io/minio/minio` — see Open questions.
 - Whether every create endpoint *should* return an audit block at all — a contract question, not a
   reason to keep returning a field that is declared and null.
 
 ## Constraints
 
-- Spans two risk classes, so the increment takes the higher one (R3): `apps/backend/core-service/**`
+- Spans two risk classes, so the increment takes the higher one (R3): `apps/backend/**` test code
   is R2, and the CI pre-pull step touches `.github/workflows/**`, which policy.yaml classes as R3
   on its own — a workflow change affects what every future PR's gate actually checks, not just this
   one.
@@ -109,15 +116,19 @@ asks for it.
   regardless — the honest answer for both is a human reading carefully.
 - No schema change. The columns, their nullability and the DTO shape are all unchanged — the first
   fix moves *when* a value is computed, not what is stored.
-- The CI change is additive only: one new step, conditioned to run for core-service alone, pulling
-  an image already pinned to the exact tag Testcontainers was already going to request. Nothing
-  about what gets tested changes.
+- The CI change is additive only: one pre-pull step, for the two services with MinIO tests, of the
+  exact image those tests request. Nothing about what gets tested changes.
 
 ## Open questions
 
 - Whether `updatedAt` should equal `createdAt` on insert or stay null until the first real update.
   This keeps today's behaviour (both set on insert), because that is what the stored row already
   looks like and what every existing read returns.
+- `docker-compose.yml` and `docker-compose.production.yml` still pin the quay.io MinIO image, which
+  can no longer be pulled anonymously. A host that already has it cached keeps working; a fresh
+  bring-up will not. Which MinIO image the real stack should run is a production decision, not made
+  here.
+- `bitnamilegacy` is a frozen archive, fine for tests but not something to depend on for years.
 
 ## Decisions
 
