@@ -27,6 +27,7 @@ import com.busmate.routeschedule.licensing.entity.PassengerServicePermit;
 import com.busmate.routeschedule.network.entity.Route;
 import com.busmate.routeschedule.network.entity.RouteGroup;
 import com.busmate.routeschedule.scheduling.entity.Schedule;
+import com.busmate.routeschedule.scheduling.enums.TimingCompletenessEnum;
 import com.busmate.routeschedule.scheduling.entity.ScheduleCalendar;
 import com.busmate.routeschedule.network.entity.Stop;
 import com.busmate.routeschedule.operations.entity.Trip;
@@ -601,8 +602,11 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         Route route = schedule.getRoute();
 
         // Get all schedule stops with full timing information
-        List<ScheduleStopDetailsProjection> scheduleStops = 
-                passengerQueryRepository.findScheduleStopsByScheduleId(request.getScheduleId());
+        boolean partialTiming = schedule.getTimingCompleteness() == TimingCompletenessEnum.ORIGIN_ONLY
+                || schedule.getTimingCompleteness() == TimingCompletenessEnum.ENDPOINTS_ONLY;
+        List<ScheduleStopDetailsProjection> scheduleStops = partialTiming
+                ? passengerQueryRepository.findRouteStopsWithScheduleTimes(request.getScheduleId())
+                : passengerQueryRepository.findScheduleStopsByScheduleId(request.getScheduleId());
 
         if (scheduleStops.isEmpty()) {
             return buildDetailsErrorResponse("No stops found for this schedule.");

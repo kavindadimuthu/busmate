@@ -273,6 +273,50 @@ public interface PassengerQueryRepository extends JpaRepository<com.busmate.rout
     List<ScheduleStopDetailsProjection> findScheduleStopsByScheduleId(
         @Param("scheduleId") UUID scheduleId
     );
+
+    /**
+     * The same stops and times for a schedule that declares its timing partial (ADR-023): the route's own stops are
+     * the spine, and whatever times exist are attached, so a departure known only at its origin still has a
+     * destination to describe. A schedule that does not declare it keeps {@link #findScheduleStopsByScheduleId}, so
+     * an express service that skips a route stop is not shown stopping there.
+     */
+    @Query(value = """
+        SELECT
+            ss.id as scheduleStopId,
+            rs.stop_order as stopOrder,
+
+            st.id as stopId,
+            st.name as stopName,
+            st.name_sinhala as stopNameSinhala,
+            st.name_tamil as stopNameTamil,
+            st.description as stopDescription,
+            st.latitude as stopLatitude,
+            st.longitude as stopLongitude,
+            st.address as stopAddress,
+            st.city as stopCity,
+            st.is_accessible as stopIsAccessible,
+
+            rs.id as routeStopId,
+            rs.distance_from_start_km as distanceFromStartKm,
+            rs.distance_from_start_km_unverified as distanceFromStartKmUnverified,
+            rs.distance_from_start_km_calculated as distanceFromStartKmCalculated,
+
+            ss.arrival_time as arrivalTime,
+            ss.departure_time as departureTime,
+            ss.arrival_time_unverified as arrivalTimeUnverified,
+            ss.departure_time_unverified as departureTimeUnverified,
+            ss.arrival_time_calculated as arrivalTimeCalculated,
+            ss.departure_time_calculated as departureTimeCalculated
+
+        FROM schedule s
+        INNER JOIN route_stop rs ON rs.route_id = s.route_id
+        INNER JOIN stop st ON rs.stop_id = st.id
+        LEFT JOIN schedule_stop ss ON ss.schedule_id = s.id AND ss.route_stop_id = rs.id
+        WHERE s.id = :scheduleId
+        ORDER BY rs.stop_order
+        """, nativeQuery = true)
+    List<ScheduleStopDetailsProjection> findRouteStopsWithScheduleTimes(
+            @Param("scheduleId") UUID scheduleId);
     
     /**
      * Get all schedule exceptions for a specific schedule.
