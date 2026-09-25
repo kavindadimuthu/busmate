@@ -545,6 +545,10 @@ const FindMyBusDetailPage = () => {
                       <span className="font-medium text-xs sm:text-sm text-right">{schedule.name}</span>
                     </div>
                   )}
+                  {/* Where the timetable came from and what it does not say, e.g. that operating days were not stated. */}
+                  {schedule?.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground border-l-2 border-border pl-3">{schedule.description}</p>
+                  )}
                   {schedule?.scheduleType && (
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-xs sm:text-sm text-muted-foreground">Type:</span>

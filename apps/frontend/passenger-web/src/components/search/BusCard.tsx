@@ -116,6 +116,8 @@ export default function BusCard({
     return `/findmybus/detail?${params.toString()}`;
   };
 
+  const totalKm = (bus.scheduleTotalDistanceKm ?? 0) > 0 ? bus.scheduleTotalDistanceKm! : (bus.distanceKm ?? 0) > 0 ? bus.distanceKm! : null;
+
   return (
     <Card className="hover:shadow-lg transition-all duration-300 border border-border rounded-xl sm:rounded-2xl w-full bg-card overflow-hidden">
       <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-5">
@@ -157,12 +159,10 @@ export default function BusCard({
 
             {/* Total Route Distance and Road Type */}
             <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm font-medium text-muted-foreground">
-              {bus.scheduleTotalDistanceKm && (
-                <span>{bus.scheduleTotalDistanceKm.toFixed(1)} km total</span>
-              )}
-              {bus.scheduleTotalDistanceKm && bus.roadType && (
-                <span>•</span>
-              )}
+              {/* A departure known only at its origin has no distance of its own; fall back to the route's, and never
+                  render a bare 0 (`0 && <span>` renders "0"). */}
+              {totalKm != null && <span>{totalKm.toFixed(1)} km total</span>}
+              {totalKm != null && bus.roadType && <span>•</span>}
               {bus.roadType && (
                 <span>{bus.roadType}</span>
               )}
