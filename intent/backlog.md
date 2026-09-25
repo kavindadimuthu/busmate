@@ -296,6 +296,9 @@ profile photos are built and in use; everything below reuses them rather than st
   the same way. Each guide needs someone to actually run it and correct what has drifted — do this as
   part of Phase 3, not by reading.
 
+- **The legacy `tests/e2e` suite is stale.** It targets Asgardeo login, a Next.js app and a create-drop
+  database, none of which exist now. Delete or rewrite it; `tests/flows` is the working suite.
+
 ## Strategy
 
 - Validate strategy assumptions `A-01`..`A-16` —
