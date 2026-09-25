@@ -131,6 +131,9 @@ Violating one of these is a bug, not a design choice.
   observed-at, confidence and credit ([ADR-018](decisions/ADR-018-community-changes-are-reviewed-changesets.md)).
   Any new write path to those tables goes through `ProvenanceStamper`; a path that skips it is caught only
   by a `PrePersist` default that labels the record `SRC_4` "BusMate", which is honest but loses the source.
+  Staff may record a third party's timetable as a report (`SRC_5`) and date it with `observedOn`
+  ([ADR-025](decisions/ADR-025-staff-may-record-a-report-dated-to-its-source.md)); an edit does not
+  re-observe a report, so it keeps its age. Never record a transcribed report as `SRC_4`: it says BusMate saw it.
 - **Passenger-facing trust.** A time or route shown to a passenger carries a label from `TrustLabels`
   (official / operator timetable / observed / reported / estimated / live); never wire a new passenger
   surface to a raw time column without one. The unauthenticated stop, route and schedule reads must not
