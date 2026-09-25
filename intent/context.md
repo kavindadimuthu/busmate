@@ -144,6 +144,11 @@ Violating one of these is a bug, not a design choice.
 - **Community standing lives in core-service, not user-service.** A contributor is still a
   `passenger` account; `core-service`'s `community` module (ADR-019) is the only source of what they
   may do to the network. Never add a `contributor` user type or check standing from the JWT.
+- **A steward reviews only inside their corridors, and blind.** A changeset's corridor is derived when read —
+  its target stop's route groups, or its proposer's declared corridors — never stored; one that matches no
+  steward is staff-only. Stewards never see the proposer's identity and cannot revert
+  ([ADR-022](decisions/ADR-022-a-changesets-corridor-is-derived-and-stewards-review-blind.md)). Review
+  authorisation goes through `ReviewAccess`; a new review path that skips it lets any passenger decide.
 - **Anchors** (HACO §4.2): branch name contains the increment ID; every commit carries an
   `Increment:` trailer, enforced by [.githooks/commit-msg](../.githooks/commit-msg); acceptance tests
   name the increment ID. Code comments carry the ID only where intent is genuinely non-obvious.
