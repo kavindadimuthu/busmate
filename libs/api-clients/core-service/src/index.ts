@@ -148,6 +148,7 @@ export { TrustInfo } from './models/TrustInfo';
 export type { UpdateMetadata } from './models/UpdateMetadata';
 export type { UpdateResult } from './models/UpdateResult';
 export type { UpdateSummary } from './models/UpdateSummary';
+export type { UsualWorking } from './models/UsualWorking';
 export type { Vehicle } from './models/Vehicle';
 export type { VehicleClaim } from './models/VehicleClaim';
 

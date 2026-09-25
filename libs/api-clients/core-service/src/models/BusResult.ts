@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { TrustInfo } from './TrustInfo';
+import type { UsualWorking } from './UsualWorking';
 /**
  * Individual bus/route result with schedule and trip information
  */
@@ -83,6 +84,10 @@ export type BusResult = {
      * Schedule ID
      */
     scheduleId?: string;
+    /**
+     * Who usually works this departure on the date searched; empty when nobody has recorded it
+     */
+    usualWorkings?: Array<UsualWorking>;
     /**
      * Schedule name
      */

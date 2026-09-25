@@ -7,6 +7,7 @@ import type { RouteDetails } from './RouteDetails';
 import type { RouteScheduleStop } from './RouteScheduleStop';
 import type { ScheduleDetails } from './ScheduleDetails';
 import type { TripDetails } from './TripDetails';
+import type { UsualWorking } from './UsualWorking';
 /**
  * Comprehensive details about a specific bus schedule or trip
  */
@@ -47,6 +48,10 @@ export type FindMyBusDetailsResponse = {
      * Summary of the journey from origin to destination
      */
     journeySummary?: JourneySummary;
+    /**
+     * Who usually works this departure on the date searched. A pattern, never a guarantee about today's bus. Empty when nobody has recorded it
+     */
+    usualWorkings?: Array<UsualWorking>;
 };
 export namespace FindMyBusDetailsResponse {
     /**
