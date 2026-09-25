@@ -1,8 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { useRouter } from '@/lib/router';
-import { MapPin, Eye, ChevronRight, Navigation, ExternalLink } from 'lucide-react';
+import { MapPin, Eye, ChevronRight, Navigation, ExternalLink, Trash2 } from 'lucide-react';
+import { RouteManagementService } from '@busmate/api-client-core';
 import type { RouteResponse } from '@busmate/api-client-core';
+import { PlaceStopPanel } from './PlaceStopPanel';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -11,6 +15,7 @@ interface RouteStopsTabProps {
 }
 
 interface DisplayStop {
+  routeStopId?: string;
   stopId?: string;
   stopName?: string;
   type: 'start' | 'intermediate' | 'end';
@@ -44,6 +49,7 @@ function getOrderedStops(route: RouteResponse): DisplayStop[] {
 
     sortedStops.forEach((stop, idx) => {
       stops.push({
+        routeStopId: stop.id,
         stopId: stop.stopId,
         stopName: stop.stopName,
         type: 'intermediate',
@@ -69,8 +75,20 @@ function getOrderedStops(route: RouteResponse): DisplayStop[] {
 
 // ── Component ─────────────────────────────────────────────────────
 
-export function RouteStopsTab({ route }: RouteStopsTabProps) {
+export function RouteStopsTab({ route: loaded }: RouteStopsTabProps) {
   const router = useRouter();
+  // The list as it is after a stop is added or removed here; the page's own copy is old until it reloads.
+  const [changed, setChanged] = useState<RouteResponse | null>(null);
+  const route: RouteResponse = changed !== null && changed.id === loaded.id ? changed : loaded;
+  const removeStop = async (routeStopId: string) => {
+    if (!window.confirm('Remove this stop from the route?')) return;
+    try {
+      setChanged(await RouteManagementService.removeRouteStop(route.id as string, routeStopId));
+    } catch (e) {
+      const body = (e as { body?: { message?: string } })?.body;
+      toast.error(body?.message ?? 'Could not remove the stop');
+    }
+  };
   const stops = getOrderedStops(route);
   const isOutbound = route.direction === 'OUTBOUND';
 
@@ -105,6 +123,8 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
           {route.direction}
         </div>
       </div>
+
+      <PlaceStopPanel route={route} onChanged={setChanged} />
 
       {/* Stops timeline */}
       <div className="relative">
@@ -183,6 +203,16 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
                         )}
                       </div>
                     </div>
+
+                    {stop.routeStopId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); void removeStop(stop.routeStopId as string); }}
+                        className="p-2.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        title="Remove stop from route"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
 
                     {/* View button */}
                     {stop.stopId && (

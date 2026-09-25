@@ -98,6 +98,7 @@ export { RouteGroupRequest } from './models/RouteGroupRequest';
 export type { RouteGroupResponse } from './models/RouteGroupResponse';
 export type { RouteGroupStopDetailResponse } from './models/RouteGroupStopDetailResponse';
 export type { RouteOption } from './models/RouteOption';
+export type { PlaceRouteStopRequest } from './models/PlaceRouteStopRequest';
 export { RouteRequest } from './models/RouteRequest';
 export { RouteResponse } from './models/RouteResponse';
 export { RouteScheduleStop } from './models/RouteScheduleStop';
