@@ -97,7 +97,7 @@ export type { RouteGroupResponse } from './models/RouteGroupResponse';
 export type { RouteGroupStopDetailResponse } from './models/RouteGroupStopDetailResponse';
 export type { RouteOption } from './models/RouteOption';
 export { RouteRequest } from './models/RouteRequest';
-export type { RouteResponse } from './models/RouteResponse';
+export { RouteResponse } from './models/RouteResponse';
 export { RouteScheduleStop } from './models/RouteScheduleStop';
 export type { RouteStatisticsResponse } from './models/RouteStatisticsResponse';
 export type { RouteStopDetailResponse } from './models/RouteStopDetailResponse';

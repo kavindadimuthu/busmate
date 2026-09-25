@@ -32,10 +32,18 @@ export type RouteResponse = {
     distanceKm?: number;
     estimatedDurationMinutes?: number;
     direction?: string;
+    stopListCompleteness?: RouteResponse.stopListCompleteness;
     routeStops?: Array<RouteStopResponse>;
     createdAt?: string;
     updatedAt?: string;
     createdBy?: string;
     updatedBy?: string;
 };
+export namespace RouteResponse {
+    export enum stopListCompleteness {
+        COMPLETE = 'COMPLETE',
+        PARTIAL = 'PARTIAL',
+        UNKNOWN = 'UNKNOWN',
+    }
+}
 

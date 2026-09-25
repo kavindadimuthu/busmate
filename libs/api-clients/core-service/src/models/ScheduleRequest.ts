@@ -24,9 +24,13 @@ export type ScheduleRequest = {
      */
     scheduleType: ScheduleRequest.scheduleType;
     /**
-     * Date when the schedule becomes effective (YYYY-MM-DD)
+     * Date when the schedule becomes effective (YYYY-MM-DD). Optional: a new schedule takes today's date, an update keeps the existing one
      */
-    effectiveStartDate: string;
+    effectiveStartDate?: string;
+    /**
+     * How much of the timetable is known. Only a person asserts anything but UNKNOWN; left out, a new schedule is UNKNOWN and an edit keeps its value
+     */
+    timingCompleteness?: ScheduleRequest.timingCompleteness;
     /**
      * Date when the schedule expires (YYYY-MM-DD). If not provided, schedule runs indefinitely
      */
@@ -71,6 +75,15 @@ export namespace ScheduleRequest {
     export enum scheduleType {
         REGULAR = 'REGULAR',
         SPECIAL = 'SPECIAL',
+    }
+    /**
+     * How much of the timetable is known. Only a person asserts anything but UNKNOWN; left out, a new schedule is UNKNOWN and an edit keeps its value
+     */
+    export enum timingCompleteness {
+        ALL_STOPS = 'ALL_STOPS',
+        ENDPOINTS_ONLY = 'ENDPOINTS_ONLY',
+        ORIGIN_ONLY = 'ORIGIN_ONLY',
+        UNKNOWN = 'UNKNOWN',
     }
     /**
      * Current status of the schedule
