@@ -21,7 +21,7 @@ import {
 } from "@busmate/api-client-core";
 import { coreErrorMessage } from "@/lib/coreError";
 import WorkingProposalDetail from "@/components/contribute/WorkingProposalDetail";
-import { isWorking, proposalKind } from "@/lib/proposalLabel";
+import { isWorking, observationLabel, proposalKind } from "@/lib/proposalLabel";
 
 const REJECT_REASONS: { value: RejectChangesetRequest.reason; label: string }[] = [
   { value: RejectChangesetRequest.reason.DUPLICATE, label: "Duplicate of an existing stop" },
@@ -201,7 +201,7 @@ function Review() {
           <h2 className="text-sm font-semibold text-foreground mb-1">How they know</h2>
           <p>
             {changeset?.observedOn} —{" "}
-            {OBSERVATION_LABEL[changeset?.observationMethod ?? ""] ?? changeset?.observationMethod}
+            {observationLabel(changeset?.entityType, changeset?.observationMethod)}
           </p>
           {changeset?.note && <p className="text-muted-foreground italic">"{changeset.note}"</p>}
         </CardContent>

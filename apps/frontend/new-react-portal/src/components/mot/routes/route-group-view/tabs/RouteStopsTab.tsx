@@ -19,7 +19,9 @@ interface DisplayStop {
   stopId?: string;
   stopName?: string;
   type: 'start' | 'intermediate' | 'end';
-  distance: number;
+  /** null when nobody has said how far from the start it is; 0 would claim it is at the start. */
+  distance: number | null;
+  distanceUnverified?: number | null;
   order: number;
 }
 
@@ -53,7 +55,8 @@ function getOrderedStops(route: RouteResponse): DisplayStop[] {
         stopId: stop.stopId,
         stopName: stop.stopName,
         type: 'intermediate',
-        distance: stop.distanceFromStartKm || 0,
+        distance: stop.distanceFromStartKm ?? null,
+        distanceUnverified: stop.distanceFromStartKmUnverified ?? null,
         order: idx + 1,
       });
     });
@@ -194,7 +197,13 @@ export function RouteStopsTab({ route: loaded }: RouteStopsTabProps) {
                       <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-3.5 h-3.5 text-muted-foreground/70" />
-                          <span>{stop.distance.toFixed(1)} km from start</span>
+                          <span>
+                            {stop.distance !== null
+                              ? `${stop.distance.toFixed(1)} km from start`
+                              : stop.distanceUnverified != null
+                              ? `about ${stop.distanceUnverified.toFixed(1)} km from start (unverified)`
+                              : 'distance not known'}
+                          </span>
                         </div>
                         {stop.stopId && (
                           <div className="hidden sm:block font-mono text-xs text-muted-foreground/70">

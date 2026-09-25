@@ -25,8 +25,8 @@ export default function CommunityReviewPage() {
   const { rows, totalItems, loading, stopName } = useChangesetQueue(tab);
 
   useSetPageMetadata({
-    title: 'Review Stop Proposals',
-    description: 'Compare each proposal with the current stop, and approve, reject or revert it',
+    title: 'Review Proposals',
+    description: 'Compare each proposal with what is there now, and approve or reject it. Stop corrections can also be reverted',
     activeItem: 'community-review',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Community' }, { label: 'Review' }],

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CommunityContributorsService, type ChangesetResponse } from "@busmate/api-client-core";
 import WorkingProposalDetail from "@/components/contribute/WorkingProposalDetail";
-import { isWorking, proposalKind } from "@/lib/proposalLabel";
+import { isWorking, observationLabel, proposalKind } from "@/lib/proposalLabel";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Under review",
@@ -169,7 +169,7 @@ export default function ContributionDetailPage() {
               <CardContent className="p-5 space-y-2 text-sm">
                 <p>
                   <span className="text-muted-foreground">Observed: </span>
-                  {proposal.observedOn} — {OBSERVATION_LABEL[proposal.observationMethod ?? ""] ?? proposal.observationMethod}
+                  {proposal.observedOn} — {observationLabel(proposal.entityType, proposal.observationMethod)}
                 </p>
                 {proposal.note && (
                   <p>

@@ -588,7 +588,12 @@ const FindMyBusDetailPage = () => {
                   <div className="pt-1.5 sm:pt-2">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">Operating on {formatDate(data.queryDate)}</p>
                     <div>
-                      {schedule?.isActiveOnDate !== false ? (
+                      {operatingDays.length === 0 && !schedule?.calendar ? (
+                        // No operating days are recorded, so "Yes" would be a claim nobody made (ADR-023).
+                        <Badge variant="secondary" className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
+                          Days not stated
+                        </Badge>
+                      ) : schedule?.isActiveOnDate !== false ? (
                         <Badge className="bg-green-500 hover:bg-green-600 text-white px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
                           Yes
                         </Badge>

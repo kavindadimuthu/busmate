@@ -26,7 +26,7 @@ import { useSetPageMetadata } from '@/context/PageContext';
 import { useChangesetReview } from '@/hooks/mot/community/useChangesetReview';
 import { StopProposalDiff } from '@/components/mot/community/StopProposalDiff';
 import { WorkingProposalDiff } from '@/components/mot/community/WorkingProposalDiff';
-import { isWorking, proposalKind } from '@/components/mot/community/proposalLabel';
+import { isWorking, proposalKind, workingMethodLabel } from '@/components/mot/community/proposalLabel';
 
 const REJECT_REASONS: { value: RejectChangesetRequest.reason; label: string }[] = [
   { value: RejectChangesetRequest.reason.DUPLICATE, label: 'Duplicate of an existing stop' },
@@ -61,7 +61,7 @@ export default function ChangesetReviewDetailPage() {
 
   useSetPageMetadata({
     title: 'Review Proposal',
-    description: 'Compare this proposal with the current stop and decide',
+    description: 'Compare this proposal with what is there now and decide',
     activeItem: 'community-review',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Community' }, { label: 'Review', href: '/mot/community/review' }, { label: 'Proposal' }],
@@ -146,7 +146,7 @@ export default function ChangesetReviewDetailPage() {
         <CardContent className="p-5 space-y-1 text-sm">
           <h2 className="text-sm font-semibold mb-2">How they observed it</h2>
           <p>
-            {changeset?.observedOn} — {OBSERVATION_LABEL[changeset?.observationMethod ?? ''] ?? changeset?.observationMethod}
+            {changeset?.observedOn} — {workingMethodLabel(changeset?.entityType, changeset?.observationMethod) ?? OBSERVATION_LABEL[changeset?.observationMethod ?? ''] ?? changeset?.observationMethod}
           </p>
           {changeset?.note && <p className="text-muted-foreground italic">"{changeset.note}"</p>}
         </CardContent>
