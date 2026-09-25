@@ -29,6 +29,8 @@ import ContributeApplyPage from "./pages/contribute/ContributeApplyPage";
 import ProposeStopPage from "./pages/contribute/ProposeStopPage";
 import MyContributionsPage from "./pages/contribute/MyContributionsPage";
 import ContributionDetailPage from "./pages/contribute/ContributionDetailPage";
+import StewardQueuePage from "./pages/contribute/steward/StewardQueuePage";
+import StewardReviewPage from "./pages/contribute/steward/StewardReviewPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,8 @@ const App = () => (
                 <Route path="/contribute/propose" element={<ProposeStopPage />} />
                 <Route path="/contribute/mine" element={<MyContributionsPage />} />
                 <Route path="/contribute/mine/:id" element={<ContributionDetailPage />} />
+                <Route path="/contribute/review" element={<StewardQueuePage />} />
+                <Route path="/contribute/review/:id" element={<StewardReviewPage />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFoundPage />} />
