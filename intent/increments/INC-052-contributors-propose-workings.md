@@ -1,7 +1,7 @@
 ---
 id: INC-052
 title: Contributors propose who usually works a departure, and stewards review it
-state: active
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -20,21 +20,23 @@ data (INC-048) has departures with no working at all.
 
 ## Acceptance criteria
 
-- [ ] An active contributor proposes a working for a schedule; anyone else is refused.
-- [ ] A steward sees it only if its schedule's route group is one of theirs, never who proposed it.
-- [ ] The reviewer sees the proposal beside the workings the schedule already has.
-- [ ] Approval creates the working at `SRC_4`, dated to when it was seen; passengers see it as usually, observed.
-- [ ] A refusal from the working rules (overlap) reaches the reviewer and leaves the proposal pending.
-- [ ] Rejection reaches the contributor with its reason; withdrawing works.
-- [ ] Revert of a working proposal says it is not offered.
-- [ ] The daily cap counts all proposal types together.
-- [ ] A contributor can propose from a departure's page, and a steward can review it, in a browser test.
+- [x] An active contributor proposes a working for a schedule; anyone else is refused.
+- [x] A steward sees it only if its schedule's route group is one of theirs, never who proposed it.
+- [x] The reviewer sees the proposal beside the workings the schedule already has.
+- [x] Approval creates the working at `SRC_4`, dated to when it was seen; passengers see it as usually, observed.
+- [x] A refusal from the working rules (overlap) reaches the reviewer and leaves the proposal pending.
+- [x] Rejection reaches the contributor with its reason; withdrawing works.
+- [x] Revert of a working proposal says it is not offered.
+- [x] The daily cap counts all proposal types together.
+- [x] A contributor can propose from a departure's page, and a steward can review it, in a browser test.
 
 ## Out of scope
 
 - Correcting or ending a working by proposal.
 - Choosing a registered operator or bus.
 - Proposals for other record types (routes, schedule times).
+- Reasons for rejecting a working are the three that fit (already recorded, can't verify, other).
+- The generated client was extended by hand in the generator's form; regenerate it with the next contract change.
 
 ## Constraints
 
@@ -42,7 +44,7 @@ data (INC-048) has departures with no working at all.
 
 ## Open questions
 
-- Should a contributor see workings already on a departure before proposing? Assumed yes.
+- A contributor sees the departure's page, with its current "usually" line, before proposing; the form itself does not list them.
 
 ## Decisions
 - See ADR-026
