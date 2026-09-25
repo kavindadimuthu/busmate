@@ -59,6 +59,9 @@ coverage/
 tests/e2e/auth/storage-state.json
 tests/e2e/playwright-report/
 tests/e2e/test-results/
+tests/flows/.run/
+tests/flows/report/
+tests/flows/test-results/
 
 # Misc
 *.tsbuildinfo
