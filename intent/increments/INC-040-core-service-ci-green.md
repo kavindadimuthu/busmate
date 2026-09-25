@@ -1,7 +1,7 @@
 ---
 id: INC-040
 title: A create response tells the truth about when the record was created, and CI goes green
-state: active
+state: in-review
 track: 1
 risk: R3
 owner: kavinda
@@ -10,8 +10,9 @@ autonomy: A2
 
 ## Goal
 
-`POST` responses in core-service carry the `createdAt`/`updatedAt` they claim to, and
-`backend-ci.yml` passes on `main` for the first time.
+`backend-ci.yml` passes on `main` for the first time, and the same gates can be run locally before
+pushing. Along the way, `POST` responses in core-service carry the `createdAt`/`updatedAt` they claim
+to.
 
 ## Why now
 
@@ -21,7 +22,9 @@ is how a gate stops being a gate: nobody reads a signal that is always red, so t
 regression arrives unnoticed.
 
 Fixing it surfaced that it was several independent problems, not one — each only visible once the
-one before it was fixed and pushed for a real CI run.
+one before it was fixed and pushed for a real CI run. Two of them had been hiding behind the local
+environment (a secrets file, a warm Docker image cache), which is why "it passes on my machine" was
+true the whole time.
 
 ## Design
 
@@ -85,6 +88,13 @@ two MinIO test classes and had been assumed unaffected. Fixed by pointing the th
 classes at `bitnamilegacy/minio` from Docker Hub (still real MinIO, pinned to a release), and
 verified with the quay image removed from the local cache so the run matches the runner.
 
+**Fifth, not a defect: a way to run the gates locally.** Every cause above cost a push and a wait on
+GitHub's runners to discover. `make ci-local` (`scripts/ci-local.sh`) runs the workflow's two gates —
+Flyway migrate + validate, and each service's `mvn verify` — against throwaway containers, narrowable
+to one gate or service. `backend-ci.yml` stays the source of truth and the script mirrors it. It is
+honest about its limit: it cannot reproduce a runner's network or a cold cache on its own, and two of
+the four causes above passed locally, so a green local run is necessary, not sufficient.
+
 ## Acceptance criteria
 
 - [x] core-service's full Maven verify passes with no failing tests, including with no secrets
@@ -92,9 +102,10 @@ verified with the quay image removed from the local cache so the run matches the
       checked directly rather than assumed.
 - [x] A create response carries a non-null `createdAt`/`updatedAt`, and they match what a
       subsequent read of the same record returns.
-- [ ] Backend CI is green on this branch's PR, including the services this does not touch.
-      *(Four causes found and fixed; the last one is confirmed locally with a cold image cache
-      and awaits a real CI run.)*
+- [x] Backend CI is green on this branch's PR, including the services this does not touch — all
+      eight jobs, on a real GitHub Actions run.
+- [x] The stale claims that CI had never run are corrected where they lived (`context.md`,
+      `policy.yaml`, the workflow's own header), and now point at `make ci-local`.
 
 ## Out of scope
 
@@ -118,6 +129,8 @@ verified with the quay image removed from the local cache so the run matches the
   fix moves *when* a value is computed, not what is stored.
 - The CI change is additive only: one pre-pull step, for the two services with MinIO tests, of the
   exact image those tests request. Nothing about what gets tested changes.
+- `scripts/ci-local.sh` and its `Makefile` target are developer tooling, not a gate: nothing depends
+  on them, and CI never calls them.
 
 ## Open questions
 

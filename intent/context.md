@@ -152,8 +152,10 @@ Violating one of these is a bug, not a design choice.
 
 Deliberately unfixed. Each is a backlog candidate, not a surprise.
 
-- **CI covers backend only**, and [backend-ci.yml](../.github/workflows/backend-ci.yml) has never run
-  on GitHub Actions. There is no frontend lint/test/e2e gate. This is why `policy.yaml` caps frontend
+- **CI covers backend only** ([backend-ci.yml](../.github/workflows/backend-ci.yml); `make ci-local`
+  runs the same gates locally). It was red on every run until INC-040 — several independent causes,
+  each hidden locally by a secrets file or a warm Docker cache — so treat a local pass as necessary,
+  not sufficient. There is no frontend lint/test/e2e gate. This is why `policy.yaml` caps frontend
   autonomy at A2 despite frontend code being R1 — the evidence that would justify A3 does not exist
   yet. **Fixing this is the highest-leverage available increment.**
 - `user-service` package layout diverges from the other Spring services.

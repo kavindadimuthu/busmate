@@ -10,10 +10,10 @@
 #      Testcontainers (AbstractPostgresIntegrationTest) and run the actual Flyway migrations, so the
 #      tests exercise the same schema path production uses (no more H2/Hibernate-DDL divergence).
 #
-# NOTE: This workflow has been validated locally (the Flyway gate against a local Postgres, and each
-# service's `mvn verify` against Testcontainers) but has NOT yet run on GitHub Actions — it is
-# committed unpushed for review. Push to a branch and open a PR to see it execute. The Flyway CLI
-# image tag (redgate/flyway:11) and the runner Java version (17) may need a small tweak on first run.
+# NOTE: Both gates can be run locally before pushing: `make ci-local` (scripts/ci-local.sh, which
+# mirrors this file — keep the two in step). Local runs cannot reproduce everything a runner sees:
+# a warm local Docker image cache and a present config/secrets/.env both hid real CI failures here
+# (INC-040), so a green local run is necessary, not sufficient.
 name: Backend CI
 
 on:

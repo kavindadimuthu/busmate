@@ -99,9 +99,8 @@ risk_classes:
 # Honest override. R1 nominally permits A3-A4, but A4 "requires CI that would
 # actually catch the failure — without it, A4 is just hoping" (HACO §7.3).
 #
-# Today .github/workflows/ contains backend-ci.yml only, and by its own header
-# comment it has never run on GitHub Actions. There is no frontend lint, test or
-# Playwright gate. So for frontend paths the honest answer to "what would catch
+# Today .github/workflows/ contains backend-ci.yml only, so there is no frontend
+# lint, test or Playwright gate. So for frontend paths the honest answer to "what would catch
 # this?" is "a human reading carefully" — which is A2.
 #
 # Remove this block when frontend CI exists and has demonstrably caught a
