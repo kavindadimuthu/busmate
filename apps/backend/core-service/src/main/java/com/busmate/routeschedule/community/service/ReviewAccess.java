@@ -11,9 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.busmate.routeschedule.shared.exception.ForbiddenException;
 import com.busmate.routeschedule.community.entity.Changeset;
 import com.busmate.routeschedule.community.entity.ChangesetAction;
+import com.busmate.routeschedule.community.entity.ChangesetEntityType;
 import com.busmate.routeschedule.community.entity.Contributor;
 import com.busmate.routeschedule.community.repository.ContributorRepository;
 import com.busmate.routeschedule.network.repository.RouteStopRepository;
+import com.busmate.routeschedule.scheduling.repository.ScheduleRepository;
 import com.busmate.routeschedule.shared.security.Caller;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class ReviewAccess {
     private final ContributorRepository contributors;
     private final ContributorStanding standing;
     private final RouteStopRepository routeStops;
+    private final ScheduleRepository schedules;
 
     @Transactional(readOnly = true)
     public Reviewer reviewer(Caller caller) {
@@ -64,8 +67,15 @@ public class ReviewAccess {
         }
     }
 
-    /** Route groups a proposal belongs to: what serves its target stop, or its proposer's declared corridors. */
+    /** Route groups a proposal belongs to: for a stop, what serves it or its proposer's declared corridors; for a working, its schedule's route group. */
     private Set<UUID> corridorsOf(Changeset c) {
+        if (c.getEntityType() == ChangesetEntityType.SCHEDULE_WORKING) {
+            // The route group its schedule runs on. A route with no group has no corridor, so it is staff-only.
+            return schedules.findById(c.getTargetId())
+                    .map(s -> s.getRoute().getRouteGroup())
+                    .map(g -> new HashSet<>(Set.of(g.getId())))
+                    .orElseGet(HashSet::new);
+        }
         if (c.getAction() == ChangesetAction.UPDATE && c.getTargetId() != null) {
             return new HashSet<>(routeStops.findRouteGroupIdsByStopId(c.getTargetId()));
         }

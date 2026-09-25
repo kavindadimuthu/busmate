@@ -174,8 +174,8 @@ public class StopProposalService {
     }
 
     private void requireUnderDailyCap(UUID userId) {
-        long today = changesets.countByProposerUserIdAndEntityTypeAndCreatedAtAfter(
-                userId, ChangesetEntityType.STOP, Instant.now().truncatedTo(ChronoUnit.DAYS));
+        long today = changesets.countByProposerUserIdAndCreatedAtAfter(
+                userId, Instant.now().truncatedTo(ChronoUnit.DAYS));
         if (today >= dailyCap) {
             throw new ConflictException("You've reached today's limit of " + dailyCap + " proposals — try again tomorrow");
         }

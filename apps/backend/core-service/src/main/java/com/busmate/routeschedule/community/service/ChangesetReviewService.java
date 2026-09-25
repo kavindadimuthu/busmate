@@ -15,6 +15,8 @@ import com.busmate.routeschedule.community.dto.ChangesetResponse;
 import com.busmate.routeschedule.community.dto.ChangesetReviewResponse;
 import com.busmate.routeschedule.community.dto.ContributorTrackRecord;
 import com.busmate.routeschedule.community.dto.RejectChangesetRequest;
+import com.busmate.routeschedule.community.dto.ScheduleWorkingContext;
+import com.busmate.routeschedule.community.dto.WorkingProposalRequest;
 import com.busmate.routeschedule.community.entity.Affiliation;
 import com.busmate.routeschedule.community.entity.Changeset;
 import com.busmate.routeschedule.community.entity.ChangesetAction;
@@ -23,6 +25,9 @@ import com.busmate.routeschedule.community.entity.ChangesetStatus;
 import com.busmate.routeschedule.community.entity.Contributor;
 import com.busmate.routeschedule.community.repository.ChangesetRepository;
 import com.busmate.routeschedule.community.repository.ContributorRepository;
+import com.busmate.routeschedule.scheduling.dto.request.ScheduleWorkingRequest;
+import com.busmate.routeschedule.scheduling.repository.ScheduleRepository;
+import com.busmate.routeschedule.scheduling.service.ScheduleWorkingService;
 import com.busmate.routeschedule.shared.dto.LocationDto;
 import com.busmate.routeschedule.network.dto.request.StopRequest;
 import com.busmate.routeschedule.network.dto.response.StopResponse;
@@ -60,10 +65,12 @@ public class ChangesetReviewService {
     private final StopMapper stopMapper;
     private final ObjectMapper objectMapper;
     private final ReviewAccess access;
+    private final ScheduleWorkingService workings;
+    private final ScheduleRepository schedules;
 
     @Transactional(readOnly = true)
-    public Page<ChangesetReviewResponse> queue(Caller caller, ChangesetStatus status, UUID proposerUserId,
-                                                String homeDistrict, Pageable pageable) {
+    public Page<ChangesetReviewResponse> queue(Caller caller, ChangesetEntityType entityType, ChangesetStatus status,
+                                                UUID proposerUserId, String homeDistrict, Pageable pageable) {
         ReviewAccess.Reviewer reviewer = access.reviewer(caller);
         // A steward does not see who proposed a change (ADR-022), so they cannot filter by it either.
         UUID proposerFilter = reviewer.isStaff() ? proposerUserId : null;
@@ -77,12 +84,12 @@ public class ChangesetReviewService {
             return Page.empty(pageable);
         }
         if (reviewer.isStaff()) {
-            return changesets.findReviewQueue(ChangesetEntityType.STOP, status, proposerFilter,
+            return changesets.findReviewQueue(entityType, status, proposerFilter,
                     districtProposerIds, pageable).map(c -> toReviewResponse(c, false));
         }
         // Scope is derived per proposal (ADR-022), so a steward's queue is filtered before it is paged.
         // Pilot-scale by design; the ADR names the trigger for storing the corridor instead.
-        List<Changeset> visible = changesets.findReviewQueue(ChangesetEntityType.STOP, status, null,
+        List<Changeset> visible = changesets.findReviewQueue(entityType, status, null,
                         districtProposerIds, Pageable.unpaged()).getContent().stream()
                 .filter(c -> !c.getProposerUserId().equals(reviewer.userId()))
                 .filter(c -> access.inScope(reviewer, c))
@@ -107,8 +114,11 @@ public class ChangesetReviewService {
         ReviewAccess.Reviewer reviewer = access.reviewer(staff);
         Changeset c = find(changesetId);
         access.requireInScope(reviewer, c);
-        requireStopPending(c);
+        requirePending(c);
         requireNotSelf(staff, c);
+        if (c.getEntityType() == ChangesetEntityType.SCHEDULE_WORKING) {
+            return approveWorking(staff, reviewer, c);
+        }
 
         StopRequest request = deserialize(c);
         Stop stop;
@@ -150,14 +160,17 @@ public class ChangesetReviewService {
         ReviewAccess.Reviewer reviewer = access.reviewer(staff);
         Changeset c = find(changesetId);
         access.requireInScope(reviewer, c);
-        requireStopPending(c);
+        requirePending(c);
         requireNotSelf(staff, c);
 
+        if (!request.getReason().appliesTo(c.getEntityType())) {
+            throw new BadRequestException("That reason doesn't apply to this kind of proposal");
+        }
         c.setStatus(ChangesetStatus.REJECTED);
         c.setDecidedBy(staff.userId());
         c.setDecidedAt(Instant.now());
         String note = request.getNote() == null ? "" : request.getNote().strip();
-        c.setDecisionReason(request.getReason().label() + (note.isEmpty() ? "" : ": " + note));
+        c.setDecisionReason(request.getReason().label(c.getEntityType()) + (note.isEmpty() ? "" : ": " + note));
         return toResponse(changesets.save(c), !reviewer.isStaff());
     }
 
@@ -167,7 +180,10 @@ public class ChangesetReviewService {
             throw new ForbiddenException("Only staff can revert an approval");
         }
         Changeset c = find(changesetId);
-        if (c.getEntityType() != ChangesetEntityType.STOP || c.getStatus() != ChangesetStatus.APPROVED) {
+        if (c.getEntityType() == ChangesetEntityType.SCHEDULE_WORKING) {
+            throw new ConflictException("An approved working can't be reverted here — remove it from the schedule's workings instead");
+        }
+        if (c.getStatus() != ChangesetStatus.APPROVED) {
             throw new ConflictException("Only an approved stop proposal can be reverted");
         }
         if (c.getAction() != ChangesetAction.UPDATE) {
@@ -204,16 +220,42 @@ public class ChangesetReviewService {
         return toResponse(changesets.save(c));
     }
 
+    /**
+     * Writes a contributor's working through the same code staff use, so every rule staff face applies here.
+     * A refusal (an overlap, say) propagates and rolls this back: the proposal stays pending, with the reason
+     * given to the reviewer, who can reject it. It is recorded at SRC_4, dated to when it was seen (ADR-026).
+     */
+    private ChangesetResponse approveWorking(Caller staff, ReviewAccess.Reviewer reviewer, Changeset c) {
+        WorkingProposalRequest proposed = objectMapper.convertValue(c.getProposedValues(), WorkingProposalRequest.class);
+        List<ScheduleWorkingRequest.VehicleClaim> vehicles = proposed.platesObserved() == null ? null
+                : proposed.platesObserved().stream().filter(p -> p != null && !p.isBlank())
+                        .map(p -> new ScheduleWorkingRequest.VehicleClaim(null, p.strip())).toList();
+        workings.create(c.getTargetId(), new ScheduleWorkingRequest(
+                null, null, null, proposed.operatorNameObserved(), proposed.serviceClass(),
+                vehicles == null || vehicles.isEmpty() ? null : vehicles,
+                SourceTier.SRC_4, COMMUNITY_CREDIT_LABEL, proposed.observedOn()), staff.auditId());
+
+        c.setStatus(ChangesetStatus.APPROVED);
+        c.setDecidedBy(staff.userId());
+        c.setDecidedAt(Instant.now());
+        return toResponse(changesets.save(c), !reviewer.isStaff());
+    }
+
+    private ScheduleWorkingContext contextOf(Changeset c) {
+        return schedules.findById(c.getTargetId()).map(s -> new ScheduleWorkingContext(
+                s.getId(), s.getName(),
+                s.getRoute() != null ? s.getRoute().getName() : null,
+                s.getRoute() != null ? s.getRoute().getRouteNumber() : null,
+                workings.list(s.getId()))).orElse(null);
+    }
+
     // ───────────────────────────── helpers ─────────────────────────────
 
     private Changeset find(UUID id) {
         return changesets.findById(id).orElseThrow(() -> new ResourceNotFoundException("No proposal " + id));
     }
 
-    private void requireStopPending(Changeset c) {
-        if (c.getEntityType() != ChangesetEntityType.STOP) {
-            throw new BadRequestException("Only stop proposals can be reviewed today");
-        }
+    private void requirePending(Changeset c) {
         if (c.getStatus() != ChangesetStatus.PENDING) {
             throw new ConflictException("This proposal has already been decided");
         }
@@ -305,6 +347,10 @@ public class ChangesetReviewService {
     }
 
     private ChangesetReviewResponse toReviewResponse(Changeset c, boolean redactProposer) {
+        if (c.getEntityType() == ChangesetEntityType.SCHEDULE_WORKING) {
+            return new ChangesetReviewResponse(toResponse(c, redactProposer), null, null, affiliationOf(c), trackRecordOf(c),
+                    false, false, contextOf(c));
+        }
         StopResponse currentStop = c.getTargetId() != null
                 ? stops.findById(c.getTargetId()).map(stopMapper::toResponse).orElse(null)
                 : null;
@@ -320,12 +366,8 @@ public class ChangesetReviewService {
             }
         }
 
-        Contributor contributor = contributors.findById(c.getProposerUserId()).orElse(null);
-        Affiliation affiliation = contributor != null ? contributor.getAffiliation() : null;
-        ContributorTrackRecord track = new ContributorTrackRecord(
-                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.APPROVED),
-                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REJECTED),
-                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REVERTED));
+        Affiliation affiliation = affiliationOf(c);
+        ContributorTrackRecord track = trackRecordOf(c);
 
         boolean outranks = false;
         boolean stale = false;
@@ -339,7 +381,19 @@ public class ChangesetReviewService {
             }
         }
 
-        return new ChangesetReviewResponse(toResponse(c, redactProposer), currentStop, distance, affiliation, track, outranks, stale);
+        return new ChangesetReviewResponse(toResponse(c, redactProposer), currentStop, distance, affiliation, track, outranks, stale, null);
+    }
+
+    private Affiliation affiliationOf(Changeset c) {
+        Contributor contributor = contributors.findById(c.getProposerUserId()).orElse(null);
+        return contributor != null ? contributor.getAffiliation() : null;
+    }
+
+    private ContributorTrackRecord trackRecordOf(Changeset c) {
+        return new ContributorTrackRecord(
+                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.APPROVED),
+                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REJECTED),
+                changesets.countByProposerUserIdAndStatus(c.getProposerUserId(), ChangesetStatus.REVERTED));
     }
 
     private ChangesetResponse toResponse(Changeset c) {

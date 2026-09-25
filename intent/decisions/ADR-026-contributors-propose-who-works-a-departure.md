@@ -44,7 +44,7 @@ made that path corridor-scoped and blind to the proposer.
 
 - **Nothing becomes trusted faster.** Approval is by a human who cannot see the proposer; the tier is the same
   `SRC_4` a stop gets. A working still never generates or alters a trip.
-- **One migration** widens the changeset's type check. A production migration is a human step.
+- **One migration** widens the changeset's type check and lets a working proposal's create name its schedule (a stop's still must not). A production migration is a human step.
 - **The record type must be checked wherever a reviewer acts.** Approve, reject and read each handled stops
   only; each now branches on type, and a new type added later must be handled in all of them.
 

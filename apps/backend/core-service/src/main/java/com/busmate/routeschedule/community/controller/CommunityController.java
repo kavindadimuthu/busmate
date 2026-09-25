@@ -30,6 +30,9 @@ import com.busmate.routeschedule.community.dto.RejectChangesetRequest;
 import com.busmate.routeschedule.community.entity.ChangesetStatus;
 import com.busmate.routeschedule.community.service.ChangesetReviewService;
 import com.busmate.routeschedule.community.service.StopProposalService;
+import com.busmate.routeschedule.community.service.WorkingProposalService;
+import com.busmate.routeschedule.community.dto.WorkingProposalRequest;
+import com.busmate.routeschedule.community.entity.ChangesetEntityType;
 import com.busmate.routeschedule.community.dto.ContributorAgreementResponse;
 import com.busmate.routeschedule.community.dto.ContributorApplicationRequest;
 import com.busmate.routeschedule.community.dto.ContributorCountsResponse;
@@ -54,6 +57,7 @@ public class CommunityController {
 
     private final ContributorService service;
     private final StopProposalService stopProposals;
+    private final WorkingProposalService workingProposals;
     private final ChangesetReviewService review;
     private final CallerContext callerContext;
 
@@ -167,6 +171,12 @@ public class CommunityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(stopProposals.propose(callerContext.require(), request));
     }
 
+    @PostMapping("/working-proposals")
+    @Operation(summary = "Propose who usually works a departure (active contributors only)", operationId = "proposeScheduleWorking")
+    public ResponseEntity<ChangesetResponse> proposeWorking(@Valid @RequestBody WorkingProposalRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workingProposals.propose(callerContext.require(), request));
+    }
+
     @GetMapping("/changesets/mine")
     @Operation(summary = "The signed-in user's own proposals, newest first", operationId = "listMyChangesets")
     public Page<ChangesetResponse> mine(@RequestParam(required = false) ChangesetStatus status,
@@ -185,14 +195,15 @@ public class CommunityController {
 
     @GetMapping("/changesets")
     @PreAuthorize("hasAnyRole('ADMIN', 'MOT', 'PASSENGER')")
-    @Operation(summary = "The review queue: stop proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity",
+    @Operation(summary = "The review queue: stop and working proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity",
             operationId = "listChangesetsForReview")
-    public Page<ChangesetReviewResponse> queue(@RequestParam(required = false) ChangesetStatus status,
+    public Page<ChangesetReviewResponse> queue(@RequestParam(required = false) ChangesetEntityType entityType,
+                                               @RequestParam(required = false) ChangesetStatus status,
                                                @RequestParam(required = false) UUID proposerUserId,
                                                @RequestParam(required = false) String homeDistrict,
                                                @RequestParam(defaultValue = "0") int page,
                                                @RequestParam(defaultValue = "20") int size) {
-        return review.queue(callerContext.require(), status, proposerUserId, homeDistrict,
+        return review.queue(callerContext.require(), entityType, status, proposerUserId, homeDistrict,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
