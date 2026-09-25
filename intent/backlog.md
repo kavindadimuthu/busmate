@@ -15,15 +15,6 @@ Delete lines that stop being worth doing rather than marking them abandoned.
 
 ## Correctness bugs — code-confirmed, fix first
 
-- ✅ **Approving a stop correction erases the stop's Sinhala and Tamil names.** Found live during the
-  INC-041/042 end-to-end run: a correction to Kadawatha left `name_sinhala` and `name_tamil` empty; an
-  untouched stop kept its own. Two causes together. `ProposeStopPage.selectTargetStop` seeds the form from
-  the passenger search result, which carries no Sinhala or Tamil names, so the proposal sends them as
-  null; then `StopMapper.updateEntityFromRequest` (MapStruct, null-overwriting by default) writes those
-  nulls over the real values on approval — by staff or a steward alike. Fix the form (load the full stop)
-  and decide whether apply should skip fields a proposal leaves out; a contributor deliberately clearing a
-  translation is the case that decision has to weigh. The same path may also drop the location's Sinhala
-  and Tamil address, city and state — check when fixing.
 - ✅ **Trip generation ignores `ScheduleCalendar` and `ScheduleException`** — creates trips on
   non-service days and skips `ADDED` days, so passenger search and trip data disagree.
   `TripServiceImpl.generateTripsForSchedule`. Highest impact, low effort — the natural first fix.

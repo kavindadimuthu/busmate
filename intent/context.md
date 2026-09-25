@@ -144,6 +144,10 @@ Violating one of these is a bug, not a design choice.
 - **Community standing lives in core-service, not user-service.** A contributor is still a
   `passenger` account; `core-service`'s `community` module (ADR-019) is the only source of what they
   may do to the network. Never add a `contributor` user type or check standing from the JWT.
+- **A correction never blanks what it doesn't mention.** Optional fields a correction leaves out (null, missing
+  or blank) are filled from the stop's current values, when the proposal is stored and again when it is
+  applied (`StopCorrectionMerge`, INC-043). A correction therefore cannot clear a field; that is a direct
+  staff edit. A new write path from a proposal must go through the same merge.
 - **A steward reviews only inside their corridors, and blind.** A changeset's corridor is derived when read —
   its target stop's route groups, or its proposer's declared corridors — never stored; one that matches no
   steward is staff-only. Stewards never see the proposer's identity and cannot revert
