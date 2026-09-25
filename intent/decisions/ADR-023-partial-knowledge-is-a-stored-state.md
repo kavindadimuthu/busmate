@@ -1,6 +1,6 @@
 # ADR-023 · Partial knowledge is a stored state, not a validation failure
 
-**Date:** 2026-09-25 · **Status:** Proposed
+**Date:** 2026-09-25 · **Status:** Accepted
 **Type:** architecture
 
 ## Context
