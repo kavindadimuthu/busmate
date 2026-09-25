@@ -53,16 +53,17 @@ test.describe.serial('the showcase data, on screen', () => {
     await expect(staff.page.getByText('Rode this bus')).toBeVisible();
     await expect(staff.page.getByRole('button', { name: /revert/i })).toHaveCount(0); // a working is removed, not reverted
 
-    await staff.page.goto(`${URLS.portal}/mot/community/review`);
-    await staff.page.getByText('Approved', { exact: true }).first().click();
-    await staff.page.getByText(/Kadawatha/).first().click();
+    // Open the exact proposal (several approved corrections can share a stop's name).
+    const mine = items((await (await as(ACCOUNTS.amara)).get('/api/community/changesets/mine?size=100')).body);
+    const target = mine.find((c: any) => c.proposedValues?.description === 'Showcase: an approved correction');
+    await staff.page.goto(`${URLS.portal}/mot/community/review/${target.id}`);
     await staff.page.getByRole('button', { name: /revert/i }).click();
+    await expect(staff.page.getByText('REVERTED').first()).toBeVisible();
     await staff.context.close();
 
     // The database, not a toast, is the evidence: that correction is now reverted.
-    const mine = items((await (await as(ACCOUNTS.amara)).get('/api/community/changesets/mine?size=100')).body);
-    const undone = mine.find((c: any) => c.proposedValues?.description === 'Showcase: an approved correction');
-    expect(undone.status).toBe('REVERTED');
+    const after = items((await (await as(ACCOUNTS.amara)).get('/api/community/changesets/mine?size=100')).body);
+    expect(after.find((c: any) => c.id === target.id).status).toBe('REVERTED');
   });
 
   test('an imported route with no group can be opened, and a stop added to it without breaking its times', async ({ browser }) => {

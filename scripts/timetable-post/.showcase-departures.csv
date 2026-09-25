@@ -1,0 +1,5 @@
+sectionKey,routeName,routeNumber,direction,roadType,originKey,destinationKey,distanceKm,estimatedDurationMinutes,departureTime,scheduleName,operatorName,plates,serviceClass,sundayExcluded,rotation,notes,sourceLine
+03-EMBILIPITIYA,Embilipitiya - Colombo via old road (03),03,OUTBOUND,NORMALWAY,EMBILIPITIYA,COLOMBO,165,285,05:00,05:00 Sample Express,Sample Express,AA-1111,,false,false,,9
+03-EMBILIPITIYA,Embilipitiya - Colombo via old road (03),03,OUTBOUND,NORMALWAY,EMBILIPITIYA,COLOMBO,165,285,06:00,06:00 Sample Lines,Sample Lines,BB-2222,,true,false,,11
+03-EMBILIPITIYA,Embilipitiya - Colombo via old road (03),03,OUTBOUND,NORMALWAY,EMBILIPITIYA,COLOMBO,165,285,07:15,07:15 Sample Board,Sample Board,CC-3333 | CC-4444,SEMI_LUXURY,false,true,,13
+03-PETTAH_GUNASINGHAPURA,Pettah Gunasinghapura Bodhiraja Mawatha - Embilipitiya via old road (03),03,INBOUND,NORMALWAY,PETTAH_GUNASINGHAPURA,EMBILIPITIYA,,,08:20,08:20 Sample Express,Sample Express,AA-1111,,false,false,,18
