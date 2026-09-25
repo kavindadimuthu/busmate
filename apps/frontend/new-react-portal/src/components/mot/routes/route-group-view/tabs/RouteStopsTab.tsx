@@ -23,14 +23,16 @@ interface DisplayStop {
 function getOrderedStops(route: RouteResponse): DisplayStop[] {
   const stops: DisplayStop[] = [];
 
-  // Start stop
-  stops.push({
-    stopId: route.startStopId,
-    stopName: route.startStopName,
-    type: 'start',
-    distance: 0,
-    order: 0,
-  });
+  // Start stop. A route can be known without endpoints (ADR-023), so only show one that exists.
+  if (route.startStopId || route.startStopName) {
+    stops.push({
+      stopId: route.startStopId,
+      stopName: route.startStopName,
+      type: 'start',
+      distance: 0,
+      order: 0,
+    });
+  }
 
   // Intermediate stops (sorted by order)
   if (route.routeStops && route.routeStops.length > 0) {
@@ -52,13 +54,15 @@ function getOrderedStops(route: RouteResponse): DisplayStop[] {
   }
 
   // End stop
-  stops.push({
-    stopId: route.endStopId,
-    stopName: route.endStopName,
-    type: 'end',
-    distance: route.distanceKm || 0,
-    order: stops.length,
-  });
+  if (route.endStopId || route.endStopName) {
+    stops.push({
+      stopId: route.endStopId,
+      stopName: route.endStopName,
+      type: 'end',
+      distance: route.distanceKm || 0,
+      order: stops.length,
+    });
+  }
 
   return stops;
 }
@@ -78,6 +82,12 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
           <h3 className="text-lg font-semibold text-foreground">Route Stops</h3>
           <p className="text-sm text-muted-foreground mt-0.5">
             {stops.length} stops along {route.distanceKm?.toFixed(1) || 0} km route
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Stop list:{' '}
+            {{ COMPLETE: 'confirmed complete', PARTIAL: 'partial — more stops exist', UNKNOWN: 'not confirmed' }[
+              route.stopListCompleteness ?? 'UNKNOWN'
+            ]}
           </p>
         </div>
 
