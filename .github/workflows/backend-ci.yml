@@ -84,6 +84,15 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      # core-service's BusProfileIntegrationTest starts its own Testcontainers MinIO (INC-018),
+      # separate from AbstractPostgresIntegrationTest's shared Postgres container. Testcontainers
+      # gives an image pull 2 minutes before failing the whole test class; pulling from quay.io
+      # from this runner reliably took longer than that (confirmed on two separate CI runs, not a
+      # one-off), so the pull happens here first, on this step's own much longer default timeout,
+      # with the image then already warm in the local Docker cache when Testcontainers asks for it.
+      - name: Pre-pull MinIO image (avoids Testcontainers' 2-minute pull timeout from quay.io)
+        if: matrix.service == 'core-service'
+        run: docker pull quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
       - name: Run tests (Testcontainers Postgres exercises the real Flyway migrations)
         working-directory: apps/backend/${{ matrix.service }}
         run: mvn -B clean verify

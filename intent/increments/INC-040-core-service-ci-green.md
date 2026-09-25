@@ -3,7 +3,7 @@ id: INC-040
 title: A create response tells the truth about when the record was created, and CI goes green
 state: active
 track: 1
-risk: R2
+risk: R3
 owner: kavinda
 autonomy: A2
 ---
@@ -20,15 +20,14 @@ Backend CI has failed on every run since it first executed, on every branch and 
 is how a gate stops being a gate: nobody reads a signal that is always red, so the next real
 regression arrives unnoticed.
 
-Fixing it surfaced that it was two independent bugs, not one, because the first one had been
-masking the second everywhere it was checked before now: locally, where the fix was written and
-verified, a real secrets file happens to be present and hid the second one completely.
+Fixing it surfaced that it was three independent problems, not one — each only visible once the
+one before it was fixed and pushed for a real CI run, because two of the three had been fully
+masked everywhere they were checked before now.
 
 ## Design
 
-Two unrelated defects, found in sequence rather than both at once — the second was invisible until
-the first was fixed and CI was re-run for real, because every prior local run had a real secrets
-file sitting in the working tree that no CI run has ever had.
+Three unrelated problems, found in sequence rather than all at once — each was invisible until the
+one before it was fixed and CI was re-run for real.
 
 **First: a create response returning `createdAt`/`updatedAt` as null.** `BaseEntity`
 stamps `createdAt`/`updatedAt` with Hibernate's `@CreationTimestamp`/`@UpdateTimestamp`,
@@ -68,6 +67,17 @@ tree there. Fixed the same way the sibling service already does: safe non-real p
 in the test profile, which the one test that needs real S3 behaviour already overrides for itself
 against its own Testcontainers instance.
 
+**Third: a Testcontainers MinIO image pull reliably timing out on the runner.** With the first two
+fixed, the one core-service test class that starts its own MinIO container (separate from the
+Postgres one every test shares) failed on two separate, independent CI runs with the same
+exception: Testcontainers gives an image pull two minutes before giving up, and pulling
+`quay.io/minio/minio` from this runner consistently took longer than that. Not a one-off — checked
+by re-running the identical CI job a second time and getting the identical failure before treating
+it as a real problem rather than registry flakiness worth ignoring. Fixed by pulling the image in
+its own CI step first, ahead of the test run, so the pull happens against that step's own far
+longer default timeout and the image is already warm in the local cache by the time Testcontainers
+asks for it.
+
 ## Acceptance criteria
 
 - [x] core-service's full Maven verify passes with no failing tests, including with no secrets
@@ -76,6 +86,8 @@ against its own Testcontainers instance.
 - [x] A create response carries a non-null `createdAt`/`updatedAt`, and they match what a
       subsequent read of the same record returns.
 - [ ] Backend CI is green on this branch's PR, including the services this does not touch.
+      *(In progress — two of three known causes fixed and confirmed on real CI runs; the third
+      pushed and awaiting confirmation.)*
 
 ## Out of scope
 
@@ -88,13 +100,18 @@ against its own Testcontainers instance.
 
 ## Constraints
 
-- R2 (`apps/backend/core-service/**`). `BaseEntity` is core-service-only — no other service has a
-  copy — so the blast radius stops at this service, but it is every entity within it.
-- A2, not the A3 that R2 allows for Testcontainers-covered changes: the suite covers the failing
-  assertion well, but exactly one test asserts this field on exactly one entity, so the honest
-  answer for the rest of the blast radius is still a human reading carefully.
-- No schema change. The columns, their nullability and the DTO shape are all unchanged — this moves
-  *when* a value is computed, not what is stored.
+- Spans two risk classes, so the increment takes the higher one (R3): `apps/backend/core-service/**`
+  is R2, and the CI pre-pull step touches `.github/workflows/**`, which policy.yaml classes as R3
+  on its own — a workflow change affects what every future PR's gate actually checks, not just this
+  one.
+- A2 throughout. R2 alone would allow A3 for a Testcontainers-covered change, but exactly one test
+  asserts the first bug's field on exactly one entity, and `.github/workflows/**` caps at A2
+  regardless — the honest answer for both is a human reading carefully.
+- No schema change. The columns, their nullability and the DTO shape are all unchanged — the first
+  fix moves *when* a value is computed, not what is stored.
+- The CI change is additive only: one new step, conditioned to run for core-service alone, pulling
+  an image already pinned to the exact tag Testcontainers was already going to request. Nothing
+  about what gets tested changes.
 
 ## Open questions
 
