@@ -1,7 +1,7 @@
 ---
 id: INC-046
 title: A passenger sees who usually works a departure, labelled as reported
-state: active
+state: in-review
 track: 1
 risk: R2
 owner: kavinda
@@ -27,7 +27,7 @@ content is exactly this, and a passenger choosing between two 06:00 departures n
 - [x] A linked operator and bus show their registered names; an unlinked one shows what was seen.
 - [x] Each carries where the claim came from, and no id or identity of whoever contributed it.
 - [x] A search does not add a query per bus.
-- [ ] passenger-web shows it on the result card and on the details page, worded "usually", with a trust chip.
+- [x] passenger-web shows it on the result card and on the details page, worded "usually", with a trust chip.
 - [ ] A departure nobody has recorded looks exactly as it did before.
 - [x] Tests named INC-046 cover the API.
 
