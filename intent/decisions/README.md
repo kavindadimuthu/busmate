@@ -53,3 +53,8 @@
 | [ADR-019](ADR-019-contributor-standing-lives-with-the-network.md) | Contributor standing lives with the network, not in account roles | architecture | Accepted |
 | [ADR-020](ADR-020-self-hosted-postgres-on-one-vps.md) | Production runs on one self-hosted VPS, with our own Postgres | architecture | Accepted |
 | [ADR-021](ADR-021-operational-telemetry-lives-in-grafana.md) | Operational telemetry lives in Grafana; the portal shows capability health only | architecture | Accepted |
+| [ADR-022](ADR-022-a-changesets-corridor-is-derived-and-stewards-review-blind.md) | A changeset's corridor is derived from what it touches, and stewards review without the proposer's identity | architecture | Accepted |
+| [ADR-023](ADR-023-partial-knowledge-is-a-stored-state.md) | Partial knowledge is a stored state, not a validation failure | architecture | Accepted |
+| [ADR-024](ADR-024-a-departures-normal-working-is-its-own-record.md) | Who normally works a departure is its own record, separate from schedule and trip | architecture | Accepted |
+| [ADR-025](ADR-025-staff-may-record-a-report-dated-to-its-source.md) | Staff may record a third party's report as a report, dated to when it was made | architecture | Accepted |
+| [ADR-026](ADR-026-contributors-propose-who-works-a-departure.md) | Contributors can propose who usually works a departure; it goes through the same review as a stop | architecture | Accepted |
