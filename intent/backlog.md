@@ -158,6 +158,15 @@ its results will reshape them.
   scripts (apply → accept → appoint → propose → steward approves → suspend), which is how the bug above
   was found and which nothing keeps. Worth turning into a `tests/e2e` spec against the dev seed
   (`docs/dev-seed-credentials.md` now has an account for each role) once frontend CI exists.
+- **What the Embilipitiya import (INC-048) left out.** Only the six Embilipitiya ↔ Colombo lists are read. Not read:
+  the southern-expressway lists (a different format: a destination line, then an operator line), the route-69
+  and other long-distance lists, fares, and booking contacts. Through-running ("starts at Suriyawewa 00:30")
+  and short-working ("as far as Maharagama") are kept as description text only. The four stops have no
+  positions, so they cannot be shown on a map until a steward adds them. Each further list needs its own parse
+  and its own decisions; the expressway lists come first, since they carry the highest-value services.
+- **A portal importer for timetable posts.** The script writes a reviewed CSV and loads it; a portal screen
+  that reads the same CSV would let MOT do it without a developer. Not worth building until a second post has
+  shown whether one CSV shape fits.
 - **Pilot gate (not code).** 5–10 invited enthusiasts on one corridor, running on INC-027..031 for 90 days:
   count who is still active at day 30 and day 90, and ride-check a sample of approved stops. Decides
   whether anything below gets built.
