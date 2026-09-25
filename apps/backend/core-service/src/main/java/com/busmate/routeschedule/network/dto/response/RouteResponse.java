@@ -40,6 +40,7 @@ public class RouteResponse {
     private Double distanceKm;
     private Integer estimatedDurationMinutes;
     private String direction;
+    private com.busmate.routeschedule.network.enums.StopListCompletenessEnum stopListCompleteness;
     private List<RouteStopResponse> routeStops;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

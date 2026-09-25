@@ -39,21 +39,22 @@ public class RouteRequest {
 
     private String routeThroughTamil;
 
-    @NotNull(message = "Route group ID is mandatory")
+    // Group, endpoints and direction are optional (ADR-023): a contributor may know a route's name and number
+    // and nothing more. On update, leaving one out leaves it as it was.
     private UUID routeGroupId; // Changed from Long to UUID
 
-    @NotNull(message = "Start stop ID is mandatory")
     private UUID startStopId;
 
-    @NotNull(message = "End stop ID is mandatory")
     private UUID endStopId;
 
     private Double distanceKm;
 
     private Integer estimatedDurationMinutes;
 
-    @NotNull(message = "Direction is mandatory")
     private String direction;
+
+    /** Only a person asserts anything but UNKNOWN; left out, a new route is UNKNOWN and an edit keeps its value. */
+    private com.busmate.routeschedule.network.enums.StopListCompletenessEnum stopListCompleteness;
 
     private List<RouteStopRequest> routeStops;
 

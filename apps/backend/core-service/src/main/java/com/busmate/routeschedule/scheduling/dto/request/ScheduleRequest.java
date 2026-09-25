@@ -53,13 +53,16 @@ public class ScheduleRequest {
     )
     private String scheduleType;
 
-    @NotNull(message = "Effective start date is mandatory")
     @Schema(
-        description = "Date when the schedule becomes effective (YYYY-MM-DD)", 
-        example = "2025-09-25",
-        required = true
+        description = "Date when the schedule becomes effective (YYYY-MM-DD). Optional: a new schedule takes today's "
+                + "date, an update keeps the existing one",
+        example = "2025-09-25"
     )
     private LocalDate effectiveStartDate;
+
+    @Schema(description = "How much of the timetable is known. Only a person asserts anything but UNKNOWN; left out, "
+            + "a new schedule is UNKNOWN and an edit keeps its value")
+    private com.busmate.routeschedule.scheduling.enums.TimingCompletenessEnum timingCompleteness;
 
     @Schema(
         description = "Date when the schedule expires (YYYY-MM-DD). If not provided, schedule runs indefinitely", 

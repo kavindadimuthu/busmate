@@ -92,19 +92,12 @@ public class RouteServiceImpl implements RouteService {
     @Override
     @Transactional
     public RouteResponse createRoute(RouteRequest request, String userId) {
-        RouteGroup routeGroup = routeGroupRepository.findById(request.getRouteGroupId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Route group not found with id: " + request.getRouteGroupId()));
+        // Group, endpoints and direction are optional (ADR-023): a route may be known by name alone.
+        RouteGroup routeGroup = findGroupOrNull(request.getRouteGroupId());
+        requireUniqueName(request.getName(), routeGroup, null);
 
-        if (routeRepository.existsByNameAndRouteGroup_Id(request.getName(), routeGroup.getId())) {
-            throw new ConflictException(
-                    "Route with name '" + request.getName() + "' already exists in route group '" + routeGroup.getName() + "'");
-        }
-
-        Stop startStop = stopRepository.findById(request.getStartStopId())
-                .orElseThrow(() -> new ResourceNotFoundException("Start stop not found with id: " + request.getStartStopId()));
-        Stop endStop = stopRepository.findById(request.getEndStopId())
-                .orElseThrow(() -> new ResourceNotFoundException("End stop not found with id: " + request.getEndStopId()));
+        Stop startStop = findStopOrNull(request.getStartStopId(), "Start stop");
+        Stop endStop = findStopOrNull(request.getEndStopId(), "End stop");
 
         Route route = new Route();
         applyRouteFields(route, request, routeGroup, startStop, endStop, userId, true);
@@ -119,25 +112,55 @@ public class RouteServiceImpl implements RouteService {
         Route route = routeRepository.findByIdWithStops(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Route not found with id: " + id));
 
-        RouteGroup routeGroup = routeGroupRepository.findById(request.getRouteGroupId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Route group not found with id: " + request.getRouteGroupId()));
+        // These were mandatory, so every existing caller sends them. Leaving one out now means "not stated", and
+        // keeps what the route has, rather than detaching it (the same rule as a stop correction, INC-043).
+        RouteGroup routeGroup = request.getRouteGroupId() != null
+                ? findGroupOrNull(request.getRouteGroupId()) : route.getRouteGroup();
+        requireUniqueName(request.getName(), routeGroup, id);
 
-        // Validate name uniqueness within route group, excluding this route
-        if (routeRepository.existsByNameAndRouteGroup_IdAndIdNot(request.getName(), routeGroup.getId(), id)) {
-            throw new ConflictException(
-                    "Route with name '" + request.getName() + "' already exists in route group '" + routeGroup.getName() + "'");
-        }
-
-        Stop startStop = stopRepository.findById(request.getStartStopId())
-                .orElseThrow(() -> new ResourceNotFoundException("Start stop not found with id: " + request.getStartStopId()));
-        Stop endStop = stopRepository.findById(request.getEndStopId())
-                .orElseThrow(() -> new ResourceNotFoundException("End stop not found with id: " + request.getEndStopId()));
+        Stop startStop = request.getStartStopId() != null
+                ? findStopOrNull(request.getStartStopId(), "Start stop") : route.getStartStop();
+        Stop endStop = request.getEndStopId() != null
+                ? findStopOrNull(request.getEndStopId(), "End stop") : route.getEndStop();
 
         applyRouteFields(route, request, routeGroup, startStop, endStop, userId, false);
 
         Route saved = routeRepository.save(route);
         return routeMapper.toResponse(saved);
+    }
+
+    private RouteGroup findGroupOrNull(UUID routeGroupId) {
+        if (routeGroupId == null) {
+            return null;
+        }
+        return routeGroupRepository.findById(routeGroupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Route group not found with id: " + routeGroupId));
+    }
+
+    private Stop findStopOrNull(UUID stopId, String what) {
+        if (stopId == null) {
+            return null;
+        }
+        return stopRepository.findById(stopId)
+                .orElseThrow(() -> new ResourceNotFoundException(what + " not found with id: " + stopId));
+    }
+
+    /** A name is unique within its group; routes with no group share one namespace of their own. */
+    private void requireUniqueName(String name, RouteGroup group, UUID excludingRouteId) {
+        boolean taken;
+        if (group == null) {
+            taken = excludingRouteId == null
+                    ? routeRepository.existsByNameAndRouteGroupIsNull(name)
+                    : routeRepository.existsByNameAndRouteGroupIsNullAndIdNot(name, excludingRouteId);
+        } else {
+            taken = excludingRouteId == null
+                    ? routeRepository.existsByNameAndRouteGroup_Id(name, group.getId())
+                    : routeRepository.existsByNameAndRouteGroup_IdAndIdNot(name, group.getId(), excludingRouteId);
+        }
+        if (taken) {
+            throw new ConflictException("Route with name '" + name + "' already exists"
+                    + (group == null ? " among routes with no group" : " in route group '" + group.getName() + "'"));
+        }
     }
 
     @Override
@@ -176,10 +199,15 @@ public class RouteServiceImpl implements RouteService {
             provenanceStamper.stampEdit(route, request.getSourceTier(), request.getAttributionLabel());
         }
 
-        try {
-            route.setDirection(DirectionEnum.valueOf(request.getDirection()));
-        } catch (IllegalArgumentException e) {
-            throw new ConflictException("Invalid direction: " + request.getDirection());
+        if (request.getDirection() != null) {
+            try {
+                route.setDirection(DirectionEnum.valueOf(request.getDirection()));
+            } catch (IllegalArgumentException e) {
+                throw new ConflictException("Invalid direction: " + request.getDirection());
+            }
+        }
+        if (request.getStopListCompleteness() != null) {
+            route.setStopListCompleteness(request.getStopListCompleteness());
         }
 
         if (request.getRoadType() != null && !request.getRoadType().trim().isEmpty()) {
@@ -212,6 +240,40 @@ public class RouteServiceImpl implements RouteService {
                 routeStop.setDistanceFromStartKmCalculated(rs.getDistanceFromStartKmCalculated());
                 existingStops.add(routeStop);
             }
+        }
+
+        ensureEndpointsAreStops(route, startStop, endStop);
+    }
+
+    /**
+     * A route's endpoints are stops of the route (ADR-023). A schedule time can only attach to a route stop, so
+     * a route known only by its endpoints would otherwise have nowhere to record a departure. This only fills an
+     * empty list: it never adds to, or reorders, stops someone listed.
+     */
+    private void ensureEndpointsAreStops(Route route, Stop startStop, Stop endStop) {
+        if (startStop == null || endStop == null) {
+            return;
+        }
+        if (route.getRouteStops() != null && !route.getRouteStops().isEmpty()) {
+            return;
+        }
+        List<RouteStop> stops = route.getRouteStops() != null ? route.getRouteStops() : new ArrayList<>();
+        route.setRouteStops(stops);
+
+        RouteStop first = new RouteStop();
+        first.setRoute(route);
+        first.setStop(startStop);
+        first.setStopOrder(1);
+        first.setDistanceFromStartKm(0.0);
+        stops.add(first);
+
+        if (!startStop.getId().equals(endStop.getId())) {
+            RouteStop last = new RouteStop();
+            last.setRoute(route);
+            last.setStop(endStop);
+            last.setStopOrder(2);
+            last.setDistanceFromStartKm(route.getDistanceKm());
+            stops.add(last);
         }
     }
 
