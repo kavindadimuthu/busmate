@@ -125,8 +125,11 @@ public class ChangesetReviewService {
                             "The stop this proposal was against no longer exists"));
             requireNotStale(stop, c);
             requireDoesNotOutrankCommunity(stop);
+            // A proposal stored before INC-043 can still carry nulls for fields its form never showed.
+            request = objectMapper.convertValue(StopCorrectionMerge.fillGaps(
+                    c.getProposedValues(), objectMapper.valueToTree(stopMapper.toResponse(stop))), StopRequest.class);
             if (nameChanged(stop, request)) {
-                requireNoDuplicateName(request, null);
+                requireNoDuplicateNameOnRename(stop, request);
             }
             snapshotPreviousProvenance(c, stop);
             stopMapper.updateEntityFromRequest(request, stop);
@@ -242,6 +245,26 @@ public class ChangesetReviewService {
         return !java.util.Objects.equals(stop.getName(), request.getName())
                 || !java.util.Objects.equals(stop.getNameSinhala(), request.getNameSinhala())
                 || !java.util.Objects.equals(stop.getNameTamil(), request.getNameTamil());
+    }
+
+    /**
+     * A rename is a duplicate only if a name it newly introduces is taken. Its unchanged variants are the
+     * stop's own — the duplicate query has no way to exclude the stop itself — so they are not tested.
+     */
+    private void requireNoDuplicateNameOnRename(Stop stop, StopRequest request) {
+        String name = java.util.Objects.equals(stop.getName(), request.getName()) ? null : request.getName();
+        String sinhala = java.util.Objects.equals(stop.getNameSinhala(), request.getNameSinhala()) ? null : request.getNameSinhala();
+        String tamil = java.util.Objects.equals(stop.getNameTamil(), request.getNameTamil()) ? null : request.getNameTamil();
+        String city = cityOf(request);
+        if (stops.existsByAnyNameVariantAndAnyCity(name, sinhala, tamil, city)) {
+            throw new ConflictException("A stop with this name already exists in this city");
+        }
+    }
+
+    private static String cityOf(StopRequest request) {
+        return request.getLocation().getCity() != null ? request.getLocation().getCity()
+                : request.getLocation().getCitySinhala() != null ? request.getLocation().getCitySinhala()
+                : request.getLocation().getCityTamil();
     }
 
     private void requireNoDuplicateName(StopRequest request, UUID excludingStopId) {

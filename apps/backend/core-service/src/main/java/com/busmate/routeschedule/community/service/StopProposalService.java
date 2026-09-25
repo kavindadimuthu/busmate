@@ -29,6 +29,7 @@ import com.busmate.routeschedule.shared.exception.ForbiddenException;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.shared.security.Caller;
 import com.busmate.routeschedule.shared.util.GeoUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -95,9 +96,11 @@ public class StopProposalService {
         c.setEntityType(ChangesetEntityType.STOP);
         c.setAction(ChangesetAction.UPDATE);
         c.setTargetId(target.getId());
-        c.setProposedValues(objectMapper.valueToTree(request));
+        JsonNode snapshot = objectMapper.valueToTree(stopMapper.toResponse(target));
+        // What the form left out stays as it is (INC-043), so what a reviewer sees is what would happen.
+        c.setProposedValues(StopCorrectionMerge.fillGaps(objectMapper.valueToTree(request), snapshot));
         c.setTargetVersion(target.getVersion());
-        c.setTargetSnapshot(objectMapper.valueToTree(stopMapper.toResponse(target)));
+        c.setTargetSnapshot(snapshot);
         fillCommon(c, caller, request);
         return toResponse(changesets.save(c));
     }
