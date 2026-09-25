@@ -27,6 +27,9 @@ public class ScheduleRequest {
     @Size(max = 255)
     private String attributionLabel;
 
+    /** The date the information dates from, if before it was typed in (ADR-025). Never in the future. */
+    private java.time.LocalDate observedOn;
+
     
     @NotBlank(message = "Name is mandatory")
     @Schema(

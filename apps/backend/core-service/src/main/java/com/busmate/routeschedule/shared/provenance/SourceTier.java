@@ -45,8 +45,12 @@ public enum SourceTier {
         return rank < other.rank;
     }
 
-    /** The tiers staff may record directly; reports and derived data arrive by other routes. */
+    /**
+     * The tiers staff may record. A report ({@code SRC_5}) is included so a staff member transcribing someone
+     * else's timetable can say that is what it is (ADR-025) — that says less about the record, not more.
+     * Derived data ({@code SRC_6}) is not: nobody transcribes an estimate.
+     */
     public boolean staffEnterable() {
-        return this == SRC_1 || this == SRC_2 || this == SRC_3 || this == SRC_4;
+        return this != SRC_6;
     }
 }

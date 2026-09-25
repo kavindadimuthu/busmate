@@ -194,9 +194,9 @@ public class RouteServiceImpl implements RouteService {
         route.setUpdatedBy(userId);
         if (isNew) {
             route.setCreatedBy(userId);
-            provenanceStamper.stampCreate(route, request.getSourceTier(), request.getAttributionLabel());
+            provenanceStamper.stampCreate(route, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
         } else {
-            provenanceStamper.stampEdit(route, request.getSourceTier(), request.getAttributionLabel());
+            provenanceStamper.stampEdit(route, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
         }
 
         if (request.getDirection() != null) {

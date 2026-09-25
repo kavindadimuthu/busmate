@@ -72,7 +72,7 @@ public class ScheduleWorkingService {
         }
         working.setCreatedBy(auditId);
         working.setUpdatedBy(auditId);
-        provenanceStamper.stampCreate(working, request.sourceTier(), request.attributionLabel());
+        provenanceStamper.stampCreate(working, request.sourceTier(), request.attributionLabel(), request.observedOn());
 
         if (hasVehicles) {
             Set<String> seen = new HashSet<>();
@@ -160,7 +160,7 @@ public class ScheduleWorkingService {
         }
         vehicle.setCreatedBy(auditId);
         vehicle.setUpdatedBy(auditId);
-        provenanceStamper.stampCreate(vehicle, request.sourceTier(), request.attributionLabel());
+        provenanceStamper.stampCreate(vehicle, request.sourceTier(), request.attributionLabel(), request.observedOn());
         return vehicle;
     }
 

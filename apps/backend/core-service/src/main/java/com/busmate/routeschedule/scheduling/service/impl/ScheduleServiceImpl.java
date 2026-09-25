@@ -658,7 +658,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         schedule.setCreatedBy(userId);
         schedule.setUpdatedBy(userId);
-        provenanceStamper.stampCreate(schedule, request.getSourceTier(), request.getAttributionLabel());
+        provenanceStamper.stampCreate(schedule, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
         return schedule;
     }
 
@@ -677,7 +677,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         schedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         schedule.setUpdatedBy(userId);
-        provenanceStamper.stampEdit(schedule, request.getSourceTier(), request.getAttributionLabel());
+        provenanceStamper.stampEdit(schedule, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
     }
 
     private List<ScheduleStop> createScheduleStops(Schedule schedule, List<ScheduleRequest.ScheduleStopRequest> stopRequests) {

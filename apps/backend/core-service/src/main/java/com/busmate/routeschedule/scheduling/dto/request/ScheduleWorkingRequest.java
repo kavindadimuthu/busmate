@@ -25,7 +25,9 @@ public record ScheduleWorkingRequest(
         @Valid @Schema(description = "One row means this vehicle; several mean the operator alternates among them, order unknown")
         List<VehicleClaim> vehicles,
         @Schema(description = "Source recorded; SRC_1 is MOT only. Defaults to field observation") SourceTier sourceTier,
-        @Size(max = 255) String attributionLabel) {
+        @Size(max = 255) String attributionLabel,
+        @Schema(description = "The date the information dates from, if before it was typed in. Never in the future")
+        LocalDate observedOn) {
 
     @Schema(description = "A vehicle by its plate as seen, and/or a registered bus")
     public record VehicleClaim(

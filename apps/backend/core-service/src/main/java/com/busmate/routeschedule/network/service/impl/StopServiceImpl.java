@@ -79,7 +79,7 @@ public class StopServiceImpl implements StopService {
         Stop stop = stopMapper.toEntity(request);
         stop.setCreatedBy(userId);
         stop.setUpdatedBy(userId);
-        provenanceStamper.stampCreate(stop, request.getSourceTier(), request.getAttributionLabel());
+        provenanceStamper.stampCreate(stop, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
         Stop savedStop = stopRepository.save(stop);
         return stopMapper.toResponse(savedStop);
     }
@@ -259,7 +259,7 @@ public class StopServiceImpl implements StopService {
 
         stopMapper.updateEntityFromRequest(request, stop);
         stop.setUpdatedBy(userId);
-        provenanceStamper.stampEdit(stop, request.getSourceTier(), request.getAttributionLabel());
+        provenanceStamper.stampEdit(stop, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
         Stop updatedStop = stopRepository.save(stop);
         return stopMapper.toResponse(updatedStop);
     }
