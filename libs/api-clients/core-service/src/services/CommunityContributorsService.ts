@@ -14,8 +14,10 @@ import type { MyContributorStandingResponse } from '../models/MyContributorStand
 import type { PageChangesetResponse } from '../models/PageChangesetResponse';
 import type { PageChangesetReviewResponse } from '../models/PageChangesetReviewResponse';
 import type { PageContributorResponse } from '../models/PageContributorResponse';
+import type { PromotionCandidateResponse } from '../models/PromotionCandidateResponse';
 import type { ProposeStopResponse } from '../models/ProposeStopResponse';
 import type { RejectChangesetRequest } from '../models/RejectChangesetRequest';
+import type { StewardAppointmentRequest } from '../models/StewardAppointmentRequest';
 import type { StopProposalRequest } from '../models/StopProposalRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -49,7 +51,7 @@ export class CommunityContributorsService {
         });
     }
     /**
-     * The review queue: stop proposals, oldest first, filterable by status, contributor and district
+     * The review queue: stop proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity
      * @param status
      * @param proposerUserId
      * @param homeDistrict
@@ -224,6 +226,17 @@ export class CommunityContributorsService {
         });
     }
     /**
+     * Active contributors whose record clears the promotion thresholds; advisory, appoints nobody
+     * @returns PromotionCandidateResponse OK
+     * @throws ApiError
+     */
+    public static listPromotionCandidates(): CancelablePromise<Array<PromotionCandidateResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/contributors/promotion-candidates',
+        });
+    }
+    /**
      * One contributor or application
      * @param userId
      * @returns ContributorResponse OK
@@ -290,6 +303,44 @@ export class CommunityContributorsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/community/contributors/{userId}/reinstate',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
+     * Appoint a contributor steward for the given corridors, or change their corridors
+     * @param userId
+     * @param requestBody
+     * @returns ContributorResponse OK
+     * @throws ApiError
+     */
+    public static appointSteward(
+        userId: string,
+        requestBody: StewardAppointmentRequest,
+    ): CancelablePromise<ContributorResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/community/contributors/{userId}/steward',
+            path: {
+                'userId': userId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Revoke stewardship; the contributor stays an active contributor
+     * @param userId
+     * @returns ContributorResponse OK
+     * @throws ApiError
+     */
+    public static revokeSteward(
+        userId: string,
+    ): CancelablePromise<ContributorResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/community/contributors/{userId}/steward',
             path: {
                 'userId': userId,
             },

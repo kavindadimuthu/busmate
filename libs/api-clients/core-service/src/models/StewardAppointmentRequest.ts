@@ -2,9 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ContributorTrackRecord = {
-    approved?: number;
-    rejected?: number;
-    reverted?: number;
+export type StewardAppointmentRequest = {
+    routeGroupIds: Array<string>;
 };
 

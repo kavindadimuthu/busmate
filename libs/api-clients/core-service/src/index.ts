@@ -79,6 +79,7 @@ export type { PassengerServicePermitStatisticsResponse } from './models/Passenge
 export type { PassengerStopResponse } from './models/PassengerStopResponse';
 export type { PassengerUpcomingTrip } from './models/PassengerUpcomingTrip';
 export type { PermitBusLinkRequest } from './models/PermitBusLinkRequest';
+export type { PromotionCandidateResponse } from './models/PromotionCandidateResponse';
 export type { ProposeStopResponse } from './models/ProposeStopResponse';
 export { ProvenanceResponse } from './models/ProvenanceResponse';
 export type { PspInfo } from './models/PspInfo';
@@ -120,6 +121,7 @@ export type { ScheduleStopResponse } from './models/ScheduleStopResponse';
 export type { SkippedRecord } from './models/SkippedRecord';
 export type { Sortnull } from './models/Sortnull';
 export type { StatusReasonRequest } from './models/StatusReasonRequest';
+export type { StewardAppointmentRequest } from './models/StewardAppointmentRequest';
 export type { StopBatchCreateRequest } from './models/StopBatchCreateRequest';
 export type { StopBatchCreateResponse } from './models/StopBatchCreateResponse';
 export type { StopBatchResultItem } from './models/StopBatchResultItem';

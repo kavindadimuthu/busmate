@@ -9,6 +9,8 @@ export type ContributorResponse = {
     motivation?: string;
     homeDistrict?: string;
     corridorRouteGroupIds?: Array<string>;
+    stewardScopeRouteGroupIds?: Array<string>;
+    stewardAppointedAt?: string;
     affiliation?: ContributorResponse.affiliation;
     affiliationDetail?: string;
     agreementVersion?: string;

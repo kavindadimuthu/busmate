@@ -2,9 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ContributorTrackRecord = {
+import type { ContributorResponse } from './ContributorResponse';
+export type PromotionCandidateResponse = {
+    contributor?: ContributorResponse;
     approved?: number;
     rejected?: number;
     reverted?: number;
+    approvalRate?: number;
 };
 
