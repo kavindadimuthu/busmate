@@ -11,6 +11,7 @@ import {
 import { BusFront, Clock, ArrowRight, Route, CheckCircle, AlertCircle, Calculator } from "lucide-react";
 import type { BusResult } from "@busmate/api-client-core";
 import { TrustChip } from "@/components/trust/TrustChip";
+import { UsualWorkingLine } from "@/components/search/UsualWorkingLine";
 
 interface BusCardProps {
   bus: BusResult;
@@ -168,6 +169,9 @@ export default function BusCard({
             </div>
           </div>
         </div>
+
+        {/* Who usually works this departure, when anyone has recorded it (ADR-024) */}
+        <UsualWorkingLine workings={bus.usualWorkings} limit={2} />
 
         {/* BADGES ROW - Time Source, Operator and Bus Info */}
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">

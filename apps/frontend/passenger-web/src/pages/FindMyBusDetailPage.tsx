@@ -29,6 +29,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
 import { TrustChip } from "@/components/trust/TrustChip";
+import { UsualWorkingLine } from "@/components/search/UsualWorkingLine";
 import { TrustExplainer } from "@/components/trust/TrustExplainer";
 import { PassengerQueryService } from "@busmate/api-client-core";
 import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-core";
@@ -531,6 +532,7 @@ const FindMyBusDetailPage = () => {
                   Schedule Details
                 </h2>
                 <div className="space-y-3 sm:space-y-4">
+                  <UsualWorkingLine workings={data.usualWorkings} />
                   {schedule?.trust && (
                     <div className="flex justify-between items-center gap-2">
                       <span className="text-xs sm:text-sm text-muted-foreground">Timetable:</span>
