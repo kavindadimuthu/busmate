@@ -6,6 +6,7 @@ import type { LocationDto } from './LocationDto';
 export type StopRequest = {
     sourceTier?: StopRequest.sourceTier;
     attributionLabel?: string;
+    observedOn?: string;
     name: string;
     nameSinhala?: string;
     nameTamil?: string;

@@ -33,6 +33,10 @@ export type ScheduleWorkingRequest = {
      */
     sourceTier?: ScheduleWorkingRequest.sourceTier;
     attributionLabel?: string;
+    /**
+     * The date the information dates from, if before it was typed in. Never in the future
+     */
+    observedOn?: string;
 };
 export namespace ScheduleWorkingRequest {
     export enum serviceClass {

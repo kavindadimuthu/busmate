@@ -11,6 +11,7 @@ import type { ScheduleStopRequest } from './ScheduleStopRequest';
 export type ScheduleRequest = {
     sourceTier?: ScheduleRequest.sourceTier;
     attributionLabel?: string;
+    observedOn?: string;
     /**
      * Unique name for this schedule within the route
      */

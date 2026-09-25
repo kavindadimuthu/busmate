@@ -6,6 +6,7 @@ import type { RouteStopRequest } from './RouteStopRequest';
 export type RouteRequest = {
     sourceTier?: RouteRequest.sourceTier;
     attributionLabel?: string;
+    observedOn?: string;
     name: string;
     nameSinhala?: string;
     nameTamil?: string;
