@@ -10,10 +10,10 @@
 #      Testcontainers (AbstractPostgresIntegrationTest) and run the actual Flyway migrations, so the
 #      tests exercise the same schema path production uses (no more H2/Hibernate-DDL divergence).
 #
-# NOTE: This workflow has been validated locally (the Flyway gate against a local Postgres, and each
-# service's `mvn verify` against Testcontainers) but has NOT yet run on GitHub Actions — it is
-# committed unpushed for review. Push to a branch and open a PR to see it execute. The Flyway CLI
-# image tag (redgate/flyway:11) and the runner Java version (17) may need a small tweak on first run.
+# NOTE: Both gates can be run locally before pushing: `make ci-local` (scripts/ci-local.sh, which
+# mirrors this file — keep the two in step). Local runs cannot reproduce everything a runner sees:
+# a warm local Docker image cache and a present config/secrets/.env both hid real CI failures here
+# (INC-040), so a green local run is necessary, not sufficient.
 name: Backend CI
 
 on:
@@ -84,6 +84,22 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      # core-service and user-service each have integration tests that start their own Testcontainers
+      # MinIO (separate from AbstractPostgresIntegrationTest's shared Postgres). The image is
+      # bitnamilegacy/minio from Docker Hub: MinIO's own quay.io image now denies anonymous pulls
+      # outright (verified from a non-CI machine too, so not runner throttling), and the old
+      # docker.io/minio/minio is gone. Pulling here first gives the pull this step's own long
+      # timeout rather than Testcontainers' 2 minutes; a few retries cover ordinary registry blips.
+      - name: Pre-pull MinIO test image (avoids Testcontainers' 2-minute pull timeout)
+        if: matrix.service == 'core-service' || matrix.service == 'user-service'
+        run: |
+          for attempt in 1 2 3; do
+            docker pull bitnamilegacy/minio:2025.7.23-debian-12-r3 && exit 0
+            echo "pull attempt $attempt failed, waiting before retry..."
+            sleep $((attempt * 15))
+          done
+          echo "::warning::MinIO pre-pull failed after 3 attempts; the MinIO integration tests will likely fail"
+          exit 0
       - name: Run tests (Testcontainers Postgres exercises the real Flyway migrations)
         working-directory: apps/backend/${{ matrix.service }}
         run: mvn -B clean verify

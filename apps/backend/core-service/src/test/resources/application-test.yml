@@ -53,3 +53,16 @@ springdoc:
 community:
   agreement:
     allow-draft-acceptance: true
+
+# INC-040: media.s3.access-key/secret-key have no default in application.yml (they must be real
+# in dev/prod, sourced from config/secrets/.env via springdotenv). That file is gitignored and
+# never present in CI, so the S3Client bean failed to construct ("Access key ID cannot be blank"),
+# taking down every test needing the full application context — not just tests that touch media.
+# Placeholder values, not real credentials: nothing here is expected to make a real S3 call.
+# BusProfileIntegrationTest already overrides all four media.s3.* properties via its own
+# @DynamicPropertySource against a real Testcontainers MinIO, which takes precedence over this
+# profile file, so it is unaffected.
+media:
+  s3:
+    access-key: test-placeholder-access-key
+    secret-key: test-placeholder-secret-key

@@ -24,3 +24,8 @@ prod-up:
 
 prod-down:
 	docker compose -f docker-compose.production.yml down
+
+# Backend CI gates run locally (see scripts/ci-local.sh). Narrow with:
+#   make ci-local GATE=test SERVICES=core-service
+ci-local:
+	bash scripts/ci-local.sh $(GATE) $(SERVICES)
