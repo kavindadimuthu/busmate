@@ -303,6 +303,10 @@ profile photos are built and in use; everything below reuses them rather than st
   a staff list of records whose effective confidence has fallen below the threshold — is not built. Now
   straightforward: query by tier/observed_at rather than a stored value, since confidence is never stored.
 
+- **A report naming a specific working, not just the departure.** INC-056 built the model
+  (`ReportedEntityType.SCHEDULE_WORKING`) but nothing yet lets a passenger say which of several alternating
+  vehicles they mean.
+
 ## Strategy
 
 - Validate strategy assumptions `A-01`..`A-16` —

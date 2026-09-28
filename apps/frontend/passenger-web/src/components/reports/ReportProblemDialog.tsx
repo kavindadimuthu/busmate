@@ -124,7 +124,7 @@ export function ReportProblemDialog({ entityType, targetId, label }: { entityTyp
           )}
           <DialogFooter>
             {done ? (
-              <Button onClick={() => setOpen(false)}>Close</Button>
+              <Button onClick={() => setOpen(false)}>Done</Button>
             ) : (
               <>
                 <Button variant="outline" onClick={() => setOpen(false)}>
