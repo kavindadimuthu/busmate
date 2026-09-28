@@ -31,6 +31,14 @@ import com.busmate.routeschedule.community.entity.ChangesetStatus;
 import com.busmate.routeschedule.community.service.ChangesetReviewService;
 import com.busmate.routeschedule.community.service.StopProposalService;
 import com.busmate.routeschedule.community.service.WorkingProposalService;
+import com.busmate.routeschedule.community.service.PassengerReportService;
+import com.busmate.routeschedule.community.dto.PassengerReportRequest;
+import com.busmate.routeschedule.community.dto.PassengerReportResponse;
+import com.busmate.routeschedule.community.dto.ResolveReportRequest;
+import com.busmate.routeschedule.community.entity.ReportStatus;
+import com.busmate.routeschedule.community.entity.ReportedEntityType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import com.busmate.routeschedule.community.dto.WorkingProposalRequest;
 import com.busmate.routeschedule.community.entity.ChangesetEntityType;
 import com.busmate.routeschedule.community.dto.ContributorAgreementResponse;
@@ -58,6 +66,7 @@ public class CommunityController {
     private final ContributorService service;
     private final StopProposalService stopProposals;
     private final WorkingProposalService workingProposals;
+    private final PassengerReportService passengerReports;
     private final ChangesetReviewService review;
     private final CallerContext callerContext;
 
@@ -189,6 +198,31 @@ public class CommunityController {
     @Operation(summary = "Withdraw one of the signed-in user's own pending proposals", operationId = "withdrawChangeset")
     public ChangesetResponse withdraw(@PathVariable UUID changesetId) {
         return stopProposals.withdraw(callerContext.require(), changesetId);
+    }
+
+    // ───────────────────────────── passenger reports (INC-056) ─────────────────────────────
+
+    @PostMapping("/reports")
+    @Operation(summary = "Report something wrong with a departure or who runs it (any signed-in user)", operationId = "reportProblem")
+    public ResponseEntity<PassengerReportResponse> report(@Valid @RequestBody PassengerReportRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(passengerReports.report(callerContext.require(), request));
+    }
+
+    @GetMapping("/reports")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "The report queue, oldest first", operationId = "listReports")
+    public Page<PassengerReportResponse> reportQueue(@RequestParam(required = false) ReportStatus status,
+                                                      @RequestParam(required = false) ReportedEntityType entityType,
+                                                      @RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "20") int size) {
+        return passengerReports.queue(status, entityType, PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+    }
+
+    @PostMapping("/reports/{reportId}/resolve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Mark a report resolved, once the real record has been checked or fixed", operationId = "resolveReport")
+    public PassengerReportResponse resolveReport(@PathVariable UUID reportId, @Valid @RequestBody ResolveReportRequest request) {
+        return passengerReports.resolve(callerContext.require(), reportId, request.note());
     }
 
     // ───────────────────────────── staff review (INC-031) ─────────────────────────────
