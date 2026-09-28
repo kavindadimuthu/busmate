@@ -58,3 +58,4 @@
 | [ADR-024](ADR-024-a-departures-normal-working-is-its-own-record.md) | Who normally works a departure is its own record, separate from schedule and trip | architecture | Accepted |
 | [ADR-025](ADR-025-staff-may-record-a-report-dated-to-its-source.md) | Staff may record a third party's report as a report, dated to when it was made | architecture | Accepted |
 | [ADR-026](ADR-026-contributors-propose-who-works-a-departure.md) | Contributors can propose who usually works a departure; it goes through the same review as a stop | architecture | Accepted |
+| [ADR-027](ADR-027-contributors-can-correct-or-end-a-working.md) | A contributor can correct or end a working, the same way they correct a stop | architecture | Accepted |
