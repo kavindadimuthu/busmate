@@ -4,7 +4,7 @@ export type WorkingValues = { operatorNameObserved?: string | null; platesObserv
 export const isWorking = (entityType?: string) => entityType === 'SCHEDULE_WORKING';
 
 export function proposalKind(entityType?: string, action?: string): string {
-  if (isWorking(entityType)) return 'Who runs a departure';
+  if (isWorking(entityType)) return action === 'CREATE' ? 'Who runs a departure' : 'Correction to a working';
   return action === 'CREATE' ? 'New stop' : 'Correction';
 }
 

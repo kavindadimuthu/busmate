@@ -8,6 +8,10 @@ import type { TrustInfo } from './TrustInfo';
  */
 export type UsualWorking = {
     /**
+     * The working this claim is; lets a passenger propose a correction to the right one
+     */
+    id?: string;
+    /**
      * The operator's name: the registered one if linked, else as seen
      */
     operatorName?: string;

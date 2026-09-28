@@ -8,9 +8,31 @@ import type { ScheduleWorkingEndRequest } from '../models/ScheduleWorkingEndRequ
 import type { ScheduleWorkingRequest } from '../models/ScheduleWorkingRequest';
 import type { ScheduleWorkingResponse } from '../models/ScheduleWorkingResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
+import type { CorrectWorkingRequest } from '../models/CorrectWorkingRequest';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class ScheduleWorkingsService {
+    /**
+     * Correct what was observed about a working; anything left out stays as it is
+     * @param workingId
+     * @param requestBody
+     * @returns ScheduleWorkingResponse OK
+     * @throws ApiError
+     */
+    public static correctScheduleWorking(
+        workingId: string,
+        requestBody: CorrectWorkingRequest,
+    ): CancelablePromise<ScheduleWorkingResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/schedule-workings/{workingId}',
+            path: {
+                'workingId': workingId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
     /**
      * Link a plate seen on a working to a registered bus
      * @param vehicleId

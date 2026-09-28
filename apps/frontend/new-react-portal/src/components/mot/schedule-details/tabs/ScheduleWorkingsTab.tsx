@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Users, Plus, Trash2, CalendarX } from 'lucide-react';
+import { Users, Plus, Trash2, CalendarX, Pencil } from 'lucide-react';
 import {
+  CorrectWorkingRequest,
   ScheduleResponse,
   ScheduleWorkingRequest,
   ScheduleWorkingResponse,
@@ -40,6 +41,12 @@ export function ScheduleWorkingsTab({ schedule }: Props) {
   const [serviceClass, setServiceClass] = useState('');
   const [start, setStart] = useState('');
   const [observedOn, setObservedOn] = useState('');
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editOperator, setEditOperator] = useState('');
+  const [editPlates, setEditPlates] = useState('');
+  const [editServiceClass, setEditServiceClass] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -85,6 +92,32 @@ export function ScheduleWorkingsTab({ schedule }: Props) {
       await ScheduleWorkingsService.endScheduleWorking(id, { effectiveEndDate: today() });
       await load();
     } catch (e) { toast.error(errorText(e)); }
+  };
+
+  const startEdit = (w: ScheduleWorkingResponse) => {
+    setEditingId(w.id as string);
+    setEditOperator(w.operatorNameObserved ?? '');
+    setEditPlates((w.vehicles ?? []).map((v) => v.plateObserved).filter(Boolean).join(', '));
+    setEditServiceClass(w.serviceClass ?? '');
+  };
+
+  const saveEdit = async (id: string) => {
+    const request: CorrectWorkingRequest = {
+      operatorNameObserved: editOperator.trim() || undefined,
+      platesObserved: editPlates.trim() ? editPlates.split(',').map((p) => p.trim()).filter(Boolean) : undefined,
+      serviceClass: (editServiceClass || undefined) as CorrectWorkingRequest.serviceClass | undefined,
+    };
+    setEditBusy(true);
+    try {
+      await ScheduleWorkingsService.correctScheduleWorking(id, request);
+      toast.success('Corrected');
+      setEditingId(null);
+      await load();
+    } catch (e) {
+      toast.error(errorText(e));
+    } finally {
+      setEditBusy(false);
+    }
   };
 
   const remove = async (id: string) => {
@@ -152,6 +185,26 @@ export function ScheduleWorkingsTab({ schedule }: Props) {
         <ul className="space-y-3">
           {workings.map((w) => (
             <li key={w.id} className="bg-card border border-border rounded-lg p-4" data-testid="working-row">
+              {editingId === w.id ? (
+                <div className="space-y-3" data-testid="working-edit-form">
+                  <label className="block text-sm">Operator, as seen
+                    <input aria-label="Edit operator as seen" className={input} value={editOperator} onChange={(e) => setEditOperator(e.target.value)} />
+                  </label>
+                  <label className="block text-sm">Plates, comma separated
+                    <input aria-label="Edit plates" className={input} value={editPlates} onChange={(e) => setEditPlates(e.target.value)} />
+                  </label>
+                  <label className="block text-sm">Service class
+                    <select aria-label="Edit service class" className={input} value={editServiceClass} onChange={(e) => setEditServiceClass(e.target.value)}>
+                      <option value="">Not stated</option>
+                      {Object.values(ScheduleWorkingRequest.serviceClass).map((c) => <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>)}
+                    </select>
+                  </label>
+                  <div className="flex gap-2">
+                    <button disabled={editBusy} onClick={() => saveEdit(w.id as string)} className="px-4 py-2 bg-primary text-white rounded-md text-sm disabled:opacity-50">Save</button>
+                    <button onClick={() => setEditingId(null)} className="px-4 py-2 border border-border rounded-md text-sm">Cancel</button>
+                  </div>
+                </div>
+              ) : (
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-medium text-foreground flex items-center gap-2 flex-wrap">
@@ -187,12 +240,14 @@ export function ScheduleWorkingsTab({ schedule }: Props) {
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${TRUST_STYLE[w.trust?.label ?? 'REPORTED'] ?? TRUST_STYLE.REPORTED}`}>
                     {w.trust?.label ?? 'REPORTED'}
                   </span>
+                  <button onClick={() => startEdit(w)} title="Edit" className="p-2 text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                   {!w.effectiveEndDate && (
                     <button onClick={() => endToday(w.id as string)} title="End today" className="p-2 text-muted-foreground hover:text-foreground"><CalendarX className="w-4 h-4" /></button>
                   )}
                   <button onClick={() => remove(w.id as string)} title="Remove" className="p-2 text-destructive"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
+              )}
             </li>
           ))}
         </ul>

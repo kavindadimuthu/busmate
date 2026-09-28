@@ -19,6 +19,7 @@ import type { ProposeStopResponse } from '../models/ProposeStopResponse';
 import type { RejectChangesetRequest } from '../models/RejectChangesetRequest';
 import type { StewardAppointmentRequest } from '../models/StewardAppointmentRequest';
 import type { StopProposalRequest } from '../models/StopProposalRequest';
+import type { WorkingCorrectionRequest } from '../models/WorkingCorrectionRequest';
 import type { WorkingProposalRequest } from '../models/WorkingProposalRequest';
 import type { PassengerReportRequest } from '../models/PassengerReportRequest';
 import type { PassengerReportResponse } from '../models/PassengerReportResponse';
@@ -493,6 +494,22 @@ export class CommunityContributorsService {
             path: {
                 'reportId': reportId,
             },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Propose a correction to an existing working, or that it has stopped (active contributors only)
+     * @param requestBody
+     * @returns ChangesetResponse Created
+     * @throws ApiError
+     */
+    public static proposeWorkingCorrection(
+        requestBody: WorkingCorrectionRequest,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/working-corrections',
             body: requestBody,
             mediaType: 'application/json',
         });

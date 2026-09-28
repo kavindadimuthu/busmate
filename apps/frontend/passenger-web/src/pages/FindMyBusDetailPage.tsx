@@ -534,16 +534,37 @@ const FindMyBusDetailPage = () => {
                 </h2>
                 <div className="space-y-3 sm:space-y-4">
                   <UsualWorkingLine workings={data.usualWorkings} />
-                  {scheduleId && (
-                    <Link
-                      to={`/contribute/propose-working?scheduleId=${encodeURIComponent(scheduleId)}`}
-                      className="block text-xs text-primary underline underline-offset-2"
-                      data-testid="propose-working-link"
-                    >
-                      {data.usualWorkings && data.usualWorkings.length > 0
-                        ? "Seen it run differently? Tell us"
-                        : "Know who runs this bus? Tell us"}
-                    </Link>
+                  {data.usualWorkings && data.usualWorkings.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {data.usualWorkings.filter((w) => w.id).map((w) => (
+                        <Link
+                          key={w.id}
+                          to={`/contribute/correct-working?workingId=${encodeURIComponent(w.id as string)}`}
+                          className="text-xs text-primary underline underline-offset-2"
+                          data-testid="correct-working-link"
+                        >
+                          {w.operatorName ? `"${w.operatorName}" wrong or stopped? Tell us` : "Something wrong here? Tell us"}
+                        </Link>
+                      ))}
+                      {scheduleId && (
+                        <Link
+                          to={`/contribute/propose-working?scheduleId=${encodeURIComponent(scheduleId)}`}
+                          className="text-xs text-muted-foreground underline underline-offset-2"
+                        >
+                          Know of another bus that runs this too?
+                        </Link>
+                      )}
+                    </div>
+                  ) : (
+                    scheduleId && (
+                      <Link
+                        to={`/contribute/propose-working?scheduleId=${encodeURIComponent(scheduleId)}`}
+                        className="block text-xs text-primary underline underline-offset-2"
+                        data-testid="propose-working-link"
+                      >
+                        Know who runs this bus? Tell us
+                      </Link>
+                    )
                   )}
                   {schedule?.trust && (
                     <div className="flex justify-between items-center gap-2">

@@ -126,6 +126,7 @@ export type { ScheduleStopDetailResponse } from './models/ScheduleStopDetailResp
 export type { ScheduleStopRequest } from './models/ScheduleStopRequest';
 export type { ScheduleStopResponse } from './models/ScheduleStopResponse';
 export type { ScheduleWorkingEndRequest } from './models/ScheduleWorkingEndRequest';
+export { CorrectWorkingRequest } from './models/CorrectWorkingRequest';
 export type { ScheduleWorkingContext } from './models/ScheduleWorkingContext';
 export { ScheduleWorkingRequest } from './models/ScheduleWorkingRequest';
 export { ScheduleWorkingResponse } from './models/ScheduleWorkingResponse';
@@ -157,6 +158,7 @@ export type { UpdateSummary } from './models/UpdateSummary';
 export type { UsualWorking } from './models/UsualWorking';
 export type { Vehicle } from './models/Vehicle';
 export type { VehicleClaim } from './models/VehicleClaim';
+export { WorkingCorrectionRequest } from './models/WorkingCorrectionRequest';
 export { WorkingProposalRequest } from './models/WorkingProposalRequest';
 
 export { BusManagementService } from './services/BusManagementService';

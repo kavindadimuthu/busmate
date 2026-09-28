@@ -28,6 +28,7 @@ import ContributeProgrammePage from "./pages/contribute/ContributeProgrammePage"
 import ContributeApplyPage from "./pages/contribute/ContributeApplyPage";
 import ProposeStopPage from "./pages/contribute/ProposeStopPage";
 import ProposeWorkingPage from "./pages/contribute/ProposeWorkingPage";
+import ProposeWorkingCorrectionPage from "./pages/contribute/ProposeWorkingCorrectionPage";
 import MyContributionsPage from "./pages/contribute/MyContributionsPage";
 import ContributionDetailPage from "./pages/contribute/ContributionDetailPage";
 import StewardQueuePage from "./pages/contribute/steward/StewardQueuePage";
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/contribute/apply" element={<ContributeApplyPage />} />
                 <Route path="/contribute/propose" element={<ProposeStopPage />} />
                 <Route path="/contribute/propose-working" element={<ProposeWorkingPage />} />
+                <Route path="/contribute/correct-working" element={<ProposeWorkingCorrectionPage />} />
                 <Route path="/contribute/mine" element={<MyContributionsPage />} />
                 <Route path="/contribute/mine/:id" element={<ContributionDetailPage />} />
                 <Route path="/contribute/review" element={<StewardQueuePage />} />

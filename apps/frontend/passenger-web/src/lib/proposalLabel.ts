@@ -16,7 +16,7 @@ export function proposalTitle(entityType: string | undefined, values: unknown): 
 }
 
 export function proposalKind(entityType: string | undefined, action: string | undefined): string {
-  if (isWorking(entityType)) return "Who usually runs a departure";
+  if (isWorking(entityType)) return action === "CREATE" ? "Who usually runs a departure" : "Correction to a working";
   return action === "CREATE" ? "New stop" : "Correction";
 }
 
