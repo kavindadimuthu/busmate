@@ -96,7 +96,7 @@ public class PostImportService {
         }
 
         PostReading reading = readReading(draft.getAiResponse());
-        List<CheckedDeparture> checked = checks.checkGrounding(reading).stream()
+        List<CheckedDeparture> checked = checks.checkGrounding(draft.getPastedText(), reading).stream()
                 .map(c -> new CheckedDeparture(c.departure(), c.grounded(), c.ungroundedFields()))
                 .toList();
         List<String> unaccounted = checks.checkCoverage(draft.getPastedText(), reading);
@@ -112,7 +112,7 @@ public class PostImportService {
                     draft.getCreatedAt(), draft.getCreatedBy());
         }
         PostReading reading = readReading(draft.getAiResponse());
-        long ungrounded = checks.checkGrounding(reading).stream().filter(c -> !c.grounded()).count();
+        long ungrounded = checks.checkGrounding(draft.getPastedText(), reading).stream().filter(c -> !c.grounded()).count();
         int unaccounted = checks.checkCoverage(draft.getPastedText(), reading).size();
         return new PostImportDraftSummary(draft.getId(), draft.getStatus(), draft.getAiProvider(),
                 reading.departures().size(), (int) ungrounded, unaccounted, draft.getCreatedAt(), draft.getCreatedBy());

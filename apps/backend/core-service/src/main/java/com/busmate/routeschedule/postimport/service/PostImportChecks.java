@@ -1,8 +1,10 @@
 package com.busmate.routeschedule.postimport.service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
@@ -24,11 +26,26 @@ public class PostImportChecks {
     private static final Pattern TIMED_LINE = Pattern.compile(
             "\\b([01]?\\d|2[0-3])[.:][0-5]\\d\\s*(am|pm|AM|PM)?\\b");
 
-    /** Grounding: for each claimed field, is its value (loosely, case-insensitively) present in the departure's own quoted source lines? */
-    public List<DepartureCheck> checkGrounding(PostReading reading) {
+    /**
+     * Grounding: for each claimed field, is its value (loosely, case-insensitively) present either in the
+     * departure's own quoted source lines, or in the section text that line sits under?
+     *
+     * <p>A real post typically states a route's origin and destination once, in a header above a whole block
+     * of departures ("Embilipitiya 03 Colombo"), and never repeats it on each individual timed line. Checking
+     * only a departure's own quoted line against that shape flags nearly every row even when the AI read it
+     * correctly — a real measurement against the Embilipitiya post found 87% flagged this way, almost all of
+     * it origin/destination correctly carried down from a header. Widening the haystack to include the
+     * section a departure sits under (the run of non-timed lines most recently seen before it) fixes that
+     * without weakening the check's actual purpose: a plate, operator or time invented out of nothing still
+     * won't appear anywhere in either the row or its section, and still gets flagged.
+     */
+    public List<DepartureCheck> checkGrounding(String pastedText, PostReading reading) {
+        Map<String, String> sectionByLine = sectionContextByLine(pastedText);
         List<DepartureCheck> results = new ArrayList<>();
         for (ReadDeparture departure : reading.departures()) {
-            String haystack = normalise(String.join(" ", nonNull(departure.sourceLines())));
+            String ownText = String.join(" ", nonNull(departure.sourceLines()));
+            String section = sectionFor(departure.sourceLines(), sectionByLine);
+            String haystack = normalise(ownText + " " + section);
             List<String> ungrounded = new ArrayList<>();
             checkField("time", departure.time(), haystack, ungrounded);
             checkField("origin", departure.origin(), haystack, ungrounded);
@@ -41,6 +58,46 @@ public class PostImportChecks {
             results.add(new DepartureCheck(departure, ungrounded));
         }
         return results;
+    }
+
+    /**
+     * Maps each timed line of the pasted text to the section it belongs to — the run of non-timed lines most
+     * recently seen before it, carried forward across every timed line until the next such run appears. This
+     * is deliberately structural (no per-source vocabulary, no language assumption), the same "any format,
+     * no new code per source" principle the rest of this reader is built on.
+     */
+    private Map<String, String> sectionContextByLine(String pastedText) {
+        Map<String, String> sectionByLine = new LinkedHashMap<>();
+        List<String> pendingSection = new ArrayList<>();
+        String currentSection = "";
+        for (String rawLine : pastedText.lines().toList()) {
+            String line = rawLine.trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            if (TIMED_LINE.matcher(line).find()) {
+                if (!pendingSection.isEmpty()) {
+                    currentSection = String.join(" ", pendingSection);
+                    pendingSection.clear();
+                }
+                sectionByLine.put(normalise(line), currentSection);
+            } else {
+                pendingSection.add(line);
+            }
+        }
+        return sectionByLine;
+    }
+
+    private String sectionFor(List<String> sourceLines, Map<String, String> sectionByLine) {
+        for (String sourceLine : nonNull(sourceLines)) {
+            String normalisedSourceLine = normalise(sourceLine);
+            for (Map.Entry<String, String> entry : sectionByLine.entrySet()) {
+                if (entry.getKey().contains(normalisedSourceLine) || normalisedSourceLine.contains(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return "";
     }
 
     /**

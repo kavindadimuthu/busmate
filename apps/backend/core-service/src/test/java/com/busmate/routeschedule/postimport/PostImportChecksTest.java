@@ -25,7 +25,7 @@ class PostImportChecksTest {
         ReadDeparture d = new ReadDeparture("6.30am", "Colombo", "Galle", "Super Line", List.of("ABC-1234"),
                 "semi luxury", null, null, List.of(line));
 
-        List<DepartureCheck> results = checks.checkGrounding(new PostReading(null, List.of(d), List.of()));
+        List<DepartureCheck> results = checks.checkGrounding(line, new PostReading(null, List.of(d), List.of()));
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).grounded()).isTrue();
@@ -39,7 +39,7 @@ class PostImportChecksTest {
         ReadDeparture d = new ReadDeparture("6.30am", "Colombo", "Galle", "Super Line", List.of(),
                 null, null, null, List.of(line));
 
-        List<DepartureCheck> results = checks.checkGrounding(new PostReading(null, List.of(d), List.of()));
+        List<DepartureCheck> results = checks.checkGrounding(line, new PostReading(null, List.of(d), List.of()));
 
         assertThat(results.get(0).grounded()).isFalse();
         assertThat(results.get(0).ungroundedFields()).containsExactly("operatorName");
@@ -52,10 +52,43 @@ class PostImportChecksTest {
         ReadDeparture d = new ReadDeparture("6.30am", "Colombo", "Galle", "Super Line", List.of("ZZZ-9999"),
                 null, null, null, List.of(line));
 
-        List<DepartureCheck> results = checks.checkGrounding(new PostReading(null, List.of(d), List.of()));
+        List<DepartureCheck> results = checks.checkGrounding(line, new PostReading(null, List.of(d), List.of()));
 
         assertThat(results.get(0).grounded()).isFalse();
         assertThat(results.get(0).ungroundedFields()).containsExactly("plates");
+    }
+
+    @Test
+    @DisplayName("a value from the section header above a departure is grounded, not just its own line")
+    void sectionHeaderGroundsOriginAndDestination() {
+        String pastedText = """
+                Embilipitiya 03 Colombo (old road)
+
+                01:15 Weerasinghe Midnight Express ND-1712
+                03:30 Samitha Super Line NE-0629""";
+        ReadDeparture second = new ReadDeparture("03:30", "Embilipitiya", "Colombo", "Samitha Super Line",
+                List.of("NE-0629"), null, null, null, List.of("03:30 Samitha Super Line NE-0629"));
+
+        List<DepartureCheck> results = checks.checkGrounding(pastedText, new PostReading(null, List.of(second), List.of()));
+
+        assertThat(results.get(0).grounded()).isTrue();
+        assertThat(results.get(0).ungroundedFields()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("a value found nowhere, not even in the section header, is still flagged")
+    void stillFlagsAGenuineInvention() {
+        String pastedText = """
+                Embilipitiya 03 Colombo (old road)
+
+                01:15 Weerasinghe Midnight Express ND-1712""";
+        ReadDeparture d = new ReadDeparture("01:15", "Embilipitiya", "Colombo", "A Different Operator Entirely",
+                List.of("ND-1712"), null, null, null, List.of("01:15 Weerasinghe Midnight Express ND-1712"));
+
+        List<DepartureCheck> results = checks.checkGrounding(pastedText, new PostReading(null, List.of(d), List.of()));
+
+        assertThat(results.get(0).grounded()).isFalse();
+        assertThat(results.get(0).ungroundedFields()).containsExactly("operatorName");
     }
 
     @Test
