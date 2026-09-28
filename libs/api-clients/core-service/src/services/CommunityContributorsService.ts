@@ -20,6 +20,10 @@ import type { RejectChangesetRequest } from '../models/RejectChangesetRequest';
 import type { StewardAppointmentRequest } from '../models/StewardAppointmentRequest';
 import type { StopProposalRequest } from '../models/StopProposalRequest';
 import type { WorkingProposalRequest } from '../models/WorkingProposalRequest';
+import type { PassengerReportRequest } from '../models/PassengerReportRequest';
+import type { PassengerReportResponse } from '../models/PassengerReportResponse';
+import type { PagePassengerReportResponse } from '../models/PagePassengerReportResponse';
+import type { ResolveReportRequest } from '../models/ResolveReportRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -426,6 +430,69 @@ export class CommunityContributorsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/community/working-proposals',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Report something wrong with a departure or who runs it (any signed-in user)
+     * @param requestBody
+     * @returns PassengerReportResponse Created
+     * @throws ApiError
+     */
+    public static reportProblem(
+        requestBody: PassengerReportRequest,
+    ): CancelablePromise<PassengerReportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/reports',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * The report queue, oldest first
+     * @param status
+     * @param entityType
+     * @param page
+     * @param size
+     * @returns PagePassengerReportResponse OK
+     * @throws ApiError
+     */
+    public static listReports(
+        status?: 'OPEN' | 'RESOLVED',
+        entityType?: 'SCHEDULE' | 'SCHEDULE_WORKING',
+        page?: number,
+        size: number = 20,
+    ): CancelablePromise<PagePassengerReportResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/reports',
+            query: {
+                'status': status,
+                'entityType': entityType,
+                'page': page,
+                'size': size,
+            },
+        });
+    }
+    /**
+     * Mark a report resolved, once the real record has been checked or fixed
+     * @param reportId
+     * @param requestBody
+     * @returns PassengerReportResponse OK
+     * @throws ApiError
+     */
+    public static resolveReport(
+        reportId: string,
+        requestBody: ResolveReportRequest,
+    ): CancelablePromise<PassengerReportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/reports/{reportId}/resolve',
+            path: {
+                'reportId': reportId,
+            },
             body: requestBody,
             mediaType: 'application/json',
         });

@@ -30,8 +30,9 @@ import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
 import { TrustChip } from "@/components/trust/TrustChip";
 import { UsualWorkingLine } from "@/components/search/UsualWorkingLine";
+import { ReportProblemDialog } from "@/components/reports/ReportProblemDialog";
 import { TrustExplainer } from "@/components/trust/TrustExplainer";
-import { PassengerQueryService } from "@busmate/api-client-core";
+import { PassengerQueryService, PassengerReportRequest } from "@busmate/api-client-core";
 import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -605,6 +606,10 @@ const FindMyBusDetailPage = () => {
                       )}
                     </div>
                   </div>
+
+                  {schedule?.scheduleId && (
+                    <ReportProblemDialog entityType={PassengerReportRequest.entityType.SCHEDULE} targetId={schedule.scheduleId} label="Report a problem with this departure" />
+                  )}
 
                   {(schedule?.effectiveStartDate || schedule?.effectiveEndDate) && (
                     <div className="pt-1.5 sm:pt-2 border-t">

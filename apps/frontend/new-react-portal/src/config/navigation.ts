@@ -20,6 +20,7 @@ import {
   Radio,
   HeartHandshake,
   ClipboardCheck,
+  Flag,
 } from "lucide-react";
 import type { NavigationConfig } from "@busmate/ui";
 
@@ -122,6 +123,12 @@ export const motNavigation: NavigationConfig = {
           label: "Review",
           icon: ClipboardCheck,
           href: "/mot/community/review",
+        },
+        {
+          id: "community-reports",
+          label: "Reports",
+          icon: Flag,
+          href: "/mot/community/reports",
         },
       ],
     },

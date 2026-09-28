@@ -62,6 +62,7 @@ export type { Pageablenull } from './models/Pageablenull';
 export type { PageBusResponse } from './models/PageBusResponse';
 export type { PageChangesetResponse } from './models/PageChangesetResponse';
 export type { PageChangesetReviewResponse } from './models/PageChangesetReviewResponse';
+export type { PagePassengerReportResponse } from './models/PagePassengerReportResponse';
 export type { PageContributorResponse } from './models/PageContributorResponse';
 export type { PageOperatorResponse } from './models/PageOperatorResponse';
 export type { PageRouteGroupResponse } from './models/PageRouteGroupResponse';
@@ -79,6 +80,9 @@ export type { PassengerServicePermitStatisticsResponse } from './models/Passenge
 export type { PassengerStopResponse } from './models/PassengerStopResponse';
 export type { PassengerUpcomingTrip } from './models/PassengerUpcomingTrip';
 export type { PermitBusLinkRequest } from './models/PermitBusLinkRequest';
+export { PassengerReportRequest } from './models/PassengerReportRequest';
+export { PassengerReportResponse } from './models/PassengerReportResponse';
+export type { ResolveReportRequest } from './models/ResolveReportRequest';
 export type { PromotionCandidateResponse } from './models/PromotionCandidateResponse';
 export type { ProposeStopResponse } from './models/ProposeStopResponse';
 export { ProvenanceResponse } from './models/ProvenanceResponse';
