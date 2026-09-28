@@ -47,6 +47,7 @@ export async function tokenFor(account: Account): Promise<string> {
 export const as = async (account: Account) => ({
   get: async (path: string) => request('GET', path, { token: await tokenFor(account) }),
   post: async (path: string, body?: unknown) => request('POST', path, { token: await tokenFor(account), body }),
+  put: async (path: string, body?: unknown) => request('PUT', path, { token: await tokenFor(account), body }),
   delete: async (path: string) => request('DELETE', path, { token: await tokenFor(account) }),
 });
 

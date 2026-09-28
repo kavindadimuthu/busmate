@@ -9,6 +9,7 @@ import {
   ScheduleWorkingResponse,
   ScheduleWorkingsService,
 } from '@busmate/api-client-core';
+import { LinkWorkingDialog } from './LinkWorkingDialog';
 
 interface Props {
   schedule: ScheduleResponse;
@@ -153,14 +154,31 @@ export function ScheduleWorkingsTab({ schedule }: Props) {
             <li key={w.id} className="bg-card border border-border rounded-lg p-4" data-testid="working-row">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-medium text-foreground">
+                  <p className="font-medium text-foreground flex items-center gap-2 flex-wrap">
                     {w.operatorName ?? w.operatorNameObserved ?? 'Operator not stated'}
-                    {!w.operatorResolved && w.operatorNameObserved && <span className="ml-2 text-xs text-muted-foreground">not a registered operator</span>}
+                    {!w.operatorResolved && w.operatorNameObserved && (
+                      <>
+                        <span className="text-xs text-muted-foreground">not a registered operator</span>
+                        <LinkWorkingDialog
+                          target={{ kind: 'operator', workingId: w.id as string, observedName: w.operatorNameObserved }}
+                          onLinked={load}
+                        />
+                      </>
+                    )}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {w.vehicles?.length ? w.vehicles.map((v) => v.plate ?? v.plateObserved).join(' · ') : 'No plate recorded'}
-                    {w.serviceClass ? ` · ${w.serviceClass.replace(/_/g, ' ')}` : ''}
                   </p>
+                  {w.vehicles?.filter((v) => !v.resolved && v.plateObserved).map((v) => (
+                    <p key={v.id} className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                      {v.plateObserved} is not a registered bus
+                      <LinkWorkingDialog
+                        target={{ kind: 'bus', vehicleId: v.id as string, observedPlate: v.plateObserved as string, operatorId: w.operatorId }}
+                        onLinked={load}
+                      />
+                    </p>
+                  ))}
+                  {w.serviceClass && <p className="text-sm text-muted-foreground">{w.serviceClass.replace(/_/g, ' ')}</p>}
                   <p className="text-xs text-muted-foreground mt-1">
                     From {w.effectiveStartDate}{w.effectiveEndDate ? ` to ${w.effectiveEndDate}` : ', still current'}
                   </p>
