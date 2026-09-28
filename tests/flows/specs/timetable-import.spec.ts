@@ -79,6 +79,7 @@ test.describe.serial('a community timetable post', () => {
     expect(stopTime.departureTime ?? null).toBeNull();
     expect(stopTime.departureTimeUnverified).toBe('05:00:00');
     ids.express = byName['05:00 Sample Express'].id;
+    ids.lines = byName['06:00 Sample Lines'].id;
     const generate = await mot.post(`/api/trips/generate?scheduleId=${ids.express}&fromDate=2026-10-01&toDate=2026-10-02`);
     expect(generate.status).toBe(400);
   });
@@ -103,6 +104,25 @@ test.describe.serial('a community timetable post', () => {
       (await request('GET', `/api/passenger/find-my-bus?fromStopId=${ids.from}&toStopId=${ids.to}&date=${date}`)).body;
     expect((await search(nextDay(1))).totalResults).toBe(3);
     expect((await search(nextDay(0))).totalResults).toBe(2); // the "except Sunday" line drops out; the two with no days stated stay
+  });
+
+  test('the details page says No on the day a calendar excludes, not the "Yes" a passenger would be told before INC-055', async ({ page }) => {
+    const detailUrl = (scheduleId: string, date: string) =>
+      `${URLS.web}/findmybus/detail?scheduleId=${scheduleId}&fromStopId=${ids.from}&toStopId=${ids.to}&date=${date}`;
+
+    // "06:00 Sample Lines" excludes Sunday: wrong before INC-055, since `isActiveOnDate` was never actually computed.
+    await page.goto(detailUrl(ids.lines, nextDay(0)));
+    await expect(page.getByText('Operating on')).toBeVisible();
+    await expect(page.getByText('No', { exact: true })).toBeVisible();
+    await page.goto(detailUrl(ids.lines, nextDay(1)));
+    await expect(page.getByText('Yes', { exact: true })).toBeVisible();
+    await expect(page.getByText('Except Sunday')).toBeVisible(); // the summary, now actually populated
+
+    // "05:00 Sample Express" has no calendar at all: neither day claims to know, on any day of the week.
+    await page.goto(detailUrl(ids.express, nextDay(0)));
+    await expect(page.getByText('Days not stated')).toBeVisible();
+    await page.goto(detailUrl(ids.express, nextDay(1)));
+    await expect(page.getByText('Days not stated')).toBeVisible();
   });
 
   test('the route page admits it lists only some stops', async ({ page }) => {
