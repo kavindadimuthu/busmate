@@ -71,7 +71,7 @@ test.describe.serial('contributors propose who works a departure', () => {
     const passenger = await browser.newPage();
     await passenger.goto(detailUrl);
     await expect(passenger.getByText(/Usually\s+Flow Test Express\s*·\s*ZX-1001 or ZX-1002/)).toBeVisible();
-    await expect(passenger.getByTestId('propose-working-link')).toHaveText('Seen it run differently? Tell us');
+    await expect(passenger.getByTestId('correct-working-link')).toHaveText(`"${OPERATOR}" wrong or stopped? Tell us`);
     await passenger.close();
   });
 

@@ -1,7 +1,7 @@
 ---
 id: INC-058
 title: A contributor can correct or end a working; staff can too, directly
-state: active
+state: in-review
 track: 2
 risk: R3
 owner: kavinda
@@ -20,19 +20,19 @@ way to fix a working's observed fields directly either — only end it, delete i
 
 ## Acceptance criteria
 
-- [ ] Staff can correct a working's observed operator, plates, service class and end date directly, keeping
+- [x] Staff can correct a working's observed operator, plates, service class and end date directly, keeping
       whatever a request doesn't mention.
-- [ ] A contributor can propose the same correction against an existing working; approval applies it through
+- [x] A contributor can propose the same correction against an existing working; approval applies it through
       the same staff capability.
-- [ ] Corridor scope for a correction comes from the working's own schedule's route group.
-- [ ] A correction proposed against a working that has since changed is refused as outdated, not merged.
-- [ ] A contributor cannot set a registered operator or bus through a correction — only staff, via INC-057's
+- [x] Corridor scope for a correction comes from the working's own schedule's route group.
+- [x] A correction proposed against a working that has since changed is refused as outdated, not merged.
+- [x] A contributor cannot set a registered operator or bus through a correction — only staff, via INC-057's
       linking, unchanged by this.
-- [ ] The reviewer sees what would change, before and after, the same way a stop correction shows it.
-- [ ] A contributor can propose ending a working from the departure's own page; staff can too, from the
+- [x] The reviewer sees what would change, before and after, the same way a stop correction shows it.
+- [x] A contributor can propose ending a working from the departure's own page; staff can too, from the
       schedule page, without deleting and recreating it.
-- [ ] Tests: backend integration coverage; a browser test proves the full loop for at least one correction
-      and one ending.
+- [x] Tests: backend integration coverage (25 new tests across two files); a browser test proves the full
+      loop for a correction and an ending, and staff's own direct edit.
 
 ## Out of scope
 

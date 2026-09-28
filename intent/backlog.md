@@ -304,8 +304,12 @@ profile photos are built and in use; everything below reuses them rather than st
   straightforward: query by tier/observed_at rather than a stored value, since confidence is never stored.
 
 - **A report naming a specific working, not just the departure.** INC-056 built the model
-  (`ReportedEntityType.SCHEDULE_WORKING`) but nothing yet lets a passenger say which of several alternating
-  vehicles they mean.
+  (`ReportedEntityType.SCHEDULE_WORKING`); INC-058 gave `UsualWorking` an id for the same reason, so the
+  report dialog could now target one the same way the correction link does — nothing wires it up yet.
+
+- **Un-linking a registered operator or bus.** Neither INC-057 (linking) nor INC-058 (correcting) built the
+  reverse: once a working's operator or a vehicle's bus is linked, there is no way back to "just a name" if
+  the link was wrong. A direct staff action, not a review flow.
 
 ## Strategy
 
