@@ -58,6 +58,19 @@ export function formatObserved(observedAt?: string): string {
     : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+/**
+ * Below this, a record's confidence has decayed enough that staff seeing it flagged is more useful than not
+ * (ADR-018's "re-verification work queue", read here at display time rather than a separate list — matches the
+ * floor passenger reports (SRC_5) start at, so anything reading that low or lower is worth a second look).
+ */
+const STALE_THRESHOLD = 30;
+
+/** The confidence bar for a record's detail page; null when there is nothing to show one for. */
+export function confidenceMeta(p?: ProvenanceResponse): { effective: number; stale: boolean } | null {
+  if (p?.effectiveConfidence == null) return null;
+  return { effective: p.effectiveConfidence, stale: p.effectiveConfidence <= STALE_THRESHOLD };
+}
+
 /** One line for a tooltip: "Observed · credited to BusMate · last observed 3 Sep 2026". */
 export function provenanceSummary(p?: ProvenanceResponse): string {
   if (!p) return 'Source not recorded';
