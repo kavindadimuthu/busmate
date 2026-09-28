@@ -59,3 +59,4 @@
 | [ADR-025](ADR-025-staff-may-record-a-report-dated-to-its-source.md) | Staff may record a third party's report as a report, dated to when it was made | architecture | Accepted |
 | [ADR-026](ADR-026-contributors-propose-who-works-a-departure.md) | Contributors can propose who usually works a departure; it goes through the same review as a stop | architecture | Accepted |
 | [ADR-027](ADR-027-contributors-can-correct-or-end-a-working.md) | A contributor can correct or end a working, the same way they correct a stop | architecture | Accepted |
+| [ADR-028](ADR-028-an-ai-reads-a-post-code-checks-it-staff-approve-it.md) | An AI reads a pasted timetable post, code checks every value against it, and staff approve it | architecture | Proposed |

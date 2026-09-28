@@ -319,6 +319,14 @@ profile photos are built and in use; everything below reuses them rather than st
   "from Colombo" Southern Expressway return list is not a gap: it is a deliberate, permanent skip (see
   INC-059), since its vehicles already appear under their Kaduwela or Makumbura leg.
 
+- **Remove phone numbers before a post is sent to the AI (ADR-028).** The first version of the AI post
+  import sends the pasted text as it is, booking phone numbers included, and stores it in the draft — a
+  deliberate first-version choice. Strip them by code on the server before the call, and before storing.
+
+- **The existing `/api/ai/generate-route` proxy is open to any signed-in user.** It sits behind the
+  gateway's auth check only, so a passenger account can spend the Gemini key. Restrict it to staff. Found
+  while planning ADR-028.
+
 ## Strategy
 
 - Validate strategy assumptions `A-01`..`A-16` —
