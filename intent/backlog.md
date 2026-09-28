@@ -299,6 +299,10 @@ profile photos are built and in use; everything below reuses them rather than st
 - **The legacy `tests/e2e` suite is stale.** It targets Asgardeo login, a Next.js app and a create-drop
   database, none of which exist now. Delete or rewrite it; `tests/flows` is the working suite.
 
+- **The re-verification work queue.** INC-054 built the decay function ADR-018 named; the queue itself —
+  a staff list of records whose effective confidence has fallen below the threshold — is not built. Now
+  straightforward: query by tier/observed_at rather than a stored value, since confidence is never stored.
+
 ## Strategy
 
 - Validate strategy assumptions `A-01`..`A-16` —
