@@ -46,7 +46,10 @@ public class PostImportService {
     @Value("${postimport.rate-limit.per-person-per-day:20}")
     private int perPersonDailyLimit;
 
-    @Transactional
+    // Deliberately not @Transactional: reader.read() below is a slow external HTTP call (measured minutes
+    // for a long real post) — wrapping it in a transaction would hold a database connection idle for that
+    // whole time. countByCreatedByAndCreatedAtAfter() and drafts.save() each get their own short transaction
+    // from Spring Data; nothing here needs atomicity spanning the AI call.
     public PostImportDraftResponse create(Caller staff, CreatePostImportRequest request) {
         Instant since = Instant.now().minus(1, ChronoUnit.DAYS);
         long recent = drafts.countByCreatedByAndCreatedAtAfter(staff.auditId(), since);

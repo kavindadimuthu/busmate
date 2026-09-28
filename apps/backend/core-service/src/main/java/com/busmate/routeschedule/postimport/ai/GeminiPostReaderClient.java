@@ -1,9 +1,12 @@
 package com.busmate.routeschedule.postimport.ai;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -27,7 +30,14 @@ public class GeminiPostReaderClient implements PostReaderClient {
 
     private static final String API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-    private final RestClient restClient = RestClient.builder().baseUrl(API_BASE).build();
+    // A full real-world post (the paste limit's full 20,000 characters) asks Gemini to quote a source line
+    // for every one of a couple of hundred departures — measured at ~3 minutes for one such post, which blew
+    // past RestClient's undocumented default read timeout and failed with no useful message. Explicit and
+    // generous on purpose; a slow read here fails cleanly into FAILED status, never hangs a request thread.
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration READ_TIMEOUT = Duration.ofMinutes(5);
+
+    private final RestClient restClient = RestClient.builder().baseUrl(API_BASE).requestFactory(requestFactory()).build();
     private final ObjectMapper objectMapper;
     private final String apiKey;
     private final String model;
@@ -39,6 +49,13 @@ public class GeminiPostReaderClient implements PostReaderClient {
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
         this.model = model;
+    }
+
+    private static JdkClientHttpRequestFactory requestFactory() {
+        HttpClient httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(READ_TIMEOUT);
+        return factory;
     }
 
     @Override
@@ -62,7 +79,15 @@ public class GeminiPostReaderClient implements PostReaderClient {
                 "generationConfig", Map.of(
                         "temperature", 0.1,
                         "responseMimeType", "application/json",
-                        "responseSchema", buildResponseSchema()));
+                        "responseSchema", buildResponseSchema(),
+                        // A full-length paste needs a source-line quote on every one of a couple of hundred
+                        // departures — measured needing tens of thousands of output tokens, well past what's
+                        // left over after the model's own reasoning otherwise silently eats the budget and
+                        // truncates mid-object (MAX_TOKENS). thinkingBudget 0 was tried and made it worse:
+                        // with no room to reason at all, every field but time/sourceLines came back empty —
+                        // a bounded budget is required, not none.
+                        "maxOutputTokens", 65536,
+                        "thinkingConfig", Map.of("thinkingBudget", 8192)));
 
         JsonNodeResponse response;
         try {
