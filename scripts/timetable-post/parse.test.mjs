@@ -105,3 +105,71 @@ test('the CSV a person reviews reads back to exactly the same rows', () => {
     assert.equal(back[i].sundayExcluded, d.sundayExcluded);
   }
 });
+
+// ── the Southern Expressway section (INC-059) ──────────────────────────────────────────────────────────────
+
+const EXPRESSWAY_OUT = '👉ඇඹිලිපිටියෙන් පිටත්වීමේ වේලාවන්';
+const EXPRESSWAY_IN_MAKUMBURA = '👉මාකුඹුරෙන් ඇඹිලිපිටිය දක්වා පිටත්වීමේ වේලාවන්';
+const EXPRESSWAY_IN_COLOMBO = '👉කොළඹින් ඇඹිලිපිටිය දක්වා පිටත්වීමේ වේලාවන්';
+
+const EXPRESSWAY_POST = [
+  EXPRESSWAY_OUT,
+  '04:00 කඩුවෙල-කොළඹ(via note)(through-running note)',
+  'Test Highway Express AA-1111',
+  'For seat booking: 0770000000',
+  '',
+  '05:00 කඩුවෙල',
+  'SLTB Test',
+  '',
+  '06:00 Somewhere Unknown',
+  'SLTB Elsewhere',
+  EXPRESSWAY_IN_MAKUMBURA,
+  '07:00 SLTB Test',
+  '',
+  EXPRESSWAY_IN_COLOMBO,
+  '08:00 Test Highway Express AA-1111',
+  '(a via note on its own line)',
+].join('\n');
+
+test('a header with no fixed route at all is read one departure at a time, by its own two lines', () => {
+  assert.equal(classifyHeader(EXPRESSWAY_OUT).variableDestination, true);
+  assert.equal(classifyHeader(EXPRESSWAY_OUT).originKey, 'EMBILIPITIYA');
+});
+
+test('the return leg is a normal fixed-route list, just one that may give no plate at all', () => {
+  const section = classifyHeader(EXPRESSWAY_IN_MAKUMBURA);
+  assert.equal(section.originKey, 'MAKUMBURA');
+  assert.equal(section.destinationKey, 'EMBILIPITIYA');
+  assert.equal(section.direction, 'INBOUND');
+  assert.equal(section.allowNoPlate, true);
+});
+
+test('"from Colombo" is deliberately not read: its vehicles already appear under their expressway stand', () => {
+  assert.equal(classifyHeader(EXPRESSWAY_IN_COLOMBO), null);
+});
+
+test('a destination line names the route BusMate treats it as, keeping a further hop as a note verbatim', () => {
+  const { departures, problems } = parsePost(EXPRESSWAY_POST);
+  assert.equal(problems.length, 1, 'the one place this importer does not know');
+  assert.match(problems[0].problem, /unrecognised destination/);
+
+  const first = departures[0];
+  assert.equal(first.destinationKey, 'KADUWELA');
+  assert.equal(first.operatorName, 'Test Highway Express');
+  assert.deepEqual(first.plates, ['AA-1111']);
+  assert.deepEqual(first.notes, ['කඩුවෙල-කොළඹ', 'via note', 'through-running note']);
+});
+
+test('a line with no plate at all is a valid claim — the operator, unnamed vehicle — not a problem', () => {
+  const { departures } = parsePost(EXPRESSWAY_POST);
+  const noPlate = departures.find((d) => d.operatorName === 'SLTB Test' && d.departureTime === '05:00');
+  assert.deepEqual(noPlate.plates, []);
+  assert.equal(noPlate.scheduleName, '05:00 SLTB Test');
+});
+
+test('the reverse list reuses the ordinary one-line reader, so a stray note line after it is simply unread', () => {
+  const { departures } = parsePost(EXPRESSWAY_POST);
+  const fixed = departures.find((d) => d.sectionKey === 'EXPRESSWAY-MAKUMBURA-EMBILIPITIYA');
+  assert.equal(fixed.operatorName, 'SLTB Test');
+  assert.equal(fixed.originKey, 'MAKUMBURA');
+});

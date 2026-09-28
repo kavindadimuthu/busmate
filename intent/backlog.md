@@ -311,6 +311,14 @@ profile photos are built and in use; everything below reuses them rather than st
   reverse: once a working's operator or a vehicle's bus is linked, there is no way back to "just a name" if
   the link was wrong. A direct staff action, not a review flow.
 
+- **What the Southern Expressway import (INC-059) left out.** Route 69 (Kegalle/Kandy/Matale/Anuradhapura/
+  Vavuniya/Jaffna/Trincomalee) and the other long-distance sections: a genuinely different departure shape,
+  two operators sharing one slot via "&", not the one-operator-alternates-vehicles rotation already handled.
+  "Other cities via the new road" section: no route number, each departure effectively its own small feeder
+  route from a different town — needs its own design, not an extension of the expressway pattern. The
+  "from Colombo" Southern Expressway return list is not a gap: it is a deliberate, permanent skip (see
+  INC-059), since its vehicles already appear under their Kaduwela or Makumbura leg.
+
 ## Strategy
 
 - Validate strategy assumptions `A-01`..`A-16` —

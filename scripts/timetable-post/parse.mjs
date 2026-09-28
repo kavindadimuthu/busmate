@@ -21,12 +21,40 @@ export const STOPS = {
     nameSinhala: 'පිටකොටුව ගුණසිංහපුර බෝධිරාජ මාවත බස් නැවතුම්පොළ',
     city: 'Colombo', citySinhala: 'කොළඹ',
   },
+  // The Southern Expressway section (INC-059) names these as plain places, never "bus stand" — kept as the
+  // post itself names them, not padded out with a title it never used.
+  MAKUMBURA: { name: 'Makumbura', nameSinhala: 'මාකුඹුර', city: 'Makumbura', citySinhala: 'මාකුඹුර' },
+  KADUWELA: { name: 'Kaduwela', nameSinhala: 'කඩුවෙල', city: 'Kaduwela', citySinhala: 'කඩුවෙල' },
+  KADAWATHA: { name: 'Kadawatha', nameSinhala: 'කඩවත', city: 'Kadawatha', citySinhala: 'කඩවත' },
+  KARAPITIYA: { name: 'Karapitiya', nameSinhala: 'කරාපිටිය', city: 'Galle', citySinhala: 'ගාල්ල' },
 };
 
 const ROAD = { '03': { label: 'old road', roadType: 'NORMALWAY' }, '122': { label: 'new road', roadType: 'NORMALWAY' } };
 const PLATE = /\b[A-Z]{2}-\d{4}\b/g;
 const TIME_LINE = /^(\d{1,2}):(\d{2})\s+(.+)$/;
 const HEADER = /^[🔵👉]/u;
+
+// The post always pairs Galle with Karapitiya as one stand and never lists Galle alone, so the more specific
+// of the two names is what BusMate calls the stop; "Galle" only ever appears as the route's own name.
+const EXPRESSWAY_PLACES = { 'කඩුවෙල': 'KADUWELA', 'ගාල්ල': 'KARAPITIYA', 'මාකුඹුර': 'MAKUMBURA', 'කඩවත': 'KADAWATHA', 'කරාපිටිය': 'KARAPITIYA' };
+// A sub-header's leading place-name, "from X", for the legs that run the other way, back to Embilipitiya.
+// "කොළඹින්" (from Colombo) is deliberately not here: every vehicle in that list also appears under its
+// Kaduwela or Makumbura leg, so reading it too would record the same vehicle twice under two different names.
+const EXPRESSWAY_REVERSE = { 'මාකුඹුරෙන්': 'MAKUMBURA', 'කඩවතින්': 'KADAWATHA', 'කඩුවෙලින්': 'KADUWELA', 'කරාපිටියෙන්': 'KARAPITIYA' };
+
+function expresswayRoute(originKey, destinationKey, direction) {
+  const from = STOPS[originKey].name;
+  const to = STOPS[destinationKey].name;
+  return {
+    key: `EXPRESSWAY-${originKey}-${destinationKey}`,
+    direction, originKey, destinationKey,
+    routeName: `${from} - ${to} via Southern Expressway`,
+    roadType: 'EXPRESSWAY',
+    // The post never gives these vehicles a plate as often as it does elsewhere on this corridor — "the
+    // operator, unnamed vehicle" is still a valid claim (ADR-024), not a parsing failure.
+    allowNoPlate: true,
+  };
+}
 
 /**
  * Which list a header line opens, or null if it is a list this importer does not read.
@@ -35,6 +63,19 @@ const HEADER = /^[🔵👉]/u;
  * Gunasinghapura one and they are different places.
  */
 export function classifyHeader(header) {
+  // Southern Expressway, departing Embilipitiya: the destination differs by line (Kaduwela, Karapitiya,
+  // Makumbura, Kadawatha), so this section carries no fixed route at all — each departure line names its own.
+  if (header.includes('ඇඹිලිපිටියෙන් පිටත්වීමේ වේලාවන්')) {
+    return { variableDestination: true, originKey: 'EMBILIPITIYA', direction: 'OUTBOUND', allowNoPlate: true };
+  }
+  // Southern Expressway, the return leg from one of those same places: one fixed route, ordinary one-line
+  // departures, just without a plate as often.
+  for (const [prefix, placeKey] of Object.entries(EXPRESSWAY_REVERSE)) {
+    if (header.includes(prefix) && header.includes('ඇඹිලිපිටිය දක්වා')) {
+      return expresswayRoute(placeKey, 'EMBILIPITIYA', 'INBOUND');
+    }
+  }
+
   const number = /මාර්ග අංක (\d+)/.exec(header)?.[1];
   if (!ROAD[number]) return null;
   const toColombo = header.includes('කොළඹ දක්වා');
@@ -69,15 +110,22 @@ function statedFacts(line, facts) {
   if (time) facts.estimatedDurationMinutes = Number(time[1]) * 60 + Number(time[2]);
 }
 
-/** Splits a departure line into its parts. Returns { row } or { problem }. */
-export function parseDepartureLine(hh, mm, body) {
+/**
+ * Splits a departure line into its parts. Returns { row } or { problem }.
+ * `plateRequired` is on by default — this list's own plates are the evidence the operator name was even read
+ * correctly. A few lists genuinely never give one (the Southern Expressway's return legs); the caller opts a
+ * list out rather than this function guessing per line, so "no plate" always means the list said so, not a
+ * quiet parsing miss.
+ */
+export function parseDepartureLine(hh, mm, body, { plateRequired = true } = {}) {
   const plates = [...body.matchAll(PLATE)];
-  if (plates.length === 0) return { problem: 'no vehicle plate found' };
+  if (plates.length === 0 && plateRequired) return { problem: 'no vehicle plate found' };
 
-  const operator = body.slice(0, plates[0].index).trim();
-  if (!operator) return { problem: 'no operator name before the plate' };
+  const operatorEnd = plates.length ? plates[0].index : (body.includes('(') ? body.indexOf('(') : body.length);
+  const operator = body.slice(0, operatorEnd).trim();
+  if (!operator) return { problem: plates.length ? 'no operator name before the plate' : 'no operator name' };
 
-  const rest = body.slice(plates[0].index);
+  const rest = body.slice(operatorEnd);
   const qualifiers = [...rest.matchAll(/\(([^)]*)\)/g)].map((m) => m[1].trim()).filter(Boolean);
 
   const facts = { serviceClass: '', sundayExcluded: false, rotation: false, notes: [] };
@@ -98,6 +146,23 @@ export function parseDepartureLine(hh, mm, body) {
 }
 
 /**
+ * The destination named on a Southern-Expressway-from-Embilipitiya line, e.g. "කඩුවෙල-කොළඹ(බත්තරමුල්ල,
+ * බොරැල්ල හරහා)". BusMate's route ends at the first place named — Kaduwela, here — because that is the
+ * expressway stand every one of these buses reliably reaches; a hyphen after it means the post says the
+ * journey carries on further, which is kept as a note in the post's own words, not modelled as a second stop
+ * (the same "through-running… kept as description text only" rule INC-048 already used). Returns null when
+ * the named place isn't one BusMate knows.
+ */
+function expresswayDestination(text) {
+  const parenNotes = [...text.matchAll(/\(([^)]*)\)/g)].map((m) => m[1].trim()).filter(Boolean);
+  const place = text.replace(/\(.*/, '').trim();
+  const first = place.split('-')[0].trim();
+  const destinationKey = EXPRESSWAY_PLACES[first];
+  if (!destinationKey) return null;
+  return { destinationKey, notes: place.includes('-') ? [place, ...parenNotes] : parenNotes };
+}
+
+/**
  * @param {string} text the pasted post
  * @returns {{ departures: object[], skippedSections: {header: string, lines: number}[], problems: object[], ignored: object }}
  */
@@ -110,11 +175,39 @@ export function parsePost(text) {
   let section = null; // the list being read, or null while skipping
   let skipped = null;
   let facts = {};
+  // While reading a variable-destination list (the Southern Expressway from Embilipitiya), a departure is two
+  // lines: this holds the destination just read, waiting for the operator line that completes it.
+  let pendingDestination = null;
   const closeSkipped = () => {
     if (skipped) skippedSections.push(skipped);
     skipped = null;
   };
   const seenNames = new Map();
+
+  const push = (sectionInfo, row, extraNotes, sourceLine) => {
+    row.notes = [...(extraNotes ?? []), ...row.notes];
+    // Two departures of one operator at one time on one list would collide; the plate tells them apart, or —
+    // lacking one — which line of the post it was, so nothing is silently dropped for want of a plate.
+    const base = `${row.departureTime} ${row.operatorName}`;
+    const key = `${sectionInfo.key}|${base}`;
+    const n = (seenNames.get(key) ?? 0) + 1;
+    seenNames.set(key, n);
+    row.scheduleName = n === 1 ? base : `${base} ${row.plates[0] ?? `(line ${sourceLine})`}`;
+
+    departures.push({
+      sectionKey: sectionInfo.key,
+      routeName: sectionInfo.routeName,
+      routeNumber: sectionInfo.number ?? '',
+      direction: sectionInfo.direction,
+      roadType: sectionInfo.roadType,
+      originKey: sectionInfo.originKey,
+      destinationKey: sectionInfo.destinationKey,
+      distanceKm: sectionInfo.direction === 'OUTBOUND' ? facts.distanceKm ?? '' : '',
+      estimatedDurationMinutes: sectionInfo.direction === 'OUTBOUND' ? facts.estimatedDurationMinutes ?? '' : '',
+      ...row,
+      sourceLine,
+    });
+  };
 
   text.split(/\r?\n/).forEach((raw, i) => {
     const line = raw.trim();
@@ -124,11 +217,36 @@ export function parsePost(text) {
       closeSkipped();
       section = classifyHeader(line);
       facts = {};
+      pendingDestination = null;
       if (!section) skipped = { header: line.replace(/^[🔵👉]\s*/u, ''), lines: 0 };
       return;
     }
     if (!section) {
       if (skipped && TIME_LINE.test(line)) skipped.lines += 1;
+      return;
+    }
+
+    if (section.variableDestination) {
+      if (pendingDestination) {
+        // This line completes the departure the previous line named a destination for.
+        const parsed = parseDepartureLine(pendingDestination.hh, pendingDestination.mm, line, { plateRequired: false });
+        if (parsed.problem) problems.push({ line: i + 1, text: line, problem: parsed.problem });
+        else {
+          const routeInfo = expresswayRoute(section.originKey, pendingDestination.destinationKey, section.direction);
+          push(routeInfo, parsed.row, pendingDestination.notes, pendingDestination.sourceLine);
+        }
+        pendingDestination = null;
+        return;
+      }
+      if (/^For seat booking/i.test(line)) { ignored.bookingLines += 1; return; }
+      const m = TIME_LINE.exec(line);
+      if (!m) return; // no facts are stated on this list; an unrecognised line here is simply not a departure
+      const dest = expresswayDestination(m[3]);
+      if (!dest) {
+        problems.push({ line: i + 1, text: line, problem: `unrecognised destination "${m[3]}"` });
+        return;
+      }
+      pendingDestination = { hh: m[1], mm: m[2], sourceLine: i + 1, ...dest };
       return;
     }
 
@@ -142,32 +260,12 @@ export function parsePost(text) {
       return;
     }
 
-    const parsed = parseDepartureLine(m[1], m[2], m[3]);
+    const parsed = parseDepartureLine(m[1], m[2], m[3], { plateRequired: !section.allowNoPlate });
     if (parsed.problem) {
       problems.push({ line: i + 1, text: line, problem: parsed.problem });
       return;
     }
-    const row = parsed.row;
-    // Two departures of one operator at one time on one list would collide; the plate tells them apart.
-    const base = `${row.departureTime} ${row.operatorName}`;
-    const key = `${section.key}|${base}`;
-    const n = (seenNames.get(key) ?? 0) + 1;
-    seenNames.set(key, n);
-    row.scheduleName = n === 1 ? base : `${base} ${row.plates[0]}`;
-
-    departures.push({
-      sectionKey: section.key,
-      routeName: section.routeName,
-      routeNumber: section.number,
-      direction: section.direction,
-      roadType: section.roadType,
-      originKey: section.originKey,
-      destinationKey: section.destinationKey,
-      distanceKm: section.direction === 'OUTBOUND' ? facts.distanceKm ?? '' : '',
-      estimatedDurationMinutes: section.direction === 'OUTBOUND' ? facts.estimatedDurationMinutes ?? '' : '',
-      ...row,
-      sourceLine: i + 1,
-    });
+    push(section, parsed.row, [], i + 1);
   });
   closeSkipped();
   return { departures, skippedSections, problems, ignored };
