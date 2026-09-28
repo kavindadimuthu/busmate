@@ -1435,6 +1435,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         r.setSourceTier(p.getSourceTier());
         r.setObservedAt(p.getObservedAt());
         r.setBaseConfidence(p.getBaseConfidence());
+        r.setEffectiveConfidence(p.getEffectiveConfidence());
         r.setAttributionLabel(p.getAttributionLabel());
         return r;
     }
