@@ -246,7 +246,57 @@ class ScheduleWorkingIntegrationTest extends AbstractPostgresIntegrationTest {
                 .content("{\"operatorId\":\"" + operator.getId() + "\"}")).andExpect(status().isConflict());
     }
 
-    // ───────────────────────────── access, removal, and trips ─────────────────────────────
+    // ───────────────────────────── correcting (INC-058) ─────────────────────────────
+
+    @Test
+    @DisplayName("INC-058 staff correct an observed field, keeping everything the request leaves out")
+    void inc058_correctKeepsWhatWasNotSent() throws Exception {
+        String id = createdId(working("Weerasinghe Midnight Express", ",\"serviceClass\":\"LUXURY\",\"vehicles\":[{\"plateObserved\":\"ND-1712\"}]"));
+
+        mvc.perform(put("/api/schedule-workings/" + id).with(as(mot, "MOT")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"operatorNameObserved\":\"Weerasinghe Express\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.operatorNameObserved").value("Weerasinghe Express"))
+                .andExpect(jsonPath("$.serviceClass").value("LUXURY")) // untouched
+                .andExpect(jsonPath("$.vehicles[0].plateObserved").value("ND-1712")); // untouched
+    }
+
+    @Test
+    @DisplayName("INC-058 correcting the plates replaces the whole list")
+    void inc058_correctPlatesReplacesTheList() throws Exception {
+        String id = createdId(working("X", ",\"vehicles\":[{\"plateObserved\":\"AA-1\"},{\"plateObserved\":\"AA-2\"}]"));
+
+        mvc.perform(put("/api/schedule-workings/" + id).with(as(mot, "MOT")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"platesObserved\":[\"BB-1\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.vehicles.length()").value(1))
+                .andExpect(jsonPath("$.vehicles[0].plateObserved").value("BB-1"));
+    }
+
+    @Test
+    @DisplayName("INC-058 correcting an end date follows the same rule 'end' does: not before it starts")
+    void inc058_correctEndDateValidated() throws Exception {
+        String id = createdId(working("X", ",\"effectiveStartDate\":\"2026-01-01\""));
+        mvc.perform(put("/api/schedule-workings/" + id).with(as(mot, "MOT")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"effectiveEndDate\":\"2025-12-31\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(put("/api/schedule-workings/" + id).with(as(mot, "MOT")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"effectiveEndDate\":\"2026-06-01\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.effectiveEndDate").value("2026-06-01"));
+    }
+
+    @Test
+    @DisplayName("INC-058 correcting into an overlap with another working by the same operator is refused")
+    void inc058_correctOverlapRefused() throws Exception {
+        String first = createdId(working("Shared Name", ",\"effectiveStartDate\":\"2025-01-01\",\"effectiveEndDate\":\"2025-06-30\""));
+        String second = createdId(working("Other Name", ",\"effectiveStartDate\":\"2025-03-01\",\"effectiveEndDate\":\"2025-09-30\""));
+        mvc.perform(put("/api/schedule-workings/" + second).with(as(mot, "MOT")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"operatorNameObserved\":\"Shared Name\"}"))
+                .andExpect(status().isConflict());
+    }
+
+        // ───────────────────────────── access, removal, and trips ─────────────────────────────
 
     @Test
     @DisplayName("INC-045 only staff can record, read or remove workings")

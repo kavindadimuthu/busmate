@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.busmate.routeschedule.scheduling.dto.request.ResolveBusRequest;
+import com.busmate.routeschedule.scheduling.dto.request.CorrectWorkingRequest;
 import com.busmate.routeschedule.scheduling.dto.request.ResolveOperatorRequest;
 import com.busmate.routeschedule.scheduling.dto.request.ScheduleWorkingEndRequest;
 import com.busmate.routeschedule.scheduling.dto.request.ScheduleWorkingRequest;
@@ -52,6 +53,13 @@ public class ScheduleWorkingController {
                                                           @Valid @RequestBody ScheduleWorkingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(service.create(scheduleId, request, callerContext.require().auditId()));
+    }
+
+    @PutMapping("/schedule-workings/{workingId}")
+    @Operation(summary = "Correct what was observed about a working; anything left out stays as it is",
+            operationId = "correctScheduleWorking")
+    public ScheduleWorkingResponse correct(@PathVariable UUID workingId, @Valid @RequestBody CorrectWorkingRequest request) {
+        return service.correct(workingId, request, callerContext.require().auditId());
     }
 
     @PutMapping("/schedule-workings/{workingId}/end")

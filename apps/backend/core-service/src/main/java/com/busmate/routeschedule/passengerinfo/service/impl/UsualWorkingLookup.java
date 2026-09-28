@@ -44,7 +44,7 @@ public class UsualWorkingLookup {
         List<String> plates = w.getVehicles().stream()
                 .map(v -> v.getBus() != null ? v.getBus().getPlateNumber() : v.getPlateObserved())
                 .toList();
-        return new UsualWorking(operator, w.getServiceClass() != null ? w.getServiceClass().name() : null, plates,
+        return new UsualWorking(w.getId(), operator, w.getServiceClass() != null ? w.getServiceClass().name() : null, plates,
                 TrustLabels.recordTrust(w.getProvenance()));
     }
 }

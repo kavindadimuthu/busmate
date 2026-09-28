@@ -16,6 +16,7 @@ import com.busmate.routeschedule.community.dto.ChangesetReviewResponse;
 import com.busmate.routeschedule.community.dto.ContributorTrackRecord;
 import com.busmate.routeschedule.community.dto.RejectChangesetRequest;
 import com.busmate.routeschedule.community.dto.ScheduleWorkingContext;
+import com.busmate.routeschedule.community.dto.WorkingCorrectionRequest;
 import com.busmate.routeschedule.community.dto.WorkingProposalRequest;
 import com.busmate.routeschedule.community.entity.Affiliation;
 import com.busmate.routeschedule.community.entity.Changeset;
@@ -25,7 +26,11 @@ import com.busmate.routeschedule.community.entity.ChangesetStatus;
 import com.busmate.routeschedule.community.entity.Contributor;
 import com.busmate.routeschedule.community.repository.ChangesetRepository;
 import com.busmate.routeschedule.community.repository.ContributorRepository;
+import com.busmate.routeschedule.scheduling.dto.request.CorrectWorkingRequest;
 import com.busmate.routeschedule.scheduling.dto.request.ScheduleWorkingRequest;
+import com.busmate.routeschedule.scheduling.entity.Schedule;
+import com.busmate.routeschedule.scheduling.entity.ScheduleWorking;
+import com.busmate.routeschedule.scheduling.repository.ScheduleWorkingRepository;
 import com.busmate.routeschedule.scheduling.repository.ScheduleRepository;
 import com.busmate.routeschedule.scheduling.service.ScheduleWorkingService;
 import com.busmate.routeschedule.shared.dto.LocationDto;
@@ -67,6 +72,7 @@ public class ChangesetReviewService {
     private final ReviewAccess access;
     private final ScheduleWorkingService workings;
     private final ScheduleRepository schedules;
+    private final ScheduleWorkingRepository workingsRepo;
 
     @Transactional(readOnly = true)
     public Page<ChangesetReviewResponse> queue(Caller caller, ChangesetEntityType entityType, ChangesetStatus status,
@@ -226,6 +232,9 @@ public class ChangesetReviewService {
      * given to the reviewer, who can reject it. It is recorded at SRC_4, dated to when it was seen (ADR-026).
      */
     private ChangesetResponse approveWorking(Caller staff, ReviewAccess.Reviewer reviewer, Changeset c) {
+        if (c.getAction() == ChangesetAction.UPDATE) {
+            return approveWorkingCorrection(staff, reviewer, c);
+        }
         WorkingProposalRequest proposed = objectMapper.convertValue(c.getProposedValues(), WorkingProposalRequest.class);
         List<ScheduleWorkingRequest.VehicleClaim> vehicles = proposed.platesObserved() == null ? null
                 : proposed.platesObserved().stream().filter(p -> p != null && !p.isBlank())
@@ -241,12 +250,37 @@ public class ChangesetReviewService {
         return toResponse(changesets.save(c), !reviewer.isStaff());
     }
 
+    /**
+     * A correction to a working already on record, or that it has stopped (INC-058, ADR-027). Written through
+     * the same staff capability {@link com.busmate.routeschedule.scheduling.controller.ScheduleWorkingController}
+     * exposes directly, so every rule staff face applies here too.
+     */
+    private ChangesetResponse approveWorkingCorrection(Caller staff, ReviewAccess.Reviewer reviewer, Changeset c) {
+        ScheduleWorking working = workingsRepo.findById(c.getTargetId())
+                .orElseThrow(() -> new ResourceNotFoundException("The working this proposal was against no longer exists"));
+        requireNotStale(working, c);
+        WorkingCorrectionRequest proposed = objectMapper.convertValue(c.getProposedValues(), WorkingCorrectionRequest.class);
+        workings.correct(c.getTargetId(), new CorrectWorkingRequest(
+                proposed.operatorNameObserved(), proposed.platesObserved(), proposed.serviceClass(), proposed.effectiveEndDate()),
+                staff.auditId());
+
+        c.setStatus(ChangesetStatus.APPROVED);
+        c.setDecidedBy(staff.userId());
+        c.setDecidedAt(Instant.now());
+        return toResponse(changesets.save(c), !reviewer.isStaff());
+    }
+
     private ScheduleWorkingContext contextOf(Changeset c) {
-        return schedules.findById(c.getTargetId()).map(s -> new ScheduleWorkingContext(
-                s.getId(), s.getName(),
-                s.getRoute() != null ? s.getRoute().getName() : null,
-                s.getRoute() != null ? s.getRoute().getRouteNumber() : null,
-                workings.list(s.getId()))).orElse(null);
+        Schedule schedule = c.getAction() == ChangesetAction.UPDATE
+                ? workingsRepo.findById(c.getTargetId()).map(ScheduleWorking::getSchedule).orElse(null)
+                : schedules.findById(c.getTargetId()).orElse(null);
+        if (schedule == null) {
+            return null;
+        }
+        return new ScheduleWorkingContext(schedule.getId(), schedule.getName(),
+                schedule.getRoute() != null ? schedule.getRoute().getName() : null,
+                schedule.getRoute() != null ? schedule.getRoute().getRouteNumber() : null,
+                workings.list(schedule.getId()));
     }
 
     // ───────────────────────────── helpers ─────────────────────────────
@@ -271,6 +305,13 @@ public class ChangesetReviewService {
         if (!stop.getVersion().equals(c.getTargetVersion())) {
             throw new ConflictException(
                     "This stop has changed since the proposal was made — reject it as outdated instead");
+        }
+    }
+
+    private void requireNotStale(ScheduleWorking working, Changeset c) {
+        if (!working.getVersion().equals(c.getTargetVersion())) {
+            throw new ConflictException(
+                    "This working has changed since the proposal was made — reject it as outdated instead");
         }
     }
 
@@ -348,8 +389,14 @@ public class ChangesetReviewService {
 
     private ChangesetReviewResponse toReviewResponse(Changeset c, boolean redactProposer) {
         if (c.getEntityType() == ChangesetEntityType.SCHEDULE_WORKING) {
+            boolean staleWorking = false;
+            if (c.getAction() == ChangesetAction.UPDATE) {
+                ScheduleWorking targetEntity = workingsRepo.findById(c.getTargetId()).orElse(null);
+                staleWorking = targetEntity != null && c.getStatus() == ChangesetStatus.PENDING
+                        && !targetEntity.getVersion().equals(c.getTargetVersion());
+            }
             return new ChangesetReviewResponse(toResponse(c, redactProposer), null, null, affiliationOf(c), trackRecordOf(c),
-                    false, false, contextOf(c));
+                    false, staleWorking, contextOf(c));
         }
         StopResponse currentStop = c.getTargetId() != null
                 ? stops.findById(c.getTargetId()).map(stopMapper::toResponse).orElse(null)

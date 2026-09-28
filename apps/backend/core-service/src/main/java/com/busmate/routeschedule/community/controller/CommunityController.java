@@ -39,6 +39,7 @@ import com.busmate.routeschedule.community.entity.ReportStatus;
 import com.busmate.routeschedule.community.entity.ReportedEntityType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import com.busmate.routeschedule.community.dto.WorkingCorrectionRequest;
 import com.busmate.routeschedule.community.dto.WorkingProposalRequest;
 import com.busmate.routeschedule.community.entity.ChangesetEntityType;
 import com.busmate.routeschedule.community.dto.ContributorAgreementResponse;
@@ -184,6 +185,13 @@ public class CommunityController {
     @Operation(summary = "Propose who usually works a departure (active contributors only)", operationId = "proposeScheduleWorking")
     public ResponseEntity<ChangesetResponse> proposeWorking(@Valid @RequestBody WorkingProposalRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(workingProposals.propose(callerContext.require(), request));
+    }
+
+    @PostMapping("/working-corrections")
+    @Operation(summary = "Propose a correction to an existing working, or that it has stopped (active contributors only)",
+            operationId = "proposeWorkingCorrection")
+    public ResponseEntity<ChangesetResponse> proposeWorkingCorrection(@Valid @RequestBody WorkingCorrectionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workingProposals.proposeCorrection(callerContext.require(), request));
     }
 
     @GetMapping("/changesets/mine")

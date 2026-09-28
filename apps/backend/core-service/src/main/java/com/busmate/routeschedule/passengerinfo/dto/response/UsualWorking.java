@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(description = "Who usually works this departure. Never a guarantee about a particular day.")
 public record UsualWorking(
+        @Schema(description = "The working this claim is; lets a passenger propose a correction to the right one (INC-058)")
+        java.util.UUID id,
         @Schema(description = "The operator's name: the registered one if linked, else as seen") String operatorName,
         @Schema(description = "NORMAL, SEMI_LUXURY, LUXURY, SUPER_LUXURY or EXPRESSWAY_SUPER_LUXURY; absent if not stated")
         String serviceClass,

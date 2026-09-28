@@ -16,6 +16,7 @@ import com.busmate.routeschedule.community.entity.Contributor;
 import com.busmate.routeschedule.community.repository.ContributorRepository;
 import com.busmate.routeschedule.network.repository.RouteStopRepository;
 import com.busmate.routeschedule.scheduling.repository.ScheduleRepository;
+import com.busmate.routeschedule.scheduling.repository.ScheduleWorkingRepository;
 import com.busmate.routeschedule.shared.security.Caller;
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ReviewAccess {
     private final ContributorStanding standing;
     private final RouteStopRepository routeStops;
     private final ScheduleRepository schedules;
+    private final ScheduleWorkingRepository workings;
 
     @Transactional(readOnly = true)
     public Reviewer reviewer(Caller caller) {
@@ -67,14 +69,18 @@ public class ReviewAccess {
         }
     }
 
-    /** Route groups a proposal belongs to: for a stop, what serves it or its proposer's declared corridors; for a working, its schedule's route group. */
+    /**
+     * Route groups a proposal belongs to: for a stop, what serves it or its proposer's declared corridors; for
+     * a working, its schedule's route group — reached directly for a new working (the target is the schedule
+     * itself) or through the working for a correction (the target is the working; INC-058).
+     */
     private Set<UUID> corridorsOf(Changeset c) {
         if (c.getEntityType() == ChangesetEntityType.SCHEDULE_WORKING) {
-            // The route group its schedule runs on. A route with no group has no corridor, so it is staff-only.
-            return schedules.findById(c.getTargetId())
-                    .map(s -> s.getRoute().getRouteGroup())
-                    .map(g -> new HashSet<>(Set.of(g.getId())))
-                    .orElseGet(HashSet::new);
+            // A route with no group has no corridor, so it is staff-only either way.
+            var routeGroup = c.getAction() == ChangesetAction.UPDATE
+                    ? workings.findById(c.getTargetId()).map(w -> w.getSchedule().getRoute().getRouteGroup())
+                    : schedules.findById(c.getTargetId()).map(s -> s.getRoute().getRouteGroup());
+            return routeGroup.map(g -> new HashSet<>(Set.of(g.getId()))).orElseGet(HashSet::new);
         }
         if (c.getAction() == ChangesetAction.UPDATE && c.getTargetId() != null) {
             return new HashSet<>(routeStops.findRouteGroupIdsByStopId(c.getTargetId()));

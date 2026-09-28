@@ -13,6 +13,7 @@ import com.busmate.routeschedule.fleet.entity.Bus;
 import com.busmate.routeschedule.fleet.entity.Operator;
 import com.busmate.routeschedule.fleet.repository.BusRepository;
 import com.busmate.routeschedule.fleet.repository.OperatorRepository;
+import com.busmate.routeschedule.scheduling.dto.request.CorrectWorkingRequest;
 import com.busmate.routeschedule.scheduling.dto.request.ScheduleWorkingRequest;
 import com.busmate.routeschedule.scheduling.dto.response.ScheduleWorkingResponse;
 import com.busmate.routeschedule.scheduling.entity.Schedule;
@@ -46,6 +47,12 @@ public class ScheduleWorkingService {
     public List<ScheduleWorkingResponse> list(UUID scheduleId) {
         requireSchedule(scheduleId);
         return workings.findAllForSchedule(scheduleId).stream().map(this::toResponse).toList();
+    }
+
+    /** One working, for building a review snapshot (INC-058) as well as any future direct read. */
+    @Transactional(readOnly = true)
+    public ScheduleWorkingResponse get(UUID workingId) {
+        return toResponse(requireWorking(workingId));
     }
 
     @Transactional
@@ -87,6 +94,52 @@ public class ScheduleWorkingService {
 
         requireNoOverlap(schedule.getId(), working.operatorKey(), working.getEffectiveStartDate(),
                 working.getEffectiveEndDate(), null);
+        return toResponse(workings.save(working));
+    }
+
+    /**
+     * Corrects what was observed about a working — the operator name, the plates, the service class, an end
+     * date — keeping anything the request leaves out (INC-058, ADR-027). Never a registered operator or bus:
+     * those are staff-only through {@link #resolveOperator} and {@link #resolveBus}.
+     */
+    @Transactional
+    public ScheduleWorkingResponse correct(UUID workingId, CorrectWorkingRequest request, String auditId) {
+        ScheduleWorking working = requireWorking(workingId);
+        if (request.operatorNameObserved() != null) {
+            working.setOperatorNameObserved(blankToNull(request.operatorNameObserved()));
+        }
+        if (request.serviceClass() != null) {
+            working.setServiceClass(request.serviceClass());
+        }
+        if (request.effectiveEndDate() != null) {
+            if (request.effectiveEndDate().isBefore(working.getEffectiveStartDate())) {
+                throw new BadRequestException("It cannot end before it starts");
+            }
+            working.setEffectiveEndDate(request.effectiveEndDate());
+        }
+        if (request.platesObserved() != null) {
+            working.getVehicles().clear();
+            // Flushed before the new rows are added: clear + re-add in one flush would issue the insert of a
+            // same-plated replacement before the delete of what it replaces, and collide with the unique index
+            // that exists precisely to stop the same vehicle appearing twice.
+            workings.saveAndFlush(working);
+            Set<String> seen = new HashSet<>();
+            for (String plate : request.platesObserved()) {
+                ScheduleWorkingVehicle vehicle = new ScheduleWorkingVehicle();
+                vehicle.setWorking(working);
+                vehicle.setPlateObserved(normalisePlate(plate));
+                vehicle.setCreatedBy(auditId);
+                vehicle.setUpdatedBy(auditId);
+                provenanceStamper.stampCreate(vehicle, null, null, null);
+                if (!seen.add(vehicleKey(vehicle))) {
+                    throw new BadRequestException("The same vehicle is listed twice");
+                }
+                working.getVehicles().add(vehicle);
+            }
+        }
+        working.setUpdatedBy(auditId);
+        requireNoOverlap(working.getSchedule().getId(), working.operatorKey(),
+                working.getEffectiveStartDate(), working.getEffectiveEndDate(), working.getId());
         return toResponse(workings.save(working));
     }
 
