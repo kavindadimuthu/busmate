@@ -1,7 +1,7 @@
 ---
 id: INC-060
 title: Staff paste a timetable post and see an AI's reading of it, checked against the text
-state: shaped
+state: active
 track: 2
 risk: R3
 owner: kavinda
@@ -21,22 +21,22 @@ approve-and-load half, the reading has to be shown good enough, on real posts, t
 
 ## Acceptance criteria
 
-- [ ] A staff-only page in the portal (Community → Import a post); the server refuses anyone else.
-- [ ] The text is read by Gemini through a provider interface in core-service, using the key already held
+- [x] A staff-only page in the portal (Community → Import a post); the server refuses anyone else.
+- [x] The text is read by Gemini through a provider interface in core-service, using the key already held
       server-side; the key never reaches the browser. Tests use a stand-in, never a real model.
-- [ ] The answer is rows of: time, where from and where to (as written), operator, plates, service class and
+- [x] The answer is rows of: time, where from and where to (as written), operator, plates, service class and
       days only if stated, notes, and which lines of the post each row came from; plus lines skipped with a
       reason, and the post's own date if it states one.
-- [ ] An answer that does not fit that structure is rejected whole, with a plain message.
-- [ ] Any time, plate, operator or place not found in the pasted text is marked on its row.
-- [ ] Any line with a time that no row uses and the AI did not skip is marked as unaccounted for.
-- [ ] The review shows the original text beside the rows, and totals: rows read, rows marked, lines
+- [x] An answer that does not fit that structure is rejected whole, with a plain message.
+- [x] Any time, plate, operator or place not found in the pasted text is marked on its row.
+- [x] Any line with a time that no row uses and the AI did not skip is marked as unaccounted for.
+- [x] The review shows the original text beside the rows, and totals: rows read, rows marked, lines
       unaccounted for.
-- [ ] The paste, the AI's answer and the check results are saved as a draft that staff can reopen.
-- [ ] A limit on the length of a paste, and on how often one person can run it.
+- [x] The paste, the AI's answer and the check results are saved as a draft that staff can reopen.
+- [x] A limit on the length of a paste, and on how often one person can run it.
 - [ ] Measured once against the real Embilipitiya post: how far the AI's reading agrees with the hand-written
-      parser's, reported as numbers.
-- [ ] Tests: the checks, against invented posts; the endpoint with the stand-in; a browser test of paste and
+      parser's, reported as numbers. **Needs the real post pasted again — not done in this pass.**
+- [x] Tests: the checks, against invented posts; the endpoint with the stand-in; a browser test of paste and
       review.
 
 ## Out of scope

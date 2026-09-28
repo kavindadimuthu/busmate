@@ -193,6 +193,18 @@ springdoc:
   # out of the published contract keeps it out of the generated browser clients too.
   paths-to-exclude: /internal/**
 
+# AI-assisted post reading for staff (INC-060, ADR-028). The key already flows in from
+# config/secrets/.env via spring-dotenv — no secrets-file change needed for this service to use it.
+# Blank is tolerated at startup (local dev, tests); a read attempt with no key fails at call time.
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  post-import-model: ${GEMINI_POST_IMPORT_MODEL:gemini-2.5-flash}
+
+postimport:
+  rate-limit:
+    # Per staff member, per rolling day, across all their pasted posts.
+    per-person-per-day: ${POSTIMPORT_RATE_LIMIT_PER_PERSON_PER_DAY:20}
+
 # Base URL for the internal, unauthenticated (GET /api/live/** is permitAll there) calls this
 # service makes to fetch a bus's latest live position for real-time ETAs (IoT Platform Layer plan,
 # Phase 3). Mirrors telemetry-service's own core.service.url convention for the reverse direction.
