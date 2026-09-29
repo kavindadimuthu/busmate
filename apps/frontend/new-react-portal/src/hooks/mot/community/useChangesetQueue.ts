@@ -29,7 +29,7 @@ export function useChangesetQueue(tab: QueueTab) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await CommunityContributorsService.listChangesetsForReview(tab, undefined, undefined, page, pageSize);
+      const result = await CommunityContributorsService.listChangesetsForReview(undefined, tab, undefined, undefined, page, pageSize);
       const content = result.content ?? [];
       setRows(content);
       setTotalItems(result.totalElements ?? 0);

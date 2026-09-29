@@ -66,6 +66,19 @@ public class Contributor {
     @Column(name = "route_group_id")
     private Set<UUID> corridorRouteGroupIds = new HashSet<>();
 
+    /** Route groups a steward may review in; empty for a plain contributor (ADR-022). */
+    @ToString.Exclude
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "contributor_steward_scope", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "route_group_id")
+    private Set<UUID> stewardScopeRouteGroupIds = new HashSet<>();
+
+    @Column(name = "steward_appointed_by")
+    private UUID stewardAppointedBy;
+
+    @Column(name = "steward_appointed_at")
+    private Instant stewardAppointedAt;
+
     @Column(name = "agreement_version", nullable = false)
     private String agreementVersion;
 

@@ -1,11 +1,14 @@
 package com.busmate.routeschedule.community.service;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +18,14 @@ import com.busmate.routeschedule.community.dto.ContributorApplicationRequest;
 import com.busmate.routeschedule.community.dto.ContributorCountsResponse;
 import com.busmate.routeschedule.community.dto.ContributorResponse;
 import com.busmate.routeschedule.community.dto.MyContributorStandingResponse;
+import com.busmate.routeschedule.community.dto.PromotionCandidateResponse;
 import com.busmate.routeschedule.community.dto.MyContributorStandingResponse.CannotApplyReason;
 import com.busmate.routeschedule.community.entity.Affiliation;
+import com.busmate.routeschedule.community.entity.ChangesetStatus;
 import com.busmate.routeschedule.community.entity.Contributor;
+import com.busmate.routeschedule.community.entity.ContributorLevel;
 import com.busmate.routeschedule.community.entity.ContributorStatus;
+import com.busmate.routeschedule.community.repository.ChangesetRepository;
 import com.busmate.routeschedule.community.repository.ContributorRepository;
 import com.busmate.routeschedule.network.repository.RouteGroupRepository;
 import com.busmate.routeschedule.shared.client.AccountDirectory;
@@ -46,10 +53,18 @@ import lombok.RequiredArgsConstructor;
 public class ContributorService {
 
     private final ContributorRepository contributors;
+    private final ChangesetRepository changesets;
     private final RouteGroupRepository routeGroups;
     private final ContributorAgreement agreement;
     private final ContributorStanding standing;
     private final AccountDirectory accounts;
+
+    @Value("${community.promotion.min-approved:10}")
+    private int promotionMinApproved;
+    @Value("${community.promotion.min-approval-rate:0.8}")
+    private double promotionMinApprovalRate;
+    @Value("${community.promotion.min-days-active:30}")
+    private int promotionMinDaysActive;
 
     public ContributorAgreementResponse agreement() {
         return new ContributorAgreementResponse(agreement.version(), agreement.isDraft(), agreement.text());
@@ -64,6 +79,7 @@ public class ContributorService {
         return new MyContributorStandingResponse(
                 row == null ? "NONE" : row.getStatus().name(),
                 row != null && standing.isActive(row),
+                row != null && standing.isActiveSteward(row),
                 reason == null,
                 reason,
                 row == null ? null : toResponse(row));
@@ -198,12 +214,81 @@ public class ContributorService {
 
     @Transactional
     public ContributorResponse suspend(Caller staff, UUID userId, String reason) {
-        return decide(staff, userId, ContributorStatus.ACTIVE, ContributorStatus.SUSPENDED, reason, true);
+        decide(staff, userId, ContributorStatus.ACTIVE, ContributorStatus.SUSPENDED, reason, true);
+        // Suspension ends stewardship too (ADR-022); reinstating returns a plain contributor.
+        Contributor row = find(userId);
+        demote(row);
+        return toResponse(row);
     }
 
     @Transactional
     public ContributorResponse reinstate(Caller staff, UUID userId) {
         return decide(staff, userId, ContributorStatus.SUSPENDED, ContributorStatus.ACTIVE, null, false);
+    }
+
+    // ───────────────────────────── stewards (INC-041, ADR-022) ─────────────────────────────
+
+    /** Makes an active contributor a steward for these corridors, or changes the corridors of one. */
+    @Transactional
+    public ContributorResponse appointSteward(Caller staff, UUID userId, Set<UUID> routeGroupIds) {
+        if (staff.userId() != null && staff.userId().equals(userId)) {
+            throw new ForbiddenException("You can't appoint yourself");
+        }
+        Contributor row = find(userId);
+        if (!standing.isActive(row)) {
+            throw new ConflictException("Only an active contributor on the current agreement can be a steward");
+        }
+        if (routeGroupIds == null || routeGroupIds.isEmpty()) {
+            throw new BadRequestException("Choose at least one corridor");
+        }
+        if (routeGroups.findAllById(routeGroupIds).size() != routeGroupIds.size()) {
+            throw new BadRequestException("One of the chosen corridors does not exist");
+        }
+        row.setLevel(ContributorLevel.STEWARD);
+        row.setStewardScopeRouteGroupIds(new HashSet<>(routeGroupIds));
+        row.setStewardAppointedBy(staff.userId());
+        row.setStewardAppointedAt(Instant.now());
+        return toResponse(contributors.saveAndFlush(row));
+    }
+
+    @Transactional
+    public ContributorResponse revokeSteward(Caller staff, UUID userId) {
+        Contributor row = find(userId);
+        if (row.getLevel() != ContributorLevel.STEWARD) {
+            throw new ConflictException("This contributor is not a steward");
+        }
+        demote(row);
+        return toResponse(contributors.saveAndFlush(row));
+    }
+
+    /**
+     * Active contributors whose record clears the configured thresholds, best first. Advisory only:
+     * appointing is a separate staff action and nothing here promotes anyone.
+     */
+    @Transactional(readOnly = true)
+    public List<PromotionCandidateResponse> promotionCandidates() {
+        Instant activeBefore = Instant.now().minus(java.time.Duration.ofDays(promotionMinDaysActive));
+        return contributors.findByStatus(ContributorStatus.ACTIVE, Pageable.unpaged()).stream()
+                .filter(c -> c.getLevel() == ContributorLevel.CONTRIBUTOR && standing.isActive(c))
+                .filter(c -> !(c.getDecidedAt() != null ? c.getDecidedAt() : c.getAppliedAt()).isAfter(activeBefore))
+                .map(c -> {
+                    long approved = changesets.countByProposerUserIdAndStatus(c.getUserId(), ChangesetStatus.APPROVED);
+                    long rejected = changesets.countByProposerUserIdAndStatus(c.getUserId(), ChangesetStatus.REJECTED);
+                    long reverted = changesets.countByProposerUserIdAndStatus(c.getUserId(), ChangesetStatus.REVERTED);
+                    double rate = approved + rejected == 0 ? 0 : (double) approved / (approved + rejected);
+                    return new PromotionCandidateResponse(toResponse(c), approved, rejected, reverted, rate);
+                })
+                .filter(r -> r.approved() >= promotionMinApproved && r.approvalRate() >= promotionMinApprovalRate
+                        && r.reverted() == 0)
+                .sorted(Comparator.comparingLong(PromotionCandidateResponse::approved).reversed())
+                .toList();
+    }
+
+    private static void demote(Contributor row) {
+        row.setLevel(ContributorLevel.CONTRIBUTOR);
+        row.setStewardScopeRouteGroupIds(new HashSet<>());
+        row.setStewardAppointedBy(null);
+        row.setStewardAppointedAt(null);
     }
 
     private ContributorResponse decide(Caller staff, UUID userId, ContributorStatus from, ContributorStatus to,
@@ -230,7 +315,8 @@ public class ContributorService {
 
     ContributorResponse toResponse(Contributor c) {
         return new ContributorResponse(c.getUserId(), c.getStatus(), c.getLevel(), c.getMotivation(),
-                c.getHomeDistrict(), Set.copyOf(c.getCorridorRouteGroupIds()), c.getAffiliation(),
+                c.getHomeDistrict(), Set.copyOf(c.getCorridorRouteGroupIds()),
+                Set.copyOf(c.getStewardScopeRouteGroupIds()), c.getStewardAppointedAt(), c.getAffiliation(),
                 c.getAffiliationDetail(), c.getAgreementVersion(), agreement.version().equals(c.getAgreementVersion()),
                 c.getAgreementAcceptedAt(), c.getAppliedAt(), c.getDecidedBy(), c.getDecidedAt(), c.getDecisionReason());
     }

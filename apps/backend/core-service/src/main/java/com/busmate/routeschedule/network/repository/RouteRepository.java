@@ -25,7 +25,11 @@ import com.busmate.routeschedule.network.repository.projection.RouteStatisticsPr
 @Repository
 public interface RouteRepository extends JpaRepository<Route, UUID> {
     boolean existsByNameAndRouteGroup_Id(String name, UUID routeGroupId);
+    // Routes with no group (ADR-023) share one namespace of their own.
+    boolean existsByNameAndRouteGroupIsNull(String name);
+    boolean existsByNameAndRouteGroupIsNullAndIdNot(String name, UUID id);
     Optional<Route> findByNameAndRouteGroup_Id(String name, UUID routeGroupId);
+    Optional<Route> findByNameAndRouteGroupIsNull(String name);
     
     @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM Route r " +
            "WHERE r.name = :name AND r.routeGroup.id = :routeGroupId AND " +

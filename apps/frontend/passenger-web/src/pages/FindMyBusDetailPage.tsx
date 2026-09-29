@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,10 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RouteMap from "@/components/RouteMap";
 import { TrustChip } from "@/components/trust/TrustChip";
+import { UsualWorkingLine } from "@/components/search/UsualWorkingLine";
+import { ReportProblemDialog } from "@/components/reports/ReportProblemDialog";
 import { TrustExplainer } from "@/components/trust/TrustExplainer";
-import { PassengerQueryService } from "@busmate/api-client-core";
+import { PassengerQueryService, PassengerReportRequest } from "@busmate/api-client-core";
 import type { RouteScheduleStop, ScheduleExceptionInfo, FindMyBusDetailsResponse } from "@busmate/api-client-core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -531,6 +533,39 @@ const FindMyBusDetailPage = () => {
                   Schedule Details
                 </h2>
                 <div className="space-y-3 sm:space-y-4">
+                  <UsualWorkingLine workings={data.usualWorkings} />
+                  {data.usualWorkings && data.usualWorkings.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {data.usualWorkings.filter((w) => w.id).map((w) => (
+                        <Link
+                          key={w.id}
+                          to={`/contribute/correct-working?workingId=${encodeURIComponent(w.id as string)}`}
+                          className="text-xs text-primary underline underline-offset-2"
+                          data-testid="correct-working-link"
+                        >
+                          {w.operatorName ? `"${w.operatorName}" wrong or stopped? Tell us` : "Something wrong here? Tell us"}
+                        </Link>
+                      ))}
+                      {scheduleId && (
+                        <Link
+                          to={`/contribute/propose-working?scheduleId=${encodeURIComponent(scheduleId)}`}
+                          className="text-xs text-muted-foreground underline underline-offset-2"
+                        >
+                          Know of another bus that runs this too?
+                        </Link>
+                      )}
+                    </div>
+                  ) : (
+                    scheduleId && (
+                      <Link
+                        to={`/contribute/propose-working?scheduleId=${encodeURIComponent(scheduleId)}`}
+                        className="block text-xs text-primary underline underline-offset-2"
+                        data-testid="propose-working-link"
+                      >
+                        Know who runs this bus? Tell us
+                      </Link>
+                    )
+                  )}
                   {schedule?.trust && (
                     <div className="flex justify-between items-center gap-2">
                       <span className="text-xs sm:text-sm text-muted-foreground">Timetable:</span>
@@ -542,6 +577,10 @@ const FindMyBusDetailPage = () => {
                       <span className="text-xs sm:text-sm text-muted-foreground">Schedule:</span>
                       <span className="font-medium text-xs sm:text-sm text-right">{schedule.name}</span>
                     </div>
+                  )}
+                  {/* Where the timetable came from and what it does not say, e.g. that operating days were not stated. */}
+                  {schedule?.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground border-l-2 border-border pl-3">{schedule.description}</p>
                   )}
                   {schedule?.scheduleType && (
                     <div className="flex justify-between items-start gap-2">
@@ -571,7 +610,13 @@ const FindMyBusDetailPage = () => {
                   <div className="pt-1.5 sm:pt-2">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">Operating on {formatDate(data.queryDate)}</p>
                     <div>
-                      {schedule?.isActiveOnDate !== false ? (
+                      {schedule?.isActiveOnDate == null ? (
+                        // The server found no calendar and no exception for this date, so this is not a
+                        // claim nobody made: nobody has said which days it runs (INC-055, ADR-023).
+                        <Badge variant="secondary" className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
+                          Days not stated
+                        </Badge>
+                      ) : schedule.isActiveOnDate ? (
                         <Badge className="bg-green-500 hover:bg-green-600 text-white px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm">
                           Yes
                         </Badge>
@@ -582,6 +627,10 @@ const FindMyBusDetailPage = () => {
                       )}
                     </div>
                   </div>
+
+                  {schedule?.scheduleId && (
+                    <ReportProblemDialog entityType={PassengerReportRequest.entityType.SCHEDULE} targetId={schedule.scheduleId} label="Report a problem with this departure" />
+                  )}
 
                   {(schedule?.effectiveStartDate || schedule?.effectiveEndDate) && (
                     <div className="pt-1.5 sm:pt-2 border-t">

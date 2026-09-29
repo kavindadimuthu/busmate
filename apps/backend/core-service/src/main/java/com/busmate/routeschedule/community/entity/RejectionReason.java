@@ -17,4 +17,17 @@ public enum RejectionReason {
     public String label() {
         return label;
     }
+
+    /** Whether this reason can be given for a proposal about this kind of record. */
+    public boolean appliesTo(ChangesetEntityType type) {
+        return type == ChangesetEntityType.STOP || this == DUPLICATE || this == CANNOT_VERIFY || this == OTHER;
+    }
+
+    /** The wording the contributor sees; the stop wording would read wrongly for anything else. */
+    public String label(ChangesetEntityType type) {
+        if (type == ChangesetEntityType.STOP) {
+            return label;
+        }
+        return this == DUPLICATE ? "Already recorded for this departure" : label;
+    }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, ChevronRight, Loader2, MapPin, Plus } from "lucide-react";
+import { AlertCircle, ChevronRight, ClipboardCheck, Loader2, MapPin, Plus } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CommunityContributorsService, type ChangesetResponse } from "@busmate/api-client-core";
+import { proposalKind, proposalTitle } from "@/lib/proposalLabel";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-amber-500",
@@ -25,10 +26,7 @@ const STATUS_LABEL: Record<string, string> = {
   REVERTED: "Reverted",
 };
 
-function proposalName(c: ChangesetResponse): string {
-  const values = c.proposedValues as { name?: string } | undefined;
-  return values?.name ?? "Untitled proposal";
-}
+const proposalName = (c: ChangesetResponse) => proposalTitle(c.entityType, c.proposedValues);
 
 /** Everything the signed-in contributor has proposed, newest first (INC-030). */
 export default function MyContributionsPage() {
@@ -36,6 +34,14 @@ export default function MyContributionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("ALL");
+  // Only a courtesy link: core-service refuses review from anyone who isn't an active steward.
+  const [isSteward, setIsSteward] = useState(false);
+
+  useEffect(() => {
+    CommunityContributorsService.getMyContributorStanding()
+      .then((s) => setIsSteward(s.activeSteward === true))
+      .catch(() => setIsSteward(false));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,13 +68,22 @@ export default function MyContributionsPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 pt-24 pb-16 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My contributions</h1>
-          <Button asChild size="sm" className="bg-gradient-primary">
-            <Link to="/contribute/propose">
-              <Plus className="h-4 w-4 mr-1.5" /> Propose a stop
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            {isSteward && (
+              <Button asChild size="sm" variant="outline">
+                <Link to="/contribute/review">
+                  <ClipboardCheck className="h-4 w-4 mr-1.5" /> Review proposals
+                </Link>
+              </Button>
+            )}
+            <Button asChild size="sm" className="bg-gradient-primary">
+              <Link to="/contribute/propose">
+                <Plus className="h-4 w-4 mr-1.5" /> Propose a stop
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-6 flex-wrap">
@@ -112,7 +127,7 @@ export default function MyContributionsPage() {
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{proposalName(p)}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {p.action === "CREATE" ? "New stop" : "Correction"} · {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ""}
+                        {proposalKind(p.entityType, p.action)} · {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

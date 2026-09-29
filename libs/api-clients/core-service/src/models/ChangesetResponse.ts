@@ -23,6 +23,7 @@ export type ChangesetResponse = {
 export namespace ChangesetResponse {
     export enum entityType {
         STOP = 'STOP',
+        SCHEDULE_WORKING = 'SCHEDULE_WORKING',
     }
     export enum action {
         CREATE = 'CREATE',

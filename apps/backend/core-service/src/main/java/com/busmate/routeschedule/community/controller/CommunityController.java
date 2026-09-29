@@ -1,5 +1,6 @@
 package com.busmate.routeschedule.community.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -8,9 +9,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,13 +21,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.busmate.routeschedule.community.dto.AgreementAcceptanceRequest;
 import com.busmate.routeschedule.community.dto.ChangesetResponse;
+import com.busmate.routeschedule.community.dto.PromotionCandidateResponse;
 import com.busmate.routeschedule.community.dto.ProposeStopResponse;
+import com.busmate.routeschedule.community.dto.StewardAppointmentRequest;
 import com.busmate.routeschedule.community.dto.StopProposalRequest;
 import com.busmate.routeschedule.community.dto.ChangesetReviewResponse;
 import com.busmate.routeschedule.community.dto.RejectChangesetRequest;
 import com.busmate.routeschedule.community.entity.ChangesetStatus;
 import com.busmate.routeschedule.community.service.ChangesetReviewService;
 import com.busmate.routeschedule.community.service.StopProposalService;
+import com.busmate.routeschedule.community.service.WorkingProposalService;
+import com.busmate.routeschedule.community.service.PassengerReportService;
+import com.busmate.routeschedule.community.dto.PassengerReportRequest;
+import com.busmate.routeschedule.community.dto.PassengerReportResponse;
+import com.busmate.routeschedule.community.dto.ResolveReportRequest;
+import com.busmate.routeschedule.community.entity.ReportStatus;
+import com.busmate.routeschedule.community.entity.ReportedEntityType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import com.busmate.routeschedule.community.dto.WorkingCorrectionRequest;
+import com.busmate.routeschedule.community.dto.WorkingProposalRequest;
+import com.busmate.routeschedule.community.entity.ChangesetEntityType;
 import com.busmate.routeschedule.community.dto.ContributorAgreementResponse;
 import com.busmate.routeschedule.community.dto.ContributorApplicationRequest;
 import com.busmate.routeschedule.community.dto.ContributorCountsResponse;
@@ -49,6 +66,8 @@ public class CommunityController {
 
     private final ContributorService service;
     private final StopProposalService stopProposals;
+    private final WorkingProposalService workingProposals;
+    private final PassengerReportService passengerReports;
     private final ChangesetReviewService review;
     private final CallerContext callerContext;
 
@@ -130,12 +149,49 @@ public class CommunityController {
         return service.reinstate(callerContext.require(), userId);
     }
 
+    @GetMapping("/contributors/promotion-candidates")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Active contributors whose record clears the promotion thresholds; advisory, appoints nobody",
+            operationId = "listPromotionCandidates")
+    public List<PromotionCandidateResponse> promotionCandidates() {
+        return service.promotionCandidates();
+    }
+
+    @PutMapping("/contributors/{userId}/steward")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Appoint a contributor steward for the given corridors, or change their corridors",
+            operationId = "appointSteward")
+    public ContributorResponse appointSteward(@PathVariable UUID userId,
+                                              @Valid @RequestBody StewardAppointmentRequest request) {
+        return service.appointSteward(callerContext.require(), userId, request.routeGroupIds());
+    }
+
+    @DeleteMapping("/contributors/{userId}/steward")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Revoke stewardship; the contributor stays an active contributor", operationId = "revokeSteward")
+    public ContributorResponse revokeSteward(@PathVariable UUID userId) {
+        return service.revokeSteward(callerContext.require(), userId);
+    }
+
     // ───────────────────────────── stop proposals (INC-030) ─────────────────────────────
 
     @PostMapping("/stop-proposals")
     @Operation(summary = "Propose a new stop or a correction to one (active contributors only)", operationId = "proposeStop")
     public ResponseEntity<ProposeStopResponse> proposeStop(@Valid @RequestBody StopProposalRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(stopProposals.propose(callerContext.require(), request));
+    }
+
+    @PostMapping("/working-proposals")
+    @Operation(summary = "Propose who usually works a departure (active contributors only)", operationId = "proposeScheduleWorking")
+    public ResponseEntity<ChangesetResponse> proposeWorking(@Valid @RequestBody WorkingProposalRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workingProposals.propose(callerContext.require(), request));
+    }
+
+    @PostMapping("/working-corrections")
+    @Operation(summary = "Propose a correction to an existing working, or that it has stopped (active contributors only)",
+            operationId = "proposeWorkingCorrection")
+    public ResponseEntity<ChangesetResponse> proposeWorkingCorrection(@Valid @RequestBody WorkingCorrectionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workingProposals.proposeCorrection(callerContext.require(), request));
     }
 
     @GetMapping("/changesets/mine")
@@ -152,31 +208,57 @@ public class CommunityController {
         return stopProposals.withdraw(callerContext.require(), changesetId);
     }
 
+    // ───────────────────────────── passenger reports (INC-056) ─────────────────────────────
+
+    @PostMapping("/reports")
+    @Operation(summary = "Report something wrong with a departure or who runs it (any signed-in user)", operationId = "reportProblem")
+    public ResponseEntity<PassengerReportResponse> report(@Valid @RequestBody PassengerReportRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(passengerReports.report(callerContext.require(), request));
+    }
+
+    @GetMapping("/reports")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "The report queue, oldest first", operationId = "listReports")
+    public Page<PassengerReportResponse> reportQueue(@RequestParam(required = false) ReportStatus status,
+                                                      @RequestParam(required = false) ReportedEntityType entityType,
+                                                      @RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "20") int size) {
+        return passengerReports.queue(status, entityType, PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+    }
+
+    @PostMapping("/reports/{reportId}/resolve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @Operation(summary = "Mark a report resolved, once the real record has been checked or fixed", operationId = "resolveReport")
+    public PassengerReportResponse resolveReport(@PathVariable UUID reportId, @Valid @RequestBody ResolveReportRequest request) {
+        return passengerReports.resolve(callerContext.require(), reportId, request.note());
+    }
+
     // ───────────────────────────── staff review (INC-031) ─────────────────────────────
 
     @GetMapping("/changesets")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
-    @Operation(summary = "The review queue: stop proposals, oldest first, filterable by status, contributor and district",
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT', 'PASSENGER')")
+    @Operation(summary = "The review queue: stop and working proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity",
             operationId = "listChangesetsForReview")
-    public Page<ChangesetReviewResponse> queue(@RequestParam(required = false) ChangesetStatus status,
+    public Page<ChangesetReviewResponse> queue(@RequestParam(required = false) ChangesetEntityType entityType,
+                                               @RequestParam(required = false) ChangesetStatus status,
                                                @RequestParam(required = false) UUID proposerUserId,
                                                @RequestParam(required = false) String homeDistrict,
                                                @RequestParam(defaultValue = "0") int page,
                                                @RequestParam(defaultValue = "20") int size) {
-        return review.queue(status, proposerUserId, homeDistrict,
+        return review.queue(callerContext.require(), entityType, status, proposerUserId, homeDistrict,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
     }
 
     @GetMapping("/changesets/{changesetId}/review")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT', 'PASSENGER')")
     @Operation(summary = "One proposal with the stop it targets, the distance between positions, and the contributor's record",
             operationId = "getChangesetForReview")
     public ChangesetReviewResponse getForReview(@PathVariable UUID changesetId) {
-        return review.get(changesetId);
+        return review.get(callerContext.require(), changesetId);
     }
 
     @PostMapping("/changesets/{changesetId}/approve")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT', 'PASSENGER')")
     @Operation(summary = "Approve a stop proposal — writes the canonical stop, credited and labelled observed",
             operationId = "approveChangeset")
     public ChangesetResponse approve(@PathVariable UUID changesetId) {
@@ -184,7 +266,7 @@ public class CommunityController {
     }
 
     @PostMapping("/changesets/{changesetId}/reject")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MOT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MOT', 'PASSENGER')")
     @Operation(summary = "Reject a stop proposal with a reason the contributor will see", operationId = "rejectChangeset")
     public ChangesetResponse reject(@PathVariable UUID changesetId, @Valid @RequestBody RejectChangesetRequest request) {
         return review.reject(callerContext.require(), changesetId, request);

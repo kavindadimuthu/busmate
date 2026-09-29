@@ -73,6 +73,12 @@ public class FindMyBusDetailsResponse {
     
     @Schema(description = "Summary of the journey from origin to destination")
     private JourneySummary journeySummary;
+
+    // ==================== Who usually works it ====================
+
+    @Schema(description = "Who usually works this departure on the date searched. A pattern, never a guarantee about "
+            + "today's bus. Empty when nobody has recorded it")
+    private List<UsualWorking> usualWorkings;
     
     /**
      * Complete route information

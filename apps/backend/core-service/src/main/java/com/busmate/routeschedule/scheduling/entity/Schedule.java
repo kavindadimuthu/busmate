@@ -2,6 +2,7 @@ package com.busmate.routeschedule.scheduling.entity;
 
 import com.busmate.routeschedule.scheduling.enums.ScheduleTypeEnum;
 import com.busmate.routeschedule.scheduling.enums.ScheduleStatusEnum; // New import
+import com.busmate.routeschedule.scheduling.enums.TimingCompletenessEnum;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -42,6 +43,11 @@ public class Schedule extends ProvenancedEntity {
 
     @Column(name = "effective_end_date")
     private LocalDate effectiveEndDate;
+
+    /** How much of the timetable is known; UNKNOWN until a person says (ADR-023). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "timing_completeness", nullable = false)
+    private TimingCompletenessEnum timingCompleteness = TimingCompletenessEnum.UNKNOWN;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

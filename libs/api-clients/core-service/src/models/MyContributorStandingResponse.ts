@@ -6,6 +6,7 @@ import type { ContributorResponse } from './ContributorResponse';
 export type MyContributorStandingResponse = {
     status?: string;
     activeContributor?: boolean;
+    activeSteward?: boolean;
     canApply?: boolean;
     cannotApplyReason?: MyContributorStandingResponse.cannotApplyReason;
     contributor?: ContributorResponse;

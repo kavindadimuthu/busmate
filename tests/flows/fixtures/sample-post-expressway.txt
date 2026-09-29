@@ -1,0 +1,24 @@
+# An invented post in the shape of the Southern Expressway section of a real community timetable (INC-059).
+# No real operator, plate or phone number. Place names (Kaduwela, Makumbura) are real places, used only as
+# parsing vocabulary — the same way "Embilipitiya" and "Colombo" already are in sample-post.txt.
+✅UPDATED ON 13/10/2025
+
+🔵බරවකුඹුක හුවමාරුව හරහා ඇඹිලිපිටිය සිට දක්ෂිණ අධිවේගී මාර්ගය ඔස්සේ ධාවනයට යොදවා ඇති බස් රථ🔵
+
+👉ඇඹිලිපිටියෙන් පිටත්වීමේ වේලාවන්
+
+04:00 කඩුවෙල-කොළඹ(බත්තරමුල්ල, බොරැල්ල හරහා)
+Sample Highway Express AA-1111
+For seat booking: 0770000000
+
+05:00 මාකුඹුර
+Sample Feeder
+
+👉කොළඹින් ඇඹිලිපිටිය දක්වා පිටත්වීමේ වේලාවන්
+
+06:45 Sample Highway Express AA-1111
+(via a note on its own line)
+
+👉මාකුඹුරෙන් ඇඹිලිපිටිය දක්වා පිටත්වීමේ වේලාවන්
+
+07:30 Sample Feeder

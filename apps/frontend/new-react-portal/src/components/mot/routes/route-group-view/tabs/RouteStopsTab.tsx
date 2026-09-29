@@ -1,8 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { useRouter } from '@/lib/router';
-import { MapPin, Eye, ChevronRight, Navigation, ExternalLink } from 'lucide-react';
+import { MapPin, Eye, ChevronRight, Navigation, ExternalLink, Trash2 } from 'lucide-react';
+import { RouteManagementService } from '@busmate/api-client-core';
 import type { RouteResponse } from '@busmate/api-client-core';
+import { PlaceStopPanel } from './PlaceStopPanel';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -11,10 +15,13 @@ interface RouteStopsTabProps {
 }
 
 interface DisplayStop {
+  routeStopId?: string;
   stopId?: string;
   stopName?: string;
   type: 'start' | 'intermediate' | 'end';
-  distance: number;
+  /** null when nobody has said how far from the start it is; 0 would claim it is at the start. */
+  distance: number | null;
+  distanceUnverified?: number | null;
   order: number;
 }
 
@@ -23,14 +30,16 @@ interface DisplayStop {
 function getOrderedStops(route: RouteResponse): DisplayStop[] {
   const stops: DisplayStop[] = [];
 
-  // Start stop
-  stops.push({
-    stopId: route.startStopId,
-    stopName: route.startStopName,
-    type: 'start',
-    distance: 0,
-    order: 0,
-  });
+  // Start stop. A route can be known without endpoints (ADR-023), so only show one that exists.
+  if (route.startStopId || route.startStopName) {
+    stops.push({
+      stopId: route.startStopId,
+      stopName: route.startStopName,
+      type: 'start',
+      distance: 0,
+      order: 0,
+    });
+  }
 
   // Intermediate stops (sorted by order)
   if (route.routeStops && route.routeStops.length > 0) {
@@ -42,31 +51,47 @@ function getOrderedStops(route: RouteResponse): DisplayStop[] {
 
     sortedStops.forEach((stop, idx) => {
       stops.push({
+        routeStopId: stop.id,
         stopId: stop.stopId,
         stopName: stop.stopName,
         type: 'intermediate',
-        distance: stop.distanceFromStartKm || 0,
+        distance: stop.distanceFromStartKm ?? null,
+        distanceUnverified: stop.distanceFromStartKmUnverified ?? null,
         order: idx + 1,
       });
     });
   }
 
   // End stop
-  stops.push({
-    stopId: route.endStopId,
-    stopName: route.endStopName,
-    type: 'end',
-    distance: route.distanceKm || 0,
-    order: stops.length,
-  });
+  if (route.endStopId || route.endStopName) {
+    stops.push({
+      stopId: route.endStopId,
+      stopName: route.endStopName,
+      type: 'end',
+      distance: route.distanceKm || 0,
+      order: stops.length,
+    });
+  }
 
   return stops;
 }
 
 // ── Component ─────────────────────────────────────────────────────
 
-export function RouteStopsTab({ route }: RouteStopsTabProps) {
+export function RouteStopsTab({ route: loaded }: RouteStopsTabProps) {
   const router = useRouter();
+  // The list as it is after a stop is added or removed here; the page's own copy is old until it reloads.
+  const [changed, setChanged] = useState<RouteResponse | null>(null);
+  const route: RouteResponse = changed !== null && changed.id === loaded.id ? changed : loaded;
+  const removeStop = async (routeStopId: string) => {
+    if (!window.confirm('Remove this stop from the route?')) return;
+    try {
+      setChanged(await RouteManagementService.removeRouteStop(route.id as string, routeStopId));
+    } catch (e) {
+      const body = (e as { body?: { message?: string } })?.body;
+      toast.error(body?.message ?? 'Could not remove the stop');
+    }
+  };
   const stops = getOrderedStops(route);
   const isOutbound = route.direction === 'OUTBOUND';
 
@@ -78,6 +103,12 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
           <h3 className="text-lg font-semibold text-foreground">Route Stops</h3>
           <p className="text-sm text-muted-foreground mt-0.5">
             {stops.length} stops along {route.distanceKm?.toFixed(1) || 0} km route
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Stop list:{' '}
+            {{ COMPLETE: 'confirmed complete', PARTIAL: 'partial — more stops exist', UNKNOWN: 'not confirmed' }[
+              route.stopListCompleteness ?? 'UNKNOWN'
+            ]}
           </p>
         </div>
 
@@ -95,6 +126,8 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
           {route.direction}
         </div>
       </div>
+
+      <PlaceStopPanel route={route} onChanged={setChanged} />
 
       {/* Stops timeline */}
       <div className="relative">
@@ -164,7 +197,13 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
                       <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-3.5 h-3.5 text-muted-foreground/70" />
-                          <span>{stop.distance.toFixed(1)} km from start</span>
+                          <span>
+                            {stop.distance !== null
+                              ? `${stop.distance.toFixed(1)} km from start`
+                              : stop.distanceUnverified != null
+                              ? `about ${stop.distanceUnverified.toFixed(1)} km from start (unverified)`
+                              : 'distance not known'}
+                          </span>
                         </div>
                         {stop.stopId && (
                           <div className="hidden sm:block font-mono text-xs text-muted-foreground/70">
@@ -173,6 +212,16 @@ export function RouteStopsTab({ route }: RouteStopsTabProps) {
                         )}
                       </div>
                     </div>
+
+                    {stop.routeStopId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); void removeStop(stop.routeStopId as string); }}
+                        className="p-2.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        title="Remove stop from route"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
 
                     {/* View button */}
                     {stop.stopId && (

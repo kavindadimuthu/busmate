@@ -374,7 +374,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         clonedSchedule.setDescription(request.getDescription());
         clonedSchedule.setRoute(route);
         clonedSchedule.setScheduleType(ScheduleTypeEnum.valueOf(request.getScheduleType()));
-        clonedSchedule.setEffectiveStartDate(request.getEffectiveStartDate());
+        clonedSchedule.setEffectiveStartDate(request.getEffectiveStartDate() != null ? request.getEffectiveStartDate() : LocalDate.now());
         clonedSchedule.setEffectiveEndDate(request.getEffectiveEndDate());
         clonedSchedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         clonedSchedule.setCreatedBy(userId);
@@ -620,9 +620,6 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (request.getScheduleType() == null || request.getScheduleType().trim().isEmpty()) {
             throw new IllegalArgumentException("Schedule type is required");
         }
-        if (request.getEffectiveStartDate() == null) {
-            throw new IllegalArgumentException("Effective start date is required");
-        }
     }
 
     private Route validateAndGetRoute(UUID routeId) {
@@ -651,12 +648,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setDescription(request.getDescription());
         schedule.setRoute(route);
         schedule.setScheduleType(ScheduleTypeEnum.valueOf(request.getScheduleType()));
-        schedule.setEffectiveStartDate(request.getEffectiveStartDate());
+        // Optional (ADR-023): "in effect as of now" is true, and the column stays NOT NULL because passenger search
+        // compares it — a NULL start date would silently hide the schedule.
+        schedule.setEffectiveStartDate(request.getEffectiveStartDate() != null ? request.getEffectiveStartDate() : LocalDate.now());
         schedule.setEffectiveEndDate(request.getEffectiveEndDate());
+        if (request.getTimingCompleteness() != null) {
+            schedule.setTimingCompleteness(request.getTimingCompleteness());
+        }
         schedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         schedule.setCreatedBy(userId);
         schedule.setUpdatedBy(userId);
-        provenanceStamper.stampCreate(schedule, request.getSourceTier(), request.getAttributionLabel());
+        provenanceStamper.stampCreate(schedule, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
         return schedule;
     }
 
@@ -665,11 +667,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setDescription(request.getDescription());
         schedule.setRoute(route);
         schedule.setScheduleType(ScheduleTypeEnum.valueOf(request.getScheduleType()));
-        schedule.setEffectiveStartDate(request.getEffectiveStartDate());
+        // Not restating a value leaves it as it was, so relaxing "required" cannot quietly change an old caller's data.
+        if (request.getEffectiveStartDate() != null) {
+            schedule.setEffectiveStartDate(request.getEffectiveStartDate());
+        }
         schedule.setEffectiveEndDate(request.getEffectiveEndDate());
+        if (request.getTimingCompleteness() != null) {
+            schedule.setTimingCompleteness(request.getTimingCompleteness());
+        }
         schedule.setStatus(ScheduleStatusEnum.valueOf(request.getStatus())); // Fixed enum
         schedule.setUpdatedBy(userId);
-        provenanceStamper.stampEdit(schedule, request.getSourceTier(), request.getAttributionLabel());
+        provenanceStamper.stampEdit(schedule, request.getSourceTier(), request.getAttributionLabel(), request.getObservedOn());
     }
 
     private List<ScheduleStop> createScheduleStops(Schedule schedule, List<ScheduleRequest.ScheduleStopRequest> stopRequests) {
@@ -1427,6 +1435,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         r.setSourceTier(p.getSourceTier());
         r.setObservedAt(p.getObservedAt());
         r.setBaseConfidence(p.getBaseConfidence());
+        r.setEffectiveConfidence(p.getEffectiveConfidence());
         r.setAttributionLabel(p.getAttributionLabel());
         return r;
     }
@@ -1443,6 +1452,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         response.setScheduleType(schedule.getScheduleType().name());
         response.setEffectiveStartDate(schedule.getEffectiveStartDate());
         response.setEffectiveEndDate(schedule.getEffectiveEndDate());
+        response.setTimingCompleteness(schedule.getTimingCompleteness());
         response.setStatus(schedule.getStatus().name());
         response.setCreatedAt(schedule.getCreatedAt());
         response.setUpdatedAt(schedule.getUpdatedAt());

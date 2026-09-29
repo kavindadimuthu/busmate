@@ -151,6 +151,22 @@ passenger labels, applying, proposing and reviewing stops) is shaped as INC-027.
 are in build order. **Shape nothing past the pilot gate until the pilot has tested `A-15` and `A-16`** —
 its results will reshape them.
 
+- **The contributor agreement is still a draft.** `community.agreement.draft` is true, so staff cannot
+  accept anyone in production until a human approves the real text (the dev profile allows it locally).
+  It is a legal document a person writes; nothing in code unblocks it, and it gates the pilot.
+- **No automated end-to-end test of the contribution loop.** INC-041/042 were verified with ad hoc browser
+  scripts (apply → accept → appoint → propose → steward approves → suspend), which is how the bug above
+  was found and which nothing keeps. Worth turning into a `tests/e2e` spec against the dev seed
+  (`docs/dev-seed-credentials.md` now has an account for each role) once frontend CI exists.
+- **What the Embilipitiya import (INC-048) left out.** Only the six Embilipitiya ↔ Colombo lists are read. Not read:
+  the southern-expressway lists (a different format: a destination line, then an operator line), the route-69
+  and other long-distance lists, fares, and booking contacts. Through-running ("starts at Suriyawewa 00:30")
+  and short-working ("as far as Maharagama") are kept as description text only. The four stops have no
+  positions, so they cannot be shown on a map until a steward adds them. Each further list needs its own parse
+  and its own decisions; the expressway lists come first, since they carry the highest-value services.
+- **A portal importer for timetable posts.** The script writes a reviewed CSV and loads it; a portal screen
+  that reads the same CSV would let MOT do it without a developer. Not worth building until a second post has
+  shown whether one CSV shape fits.
 - **Pilot gate (not code).** 5–10 invited enthusiasts on one corridor, running on INC-027..031 for 90 days:
   count who is still active at day 30 and day 90, and ride-check a sample of approved stops. Decides
   whether anything below gets built.
@@ -279,6 +295,37 @@ profile photos are built and in use; everything below reuses them rather than st
   accounts", which stopped being true when self-hosted auth reached Phase 5. Others are likely stale
   the same way. Each guide needs someone to actually run it and correct what has drifted — do this as
   part of Phase 3, not by reading.
+
+- **The legacy `tests/e2e` suite is stale.** It targets Asgardeo login, a Next.js app and a create-drop
+  database, none of which exist now. Delete or rewrite it; `tests/flows` is the working suite.
+
+- **The re-verification work queue.** INC-054 built the decay function ADR-018 named; the queue itself —
+  a staff list of records whose effective confidence has fallen below the threshold — is not built. Now
+  straightforward: query by tier/observed_at rather than a stored value, since confidence is never stored.
+
+- **A report naming a specific working, not just the departure.** INC-056 built the model
+  (`ReportedEntityType.SCHEDULE_WORKING`); INC-058 gave `UsualWorking` an id for the same reason, so the
+  report dialog could now target one the same way the correction link does — nothing wires it up yet.
+
+- **Un-linking a registered operator or bus.** Neither INC-057 (linking) nor INC-058 (correcting) built the
+  reverse: once a working's operator or a vehicle's bus is linked, there is no way back to "just a name" if
+  the link was wrong. A direct staff action, not a review flow.
+
+- **What the Southern Expressway import (INC-059) left out.** Route 69 (Kegalle/Kandy/Matale/Anuradhapura/
+  Vavuniya/Jaffna/Trincomalee) and the other long-distance sections: a genuinely different departure shape,
+  two operators sharing one slot via "&", not the one-operator-alternates-vehicles rotation already handled.
+  "Other cities via the new road" section: no route number, each departure effectively its own small feeder
+  route from a different town — needs its own design, not an extension of the expressway pattern. The
+  "from Colombo" Southern Expressway return list is not a gap: it is a deliberate, permanent skip (see
+  INC-059), since its vehicles already appear under their Kaduwela or Makumbura leg.
+
+- **Remove phone numbers before a post is sent to the AI (ADR-028).** The first version of the AI post
+  import sends the pasted text as it is, booking phone numbers included, and stores it in the draft — a
+  deliberate first-version choice. Strip them by code on the server before the call, and before storing.
+
+- **The existing `/api/ai/generate-route` proxy is open to any signed-in user.** It sits behind the
+  gateway's auth check only, so a passenger account can spend the Gemini key. Restrict it to staff. Found
+  while planning ADR-028.
 
 ## Strategy
 

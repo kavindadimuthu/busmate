@@ -70,6 +70,10 @@ for both would misrepresent that relationship, so each operator gets two entries
 | `00000000-0000-0000-0000-000000000201` | Dilani Perera | Books an online ticket on the Colombo–Kandy line. |
 | `00000000-0000-0000-0000-000000000202` | Kasun Mendis | Books an online ticket on the Colombo–Galle line. |
 | `00000000-0000-0000-0000-000000000203` | Ishara Gunawardena | Books an online ticket on the Colombo–Negombo line. |
+| `00000000-0000-0000-0000-000000000204` | Amara Jayawardena | Community contributor (Colombo–Kandy); user-service account, standing in core-service (V909). No tickets. |
+| `00000000-0000-0000-0000-000000000205` | Chamara Herath | Community contributor (Colombo–Galle); as above. |
+| `00000000-0000-0000-0000-000000000206` | Tharindu Ekanayake | Community steward for Colombo–Kandy; as above. |
+| `00000000-0000-0000-0000-000000000207` | Nadeesha Rajapaksa | Community applicant, awaiting MOT; as above. |
 
 ### Demo conductors (users)
 

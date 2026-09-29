@@ -5,6 +5,7 @@ import { AlertTriangle, ChevronRight, ClipboardList, Loader2, MapPin } from 'luc
 import { useSetPageMetadata } from '@/context/PageContext';
 import { useChangesetQueue, type QueueTab } from '@/hooks/mot/community/useChangesetQueue';
 import { useState } from 'react';
+import { proposalKind, proposalTitle } from '@/components/mot/community/proposalLabel';
 
 const TABS: { value: QueueTab; label: string }[] = [
   { value: 'PENDING', label: 'Pending' },
@@ -24,8 +25,8 @@ export default function CommunityReviewPage() {
   const { rows, totalItems, loading, stopName } = useChangesetQueue(tab);
 
   useSetPageMetadata({
-    title: 'Review Stop Proposals',
-    description: 'Compare each proposal with the current stop, and approve, reject or revert it',
+    title: 'Review Proposals',
+    description: 'Compare each proposal with what is there now, and approve or reject it. Stop corrections can also be reverted',
     activeItem: 'community-review',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Community' }, { label: 'Review' }],
@@ -77,9 +78,9 @@ export default function CommunityReviewPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold truncate">{stopName(row.changeset)}</p>
+                  <p className="text-sm font-semibold truncate">{proposalTitle(row.changeset?.entityType, row.changeset?.proposedValues, stopName(row.changeset))}</p>
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                    {row.changeset?.action === 'CREATE' ? 'New stop' : 'Correction'}
+                    {proposalKind(row.changeset?.entityType, row.changeset?.action)}
                   </span>
                   {row.targetOutranksCommunityTier && (
                     <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20 shrink-0">

@@ -26,7 +26,14 @@ export const contributorColumns: ColumnDef<ContributorRow>[] = [
     header: "Applicant",
     cell: ({ row }) => (
       <div className="min-w-0">
-        <p className="text-sm font-semibold truncate leading-tight">{row.account?.fullName ?? "—"}</p>
+        <p className="text-sm font-semibold truncate leading-tight">
+          {row.account?.fullName ?? "—"}
+          {row.level === "STEWARD" && (
+            <span className="ml-2 align-middle inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
+              Steward
+            </span>
+          )}
+        </p>
         <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
           {row.account?.email ?? row.userId?.slice(0, 8)}
         </p>

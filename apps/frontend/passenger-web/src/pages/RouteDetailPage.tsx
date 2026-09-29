@@ -104,6 +104,12 @@ export default function RouteDetailPage() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               Stops ({stops.length})
             </h2>
+            {/* Only PARTIAL says something: UNKNOWN is "nobody has said" and would be noise on every older route. */}
+            {route.stopListCompleteness === "PARTIAL" && (
+              <p className="text-sm text-muted-foreground mb-3">
+                These are only some of this route's stops. The bus stops at others that haven't been listed yet.
+              </p>
+            )}
             <Card>
               <CardContent className="p-0">
                 <ol className="divide-y divide-border">

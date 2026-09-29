@@ -159,7 +159,7 @@ export const routesResource: ResourceConfig<RouteResponse, RouteFilters> = defin
         variant="ghost"
         size="icon"
         className="h-8 w-8"
-        onClick={() => route.routeGroupId && navigate?.(`/mot/routes/${route.routeGroupId}?highlight=${route.id}`)}
+        onClick={() => navigate?.(route.routeGroupId ? `/mot/routes/${route.routeGroupId}?highlight=${route.id}` : `/mot/routes/single/${route.id}`)}
         title="View route"
       >
         <Eye className="h-3.5 w-3.5 text-primary" />

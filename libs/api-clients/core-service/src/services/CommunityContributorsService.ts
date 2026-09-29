@@ -14,9 +14,17 @@ import type { MyContributorStandingResponse } from '../models/MyContributorStand
 import type { PageChangesetResponse } from '../models/PageChangesetResponse';
 import type { PageChangesetReviewResponse } from '../models/PageChangesetReviewResponse';
 import type { PageContributorResponse } from '../models/PageContributorResponse';
+import type { PromotionCandidateResponse } from '../models/PromotionCandidateResponse';
 import type { ProposeStopResponse } from '../models/ProposeStopResponse';
 import type { RejectChangesetRequest } from '../models/RejectChangesetRequest';
+import type { StewardAppointmentRequest } from '../models/StewardAppointmentRequest';
 import type { StopProposalRequest } from '../models/StopProposalRequest';
+import type { WorkingCorrectionRequest } from '../models/WorkingCorrectionRequest';
+import type { WorkingProposalRequest } from '../models/WorkingProposalRequest';
+import type { PassengerReportRequest } from '../models/PassengerReportRequest';
+import type { PassengerReportResponse } from '../models/PassengerReportResponse';
+import type { PagePassengerReportResponse } from '../models/PagePassengerReportResponse';
+import type { ResolveReportRequest } from '../models/ResolveReportRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -49,7 +57,8 @@ export class CommunityContributorsService {
         });
     }
     /**
-     * The review queue: stop proposals, oldest first, filterable by status, contributor and district
+     * The review queue: stop and working proposals, oldest first. Staff see all; a steward sees only their corridors, without proposer identity
+     * @param entityType
      * @param status
      * @param proposerUserId
      * @param homeDistrict
@@ -59,6 +68,7 @@ export class CommunityContributorsService {
      * @throws ApiError
      */
     public static listChangesetsForReview(
+        entityType?: 'STOP' | 'SCHEDULE_WORKING',
         status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | 'REVERTED',
         proposerUserId?: string,
         homeDistrict?: string,
@@ -69,6 +79,7 @@ export class CommunityContributorsService {
             method: 'GET',
             url: '/api/community/changesets',
             query: {
+                'entityType': entityType,
                 'status': status,
                 'proposerUserId': proposerUserId,
                 'homeDistrict': homeDistrict,
@@ -224,6 +235,17 @@ export class CommunityContributorsService {
         });
     }
     /**
+     * Active contributors whose record clears the promotion thresholds; advisory, appoints nobody
+     * @returns PromotionCandidateResponse OK
+     * @throws ApiError
+     */
+    public static listPromotionCandidates(): CancelablePromise<Array<PromotionCandidateResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/contributors/promotion-candidates',
+        });
+    }
+    /**
      * One contributor or application
      * @param userId
      * @returns ContributorResponse OK
@@ -296,6 +318,44 @@ export class CommunityContributorsService {
         });
     }
     /**
+     * Appoint a contributor steward for the given corridors, or change their corridors
+     * @param userId
+     * @param requestBody
+     * @returns ContributorResponse OK
+     * @throws ApiError
+     */
+    public static appointSteward(
+        userId: string,
+        requestBody: StewardAppointmentRequest,
+    ): CancelablePromise<ContributorResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/community/contributors/{userId}/steward',
+            path: {
+                'userId': userId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Revoke stewardship; the contributor stays an active contributor
+     * @param userId
+     * @returns ContributorResponse OK
+     * @throws ApiError
+     */
+    public static revokeSteward(
+        userId: string,
+    ): CancelablePromise<ContributorResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/community/contributors/{userId}/steward',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
      * Suspend an active contributor; takes effect on their next request
      * @param userId
      * @param requestBody
@@ -355,6 +415,101 @@ export class CommunityContributorsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/community/stop-proposals',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Propose who usually works a departure (active contributors only)
+     * @param requestBody
+     * @returns ChangesetResponse Created
+     * @throws ApiError
+     */
+    public static proposeScheduleWorking(
+        requestBody: WorkingProposalRequest,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/working-proposals',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Report something wrong with a departure or who runs it (any signed-in user)
+     * @param requestBody
+     * @returns PassengerReportResponse Created
+     * @throws ApiError
+     */
+    public static reportProblem(
+        requestBody: PassengerReportRequest,
+    ): CancelablePromise<PassengerReportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/reports',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * The report queue, oldest first
+     * @param status
+     * @param entityType
+     * @param page
+     * @param size
+     * @returns PagePassengerReportResponse OK
+     * @throws ApiError
+     */
+    public static listReports(
+        status?: 'OPEN' | 'RESOLVED',
+        entityType?: 'SCHEDULE' | 'SCHEDULE_WORKING',
+        page?: number,
+        size: number = 20,
+    ): CancelablePromise<PagePassengerReportResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/community/reports',
+            query: {
+                'status': status,
+                'entityType': entityType,
+                'page': page,
+                'size': size,
+            },
+        });
+    }
+    /**
+     * Mark a report resolved, once the real record has been checked or fixed
+     * @param reportId
+     * @param requestBody
+     * @returns PassengerReportResponse OK
+     * @throws ApiError
+     */
+    public static resolveReport(
+        reportId: string,
+        requestBody: ResolveReportRequest,
+    ): CancelablePromise<PassengerReportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/reports/{reportId}/resolve',
+            path: {
+                'reportId': reportId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Propose a correction to an existing working, or that it has stopped (active contributors only)
+     * @param requestBody
+     * @returns ChangesetResponse Created
+     * @throws ApiError
+     */
+    public static proposeWorkingCorrection(
+        requestBody: WorkingCorrectionRequest,
+    ): CancelablePromise<ChangesetResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/community/working-corrections',
             body: requestBody,
             mediaType: 'application/json',
         });

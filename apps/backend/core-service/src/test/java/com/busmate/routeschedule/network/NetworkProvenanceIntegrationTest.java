@@ -113,9 +113,9 @@ class NetworkProvenanceIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    @DisplayName("INC-027 staff cannot record passenger-report or derived sources")
-    void inc027_staffCannotRecordReportsOrDerived() throws Exception {
-        for (String tier : List.of("SRC_5", "SRC_6")) {
+    @DisplayName("INC-027 staff cannot record a derived source (a report is allowed since ADR-025)")
+    void inc027_staffCannotRecordDerived() throws Exception {
+        for (String tier : List.of("SRC_6")) {
             mvc.perform(post("/api/stops").with(as(mot, "MOT")).contentType(MediaType.APPLICATION_JSON)
                             .content(stopJson("Gamma" + tier, ",\"sourceTier\":\"" + tier + "\"")))
                     .andExpect(status().isBadRequest());

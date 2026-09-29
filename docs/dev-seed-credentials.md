@@ -51,6 +51,27 @@ real inboxes. Password convention: `{Role}{N}@2026`.
 | Kasun Mendis | `passenger.kasun@busmate.test` | `Passenger2@2026` |
 | Ishara Gunawardena | `passenger.ishara@busmate.test` | `Passenger3@2026` |
 
+## Community programme (contributors and stewards)
+
+Added for the contributor programme (INC-041/042). All are passenger accounts; what each may do is
+their standing in core-service ([`V909__demo_community.sql`](../apps/backend/core-service/src/main/resources/db/seed/dev/V909__demo_community.sql)).
+They exist on a fresh dev stack with no extra steps.
+
+| Standing | Name | Email | Password | Try this |
+|---|---|---|---|---|
+| Steward, Colombo–Kandy only | Tharindu Ekanayake | `steward.tharindu@busmate.test` | `Steward1@2026` | passenger-web → My contributions → **Review proposals**: sees Amara's, not Chamara's |
+| Contributor, Colombo–Kandy | Amara Jayawardena | `contributor.amara@busmate.test` | `Contributor1@2026` | Has a pending stop proposal; can propose more |
+| Contributor, Colombo–Galle | Chamara Herath | `contributor.chamara@busmate.test` | `Contributor2@2026` | Has a pending proposal outside the steward's corridor (MOT sees it) |
+| Applicant (waiting) | Nadeesha Rajapaksa | `applicant.nadeesha@busmate.test` | `Applicant1@2026` | MOT portal → Community → Applications → accept or decline |
+
+The three original passengers above can also be walked through the whole loop: apply on
+passenger-web, accept as `mot@busmate.test` in the portal, appoint a steward, propose, review.
+
+Two local settings make the promotion list and the loop convenient. `community.agreement.allow-draft-acceptance`
+is already on in the dev profile, so MOT can accept applicants under the draft agreement. Nobody starts
+with enough approvals to show under **Ready to promote** (the default bar is 10), so lower it for a local
+run: `COMMUNITY_PROMOTION_MIN_APPROVED=1 COMMUNITY_PROMOTION_MIN_DAYS_ACTIVE=0`.
+
 ## What else the dev seed creates
 
 Beyond the accounts above, a fresh dev stack (all three services, `SPRING_PROFILES_ACTIVE=dev`)

@@ -5,5 +5,6 @@
 export type ContributorTrackRecord = {
     approved?: number;
     rejected?: number;
+    reverted?: number;
 };
 

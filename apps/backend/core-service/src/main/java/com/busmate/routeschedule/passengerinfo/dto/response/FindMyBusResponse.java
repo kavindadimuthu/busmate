@@ -163,6 +163,9 @@ public class FindMyBusResponse {
         
         @Schema(description = "Schedule ID")
         private UUID scheduleId;
+
+        @Schema(description = "Who usually works this departure on the date searched; empty when nobody has recorded it")
+        private List<UsualWorking> usualWorkings;
         
         @Schema(description = "Schedule name")
         private String scheduleName;

@@ -53,6 +53,10 @@ public interface RouteMapper {
     @AfterMapping
     default void addTrust(Route entity, @MappingTarget RouteResponse response) {
         response.setTrust(TrustLabels.recordTrust(entity.getProvenance()));
+        // A route can now be known without any stops (ADR-023); an empty list is safe to iterate, null is not.
+        if (response.getRouteStops() == null) {
+            response.setRouteStops(new java.util.ArrayList<>());
+        }
     }
 
     @AfterMapping

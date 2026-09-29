@@ -27,7 +27,9 @@ import com.busmate.routeschedule.licensing.entity.PassengerServicePermit;
 import com.busmate.routeschedule.network.entity.Route;
 import com.busmate.routeschedule.network.entity.RouteGroup;
 import com.busmate.routeschedule.scheduling.entity.Schedule;
+import com.busmate.routeschedule.scheduling.enums.TimingCompletenessEnum;
 import com.busmate.routeschedule.scheduling.entity.ScheduleCalendar;
+import com.busmate.routeschedule.scheduling.service.OperatingDayEvaluator;
 import com.busmate.routeschedule.network.entity.Stop;
 import com.busmate.routeschedule.operations.entity.Trip;
 import com.busmate.routeschedule.shared.enums.TimePreferenceEnum;
@@ -39,6 +41,7 @@ import com.busmate.routeschedule.passengerinfo.dto.projection.ScheduleStopDetail
 import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusDetailsRequest;
 import com.busmate.routeschedule.passengerinfo.dto.request.FindMyBusRequest;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse;
+import com.busmate.routeschedule.passengerinfo.dto.response.UsualWorking;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.BusInfo;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.JourneySummary;
 import com.busmate.routeschedule.passengerinfo.dto.response.FindMyBusDetailsResponse.OperatorInfo;
@@ -94,6 +97,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     private final TripRepository tripRepository;
     private final LiveBusStateClient liveBusStateClient;
     private final LiveEtaProperties liveEtaProperties;
+    private final UsualWorkingLookup usualWorkingLookup;
 
     @Override
     public FindMyBusResponse findMyBus(FindMyBusRequest request) {
@@ -148,6 +152,11 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .filter(Objects::nonNull)
                 .sorted(this::compareResults)
                 .collect(Collectors.toList());
+
+        // Who usually works each departure (ADR-024): one query for the whole result set, never one per bus.
+        Map<UUID, List<UsualWorking>> usual = usualWorkingLookup.forSchedules(
+                results.stream().map(BusResult::getScheduleId).filter(Objects::nonNull).distinct().toList(), searchDate);
+        results.forEach(r -> r.setUsualWorkings(usual.getOrDefault(r.getScheduleId(), List.of())));
 
         return buildSuccessResponse(fromStop, toStop, searchDate, searchTime, timePreference, results);
     }
@@ -594,8 +603,11 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
         Route route = schedule.getRoute();
 
         // Get all schedule stops with full timing information
-        List<ScheduleStopDetailsProjection> scheduleStops = 
-                passengerQueryRepository.findScheduleStopsByScheduleId(request.getScheduleId());
+        boolean partialTiming = schedule.getTimingCompleteness() == TimingCompletenessEnum.ORIGIN_ONLY
+                || schedule.getTimingCompleteness() == TimingCompletenessEnum.ENDPOINTS_ONLY;
+        List<ScheduleStopDetailsProjection> scheduleStops = partialTiming
+                ? passengerQueryRepository.findRouteStopsWithScheduleTimes(request.getScheduleId())
+                : passengerQueryRepository.findScheduleStopsByScheduleId(request.getScheduleId());
 
         if (scheduleStops.isEmpty()) {
             return buildDetailsErrorResponse("No stops found for this schedule.");
@@ -620,16 +632,25 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
 
         // Get schedule calendars
         List<ScheduleCalendar> calendars = schedule.getScheduleCalendars();
-        List<ScheduleCalendarInfo> calendarInfos = calendars != null ?
-                calendars.stream()
-                        .map(this::buildCalendarInfo)
-                        .collect(Collectors.toList()) : Collections.emptyList();
 
         // Get schedule exceptions
         List<PassengerQueryRepository.ScheduleExceptionDetailProjection> exceptions = 
                 passengerQueryRepository.findAllScheduleExceptions(request.getScheduleId());
+
+        // Whether it actually runs on the queried date, computed once so the schedule-level answer and every
+        // per-row hint agree (INC-055) — `isActiveOnDate` used to be declared and never set, always reading as
+        // "yes" on the frontend regardless of what the calendar said.
+        OperatingDayEvaluator.Status operatingStatus = OperatingDayEvaluator.evaluate(searchDate,
+                schedule.getEffectiveStartDate(), schedule.getEffectiveEndDate(),
+                toWeeklyPatterns(calendars), toDatedExceptions(exceptions));
+
+        List<ScheduleCalendarInfo> calendarInfos = calendars != null ?
+                calendars.stream()
+                        .map(c -> buildCalendarInfo(c, operatingStatus))
+                        .collect(Collectors.toList()) : Collections.emptyList();
+
         List<ScheduleExceptionInfo> exceptionInfos = exceptions.stream()
-                .map(this::buildExceptionInfo)
+                .map(e -> buildExceptionInfo(e, searchDate))
                 .collect(Collectors.toList());
 
         // Build route schedule stops (all stops with unified data)
@@ -660,7 +681,7 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
 
         // Build schedule details (metadata only, no stops)
         ScheduleDetails scheduleDetails = buildScheduleDetails(schedule, scheduleStops.size(), 
-                calendarInfos, exceptionInfos);
+                calendarInfos, exceptionInfos, operatingStatus);
 
         return FindMyBusDetailsResponse.builder()
                 .success(true)
@@ -672,6 +693,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .routeScheduleStops(routeScheduleStops)
                 .trip(tripDetails)
                 .journeySummary(journeySummary)
+                .usualWorkings(usualWorkingLookup.forSchedules(List.of(schedule.getId()), searchDate)
+                        .getOrDefault(schedule.getId(), List.of()))
                 .build();
     }
 
@@ -724,7 +747,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
      */
     private ScheduleDetails buildScheduleDetails(Schedule schedule, int totalStops,
                                                   List<ScheduleCalendarInfo> calendars,
-                                                  List<ScheduleExceptionInfo> exceptions) {
+                                                  List<ScheduleExceptionInfo> exceptions,
+                                                  OperatingDayEvaluator.Status operatingStatus) {
         // Build single calendar from list (assuming single calendar per schedule)
         ScheduleCalendarInfo calendar = calendars.isEmpty() ? null : calendars.get(0);
         
@@ -737,6 +761,9 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .status(schedule.getStatus() != null ? schedule.getStatus().name() : null)
                 .effectiveStartDate(schedule.getEffectiveStartDate())
                 .effectiveEndDate(schedule.getEffectiveEndDate())
+                // null means nobody has recorded which days it runs — never a claim that it runs every day.
+                .isActiveOnDate(operatingStatus == OperatingDayEvaluator.Status.UNKNOWN ? null
+                        : operatingStatus == OperatingDayEvaluator.Status.RUNS)
                 .totalStops(totalStops)
                 .calendar(calendar)
                 .exceptions(exceptions)
@@ -827,7 +854,8 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
     /**
      * Build calendar info from ScheduleCalendar entity.
      */
-    private ScheduleCalendarInfo buildCalendarInfo(ScheduleCalendar calendar) {
+    private ScheduleCalendarInfo buildCalendarInfo(ScheduleCalendar calendar, OperatingDayEvaluator.Status operatingStatus) {
+        OperatingDayEvaluator.WeeklyPattern pattern = toWeeklyPattern(calendar);
         return ScheduleCalendarInfo.builder()
                 .monday(calendar.getMonday())
                 .tuesday(calendar.getTuesday())
@@ -836,6 +864,9 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
                 .friday(calendar.getFriday())
                 .saturday(calendar.getSaturday())
                 .sunday(calendar.getSunday())
+                .operatesOnQueryDate(operatingStatus == OperatingDayEvaluator.Status.UNKNOWN ? null
+                        : operatingStatus == OperatingDayEvaluator.Status.RUNS)
+                .operatingDaysSummary(pattern.summarise())
                 .build();
     }
 
@@ -843,12 +874,33 @@ public class PassengerQueryServiceImpl implements PassengerQueryService {
      * Build exception info from projection.
      */
     private ScheduleExceptionInfo buildExceptionInfo(
-            PassengerQueryRepository.ScheduleExceptionDetailProjection proj) {
+            PassengerQueryRepository.ScheduleExceptionDetailProjection proj, LocalDate queryDate) {
         return ScheduleExceptionInfo.builder()
                 .id(proj.getId())
                 .exceptionDate(proj.getExceptionDate())
                 .exceptionType(proj.getExceptionType())
+                .affectsQueryDate(queryDate.equals(proj.getExceptionDate()))
                 .build();
+    }
+
+    private static OperatingDayEvaluator.WeeklyPattern toWeeklyPattern(ScheduleCalendar c) {
+        return new OperatingDayEvaluator.WeeklyPattern(
+                Boolean.TRUE.equals(c.getMonday()), Boolean.TRUE.equals(c.getTuesday()),
+                Boolean.TRUE.equals(c.getWednesday()), Boolean.TRUE.equals(c.getThursday()),
+                Boolean.TRUE.equals(c.getFriday()), Boolean.TRUE.equals(c.getSaturday()),
+                Boolean.TRUE.equals(c.getSunday()));
+    }
+
+    private static List<OperatingDayEvaluator.WeeklyPattern> toWeeklyPatterns(List<ScheduleCalendar> calendars) {
+        return calendars == null ? List.of()
+                : calendars.stream().map(PassengerQueryServiceImpl::toWeeklyPattern).collect(Collectors.toList());
+    }
+
+    private static List<OperatingDayEvaluator.DatedException> toDatedExceptions(
+            List<PassengerQueryRepository.ScheduleExceptionDetailProjection> exceptions) {
+        return exceptions.stream()
+                .map(e -> new OperatingDayEvaluator.DatedException(e.getExceptionDate(), "ADDED".equals(e.getExceptionType())))
+                .collect(Collectors.toList());
     }
 
     /**

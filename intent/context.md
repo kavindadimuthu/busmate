@@ -131,6 +131,9 @@ Violating one of these is a bug, not a design choice.
   observed-at, confidence and credit ([ADR-018](decisions/ADR-018-community-changes-are-reviewed-changesets.md)).
   Any new write path to those tables goes through `ProvenanceStamper`; a path that skips it is caught only
   by a `PrePersist` default that labels the record `SRC_4` "BusMate", which is honest but loses the source.
+  Staff may record a third party's timetable as a report (`SRC_5`) and date it with `observedOn`
+  ([ADR-025](decisions/ADR-025-staff-may-record-a-report-dated-to-its-source.md)); an edit does not
+  re-observe a report, so it keeps its age. Never record a transcribed report as `SRC_4`: it says BusMate saw it.
 - **Passenger-facing trust.** A time or route shown to a passenger carries a label from `TrustLabels`
   (official / operator timetable / observed / reported / estimated / live); never wire a new passenger
   surface to a raw time column without one. The unauthenticated stop, route and schedule reads must not
@@ -144,6 +147,15 @@ Violating one of these is a bug, not a design choice.
 - **Community standing lives in core-service, not user-service.** A contributor is still a
   `passenger` account; `core-service`'s `community` module (ADR-019) is the only source of what they
   may do to the network. Never add a `contributor` user type or check standing from the JWT.
+- **A correction never blanks what it doesn't mention.** Optional fields a correction leaves out (null, missing
+  or blank) are filled from the stop's current values, when the proposal is stored and again when it is
+  applied (`StopCorrectionMerge`, INC-043). A correction therefore cannot clear a field; that is a direct
+  staff edit. A new write path from a proposal must go through the same merge.
+- **A steward reviews only inside their corridors, and blind.** A changeset's corridor is derived when read —
+  its target stop's route groups, or its proposer's declared corridors — never stored; one that matches no
+  steward is staff-only. Stewards never see the proposer's identity and cannot revert
+  ([ADR-022](decisions/ADR-022-a-changesets-corridor-is-derived-and-stewards-review-blind.md)). Review
+  authorisation goes through `ReviewAccess`; a new review path that skips it lets any passenger decide.
 - **Anchors** (HACO §4.2): branch name contains the increment ID; every commit carries an
   `Increment:` trailer, enforced by [.githooks/commit-msg](../.githooks/commit-msg); acceptance tests
   name the increment ID. Code comments carry the ID only where intent is genuinely non-obvious.

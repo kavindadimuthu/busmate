@@ -1,0 +1,12 @@
+{
+  "name": "@busmate/ui-snapshots",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  },
+  "scripts": {
+    "screenshots": "node run.mjs"
+  }
+}

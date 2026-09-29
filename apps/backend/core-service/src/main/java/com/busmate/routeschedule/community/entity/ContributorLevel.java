@@ -1,6 +1,6 @@
 package com.busmate.routeschedule.community.entity;
 
-/** STEWARD is reserved for scoped review (ADR-019); nothing grants it yet. */
+/** STEWARD reviews others' proposals inside an appointed set of route groups (ADR-019, ADR-022). */
 public enum ContributorLevel {
     CONTRIBUTOR, STEWARD
 }

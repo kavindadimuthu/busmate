@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { PageRouteGroupResponse } from '../models/PageRouteGroupResponse';
 import type { PageRouteResponse } from '../models/PageRouteResponse';
+import type { PlaceRouteStopRequest } from '../models/PlaceRouteStopRequest';
 import type { RouteFilterOptionsResponse } from '../models/RouteFilterOptionsResponse';
 import type { RouteGroupRequest } from '../models/RouteGroupRequest';
 import type { RouteGroupResponse } from '../models/RouteGroupResponse';
@@ -494,6 +495,47 @@ export class RouteManagementService {
                 401: `Unauthorized`,
                 403: `Forbidden - requires MOT role`,
                 404: `Route not found`,
+            },
+        });
+    }
+    /**
+     * Place a stop into a route after a given stop, leaving the others and their schedule times alone
+     * @param routeId
+     * @param requestBody
+     * @returns RouteResponse Created
+     * @throws ApiError
+     */
+    public static placeRouteStop(
+        routeId: string,
+        requestBody: PlaceRouteStopRequest,
+    ): CancelablePromise<RouteResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/routes/{routeId}/stops',
+            path: {
+                'routeId': routeId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Remove a stop placed by mistake; refused for a route's ends or a stop a schedule has a time at
+     * @param routeId
+     * @param routeStopId
+     * @returns RouteResponse OK
+     * @throws ApiError
+     */
+    public static removeRouteStop(
+        routeId: string,
+        routeStopId: string,
+    ): CancelablePromise<RouteResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/routes/{routeId}/stops/{routeStopId}',
+            path: {
+                'routeId': routeId,
+                'routeStopId': routeStopId,
             },
         });
     }

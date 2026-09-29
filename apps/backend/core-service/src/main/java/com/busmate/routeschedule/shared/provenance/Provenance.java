@@ -3,6 +3,8 @@ package com.busmate.routeschedule.shared.provenance;
 import java.time.Instant;
 import java.util.UUID;
 
+import jakarta.persistence.Transient;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
@@ -31,6 +33,15 @@ public class Provenance {
     /** Display credit such as "BusMate" or an organisation. */
     @Column(name = "attribution_label", nullable = false)
     private String attributionLabel;
+
+    /**
+     * What this record's confidence has decayed to by now (ADR-018). Computed fresh on every read, never
+     * stored: {@link #baseConfidence} is the value as it was recorded, and stays that way.
+     */
+    @Transient
+    public Integer getEffectiveConfidence() {
+        return ConfidenceDecay.effectiveConfidence(sourceTier, baseConfidence, observedAt, Instant.now());
+    }
 
     public static Provenance of(SourceTier tier, String label, UUID attributedUserId, Instant observedAt) {
         Provenance p = new Provenance();

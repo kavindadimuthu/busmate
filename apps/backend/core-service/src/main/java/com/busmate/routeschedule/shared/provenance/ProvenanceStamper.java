@@ -1,6 +1,8 @@
 package com.busmate.routeschedule.shared.provenance;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import org.springframework.stereotype.Component;
 
@@ -24,8 +26,16 @@ public class ProvenanceStamper {
 
     /** A new record: the requested source, or field observation credited to BusMate. */
     public void stampCreate(ProvenancedEntity entity, SourceTier requested, String requestedLabel) {
+        stampCreate(entity, requested, requestedLabel, null);
+    }
+
+    /**
+     * As above, dated to {@code observedOn} when the information dates from before it was typed in (ADR-025):
+     * a year-old post is reported as of that date, not confirmed today. Never in the future.
+     */
+    public void stampCreate(ProvenancedEntity entity, SourceTier requested, String requestedLabel, LocalDate observedOn) {
         SourceTier tier = resolve(requested);
-        entity.setProvenance(Provenance.of(tier, requestedLabel, null, Instant.now()));
+        entity.setProvenance(Provenance.of(tier, requestedLabel, null, observedAt(observedOn)));
     }
 
     /**
@@ -34,24 +44,45 @@ public class ProvenanceStamper {
      * the data: an official record edited by anyone but MOT, and a contributor's record edited by staff.
      */
     public void stampEdit(ProvenancedEntity entity, SourceTier requested, String requestedLabel) {
+        stampEdit(entity, requested, requestedLabel, null);
+    }
+
+    /**
+     * An edit that may state the date the information dates from. A report ({@code SRC_5}) that is edited
+     * without saying so is not re-observed: correcting a typo in an unverified report does not confirm it, so
+     * it keeps its age (ADR-025).
+     */
+    public void stampEdit(ProvenancedEntity entity, SourceTier requested, String requestedLabel, LocalDate observedOn) {
         Provenance current = entity.getProvenance();
         if (requested != null) {
-            stampCreate(entity, requested, requestedLabel);
+            stampCreate(entity, requested, requestedLabel, observedOn);
             return;
         }
         if (current == null) {
-            stampCreate(entity, null, null);
+            stampCreate(entity, null, null, observedOn);
             return;
         }
         boolean officialEditedByNonMot = current.getSourceTier() == SourceTier.SRC_1 && !isMot();
         if (officialEditedByNonMot || current.getAttributedUserId() != null) {
-            entity.setProvenance(Provenance.of(SourceTier.SRC_4, null, null, Instant.now()));
+            entity.setProvenance(Provenance.of(SourceTier.SRC_4, null, null, observedAt(observedOn)));
             return;
         }
-        current.setObservedAt(Instant.now());
+        if (observedOn != null || current.getSourceTier() != SourceTier.SRC_5) {
+            current.setObservedAt(observedAt(observedOn));
+        }
         if (requestedLabel != null && !requestedLabel.isBlank()) {
             current.setAttributionLabel(requestedLabel.strip());
         }
+    }
+
+    private static Instant observedAt(LocalDate observedOn) {
+        if (observedOn == null) {
+            return Instant.now();
+        }
+        if (observedOn.isAfter(LocalDate.now(ZoneOffset.UTC))) {
+            throw new BadRequestException("The date it was observed cannot be in the future");
+        }
+        return observedOn.atStartOfDay(ZoneOffset.UTC).toInstant();
     }
 
     /** Gives {@code child} the same source, observation time and credit as {@code parent}. */
@@ -69,7 +100,7 @@ public class ProvenanceStamper {
         }
         if (!requested.staffEnterable()) {
             throw new BadRequestException(
-                    "Source " + requested + " cannot be recorded by staff; use SRC_1 to SRC_4");
+                    "Source " + requested + " cannot be recorded by staff; use SRC_1 to SRC_5");
         }
         if (requested == SourceTier.SRC_1 && !isMot()) {
             throw new ForbiddenException("Only the Ministry of Transport can mark a record official");

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.busmate.routeschedule.network.enums.DirectionEnum;
+import com.busmate.routeschedule.network.enums.StopListCompletenessEnum;
 import com.busmate.routeschedule.network.enums.RoadTypeEnum;
 import com.busmate.routeschedule.shared.provenance.ProvenancedEntity;
 
@@ -82,6 +83,11 @@ public class Route extends ProvenancedEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "direction")
     private DirectionEnum direction;
+
+    /** Whether the recorded stops are all of the route's stops; UNKNOWN until a person says (ADR-023). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "stop_list_completeness", nullable = false)
+    private StopListCompletenessEnum stopListCompleteness = StopListCompletenessEnum.UNKNOWN;
 
     @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RouteStop> routeStops;

@@ -218,7 +218,7 @@ public class RouteGroupServiceImpl implements RouteGroupService {
             if (routeRequest.getId() != null) {
                 Route existingRoute = existingRoutesById.get(routeRequest.getId());
                 if (existingRoute != null) {
-                    if (!existingRoute.getRouteGroup().getId().equals(routeGroup.getId())) {
+                    if (existingRoute.getRouteGroup() == null || !existingRoute.getRouteGroup().getId().equals(routeGroup.getId())) {
                         throw new ConflictException("Route with id " + routeRequest.getId() + " does not belong to route group " + routeGroup.getId());
                     }
                     

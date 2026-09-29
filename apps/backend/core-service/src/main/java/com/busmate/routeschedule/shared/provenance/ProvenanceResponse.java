@@ -13,5 +13,7 @@ public class ProvenanceResponse {
     private SourceTier sourceTier;
     private Instant observedAt;
     private Integer baseConfidence;
+    /** {@link Provenance#getEffectiveConfidence()} — what the age of the record has left it with. */
+    private Integer effectiveConfidence;
     private String attributionLabel;
 }

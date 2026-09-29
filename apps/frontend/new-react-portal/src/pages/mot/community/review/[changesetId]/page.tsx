@@ -25,6 +25,8 @@ import { useParams, useRouter } from '@/lib/router';
 import { useSetPageMetadata } from '@/context/PageContext';
 import { useChangesetReview } from '@/hooks/mot/community/useChangesetReview';
 import { StopProposalDiff } from '@/components/mot/community/StopProposalDiff';
+import { WorkingProposalDiff } from '@/components/mot/community/WorkingProposalDiff';
+import { isWorking, proposalKind, workingMethodLabel } from '@/components/mot/community/proposalLabel';
 
 const REJECT_REASONS: { value: RejectChangesetRequest.reason; label: string }[] = [
   { value: RejectChangesetRequest.reason.DUPLICATE, label: 'Duplicate of an existing stop' },
@@ -59,7 +61,7 @@ export default function ChangesetReviewDetailPage() {
 
   useSetPageMetadata({
     title: 'Review Proposal',
-    description: 'Compare this proposal with the current stop and decide',
+    description: 'Compare this proposal with what is there now and decide',
     activeItem: 'community-review',
     showBreadcrumbs: true,
     breadcrumbs: [{ label: 'Community' }, { label: 'Review', href: '/mot/community/review' }, { label: 'Proposal' }],
@@ -100,7 +102,7 @@ export default function ChangesetReviewDetailPage() {
             <MapPin className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">{changeset?.action === 'CREATE' ? 'New stop proposal' : 'Correction proposal'}</h1>
+            <h1 className="text-lg font-semibold">{proposalKind(changeset?.entityType, changeset?.action)} proposal</h1>
             <p className="text-xs text-muted-foreground">Proposed {changeset?.createdAt ? new Date(changeset.createdAt).toLocaleString() : ''}</p>
           </div>
         </div>
@@ -144,7 +146,7 @@ export default function ChangesetReviewDetailPage() {
         <CardContent className="p-5 space-y-1 text-sm">
           <h2 className="text-sm font-semibold mb-2">How they observed it</h2>
           <p>
-            {changeset?.observedOn} — {OBSERVATION_LABEL[changeset?.observationMethod ?? ''] ?? changeset?.observationMethod}
+            {changeset?.observedOn} — {workingMethodLabel(changeset?.entityType, changeset?.observationMethod) ?? OBSERVATION_LABEL[changeset?.observationMethod ?? ''] ?? changeset?.observationMethod}
           </p>
           {changeset?.note && <p className="text-muted-foreground italic">"{changeset.note}"</p>}
         </CardContent>
@@ -153,7 +155,11 @@ export default function ChangesetReviewDetailPage() {
       <Card>
         <CardContent className="p-5">
           <h2 className="text-sm font-semibold mb-3">What would change</h2>
-          <StopProposalDiff changeset={changeset} currentStop={currentStop} positionDistanceMeters={positionDistanceMeters} />
+          {isWorking(changeset?.entityType) ? (
+            <WorkingProposalDiff changeset={changeset} context={review.scheduleContext} />
+          ) : (
+            <StopProposalDiff changeset={changeset} currentStop={currentStop} positionDistanceMeters={positionDistanceMeters} />
+          )}
         </CardContent>
       </Card>
 
@@ -178,7 +184,7 @@ export default function ChangesetReviewDetailPage() {
             </Button>
           </>
         )}
-        {status === 'APPROVED' && (
+        {status === 'APPROVED' && !isWorking(changeset?.entityType) && (
           <Button variant="destructive" onClick={() => revert()} disabled={actionLoading}>
             {actionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Undo2 className="h-4 w-4 mr-2" />}
             Revert
@@ -199,7 +205,14 @@ export default function ChangesetReviewDetailPage() {
                   <SelectValue placeholder="Choose one" />
                 </SelectTrigger>
                 <SelectContent>
-                  {REJECT_REASONS.map((r) => (
+                  {(isWorking(changeset?.entityType)
+                    ? [
+                        { value: RejectChangesetRequest.reason.DUPLICATE, label: 'Already recorded for this departure' },
+                        { value: RejectChangesetRequest.reason.CANNOT_VERIFY, label: "Can't verify this" },
+                        { value: RejectChangesetRequest.reason.OTHER, label: 'Other' },
+                      ]
+                    : REJECT_REASONS
+                  ).map((r) => (
                     <SelectItem key={r.value} value={r.value}>
                       {r.label}
                     </SelectItem>

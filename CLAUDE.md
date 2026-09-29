@@ -103,3 +103,8 @@ it is a project. Split it. This is the main mechanism keeping human review ahead
 - **Never edit an accepted ADR.** Supersede it with a new one that links back.
 - **A human finishing what an agent started is normal**, not a failure. Record nothing special.
 - **Do not maintain notes outside `intent/`.** One shared state, no exceptions.
+- **Each parallel agent session works in its own git worktree, never in the shared checkout.** A git
+  working directory has exactly one checked-out branch; two sessions sharing one directory silently
+  steal each other's `HEAD` on every `checkout`, and a commit can land on the wrong branch with no
+  warning. Isolation belongs to the *session* (Claude Code's own worktree support, or plain
+  `git worktree add`), not to discipline about which branch you meant to be on.

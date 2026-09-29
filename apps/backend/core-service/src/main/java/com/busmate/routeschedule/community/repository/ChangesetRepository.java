@@ -25,12 +25,12 @@ public interface ChangesetRepository extends JpaRepository<Changeset, UUID> {
     Optional<Changeset> findByProposerUserIdAndTargetIdAndStatus(UUID proposerUserId, UUID targetId,
                                                                    ChangesetStatus status);
 
-    long countByProposerUserIdAndEntityTypeAndCreatedAtAfter(UUID proposerUserId, ChangesetEntityType entityType,
-                                                              Instant since);
+    /** Across every proposal type: the daily cap is one limit, not one per type (ADR-026). */
+    long countByProposerUserIdAndCreatedAtAfter(UUID proposerUserId, Instant since);
 
     // ───────────────────────────── review queue (INC-031) ─────────────────────────────
 
-    @Query("SELECT c FROM Changeset c WHERE c.entityType = :entityType " +
+    @Query("SELECT c FROM Changeset c WHERE (:entityType IS NULL OR c.entityType = :entityType) " +
            "AND (:status IS NULL OR c.status = :status) " +
            "AND (:proposerUserId IS NULL OR c.proposerUserId = :proposerUserId) " +
            "AND (:proposerUserIds IS NULL OR c.proposerUserId IN :proposerUserIds) " +

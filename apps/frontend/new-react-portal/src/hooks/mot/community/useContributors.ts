@@ -15,7 +15,7 @@ export interface ContributorRow extends ContributorResponse {
 export type ContributorTab = 'APPLIED' | 'ACTIVE' | 'DECLINED' | 'SUSPENDED';
 
 /** The community review queue: one status tab at a time, real API, no mock resource layer. */
-export function useContributors(tab: ContributorTab) {
+export function useContributors(tab: ContributorTab, onChanged?: () => void) {
   const [contributors, setContributors] = useState<ContributorRow[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [counts, setCounts] = useState<ContributorCountsResponse | null>(null);
@@ -77,6 +77,12 @@ export function useContributors(tab: ContributorTab) {
     loadCounts();
   }, [tab, page, pageSize, load, loadCounts]);
 
+  // The candidates tab reloads through this after an appointment, without re-creating every action.
+  const onChangedRef = useRef(onChanged);
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  });
+
   const refresh = useCallback(() => {
     load();
     loadCounts();
@@ -90,6 +96,7 @@ export function useContributors(tab: ContributorTab) {
         toast.success(successMessage);
         setSelected((prev) => (prev ? { ...updated, account: prev.account } : updated));
         refresh();
+        onChangedRef.current?.();
         return true;
       } catch (err) {
         const message = err instanceof Error ? err.message : undefined;
@@ -122,6 +129,19 @@ export function useContributors(tab: ContributorTab) {
     [withReload],
   );
 
+  const appointSteward = useCallback(
+    (userId: string, routeGroupIds: string[]) =>
+      withReload(
+        () => CommunityContributorsService.appointSteward(userId, { routeGroupIds }),
+        'Steward corridors saved',
+      ),
+    [withReload],
+  );
+  const revokeSteward = useCallback(
+    (userId: string) => withReload(() => CommunityContributorsService.revokeSteward(userId), 'Stewardship revoked'),
+    [withReload],
+  );
+
   return {
     contributors,
     totalItems,
@@ -138,5 +158,7 @@ export function useContributors(tab: ContributorTab) {
     decline,
     suspend,
     reinstate,
+    appointSteward,
+    revokeSteward,
   };
 }

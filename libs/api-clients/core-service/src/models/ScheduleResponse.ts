@@ -51,6 +51,7 @@ export type ScheduleResponse = {
      * Date when schedule expires
      */
     effectiveEndDate?: string;
+    timingCompleteness?: ScheduleResponse.timingCompleteness;
     /**
      * Current status
      */
@@ -91,6 +92,12 @@ export namespace ScheduleResponse {
     export enum scheduleType {
         REGULAR = 'REGULAR',
         SPECIAL = 'SPECIAL',
+    }
+    export enum timingCompleteness {
+        ALL_STOPS = 'ALL_STOPS',
+        ENDPOINTS_ONLY = 'ENDPOINTS_ONLY',
+        ORIGIN_ONLY = 'ORIGIN_ONLY',
+        UNKNOWN = 'UNKNOWN',
     }
     /**
      * Current status

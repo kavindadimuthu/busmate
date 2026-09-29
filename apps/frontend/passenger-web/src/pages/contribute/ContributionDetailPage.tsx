@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CommunityContributorsService, type ChangesetResponse } from "@busmate/api-client-core";
+import WorkingProposalDetail from "@/components/contribute/WorkingProposalDetail";
+import { isWorking, observationLabel, proposalKind } from "@/lib/proposalLabel";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Under review",
@@ -116,7 +118,7 @@ export default function ContributionDetailPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-bold text-foreground">
-                {proposal.action === "CREATE" ? "New stop" : "Correction"}
+                {proposalKind(proposal.entityType, proposal.action)}
               </h1>
               <Badge>{STATUS_LABEL[proposal.status ?? ""] ?? proposal.status}</Badge>
             </div>
@@ -124,7 +126,9 @@ export default function ContributionDetailPage() {
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h2 className="text-sm font-semibold text-foreground">What you proposed</h2>
-                {proposal.action === "UPDATE" && proposal.targetSnapshot ? (
+                {isWorking(proposal.entityType) ? (
+                  <WorkingProposalDetail changeset={proposal} />
+                ) : proposal.action === "UPDATE" && proposal.targetSnapshot ? (
                   <div className="space-y-2">
                     {DIFF_FIELDS.map(({ key, label }) => {
                       const before = get(proposal.targetSnapshot, key);
@@ -165,7 +169,7 @@ export default function ContributionDetailPage() {
               <CardContent className="p-5 space-y-2 text-sm">
                 <p>
                   <span className="text-muted-foreground">Observed: </span>
-                  {proposal.observedOn} — {OBSERVATION_LABEL[proposal.observationMethod ?? ""] ?? proposal.observationMethod}
+                  {proposal.observedOn} — {observationLabel(proposal.entityType, proposal.observationMethod)}
                 </p>
                 {proposal.note && (
                   <p>

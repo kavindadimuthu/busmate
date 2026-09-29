@@ -50,6 +50,7 @@ public class ScheduleResponse {
     
     @Schema(description = "Date when schedule expires", example = "2025-12-31")
     private LocalDate effectiveEndDate;
+    private com.busmate.routeschedule.scheduling.enums.TimingCompletenessEnum timingCompleteness;
     
     @Schema(description = "Current status", allowableValues = {"PENDING", "ACTIVE", "INACTIVE", "CANCELLED"}, example = "ACTIVE")
     private String status;

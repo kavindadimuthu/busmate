@@ -6,6 +6,10 @@ export type ProvenanceResponse = {
     sourceTier?: ProvenanceResponse.sourceTier;
     observedAt?: string;
     baseConfidence?: number;
+    /**
+     * What the age of the record has left it with; decays at read time, never stored (ADR-018).
+     */
+    effectiveConfidence?: number;
     attributionLabel?: string;
 };
 export namespace ProvenanceResponse {

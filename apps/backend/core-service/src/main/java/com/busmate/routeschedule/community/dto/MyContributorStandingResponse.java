@@ -7,6 +7,7 @@ package com.busmate.routeschedule.community.dto;
 public record MyContributorStandingResponse(
         String status,
         boolean activeContributor,
+        boolean activeSteward,
         boolean canApply,
         CannotApplyReason cannotApplyReason,
         ContributorResponse contributor) {
