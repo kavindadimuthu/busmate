@@ -49,7 +49,7 @@
     "type-check": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc --noEmit",
+        "command": "tsc -p tsconfig.app.json --noEmit",
         "cwd": "{projectRoot}"
       },
       "cache": true

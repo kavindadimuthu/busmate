@@ -3,104 +3,93 @@
 @tailwind utilities;
 
 /*
-Design tokens — starting point copied from passenger-web's index.css (same shadcn/Radix
-token architecture, so the same component base works unchanged). Values will be recalibrated
-against docs/ui/passenger-web-v2-design-reference.md as each screen is actually built
-(INC-063) — not done speculatively here.
+Design tokens from the Claude Design reference (docs/ui/passenger-web-v2-design-reference.md),
+converted from its hex `t` objects to HSL so the shadcn/Radix component base keeps working.
+The extra tokens (tint, soft, alt, footer, highlight, success, warning) are the design's own
+surfaces that shadcn has no name for.
 */
 
 @layer base {
   :root {
-    --background: 220 20% 98%;
-    --foreground: 220 15% 15%;
+    --background: 220 100% 98%;
+    --foreground: 224 61% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
-
+    --card-foreground: 224 61% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --popover-foreground: 224 61% 15%;
 
-    --primary: 225 100% 50%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 225 95% 45%;
+    --primary-hover: 224 76% 48%;
 
-    --secondary: 220 15% 92%;
-    --secondary-foreground: 220 25% 20%;
-    --secondary-hover: 220 15% 88%;
+    --secondary: 220 79% 96%;
+    --secondary-foreground: 224 61% 15%;
 
-    --muted: 220 15% 95%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 222 83% 98%;
+    --muted-foreground: 220 21% 45%;
 
-    --accent: 225 90% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 218 100% 93%;
+    --accent-foreground: 224 61% 15%;
 
-    --destructive: 0 80% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 88%;
-    --input: 220 15% 95%;
-    --ring: 225 100% 50%;
+    --border: 220 60% 92%;
+    --input: 220 60% 92%;
+    --ring: 221 83% 53%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(225 100% 50%), hsl(225 90% 45%));
-    --gradient-secondary: linear-gradient(135deg, hsl(225 80% 52%), hsl(225 85% 46%));
-    --gradient-hero: linear-gradient(135deg, hsl(225 100% 50%) 0%, hsla(225, 90%, 45%, 0.89) 100%);
+    --tint: 218 100% 93%;
+    --soft: 222 83% 98%;
+    --alt: 220 79% 96%;
+    --footer: 227 63% 12%;
+    --highlight: 188 86% 53%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
 
-    --shadow-soft: 0 4px 20px -2px hsl(225 100% 50% / 0.1);
-    --shadow-card: 0 2px 12px -1px hsl(220 15% 30% / 0.08);
+    --header: 0 0% 100% / 0.88;
 
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 220 20% 97%;
-    --sidebar-foreground: 220 15% 20%;
-    --sidebar-primary: 225 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 20% 94%;
-    --sidebar-accent-foreground: 220 15% 20%;
-    --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 225 100% 50%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 220 15% 96%;
+    --background: 224 52% 8%;
+    --foreground: 222 77% 95%;
 
-    --card: 220 25% 10%;
-    --card-foreground: 220 15% 96%;
+    --card: 223 48% 13%;
+    --card-foreground: 222 77% 95%;
+    --popover: 223 48% 13%;
+    --popover-foreground: 222 77% 95%;
 
-    --popover: 220 25% 10%;
-    --popover-foreground: 220 15% 96%;
-
-    --primary: 225 100% 65%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 225 100% 55%;
+    --primary-hover: 224 76% 48%;
 
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 220 15% 90%;
-    --secondary-hover: 220 15% 25%;
+    --secondary: 222 53% 10%;
+    --secondary-foreground: 222 77% 95%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 15% 70%;
+    --muted: 220 49% 11%;
+    --muted-foreground: 220 29% 67%;
 
-    --accent: 225 100% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 222 54% 19%;
+    --accent-foreground: 222 77% 95%;
 
-    --destructive: 0 65% 50%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 18%;
-    --ring: 225 100% 60%;
+    --border: 222 41% 20%;
+    --input: 222 41% 20%;
+    --ring: 221 83% 60%;
 
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 220 15% 95%;
-    --sidebar-primary: 225 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 220 15% 95%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 225 100% 60%;
+    --tint: 222 54% 19%;
+    --soft: 220 49% 11%;
+    --alt: 222 53% 10%;
+    --footer: 222 63% 5%;
+    --highlight: 188 86% 53%;
+    --success: 142 69% 45%;
+    --warning: 38 92% 50%;
+
+    --header: 224 52% 8% / 0.85;
   }
 }
 
@@ -109,7 +98,21 @@ against docs/ui/passenger-web-v2-design-reference.md as each screen is actually 
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans;
+    overflow-x: hidden;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  /* iOS zooms into any input under 16px on focus. */
+  @media (max-width: 760px) {
+    input,
+    select {
+      font-size: 16px;
+    }
   }
 }
