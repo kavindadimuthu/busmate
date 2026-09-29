@@ -1,0 +1,19 @@
+{
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@busmate/api-client-core": ["../../../libs/api-clients/core-service/src/index.ts"],
+      "@busmate/api-client-ticketing": ["../../../libs/api-clients/ticketing-service/src/index.ts"],
+      "@busmate/api-client-user": ["../../../libs/api-clients/user-service/src/index.ts"]
+    },
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noUnusedLocals": false,
+    "strictNullChecks": false
+  }
+}

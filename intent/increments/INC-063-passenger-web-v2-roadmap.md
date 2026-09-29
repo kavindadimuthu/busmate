@@ -1,7 +1,7 @@
 ---
 id: INC-063
 title: Passenger-web v2 — parallel rebuild roadmap
-state: shaped
+state: done
 track: 2
 risk: R1
 owner: kavinda
@@ -29,12 +29,12 @@ live passenger-facing app mid-rebuild.
 
 ## Acceptance criteria
 
-- [ ] `apps/frontend/passenger-web-v2` exists as its own Nx app: same stack as `passenger-web` (Vite, React,
+- [x] `apps/frontend/passenger-web-v2` exists as its own Nx app: same stack as `passenger-web` (Vite, React,
       the existing `@busmate/ui`/Radix component base, TanStack Query, `@busmate/api-client-*` libs), runs
       locally on its own port, not linked from any deployed surface.
-- [ ] The app boots to an empty/placeholder shell that talks to the real `api-gateway` (no mock data) —
+- [x] The app boots to an empty/placeholder shell that talks to the real `api-gateway` (no mock data) —
       proves the wiring works before any screen is built.
-- [ ] The phased screen sequence below is agreed and each phase's first increment can be created without
+- [x] The phased screen sequence below is agreed and each phase's first increment can be created without
       re-deciding scope.
 
 ## Planned phases (for context — not a commitment to create these files yet)
