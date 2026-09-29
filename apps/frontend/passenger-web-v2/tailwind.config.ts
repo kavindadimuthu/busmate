@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
+import plugin from "tailwindcss/plugin";
 
 export default {
   darkMode: ["class"],
@@ -90,5 +91,11 @@ export default {
       },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    // `touch:` — finger-sized tap targets on any touchscreen (tablets included), whatever its width.
+    // Tailwind emits plugin variants before the `md:` breakpoints, so the `:root` prefix is what lets
+    // a touch rule beat a later `md:` rule on a tablet.
+    plugin(({ addVariant }) => addVariant("touch", "@media (pointer: coarse) { :root & }")),
+  ],
 } satisfies Config;

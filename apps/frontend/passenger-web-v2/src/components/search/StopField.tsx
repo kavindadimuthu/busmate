@@ -15,6 +15,8 @@ interface StopFieldProps {
   text: string;
   onTextChange: (text: string) => void;
   onPick: (stop: StopOption) => void;
+  onListOpenChange?: (open: boolean) => void;
+  className?: string;
 }
 
 const MIN_CHARS = 2;
@@ -23,7 +25,15 @@ const DEBOUNCE_MS = 300;
 /** A labelled stop box with type-ahead over the real stop registry. Typing clears any picked stop
  * (the parent does that in onTextChange), so a stop id is only ever sent for a name the passenger
  * actually chose from the list. */
-export default function StopField({ label, placeholder, text, onTextChange, onPick }: StopFieldProps) {
+export default function StopField({
+  label,
+  placeholder,
+  text,
+  onTextChange,
+  onPick,
+  onListOpenChange,
+  className,
+}: StopFieldProps) {
   const listId = useId();
   const [options, setOptions] = useState<StopOption[]>([]);
   const [open, setOpen] = useState(false);
@@ -93,10 +103,20 @@ export default function StopField({ label, placeholder, text, onTextChange, onPi
   };
 
   const showEmpty = open && !loading && options.length === 0;
+  const listVisible = (open && options.length > 0) || showEmpty;
+
+  useEffect(() => {
+    onListOpenChange?.(listVisible);
+  }, [listVisible, onListOpenChange]);
 
   return (
     <div ref={wrapRef} className="relative">
-      <label className="block rounded-xl border border-border bg-soft px-4 py-3 focus-within:border-primary">
+      <label
+        className={cn(
+          "block rounded-xl border border-border bg-soft px-3.5 py-2.5 focus-within:border-primary md:px-4 md:py-3",
+          className,
+        )}
+      >
         <span className="block text-xs font-bold text-primary">{label}</span>
         <span className="mt-1 flex items-center gap-2">
           <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
@@ -121,7 +141,7 @@ export default function StopField({ label, placeholder, text, onTextChange, onPi
         </span>
       </label>
 
-      {(open && options.length > 0) || showEmpty ? (
+      {listVisible ? (
         <ul
           id={listId}
           role="listbox"

@@ -108,6 +108,14 @@ surfaces that shadcn has no name for.
     transition: background-color 0.3s, color 0.3s;
   }
 
+  a,
+  button,
+  input,
+  label {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
   /* iOS zooms into any input under 16px on focus. */
   @media (max-width: 760px) {
     input,

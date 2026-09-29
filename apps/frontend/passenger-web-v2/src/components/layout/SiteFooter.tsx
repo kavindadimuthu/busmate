@@ -21,52 +21,55 @@ const COLUMNS = [
   },
 ];
 
+// Thumb-sized (40px) on phones and any touchscreen; text height only on mouse-driven desktops.
+const LINK = "inline-flex min-h-10 items-center text-slate-300 transition-colors hover:text-white md:min-h-0 touch:min-h-10";
+
 export default function SiteFooter() {
   return (
-    <footer className="bg-footer px-6 pb-6 pt-14 text-slate-300">
-      <div className="mx-auto grid max-w-[1200px] grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-9 text-sm">
-        <div>
+    <footer className="bg-footer px-4 pb-6 pt-10 text-slate-300 min-[400px]:px-5 md:px-6 md:pt-14">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-x-6 gap-y-7 text-sm md:grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] md:gap-9">
+        <div className="col-span-2 md:col-span-1">
           <div className="mb-2 text-xl font-extrabold text-white">BusMate</div>
-          <p className="leading-relaxed">
+          <p className="max-w-sm leading-relaxed">
             Your companion for Sri Lanka's public buses: find a bus between any two stops, book your seat and
             travel with a digital ticket.
           </p>
         </div>
 
         {COLUMNS.map((col) => (
-          <div key={col.title}>
-            <div className="mb-2 font-bold text-white">{col.title}</div>
-            <ul className="space-y-2">
+          <nav key={col.title} aria-label={col.title}>
+            <div className="mb-1 font-bold text-white md:mb-2">{col.title}</div>
+            <ul className="md:space-y-2">
               {col.links.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className="text-slate-300 transition-colors hover:text-white">
+                  <Link to={link.to} className={LINK}>
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
         ))}
 
-        <div>
-          <div className="mb-2 font-bold text-white">Contact</div>
-          <ul className="space-y-2">
+        <div className="col-span-2 md:col-span-1">
+          <div className="mb-1 font-bold text-white md:mb-2">Contact</div>
+          <ul className="md:space-y-2">
             <li>
-              <a href="mailto:info@busmate.lk" className="inline-flex items-center gap-2 text-slate-300 hover:text-white">
+              <a href="mailto:info@busmate.lk" className={`${LINK} gap-2`}>
                 <Mail className="h-4 w-4" /> info@busmate.lk
               </a>
             </li>
             <li>
-              <a href="tel:+94112345678" className="inline-flex items-center gap-2 text-slate-300 hover:text-white">
+              <a href="tel:+94112345678" className={`${LINK} gap-2`}>
                 <Phone className="h-4 w-4" /> +94 11 234 5678
               </a>
             </li>
-            <li>Colombo, Sri Lanka</li>
+            <li className="py-2 md:py-0">Colombo, Sri Lanka</li>
           </ul>
         </div>
       </div>
 
-      <div className="mx-auto mt-8 max-w-[1200px] border-t border-slate-800 pt-5 text-xs">
+      <div className="mx-auto mt-7 max-w-[1200px] border-t border-slate-800 pt-5 text-xs md:mt-8">
         © {new Date().getFullYear()} BusMate. All rights reserved.
       </div>
     </footer>

@@ -67,7 +67,7 @@ export default function RouteCard({ route }: { route: RouteResponse }) {
         </div>
         <Link
           to={`/routes/${route.id}`}
-          className="block rounded-[10px] border-[1.5px] border-primary py-2 text-center text-[13px] font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="flex min-h-11 items-center justify-center rounded-[10px] border-[1.5px] border-primary text-center text-[13px] font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
         >
           View Route →
         </Link>

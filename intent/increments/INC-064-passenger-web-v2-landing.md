@@ -23,6 +23,9 @@ Every later v2 screen sits inside this shell and uses these tokens, so it goes f
 
 - [x] Header and footer match the design's look in light and dark, and work at phone width (nav collapses
       to a horizontal strip, no page-level horizontal scroll).
+- [x] Phone-first: on a 360px-wide phone the whole search form is on the first screen, every link and
+      button is at least 40px tall on any touchscreen, and nothing scrolls sideways from 320px to
+      desktop. Most passengers arrive on a phone.
 - [x] The landing's search bar finds real stops as you type and, on submit, goes to `/findmybus` with the
       same query parameters the current app's search form sends — so the future v2 Find My Bus page can
       read them unchanged.
