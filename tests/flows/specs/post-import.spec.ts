@@ -58,8 +58,9 @@ test.describe.serial('an AI reads a pasted post for staff review', () => {
 
     const rows = staff.page.getByTestId('post-import-row');
     await expect(rows).toHaveCount(2);
-    const grounded = rows.filter({ hasText: 'Super Line' });
-    const ungrounded = rows.filter({ hasText: 'Invented Travels' });
+    // Rows are editable inputs now (INC-061), so "which row" is found by an input's value, not text content.
+    const grounded = rows.filter({ has: staff.page.locator('input[value="Super Line"]') });
+    const ungrounded = rows.filter({ has: staff.page.locator('input[value="Invented Travels"]') });
     await expect(grounded.getByText(/Not backed by/)).toHaveCount(0);
     await expect(ungrounded.getByText(/Not backed by/)).toBeVisible();
     await expect(staff.page.getByTestId('post-import-result')).toContainText('Colombo to Galle');

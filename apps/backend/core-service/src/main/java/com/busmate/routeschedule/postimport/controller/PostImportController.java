@@ -1,5 +1,6 @@
 package com.busmate.routeschedule.postimport.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -9,14 +10,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.busmate.routeschedule.postimport.dto.CreatePostImportRequest;
+import com.busmate.routeschedule.postimport.dto.DraftResolutionRequest;
 import com.busmate.routeschedule.postimport.dto.PostImportDraftResponse;
 import com.busmate.routeschedule.postimport.dto.PostImportDraftSummary;
+import com.busmate.routeschedule.postimport.dto.StopMatchCandidate;
 import com.busmate.routeschedule.postimport.service.PostImportService;
 import com.busmate.routeschedule.shared.security.CallerContext;
 
@@ -26,9 +30,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Staff pastes a community post; an AI reads it; code checks the reading. Staff-only, always (ADR-028) — not
- * every contributor path, a deliberately optional tool for the people who choose to use it. Nothing here
- * loads anything into the network; see INC-061 for the approve-and-load half.
+ * Staff pastes a community post; an AI reads it; code checks the reading; staff correct, match stops and
+ * load it. Staff-only, always (ADR-028) — not every contributor path, a deliberately optional tool for the
+ * people who choose to use it.
  */
 @RestController
 @RequestMapping("/api/community/post-imports")
@@ -58,5 +62,26 @@ public class PostImportController {
                                               @RequestParam(defaultValue = "20") int size) {
         return service.list(PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
                 Sort.by("createdAt").descending()));
+    }
+
+    @GetMapping("/stop-candidates")
+    @Operation(summary = "Existing stops that might be this place name; staff confirm, code never decides alone",
+            operationId = "getPostImportStopCandidates")
+    public List<StopMatchCandidate> stopCandidates(@RequestParam String name) {
+        return service.stopCandidates(name);
+    }
+
+    @PutMapping("/{id}/resolution")
+    @Operation(summary = "Save staff's edits, stop matches and decisions for a draft — loads nothing yet",
+            operationId = "savePostImportResolution")
+    public PostImportDraftResponse saveResolution(@PathVariable UUID id, @Valid @RequestBody DraftResolutionRequest request) {
+        return service.saveResolution(id, request);
+    }
+
+    @PostMapping("/{id}/approve")
+    @Operation(summary = "Load the resolved draft's rows as reports, the same rules staff already load by hand under",
+            operationId = "approvePostImport")
+    public PostImportDraftResponse approve(@PathVariable UUID id) {
+        return service.approve(callerContext.require(), id);
     }
 }

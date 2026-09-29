@@ -29,6 +29,7 @@ import com.busmate.routeschedule.shared.exception.ForbiddenException;
 import com.busmate.routeschedule.shared.exception.ResourceNotFoundException;
 import com.busmate.routeschedule.shared.security.Caller;
 import com.busmate.routeschedule.shared.util.GeoUtils;
+import com.busmate.routeschedule.shared.util.StopNameMatcher;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -122,7 +123,6 @@ public class StopProposalService {
         double lngPad = GeoUtils.metersToLongitudeDegrees(DUPLICATE_RADIUS_METERS, lat);
 
         List<Stop> nearby = stops.findWithinBoundingBox(lat - latPad, lat + latPad, lng - lngPad, lng + lngPad);
-        String proposedName = normalise(request.getName());
 
         return nearby.stream()
                 .filter(s -> s.getLocation() != null && s.getLocation().getLatitude() != null
@@ -130,31 +130,9 @@ public class StopProposalService {
                 .map(s -> new DuplicateStopCandidate(s.getId(), s.getName(),
                         GeoUtils.haversineMeters(lat, lng, s.getLocation().getLatitude(), s.getLocation().getLongitude())))
                 .filter(candidate -> candidate.distanceMeters() <= DUPLICATE_RADIUS_METERS)
-                .filter(candidate -> namesMatch(proposedName, normalise(candidate.name())))
+                .filter(candidate -> StopNameMatcher.namesMatch(request.getName(), candidate.name()))
                 .min((a, b) -> Double.compare(a.distanceMeters(), b.distanceMeters()))
                 .orElse(null);
-    }
-
-    /**
-     * Two names are "similar enough to ask about" if one contains the other, or if their first
-     * word matches — the common case for an abbreviation ("Nugegoda Jn" for "Nugegoda Junction"),
-     * which a plain substring check misses because the abbreviated word doesn't even share a
-     * prefix with the word it stands for.
-     */
-    private static boolean namesMatch(String a, String b) {
-        if (a.isBlank() || b.isBlank()) {
-            return false;
-        }
-        if (a.equals(b) || a.contains(b) || b.contains(a)) {
-            return true;
-        }
-        String firstA = a.split(" ", 2)[0];
-        String firstB = b.split(" ", 2)[0];
-        return !firstA.isBlank() && firstA.equals(firstB);
-    }
-
-    private static String normalise(String name) {
-        return name == null ? "" : name.strip().toLowerCase().replaceAll("\\s+", " ");
     }
 
     private void requireActiveContributor(Caller caller) {

@@ -56,6 +56,26 @@ public class PostImportDraft {
     @Column(nullable = false)
     private PostImportDraftStatus status = PostImportDraftStatus.READ;
 
+    /**
+     * What staff decided (INC-061): edited rows, which to load or skip, stop matches, override reasons for a
+     * flagged row, the source label and date. Null until a staff member has started reviewing. Kept separate
+     * from {@link #aiResponse} on purpose — the AI's own answer is never overwritten by a correction to it.
+     */
+    @ToString.Exclude
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode resolution;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "load_status", nullable = false)
+    private PostImportLoadStatus loadStatus = PostImportLoadStatus.NOT_LOADED;
+
+    /** What loading actually did, row by row: created, already there, or failed with a reason. */
+    @ToString.Exclude
+    @Type(JsonType.class)
+    @Column(name = "load_result", columnDefinition = "jsonb")
+    private JsonNode loadResult;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
