@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}input::placeholder{color:#8a97b5}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh">
+<div style="background:{{ t.card }};border-bottom:1px solid {{ t.line }}">
+<div style="max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;font-weight:800"><span style="width:34px;height:34px;border-radius:9px;background:#2563eb;color:#fff;display:grid;place-items:center">🔒</span>Secure Payment Gateway<span style="font-size:12px;font-weight:600;color:{{ t.mute }}">· PayHere</span></div>
+<div style="display:flex;gap:12px;align-items:center"><span style="font-size:13px;color:{{ t.mute }}">Merchant: <b style="color:{{ t.ink }}">BusMate (Pvt) Ltd</b></span>
+<button onClick="{{ toggleTheme }}" aria-label="Toggle theme" style="width:36px;height:36px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer">{{ t.icon }}</button></div>
+</div></div>
+
+<sc-if value="{{ isPaid }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:560px;margin:56px auto;padding:0 24px">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:20px;padding:36px;text-align:center;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<div style="width:64px;height:64px;border-radius:50%;background:#dcfce7;color:#16a34a;display:grid;place-items:center;font-size:30px;margin:0 auto 16px">✓</div>
+<h1 class="bm-h1" style="margin:0 0 6px;font-size:28px;letter-spacing:-.02em">Payment successful</h1>
+<p style="color:{{ t.mute }};margin:0 0 24px">Your e-ticket has been sent to your mobile and email.</p>
+<div style="text-align:left;border:1px dashed {{ t.line }};border-radius:14px;padding:18px;background:{{ t.soft }};display:grid;gap:10px;font-size:14px">
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Booking reference</span><b style="font-family:'JetBrains Mono',monospace;color:#2563eb">{{ o.ref }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Route</span><b>{{ o.route }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Departure</span><b>{{ o.date }} · {{ o.dep }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Seats</span><b>{{ o.seatText }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Amount paid</span><b>Rs. {{ o.total }}</b></div></div>
+<div style="display:flex;gap:10px;margin-top:24px"><a href="BusMate Landing.dc.html" style="flex:1;border:1.5px solid #2563eb;padding:13px;border-radius:12px;font-weight:700">Back to home</a><a href="#" style="flex:1;background:#2563eb;color:#fff;padding:13px;border-radius:12px;font-weight:700">Track my bus</a></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ notPaid }}" hint-placeholder-val="{{ true }}">
+<div style="max-width:1080px;margin:32px auto;padding:0 24px 64px;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+<div style="flex:3 1 480px;min-width:0;background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:28px">
+<h1 class="bm-h1" style="margin:0 0 20px;font-size:24px;letter-spacing:-.02em">Choose payment method</h1>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px">
+<sc-for list="{{ methods }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.tap }}" style="padding:14px 8px;border-radius:12px;border:2px solid {{ m.bd }};background:{{ m.bg }};color:{{ t.ink }};font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;line-height:1.5"><span style="font-size:20px">{{ m.i }}</span><br>{{ m.l }}</button></sc-for></div>
+
+<sc-if value="{{ isCard }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;gap:14px">
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Card number</div><input placeholder="1234 5678 9012 3456" value="{{ card }}" onInput="{{ setCard }}" style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 15px 'JetBrains Mono',monospace;outline:0"></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Name on card</div><input placeholder="As printed on card" style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Expiry</div><input placeholder="MM / YY" style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'JetBrains Mono',monospace;outline:0"></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">CVV</div><input placeholder="•••" type="password" style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'JetBrains Mono',monospace;outline:0"></label></div>
+</div>
+</sc-if>
+<sc-if value="{{ notCard }}" hint-placeholder-val="{{ false }}">
+<div style="padding:22px;border:1px solid {{ t.line }};border-radius:14px;background:{{ t.soft }};font-size:14px;line-height:1.6;color:{{ t.mute }}">{{ methodHelp }}</div>
+</sc-if>
+
+<button onClick="{{ pay }}" style="width:100%;margin-top:24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:12px;padding:16px;font:700 16px 'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 12px 28px -12px rgba(37,99,235,.7)">{{ payLabel }}</button>
+<div style="text-align:center;font-size:12px;color:{{ t.mute }};margin-top:14px">256-bit SSL encrypted · This is a demo — no real payment is taken.</div>
+<div style="text-align:center;margin-top:10px"><a href="BusMate Booking.dc.html" style="font-size:13px;font-weight:600">← Cancel and return to booking</a></div>
+</div>
+
+<aside style="flex:1 1 300px;background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:24px">
+<div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#2563eb">ORDER SUMMARY</div>
+<div style="font-weight:800;font-size:18px;margin:8px 0 2px">{{ o.route }}</div>
+<div style="font-size:13px;color:{{ t.mute }};margin-bottom:16px">{{ o.op }} · {{ o.date }} · {{ o.dep }}</div>
+<div style="display:grid;gap:8px;padding:14px 0;border-top:1px solid {{ t.line }};border-bottom:1px solid {{ t.line }};font-size:14px">
+<sc-for list="{{ o.pax }}" as="p" hint-placeholder-count="1"><div style="display:flex;justify-content:space-between"><span>{{ p.name }} <span style="color:{{ t.mute }}">· Seat {{ p.seat }}</span></span><b>Rs. 1,450</b></div></sc-for></div>
+<div style="display:grid;gap:8px;padding:14px 0;font-size:14px;color:{{ t.mute }}"><div style="display:flex;justify-content:space-between"><span>Service fee</span><span>Rs. {{ o.fee }}</span></div><div style="display:flex;justify-content:space-between"><span>Taxes</span><span>Rs. {{ o.tax }}</span></div></div>
+<div style="display:flex;justify-content:space-between;font-size:22px;font-weight:800"><span>Total</span><span style="color:#2563eb">Rs. {{ o.total }}</span></div>
+</aside>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const fmt = n => Number(n).toLocaleString('en-US');
+const FALLBACK = { ref:'BM000000', route:'Colombo Fort → Kandy', date:'Wed, 30 Sep 2026', dep:'05:30', op:'Ceylon Express · NB-4521', seats:['5A'], pax:[{ seat:'5A', name:'Guest passenger' }], base:1450, fee:95, tax:50, total:1595 };
+class Component extends DCLogic {
+  state = { dark:false, method:0, card:'', status:'idle', order:FALLBACK };
+  componentDidMount() { try { const o = JSON.parse(sessionStorage.getItem('busmate_order')); if (o) this.setState({ order:o }); } catch (e) {} }
+  renderVals() {
+    const S = this.state, o = S.order;
+    const t = S.dark
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#26365e', soft:'#0e1729', tint:'#16264a', icon:'☀' }
+      : { bg:'#f6f9ff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', soft:'#f4f7fe', tint:'#dbe8ff', icon:'☾' };
+    const M = [{ i:'💳', l:'Card' }, { i:'🏦', l:'Online banking' }, { i:'📱', l:'Mobile wallet' }];
+    const help = ['', 'You will be redirected to your bank’s secure login to approve this payment.', 'Enter your wallet number on the next step and approve the request on your phone.'];
+    return {
+      t, toggleTheme:() => this.setState(s => ({ dark:!s.dark })),
+      isPaid:S.status === 'paid', notPaid:S.status !== 'paid',
+      o:{ ...o, base:fmt(o.base), fee:fmt(o.fee), tax:fmt(o.tax), total:fmt(o.total), seatText:o.seats.join(', ') },
+      methods:M.map((m, i) => ({ ...m, tap:() => this.setState({ method:i }), bd:S.method === i ? '#2563eb' : t.line, bg:S.method === i ? t.tint : t.soft })),
+      isCard:S.method === 0, notCard:S.method !== 0, methodHelp:help[S.method],
+      card:S.card, setCard:e => this.setState({ card:e.target.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim() }),
+      payLabel:S.status === 'processing' ? 'Processing…' : 'Pay Rs. ' + fmt(o.total),
+      pay:() => { if (S.status === 'processing') return; this.setState({ status:'processing' }); setTimeout(() => this.setState({ status:'paid' }), 1600); }
+    };
+  }
+}
+</script>
+</body>
+</html>

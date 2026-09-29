@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}input::placeholder{color:#8a97b5}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div class="bm-stack" style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)">
+
+<aside class="bm-pad2" style="position:relative;background:{{ t.hero }};color:#fff;padding:40px 48px;display:flex;flex-direction:column;overflow:hidden">
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.06) 0 12px,rgba(255,255,255,.015) 12px 24px)"></div>
+<a href="BusMate Landing.dc.html" style="position:relative;display:flex;align-items:center;gap:10px;color:#fff">
+<div style="width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;font-weight:800">B</div>
+<div><div style="font-weight:800;font-size:18px;line-height:1">BusMate</div><div style="font-size:10px;opacity:.8;margin-top:3px">Your Journey Our Priority</div></div></a>
+<div class="bm-mid" style="position:relative;margin:auto 0;padding:48px 0">
+<div class="bm-hide" style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.7;margin-bottom:24px">photo: blue BusMate bus on a highway, hills behind</div>
+<h1 class="bm-h1" style="font-size:46px;line-height:1.08;letter-spacing:-.03em;margin:0 0 16px;font-weight:800">{{ side.h }} <span style="color:#22d3ee">{{ side.a }}</span></h1>
+<p style="font-size:16px;line-height:1.6;opacity:.9;max-width:400px;margin:0 0 28px">{{ side.p }}</p>
+<div class="bm-hide" style="display:grid;gap:12px;font-size:14px;font-weight:600">
+<sc-for list="{{ perks }}" as="p" hint-placeholder-count="3">
+<div style="display:flex;gap:12px;align-items:center"><span style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:12px">✓</span>{{ p }}</div>
+</sc-for></div>
+</div>
+<div class="bm-hide" style="position:relative;display:flex;gap:32px;font-size:13px;opacity:.9"><span><b style="font-size:22px">50K+</b><br>Daily users</span><span><b style="font-size:22px">500+</b><br>Bus routes</span><span><b style="font-size:22px">4.8★</b><br>Rating</span></div>
+</aside>
+
+<main class="bm-pad" style="display:flex;flex-direction:column;padding:28px 48px">
+<div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
+<a href="BusMate Landing.dc.html" style="font-weight:600">← Back to home</a>
+<button onClick="{{ toggleTheme }}" aria-label="Toggle theme" style="width:38px;height:38px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer;font-size:16px">{{ t.icon }}</button>
+</div>
+<div style="margin:auto;width:100%;max-width:420px;padding:32px 0">
+<div style="display:flex;background:{{ t.alt }};border:1px solid {{ t.line }};border-radius:12px;padding:4px;margin-bottom:28px">
+<button onClick="{{ goLogin }}" style="flex:1;border:0;border-radius:9px;padding:10px;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer;background:{{ tabL.bg }};color:{{ tabL.fg }}">Log In</button>
+<button onClick="{{ goSignup }}" style="flex:1;border:0;border-radius:9px;padding:10px;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer;background:{{ tabS.bg }};color:{{ tabS.fg }}">Sign Up</button>
+</div>
+<h2 class="bm-h2" style="font-size:32px;letter-spacing:-.02em;margin:0 0 8px">{{ copy.h }}</h2>
+<p style="color:{{ t.mute }};margin:0 0 24px;line-height:1.5">{{ copy.p }}</p>
+
+<form onSubmit="{{ submit }}" style="display:grid;gap:16px">
+<sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+<label style="display:block"><div style="font-size:13px;font-weight:700;margin-bottom:6px">Full name</div>
+<input placeholder="Nimasha Perera" style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+</sc-if>
+<label style="display:block"><div style="font-size:13px;font-weight:700;margin-bottom:6px">Email or mobile number</div>
+<input placeholder="you@example.com" style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+<label style="display:block"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px"><span>Password</span><sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}"><a href="#" style="font-weight:600">Forgot password?</a></sc-if></div>
+<div style="position:relative"><input type="{{ pwType }}" placeholder="••••••••" style="width:100%;padding:14px 64px 14px 16px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0">
+<button type="button" onClick="{{ togglePw }}" style="position:absolute;right:8px;top:8px;border:0;background:transparent;color:#2563eb;font:700 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer;padding:8px">{{ pwLabel }}</button></div></label>
+<sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+<label style="display:flex;gap:10px;font-size:13px;color:{{ t.mute }};line-height:1.5"><input type="checkbox" style="margin-top:3px;accent-color:#2563eb">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</label>
+</sc-if>
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;gap:10px;font-size:13px;color:{{ t.mute }}"><input type="checkbox" style="accent-color:#2563eb">Keep me signed in</label>
+</sc-if>
+<button type="submit" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:12px;padding:15px;font:700 15px 'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 12px 28px -12px rgba(37,99,235,.7)">{{ copy.btn }} →</button>
+<div style="min-height:20px;font-size:13px;font-weight:600;color:#2563eb;text-align:center">{{ msg }}</div>
+</form>
+
+<div style="display:flex;align-items:center;gap:12px;color:{{ t.mute }};font-size:12px;margin:8px 0 16px"><div style="flex:1;height:1px;background:{{ t.line }}"></div>or continue with<div style="flex:1;height:1px;background:{{ t.line }}"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<button style="padding:12px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:600 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Google</button>
+<button style="padding:12px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:600 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Phone OTP</button>
+</div>
+<p style="text-align:center;font-size:14px;color:{{ t.mute }};margin:24px 0 0">{{ copy.alt }} <a href="#" onClick="{{ swap }}" style="font-weight:700">{{ copy.altLink }}</a></p>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dark: false, mode: 'login', pw: false, msg: '' };
+  componentDidMount() { if (location.hash === '#signup') this.setState({ mode: 'signup' }); }
+  renderVals() {
+    const { dark, mode, pw, msg } = this.state;
+    const su = mode === 'signup';
+    const t = dark
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#26365e', alt:'#0c1427', icon:'☀', hero:'linear-gradient(150deg,#0b1a4a,#1d3f9e 80%)' }
+      : { bg:'#fbfcff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', alt:'#eef3fd', icon:'☾', hero:'linear-gradient(150deg,#1e3a8a,#2563eb 70%,#3b82f6)' };
+    const on = { bg:'#2563eb', fg:'#fff' }, off = { bg:'transparent', fg:t.mute };
+    return {
+      t, msg, isSignup: su, isLogin: !su,
+      tabL: su ? off : on, tabS: su ? on : off,
+      side: su ? { h:'Join the ride with', a:'BusMate', p:'Create your free account to save routes, get live alerts and travel smarter across Sri Lanka.' }
+               : { h:'Welcome back to', a:'BusMate', p:'Log in to track your bus live, manage trips and pick up right where you left off.' },
+      perks: ['Live bus tracking and arrival times','Save favourite routes and trips','Safe, verified buses across 25 cities'],
+      copy: su ? { h:'Create your account', p:'It only takes a minute to get started.', btn:'Create Account', alt:'Already have an account?', altLink:'Log in' }
+               : { h:'Log in to BusMate', p:'Enter your details to access your account.', btn:'Log In', alt:"Don't have an account?", altLink:'Sign up' },
+      pwType: pw ? 'text' : 'password', pwLabel: pw ? 'Hide' : 'Show',
+      togglePw: () => this.setState(s => ({ pw: !s.pw })),
+      toggleTheme: () => this.setState(s => ({ dark: !s.dark })),
+      goLogin: () => this.setState({ mode: 'login', msg: '' }),
+      goSignup: () => this.setState({ mode: 'signup', msg: '' }),
+      swap: e => { e.preventDefault(); this.setState(s => ({ mode: s.mode === 'login' ? 'signup' : 'login', msg: '' })); },
+      submit: e => { e.preventDefault(); this.setState({ msg: su ? 'Account created (demo). Welcome aboard!' : 'Logged in (demo).' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

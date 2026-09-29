@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}html{scroll-behavior:smooth}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh;transition:background .3s,color .3s">
+
+<header style="position:sticky;top:0;z-index:20;background:{{ t.nav }};backdrop-filter:blur(14px);border-bottom:1px solid {{ t.line }}">
+<div class="bm-hd" style="max-width:1200px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#1e40af);display:grid;place-items:center;color:#fff;font-weight:800">B</div>
+<div><div style="font-weight:800;font-size:18px;line-height:1">BusMate</div><div style="font-size:10px;color:{{ t.mute }};margin-top:3px">Your Journey Our Priority</div></div>
+</div>
+<nav class="bm-nav" style="margin:0 auto;display:flex;gap:28px;font-size:14px;font-weight:600">
+<a href="#top" style="color:#2563eb">Home</a>
+<a href="BusMate Find Bus.dc.html" style="color:{{ t.ink }}">Find My Bus</a>
+<a href="BusMate Routes.dc.html" style="color:{{ t.ink }}">Routes</a>
+<a href="BusMate Community.dc.html" style="color:{{ t.ink }}">Community</a>
+<a href="BusMate About.dc.html" style="color:{{ t.ink }}">About</a>
+</nav>
+<button onClick="{{ toggle }}" aria-label="Toggle theme" style="width:38px;height:38px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer;font-size:16px">{{ t.icon }}</button>
+<a href="BusMate Auth.dc.html" style="color:{{ t.ink }};font-size:14px;font-weight:600">Log In</a>
+<a href="BusMate Auth.dc.html#signup" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:700">Sign Up</a>
+</div>
+</header>
+
+<section id="top" style="position:relative;background:linear-gradient(90deg,rgba(9,22,68,.94) 0%,rgba(20,48,130,.82) 38%,rgba(30,64,175,.25) 68%,rgba(30,64,175,0) 100%),url(assets/hero-bus.png) 78% center/cover no-repeat;background-color:#1e3a8a;color:#fff;padding:72px 24px 150px;overflow:hidden">
+
+<div style="position:relative;max-width:1200px;margin:0 auto">
+<div style="display:inline-flex;gap:8px;align-items:center;padding:7px 14px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);font-size:12px;font-weight:600">Sri Lanka's Trusted Bus Transportation</div>
+<h1 class="bm-h1" style="font-size:68px;line-height:1.02;letter-spacing:-.03em;margin:22px 0 20px;font-weight:800;max-width:600px">Your Journey Starts with <span style="color:#22d3ee">BusMate</span></h1>
+<p style="font-size:18px;line-height:1.6;max-width:480px;color:rgba(255,255,255,.88);margin:0 0 32px">Real-time bus information, route planning and live tracking for a smoother, safer and smarter travel experience across Sri Lanka.</p>
+<div style="display:flex;gap:28px;flex-wrap:wrap">
+<sc-for list="{{ perks }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;line-height:1.25"><span style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center">{{ p.i }}</span><span style="white-space:pre-line">{{ p.t }}</span></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<div id="search" style="max-width:1120px;margin:-70px auto 0;padding:0 24px;position:relative;z-index:5">
+<div class="bm-stack" style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:14px;box-shadow:0 24px 60px -20px rgba(30,64,175,.35)">
+<sc-for list="{{ fields }}" as="f" hint-placeholder-count="3">
+<label style="border:1px solid {{ t.line }};border-radius:12px;padding:12px 16px;background:{{ t.soft }};display:block">
+<div style="font-size:12px;font-weight:700;color:#2563eb">{{ f.l }}</div>
+<input value="{{ f.v }}" placeholder="{{ f.p }}" style="border:0;background:transparent;outline:0;width:100%;margin-top:4px;font:500 14px 'Plus Jakarta Sans',sans-serif;color:{{ t.ink }}">
+</label>
+</sc-for>
+<button style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:12px;padding:0 32px;font:700 15px 'Plus Jakarta Sans',sans-serif;cursor:pointer;min-height:56px">Find My Bus →</button>
+</div>
+</div>
+
+<section id="about" style="max-width:1200px;margin:0 auto;padding:96px 24px 40px;text-align:center">
+<div style="font-size:12px;font-weight:800;letter-spacing:.2em;color:#2563eb">WHY CHOOSE BUSMATE</div>
+<h2 class="bm-h2" style="font-size:40px;letter-spacing:-.02em;margin:10px 0 12px">A Smarter Way to <span style="color:#2563eb">Travel</span></h2>
+<p style="color:{{ t.mute }};max-width:520px;margin:0 auto 44px;line-height:1.6">A seamless, reliable bus travel experience with powerful tools and real-time information.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:20px;text-align:left">
+<sc-for list="{{ features }}" as="f" hint-placeholder-count="4">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<div style="width:52px;height:52px;border-radius:50%;background:{{ t.tint }};display:grid;place-items:center;font-size:22px;margin-bottom:18px">{{ f.i }}</div>
+<div style="font-weight:700;font-size:17px;margin-bottom:8px">{{ f.t }}</div>
+<div style="color:{{ t.mute }};font-size:14px;line-height:1.6">{{ f.d }}</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:32px;border-radius:20px;background:linear-gradient(120deg,#1e3a8a,#2563eb 60%,#1d4ed8);color:#fff;padding:34px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+<div><div style="font-size:40px;font-weight:800;letter-spacing:-.02em">{{ s.n }}</div><div style="font-size:14px;opacity:.85">{{ s.l }}</div></div>
+</sc-for>
+</div>
+</section>
+
+<section id="routes" style="background:{{ t.alt }};padding:80px 24px;margin-top:40px">
+<div style="max-width:1200px;margin:0 auto">
+<div style="display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:32px">
+<div><div style="font-size:12px;font-weight:800;letter-spacing:.2em;color:#2563eb">POPULAR ROUTES</div>
+<h2 class="bm-h2" style="font-size:38px;letter-spacing:-.02em;margin:8px 0">Top Bus Routes</h2>
+<div style="color:{{ t.mute }}">Explore the most popular routes and plan your next trip with ease.</div></div>
+<a href="#" style="border:1.5px solid #2563eb;padding:10px 18px;border-radius:10px;font-weight:700;font-size:14px">View All Routes →</a>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:20px">
+<sc-for list="{{ routes }}" as="r" hint-placeholder-count="4">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:16px;overflow:hidden">
+<div style="height:130px;background:repeating-linear-gradient(135deg,{{ t.tint }} 0 10px,{{ t.soft }} 10px 20px);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ t.mute }}">photo: {{ r.ph }}</div>
+<div style="padding:18px">
+<div style="font-weight:700;font-size:17px">{{ r.a }} <span style="color:#2563eb">→</span> {{ r.b }}</div>
+<div style="display:flex;gap:16px;color:{{ t.mute }};font-size:13px;margin:12px 0 16px"><span>{{ r.d }}</span><span>{{ r.f }}</span></div>
+<a href="#" style="display:block;text-align:center;border:1.5px solid #2563eb;border-radius:10px;padding:9px;font-weight:700;font-size:13px">View Route →</a>
+</div></div>
+</sc-for>
+</div></div>
+</section>
+
+<section id="how" style="max-width:1200px;margin:0 auto;padding:96px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:56px;align-items:center">
+<div style="min-height:400px;border-radius:28px;background:linear-gradient(160deg,{{ t.tint }},{{ t.soft }});display:grid;place-items:center;position:relative">
+<div style="width:200px;height:380px;border-radius:32px;background:#0f172a;padding:10px;transform:rotate(-6deg);box-shadow:0 30px 60px -20px rgba(30,64,175,.5)">
+<div style="height:100%;border-radius:24px;background:repeating-linear-gradient(135deg,#dbeafe 0 10px,#eff6ff 10px 20px);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:#1e40af;text-align:center;padding:12px">app screenshot: live bus tracking map</div>
+</div></div>
+<div>
+<div style="font-size:12px;font-weight:800;letter-spacing:.2em;color:#2563eb">HOW IT WORKS</div>
+<h2 class="bm-h2" style="font-size:38px;letter-spacing:-.02em;margin:8px 0 12px">Simple Steps, <span style="color:#2563eb">Better Journeys</span></h2>
+<p style="color:{{ t.mute }};line-height:1.6;margin:0 0 28px">Plan your trip, track your bus and reach your destination with ease in just a few taps.</p>
+<div style="display:grid;gap:22px">
+<sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;gap:16px"><div style="flex:none;width:46px;height:46px;border-radius:50%;background:{{ t.tint }};color:#2563eb;font-weight:800;display:grid;place-items:center">{{ s.n }}</div>
+<div><div style="font-weight:700;margin-bottom:4px">{{ s.t }}</div><div style="color:{{ t.mute }};font-size:14px;line-height:1.55">{{ s.d }}</div></div></div>
+</sc-for>
+</div></div>
+</section>
+
+<section style="background:{{ t.alt }};padding:80px 24px">
+<div style="max-width:1200px;margin:0 auto;text-align:center">
+<div style="font-size:12px;font-weight:800;letter-spacing:.2em;color:#2563eb">WHAT OUR PASSENGERS SAY</div>
+<h2 class="bm-h2" style="font-size:36px;letter-spacing:-.02em;margin:8px 0 36px">Trusted by Thousands</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px;text-align:left">
+<sc-for list="{{ quotes }}" as="q" hint-placeholder-count="3">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:16px;padding:24px">
+<div style="color:#f59e0b;letter-spacing:2px;margin-bottom:12px">★★★★★</div>
+<p style="margin:0 0 20px;line-height:1.6;font-size:15px">"{{ q.q }}"</p>
+<div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;border-radius:50%;background:#2563eb;color:#fff;display:grid;place-items:center;font-weight:700">{{ q.i }}</div><div style="font-weight:700;font-size:14px">{{ q.n }}</div></div>
+</div>
+</sc-for>
+</div></div>
+</section>
+
+<section style="background:linear-gradient(110deg,#1e3a8a,#2563eb);color:#fff;padding:72px 24px">
+<div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap">
+<div style="max-width:620px"><div style="font-size:12px;font-weight:800;letter-spacing:.2em;opacity:.85">READY TO TRANSFORM YOUR COMMUTE?</div>
+<h2 class="bm-h2" style="font-size:38px;line-height:1.15;letter-spacing:-.02em;margin:12px 0">Join thousands of Sri Lankans who trust BusMate for their daily travel.</h2>
+<p style="opacity:.9;margin:0 0 26px">Plan your journey today and experience the future of public transportation.</p>
+<a href="#" style="display:inline-block;background:#fff;color:#1d4ed8;padding:14px 26px;border-radius:12px;font-weight:700">Get Started Now →</a></div>
+<div style="font-size:30px;font-style:italic;font-weight:500;opacity:.9;line-height:1.3">Your Journey,<br>Our Priority</div>
+</div>
+</section>
+
+<footer style="background:{{ t.foot }};color:#cbd5e1;padding:56px 24px 24px">
+<div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:36px;font-size:14px;line-height:2">
+<div><div style="font-weight:800;font-size:20px;color:#fff;margin-bottom:8px">BusMate</div><div style="line-height:1.6">Your trusted companion for Sri Lanka's public transportation. Real-time updates, smart route planning and reliable journey information.</div></div>
+<div><div style="color:#fff;font-weight:700">Quick Links</div>Home<br>Find My Bus<br>Routes<br>Live Tracking<br>Help Center</div>
+<div><div style="color:#fff;font-weight:700">Services</div>Route Planning<br>Real-time Updates<br>Bus Schedules<br>Fare Information</div>
+<div><div style="color:#fff;font-weight:700">Stay Connected</div>info@busmate.lk<br>+94 11 234 5678<br>Colombo, Sri Lanka
+<div style="display:flex;gap:8px;margin-top:8px"><input placeholder="Your email address" style="flex:1;min-width:0;padding:9px 12px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#fff;font:13px 'Plus Jakarta Sans',sans-serif"><button style="background:#2563eb;color:#fff;border:0;border-radius:8px;padding:0 14px;font-weight:700;cursor:pointer">Subscribe</button></div></div>
+</div>
+<div style="max-width:1200px;margin:32px auto 0;padding-top:20px;border-top:1px solid #1e293b;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px"><span>© 2026 BusMate. All rights reserved.</span><span>Privacy Policy · Terms of Service · Cookie Policy</span></div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dark: false };
+  renderVals() {
+    const d = this.state.dark;
+    const t = d
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#1e2a47', soft:'#0e1729', alt:'#0c1427', tint:'#16264a', nav:'rgba(10,16,32,.85)', foot:'#050a16', icon:'☀', hero:'linear-gradient(120deg,#0b1a4a,#1d3f9e 70%,#1e40af)' }
+      : { bg:'#fbfcff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', soft:'#f4f7fe', alt:'#eef3fd', tint:'#dbe8ff', nav:'rgba(255,255,255,.88)', foot:'#0b1330', icon:'☾', hero:'linear-gradient(120deg,#1e3a8a,#2563eb 65%,#3b82f6)' };
+    return {
+      t, toggle: () => this.setState(s => ({ dark: !s.dark })),
+      perks: [{i:'🛡',t:'Safe\n& Reliable'},{i:'◔',t:'Real-time\nUpdates'},{i:'🗺',t:'Easy Route\nPlanning'},{i:'⚭',t:'Better\nConnections'}],
+      fields: [{l:'From',p:'Enter departure city',v:''},{l:'To',p:'Enter destination city',v:''},{l:'Date',p:'',v:'09/29/2026'}],
+      features: [
+        {i:'◔',t:'Real-time Updates',d:'Live bus locations, arrival times and route updates to plan your journey perfectly.'},
+        {i:'⌖',t:'Smart Route Planning',d:'Find the fastest routes, compare options and discover convenient connections.'},
+        {i:'⚡',t:'Lightning Fast',d:'Quick search results and instant updates to keep you moving without delays.'},
+        {i:'🛡',t:'Safe & Trusted',d:'Your safety matters. Travel with confidence on verified and trusted buses.'}],
+      stats: [{n:'500+',l:'Bus Routes'},{n:'50K+',l:'Daily Users'},{n:'25',l:'Cities Covered'},{n:'4.8',l:'User Rating'}],
+      routes: [
+        {a:'Colombo Fort',b:'Kandy',d:'3h 15m',f:'12 buses/day',ph:'Colombo skyline'},
+        {a:'Colombo',b:'Negombo',d:'1h 15m',f:'25 buses/day',ph:'Sigiriya rock'},
+        {a:'Kandy',b:'Nuwara Eliya',d:'2h 30m',f:'8 buses/day',ph:'Lake & hills'},
+        {a:'Galle',b:'Colombo',d:'2h 15m',f:'15 buses/day',ph:'Southern beach'}],
+      steps: [
+        {n:'1',t:'Search & Plan',d:'Enter your location, choose a route and find the best bus for your journey.'},
+        {n:'2',t:'Book Your Seat',d:'Select your bus, pick your seat and confirm your booking instantly.'},
+        {n:'3',t:'Track in Real-Time',d:'Follow your bus live and get updates until you reach your destination.'}],
+      quotes: [
+        {i:'N',n:'Nimasha Perera',q:'BusMate made my travel so easy! Real-time tracking is a game changer. Highly recommended!'},
+        {i:'K',n:'Kavindu Silva',q:'Very accurate timings and smooth booking process. Best app for bus travel in Sri Lanka!'},
+        {i:'T',n:'Tharushi Fernando',q:'Clean interface, reliable information and excellent customer support. Love using BusMate!'}]
+    };
+  }
+}
+</script>
+</body>
+</html>

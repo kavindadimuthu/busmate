@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}input::placeholder{color:#a3b4d6}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh">
+<header style="position:sticky;top:0;z-index:20;background:{{ t.nav }};backdrop-filter:blur(14px);border-bottom:1px solid {{ t.line }}">
+<div class="bm-hd" style="max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+<a href="BusMate Landing.dc.html" style="display:flex;align-items:center;gap:10px;color:{{ t.ink }}"><div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#1e40af);display:grid;place-items:center;color:#fff;font-weight:800">B</div><div style="font-weight:800;font-size:18px">BusMate</div></a>
+<nav class="bm-nav" style="margin:0 auto;display:flex;gap:28px;font-size:14px;font-weight:600">
+<a href="BusMate Landing.dc.html" style="color:{{ t.ink }}">Home</a><a href="BusMate Find Bus.dc.html" style="color:{{ t.ink }}">Find My Bus</a><a href="BusMate Routes.dc.html" style="color:{{ t.ink }}">Routes</a><a href="BusMate Community.dc.html" style="color:{{ t.ink }}">Community</a><a href="BusMate About.dc.html" style="color:{{ t.ink }}">About</a></nav>
+<button onClick="{{ toggleTheme }}" aria-label="Toggle theme" style="width:38px;height:38px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer;font-size:16px">{{ t.icon }}</button>
+<div style="display:flex;align-items:center;gap:10px;padding:4px 14px 4px 4px;border-radius:99px;border:1px solid #2563eb;background:{{ t.card }}"><span style="width:32px;height:32px;border-radius:50%;background:#2563eb;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px">{{ initials }}</span><span style="font-size:13px;font-weight:700">{{ first }}</span></div>
+</div></header>
+
+<section style="background:{{ t.hero }};color:#fff;padding:40px 24px 110px">
+<div style="max-width:1240px;margin:0 auto;display:flex;gap:28px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+<div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
+<div style="position:relative"><div style="width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.6);display:grid;place-items:center;font-size:36px;font-weight:800">{{ initials }}</div><div style="position:absolute;right:-2px;bottom:4px;width:30px;height:30px;border-radius:50%;background:#fff;color:#1d4ed8;display:grid;place-items:center;font-size:14px;cursor:pointer">✎</div></div>
+<div>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><span style="padding:4px 12px;border-radius:99px;background:#22d3ee;color:#0b1a4a;font-size:12px;font-weight:800">Gold Traveller</span><span style="font-size:13px;opacity:.85">Member since Mar 2024</span></div>
+<h1 class="bm-h1" style="font-size:36px;letter-spacing:-.02em;margin:0 0 4px;font-weight:800">{{ name }}</h1>
+<div style="opacity:.9;font-size:14px">{{ email }} · {{ phone }}</div></div>
+</div>
+<div style="display:flex;gap:10px"><button onClick="{{ goPersonal }}" style="padding:12px 20px;border-radius:12px;border:0;background:#fff;color:#1d4ed8;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Edit profile</button><a href="BusMate Auth.dc.html" style="padding:12px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.5);color:#fff;font-weight:700;font-size:14px">Log out</a></div>
+</div></section>
+
+<div style="max-width:1240px;margin:-64px auto 0;padding:0 24px 80px">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4"><div style="display:flex;gap:14px;align-items:center"><span style="width:46px;height:46px;border-radius:12px;background:{{ t.tint }};display:grid;place-items:center;font-size:20px">{{ s.i }}</span><div><div style="font-size:24px;font-weight:800;letter-spacing:-.02em">{{ s.n }}</div><div style="font-size:12px;color:{{ t.mute }}">{{ s.l }}</div></div></div></sc-for></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;margin-top:28px">
+<aside class="bm-tabs bm-aside" style="flex:1 1 240px;max-width:100%;background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:12px;display:grid;gap:4px;position:sticky;top:84px">
+<sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="6"><button onClick="{{ tb.tap }}" style="display:flex;gap:12px;align-items:center;text-align:left;border:0;border-radius:12px;padding:13px 14px;background:{{ tb.bg }};color:{{ tb.fg }};font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer"><span style="width:22px;text-align:center">{{ tb.i }}</span>{{ tb.l }}</button></sc-for>
+</aside>
+
+<main style="flex:3 1 560px;min-width:0;display:grid;gap:24px">
+
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<div style="background:linear-gradient(120deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:26px;display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center;justify-content:space-between">
+<div><div style="font-size:12px;font-weight:800;letter-spacing:.15em;opacity:.85">NEXT TRIP · IN 1 DAY</div><div style="font-size:24px;font-weight:800;margin:8px 0 4px">Colombo Fort → Kandy</div><div style="opacity:.9;font-size:14px">Wed, 30 Sep 2026 · 05:30 · Seats 5A, 5B · Ceylon Express</div></div>
+<div style="display:flex;gap:10px"><a href="BusMate Trip Details.dc.html" style="background:#fff;color:#1d4ed8;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13px">View ticket</a><a href="#" style="border:1px solid rgba(255,255,255,.6);color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;font-size:13px">Track bus</a></div>
+</div>
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><h2 style="margin:0;font-size:20px">Gold Traveller progress</h2><span style="font-size:13px;color:{{ t.mute }}">1,240 / 2,000 pts</span></div>
+<div style="height:10px;border-radius:10px;background:{{ t.tint }};overflow:hidden"><div style="width:62%;height:100%;background:linear-gradient(90deg,#2563eb,#22d3ee)"></div></div>
+<div style="font-size:13px;color:{{ t.mute }};margin-top:10px">760 points to Platinum · earn 10 points per trip and 25 for every review.</div>
+</div>
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px"><h2 style="margin:0;font-size:20px">Recent trips</h2><a href="#" onClick="{{ goTrips }}" style="font-size:13px;font-weight:700">View all →</a></div>
+<div style="display:grid;gap:10px">
+<sc-for list="{{ recent }}" as="tr" hint-placeholder-count="3"><div style="display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;padding:14px 16px;border:1px solid {{ t.line }};border-radius:14px;background:{{ t.soft }}"><div style="flex:1 1 200px"><div style="font-weight:700">{{ tr.route }}</div><div style="font-size:12px;color:{{ t.mute }}">{{ tr.when }} · {{ tr.op }}</div></div><span style="font-weight:800;color:#2563eb">Rs. {{ tr.price }}</span><span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:{{ tr.pbg }};color:{{ tr.pfg }}">{{ tr.status }}</span></div></sc-for></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTrips }}" hint-placeholder-val="{{ false }}">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px"><h2 style="margin:0;font-size:20px">My trips</h2>
+<div style="display:flex;gap:6px;background:{{ t.alt }};border:1px solid {{ t.line }};padding:4px;border-radius:12px"><sc-for list="{{ tripFilters }}" as="f" hint-placeholder-count="3"><button onClick="{{ f.tap }}" style="border:0;border-radius:9px;padding:8px 14px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }}">{{ f.l }}</button></sc-for></div></div>
+<div style="display:grid;gap:12px">
+<sc-for list="{{ trips }}" as="tr" hint-placeholder-count="4"><div style="display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;padding:16px 18px;border:1px solid {{ t.line }};border-radius:14px;background:{{ t.soft }}"><div style="flex:1 1 220px"><div style="font-weight:800">{{ tr.route }}</div><div style="font-size:12px;color:{{ t.mute }};margin-top:3px">{{ tr.when }} · {{ tr.op }} · Seats {{ tr.seats }}</div><div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:{{ t.mute }};margin-top:3px">{{ tr.ref }}</div></div><span style="font-weight:800;color:#2563eb">Rs. {{ tr.price }}</span><span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:{{ tr.pbg }};color:{{ tr.pfg }}">{{ tr.status }}</span><a href="BusMate Trip Details.dc.html" style="border:1.5px solid #2563eb;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700">Details</a></div></sc-for></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSaved }}" hint-placeholder-val="{{ false }}">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<h2 style="margin:0 0 16px;font-size:20px">Saved routes</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
+<sc-for list="{{ saved }}" as="s" hint-placeholder-count="4"><a href="{{ s.href }}" style="display:block;padding:18px;border:1px solid {{ t.line }};border-radius:14px;background:{{ t.soft }};color:{{ t.ink }}"><div style="display:flex;justify-content:space-between;font-size:12px;color:{{ t.mute }}"><span>Route {{ s.no }}</span><span style="color:#ef4444">♥</span></div><div style="font-weight:800;font-size:17px;margin:8px 0">{{ s.from }} → {{ s.to }}</div><div style="font-size:13px;color:{{ t.mute }}">{{ s.dist }} km · {{ s.dur }} · from Rs. {{ s.fare }}</div></a></sc-for></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPersonal }}" hint-placeholder-val="{{ false }}">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<h2 style="margin:0 0 18px;font-size:20px">Personal information</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px">
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Full name</div><input value="{{ name }}" onInput="{{ setName }}" style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Email</div><input value="{{ email }}" onInput="{{ setEmail }}" style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Mobile number</div><input value="{{ phone }}" onInput="{{ setPhone }}" style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Date of birth</div><input value="14/06/1996" style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Gender</div><select style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"><option>Female</option><option>Male</option><option>Other</option></select></label>
+<label><div style="font-size:13px;font-weight:700;margin-bottom:6px">Home city</div><input value="Colombo" style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></label>
+</div>
+<h3 style="margin:26px 0 12px;font-size:16px">Emergency contact</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px"><input value="Kumari Perera" style="padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"><input value="+94 71 987 6543" style="padding:13px 15px;border-radius:12px;border:1px solid {{ t.line }};background:{{ t.soft }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></div>
+<div style="display:flex;align-items:center;gap:14px;margin-top:24px"><button onClick="{{ save }}" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:12px;padding:13px 26px;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Save changes</button><span style="font-size:13px;font-weight:700;color:#16a34a">{{ saved2 }}</span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPayments }}" hint-placeholder-val="{{ false }}">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin:0;font-size:20px">Payment methods</h2><button style="border:1.5px solid #2563eb;background:transparent;color:#2563eb;border-radius:10px;padding:8px 14px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer">+ Add method</button></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px">
+<div style="border-radius:16px;padding:22px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;min-height:150px;display:flex;flex-direction:column;justify-content:space-between"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span>Visa · Default</span><span>💳</span></div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:.1em">•••• •••• •••• 4821</div><div style="display:flex;justify-content:space-between;font-size:12px"><span>{{ name }}</span><span>09/28</span></div></div>
+<div style="border-radius:16px;padding:22px;border:1px dashed {{ t.line }};background:{{ t.soft }};min-height:150px;display:flex;flex-direction:column;justify-content:space-between"><div style="font-size:12px;font-weight:700;color:{{ t.mute }}">Mobile wallet</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px">+94 77 ••• 4567</div><div style="font-size:12px;color:{{ t.mute }}">Linked · Verified</div></div>
+</div></div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<h2 style="margin:0 0 8px;font-size:20px">Notifications</h2>
+<sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px 0;border-top:1px solid {{ t.line }}"><div><div style="font-weight:700;font-size:14px">{{ n.t }}</div><div style="font-size:13px;color:{{ t.mute }}">{{ n.d }}</div></div><button onClick="{{ n.tap }}" aria-label="Toggle" style="flex:none;width:46px;height:26px;border-radius:26px;border:0;background:{{ n.bg }};position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:{{ n.left }}px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s"></span></button></div></sc-for>
+</div>
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:26px">
+<h2 style="margin:0 0 8px;font-size:20px">Security</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid {{ t.line }}"><div><div style="font-weight:700;font-size:14px">Password</div><div style="font-size:13px;color:{{ t.mute }}">Last changed 3 months ago</div></div><button style="border:1.5px solid #2563eb;background:transparent;color:#2563eb;border-radius:10px;padding:8px 14px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Change</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid {{ t.line }}"><div><div style="font-weight:700;font-size:14px">Two-step verification</div><div style="font-size:13px;color:{{ t.mute }}">Verify logins with an OTP to your phone</div></div><span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:#dcfce7;color:#15803d">Enabled</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid {{ t.line }}"><div><div style="font-weight:700;font-size:14px;color:#dc2626">Delete account</div><div style="font-size:13px;color:{{ t.mute }}">Permanently remove your data</div></div><button style="border:1.5px solid #dc2626;background:transparent;color:#dc2626;border-radius:10px;padding:8px 14px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Delete</button></div>
+</div>
+</sc-if>
+
+</main>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dark:false, tab:'overview', tf:'Upcoming', name:'Nimasha Perera', email:'nimasha.perera@email.com', phone:'+94 77 123 4567', saved2:'', n:[true, true, false, true] };
+  renderVals() {
+    const S = this.state;
+    const t = S.dark
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#26365e', soft:'#0e1729', alt:'#0c1427', tint:'#16264a', nav:'rgba(10,16,32,.85)', icon:'☀', hero:'linear-gradient(120deg,#0b1a4a,#1d3f9e 75%)' }
+      : { bg:'#f6f9ff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', soft:'#f4f7fe', alt:'#eef3fd', tint:'#dbe8ff', nav:'rgba(255,255,255,.88)', icon:'☾', hero:'linear-gradient(120deg,#1e3a8a,#2563eb 65%,#3b82f6)' };
+    const st = { Completed:['#dcfce7', '#15803d'], Upcoming:['#dbeafe', '#1d4ed8'], Cancelled:['#fee2e2', '#b91c1c'] };
+    const all = [
+      { route:'Colombo Fort → Kandy', when:'30 Sep 2026 · 05:30', op:'Ceylon Express', seats:'5A, 5B', ref:'BM482913', price:'2,900', status:'Upcoming' },
+      { route:'Kandy → Nuwara Eliya', when:'12 Oct 2026 · 07:00', op:'Golden Coach', seats:'8C', ref:'BM501277', price:'1,180', status:'Upcoming' },
+      { route:'Galle → Colombo', when:'18 Sep 2026 · 06:15', op:'Lanka Star Travels', seats:'3B', ref:'BM471002', price:'920', status:'Completed' },
+      { route:'Colombo → Negombo', when:'02 Sep 2026 · 17:45', op:'SLTB Intercity', seats:'11A', ref:'BM455688', price:'180', status:'Completed' },
+      { route:'Colombo → Jaffna', when:'14 Aug 2026 · 21:00', op:'Ceylon Express', seats:'6D', ref:'BM431190', price:'2,400', status:'Cancelled' }
+    ].map(x => ({ ...x, pbg:st[x.status][0], pfg:st[x.status][1] }));
+    const tabs = [['overview', '◫', 'Overview'], ['trips', '🚌', 'My trips'], ['saved', '♥', 'Saved routes'], ['personal', '☺', 'Personal info'], ['payments', '💳', 'Payment methods'], ['settings', '⚙', 'Notifications & security']];
+    const nl = [['Trip reminders', 'Get reminded 2 hours before departure'], ['Live bus alerts', 'Delays and arrival updates for booked trips'], ['Offers and news', 'Discounts and new routes'], ['SMS confirmations', 'Ticket details sent by text message']];
+    const initials = S.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    return {
+      t, initials, first:S.name.split(' ')[0], name:S.name, email:S.email, phone:S.phone,
+      toggleTheme:() => this.setState(s => ({ dark:!s.dark })),
+      goPersonal:() => this.setState({ tab:'personal' }), goTrips:e => { e.preventDefault(); this.setState({ tab:'trips' }); },
+      setName:e => this.setState({ name:e.target.value, saved2:'' }), setEmail:e => this.setState({ email:e.target.value, saved2:'' }), setPhone:e => this.setState({ phone:e.target.value, saved2:'' }),
+      save:() => this.setState({ saved2:'✓ Changes saved' }), saved2:S.saved2,
+      stats:[{ i:'🚌', n:'38', l:'Trips taken' }, { i:'📍', n:'4,120', l:'Km travelled' }, { i:'♥', n:'6', l:'Saved routes' }, { i:'★', n:'1,240', l:'Reward points' }],
+      tabs:tabs.map(x => ({ i:x[1], l:x[2], tap:() => this.setState({ tab:x[0] }), bg:S.tab === x[0] ? '#2563eb' : 'transparent', fg:S.tab === x[0] ? '#fff' : t.ink })),
+      isOverview:S.tab === 'overview', isTrips:S.tab === 'trips', isSaved:S.tab === 'saved', isPersonal:S.tab === 'personal', isPayments:S.tab === 'payments', isSettings:S.tab === 'settings',
+      recent:all.slice(2, 5),
+      tripFilters:['Upcoming', 'Completed', 'Cancelled'].map(l => ({ l, tap:() => this.setState({ tf:l }), bg:S.tf === l ? '#2563eb' : 'transparent', fg:S.tf === l ? '#fff' : t.mute })),
+      trips:all.filter(x => x.status === S.tf),
+      saved:[['r01', '01', 'Colombo Fort', 'Kandy', 115, '3h 10m', 560], ['r02', '02', 'Colombo', 'Negombo', 38, '1h 15m', 180], ['r03', '03', 'Kandy', 'Nuwara Eliya', 78, '2h 30m', 420], ['r04', '04', 'Galle', 'Colombo', 126, '2h 15m', 640]].map(r => ({ no:r[1], from:r[2], to:r[3], dist:r[4], dur:r[5], fare:r[6], href:'BusMate Route Details.dc.html#' + r[0] })),
+      notifs:nl.map((x, i) => ({ t:x[0], d:x[1], bg:S.n[i] ? '#2563eb' : (S.dark ? '#26365e' : '#cbd5e8'), left:S.n[i] ? 23 : 3, tap:() => this.setState(s => ({ n:s.n.map((v, j) => j === i ? !v : v) })) }))
+    };
+  }
+}
+</script>
+</body>
+</html>
