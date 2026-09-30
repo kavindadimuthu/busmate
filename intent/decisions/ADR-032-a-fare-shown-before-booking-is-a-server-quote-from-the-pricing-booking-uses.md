@@ -9,7 +9,7 @@ A passenger can't see what a seat costs until they reserve it: the search has no
 the first place a fare appears. Showing a price earlier is the obvious improvement, and the wrong ways to do it are
 tempting: copying the fare tables into an app, or working the price out in the browser. Either would put a second
 copy of money logic where it can't be trusted, and drift from what booking really charges
-([INC-011](../increments/INC-011-passenger-booking.md) moved every fact behind the price to the server for this reason).
+([INC-011](../increments/INC-011-server-priced-passenger-booking.md) moved every fact behind the price to the server for this reason).
 
 ## Options considered
 
