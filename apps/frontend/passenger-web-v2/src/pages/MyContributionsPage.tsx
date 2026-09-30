@@ -28,7 +28,9 @@ const Panel = ({ icon, title, children, tone = "plain" }: { icon: React.ReactNod
  * decides what they may actually do. */
 export default function MyContributionsPage() {
   const location = useLocation();
-  const justApplied = (location.state as { justApplied?: boolean } | null)?.justApplied === true;
+  const navState = location.state as { justApplied?: boolean; sent?: string } | null;
+  const justApplied = navState?.justApplied === true;
+  const sent = navState?.sent;
   const standingQuery = useStanding();
   const standing = standingQuery.data;
   const role = roleOf(standing);
@@ -71,6 +73,13 @@ export default function MyContributionsPage() {
           <p role="status" className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-900 dark:border-green-400/30 dark:bg-green-500/10 dark:text-green-200">
             <CheckCircle2 className="h-5 w-5 flex-none" aria-hidden />
             Application submitted. Staff will look at it soon.
+          </p>
+        )}
+
+        {sent && (
+          <p role="status" className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-900 dark:border-green-400/30 dark:bg-green-500/10 dark:text-green-200">
+            <CheckCircle2 className="h-5 w-5 flex-none" aria-hidden />
+            Thank you. It's with a reviewer now, and you'll see what they decide here.
           </p>
         )}
 

@@ -1,14 +1,15 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { inputClass } from "@/components/auth/Field";
 import { cn } from "@/lib/utils";
 
 /** A label, the control, an optional hint and the problem with it, laid out the same way as every other field. */
-function Frame({ id, label, hint, error, children }: { id: string; label: string; hint?: string; error?: string; children: ReactNode }) {
+function Frame({ id, label, hint, error, aside, children }: { id: string; label: string; hint?: string; error?: string; aside?: ReactNode; children: ReactNode }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-[13px] font-bold">
-        {label}
-      </label>
+      <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px] font-bold">
+        <label htmlFor={id}>{label}</label>
+        {aside}
+      </div>
       {hint && (
         <p id={`${id}-hint`} className="-mt-0.5 mb-1.5 text-xs text-muted-foreground">
           {hint}
@@ -28,14 +29,16 @@ interface AreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   hint?: string;
   error?: string;
+  /** Something small beside the label, such as a "Changed" tag. */
+  aside?: ReactNode;
 }
 
 /** A multi-line box. 16px text so a phone doesn't zoom the page when it is focused. */
-export const TextAreaField = forwardRef<HTMLTextAreaElement, AreaProps>(function TextAreaField({ label, hint, error, id, className, ...props }, ref) {
+export const TextAreaField = forwardRef<HTMLTextAreaElement, AreaProps>(function TextAreaField({ label, hint, error, aside, id, className, ...props }, ref) {
   const auto = useId();
   const areaId = id ?? auto;
   return (
-    <Frame id={areaId} label={label} hint={hint} error={error}>
+    <Frame id={areaId} label={label} hint={hint} error={error} aside={aside}>
       <textarea
         ref={ref}
         id={areaId}
@@ -65,5 +68,32 @@ export const RadioCard = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLIn
       <input ref={ref} type="radio" className="h-5 w-5 flex-none accent-[hsl(var(--primary))]" {...props} />
       <span className="min-w-0">{children}</span>
     </label>
+  );
+});
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  hint?: string;
+  error?: string;
+  options: readonly { value: string; label: string }[];
+  /** The first, empty choice, e.g. "Not sure". */
+  placeholder: string;
+}
+
+/** A native drop-down: on a phone it opens the device's own picker, which is easier to use than any custom one. */
+export const SelectField = forwardRef<HTMLSelectElement, SelectProps>(function SelectField({ label, hint, error, options, placeholder, id, className, ...props }, ref) {
+  const auto = useId();
+  const selectId = id ?? auto;
+  return (
+    <Frame id={selectId} label={label} hint={hint} error={error}>
+      <select ref={ref} id={selectId} aria-invalid={!!error} className={cn(inputClass(!!error), "appearance-auto", className)} {...props}>
+        <option value="">{placeholder}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </Frame>
   );
 });
