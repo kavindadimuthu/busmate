@@ -23,6 +23,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(BookingClosedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleBookingClosed(BookingClosedException ex) {
+        ErrorResponseDTO body = new ErrorResponseDTO(ex.getMessage(), "BOOKING_CLOSED", System.currentTimeMillis());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
     @ExceptionHandler(UnauthenticatedException.class)
     public ResponseEntity<ErrorResponseDTO> handleUnauthenticated(UnauthenticatedException ex) {
         ErrorResponseDTO body = new ErrorResponseDTO(ex.getMessage(), "UNAUTHENTICATED", System.currentTimeMillis());

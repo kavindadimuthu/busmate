@@ -10,6 +10,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { BaseFareDTO } from './models/BaseFareDTO';
 export type { BookingRequestDTO } from './models/BookingRequestDTO';
 export type { BookingResponseDTO } from './models/BookingResponseDTO';
+export type { BookingStatusDTO } from './models/BookingStatusDTO';
 export type { ConductorLogTicketDTO } from './models/ConductorLogTicketDTO';
 export type { FareCalculationRequestDTO } from './models/FareCalculationRequestDTO';
 export type { OccupiedSeatsDTO } from './models/OccupiedSeatsDTO';

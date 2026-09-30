@@ -62,6 +62,8 @@ export const routes: RouteConfig[] = [
   // (which expects a user-service-issued token) and forward the Authorization header as-is.
   { pathPrefix: '/ingest', target: 'TELEMETRY', requiresAuth: false },
   // Ticketing
+  // Whether online booking is open (INC-072): one public yes/no fact, so a page can say so before anyone signs in.
+  { pathPrefix: '/api/v1/tickets/booking-status', target: 'TICKETING', requiresAuth: false },
   { pathPrefix: '/api/tickets', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/tickets', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/routeFare', target: 'TICKETING', requiresAuth: true },

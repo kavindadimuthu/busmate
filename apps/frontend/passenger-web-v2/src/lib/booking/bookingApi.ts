@@ -34,6 +34,19 @@ export function useOccupiedSeats(tripId: string, enabled: boolean) {
   });
 }
 
+/** Whether online booking is open (INC-072). `undefined` until known, and when the answer can't be had: a page then
+ * behaves as before and lets the server, which enforces the switch itself, have the final word. */
+export function useOnlineBookingOpen(): boolean | undefined {
+  const q = useQuery({
+    queryKey: ["online-booking-open"],
+    staleTime: 60_000,
+    retry: 1,
+    refetchOnWindowFocus: true,
+    queryFn: () => TicketControllerService.getBookingStatus(),
+  });
+  return q.data?.onlineBookingOpen;
+}
+
 /** Everything the seat map needs, or why it can't be drawn. */
 export function useSeatMapData(tripId: string, busId: string, enabled: boolean) {
   const bus = useBus(busId, enabled);
@@ -58,6 +71,10 @@ export function useSeatMapData(tripId: string, busId: string, enabled: boolean) 
 export function bookingProblem(error: unknown): { message: string; signedOut: boolean } {
   if (error instanceof TicketingApiError) {
     if (error.status === 401) return { message: "Your session has ended. Log in again to book.", signedOut: true };
+    const closed = error.body as { code?: unknown; message?: unknown } | null | undefined;
+    if (error.status === 503 && closed?.code === "BOOKING_CLOSED") {
+      return { message: typeof closed.message === "string" ? closed.message : "Online booking isn't open yet.", signedOut: false };
+    }
     if (error.status === 429) return { message: "Too many attempts. Please wait a minute and try again.", signedOut: false };
     const body = error.body as { message?: unknown; error?: unknown } | null | undefined;
     const raw = body?.message ?? body?.error;

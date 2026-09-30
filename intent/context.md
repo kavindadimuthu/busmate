@@ -175,6 +175,10 @@ Deliberately unfixed. Each is a backlog candidate, not a surprise.
 - Passenger self-booking still pays through a dummy gateway; only conductor-collected card payments
   are real (PayHere, [ADR-010](decisions/ADR-010-payhere-for-conductor-card-payments.md)). The
   PayHere `notify_url` webhook is unverified until the backend is publicly reachable.
+- Online booking has a server-side switch (`booking.online-enabled`, env `TICKETING_ONLINE_BOOKING_ENABLED`,
+  [ADR-031](decisions/ADR-031-online-booking-is-closed-unless-switched-on-and-never-open-on-dummy-payments-in-production.md)).
+  Closed by default; the dev profile opens it. Production refuses to start with it open while payments are the
+  dummy gateway, because that gateway confirms bookings without taking money.
 - Revenue grouping follows [ADR-011](decisions/ADR-011-revenue-grouped-by-custody-listed-by-method.md)
   and ticket categorisation follows
   [ADR-012](decisions/ADR-012-tickets-grouped-by-sale-stage-listed-by-channel.md) in conductor-mobile

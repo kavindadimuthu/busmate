@@ -30,6 +30,10 @@ spring:
     init:
       mode: never
 
+# Tests book seats unless a test says otherwise (INC-072).
+booking:
+  online-enabled: true
+
 logging:
   level:
     com.busmate.ticketing_service: INFO

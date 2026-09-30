@@ -66,6 +66,7 @@ public class PaymentServiceIMPL implements PaymentService {
     private final CoreServiceClient coreServiceClient;
     private final RouteFareService routeFareService;
     private final com.busmate.ticketing_service.service.SeatHoldService seatHoldService;
+    private final com.busmate.ticketing_service.booking.BookingSwitch bookingSwitch;
 
     @Value("${booking.cutoff-minutes-before-departure:30}")
     private int cutoffMinutesBeforeDeparture;
@@ -193,6 +194,8 @@ public class PaymentServiceIMPL implements PaymentService {
     @Override
     @Transactional
     public BookingResponseDTO bookTicket(BookingRequestDTO requestDTO, Caller caller) {
+        // First, before anything is read or held: a closed switch must never cost a seat hold or a core-service call.
+        bookingSwitch.requireOpen();
         if (requestDTO.getTripId() == null || requestDTO.getTripId().isBlank()) {
             throw new BadRequestException("tripId is mandatory");
         }

@@ -5,6 +5,8 @@ import com.busmate.ticketing_service.dto.request.PaymentRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketCancelRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
+import com.busmate.ticketing_service.booking.BookingSwitch;
+import com.busmate.ticketing_service.dto.response.BookingStatusDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
 import com.busmate.ticketing_service.dto.response.OccupiedSeatsDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
@@ -31,6 +33,7 @@ import java.util.List;
 public class TicketController {
 
     private final PaymentService conductorLogService;
+    private final BookingSwitch bookingSwitch;
 
     /**
      * Who is calling, from the headers api-gateway sets once it has verified the JWT (INC-011).
@@ -49,6 +52,12 @@ public class TicketController {
     // ============================================================================
     // PASSENGER SELF-SERVICE BOOKING
     // ============================================================================
+
+    /** Whether passengers may book online right now. Public: it is one yes/no fact, and a page needs it before anyone signs in (INC-072). */
+    @GetMapping("/booking-status")
+    public BookingStatusDTO getBookingStatus() {
+        return new BookingStatusDTO(bookingSwitch.isOpen());
+    }
 
     @PostMapping("/book")
     public ResponseEntity<BookingResponseDTO> bookTicket(

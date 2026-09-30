@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { AlertTriangle, Armchair, RefreshCw, SearchX } from "lucide-react";
+import { AlertTriangle, Armchair, Lock, RefreshCw, SearchX } from "lucide-react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { HeroBackButton, PageHero } from "@/components/layout/PageHero";
 import Notice from "@/components/findmybus/Notice";
@@ -9,7 +9,7 @@ import SeatMap from "@/components/booking/SeatMap";
 import BookingSteps from "@/components/booking/BookingSteps";
 import TripSummary from "@/components/booking/TripSummary";
 import { useBooking, type BookingTrip } from "@/lib/booking/BookingContext";
-import { useSeatMapData } from "@/lib/booking/bookingApi";
+import { useOnlineBookingOpen, useSeatMapData } from "@/lib/booking/bookingApi";
 import { MAX_SEATS_PER_BOOKING, dropUnavailable, sortSeats, toggleSeat } from "@/lib/booking/seatMap.ts";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,7 @@ export default function SeatSelectionPage() {
   const [params] = useSearchParams();
   const { trip: saved, seats: savedSeats, start } = useBooking();
   const fromLink = useMemo(() => readTrip(params), [params]);
+  const paused = useOnlineBookingOpen() === false;
   const map = useSeatMapData(fromLink?.tripId ?? "", fromLink?.busId ?? "", !!fromLink);
 
   // Coming back from the review step keeps what was chosen for this same trip.
@@ -96,12 +97,16 @@ export default function SeatSelectionPage() {
   );
 
   // ---------- no usable link, loading, or failed ----------
-  if (!fromLink || map.isPending || map.error || map.noLayout) {
+  if (!fromLink || paused || map.isPending || map.error || map.noLayout) {
     return (
       <SiteLayout>
         {hero}
         <div className="relative z-[5] mx-auto -mt-[42px] max-w-[1240px] px-3 pb-16 min-[360px]:px-4 md:px-6">
-          {!fromLink ? (
+          {paused ? (
+            <Notice role="alert" icon={<Lock className="h-6 w-6" />} title="Online booking isn't open yet" actions={<Link to="/findmybus" className={noticePrimary}>Find a bus</Link>}>
+              Seats can't be reserved online yet. You can still look up when buses run.
+            </Notice>
+          ) : !fromLink ? (
             <Notice role="alert" icon={<SearchX className="h-6 w-6" />} title="That link is missing something" actions={<Link to="/findmybus" className={noticePrimary}>Search for a bus</Link>}>
               Start from a bus's details page and choose "Choose seats".
             </Notice>

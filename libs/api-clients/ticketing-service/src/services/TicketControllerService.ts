@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { BookingRequestDTO } from '../models/BookingRequestDTO';
 import type { BookingResponseDTO } from '../models/BookingResponseDTO';
+import type { BookingStatusDTO } from '../models/BookingStatusDTO';
 import type { ConductorLogTicketDTO } from '../models/ConductorLogTicketDTO';
 import type { OccupiedSeatsDTO } from '../models/OccupiedSeatsDTO';
 import type { PageConductorLogTicketDTO } from '../models/PageConductorLogTicketDTO';
@@ -307,6 +308,16 @@ export class TicketControllerService {
             path: {
                 'busId': busId,
             },
+        });
+    }
+    /**
+     * @returns BookingStatusDTO OK
+     * @throws ApiError
+     */
+    public static getBookingStatus(): CancelablePromise<BookingStatusDTO> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tickets/booking-status',
         });
     }
 }

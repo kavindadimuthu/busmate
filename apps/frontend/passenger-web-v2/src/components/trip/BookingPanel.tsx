@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
-import { Armchair, Ban, CalendarX, Clock, Ticket } from "lucide-react";
+import { Armchair, Ban, CalendarX, Clock, Lock, Ticket } from "lucide-react";
 import type { BookingState } from "@/lib/tripDetails.ts";
 import { cn } from "@/lib/utils";
 
 const CTA =
   "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary px-6 text-[15px] font-bold text-white shadow-[0_12px_28px_-12px_rgba(37,99,235,.7)] transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-const CLOSED: Record<Exclude<BookingState["kind"], "open">, { icon: typeof Ban; title: string; body: string }> = {
+const CLOSED: Record<Exclude<BookingState["kind"], "open"> | "paused", { icon: typeof Ban; title: string; body: string }> = {
   "no-bus": {
     icon: Armchair,
     title: "Online booking isn't open for this departure",
@@ -14,14 +14,20 @@ const CLOSED: Record<Exclude<BookingState["kind"], "open">, { icon: typeof Ban; 
   },
   cancelled: { icon: Ban, title: "This trip has been cancelled", body: "It can't be booked. Search again for another bus." },
   left: { icon: Clock, title: "This bus has already left", body: "It can't be booked any more. Search again for a later bus." },
+  // Online booking is switched off for everyone (INC-072): not about this bus at all.
+  paused: {
+    icon: Lock,
+    title: "Online booking isn't open yet",
+    body: "You can still see when this bus runs and who runs it. Seats can't be reserved online yet.",
+  },
   "past-date": { icon: CalendarX, title: "This date has passed", body: "Choose a date from today onwards to book seats." },
 };
 
 /** What a passenger can do about booking, stated plainly: a button when a bus is assigned and the trip can still
  * be booked, otherwise the reason it can't. The fare isn't shown: the search has no price, and the server
  * works it out when the seats are reserved. */
-export default function BookingPanel({ state, seatsHref, className }: { state: BookingState; seatsHref?: string; className?: string }) {
-  if (state.kind === "open" && seatsHref) {
+export default function BookingPanel({ state, seatsHref, paused = false, className }: { state: BookingState; seatsHref?: string; paused?: boolean; className?: string }) {
+  if (state.kind === "open" && seatsHref && !paused) {
     return (
       <section aria-label="Booking" className={cn("rounded-2xl border border-border bg-card p-4 md:p-5", className)}>
         <div className="flex items-center gap-2 text-[15px] font-extrabold">
@@ -38,7 +44,7 @@ export default function BookingPanel({ state, seatsHref, className }: { state: B
     );
   }
 
-  const closed = CLOSED[state.kind === "open" ? "no-bus" : state.kind];
+  const closed = CLOSED[state.kind === "open" ? (paused ? "paused" : "no-bus") : state.kind];
   const Icon = closed.icon;
   return (
     <section aria-label="Booking" className={cn("rounded-2xl border border-dashed border-border bg-card p-4 md:p-5", className)}>
