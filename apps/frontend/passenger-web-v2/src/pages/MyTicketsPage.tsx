@@ -2,8 +2,7 @@ import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw, Ticket } from "lucide-react";
-import SiteLayout from "@/components/layout/SiteLayout";
-import { PageHero } from "@/components/layout/PageHero";
+import AccountLayout from "@/components/account/AccountLayout";
 import Notice from "@/components/findmybus/Notice";
 import { noticePrimary } from "@/components/findmybus/noticeStyles";
 import TripGroupCard from "@/components/tickets/TripGroupCard";
@@ -43,13 +42,10 @@ export default function MyTicketsPage() {
   const loading = mine.isPending || (groups.length > 0 && !tripsSettled);
 
   return (
-    <SiteLayout>
-      <PageHero compact>
-        <h1 className="mt-4 text-[clamp(24px,6.6vw,42px)] font-extrabold leading-[1.1] tracking-[-0.03em]">My tickets</h1>
-        <p className="mt-1.5 text-sm opacity-90">Your bookings, with the seat and status of each.</p>
-      </PageHero>
-
-      <div className="relative z-[5] mx-auto mt-6 max-w-3xl px-3 pb-16 min-[360px]:px-4 md:px-6">
+    <AccountLayout>
+      <div className="max-w-3xl">
+        <h2 className="text-xl font-extrabold tracking-tight">My tickets</h2>
+        <p className="mb-4 mt-1 text-sm text-muted-foreground">Your bookings, with the seat and status of each.</p>
         {problem ? (
           <Notice
             role="alert"
@@ -103,6 +99,6 @@ export default function MyTicketsPage() {
           </div>
         )}
       </div>
-    </SiteLayout>
+    </AccountLayout>
   );
 }
