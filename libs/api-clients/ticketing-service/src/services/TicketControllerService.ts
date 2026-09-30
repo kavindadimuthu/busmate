@@ -5,6 +5,7 @@
 import type { BookingRequestDTO } from '../models/BookingRequestDTO';
 import type { BookingResponseDTO } from '../models/BookingResponseDTO';
 import type { ConductorLogTicketDTO } from '../models/ConductorLogTicketDTO';
+import type { OccupiedSeatsDTO } from '../models/OccupiedSeatsDTO';
 import type { PageConductorLogTicketDTO } from '../models/PageConductorLogTicketDTO';
 import type { PaymentConfirmResponseDTO } from '../models/PaymentConfirmResponseDTO';
 import type { PaymentRequestDTO } from '../models/PaymentRequestDTO';
@@ -231,6 +232,22 @@ export class TicketControllerService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/tickets/trip/{tripId}/summary',
+            path: {
+                'tripId': tripId,
+            },
+        });
+    }
+    /**
+     * @param tripId
+     * @returns OccupiedSeatsDTO OK
+     * @throws ApiError
+     */
+    public static getOccupiedSeats(
+        tripId: string,
+    ): CancelablePromise<OccupiedSeatsDTO> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tickets/trip/{tripId}/occupied-seats',
             path: {
                 'tripId': tripId,
             },

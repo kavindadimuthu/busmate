@@ -6,6 +6,7 @@ import com.busmate.ticketing_service.dto.request.TicketCancelRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.OccupiedSeatsDTO;
 import com.busmate.ticketing_service.dto.response.PaymentBreakdownEntryDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.SaleStageBreakdownEntryDTO;
@@ -543,6 +544,13 @@ public class PaymentServiceIMPL implements PaymentService {
         } catch (Exception e) {
             throw new BadRequestException("Failed to fetch tickets for tripId: " + tripId + ", " + e.getMessage());
         }
+    }
+
+    @Override
+    public OccupiedSeatsDTO getOccupiedSeats(String tripId) {
+        // Same rule as booking: anything not cancelled still claims its seat (an unpaid hold counts until it is freed).
+        List<String> seats = ticketRepo.findClaimedSeatNumbers(tripId, Tickets.Status.CANCELLED).stream().sorted().toList();
+        return new OccupiedSeatsDTO(tripId, seats);
     }
 
     @Override

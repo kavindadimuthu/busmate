@@ -6,6 +6,7 @@ import com.busmate.ticketing_service.dto.request.TicketCancelRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.OccupiedSeatsDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
 import com.busmate.ticketing_service.security.Caller;
@@ -135,6 +136,12 @@ public class TicketController {
     @GetMapping("/trip/{tripId}")
     public List<ConductorLogTicketDTO> getTicketsByTripId(@PathVariable String tripId) {
         return conductorLogService.getTicketDetailsByTripId(tripId);
+    }
+
+    /** For a passenger's seat map: which seats are taken, and nothing about who took them (INC-068). */
+    @GetMapping("/trip/{tripId}/occupied-seats")
+    public OccupiedSeatsDTO getOccupiedSeats(@PathVariable String tripId) {
+        return conductorLogService.getOccupiedSeats(tripId);
     }
 
     @GetMapping("/trip/{tripId}/summary")
