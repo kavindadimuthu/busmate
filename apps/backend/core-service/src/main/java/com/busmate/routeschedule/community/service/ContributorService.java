@@ -58,6 +58,7 @@ public class ContributorService {
     private final ContributorAgreement agreement;
     private final ContributorStanding standing;
     private final AccountDirectory accounts;
+    private final ApplicantAccountRule applicantAccountRule;
 
     @Value("${community.promotion.min-approved:10}")
     private int promotionMinApproved;
@@ -149,14 +150,7 @@ public class ContributorService {
                 case DECLINED: break; // may apply again
             }
         }
-        AccountDirectory.Account account = accounts.find(caller.userId()).orElse(null);
-        if (account == null || !"active".equals(account.accountStatus())) {
-            return CannotApplyReason.ACCOUNT_NOT_ACTIVE;
-        }
-        if (!Boolean.TRUE.equals(account.emailVerified())) {
-            return CannotApplyReason.EMAIL_NOT_VERIFIED;
-        }
-        return null;
+        return applicantAccountRule.check(accounts.find(caller.userId()).orElse(null));
     }
 
     private static RuntimeException refusal(CannotApplyReason reason) {

@@ -14,6 +14,8 @@ interface AuthLayoutProps {
   side: { heading: string; accent: string; body: string };
   children: React.ReactNode;
   footer: React.ReactNode;
+  /** The Log In / Sign Up switch. Off for pages reached from an email link, which belong to neither. */
+  tabs?: boolean;
 }
 
 const TAB =
@@ -21,7 +23,7 @@ const TAB =
 
 /** Phone: brand + theme switch, a Log In / Sign Up switch, then the form, with nothing above it that
  * pushes it down. From lg up it becomes the design's two columns, with the brand panel on the left. */
-export default function AuthLayout({ heading, intro, side, children, footer }: AuthLayoutProps) {
+export default function AuthLayout({ heading, intro, side, children, footer, tabs = true }: AuthLayoutProps) {
   // Switching tabs keeps where the passenger was headed (`from`), so sign-up then log-in still lands there.
   const { state } = useLocation();
   return (
@@ -65,24 +67,26 @@ export default function AuthLayout({ heading, intro, side, children, footer }: A
         </div>
 
         <div className="mx-auto w-full max-w-[420px] pt-6 lg:my-auto lg:py-8">
-          <nav aria-label="Account" className="mb-6 flex rounded-xl border border-border bg-alt p-1 lg:mb-7">
-            {[
-              { to: "/login", label: "Log In" },
-              { to: "/signup", label: "Sign Up" },
-            ].map((t) => (
-              <NavLink
-                key={t.to}
-                to={t.to}
-                replace
-                state={state}
-                className={({ isActive }) =>
-                  cn(TAB, isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")
-                }
-              >
-                {t.label}
-              </NavLink>
-            ))}
-          </nav>
+          {tabs && (
+            <nav aria-label="Account" className="mb-6 flex rounded-xl border border-border bg-alt p-1 lg:mb-7">
+              {[
+                { to: "/login", label: "Log In" },
+                { to: "/signup", label: "Sign Up" },
+              ].map((t) => (
+                <NavLink
+                  key={t.to}
+                  to={t.to}
+                  replace
+                  state={state}
+                  className={({ isActive }) =>
+                    cn(TAB, isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  {t.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
 
           <h2 className="mb-2 text-[clamp(26px,7vw,32px)] font-extrabold leading-tight tracking-[-0.02em]">{heading}</h2>
           <p className="mb-6 leading-relaxed text-muted-foreground">{intro}</p>

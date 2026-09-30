@@ -122,6 +122,11 @@ community:
     version: draft-1
     draft: true
     allow-draft-acceptance: ${COMMUNITY_ALLOW_DRAFT_ACCEPTANCE:false}
+  applications:
+    # INC-078: an applicant needs an active account with a verified email. Verification needs outgoing email, which
+    # isn't set up yet, so the dev profile turns this off to let the flow be tried by hand. Production refuses to start
+    # with it off (ApplicantAccountRule). Suspended or deactivated accounts are refused either way.
+    require-verified-account: ${COMMUNITY_REQUIRE_VERIFIED_ACCOUNT:true}
   proposals:
     # Per contributor, per day, across all entity types they can propose (INC-030).
     daily-cap: ${COMMUNITY_PROPOSALS_DAILY_CAP:20}

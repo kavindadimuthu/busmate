@@ -19,6 +19,22 @@ const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
 const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const ContributeProgrammePage = lazy(() => import("./pages/ContributeProgrammePage"));
+const ContributeApplyPage = lazy(() => import("./pages/ContributeApplyPage"));
+const MyContributionsPage = lazy(() => import("./pages/MyContributionsPage"));
+const ContributionDetailPage = lazy(() => import("./pages/ContributionDetailPage"));
+const ProposeStopPage = lazy(() => import("./pages/ProposeStopPage"));
+const ReviewQueuePage = lazy(() => import("./pages/ReviewQueuePage"));
+const ReviewDetailPage = lazy(() => import("./pages/ReviewDetailPage"));
+const ProposeWorkingPage = lazy(() => import("./pages/ProposeWorkingPage"));
+const CorrectWorkingPage = lazy(() => import("./pages/CorrectWorkingPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const RoutesPage = lazy(() => import("./pages/RoutesPage"));
+const RouteDetailPage = lazy(() => import("./pages/RouteDetailPage"));
 const MyTicketsPage = lazy(() => import("./pages/MyTicketsPage"));
 const TicketDetailPage = lazy(() => import("./pages/TicketDetailPage"));
 const PayHereCancelPage = lazy(() => import("./pages/PayHereCancelPage"));
@@ -43,6 +59,9 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/findmybus" element={<FindMyBusPage />} />
               <Route path="/findmybus/detail" element={<TripDetailsPage />} />
               <Route path="/booking/seats" element={<RequireAuth notice="Log in to choose your seats."><SeatSelectionPage /></RequireAuth>} />
@@ -54,6 +73,19 @@ const App = () => (
               <Route path="/booking/payhere-cancel" element={<PayHereCancelPage />} />
               <Route path="/tickets" element={<RequireAuth notice="Log in to see your tickets."><MyTicketsPage /></RequireAuth>} />
               <Route path="/tickets/:id" element={<RequireAuth notice="Log in to see your ticket."><TicketDetailPage /></RequireAuth>} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/routes" element={<RoutesPage />} />
+              <Route path="/routes/:id" element={<RouteDetailPage />} />
+              <Route path="/profile" element={<RequireAuth notice="Log in to see your profile."><ProfilePage /></RequireAuth>} />
+              <Route path="/contribute" element={<ContributeProgrammePage />} />
+              <Route path="/contribute/apply" element={<RequireAuth notice="Log in to apply to contribute."><ContributeApplyPage /></RequireAuth>} />
+              <Route path="/contribute/mine" element={<RequireAuth notice="Log in to see your contributions."><MyContributionsPage /></RequireAuth>} />
+              <Route path="/contribute/mine/:id" element={<RequireAuth notice="Log in to see your contributions."><ContributionDetailPage /></RequireAuth>} />
+              <Route path="/contribute/review" element={<RequireAuth notice="Log in to review proposals."><ReviewQueuePage /></RequireAuth>} />
+              <Route path="/contribute/review/:id" element={<RequireAuth notice="Log in to review proposals."><ReviewDetailPage /></RequireAuth>} />
+              <Route path="/contribute/propose" element={<RequireAuth notice="Log in to propose a stop."><ProposeStopPage /></RequireAuth>} />
+              <Route path="/contribute/propose-working" element={<RequireAuth notice="Log in to say who runs a bus."><ProposeWorkingPage /></RequireAuth>} />
+              <Route path="/contribute/correct-working" element={<RequireAuth notice="Log in to correct a bus's record."><CorrectWorkingPage /></RequireAuth>} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>

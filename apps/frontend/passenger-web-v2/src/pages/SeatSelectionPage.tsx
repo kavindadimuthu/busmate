@@ -69,7 +69,6 @@ export default function SeatSelectionPage() {
     if (dropped.length === 0) return;
     setPicked(selected);
     say(`${dropped.length === 1 ? `Seat ${dropped[0]} was` : `Seats ${dropped.join(", ")} were`} just taken, so we've removed ${dropped.length === 1 ? "it" : "them"} from your choice.`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picked, map.taken, blocked]);
 
   const onPick = (seat: string) => {
