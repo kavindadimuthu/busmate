@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, RefreshCw, SearchX } from "lucide-react";
+import { AlertTriangle, RefreshCw, SearchX } from "lucide-react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import Notice from "@/components/findmybus/Notice";
 import { noticePrimary } from "@/components/findmybus/noticeStyles";
@@ -16,25 +16,8 @@ import { requestProblem, responseProblem, useTripDetails } from "@/lib/tripDetai
 import { bookingState, hasRequiredParams, readDetailParams, resultsPath, seatsPath, stopRows, visibleRows } from "@/lib/tripDetails.ts";
 import { formatClock, formatLongDate, parseTimeOfDay, shortStopName } from "@/lib/findMyBus.ts";
 import { todayInSriLanka } from "@/lib/search";
-import heroBus from "@/assets/hero-bus.webp";
+import { HeroBackLink, PageHero } from "@/components/layout/PageHero";
 import { cn } from "@/lib/utils";
-
-const Hero = ({ children }: { children: React.ReactNode }) => (
-  <section
-    className="relative overflow-hidden bg-[#1e3a8a] bg-cover px-4 pb-[64px] pt-3 text-white md:px-6 lg:bg-[image:var(--hero)] lg:pb-[84px]"
-    style={{ ["--hero" as string]: `url(${heroBus})`, backgroundPosition: "78% center" }}
-  >
-    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,22,68,.94),rgba(30,64,175,.85))] lg:bg-[linear-gradient(90deg,rgba(9,22,68,.94)_0%,rgba(20,48,130,.85)_50%,rgba(30,64,175,.35)_100%)]" />
-    <div className="relative mx-auto max-w-[1240px]">{children}</div>
-  </section>
-);
-
-const BackLink = ({ to }: { to: string }) => (
-  <Link to={to} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg pr-2 text-[13px] font-bold text-white/95 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-    <ArrowLeft className="h-4 w-4" aria-hidden />
-    Search results
-  </Link>
-);
 
 export default function TripDetailsPage() {
   const { search } = useLocation();
@@ -81,6 +64,7 @@ export default function TripDetailsPage() {
           operatorName: data?.trip?.operator?.name,
           tripDate: data?.queryDate ?? params.date,
           departureTime: js?.departureFromOrigin,
+          departureTrust: js?.departureTimeTrust?.label,
           arrivalTime: js?.arrivalAtDestination,
         })
       : undefined;
@@ -89,10 +73,10 @@ export default function TripDetailsPage() {
   if (!valid || problem || query.isPending) {
     return (
       <SiteLayout>
-        <Hero>
-          <BackLink to={valid ? back : "/findmybus"} />
+        <PageHero>
+          <HeroBackLink to={valid ? back : "/findmybus"}>Search results</HeroBackLink>
           <h1 className="mt-1 text-[clamp(22px,6vw,40px)] font-extrabold leading-tight tracking-[-0.03em]">Bus details</h1>
-        </Hero>
+        </PageHero>
         <div className="relative z-[5] mx-auto -mt-[42px] max-w-[1240px] px-3 pb-16 min-[360px]:px-4 md:px-6">
           {!valid ? (
             <Notice role="alert" icon={<SearchX className="h-6 w-6" />} title="That link is missing something" actions={<Link to="/findmybus" className={noticePrimary}>Search for a bus</Link>}>
@@ -134,9 +118,9 @@ export default function TripDetailsPage() {
   const route = d.route;
   return (
     <SiteLayout>
-      <Hero>
+      <PageHero>
         <div className="flex items-center justify-between gap-3">
-          <BackLink to={back} />
+          <HeroBackLink to={back}>Search results</HeroBackLink>
           <ShareButton title={`${shortStopName(fromName)} → ${shortStopName(toName)}`} text={`Bus from ${shortStopName(fromName)} to ${shortStopName(toName)} on ${formatLongDate(params.date)}`} />
         </div>
         <h1 className="mt-1 text-[clamp(24px,6.6vw,42px)] font-extrabold leading-[1.1] tracking-[-0.03em]">
@@ -145,7 +129,7 @@ export default function TripDetailsPage() {
         <p className="mt-1.5 text-sm opacity-90">
           {[route?.routeNumber && `Route ${route.routeNumber}`, formatLongDate(d.queryDate ?? params.date)].filter(Boolean).join(" · ")}
         </p>
-      </Hero>
+      </PageHero>
 
       <div className={cn("relative z-[5] mx-auto -mt-[44px] max-w-[1240px] px-3 min-[360px]:px-4 md:px-6", state?.kind === "open" ? "pb-28 lg:pb-16" : "pb-16")}>
         <JourneyCard data={d} date={params.date} />

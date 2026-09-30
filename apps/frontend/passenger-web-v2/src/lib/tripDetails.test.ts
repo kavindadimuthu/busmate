@@ -149,4 +149,9 @@ describe("INC-067 booking entry", () => {
     assert.equal(u.pathname, "/booking/seats");
     assert.deepEqual(Object.fromEntries(u.searchParams), { tripId: "t1", busId: "b1", fromStopId: A, toStopId: B, fromStopName: "Colombo Fort", tripDate: "2026-10-01" });
   });
+
+  it("carries the departure time's trust label to seat selection", () => {
+    const u = new URL(seatsPath({ tripId: "t1", busId: "b1", fromStopId: A, toStopId: B, departureTime: "06:00:00", departureTrust: "OBSERVED" }), "http://x");
+    assert.equal(u.searchParams.get("departureTrust"), "OBSERVED");
+  });
 });

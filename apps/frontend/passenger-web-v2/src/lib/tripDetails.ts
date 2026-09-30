@@ -208,6 +208,8 @@ export interface SeatsLinkInput {
   operatorName?: string;
   tripDate?: string;
   departureTime?: string;
+  /** The trust label key of the departure time, so the booking pages can keep saying how far to trust it. */
+  departureTrust?: string;
   arrivalTime?: string;
 }
 
@@ -221,6 +223,7 @@ export function seatsPath(i: SeatsLinkInput): string {
     ["operatorName", i.operatorName],
     ["tripDate", i.tripDate],
     ["departureTime", i.departureTime],
+    ["departureTrust", i.departureTrust],
     ["arrivalTime", i.arrivalTime],
   ];
   for (const [k, v] of optional) if (v) q.set(k, v);
