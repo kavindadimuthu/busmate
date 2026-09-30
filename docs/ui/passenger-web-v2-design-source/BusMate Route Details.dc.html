@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh">
+<header style="position:sticky;top:0;z-index:20;background:{{ t.nav }};backdrop-filter:blur(14px);border-bottom:1px solid {{ t.line }}">
+<div class="bm-hd" style="max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+<a href="BusMate Landing.dc.html" style="display:flex;align-items:center;gap:10px;color:{{ t.ink }}"><div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#1e40af);display:grid;place-items:center;color:#fff;font-weight:800">B</div><div style="font-weight:800;font-size:18px">BusMate</div></a>
+<nav class="bm-nav" style="margin:0 auto;display:flex;gap:28px;font-size:14px;font-weight:600">
+<a href="BusMate Landing.dc.html" style="color:{{ t.ink }}">Home</a><a href="BusMate Find Bus.dc.html" style="color:{{ t.ink }}">Find My Bus</a><a href="BusMate Routes.dc.html" style="color:#2563eb">Routes</a><a href="BusMate Community.dc.html" style="color:{{ t.ink }}">Community</a><a href="BusMate About.dc.html" style="color:{{ t.ink }}">About</a></nav>
+<button onClick="{{ toggleTheme }}" aria-label="Toggle theme" style="width:38px;height:38px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer;font-size:16px">{{ t.icon }}</button>
+<a href="BusMate Auth.dc.html" style="color:{{ t.ink }};font-size:14px;font-weight:600">Log In</a>
+</div></header>
+
+<section style="background:{{ t.hero }};color:#fff;padding:26px 24px 100px">
+<div style="max-width:1240px;margin:0 auto">
+<div style="font-size:13px;opacity:.85;margin-bottom:20px"><a href="BusMate Routes.dc.html" style="color:#fff;font-weight:600">← All routes</a> &nbsp;/&nbsp; Route {{ r.no }}</div>
+<div style="display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-end">
+<div style="max-width:660px">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><span style="padding:4px 12px;border-radius:99px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);font-size:12px;font-weight:800">{{ r.type }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;opacity:.9">Route {{ r.no }}</span></div>
+<h1 class="bm-h1" style="font-size:42px;letter-spacing:-.03em;margin:0 0 8px;font-weight:800">{{ r.from }} → {{ r.to }}</h1>
+<p style="margin:0;opacity:.92;line-height:1.6">{{ r.desc }}</p></div>
+<a href="BusMate Find Bus.dc.html" style="background:#fff;color:#1d4ed8;padding:13px 22px;border-radius:12px;font-weight:700">Find a bus on this route →</a>
+</div></div></section>
+
+<div style="max-width:1240px;margin:-64px auto 0;padding:0 24px 40px;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+<div style="flex:3 1 560px;min-width:0;display:grid;gap:24px">
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<sc-for list="{{ facts }}" as="f" hint-placeholder-count="5"><div><div style="font-size:11px;font-weight:700;color:{{ t.mute }};letter-spacing:.06em">{{ f.l }}</div><div style="font-weight:800;font-size:18px;margin-top:4px">{{ f.v }}</div></div></sc-for></div>
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:22px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap"><h2 style="margin:0;font-size:22px;letter-spacing:-.01em">Route map</h2><span style="font-size:13px;color:{{ t.mute }}">{{ r.dist }} km · tap a stop to highlight</span></div>
+<div style="position:relative;border-radius:14px;overflow:hidden;background:repeating-linear-gradient(135deg,{{ t.tint }} 0 14px,{{ t.soft }} 14px 28px);border:1px solid {{ t.line }}">
+<svg viewBox="0 0 800 340" style="display:block;width:100%;height:auto">
+<polyline points="{{ path }}" fill="none" stroke="#ffffff" stroke-opacity=".9" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></polyline>
+<polyline points="{{ path }}" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+<sc-for list="{{ pins }}" as="p" hint-placeholder-count="5">
+<g onClick="{{ p.tap }}" style="cursor:pointer"><circle cx="{{ p.x }}" cy="{{ p.y }}" r="{{ p.r }}" fill="{{ p.fill }}" stroke="#2563eb" stroke-width="4"></circle>
+<rect x="{{ p.lx }}" y="{{ p.ly }}" width="{{ p.lw }}" height="24" rx="8" fill="{{ p.lbg }}" stroke="#2563eb" stroke-opacity=".4"></rect>
+<text x="{{ p.tx }}" y="{{ p.ty }}" text-anchor="middle" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif" fill="{{ p.lfg }}">{{ p.name }}</text></g>
+</sc-for>
+</svg>
+<div style="position:absolute;left:12px;bottom:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:{{ t.mute }}">schematic · map tiles placeholder</div>
+</div>
+</div>
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:28px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px"><h2 style="margin:0;font-size:22px;letter-spacing:-.01em">Stops</h2><span style="font-size:13px;color:{{ t.mute }}">{{ stops.length }} stops · typical times from start</span></div>
+<sc-for list="{{ stops }}" as="s" hint-placeholder-count="5">
+<div onClick="{{ s.tap }}" style="display:grid;grid-template-columns:70px 28px minmax(0,1fr);gap:14px;cursor:pointer">
+<div style="text-align:right"><div style="font-weight:800;font-size:15px">{{ s.at }}</div><div style="font-size:11px;color:{{ t.mute }}">{{ s.km }} km</div></div>
+<div style="display:flex;flex-direction:column;align-items:center"><div style="width:{{ s.dot }}px;height:{{ s.dot }}px;border-radius:50%;background:{{ s.fill }};border:3px solid #2563eb;flex:none;margin-top:3px"></div><div style="flex:1;width:3px;background:{{ s.line }};min-height:28px"></div></div>
+<div style="padding-bottom:20px"><div style="padding:10px 14px;margin:-6px 0 0 -10px;border-radius:12px;background:{{ s.bg }};border:1px solid {{ s.bd }}"><div style="font-weight:700;font-size:16px">{{ s.name }}</div><div style="font-size:13px;color:{{ t.mute }};margin-top:3px">{{ s.note }}</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;background:{{ t.soft }};border:1px solid {{ t.line }};color:{{ t.mute }}">{{ s.fac }}</span><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;background:{{ t.tint }};color:#2563eb">{{ s.leg }}</span></div></div></div>
+</div>
+</sc-for>
+</div>
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:28px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px"><h2 style="margin:0;font-size:22px;letter-spacing:-.01em">Related schedules</h2><a href="BusMate Find Bus.dc.html" style="font-size:13px;font-weight:700">See all →</a></div>
+<div style="display:grid;gap:10px">
+<sc-for list="{{ schedules }}" as="s" hint-placeholder-count="4">
+<a href="BusMate Trip Details.dc.html" style="display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:14px 18px;border:1px solid {{ t.line }};border-radius:14px;background:{{ t.soft }};color:{{ t.ink }}">
+<div style="min-width:130px"><div style="font-size:20px;font-weight:800">{{ s.dep }} <span style="font-size:13px;color:{{ t.mute }};font-weight:600">→ {{ s.arr }}</span></div><div style="font-size:12px;color:{{ t.mute }}">{{ s.op }}</div></div>
+<span style="padding:3px 10px;border-radius:99px;background:{{ t.tint }};color:#2563eb;font-size:11px;font-weight:800">{{ s.type }}</span>
+<span style="font-size:13px;color:{{ t.mute }}">{{ s.stops }}</span>
+<div style="margin-left:auto;font-weight:800;color:#2563eb">Rs. {{ s.price }}</div></a>
+</sc-for></div>
+</div>
+</div>
+
+<aside class="bm-aside" style="flex:1 1 300px;max-width:100%;position:sticky;top:84px;display:grid;gap:20px">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:24px;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<h3 style="margin:0 0 14px;font-size:17px">Service hours</h3>
+<div style="display:grid;gap:10px;font-size:14px"><div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">First bus</span><b>{{ r.first }}</b></div><div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Last bus</span><b>{{ r.last }}</b></div><div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Buses per day</span><b>{{ r.perDay }}</b></div><div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Operators</span><b>{{ r.ops }}</b></div></div>
+</div>
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:24px">
+<h3 style="margin:0 0 14px;font-size:17px">Typical fares</h3>
+<div style="display:grid;gap:10px;font-size:14px">
+<sc-for list="{{ fares }}" as="f" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">{{ f.l }}</span><b>Rs. {{ f.v }}</b></div></sc-for></div>
+<div style="font-size:12px;color:{{ t.mute }};margin-top:12px">Fares vary by operator and date.</div>
+</div>
+</aside>
+</div>
+
+<div style="max-width:1240px;margin:0 auto;padding:0 24px 80px">
+<h2 style="font-size:24px;letter-spacing:-.01em;margin:0 0 16px">Other routes</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:16px">
+<sc-for list="{{ others }}" as="o" hint-placeholder-count="4"><a href="{{ o.href }}" style="display:block;background:{{ t.card }};border:1px solid {{ t.line }};border-radius:14px;padding:18px;color:{{ t.ink }}"><div style="font-size:12px;color:{{ t.mute }}">Route {{ o.no }} · {{ o.type }}</div><div style="font-weight:800;margin:6px 0">{{ o.from }} → {{ o.to }}</div><div style="font-size:13px;color:{{ t.mute }}">{{ o.dist }} km · {{ o.dur }}</div></a></sc-for></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const EMPTY = { no:'—', from:'Loading', to:'', type:'', desc:'', first:'', last:'', perDay:'', ops:'', dist:0, stops:[] };
+const hm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+class Component extends DCLogic {
+  state = { dark:false, id:'r01', hi:0, data:null };
+  componentDidMount() {
+    const id = location.hash.slice(1);
+    if (id) this.setState({ id });
+    window.addEventListener('hashchange', () => { this.setState({ id:location.hash.slice(1) || 'r01', hi:0 }); window.scrollTo(0, 0); });
+    import('./routes-data.js').then(m => this.setState({ data:m }));
+  }
+  renderVals() {
+    const S = this.state;
+    const t = S.dark
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#26365e', soft:'#0e1729', tint:'#16264a', nav:'rgba(10,16,32,.85)', icon:'☀', hero:'linear-gradient(120deg,#0b1a4a,#1d3f9e 75%)' }
+      : { bg:'#f6f9ff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', soft:'#f4f7fe', tint:'#dbe8ff', nav:'rgba(255,255,255,.88)', icon:'☾', hero:'linear-gradient(120deg,#1e3a8a,#2563eb 65%,#3b82f6)' };
+    const all = S.data ? S.data.ROUTES : [];
+    const r = all.find(x => x.id === S.id) || all[0] || EMPTY;
+    const n = r.stops.length, last = n - 1;
+    const W = 800, H = 340, padX = 90;
+    const pts = r.stops.map((s, i) => {
+      const f = r.dist ? s.km / r.dist : 0;
+      const x = padX + f * (W - 2 * padX);
+      const y = H / 2 + Math.sin(f * Math.PI * 1.6 + 0.4) * 78 + (i % 2 ? 6 : -6) * 0;
+      return { x, y };
+    });
+    const path = pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    const pins = r.stops.map((s, i) => {
+      const on = S.hi === i, end = i === 0 || i === last, p = pts[i];
+      const lw = Math.max(64, s.name.length * 7.2 + 18), up = i % 2 === 0;
+      const ly = up ? p.y - 44 : p.y + 20;
+      return { x:p.x, y:p.y, r:on ? 13 : end ? 11 : 8, fill:on || end ? '#2563eb' : '#ffffff', lx:p.x - lw / 2, ly, lw, tx:p.x, ty:ly + 16, name:s.name, lbg:on ? '#2563eb' : '#ffffff', lfg:on ? '#ffffff' : '#0f1b3d', tap:() => this.setState({ hi:i }) };
+    });
+    const stops = r.stops.map((s, i) => {
+      const on = S.hi === i, end = i === 0 || i === last;
+      return { name:s.name, note:s.note, km:s.km, at:s.min ? '+' + Math.floor(s.min / 60) + 'h ' + String(s.min % 60).padStart(2, '0') + 'm' : 'Start', fac:s.fac, dot:end ? 18 : 14, fill:end ? '#2563eb' : t.card, line:i === last ? 'transparent' : '#93b4f5',
+        leg:i === 0 ? 'Origin' : i === last ? 'Destination' : (s.km - r.stops[i - 1].km) + ' km from previous', bg:on ? t.soft : 'transparent', bd:on ? '#2563eb' : 'transparent', tap:() => this.setState({ hi:i }) };
+    });
+    const deps = [-1, 0, 1, 2, 3].map((k, j) => 0);
+    const base = r.first ? parseInt(r.first) * 60 + parseInt(r.first.slice(3)) : 300;
+    const ops = ['Ceylon Express', 'Lanka Star Travels', 'Golden Coach', 'SLTB Intercity'];
+    const types = ['Luxury', 'Semi-Luxury', 'A/C', 'Normal'];
+    const mult = [1.6, 1.15, 1.35, 1];
+    const off = [0, 90, 210, 330];
+    const schedules = ops.map((op, i) => { const d = base + off[i] + (r.durM ? 0 : 0); const dm = r.dur ? parseInt(r.dur) * 60 + (parseInt(r.dur.split('h')[1]) || 0) : 180;
+      return { dep:hm(d % 1440), arr:hm((d + dm) % 1440), op, type:types[i], stops:i === 0 ? 'Direct' : (i + 1) + ' stops', price:Math.round(r.fare * mult[i] / 10 * 10).toLocaleString('en-US') }; });
+    return {
+      t, r, toggleTheme:() => this.setState(s => ({ dark:!s.dark })),
+      facts:[{ l:'DISTANCE', v:r.dist + ' km' }, { l:'DURATION', v:r.dur || '—' }, { l:'STOPS', v:String(n) }, { l:'BUSES / DAY', v:String(r.perDay) }, { l:'FROM', v:'Rs. ' + r.fare }],
+      path, pins, stops, schedules,
+      fares:[{ l:'Normal', v:r.fare }, { l:'Semi-Luxury', v:Math.round(r.fare * 1.15) }, { l:'A/C', v:Math.round(r.fare * 1.35) }, { l:'Luxury', v:Math.round(r.fare * 1.6) }].map(f => ({ l:f.l, v:f.v.toLocaleString('en-US') })),
+      others:all.filter(x => x.id !== r.id).slice(0, 4).map(x => ({ ...x, href:'BusMate Route Details.dc.html#' + x.id }))
+    };
+  }
+}
+</script>
+</body>
+</html>

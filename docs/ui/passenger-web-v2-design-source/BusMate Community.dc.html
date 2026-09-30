@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}input::placeholder{color:#a3b4d6}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh">
+<header style="position:sticky;top:0;z-index:20;background:{{ t.nav }};backdrop-filter:blur(14px);border-bottom:1px solid {{ t.line }}">
+<div class="bm-hd" style="max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+<a href="BusMate Landing.dc.html" style="display:flex;align-items:center;gap:10px;color:{{ t.ink }}"><div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#1e40af);display:grid;place-items:center;color:#fff;font-weight:800">B</div><div style="font-weight:800;font-size:18px">BusMate</div></a>
+<nav class="bm-nav" style="margin:0 auto;display:flex;gap:28px;font-size:14px;font-weight:600">
+<a href="BusMate Landing.dc.html" style="color:{{ t.ink }}">Home</a><a href="BusMate Find Bus.dc.html" style="color:{{ t.ink }}">Find My Bus</a><a href="BusMate Routes.dc.html" style="color:{{ t.ink }}">Routes</a><a href="BusMate Community.dc.html" style="color:#2563eb">Community</a><a href="BusMate About.dc.html" style="color:{{ t.ink }}">About</a></nav>
+<button onClick="{{ toggleTheme }}" aria-label="Toggle theme" style="width:38px;height:38px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer;font-size:16px">{{ t.icon }}</button>
+<a href="BusMate Profile.dc.html" style="display:flex;align-items:center;gap:10px;padding:4px 14px 4px 4px;border-radius:99px;border:1px solid #2563eb;background:{{ t.card }};color:{{ t.ink }};font-size:13px;font-weight:700"><span style="width:32px;height:32px;border-radius:50%;background:#2563eb;color:#fff;display:grid;place-items:center;font-size:13px">NP</span>Nimasha</a>
+</div></header>
+
+<section style="background:linear-gradient(90deg,rgba(9,22,68,.94) 0%,rgba(20,48,130,.82) 38%,rgba(30,64,175,.25) 68%,rgba(30,64,175,0) 100%),url(assets/hero-bus.png) 78% center/cover no-repeat;background-color:#1e3a8a;color:#fff;padding:56px 24px 120px">
+<div style="max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;gap:32px;justify-content:space-between;align-items:flex-end">
+<div style="max-width:640px">
+<div style="font-size:12px;font-weight:800;letter-spacing:.2em;opacity:.85">BUSMATE COMMUNITY</div>
+<h1 class="bm-h1" style="font-size:52px;line-height:1.05;letter-spacing:-.03em;margin:12px 0 16px;font-weight:800">The people who keep Sri Lanka <span style="color:#22d3ee">moving.</span></h1>
+<p style="font-size:17px;line-height:1.65;opacity:.9;margin:0">Community contributors add and verify routes, stops and schedules so every passenger travels with accurate information. Earn points, climb the board and unlock rewards.</p></div>
+<div style="display:flex;gap:12px;flex-wrap:wrap"><a href="#" style="background:#fff;color:#1d4ed8;padding:14px 24px;border-radius:12px;font-weight:700">Start contributing →</a><a href="#how" style="border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:13px 22px;border-radius:12px;font-weight:700">How it works</a></div>
+</div></section>
+
+<div style="max-width:1240px;margin:-72px auto 0;padding:0 24px 80px">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<sc-for list="{{ totals }}" as="s" hint-placeholder-count="4"><div><div style="font-size:28px;font-weight:800;letter-spacing:-.02em;color:#2563eb">{{ s.n }}</div><div style="font-size:13px;color:{{ t.mute }}">{{ s.l }}</div></div></sc-for></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:32px 0 18px">
+<h2 style="margin:0;font-size:26px;letter-spacing:-.02em">Leaderboard</h2>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div style="display:flex;gap:6px;background:{{ t.alt }};border:1px solid {{ t.line }};padding:4px;border-radius:12px"><sc-for list="{{ periods }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.tap }}" style="border:0;border-radius:9px;padding:8px 14px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for></div>
+<div style="display:flex;gap:6px;background:{{ t.alt }};border:1px solid {{ t.line }};padding:4px;border-radius:12px;flex-wrap:wrap"><sc-for list="{{ cats }}" as="o" hint-placeholder-count="5"><button onClick="{{ o.tap }}" style="border:0;border-radius:9px;padding:8px 14px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for></div>
+</div></div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px;align-items:end;margin-bottom:24px">
+<sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
+<a href="{{ p.href }}" style="display:block;background:{{ t.card }};border:2px solid {{ p.bd }};border-radius:20px;padding:26px;text-align:center;color:{{ t.ink }};padding-top:{{ p.pt }}px;box-shadow:{{ p.sh }}">
+<div style="position:relative;width:84px;height:84px;margin:0 auto 14px"><div style="width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;display:grid;place-items:center;font-size:28px;font-weight:800">{{ p.ini }}</div><div style="position:absolute;right:-6px;bottom:-4px;width:32px;height:32px;border-radius:50%;background:{{ p.medal }};color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;border:3px solid {{ t.card }}">{{ p.rank }}</div></div>
+<div style="font-weight:800;font-size:18px">{{ p.name }}</div>
+<div style="font-size:13px;color:{{ t.mute }};margin:2px 0 10px">{{ p.city }}</div>
+<span style="padding:3px 12px;border-radius:99px;background:{{ t.tint }};color:#2563eb;font-size:11px;font-weight:800">{{ p.level }}</span>
+<div style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:12px;color:#2563eb">{{ p.score }}</div><div style="font-size:12px;color:{{ t.mute }}">{{ p.unit }}</div></a>
+</sc-for></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+<div style="flex:3 1 560px;min-width:0;background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:8px 20px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="7">
+<a href="{{ r.href }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:16px 0;border-bottom:1px solid {{ t.line }};color:{{ t.ink }}">
+<span style="width:30px;font-weight:800;color:{{ t.mute }}">#{{ r.rank }}</span>
+<span style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none">{{ r.ini }}</span>
+<div style="flex:1 1 180px;min-width:0"><div style="font-weight:700">{{ r.name }}</div><div style="font-size:12px;color:{{ t.mute }}">{{ r.city }} · {{ r.acc }}% accuracy</div></div>
+<div style="display:flex;gap:14px;font-size:12px;color:{{ t.mute }}"><span><b style="color:{{ t.ink }}">{{ r.routes }}</b> routes</span><span><b style="color:{{ t.ink }}">{{ r.stops }}</b> stops</span><span><b style="color:{{ t.ink }}">{{ r.schedules }}</b> sched.</span></div>
+<span style="padding:3px 10px;border-radius:99px;background:{{ t.tint }};color:#2563eb;font-size:11px;font-weight:800">{{ r.level }}</span>
+<div style="min-width:80px;text-align:right"><div style="font-weight:800;font-size:17px;color:#2563eb">{{ r.score }}</div><div style="font-size:11px;color:{{ t.mute }}">{{ r.unit }}</div></div></a>
+</sc-for></div>
+
+<aside class="bm-aside" id="how" style="flex:1 1 300px;max-width:100%;display:grid;gap:20px;position:sticky;top:84px">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:24px">
+<h3 style="margin:0 0 14px;font-size:17px">How to earn points</h3>
+<div style="display:grid;gap:12px;font-size:14px">
+<sc-for list="{{ earn }}" as="e" hint-placeholder-count="5"><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:{{ t.mute }}">{{ e.l }}</span><b style="color:#2563eb">+{{ e.p }}</b></div></sc-for></div></div>
+<div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:24px">
+<h3 style="margin:0 0 14px;font-size:17px">Reward tiers</h3>
+<div style="display:grid;gap:14px">
+<sc-for list="{{ tiers }}" as="tr" hint-placeholder-count="4"><div><div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px"><span>{{ tr.n }}</span><span style="opacity:.8;font-weight:600">{{ tr.min }}+ pts</span></div><div style="font-size:13px;opacity:.88;margin-top:2px;line-height:1.5">{{ tr.perk }}</div></div></sc-for></div></div>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dark:false, period:'This month', cat:'All', data:null };
+  componentDidMount() { import('./community-data.js').then(m => this.setState({ data:m })); }
+  renderVals() {
+    const S = this.state, D = S.data;
+    const t = S.dark
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#26365e', soft:'#0e1729', alt:'#0c1427', tint:'#16264a', nav:'rgba(10,16,32,.85)', icon:'☀', hero:'linear-gradient(120deg,#0b1a4a,#1d3f9e 75%)' }
+      : { bg:'#f6f9ff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', soft:'#f4f7fe', alt:'#eef3fd', tint:'#dbe8ff', nav:'rgba(255,255,255,.88)', icon:'☾', hero:'linear-gradient(120deg,#1e3a8a,#2563eb 65%,#3b82f6)' };
+    const fmt = n => n.toLocaleString('en-US');
+    const list = D ? [...D.PEOPLE] : [];
+    const val = p => S.cat === 'All' ? (S.period === 'This month' ? p.month : p.points) : D.CATS[S.cat](p);
+    const unit = S.cat === 'All' ? 'points' : S.cat.toLowerCase();
+    if (D) list.sort((a, b) => val(b) - val(a));
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    const mk = (p, i) => ({ rank:i + 1, name:p.name, city:p.city, ini:ini(p.name), level:p.level, acc:p.acc, routes:p.routes, stops:p.stops, schedules:p.schedules, score:fmt(val(p)), unit, href:'BusMate Contributor.dc.html#' + p.id });
+    const top = list.slice(0, 3).map(mk);
+    const order = top.length ? [top[1], top[0], top[2]] : [];
+    const medals = { 1:'#f59e0b', 2:'#94a3b8', 3:'#b45309' };
+    const podium = order.map(p => ({ ...p, medal:medals[p.rank], bd:p.rank === 1 ? '#2563eb' : t.line, pt:p.rank === 1 ? 40 : 26, sh:p.rank === 1 ? '0 24px 60px -28px rgba(37,99,235,.6)' : 'none' }));
+    const tot = D ? D.PEOPLE.reduce((a, p) => ({ r:a.r + p.routes, s:a.s + p.stops, c:a.c + p.schedules, f:a.f + p.fixes }), { r:0, s:0, c:0, f:0 }) : { r:0, s:0, c:0, f:0 };
+    return {
+      t, toggleTheme:() => this.setState(s => ({ dark:!s.dark })),
+      totals:[{ n:'2,480', l:'Active contributors' }, { n:fmt(tot.r * 6), l:'Routes contributed' }, { n:fmt(tot.s * 6), l:'Stops verified' }, { n:fmt(tot.c * 6), l:'Schedules updated' }],
+      periods:['This month', 'All time'].map(l => ({ l, tap:() => this.setState({ period:l }), bg:S.period === l ? '#2563eb' : 'transparent', fg:S.period === l ? '#fff' : t.mute })),
+      cats:['All', 'Routes', 'Stops', 'Schedules', 'Corrections'].map(l => ({ l, tap:() => this.setState({ cat:l }), bg:S.cat === l ? '#2563eb' : 'transparent', fg:S.cat === l ? '#fff' : t.mute })),
+      podium, rows:list.slice(3).map((p, i) => mk(p, i + 3)),
+      earn:[{ l:'Add a new route', p:50 }, { l:'Add or verify a stop', p:15 }, { l:'Update a schedule', p:20 }, { l:'Fix incorrect details', p:10 }, { l:'Add a stop photo', p:5 }],
+      tiers:D ? D.TIERS.map(x => ({ ...x, min:fmt(x.min) })) : []
+    };
+  }
+}
+</script>
+</body>
+</html>

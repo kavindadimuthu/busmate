@@ -172,6 +172,10 @@ core-service:
 
 # How a passenger's own online booking behaves (INC-011).
 booking:
+  # Whether passengers may book online at all (INC-072, ADR-031). Closed unless switched on, so a deployment
+  # that doesn't set it sells nothing. The dev profile opens it. Production refuses to start with it open
+  # while payments are the dummy gateway (BookingSwitch): that gateway confirms bookings without taking money.
+  online-enabled: ${TICKETING_ONLINE_BOOKING_ENABLED:false}
   # A seat stops being sellable this long before the bus leaves the passenger's boarding stop -
   # long enough to reach the stop, and for the booking to reach the conductor before the bus does.
   cutoff-minutes-before-departure: 30

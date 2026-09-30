@@ -18,6 +18,11 @@ spring:
     # dev database. Dev only — production has no seed tier, so its history is never interleaved.
     out-of-order: true
 
+# Local development books seats, against the dummy payment gateway. Set TICKETING_ONLINE_BOOKING_ENABLED=false
+# to see the closed state.
+booking:
+  online-enabled: ${TICKETING_ONLINE_BOOKING_ENABLED:true}
+
 logging:
   level:
     com.busmate.ticketing_service: DEBUG

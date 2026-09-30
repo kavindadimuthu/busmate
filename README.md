@@ -12,6 +12,7 @@ A monorepo managed with [Nx](https://nx.dev) containing the BusMate platform app
 |---|---|---|---|
 | `new-react-portal` | `apps/frontend/new-react-portal` | Vite + React | Operations & fleet management dashboard (MOT / operator / admin / timekeeper) |
 | `passenger-web` | `apps/frontend/passenger-web` | Vite + React | Passenger-facing web app |
+| `passenger-web-v2` | `apps/frontend/passenger-web-v2` | Vite + React | Passenger-web rebuild, parallel to `passenger-web`, not yet linked anywhere real (ADR-029, INC-063) |
 | `passenger-mobile` | `apps/frontend/passenger-mobile` | Expo / React Native | Passenger mobile app |
 | `conductor-mobile` | `apps/frontend/conductor-mobile` | Expo / React Native | Conductor mobile app |
 | `api-gateway` | `apps/backend/api-gateway` | Node + TypeScript | Single entry point (`:8080`) every frontend calls |
@@ -97,9 +98,9 @@ Projects are tagged for fine-grained control:
 
 | Tag | Projects |
 |---|---|
-| `scope:frontend` | `new-react-portal`, `passenger-web`, `passenger-mobile`, `conductor-mobile` |
+| `scope:frontend` | `new-react-portal`, `passenger-web`, `passenger-web-v2`, `passenger-mobile`, `conductor-mobile` |
 | `scope:backend` | `user-service`, `core-service`, `ticketing-service`, `telemetry-service`, `api-gateway` |
-| `framework:vite` | `new-react-portal`, `passenger-web` |
+| `framework:vite` | `new-react-portal`, `passenger-web`, `passenger-web-v2` |
 | `framework:spring-boot` | `user-service`, `core-service`, `ticketing-service`, `telemetry-service` |
 
 Run only frontend apps:

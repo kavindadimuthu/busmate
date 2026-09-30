@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}input::placeholder{color:#8a97b5}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{overflow-x:hidden}img,svg{max-width:100%}
+@media(max-width:760px){
+.bm-hd{gap:8px 10px!important;padding:10px 16px!important;flex-wrap:wrap!important}
+.bm-hd>a:first-child{margin-right:auto}
+.bm-nav{order:9;flex:1 1 100%!important;margin:0!important;overflow-x:auto;gap:22px!important;padding:8px 0 4px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.bm-nav a{flex:none;padding:6px 0}
+.bm-h1{font-size:clamp(30px,9vw,40px)!important;line-height:1.1!important}
+.bm-h2{font-size:28px!important}
+.bm-stack{grid-template-columns:1fr!important}
+.bm-two{grid-template-columns:1fr 1fr!important}
+.bm-aside{position:static!important}
+.bm-tabs{display:flex!important;overflow-x:auto;position:static!important;padding:8px!important}
+.bm-tabs button{white-space:nowrap;flex:none}
+.bm-pad{padding:20px!important}.bm-pad2{padding:28px 20px!important}.bm-mid{padding:24px 0!important}.bm-hide{display:none!important}
+input,select{font-size:16px!important}
+}</style></helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:{{ t.bg }};color:{{ t.ink }};min-height:100vh">
+
+<header style="position:sticky;top:0;z-index:20;background:{{ t.nav }};backdrop-filter:blur(14px);border-bottom:1px solid {{ t.line }}">
+<div class="bm-hd" style="max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+<a href="BusMate Landing.dc.html" style="display:flex;align-items:center;gap:10px;color:{{ t.ink }}"><div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#1e40af);display:grid;place-items:center;color:#fff;font-weight:800">B</div><div style="font-weight:800;font-size:18px">BusMate</div></a>
+<nav class="bm-nav" style="margin:0 auto;display:flex;gap:28px;font-size:14px;font-weight:600">
+<a href="BusMate Landing.dc.html" style="color:{{ t.ink }}">Home</a><a href="BusMate Find Bus.dc.html" style="color:#2563eb">Find My Bus</a><a href="#" style="color:{{ t.ink }}">Routes</a><a href="BusMate Community.dc.html" style="color:{{ t.ink }}">Community</a><a href="BusMate About.dc.html" style="color:{{ t.ink }}">About</a></nav>
+<button onClick="{{ toggleTheme }}" aria-label="Toggle theme" style="width:38px;height:38px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};cursor:pointer;font-size:16px">{{ t.icon }}</button>
+<a href="BusMate Auth.dc.html" style="color:{{ t.ink }};font-size:14px;font-weight:600">Log In</a>
+</div></header>
+
+<section style="background:{{ t.hero }};color:#fff;padding:26px 24px 88px">
+<div style="max-width:1240px;margin:0 auto">
+<div style="font-size:13px;opacity:.85;margin-bottom:18px"><a href="BusMate Trip Details.dc.html" style="color:#fff;font-weight:600">← Trip details</a></div>
+<div style="display:flex;gap:16px 40px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+<div><h1 class="bm-h1" style="font-size:34px;letter-spacing:-.02em;margin:0 0 4px;font-weight:800">Book your seats</h1><div style="opacity:.9">Ceylon Express · NB-4521 · Luxury A/C · Wed, 30 Sep 2026</div></div>
+<div style="display:flex;align-items:center;gap:22px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:12px 20px">
+<div><div style="font-size:22px;font-weight:800">05:30</div><div style="font-size:12px;opacity:.85">Colombo Fort</div></div><div style="opacity:.8">→ 3h 10m →</div><div><div style="font-size:22px;font-weight:800">08:40</div><div style="font-size:12px;opacity:.85">Kandy</div></div></div>
+</div>
+<div style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;font-size:13px;font-weight:700">
+<sc-for list="{{ steps }}" as="s" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:8px;opacity:{{ s.o }}"><span style="width:26px;height:26px;border-radius:50%;background:{{ s.bg }};color:{{ s.fg }};display:grid;place-items:center;font-size:12px">{{ s.n }}</span>{{ s.l }}<span style="opacity:.5;margin-left:6px">{{ s.sep }}</span></div></sc-for></div>
+</div></section>
+
+<div style="max-width:1240px;margin:-56px auto 0;padding:0 24px 80px;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+<div style="flex:3 1 560px;min-width:0;display:grid;gap:24px">
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:28px;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px"><h2 style="margin:0;font-size:22px;letter-spacing:-.01em">Choose your seats</h2><span style="font-size:13px;color:{{ t.mute }}">Select up to 4 seats · {{ availCount }} available</span></div>
+<div style="display:flex;gap:10px 22px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;background:{{ t.soft }};border:1px solid {{ t.line }};margin-bottom:26px;font-size:13px;font-weight:600">
+<sc-for list="{{ legend }}" as="l" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:6px 6px 4px 4px;background:{{ l.bg }};border:2px solid {{ l.bd }};color:{{ l.fg }};font-size:10px;display:grid;place-items:center">{{ l.m }}</span>{{ l.t }}</div></sc-for></div>
+
+<div style="max-width:340px;margin:0 auto;border:2px solid {{ t.line }};border-radius:36px 36px 20px 20px;padding:22px 22px 26px;background:{{ t.alt }}">
+<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:18px;border-bottom:2px dashed {{ t.line }}">
+<div style="font-size:11px;font-weight:700;color:{{ t.mute }};letter-spacing:.08em">ENTRANCE</div>
+<div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:{{ t.mute }}">DRIVER<span style="width:34px;height:34px;border-radius:50%;border:3px solid {{ t.mute }};display:grid;place-items:center;font-size:14px">◎</span></div></div>
+<div style="display:grid;gap:10px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+<div style="display:grid;grid-template-columns:1fr 1fr 28px 1fr 1fr;gap:8px;align-items:center">
+<sc-for list="{{ r.left }}" as="s"><button onClick="{{ s.tap }}" disabled="{{ s.off }}" title="{{ s.title }}" style="height:44px;border-radius:10px 10px 6px 6px;background:{{ s.bg }};color:{{ s.fg }};border:2px solid {{ s.bd }};font:700 12px 'Plus Jakarta Sans',sans-serif;cursor:{{ s.cur }};padding:0">{{ s.label }}</button></sc-for>
+<div style="text-align:center;font-size:11px;font-weight:700;color:{{ t.mute }}">{{ r.n }}</div>
+<sc-for list="{{ r.right }}" as="s"><button onClick="{{ s.tap }}" disabled="{{ s.off }}" title="{{ s.title }}" style="height:44px;border-radius:10px 10px 6px 6px;background:{{ s.bg }};color:{{ s.fg }};border:2px solid {{ s.bd }};font:700 12px 'Plus Jakarta Sans',sans-serif;cursor:{{ s.cur }};padding:0">{{ s.label }}</button></sc-for>
+</div>
+</sc-for></div>
+<div style="text-align:center;margin-top:18px;font-size:11px;font-weight:700;color:{{ t.mute }};letter-spacing:.08em">REAR</div>
+</div>
+</div>
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:28px">
+<h2 style="margin:0 0 18px;font-size:22px;letter-spacing:-.01em">Passenger details</h2>
+<sc-if value="{{ noSeats }}" hint-placeholder-val="{{ true }}"><div style="padding:24px;border:1px dashed {{ t.line }};border-radius:12px;color:{{ t.mute }};text-align:center;font-size:14px">Select a seat on the bus layout to add passenger details.</div></sc-if>
+<div style="display:grid;gap:14px">
+<sc-for list="{{ pax }}" as="p" hint-placeholder-count="1">
+<div style="border:1px solid {{ t.line }};border-radius:14px;padding:16px;background:{{ t.soft }}">
+<div style="display:flex;justify-content:space-between;margin-bottom:12px"><b>Passenger · Seat {{ p.seat }}</b><span style="font-size:12px;color:{{ t.mute }}">Rs. 1,450</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+<input placeholder="Full name" value="{{ p.name }}" onInput="{{ p.setName }}" style="padding:12px 14px;border-radius:10px;border:1px solid {{ p.nameBd }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0">
+<input placeholder="Age" value="{{ p.age }}" onInput="{{ p.setAge }}" style="padding:12px 14px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0">
+<select onChange="{{ p.setGender }}" style="padding:12px 14px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"><option>Female</option><option>Male</option><option>Other</option></select>
+</div></div>
+</sc-for></div>
+<h3 style="margin:26px 0 12px;font-size:16px">Contact details</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px">
+<input placeholder="Mobile number (+94)" value="{{ phone }}" onInput="{{ setPhone }}" style="padding:12px 14px;border-radius:10px;border:1px solid {{ phoneBd }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0">
+<input placeholder="Email address" value="{{ email }}" onInput="{{ setEmail }}" style="padding:12px 14px;border-radius:10px;border:1px solid {{ t.line }};background:{{ t.card }};color:{{ t.ink }};font:500 14px 'Plus Jakarta Sans',sans-serif;outline:0"></div>
+<div style="font-size:12px;color:{{ t.mute }};margin-top:10px">Your e-ticket and live tracking link will be sent to these contacts.</div>
+</div>
+
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:20px">
+<div><div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#2563eb">BOARDING</div><div style="font-weight:700;margin-top:6px">Colombo Fort Bus Stand</div><div style="font-size:13px;color:{{ t.mute }}">05:30 · Platform 4 · Arrive 15 min early</div></div>
+<div><div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#2563eb">DROP-OFF</div><div style="font-weight:700;margin-top:6px">Kandy Bus Stand</div><div style="font-size:13px;color:{{ t.mute }}">08:40 · Platform 2</div></div>
+</div>
+</div>
+
+<aside class="bm-aside" style="flex:1 1 300px;max-width:100%;position:sticky;top:84px;display:grid;gap:16px">
+<div style="background:{{ t.card }};border:1px solid {{ t.line }};border-radius:18px;padding:24px;box-shadow:0 24px 60px -30px rgba(30,64,175,.4)">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:10px;background:{{ t.tint }};color:#2563eb;font-size:13px;font-weight:700;margin-bottom:18px"><span>Seats held for</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px">{{ clock }}</span></div>
+<h3 style="margin:0 0 14px;font-size:17px">Booking summary</h3>
+<div style="display:grid;gap:10px;font-size:14px;padding-bottom:16px;border-bottom:1px solid {{ t.line }}">
+<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:{{ t.mute }}">Seats</span><b>{{ seatText }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Fare × {{ n }}</span><b>Rs. {{ base }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Service fee</span><b>Rs. {{ fee }}</b></div>
+<div style="display:flex;justify-content:space-between"><span style="color:{{ t.mute }}">Taxes</span><b>Rs. {{ tax }}</b></div></div>
+<div style="display:flex;justify-content:space-between;font-size:20px;font-weight:800;margin:16px 0"><span>Total</span><span style="color:#2563eb">Rs. {{ total }}</span></div>
+<div style="min-height:18px;font-size:13px;font-weight:600;color:#dc2626;margin-bottom:8px">{{ error }}</div>
+<button onClick="{{ proceed }}" style="width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:12px;padding:15px;font:700 15px 'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 12px 28px -12px rgba(37,99,235,.7)">Proceed to Payment →</button>
+<div style="text-align:center;font-size:12px;color:{{ t.mute }};margin-top:12px">Secure checkout via PayHere · Free cancellation up to 6h before departure</div>
+</div>
+</aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const BOOKED = ['1A','1B','2C','3D','4A','4B','5B','6C','6D','7A','8D','9B','9C','10A'];
+const LADIES = ['1C','1D','2A','2B'];
+const PRICE = 1450;
+const fmt = n => n.toLocaleString('en-US');
+class Component extends DCLogic {
+  state = { dark:false, sel:[], pax:{}, phone:'', email:'', error:'', secs:600 };
+  componentDidMount() { this.tm = setInterval(() => this.setState(s => ({ secs:Math.max(0, s.secs - 1) })), 1000); }
+  componentWillUnmount() { clearInterval(this.tm); }
+  pick(id) {
+    this.setState(s => {
+      if (s.sel.includes(id)) return { sel:s.sel.filter(x => x !== id), error:'' };
+      if (s.sel.length >= 4) return { error:'You can select up to 4 seats.' };
+      return { sel:[...s.sel, id], error:'', pax:{ ...s.pax, [id]:s.pax[id] || { name:'', age:'', gender:'Female' } } };
+    });
+  }
+  setPax(id, k, v) { this.setState(s => ({ pax:{ ...s.pax, [id]:{ ...s.pax[id], [k]:v } } })); }
+  renderVals() {
+    const S = this.state;
+    const t = S.dark
+      ? { bg:'#0a1020', ink:'#e8eefc', mute:'#93a3c4', card:'#111a30', line:'#26365e', soft:'#0e1729', alt:'#0c1427', tint:'#16264a', nav:'rgba(10,16,32,.85)', icon:'☀', hero:'linear-gradient(120deg,#0b1a4a,#1d3f9e 75%)' }
+      : { bg:'#f6f9ff', ink:'#0f1b3d', mute:'#5b6b8c', card:'#ffffff', line:'#dfe7f7', soft:'#f4f7fe', alt:'#f1f5fe', tint:'#dbe8ff', nav:'rgba(255,255,255,.88)', icon:'☾', hero:'linear-gradient(120deg,#1e3a8a,#2563eb 65%,#3b82f6)' };
+    const styleFor = id => {
+      if (BOOKED.includes(id)) return { bg:S.dark ? '#1b2540' : '#e2e8f4', fg:t.mute, bd:S.dark ? '#1b2540' : '#e2e8f4', off:true, cur:'not-allowed', title:'Booked', label:'✕' };
+      if (S.sel.includes(id)) return { bg:'#2563eb', fg:'#fff', bd:'#1d4ed8', off:false, cur:'pointer', title:'Selected', label:id };
+      if (LADIES.includes(id)) return { bg:S.dark ? '#3a1a3f' : '#fce7f3', fg:S.dark ? '#f9a8d4' : '#be185d', bd:'#ec4899', off:false, cur:'pointer', title:'Ladies only', label:id };
+      return { bg:t.card, fg:t.ink, bd:'#93b4f5', off:false, cur:'pointer', title:'Available', label:id };
+    };
+    const seat = id => ({ ...styleFor(id), tap:() => this.pick(id) });
+    const rows = Array.from({ length:10 }, (_, i) => { const n = i + 1; return { n, left:['A','B'].map(c => seat(n + c)), right:['C','D'].map(c => seat(n + c)) }; });
+    const n = S.sel.length, base = n * PRICE, fee = n * 95, tax = n * 50, total = base + fee + tax;
+    const sorted = [...S.sel].sort((a, b) => parseInt(a) - parseInt(b) || a.localeCompare(b));
+    const mm = String(Math.floor(S.secs / 60)).padStart(2, '0'), ss = String(S.secs % 60).padStart(2, '0');
+    const done = i => i === 0;
+    return {
+      t, toggleTheme:() => this.setState(s => ({ dark:!s.dark })),
+      rows, availCount:40 - BOOKED.length - S.sel.length,
+      legend:[{t:'Available',bg:t.card,bd:'#93b4f5',fg:t.ink,m:''},{t:'Selected',bg:'#2563eb',bd:'#1d4ed8',fg:'#fff',m:''},{t:'Booked',bg:S.dark ? '#1b2540' : '#e2e8f4',bd:S.dark ? '#1b2540' : '#e2e8f4',fg:t.mute,m:'✕'},{t:'Ladies only',bg:S.dark ? '#3a1a3f' : '#fce7f3',bd:'#ec4899',fg:'#be185d',m:''}],
+      steps:[{n:'1',l:'Select seats',o:1,bg:'#fff',fg:'#1d4ed8',sep:'—'},{n:'2',l:'Passenger details',o:.75,bg:'rgba(255,255,255,.25)',fg:'#fff',sep:'—'},{n:'3',l:'Payment',o:.6,bg:'rgba(255,255,255,.25)',fg:'#fff',sep:''}],
+      noSeats:n === 0,
+      pax:sorted.map(id => ({ seat:id, name:S.pax[id].name, age:S.pax[id].age, nameBd:S.error && !S.pax[id].name.trim() ? '#dc2626' : t.line,
+        setName:e => this.setPax(id, 'name', e.target.value), setAge:e => this.setPax(id, 'age', e.target.value), setGender:e => this.setPax(id, 'gender', e.target.value) })),
+      phone:S.phone, email:S.email, phoneBd:S.error && !S.phone.trim() ? '#dc2626' : t.line,
+      setPhone:e => this.setState({ phone:e.target.value }), setEmail:e => this.setState({ email:e.target.value }),
+      clock:mm + ':' + ss, seatText:n ? sorted.join(', ') : '—', n, base:fmt(base), fee:fmt(fee), tax:fmt(tax), total:fmt(total), error:S.error,
+      proceed:() => {
+        if (!n) return this.setState({ error:'Please select at least one seat.' });
+        if (sorted.some(id => !S.pax[id].name.trim()) || !S.phone.trim()) return this.setState({ error:'Please fill in passenger names and a mobile number.' });
+        const order = { ref:'BM' + Math.floor(100000 + Math.random() * 899999), route:'Colombo Fort → Kandy', date:'Wed, 30 Sep 2026', dep:'05:30', op:'Ceylon Express · NB-4521', seats:sorted, pax:sorted.map(id => ({ seat:id, ...S.pax[id] })), phone:S.phone, email:S.email, base, fee, tax, total };
+        try { sessionStorage.setItem('busmate_order', JSON.stringify(order)); } catch (e) {}
+        location.href = 'BusMate Payment.dc.html';
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

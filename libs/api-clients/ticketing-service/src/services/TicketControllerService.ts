@@ -4,7 +4,10 @@
 /* eslint-disable */
 import type { BookingRequestDTO } from '../models/BookingRequestDTO';
 import type { BookingResponseDTO } from '../models/BookingResponseDTO';
+import type { BookingStatusDTO } from '../models/BookingStatusDTO';
 import type { ConductorLogTicketDTO } from '../models/ConductorLogTicketDTO';
+import type { FareQuoteDTO } from '../models/FareQuoteDTO';
+import type { OccupiedSeatsDTO } from '../models/OccupiedSeatsDTO';
 import type { PageConductorLogTicketDTO } from '../models/PageConductorLogTicketDTO';
 import type { PaymentConfirmResponseDTO } from '../models/PaymentConfirmResponseDTO';
 import type { PaymentRequestDTO } from '../models/PaymentRequestDTO';
@@ -237,6 +240,47 @@ export class TicketControllerService {
         });
     }
     /**
+     * @param tripId
+     * @returns OccupiedSeatsDTO OK
+     * @throws ApiError
+     */
+    public static getOccupiedSeats(
+        tripId: string,
+    ): CancelablePromise<OccupiedSeatsDTO> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tickets/trip/{tripId}/occupied-seats',
+            path: {
+                'tripId': tripId,
+            },
+        });
+    }
+    /**
+     * @param tripId
+     * @param fromStopId
+     * @param toStopId
+     * @param seats
+     * @returns FareQuoteDTO OK
+     * @throws ApiError
+     */
+    public static quoteFare(
+        tripId: string,
+        fromStopId: string,
+        toStopId: string,
+        seats: number = 1,
+    ): CancelablePromise<FareQuoteDTO> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tickets/quote',
+            query: {
+                'tripId': tripId,
+                'fromStopId': fromStopId,
+                'toStopId': toStopId,
+                'seats': seats,
+            },
+        });
+    }
+    /**
      * @param passengerId
      * @param xUserId
      * @param xUserType
@@ -290,6 +334,16 @@ export class TicketControllerService {
             path: {
                 'busId': busId,
             },
+        });
+    }
+    /**
+     * @returns BookingStatusDTO OK
+     * @throws ApiError
+     */
+    public static getBookingStatus(): CancelablePromise<BookingStatusDTO> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/tickets/booking-status',
         });
     }
 }
