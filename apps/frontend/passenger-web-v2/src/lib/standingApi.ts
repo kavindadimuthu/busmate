@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { CommunityContributorsService, RouteManagementService } from "@busmate/api-client-core";
+import { CommunityContributorsService } from "@busmate/api-client-core";
+import { useRouteGroups } from "@/lib/contributionsApi";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 /** The signed-in passenger's contributor standing, in one call: status, whether they are an active contributor or
@@ -20,13 +21,7 @@ export function useStanding() {
 /** Names for a steward's route groups (corridors), so "you review Colombo - Kandy" can be said in words. */
 export function useCorridorNames(ids: readonly string[] | undefined) {
   const wanted = ids ?? [];
-  const q = useQuery({
-    queryKey: ["route-groups-all"],
-    enabled: wanted.length > 0,
-    staleTime: 5 * 60_000,
-    retry: 1,
-    queryFn: () => RouteManagementService.getAllRouteGroupsAsList(),
-  });
+  const q = useRouteGroups(wanted.length > 0);
   const byId = new Map((q.data ?? []).map((g) => [g.id, g.name]));
   return wanted.map((id) => byId.get(id)).filter((n): n is string => !!n);
 }

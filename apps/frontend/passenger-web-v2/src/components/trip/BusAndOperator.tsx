@@ -4,6 +4,7 @@ import type { TripDetails, UsualWorking } from "@busmate/api-client-core";
 import { UsualWorkingLine } from "@/components/findmybus/UsualWorkingLine";
 import Disclosure, { Fact } from "./Disclosure";
 import { statusLabel } from "@/lib/findMyBus.ts";
+import { SERVICE_CLASSES } from "@/lib/propose.ts";
 import { cn } from "@/lib/utils";
 
 const TONE = {
@@ -15,6 +16,12 @@ const TONE = {
 const Chip = ({ children }: { children: React.ReactNode }) => (
   <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-border bg-soft px-2.5 text-xs font-semibold text-muted-foreground">{children}</span>
 );
+
+/** What a working says now, in one line, so the correction page can show what is being corrected. */
+function recorded(w: UsualWorking): string {
+  const klass = SERVICE_CLASSES.find((c) => c.value === w.serviceClass)?.label;
+  return [w.operatorName, (w.plates ?? []).join(" or "), klass].filter(Boolean).join(" · ") || "Nothing stated";
+}
 
 /** "5 min late" / "2 min early" / null when on time or unknown. */
 function delayText(minutes?: number | null): string | null {
@@ -87,7 +94,7 @@ export default function BusAndOperator({
         <div className="grid gap-2">
           <UsualWorkingLine workings={usualWorkings} />
           {workings.filter((w) => w.id).map((w) => (
-            <Link key={w.id} to={`/contribute/correct-working?workingId=${encodeURIComponent(w.id!)}`} className="inline-flex min-h-10 items-center text-[13px] font-semibold text-primary hover:underline">
+            <Link key={w.id} to={`/contribute/correct-working?workingId=${encodeURIComponent(w.id!)}&current=${encodeURIComponent(recorded(w))}`} className="inline-flex min-h-10 items-center text-[13px] font-semibold text-primary hover:underline">
               {w.operatorName ? `“${w.operatorName}” wrong or stopped? Tell us` : "Something wrong here? Tell us"}
             </Link>
           ))}
