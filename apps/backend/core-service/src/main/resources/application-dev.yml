@@ -26,3 +26,6 @@ logging:
 community:
   agreement:
     allow-draft-acceptance: true
+  # INC-078: until email is set up nobody new can verify their email, so locally anyone signed in may apply.
+  applications:
+    require-verified-account: ${COMMUNITY_REQUIRE_VERIFIED_ACCOUNT:false}
