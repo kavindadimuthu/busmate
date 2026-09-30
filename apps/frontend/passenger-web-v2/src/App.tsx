@@ -19,6 +19,8 @@ const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
 const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const MyTicketsPage = lazy(() => import("./pages/MyTicketsPage"));
+const TicketDetailPage = lazy(() => import("./pages/TicketDetailPage"));
 const PayHereCancelPage = lazy(() => import("./pages/PayHereCancelPage"));
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ const App = () => (
               {/* PayHere sends the browser back to these two addresses (ADR-014), the same ones passenger-web serves. */}
               <Route path="/booking/payhere-return" element={<RequireAuth notice="Log in to confirm your payment."><PayHereReturnPage /></RequireAuth>} />
               <Route path="/booking/payhere-cancel" element={<PayHereCancelPage />} />
+              <Route path="/tickets" element={<RequireAuth notice="Log in to see your tickets."><MyTicketsPage /></RequireAuth>} />
+              <Route path="/tickets/:id" element={<RequireAuth notice="Log in to see your ticket."><TicketDetailPage /></RequireAuth>} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>

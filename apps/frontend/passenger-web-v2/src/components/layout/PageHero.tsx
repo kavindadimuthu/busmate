@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import heroBus from "@/assets/hero-bus.webp";
+import { cn } from "@/lib/utils";
 
 /** The blue strip under the header that inner pages open with; the page's card overlaps its lower edge. */
-export function PageHero({ children }: { children: ReactNode }) {
+export function PageHero({ children, compact = false }: { children: ReactNode; compact?: boolean }) {
   return (
     <section
-      className="relative overflow-hidden bg-[#1e3a8a] bg-cover px-4 pb-[64px] pt-3 text-white md:px-6 lg:bg-[image:var(--hero)] lg:pb-[84px]"
+      className={cn("relative overflow-hidden bg-[#1e3a8a] bg-cover px-4 pt-3 text-white md:px-6 lg:bg-[image:var(--hero)]", compact ? "pb-7 lg:pb-9" : "pb-[64px] lg:pb-[84px]")}
       style={{ ["--hero" as string]: `url(${heroBus})`, backgroundPosition: "78% center" }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,22,68,.94),rgba(30,64,175,.85))] lg:bg-[linear-gradient(90deg,rgba(9,22,68,.94)_0%,rgba(20,48,130,.85)_50%,rgba(30,64,175,.35)_100%)]" />
