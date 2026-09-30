@@ -3,7 +3,7 @@ import SiteLayout from "@/components/layout/SiteLayout";
 
 // Paths the current passenger-web serves that v2 hasn't rebuilt yet (ADR-029). Anything else is a
 // plain not-found.
-const PLANNED = ["/findmybus", "/routes", "/login", "/signup", "/profile", "/booking", "/tickets", "/contribute"];
+const PLANNED = ["/findmybus", "/routes", "/profile", "/booking", "/tickets", "/contribute"];
 
 export default function NotRebuiltPage() {
   const { pathname } = useLocation();

@@ -1,30 +1,35 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone } from "lucide-react";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 // Links only to pages that exist (INC-064): the design's newsletter box and "#" links are left out.
-const COLUMNS = [
-  {
-    title: "Explore",
-    links: [
-      { to: "/", label: "Home" },
-      { to: "/findmybus", label: "Find My Bus" },
-      { to: "/routes", label: "Routes" },
-    ],
-  },
-  {
-    title: "Get involved",
-    links: [
-      { to: "/contribute", label: "Contribute" },
-      { to: "/signup", label: "Create an account" },
-      { to: "/login", label: "Log In" },
-    ],
-  },
+const EXPLORE = [
+  { to: "/", label: "Home" },
+  { to: "/findmybus", label: "Find My Bus" },
+  { to: "/routes", label: "Routes" },
+];
+
+const GET_INVOLVED_SIGNED_OUT = [
+  { to: "/contribute", label: "Contribute" },
+  { to: "/signup", label: "Create an account" },
+  { to: "/login", label: "Log In" },
+];
+
+const GET_INVOLVED_SIGNED_IN = [
+  { to: "/contribute", label: "Contribute" },
+  { to: "/tickets", label: "My Tickets" },
+  { to: "/profile", label: "Profile" },
 ];
 
 // Thumb-sized (40px) on phones and any touchscreen; text height only on mouse-driven desktops.
 const LINK = "inline-flex min-h-10 items-center text-slate-300 transition-colors hover:text-white md:min-h-0 touch:min-h-10";
 
 export default function SiteFooter() {
+  const { isAuthenticated } = useAuth();
+  const COLUMNS = [
+    { title: "Explore", links: EXPLORE },
+    { title: "Get involved", links: isAuthenticated ? GET_INVOLVED_SIGNED_IN : GET_INVOLVED_SIGNED_OUT },
+  ];
   return (
     <footer className="bg-footer px-4 pb-6 pt-10 text-slate-300 min-[400px]:px-5 md:px-6 md:pt-14">
       <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-x-6 gap-y-7 text-sm md:grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] md:gap-9">
