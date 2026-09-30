@@ -80,11 +80,13 @@ export interface Built {
   contributions: boolean;
   /** The steward Review tab's screens exist. */
   review: boolean;
+  /** The propose-a-stop screens exist, so "Propose a stop" can be offered. */
+  proposals: boolean;
 }
 
 /** What has actually been built. A tab or link is offered only when its screen exists, however the role reads: a
  * menu item for a page that doesn't work yet is fiction. Each contribute increment flips its own flag. */
-export const BUILT: Built = { programme: false, contributions: false, review: false };
+export const BUILT: Built = { programme: true, contributions: true, review: false, proposals: false };
 
 export interface AccountTab {
   id: "profile" | "tickets" | "contributions" | "review";

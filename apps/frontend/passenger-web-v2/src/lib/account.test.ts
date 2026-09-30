@@ -10,8 +10,8 @@ const STALE: StandingLike = { status: "ACTIVE", activeContributor: false, active
 const SUSPENDED: StandingLike = { status: "SUSPENDED", cannotApplyReason: "SUSPENDED", contributor: { decisionReason: "Repeated wrong times" } };
 const DECLINED: StandingLike = { status: "DECLINED", contributor: { decisionReason: "  " } };
 const STAFF: StandingLike = { status: "NONE", cannotApplyReason: "NOT_A_PASSENGER" };
-const ALL: Built = { programme: true, contributions: true, review: true };
-const NOTHING: Built = { programme: false, contributions: false, review: false };
+const ALL: Built = { programme: true, contributions: true, review: true, proposals: true };
+const NOTHING: Built = { programme: false, contributions: false, review: false, proposals: false };
 
 describe("INC-077 what a standing means", () => {
   it("reads every standing core-service can give", () => {

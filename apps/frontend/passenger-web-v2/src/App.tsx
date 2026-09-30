@@ -19,6 +19,10 @@ const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
 const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const ContributeProgrammePage = lazy(() => import("./pages/ContributeProgrammePage"));
+const ContributeApplyPage = lazy(() => import("./pages/ContributeApplyPage"));
+const MyContributionsPage = lazy(() => import("./pages/MyContributionsPage"));
+const ContributionDetailPage = lazy(() => import("./pages/ContributionDetailPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const RoutesPage = lazy(() => import("./pages/RoutesPage"));
 const RouteDetailPage = lazy(() => import("./pages/RouteDetailPage"));
@@ -60,6 +64,10 @@ const App = () => (
               <Route path="/routes" element={<RoutesPage />} />
               <Route path="/routes/:id" element={<RouteDetailPage />} />
               <Route path="/profile" element={<RequireAuth notice="Log in to see your profile."><ProfilePage /></RequireAuth>} />
+              <Route path="/contribute" element={<ContributeProgrammePage />} />
+              <Route path="/contribute/apply" element={<RequireAuth notice="Log in to apply to contribute."><ContributeApplyPage /></RequireAuth>} />
+              <Route path="/contribute/mine" element={<RequireAuth notice="Log in to see your contributions."><MyContributionsPage /></RequireAuth>} />
+              <Route path="/contribute/mine/:id" element={<RequireAuth notice="Log in to see your contributions."><ContributionDetailPage /></RequireAuth>} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>
