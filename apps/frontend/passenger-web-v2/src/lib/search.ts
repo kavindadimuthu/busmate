@@ -1,3 +1,5 @@
+import { colomboNow } from "./findMyBus";
+
 export interface TripSearch {
   fromStopId: string;
   toStopId: string;
@@ -6,11 +8,10 @@ export interface TripSearch {
   date: string;
 }
 
-/** Today as YYYY-MM-DD in the passenger's own timezone. `toISOString()` would give the UTC date,
- * which in Sri Lanka (UTC+5:30) is still yesterday until 05:30. */
-export function localIsoDate(d: Date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/** Today as YYYY-MM-DD in Sri Lanka. BusMate's timetables are Sri Lankan, so "today" is theirs even
+ * when the phone is elsewhere; `toISOString()` would give the UTC date, still yesterday until 05:30. */
+export function todayInSriLanka(): string {
+  return colomboNow().date;
 }
 
 /** Same query contract as passenger-web's SearchForm, so either app's Find My Bus page reads it:

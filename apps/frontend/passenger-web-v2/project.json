@@ -53,6 +53,14 @@
         "cwd": "{projectRoot}"
       },
       "cache": true
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node --test \"src/**/*.test.ts\"",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
     }
   }
 }

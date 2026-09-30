@@ -9,6 +9,7 @@ import NotRebuiltPage from "./pages/NotRebuiltPage";
 // The forms pull in zod and react-hook-form; only passengers who open them should download those.
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
+const FindMyBusPage = lazy(() => import("./pages/FindMyBusPage"));
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/findmybus" element={<FindMyBusPage />} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>

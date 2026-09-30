@@ -2,17 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, Search } from "lucide-react";
 import StopField from "./StopField";
-import { findMyBusPath, localIsoDate, type TripSearch } from "@/lib/search";
+import { findMyBusPath, todayInSriLanka, type TripSearch } from "@/lib/search";
 import { cn } from "@/lib/utils";
 
-export default function TripSearchBar({ className }: { className?: string }) {
+export default function TripSearchBar({ className, initial }: { className?: string; initial?: Partial<TripSearch> }) {
   const navigate = useNavigate();
   const [s, setS] = useState<TripSearch>({
     fromStopId: "",
     toStopId: "",
     fromText: "",
     toText: "",
-    date: localIsoDate(),
+    date: todayInSriLanka(),
+    ...initial,
   });
   const [error, setError] = useState<string | null>(null);
   // On phones the swap button floats over the From/To edge, right where From's suggestions open.
@@ -87,7 +88,7 @@ export default function TripSearchBar({ className }: { className?: string }) {
             <input
               type="date"
               value={s.date}
-              min={localIsoDate()}
+              min={todayInSriLanka()}
               onChange={(e) => setS((p) => ({ ...p, date: e.target.value }))}
               className="mt-1 w-full min-w-0 border-0 bg-transparent text-sm font-medium text-foreground outline-none [color-scheme:light] dark:[color-scheme:dark]"
             />
