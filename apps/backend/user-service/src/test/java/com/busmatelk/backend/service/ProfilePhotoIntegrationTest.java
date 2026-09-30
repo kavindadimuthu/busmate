@@ -1,6 +1,7 @@
 package com.busmatelk.backend.service;
 
 import com.busmatelk.backend.AbstractPostgresIntegrationTest;
+import com.busmatelk.backend.MinioTestContainer;
 import com.busmatelk.backend.model.User;
 import com.busmatelk.backend.model.UserProfile;
 import com.busmatelk.backend.model.UserType;
@@ -15,7 +16,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
@@ -48,17 +48,8 @@ class ProfilePhotoIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final String BUCKET = "test-media";
 
-    @SuppressWarnings("resource")
-    static final GenericContainer<?> MINIO =
-            new GenericContainer<>("bitnamilegacy/minio:2025.7.23-debian-12-r3")
-                    .withEnv("MINIO_ROOT_USER", "testaccesskey")
-                    .withEnv("MINIO_ROOT_PASSWORD", "testsecretkey")
-                    .withExposedPorts(9000)
-                    .waitingFor(Wait.forHttp("/minio/health/live").forPort(9000));
-
-    static {
-        MINIO.start();
-    }
+    /** Started once for the class, and handed back only when it is really serving storage requests. */
+    static final GenericContainer<?> MINIO = MinioTestContainer.start();
 
     @DynamicPropertySource
     static void mediaProperties(DynamicPropertyRegistry registry) {

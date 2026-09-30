@@ -22,9 +22,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import com.busmatelk.backend.AbstractPostgresIntegrationTest;
+import com.busmatelk.backend.MinioTestContainer;
 import com.busmatelk.backend.dto.request.CreateUserRequest;
 import com.busmatelk.backend.dto.response.UserResponse;
 import com.busmatelk.backend.model.User;
@@ -48,17 +48,8 @@ class OperatorCrewScopeIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final String BUCKET = "test-crew-docs";
 
-    @SuppressWarnings("resource")
-    static final GenericContainer<?> MINIO =
-            new GenericContainer<>("bitnamilegacy/minio:2025.7.23-debian-12-r3")
-                    .withEnv("MINIO_ROOT_USER", "testaccesskey")
-                    .withEnv("MINIO_ROOT_PASSWORD", "testsecretkey")
-                    .withExposedPorts(9000)
-                    .waitingFor(Wait.forHttp("/minio/health/live").forPort(9000));
-
-    static {
-        MINIO.start();
-    }
+    /** Started once for the class, and handed back only when it is really serving storage requests. */
+    static final GenericContainer<?> MINIO = MinioTestContainer.start();
 
     @DynamicPropertySource
     static void mediaProperties(DynamicPropertyRegistry registry) {
