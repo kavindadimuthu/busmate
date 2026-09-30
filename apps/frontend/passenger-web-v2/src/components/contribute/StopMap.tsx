@@ -1,10 +1,9 @@
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { Loader2 } from "lucide-react";
+import { GOOGLE_MAPS_KEY as KEY, NO_LIBRARIES } from "@/lib/googleMaps";
 
-const KEY = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) ?? "";
 // Sri Lanka's rough centre: where the map opens until a position is chosen.
 const CENTRE = { lat: 7.87, lng: 80.77 };
-const NO_LIBRARIES: never[] = [];
 const OPTIONS = {
   streetViewControl: false,
   mapTypeControl: false,

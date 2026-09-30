@@ -8,8 +8,10 @@ import { noticePrimary } from "@/components/findmybus/noticeStyles";
 import { TrustChip } from "@/components/trust/TrustChip";
 import { TrustExplainer } from "@/components/trust/TrustExplainer";
 import RouteStopList from "@/components/routes/RouteStopList";
+import MapDisclosure from "@/components/map/MapDisclosure";
 import { isNotFound, useRoute, useRoutes, useRouteStops } from "@/lib/routesApi";
 import { formatKm, orderedStops, otherDirections, roadTypeLabel } from "@/lib/routes.ts";
+import { routePoints } from "@/lib/routeMap.ts";
 import { formatDuration, shortStopName } from "@/lib/findMyBus.ts";
 import { findMyBusPath, todayInSriLanka } from "@/lib/search";
 import { confirmedText } from "@/lib/trust";
@@ -27,8 +29,8 @@ const Fact = ({ icon, label, children }: { icon: React.ReactNode; label: string;
   </div>
 );
 
-/** One route: where it goes, how far, its stops in order, and a way straight into looking for a bus on it. There is
- * no map yet and no timetable here: what runs on a route on a given day is what searching for a bus answers. */
+/** One route: where it goes, how far, its stops in order, and a way straight into looking for a bus on it. The map
+ * is opt-in, and there is no timetable here: what runs on a route on a given day is what searching for a bus answers. */
 export default function RouteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const routeQuery = useRoute(id);
@@ -37,6 +39,7 @@ export default function RouteDetailPage() {
   const route = routeQuery.data;
 
   const stops = useMemo(() => orderedStops(stopsQuery.data ?? []), [stopsQuery.data]);
+  const mapData = useMemo(() => routePoints(stops), [stops]);
   const others = useMemo(() => (route && all ? otherDirections(all, route) : []), [route, all]);
   const from = route?.startStopName ? shortStopName(route.startStopName) : null;
   const to = route?.endStopName ? shortStopName(route.endStopName) : null;
@@ -153,6 +156,8 @@ export default function RouteDetailPage() {
       </section>
 
       <div className="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-7">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
+        <MapDisclosure title="Route map" data={mapData} legend="Green is the start, red the end. The line joins the stops in order; it isn't the road the bus takes." />
         <section aria-label="Stops" className="rounded-2xl border border-border bg-card p-4 md:p-5">
           <div className="mb-4 flex items-baseline justify-between gap-3">
             <h2 className="text-[15px] font-extrabold">Stops</h2>
@@ -183,6 +188,7 @@ export default function RouteDetailPage() {
             <RouteStopList stops={stops} />
           )}
         </section>
+        </div>
 
         {others.length > 0 && (
           <aside aria-label="The other direction" className="rounded-2xl border border-border bg-card p-4 md:p-5 lg:sticky lg:top-24">
