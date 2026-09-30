@@ -30,8 +30,8 @@ Compared route by route with `apps/frontend/passenger-web/src/App.tsx` and its p
 
 ### Gaps that need a decision or work before cutover
 
-1. **Route map on the trip page.** The old app draws the route on Google Maps (`RouteMap.tsx`); v2 shows the stop
-   timeline only. It was left out on purpose (opt-in, no fictional UI). Decide: build it, or accept the drop.
+1. ~~**Route map on the trip page.**~~ **Done (INC-085):** an opt-in "Show map" on route details and trip details.
+   The line joins the stops; it isn't the road the bus takes (no Directions API).
 2. **Booking behaves differently.** v2 booking is closed by default and production refuses to start with it open on
    dummy payments (ADR-031). The old app has no switch. At cutover passengers can find buses but not book, until real
    PayHere is enabled (waiting on the domain). Decide whether that is acceptable.

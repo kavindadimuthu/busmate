@@ -12,6 +12,8 @@ import TimetableFacts, { RouteFacts } from "@/components/trip/TimetableFacts";
 import OtherDepartures from "@/components/trip/OtherDepartures";
 import ReportProblem from "@/components/trip/ReportProblem";
 import ShareButton from "@/components/trip/ShareButton";
+import MapDisclosure from "@/components/map/MapDisclosure";
+import { tripPoints } from "@/lib/routeMap.ts";
 import { requestProblem, responseProblem, useTripDetails } from "@/lib/tripDetailsApi";
 import { useFareQuote, useOnlineBookingOpen } from "@/lib/booking/bookingApi";
 import { bookingState, hasRequiredParams, readDetailParams, resultsPath, seatsPath, stopRows, visibleRows } from "@/lib/tripDetails.ts";
@@ -48,6 +50,7 @@ export default function TripDetailsPage() {
     () => stopRows(data?.routeScheduleStops, { originOrder: js?.originStopOrder, destinationOrder: js?.destinationStopOrder, fromStopId: params.fromStopId, toStopId: params.toStopId }),
     [data, js, params.fromStopId, params.toStopId],
   );
+  const mapData = useMemo(() => tripPoints(rows), [rows]);
   const shown = visibleRows(rows, showAll);
   const hiddenCount = rows.length - visibleRows(rows, false).length;
 
@@ -172,6 +175,7 @@ export default function TripDetailsPage() {
                 </button>
               )}
             </section>
+            <MapDisclosure title="Map" data={mapData} highlightJourney className="order-2" legend="Your journey is the bold line, from where you board (green) to where you get off (red). The line joins the stops in order; it isn't the road the bus takes." />
             <div className="order-4 grid gap-4 lg:contents">
               <TimetableFacts schedule={d.schedule} date={params.date} />
               <RouteFacts route={route} />
