@@ -95,3 +95,10 @@ path; confirm this reading of ADR-031 when you review it).
 2. Deploy v2 to a staging address (gap 3); set up the email provider and domain (gap 4).
 3. Port the flow tests (gap 5), then do the mechanical items (6 to 8).
 4. Ask for the cutover decision.
+
+## 4. Cutover (INC-086)
+
+Done on the owner's decision: the production image builds and serves `passenger-web-v2` at busmate.site, and the old
+`passenger-web` is retired but kept (`apps/frontend/passenger-web/RETIRED.md`). Production had no real users and no
+network data at the time, so the new-address trial step was skipped. Still open from section 1: real email, the flow
+tests, and loading real network data.

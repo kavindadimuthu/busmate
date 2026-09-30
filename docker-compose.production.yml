@@ -126,6 +126,10 @@ services:
       - CORE_SERVICE_URL=http://core-service:9010
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
       - MEDIA_S3_ENDPOINT=http://minio:9000
+      # Where the links in password-reset and verification emails land (passenger-web-v2 pages). Nothing is
+      # sent until SMTP_* is set in config/secrets/.env; until then user-service only logs the email.
+      - AUTH_RESET_PASSWORD_URL=https://busmate.site/reset-password
+      - AUTH_VERIFY_EMAIL_URL=https://busmate.site/verify-email
       # The Dockerfile's OTel agent would otherwise retry a collector that is not deployed.
       - OTEL_SDK_DISABLED=true
       - JAVA_TOOL_OPTIONS=-Xmx448m -XX:MaxMetaspaceSize=192m

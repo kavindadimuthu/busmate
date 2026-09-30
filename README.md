@@ -11,8 +11,8 @@ A monorepo managed with [Nx](https://nx.dev) containing the BusMate platform app
 | Project | Path | Stack | Description |
 |---|---|---|---|
 | `new-react-portal` | `apps/frontend/new-react-portal` | Vite + React | Operations & fleet management dashboard (MOT / operator / admin / timekeeper) |
-| `passenger-web` | `apps/frontend/passenger-web` | Vite + React | Passenger-facing web app |
-| `passenger-web-v2` | `apps/frontend/passenger-web-v2` | Vite + React | Passenger-web rebuild, parallel to `passenger-web`, not yet linked anywhere real (ADR-029, INC-063) |
+| `passenger-web` | `apps/frontend/passenger-web` | Vite + React | **Retired**: replaced by `passenger-web-v2`, kept for rollback (INC-086) |
+| `passenger-web-v2` | `apps/frontend/passenger-web-v2` | Vite + React | The passenger site on busmate.site (ADR-029, INC-086) |
 | `passenger-mobile` | `apps/frontend/passenger-mobile` | Expo / React Native | Passenger mobile app |
 | `conductor-mobile` | `apps/frontend/conductor-mobile` | Expo / React Native | Conductor mobile app |
 | `api-gateway` | `apps/backend/api-gateway` | Node + TypeScript | Single entry point (`:8080`) every frontend calls |
