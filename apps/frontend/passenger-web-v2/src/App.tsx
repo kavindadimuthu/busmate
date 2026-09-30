@@ -16,6 +16,10 @@ const FindMyBusPage = lazy(() => import("./pages/FindMyBusPage"));
 const TripDetailsPage = lazy(() => import("./pages/TripDetailsPage"));
 const SeatSelectionPage = lazy(() => import("./pages/SeatSelectionPage"));
 const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
+const PaymentPage = lazy(() => import("./pages/PaymentPage"));
+const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
+const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const PayHereCancelPage = lazy(() => import("./pages/PayHereCancelPage"));
 
 const queryClient = new QueryClient();
 
@@ -41,6 +45,11 @@ const App = () => (
               <Route path="/findmybus/detail" element={<TripDetailsPage />} />
               <Route path="/booking/seats" element={<RequireAuth notice="Log in to choose your seats."><SeatSelectionPage /></RequireAuth>} />
               <Route path="/booking/review" element={<RequireAuth notice="Log in to finish your booking."><BookingReviewPage /></RequireAuth>} />
+              <Route path="/booking/payment" element={<RequireAuth notice="Log in to finish your booking."><PaymentPage /></RequireAuth>} />
+              <Route path="/booking/success" element={<RequireAuth notice="Log in to see your booking."><BookingSuccessPage /></RequireAuth>} />
+              {/* PayHere sends the browser back to these two addresses (ADR-014), the same ones passenger-web serves. */}
+              <Route path="/booking/payhere-return" element={<RequireAuth notice="Log in to confirm your payment."><PayHereReturnPage /></RequireAuth>} />
+              <Route path="/booking/payhere-cancel" element={<PayHereCancelPage />} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>
