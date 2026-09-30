@@ -6,6 +6,10 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
   if (!(error instanceof ApiError)) {
     return "We couldn't reach BusMate. Check your connection and try again.";
   }
+  // A server fault has nothing a passenger can act on, and its text ("Internal server error") is a stack of jargon.
+  if (error.status >= 500) {
+    return fallback;
+  }
   if (error.status === 429) {
     return "Too many attempts. Please wait a minute and try again.";
   }

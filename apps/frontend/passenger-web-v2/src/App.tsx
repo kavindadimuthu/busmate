@@ -19,6 +19,7 @@ const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
 const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const RoutesPage = lazy(() => import("./pages/RoutesPage"));
 const RouteDetailPage = lazy(() => import("./pages/RouteDetailPage"));
 const MyTicketsPage = lazy(() => import("./pages/MyTicketsPage"));
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/tickets/:id" element={<RequireAuth notice="Log in to see your ticket."><TicketDetailPage /></RequireAuth>} />
               <Route path="/routes" element={<RoutesPage />} />
               <Route path="/routes/:id" element={<RouteDetailPage />} />
+              <Route path="/profile" element={<RequireAuth notice="Log in to see your profile."><ProfilePage /></RequireAuth>} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>
