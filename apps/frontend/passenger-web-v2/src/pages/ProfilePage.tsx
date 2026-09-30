@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, ChevronRight, HeartHandshake, Loader2, LogOut, Mail, ShieldCheck, Ticket } from "lucide-react";
+import { CheckCircle2, ChevronRight, HeartHandshake, Loader2, LogOut, Mail, ShieldCheck } from "lucide-react";
 import { ApiError, AuthControllerService, UsersControllerService } from "@busmate/api-client-user";
-import SiteLayout from "@/components/layout/SiteLayout";
-import { PageHero } from "@/components/layout/PageHero";
+import AccountLayout from "@/components/account/AccountLayout";
 import { Field, PasswordField } from "@/components/auth/Field";
 import Disclosure from "@/components/trip/Disclosure";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useCorridorNames, useStanding } from "@/lib/standingApi";
+import { applyBlockedText, BUILT, roleOf, roleText, showBecomeContributor } from "@/lib/account.ts";
 import { extractErrorMessage } from "@/lib/auth/errorMessage";
 import type { AuthRouteState } from "@/lib/auth/redirect";
 import { changedFields, hasChanges, initialsOf, passwordSchema, profileSchema, type PasswordValues, type ProfileValues } from "@/lib/profile.ts";
@@ -39,9 +40,15 @@ export default function ProfilePage() {
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const standing = useStanding().data;
+  const role = roleOf(standing);
+  const corridors = useCorridorNames(role === "steward" ? standing?.contributor?.stewardScopeRouteGroupIds : undefined);
+  const roleLine = role ? roleText(role, standing, corridors) : null;
+  // Only once contributing can actually be started here: a note about a page that isn't there yet would be noise.
+  const blocked = role === "passenger" && BUILT.programme ? applyBlockedText(standing) : null;
 
   useEffect(() => {
-    document.title = "Your profile · BusMate";
+    document.title = "Account · BusMate";
   }, []);
 
   const current = useMemo<Partial<ProfileValues>>(() => ({ fullName: user?.fullName ?? "", username: user?.username ?? "", phoneNumber: user?.phoneNumber ?? "" }), [user]);
@@ -92,12 +99,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <SiteLayout>
-      <PageHero compact>
-        <h1 className="mt-4 text-[clamp(24px,6.6vw,42px)] font-extrabold leading-[1.1] tracking-[-0.03em]">Your profile</h1>
-      </PageHero>
-
-      <div className="mx-auto grid max-w-xl gap-4 px-3 pb-16 pt-5 min-[360px]:px-4 md:px-6">
+    <AccountLayout>
+      <div className="grid max-w-2xl gap-4">
         <section aria-label="Account" className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 md:p-5">
           <span aria-hidden className="grid h-16 w-16 flex-none place-items-center rounded-full bg-gradient-primary text-xl font-extrabold text-white">
             {initialsOf(user.fullName)}
@@ -108,6 +111,12 @@ export default function ProfilePage() {
               <Mail className="h-3.5 w-3.5 flex-none" aria-hidden />
               <span className="min-w-0 [overflow-wrap:anywhere]"><Email value={user.email!} /></span>
             </p>
+            {roleLine && (
+              <p className="mt-2 text-[13px] leading-snug">
+                <span className="font-bold">{roleLine.title}</span>
+                {roleLine.detail && <span className="text-muted-foreground"> · {roleLine.detail}</span>}
+              </p>
+            )}
             {user.isEmailVerified && (
               <span className="mt-1.5 inline-flex min-h-7 items-center gap-1 rounded-full border border-green-200 bg-green-100 px-2.5 text-xs font-bold text-green-900 dark:border-green-400/30 dark:bg-green-500/15 dark:text-green-200">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
@@ -161,27 +170,23 @@ export default function ProfilePage() {
           </form>
         </Disclosure>
 
-        <nav aria-label="More" className="grid gap-2">
-          {[
-            { to: "/tickets", icon: <Ticket className="h-5 w-5" />, title: "My tickets", body: "Your bookings and boarding codes" },
-            { to: "/contribute", icon: <HeartHandshake className="h-5 w-5" />, title: "Help improve BusMate", body: "Add stops, routes and timetables you know" },
-          ].map((l) => (
-            <Link key={l.to} to={l.to} className="flex min-h-16 items-center gap-3.5 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <span className="text-primary" aria-hidden>{l.icon}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-bold leading-tight">{l.title}</span>
-                <span className="block text-xs text-muted-foreground">{l.body}</span>
-              </span>
-              <ChevronRight className="h-5 w-5 flex-none text-muted-foreground" aria-hidden />
-            </Link>
-          ))}
-        </nav>
+        {showBecomeContributor(role, standing) && (
+          <Link to="/contribute" className="flex min-h-16 items-center gap-3.5 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <span className="text-primary" aria-hidden><HeartHandshake className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-bold leading-tight">Become a contributor</span>
+              <span className="block text-xs text-muted-foreground">Help add stops, routes and timetables you know</span>
+            </span>
+            <ChevronRight className="h-5 w-5 flex-none text-muted-foreground" aria-hidden />
+          </Link>
+        )}
+        {blocked && <p className="rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed text-muted-foreground">{blocked}</p>}
 
         <button type="button" onClick={signOut} disabled={leaving} className={SECONDARY}>
           {leaving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LogOut className="h-4 w-4" aria-hidden />}
           Log out
         </button>
       </div>
-    </SiteLayout>
+    </AccountLayout>
   );
 }

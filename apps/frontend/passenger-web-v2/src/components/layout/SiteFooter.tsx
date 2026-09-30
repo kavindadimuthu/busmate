@@ -18,7 +18,7 @@ const GET_INVOLVED_SIGNED_OUT = [
 const GET_INVOLVED_SIGNED_IN = [
   { to: "/contribute", label: "Contribute" },
   { to: "/tickets", label: "My Tickets" },
-  { to: "/profile", label: "Profile" },
+  { to: "/profile", label: "Account" },
 ];
 
 // Thumb-sized (40px) on phones and any touchscreen; text height only on mouse-driven desktops.

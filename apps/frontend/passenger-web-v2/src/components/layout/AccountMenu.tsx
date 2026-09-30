@@ -50,7 +50,7 @@ export default function AccountMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/profile">
-            <UserIcon /> Profile
+            <UserIcon /> Account
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
