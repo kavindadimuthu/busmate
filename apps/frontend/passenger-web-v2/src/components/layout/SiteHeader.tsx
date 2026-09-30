@@ -2,46 +2,35 @@ import { lazy, Suspense } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import BrandMark from "./BrandMark";
+import MobileMenu from "./MobileMenu";
+import { navItems } from "./navItems";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 // The menu pulls in Radix; signed-out visitors never need it.
 const AccountMenu = lazy(() => import("./AccountMenu"));
-const MenuPlaceholder = () => <span aria-hidden className="h-10 w-10 animate-pulse rounded-full bg-muted touch:h-11 touch:w-11" />;
+const MenuPlaceholder = () => <span aria-hidden className="h-11 w-11 animate-pulse rounded-full bg-muted lg:h-10 lg:w-10" />;
 
-const NAV = [
-  { to: "/", label: "Home", end: true },
-  { to: "/findmybus", label: "Find My Bus" },
-  { to: "/routes", label: "Routes" },
-  { to: "/contribute", label: "Contribute" },
-];
-
+/** One 64px bar at every width: the brand on the left, then who you are, then (below the desktop width) a menu button
+ * that opens the pages as a sheet. From lg the pages sit in the bar itself. */
 export default function SiteHeader() {
   const { isAuthenticated, isLoading } = useAuth();
-  const nav = isAuthenticated ? [...NAV, { to: "/tickets", label: "My Tickets" }] : NAV;
+  const items = navItems(isAuthenticated);
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-header backdrop-blur-[14px]">
-      {/* Phones and tablets: one row of brand + actions, with the nav as its own full-width strip
-          below that scrolls sideways (as in the design) rather than wrapping or hiding behind a
-          menu. The single-row desktop header needs ~1024px before its buttons stop wrapping. */}
-      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-2 px-3 min-[360px]:px-4 lg:flex-nowrap lg:gap-6 lg:px-6 lg:py-3">
-        <BrandMark tagline className="mr-auto py-2 lg:mr-0 lg:py-0" />
+      <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-4 min-[400px]:gap-2.5 md:px-6 lg:gap-6">
+        <BrandMark tagline className="mr-auto rounded-xl py-1 lg:mr-0" />
 
-        <nav
-          aria-label="Main"
-          className="order-last -mx-3 flex w-[calc(100%+1.5rem)] gap-1 overflow-x-auto whitespace-nowrap border-t border-border/60 px-2 [scrollbar-width:none] min-[360px]:-mx-4 min-[360px]:w-[calc(100%+2rem)] min-[360px]:px-3 lg:order-none lg:mx-auto lg:w-auto lg:gap-7 lg:overflow-visible lg:border-0 lg:p-0 [&::-webkit-scrollbar]:hidden max-[400px]:[mask-image:linear-gradient(90deg,#000_82%,transparent)]"
-        >
-          {nav.map((item) => (
+        <nav aria-label="Main" className="hidden lg:mx-auto lg:flex lg:gap-7">
+          {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  "relative flex min-h-11 flex-none items-center rounded-md px-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring lg:min-h-0 lg:px-0 touch:min-h-11",
-                  isActive
-                    ? "text-primary after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary lg:after:hidden"
-                    : "text-foreground hover:text-primary",
+                  "relative flex items-center rounded-md py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isActive ? "text-primary after:absolute after:inset-x-0 after:-bottom-[15px] after:h-0.5 after:rounded-full after:bg-primary" : "text-foreground hover:text-primary",
                 )
               }
             >
@@ -50,7 +39,9 @@ export default function SiteHeader() {
           ))}
         </nav>
 
-        <ThemeToggle />
+        <div className="hidden lg:block">
+          <ThemeToggle />
+        </div>
         {isAuthenticated ? (
           <Suspense fallback={<MenuPlaceholder />}>
             <AccountMenu />
@@ -60,22 +51,19 @@ export default function SiteHeader() {
           <MenuPlaceholder />
         ) : (
           <>
-            <Link
-              to="/login"
-              className="inline-flex min-h-10 items-center rounded-[10px] px-2.5 text-sm font-semibold text-foreground hover:text-primary lg:px-0 touch:min-h-11"
-            >
+            <Link to="/login" className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:px-0">
               Log In
             </Link>
-            {/* Below 360px there's only room for one account action; sign-up is one tap away on the
-                login screen and on the page itself. */}
+            {/* Under 400px there is room for one account button; Sign Up is one tap away in the menu. */}
             <Link
               to="/signup"
-              className="hidden min-h-10 items-center rounded-[10px] bg-primary px-3.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover min-[360px]:inline-flex lg:px-4 touch:min-h-11"
+              className="hidden min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-[400px]:inline-flex"
             >
               Sign Up
             </Link>
           </>
         )}
+        <MobileMenu items={items} />
       </div>
     </header>
   );

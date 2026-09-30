@@ -32,7 +32,7 @@ export default function AccountMenu() {
         <button
           type="button"
           aria-label={`Account menu for ${user?.fullName || user?.email || "your account"}`}
-          className="grid h-10 w-10 place-items-center rounded-full bg-gradient-primary text-sm font-extrabold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch:h-11 touch:w-11"
+          className="grid h-11 w-11 place-items-center rounded-full bg-gradient-primary text-sm font-extrabold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:h-10 lg:w-10"
         >
           {initialsOf(user?.fullName, user?.email)}
         </button>
