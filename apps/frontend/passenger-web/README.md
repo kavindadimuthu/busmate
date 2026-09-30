@@ -1,3 +1,5 @@
+> **Retired.** Replaced by `passenger-web-v2`; kept for rollback. See [RETIRED.md](RETIRED.md).
+
 # Busmate Passenger Web
 
 

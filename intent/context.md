@@ -40,7 +40,7 @@ Production deploys a subset: `telemetry-service`, EMQX and the bus simulator are
 | `ticketing-service` (Spring) | Fares, tickets, bookings, settlement | 9030 |
 | `telemetry-service` (Spring) | Device registry, position, vehicle health | 9040 |
 
-Frontends: `new-react-portal` (Vite — MOT/operator/admin/timekeeper), `passenger-web` (Vite),
+Frontends: `new-react-portal` (Vite — MOT/operator/admin/timekeeper), `passenger-web-v2` (Vite, the passenger site; the old `passenger-web` is retired but kept for rollback),
 `passenger-mobile` + `conductor-mobile` (Expo/React Native).
 
 `core-service` packages by feature then layer: `com.busmate.routeschedule.{network, scheduling,

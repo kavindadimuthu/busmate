@@ -1,4 +1,5 @@
-# One image that both builds the two web frontends and serves them (INC-032).
+# One image that both builds the two web frontends and serves them (INC-032). The passenger site is
+# passenger-web-v2 since INC-086; the old passenger-web is retired (kept in the repo, not built here).
 #
 # They are static files, so giving each its own runtime container would cost memory for nothing.
 # Caddy serves both site roots and proxies each site's /api/* to api-gateway.
@@ -17,7 +18,7 @@ COPY . .
 # Only these two apps and their workspace dependencies. A bare `pnpm install` would also pull the
 # Expo apps' React Native toolchains, which this image neither needs nor can use.
 RUN pnpm install --frozen-lockfile \
-    --filter "@busmate/passenger-web..." \
+    --filter "@busmate/passenger-web-v2..." \
     --filter "@busmate/new-react-portal..."
 
 # Vite inlines these at build time — they are baked into the bundle, so they are build args, not
@@ -31,18 +32,19 @@ ARG VITE_GOOGLE_MAPS_API_KEY=""
 # build context can no longer win, and the bundle's API base is exactly what was asked for.
 RUN printf 'VITE_API_GATEWAY_URL=%s\nVITE_GOOGLE_MAPS_API_KEY=%s\n' \
         "$PASSENGER_WEB_ORIGIN" "$VITE_GOOGLE_MAPS_API_KEY" \
-        > apps/frontend/passenger-web/.env.production.local \
+        > apps/frontend/passenger-web-v2/.env.production.local \
  && printf 'VITE_API_GATEWAY_URL=%s\nVITE_GEMINI_ENABLED=true\n' \
         "$PORTAL_ORIGIN" \
         > apps/frontend/new-react-portal/.env.production.local
 
-RUN pnpm --filter @busmate/passenger-web build \
+RUN pnpm --filter @busmate/passenger-web-v2 build \
  && pnpm --filter @busmate/new-react-portal build
 
 # ── Runtime stage ───────────────────────────────────────────────────────────
 FROM caddy:2-alpine
 
-COPY --from=web-builder /repo/apps/frontend/passenger-web/dist /srv/passenger-web
+# Served from /srv/passenger-web so the Caddyfile and a rollback need no other change.
+COPY --from=web-builder /repo/apps/frontend/passenger-web-v2/dist /srv/passenger-web
 COPY --from=web-builder /repo/apps/frontend/new-react-portal/dist /srv/portal
 COPY config/caddy/Caddyfile /etc/caddy/Caddyfile
 
