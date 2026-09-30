@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronRight, Clock, HeartHandshake, MapPin, Plus, RefreshCw, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight, ClipboardCheck, Clock, HeartHandshake, MapPin, Plus, RefreshCw, XCircle } from "lucide-react";
 import AccountLayout from "@/components/account/AccountLayout";
 import Notice from "@/components/findmybus/Notice";
 import { noticePrimary, noticeSecondary } from "@/components/findmybus/noticeStyles";
@@ -91,6 +91,12 @@ export default function MyContributionsPage() {
         {(role === "contributor" || role === "steward") && (
           <Panel icon={<CheckCircle2 className="h-7 w-7 text-green-600" />} title={role === "steward" ? "You're a steward" : "You're a contributor"} tone="good">
             <p>{role === "steward" ? (corridors.length > 0 ? `Thank you for helping. You review proposals on ${corridors.join(", ")}.` : "Thank you for helping. You review other contributors' proposals.") : "Thanks for helping map the network."}</p>
+            {BUILT.review && role === "steward" && (
+              <Link to="/contribute/review" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-[1.5px] border-green-300 px-5 text-sm font-bold text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-green-400/40 dark:text-green-200">
+                <ClipboardCheck className="h-4 w-4" aria-hidden />
+                Review proposals
+              </Link>
+            )}
             {BUILT.proposals && (
               <Link to="/contribute/propose" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-5 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <Plus className="h-4 w-4" aria-hidden />

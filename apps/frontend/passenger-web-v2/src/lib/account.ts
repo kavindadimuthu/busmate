@@ -86,7 +86,7 @@ export interface Built {
 
 /** What has actually been built. A tab or link is offered only when its screen exists, however the role reads: a
  * menu item for a page that doesn't work yet is fiction. Each contribute increment flips its own flag. */
-export const BUILT: Built = { programme: true, contributions: true, review: false, proposals: true };
+export const BUILT: Built = { programme: true, contributions: true, review: true, proposals: true };
 
 export interface AccountTab {
   id: "profile" | "tickets" | "contributions" | "review";
