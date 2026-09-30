@@ -79,6 +79,11 @@ export default function LoginPage() {
         />
         <PasswordField
           label="Password"
+          labelAside={
+            <Link to="/forgot-password" className="inline-flex min-h-11 items-center font-bold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              Forgot password?
+            </Link>
+          }
           autoComplete="current-password"
           enterKeyHint="go"
           placeholder="Your password"

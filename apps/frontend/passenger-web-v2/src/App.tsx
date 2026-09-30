@@ -19,6 +19,9 @@ const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
 const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const ContributeProgrammePage = lazy(() => import("./pages/ContributeProgrammePage"));
 const ContributeApplyPage = lazy(() => import("./pages/ContributeApplyPage"));
@@ -56,6 +59,9 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/findmybus" element={<FindMyBusPage />} />
               <Route path="/findmybus/detail" element={<TripDetailsPage />} />
               <Route path="/booking/seats" element={<RequireAuth notice="Log in to choose your seats."><SeatSelectionPage /></RequireAuth>} />
