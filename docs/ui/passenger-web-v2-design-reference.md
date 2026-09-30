@@ -47,7 +47,7 @@ grids to single column.
 | `Payment` | "Choose payment method" step, success state | `PaymentProcessingPage.tsx`, `BookingSuccessPage.tsx`, `PayHereReturnPage.tsx` | **Reuse PayHere integration as-is** — restyle shell only (user decision) |
 | `My Tickets` *(not a separate design page — covered by Profile's "My trips" tab)* | — | `MyTicketsPage.tsx`, `TicketDetailPage.tsx` | Needs its own restyle pass; not directly covered by the design set |
 | `Profile` | Tabs: overview/trips, saved routes, personal info, payment methods, notifications, security | `ProfilePage.tsx` | **Drop:** "Gold Traveller progress" loyalty widget (no backend), "Payment methods" saved-cards list (PayHere is redirect-only, nothing to store) — both per user decision |
-| `Auth` | Split panel, tabbed Log In / Sign Up, show/hide password, "Forgot password?", Google button | `LoginPage.tsx`, `SignupPage.tsx` | **Drop the Google button** — no OAuth/social login exists in the current backend (checked: no Google/OAuth references in `lib/auth` or the auth pages). Same "don't build fictional UI" precedent as loyalty/saved-cards. |
+| `Auth` | Split panel, tabbed Log In / Sign Up, show/hide password, "Forgot password?", Google button | `LoginPage.tsx`, `SignupPage.tsx` | **Leave the Google button out for now.** The backend can verify Google/Facebook ID tokens but has no client ID configured and no frontend calls it; needs a Google OAuth client ID and sign-off on loading Google's script. A later increment, not dropped. "Forgot password?" is real (backend endpoints exist) but has no page anywhere yet: it comes in the increment after login. |
 | `Community` | Leaderboard of contributors, ranked by points/badges | *(no direct equivalent)* | **Do not build the leaderboard/points as designed** — no scoring system exists. Real equivalent is the contribute/steward flow (see below) |
 | `Contributor` | Gamified contributor profile: points, badges, contribution breakdown, activity feed | *(no direct equivalent)* | Same as above — restyle the **real** contributor screens instead: `ContributeProgrammePage`, `MyContributionsPage`, `ContributionDetailPage`, `ProposeStopPage`, `ProposeWorkingPage`, `ProposeWorkingCorrectionPage`, `StewardQueuePage`, `StewardReviewPage`. Phase 2, after core passenger flows. |
 | `Routes` | All-routes grid/list with count header | `RoutesPage.tsx` | |
@@ -64,7 +64,7 @@ this reference exists to make legible — not to be treated as open questions:
   workflow gets the new visual language instead, once core passenger flows are done.
 - **Saved payment methods**: dropped. PayHere integration here is redirect-per-transaction; there is
   nothing to list.
-- **Social/Google login**: dropped. No OAuth integration exists.
+- **Google login**: deferred, not dropped (see the `Auth` row). An earlier version of this file said no backend support existed; that was wrong, corrected 2026-09-30.
 
 ## What this reference is for
 

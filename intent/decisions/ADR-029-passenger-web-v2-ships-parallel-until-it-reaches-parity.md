@@ -16,7 +16,7 @@ The product owner commissioned a modern visual design in Claude Design: 12 pages
 landing, auth, find-bus/search, route/trip details, booking, payment, profile, routes, about, and a
 community/contributor section. The design is a visual and structural reference, not a working app: it has
 no real backend behind it, and several of its screens depict capabilities BusMate does not have (a loyalty/
-points tier, a contributor leaderboard with badges, saved payment cards, Google sign-in). It is also missing
+points tier, a contributor leaderboard with badges, saved payment cards, a Google sign-in button no frontend can use yet). It is also missing
 screens the current app actually needs (My Tickets has no dedicated design page).
 
 Redesigning the current app in place would mean the live passenger-facing app is broken or inconsistent for
@@ -48,7 +48,9 @@ today, with no working fallback while incomplete.
   - No contributor leaderboard/badges/points — the real contribute/steward workflow (propose stops,
     propose/correct workings, steward review) is restyled instead, using the same visual language.
   - No saved payment methods — PayHere here is redirect-per-transaction; there is nothing to store.
-  - No Google/social sign-in — no OAuth integration exists.
+  - No Google sign-in for now. user-service can verify Google and Facebook ID tokens (`POST /api/auth/social/{provider}`)
+    but has no client ID configured and no frontend calls it. Adding it needs a Google OAuth client ID and the owner's
+    sign-off on loading Google's script, so it is its own later increment, not part of this rebuild.
 - The PayHere payment integration is ported as working logic, not rebuilt; only its surrounding screens are
   restyled.
 - Build order: core passenger flows first (landing, auth, find-bus/search, route & trip details, booking,
@@ -65,8 +67,8 @@ today, with no working fallback while incomplete.
   users yet.
 - No new third-party dependency is intended by this decision beyond what the current `passenger-web` already
   uses; if the v2 build later needs one, that still requires separate human sign-off per this repo's policy.
-- The design's fictional capabilities (loyalty, leaderboard, saved cards, social login) are deliberately not
-  built. If any of these becomes a real product want, it is a separate feature decision with its own ADR, not
+- The design's fictional capabilities (loyalty, leaderboard, saved cards) are deliberately not
+  built; Google sign-in is deferred, not dropped. If any of these becomes a real product want, it is a separate feature decision with its own ADR, not
   an implicit side effect of this redesign.
 - Extra short-term cost: some UI work (component styling, layout) is done twice in spirit — once conceptually
   in the design, once for real against the actual data — but this is the cost of not risking the live app.
@@ -75,7 +77,7 @@ today, with no working fallback while incomplete.
 
 - Parity is reached and cutover is being planned — that step needs its own review of what "parity" actually
   covers before traffic moves.
-- A design element currently dropped (loyalty, leaderboard, saved cards, social login) becomes a real,
+- A design element currently dropped (loyalty, leaderboard, saved cards) or deferred (Google sign-in) becomes a real,
   separately-decided feature — it should be designed against real backend capability at that point, not
   retrofitted into this rebuild.
 - The parallel-app maintenance cost (bug fixes landing only on the old app) turns out heavier than expected,

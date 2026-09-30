@@ -40,7 +40,7 @@ live passenger-facing app mid-rebuild.
 ## Planned phases (for context — not a commitment to create these files yet)
 
 1. **Scaffold** — new app, shared design tokens/component base, gateway wiring. (this increment)
-2. **Core passenger flows** — landing, auth (log in/sign up, no social login), find-bus/search with filters,
+2. **Core passenger flows** — landing, auth (log in/sign up; password recovery pages next; Google sign-in later), find-bus/search with filters,
    route & trip details, booking (seat selection + passenger details, real seat-map logic restyled),
    payment (PayHere integration reused, shell restyled), tickets (My Tickets — no design reference exists,
    needs its own pass), profile (personal info, trips, security — no loyalty widget, no saved-cards list).
@@ -52,7 +52,7 @@ live passenger-facing app mid-rebuild.
 
 ## Out of scope
 
-- Any loyalty/points/tier system, contributor leaderboard/badges, saved payment methods, or social login —
+- Any loyalty/points/tier system, contributor leaderboard/badges, or saved payment methods. Google sign-in is deferred until a client ID exists —
   see ADR-029. Not being built as a side effect of this redesign.
 - Reworking the PayHere payment integration logic itself (shell restyle only).
 - The actual cutover/retirement of the current `passenger-web` app.
