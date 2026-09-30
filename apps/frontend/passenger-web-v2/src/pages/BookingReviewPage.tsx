@@ -10,7 +10,8 @@ import { noticePrimary } from "@/components/findmybus/noticeStyles";
 import BookingSteps from "@/components/booking/BookingSteps";
 import TripSummary from "@/components/booking/TripSummary";
 import { useBooking } from "@/lib/booking/BookingContext";
-import { bookingProblem } from "@/lib/booking/bookingApi";
+import { bookingProblem, useFareQuote } from "@/lib/booking/bookingApi";
+import { formatMoney } from "@/lib/booking/payment.ts";
 import { seatsPath } from "@/lib/tripDetails.ts";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { AuthRouteState } from "@/lib/auth/redirect";
@@ -52,6 +53,9 @@ export default function BookingReviewPage() {
       }
     },
   });
+
+  // Above the early return below: hooks can't be skipped on some renders.
+  const quote = useFareQuote({ tripId: trip?.tripId, fromStopId: trip?.fromStopId, toStopId: trip?.toStopId, seats: seats.length, enabled: !result });
 
   const hero = (
     <PageHero>
@@ -98,8 +102,14 @@ export default function BookingReviewPage() {
           <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
             {reserved
               ? "These seats are already reserved for you. Carry on to payment."
-              : "Reserving holds these seats for you for a short time while you pay. The fare is worked out when you reserve, and you'll see it before you pay anything."}
+              : "Reserving holds these seats for you for a short time while you pay. The fare is confirmed when you reserve, and you'll see it again before you pay anything."}
           </p>
+          {!reserved && quote?.totalFare != null && (
+            <p className="mt-4 flex items-baseline justify-between gap-3 border-t border-border pt-4">
+              <span className="text-sm font-bold">Fare</span>
+              <span className="text-2xl font-extrabold tracking-tight">{formatMoney(quote.totalFare)}</span>
+            </p>
+          )}
         </section>
 
         {problem && !problem.signedOut && (

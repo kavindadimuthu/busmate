@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ApiError as CoreApiError, BusManagementService } from "@busmate/api-client-core";
 import { ApiError as TicketingApiError, TicketControllerService } from "@busmate/api-client-ticketing";
 import { layoutSeats, resolveLayout } from "./seatMap.ts";
@@ -32,6 +32,23 @@ export function useOccupiedSeats(tripId: string, enabled: boolean) {
     retry: noRetryOn4xx,
     queryFn: () => TicketControllerService.getOccupiedSeats(tripId),
   });
+}
+
+/** What these seats would cost on this journey, priced by the server with the same code that prices a booking
+ * (INC-073). A quote, not a promise: the reservation's own figure is what is charged. `undefined` while it loads and
+ * when it can't be had, and callers then say nothing about price rather than guess. */
+export function useFareQuote(p: { tripId?: string; fromStopId?: string; toStopId?: string; seats: number; enabled?: boolean }) {
+  const ready = !!p.tripId && !!p.fromStopId && !!p.toStopId && p.seats >= 1 && (p.enabled ?? true);
+  const q = useQuery({
+    queryKey: ["fare-quote", p.tripId, p.fromStopId, p.toStopId, p.seats],
+    enabled: ready,
+    staleTime: 60_000,
+    retry: noRetryOn4xx,
+    // Changing the seat count shows the last figure until the new one arrives, so a price doesn't blink out mid-tap.
+    placeholderData: keepPreviousData,
+    queryFn: () => TicketControllerService.quoteFare(p.tripId!, p.fromStopId!, p.toStopId!, p.seats),
+  });
+  return q.data && q.data.totalFare != null && q.data.farePerSeat != null ? q.data : undefined;
 }
 
 /** Whether online booking is open (INC-072). `undefined` until known, and when the answer can't be had: a page then

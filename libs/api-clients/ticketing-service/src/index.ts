@@ -13,6 +13,7 @@ export type { BookingResponseDTO } from './models/BookingResponseDTO';
 export type { BookingStatusDTO } from './models/BookingStatusDTO';
 export type { ConductorLogTicketDTO } from './models/ConductorLogTicketDTO';
 export type { FareCalculationRequestDTO } from './models/FareCalculationRequestDTO';
+export type { FareQuoteDTO } from './models/FareQuoteDTO';
 export type { OccupiedSeatsDTO } from './models/OccupiedSeatsDTO';
 export type { Pageablenull } from './models/Pageablenull';
 export type { PageConductorLogTicketDTO } from './models/PageConductorLogTicketDTO';

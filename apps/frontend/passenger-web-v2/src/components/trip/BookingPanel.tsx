@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Armchair, Ban, CalendarX, Clock, Lock, Ticket } from "lucide-react";
+import type { FareQuoteDTO } from "@busmate/api-client-ticketing";
 import type { BookingState } from "@/lib/tripDetails.ts";
+import { formatMoney } from "@/lib/booking/payment.ts";
 import { cn } from "@/lib/utils";
 
 const CTA =
@@ -24,9 +26,21 @@ const CLOSED: Record<Exclude<BookingState["kind"], "open"> | "paused", { icon: t
 };
 
 /** What a passenger can do about booking, stated plainly: a button when a bus is assigned and the trip can still
- * be booked, otherwise the reason it can't. The fare isn't shown: the search has no price, and the server
- * works it out when the seats are reserved. */
-export default function BookingPanel({ state, seatsHref, paused = false, className }: { state: BookingState; seatsHref?: string; paused?: boolean; className?: string }) {
+ * be booked, otherwise the reason it can't. The fare is the server's quote for this journey (INC-073); if it can't
+ * be had, the panel says the fare comes when seats are reserved rather than guess. */
+export default function BookingPanel({
+  state,
+  seatsHref,
+  paused = false,
+  quote,
+  className,
+}: {
+  state: BookingState;
+  seatsHref?: string;
+  paused?: boolean;
+  quote?: FareQuoteDTO;
+  className?: string;
+}) {
   if (state.kind === "open" && seatsHref && !paused) {
     return (
       <section aria-label="Booking" className={cn("rounded-2xl border border-border bg-card p-4 md:p-5", className)}>
@@ -34,9 +48,19 @@ export default function BookingPanel({ state, seatsHref, paused = false, classNa
           <Ticket className="h-5 w-5 text-primary" aria-hidden />
           Book this bus
         </div>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-          Choose your seats next. The fare is worked out and shown when you reserve them.
-        </p>
+        {quote?.farePerSeat != null ? (
+          <>
+            <p className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-extrabold tracking-tight">{formatMoney(quote.farePerSeat)}</span>
+              <span className="text-sm text-muted-foreground">per seat</span>
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              For your stops. Choose your seats next; the fare is confirmed when you reserve them, and you'll see it before you pay.
+            </p>
+          </>
+        ) : (
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">Choose your seats next. The fare is worked out and shown when you reserve them.</p>
+        )}
         <Link to={seatsHref} className={cn(CTA, "mt-3.5")}>
           Choose seats →
         </Link>
@@ -62,12 +86,20 @@ export default function BookingPanel({ state, seatsHref, paused = false, classNa
 }
 
 /** A phone's thumb-reach booking button, fixed to the bottom edge. Only when booking is open. */
-export function StickyBookBar({ seatsHref }: { seatsHref: string }) {
+export function StickyBookBar({ seatsHref, quote }: { seatsHref: string; quote?: FareQuoteDTO }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
-      <Link to={seatsHref} className={CTA}>
-        Choose seats →
-      </Link>
+      <div className="mx-auto flex max-w-[1240px] items-center gap-3">
+        {quote?.farePerSeat != null && (
+          <p className="min-w-0 flex-none text-sm leading-tight">
+            <span className="block font-extrabold">{formatMoney(quote.farePerSeat)}</span>
+            <span className="block text-xs text-muted-foreground">per seat</span>
+          </p>
+        )}
+        <Link to={seatsHref} className={CTA}>
+          Choose seats →
+        </Link>
+      </div>
     </div>
   );
 }

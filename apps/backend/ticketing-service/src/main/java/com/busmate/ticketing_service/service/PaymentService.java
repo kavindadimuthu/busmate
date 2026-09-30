@@ -6,6 +6,7 @@ import com.busmate.ticketing_service.dto.request.TicketCancelRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.FareQuoteDTO;
 import com.busmate.ticketing_service.dto.response.OccupiedSeatsDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
@@ -24,6 +25,9 @@ public interface PaymentService {
     List<ConductorLogTicketDTO> getTicketDetailsByBusId(String busId);
 
     List<ConductorLogTicketDTO> getTicketDetailsByTripId(String tripId);
+
+    /** What booking these seats would cost, priced by the same code as a real booking (INC-073). Reads only. */
+    FareQuoteDTO quoteFare(String tripId, String fromStopId, String toStopId, int seatCount);
 
     /** Seats on this trip that can't be booked: labels only, safe for any signed-in passenger (INC-068). */
     OccupiedSeatsDTO getOccupiedSeats(String tripId);

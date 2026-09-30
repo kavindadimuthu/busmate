@@ -6,6 +6,7 @@ import com.busmate.ticketing_service.dto.request.TicketCancelRequestDTO;
 import com.busmate.ticketing_service.dto.request.TicketValidationRequestDTO;
 import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.FareQuoteDTO;
 import com.busmate.ticketing_service.dto.response.OccupiedSeatsDTO;
 import com.busmate.ticketing_service.dto.response.PaymentBreakdownEntryDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
@@ -81,6 +82,9 @@ public class PaymentServiceIMPL implements PaymentService {
      * Trip states a seat can still be sold for. Everything else - departed, in transit, completed,
      * cancelled - is a bus the passenger cannot still board at their stop.
      */
+    /** Fares are in Sri Lankan rupees. */
+    private static final String FARE_CURRENCY = "LKR";
+
     private static final java.util.Set<String> BOOKABLE_TRIP_STATUSES = java.util.Set.of("pending", "active");
 
     @Override
@@ -210,7 +214,7 @@ public class PaymentServiceIMPL implements PaymentService {
         reserveSeatsOrThrow(requestDTO.getTripId(), seats);
 
         BigDecimal farePerSeat = priceOf(context);
-        BigDecimal total = farePerSeat.multiply(BigDecimal.valueOf(seats.size()));
+        BigDecimal total = totalFor(farePerSeat, seats.size());
 
         Transactions transaction = new Transactions();
         transaction.setTotalAmount(total.doubleValue());
@@ -327,6 +331,31 @@ public class PaymentServiceIMPL implements PaymentService {
                     "Booking for this trip closed " + cutoffMinutesBeforeDeparture
                             + " minutes before it leaves your stop");
         }
+    }
+
+    @Override
+    public FareQuoteDTO quoteFare(String tripId, String fromStopId, String toStopId, int seatCount) {
+        if (tripId == null || tripId.isBlank() || fromStopId == null || fromStopId.isBlank()
+                || toStopId == null || toStopId.isBlank()) {
+            throw new BadRequestException("tripId, fromStopId and toStopId are mandatory");
+        }
+        if (seatCount < 1) {
+            throw new BadRequestException("Choose at least one seat");
+        }
+        if (seatCount > maxSeatsPerBooking) {
+            throw new BadRequestException("A single booking can hold at most " + maxSeatsPerBooking + " seats");
+        }
+        // The same facts and the same pricing as bookTicket, so a quote can't drift from what booking charges.
+        // Deliberately not requireBookable: this prices a journey, it doesn't reserve anything, and a page that
+        // asks has already decided the trip is bookable.
+        BookingContext context = coreServiceClient.getBookingContext(tripId, fromStopId, toStopId);
+        BigDecimal farePerSeat = priceOf(context);
+        return new FareQuoteDTO(tripId, seatCount, farePerSeat, totalFor(farePerSeat, seatCount), FARE_CURRENCY);
+    }
+
+    /** One formula for what several seats cost, used by booking and by the quote. */
+    private static BigDecimal totalFor(BigDecimal farePerSeat, int seats) {
+        return farePerSeat.multiply(BigDecimal.valueOf(seats));
     }
 
     /** The fare for one seat, from this service's own fare tables and core-service's facts. */

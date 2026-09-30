@@ -1,7 +1,7 @@
 import type { FindMyBusDetailsResponse } from "@busmate/api-client-core";
 import { TrustChip } from "@/components/trust/TrustChip";
 import { DateStatusBadge } from "./TimetableFacts";
-import { formatClock, formatDuration, hasPassed, journeyMinutes, parseTimeOfDay } from "@/lib/findMyBus.ts";
+import { formatClock, formatDuration, hasPassed, journeyMinutes, parseTimeOfDay, shortStopName } from "@/lib/findMyBus.ts";
 
 /** The journey at a glance: leaves, arrives, how long, how far, how far to trust the times, and whether it runs. */
 export default function JourneyCard({ data, date }: { data: FindMyBusDetailsResponse; date: string }) {
@@ -21,10 +21,13 @@ export default function JourneyCard({ data, date }: { data: FindMyBusDetailsResp
 
   return (
     <section aria-label="Journey" className="rounded-2xl border border-border bg-card p-4 shadow-float md:p-6">
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(64px,auto)_minmax(0,1fr)] items-start gap-2.5 md:grid-cols-[minmax(0,15rem)_minmax(110px,1fr)_minmax(0,15rem)] md:gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,auto)_minmax(0,1fr)] items-start gap-2 md:grid-cols-[minmax(0,15rem)_minmax(110px,1fr)_minmax(0,15rem)] md:gap-4">
         <div className="min-w-0">
-          <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] md:text-4xl">{dep != null ? formatClock(dep) : "—"}</div>
-          <div className="mt-1.5 line-clamp-2 text-xs leading-snug text-muted-foreground md:text-[13px]">{js.originStop?.name}</div>
+          <div className="whitespace-nowrap text-[22px] max-[359px]:text-[19px] font-extrabold leading-none tracking-[-0.02em] min-[400px]:text-[26px] md:text-4xl">{dep != null ? formatClock(dep) : "—"}</div>
+          <div className="mt-1.5 line-clamp-3 text-xs leading-snug text-muted-foreground [overflow-wrap:anywhere] md:text-[13px]">
+            <span className="md:hidden">{shortStopName(js.originStop?.name ?? "")}</span>
+            <span className="hidden md:inline">{js.originStop?.name}</span>
+          </div>
         </div>
         <div className="grid justify-items-center gap-1.5 pt-1 text-center">
           <span className="text-xs font-bold text-muted-foreground">{duration ?? " "}</span>
@@ -32,7 +35,7 @@ export default function JourneyCard({ data, date }: { data: FindMyBusDetailsResp
           <span className="text-[11px] text-muted-foreground">{[km, between > 0 ? `${between} stop${between === 1 ? "" : "s"} between` : null].filter(Boolean).join(" · ") || " "}</span>
         </div>
         <div className="min-w-0 text-right">
-          <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] md:text-4xl">
+          <div className="whitespace-nowrap text-[22px] max-[359px]:text-[19px] font-extrabold leading-none tracking-[-0.02em] min-[400px]:text-[26px] md:text-4xl">
             {arr != null ? formatClock(arr) : "—"}
             {nextDay && (
               <sup title="Arrives the next day" className="ml-0.5 text-xs font-bold text-muted-foreground">
@@ -40,7 +43,10 @@ export default function JourneyCard({ data, date }: { data: FindMyBusDetailsResp
               </sup>
             )}
           </div>
-          <div className="mt-1.5 line-clamp-2 text-xs leading-snug text-muted-foreground md:text-[13px]">{js.destinationStop?.name}</div>
+          <div className="mt-1.5 line-clamp-3 text-xs leading-snug text-muted-foreground [overflow-wrap:anywhere] md:text-[13px]">
+            <span className="md:hidden">{shortStopName(js.destinationStop?.name ?? "")}</span>
+            <span className="hidden md:inline">{js.destinationStop?.name}</span>
+          </div>
         </div>
       </div>
 

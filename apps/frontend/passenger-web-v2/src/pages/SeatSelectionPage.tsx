@@ -9,7 +9,8 @@ import SeatMap from "@/components/booking/SeatMap";
 import BookingSteps from "@/components/booking/BookingSteps";
 import TripSummary from "@/components/booking/TripSummary";
 import { useBooking, type BookingTrip } from "@/lib/booking/BookingContext";
-import { useOnlineBookingOpen, useSeatMapData } from "@/lib/booking/bookingApi";
+import { useFareQuote, useOnlineBookingOpen, useSeatMapData } from "@/lib/booking/bookingApi";
+import { formatMoney } from "@/lib/booking/payment.ts";
 import { MAX_SEATS_PER_BOOKING, dropUnavailable, sortSeats, toggleSeat } from "@/lib/booking/seatMap.ts";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +81,7 @@ export default function SeatSelectionPage() {
   };
 
   const ordered = sortSeats(picked);
+  const quote = useFareQuote({ tripId: fromLink?.tripId, fromStopId: fromLink?.fromStopId, toStopId: fromLink?.toStopId, seats: picked.length, enabled: !paused && picked.length > 0 });
   const cont = () => {
     if (!fromLink || picked.length === 0) return;
     start({ ...fromLink, busPlateNumber: map.bus?.plateNumber }, ordered);
@@ -167,7 +169,15 @@ export default function SeatSelectionPage() {
           <aside aria-label="Your choice" className="hidden rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24 lg:block">
             <h2 className="text-[15px] font-extrabold">Your seats</h2>
             <p className="mt-2 text-sm text-muted-foreground">{picked.length === 0 ? "Choose a seat on the map." : `${plural(picked.length)}: ${ordered.join(", ")}`}</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">You'll see the fare when you reserve, before you pay.</p>
+            {picked.length > 0 && quote?.totalFare != null ? (
+              <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-border pt-3">
+                <span className="text-sm text-muted-foreground">Fare</span>
+                <span className="text-2xl font-extrabold tracking-tight">{formatMoney(quote.totalFare)}</span>
+              </p>
+            ) : null}
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+              {quote?.totalFare != null && picked.length > 0 ? "Confirmed when you reserve, and shown again before you pay." : "You'll see the fare when you reserve, before you pay."}
+            </p>
             <button type="button" disabled={picked.length === 0} onClick={cont} className={cn(CTA, "mt-4")}>
               Continue →
             </button>
@@ -182,7 +192,10 @@ export default function SeatSelectionPage() {
               <span className="text-muted-foreground">Choose a seat</span>
             ) : (
               <>
-                <span className="block font-bold">{plural(picked.length)}</span>
+                <span className="block font-bold">
+                  {plural(picked.length)}
+                  {quote?.totalFare != null && <span> · {formatMoney(quote.totalFare)}</span>}
+                </span>
                 <span className="block truncate text-xs text-muted-foreground">{ordered.join(", ")}</span>
               </>
             )}

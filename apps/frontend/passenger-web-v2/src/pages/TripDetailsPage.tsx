@@ -13,7 +13,7 @@ import OtherDepartures from "@/components/trip/OtherDepartures";
 import ReportProblem from "@/components/trip/ReportProblem";
 import ShareButton from "@/components/trip/ShareButton";
 import { requestProblem, responseProblem, useTripDetails } from "@/lib/tripDetailsApi";
-import { useOnlineBookingOpen } from "@/lib/booking/bookingApi";
+import { useFareQuote, useOnlineBookingOpen } from "@/lib/booking/bookingApi";
 import { bookingState, hasRequiredParams, readDetailParams, resultsPath, seatsPath, stopRows, visibleRows } from "@/lib/tripDetails.ts";
 import { formatClock, formatLongDate, parseTimeOfDay, shortStopName } from "@/lib/findMyBus.ts";
 import { todayInSriLanka } from "@/lib/search";
@@ -54,6 +54,13 @@ export default function TripDetailsPage() {
   const state = ready ? bookingState(data, params.date, today) : null;
   // Switched off for everyone: say so, and offer no way in. Unknown (still loading, or unreachable) is treated as open.
   const paused = useOnlineBookingOpen() === false;
+  const quote = useFareQuote({
+    tripId: state?.kind === "open" ? state.tripId : undefined,
+    fromStopId: js?.originStop?.id ?? params.fromStopId,
+    toStopId: js?.destinationStop?.id ?? params.toStopId,
+    seats: 1,
+    enabled: !paused,
+  });
   const seatsHref =
     state?.kind === "open" && !paused
       ? seatsPath({
@@ -140,7 +147,7 @@ export default function TripDetailsPage() {
         <div className="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-7">
           {/* `contents` lets phones interleave both columns in one order; from lg they are two real columns. */}
           <div className="contents lg:col-start-2 lg:row-start-1 lg:sticky lg:top-24 lg:grid lg:gap-4">
-            {state && <BookingPanel state={state} seatsHref={seatsHref} paused={paused} className="order-1" />}
+            {state && <BookingPanel state={state} seatsHref={seatsHref} paused={paused} quote={quote} className="order-1" />}
             <BusAndOperator trip={d.trip} usualWorkings={d.usualWorkings} scheduleId={params.scheduleId} className="order-3" />
             <OtherDepartures fromStopId={params.fromStopId} toStopId={params.toStopId} date={params.date} currentScheduleId={params.scheduleId} currentTripId={params.tripId} className="order-6" />
           </div>
@@ -174,7 +181,7 @@ export default function TripDetailsPage() {
         </div>
       </div>
 
-      {seatsHref && <StickyBookBar seatsHref={seatsHref} />}
+      {seatsHref && <StickyBookBar seatsHref={seatsHref} quote={quote} />}
     </SiteLayout>
   );
 }

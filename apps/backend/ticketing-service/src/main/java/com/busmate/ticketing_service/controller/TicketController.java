@@ -8,6 +8,7 @@ import com.busmate.ticketing_service.dto.response.BookingResponseDTO;
 import com.busmate.ticketing_service.booking.BookingSwitch;
 import com.busmate.ticketing_service.dto.response.BookingStatusDTO;
 import com.busmate.ticketing_service.dto.response.ConductorLogTicketDTO;
+import com.busmate.ticketing_service.dto.response.FareQuoteDTO;
 import com.busmate.ticketing_service.dto.response.OccupiedSeatsDTO;
 import com.busmate.ticketing_service.dto.response.PaymentConfirmResponseDTO;
 import com.busmate.ticketing_service.dto.response.TripSummaryDTO;
@@ -57,6 +58,19 @@ public class TicketController {
     @GetMapping("/booking-status")
     public BookingStatusDTO getBookingStatus() {
         return new BookingStatusDTO(bookingSwitch.isOpen());
+    }
+
+    /**
+     * What these seats would cost on this journey, before anyone books (INC-073). Public through the gateway: a
+     * trip page shows the price to a visitor who hasn't signed in, and a fare is not private.
+     */
+    @GetMapping("/quote")
+    public FareQuoteDTO quoteFare(
+            @RequestParam String tripId,
+            @RequestParam String fromStopId,
+            @RequestParam String toStopId,
+            @RequestParam(defaultValue = "1") int seats) {
+        return conductorLogService.quoteFare(tripId, fromStopId, toStopId, seats);
     }
 
     @PostMapping("/book")

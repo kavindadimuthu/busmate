@@ -36,7 +36,7 @@ stops at the door of seat selection.
 - [x] A broken link, an unknown departure and a network failure each say what happened and what to do.
 - [x] On a 360px phone the journey and the booking state are on the first screen, nothing scrolls sideways, and
       every control is at least 40px tall.
-- [x] Nothing shows what BusMate can't tell: no fare, seats left, ratings, policies, "track this bus", saved
+- [x] Nothing shows what BusMate can't tell: no seats left, ratings, policies, "track this bus", saved
       trips, or amenities beyond what the bus record actually states.
 
 ## Out of scope
@@ -44,8 +44,8 @@ stops at the door of seat selection.
 - Seat selection, review, payment and confirmation: their own increments. "Choose seats" leads to "not rebuilt
   yet" until then.
 - The route map: an opt-in "show map" is its own later increment (Google's script and key, and heavy on data).
-- Fares and any price before booking: needs a server-priced quote, its own reviewed increment before real
-  payments go live.
+- Fares and any price before booking: needs a server-priced quote, its own reviewed increment
+  ([INC-073](INC-073-fare-quote.md)).
 - Contribute pages the "tell us" links point to: they land on "not rebuilt yet" until rebuilt.
 
 ## Constraints

@@ -64,6 +64,8 @@ export const routes: RouteConfig[] = [
   // Ticketing
   // Whether online booking is open (INC-072): one public yes/no fact, so a page can say so before anyone signs in.
   { pathPrefix: '/api/v1/tickets/booking-status', target: 'TICKETING', requiresAuth: false },
+  // What seats would cost on a journey (INC-073): a fare isn't private, and the trip page is public.
+  { pathPrefix: '/api/v1/tickets/quote', target: 'TICKETING', requiresAuth: false },
   { pathPrefix: '/api/tickets', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/tickets', target: 'TICKETING', requiresAuth: true },
   { pathPrefix: '/api/v1/routeFare', target: 'TICKETING', requiresAuth: true },
