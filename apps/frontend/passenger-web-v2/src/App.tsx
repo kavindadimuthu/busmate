@@ -10,6 +10,7 @@ import NotRebuiltPage from "./pages/NotRebuiltPage";
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
 const FindMyBusPage = lazy(() => import("./pages/FindMyBusPage"));
+const TripDetailsPage = lazy(() => import("./pages/TripDetailsPage"));
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/findmybus" element={<FindMyBusPage />} />
+              <Route path="/findmybus/detail" element={<TripDetailsPage />} />
               <Route path="*" element={<NotRebuiltPage />} />
             </Routes>
           </Suspense>
