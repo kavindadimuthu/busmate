@@ -19,6 +19,7 @@ const BookingReviewPage = lazy(() => import("./pages/BookingReviewPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage"));
 const PayHereReturnPage = lazy(() => import("./pages/PayHereReturnPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 const ContributeProgrammePage = lazy(() => import("./pages/ContributeProgrammePage"));
 const ContributeApplyPage = lazy(() => import("./pages/ContributeApplyPage"));
 const MyContributionsPage = lazy(() => import("./pages/MyContributionsPage"));
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/booking/payhere-cancel" element={<PayHereCancelPage />} />
               <Route path="/tickets" element={<RequireAuth notice="Log in to see your tickets."><MyTicketsPage /></RequireAuth>} />
               <Route path="/tickets/:id" element={<RequireAuth notice="Log in to see your ticket."><TicketDetailPage /></RequireAuth>} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/routes" element={<RoutesPage />} />
               <Route path="/routes/:id" element={<RouteDetailPage />} />
               <Route path="/profile" element={<RequireAuth notice="Log in to see your profile."><ProfilePage /></RequireAuth>} />

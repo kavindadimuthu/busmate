@@ -7,6 +7,7 @@ const EXPLORE = [
   { to: "/", label: "Home" },
   { to: "/findmybus", label: "Find My Bus" },
   { to: "/routes", label: "Routes" },
+  { to: "/about", label: "About" },
 ];
 
 const GET_INVOLVED_SIGNED_OUT = [
